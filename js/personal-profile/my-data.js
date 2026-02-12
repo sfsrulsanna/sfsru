@@ -1,160 +1,174 @@
-let userData = {};
-let currentEditType = null;
+// js/personal-profile/my-data-supabase.js
+import { supabase } from '../supabase-config.js'
 
-document.addEventListener('DOMContentLoaded', () => {
-  const menuToggle = document.getElementById('menuToggle');
-  const mainNav = document.getElementById('mainNav');
-  if (menuToggle && mainNav) {
-    menuToggle.addEventListener('click', () => {
-      mainNav.classList.toggle('nav-open');
-      menuToggle.classList.toggle('menu-open');
-      document.body.style.overflow = mainNav.classList.contains('nav-open') ? 'hidden' : '';
-    });
-    mainNav.querySelectorAll('a').forEach(link => {
-      link.addEventListener('click', () => {
-        mainNav.classList.remove('nav-open');
-        menuToggle.classList.remove('menu-open');
-        document.body.style.overflow = '';
-      });
-    });
+// --- Глобальное состояние ---
+let userData = {}          // данные пользователя (camelCase)
+let addressesData = {}     // данные адресов (camelCase)
+let currentEditType = null // тип редактируемого блока
+
+// --- Функция-преобразователь snake_case -> camelCase ---
+function toCamelCase(obj) {
+  if (!obj) return {}
+  const newObj = {}
+  for (const [key, value] of Object.entries(obj)) {
+    const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+    newObj[camelKey] = value
   }
+  return newObj
+}
 
-  firebase.auth().onAuthStateChanged(user => {
-    if (!user) return window.location.href = '../login.html';
-    loadUserData(user.uid);
-  });
+// --- Обратная функция для подготовки данных к отправке (camelCase -> snake_case) ---
+function toSnakeCase(obj) {
+  if (!obj) return {}
+  const newObj = {}
+  for (const [key, value] of Object.entries(obj)) {
+    const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`)
+    newObj[snakeKey] = value
+  }
+  return newObj
+}
 
-  // Обработчик сохранения — НАЗНАЧАЕМ ОДИН РАЗ
-  document.getElementById('saveBtn').addEventListener('click', saveChanges);
-
-  const modal = document.getElementById('modal');
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) closeModal();
-  });
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeModal();
-  });
-});
-
-async function loadUserData(userId) {
+// --- Загрузка данных пользователя и адресов ---
+async function loadUserData() {
   try {
-    const userDoc = await firebase.firestore().collection('users').doc(userId).get();
-    const addrDoc = await firebase.firestore().collection('users_addresses').doc(userId).get();
+    // 1. Проверяем сессию
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError) throw sessionError
+    if (!session) {
+      window.location.href = '../login.html'
+      return
+    }
 
-    if (!userDoc.exists) throw new Error('Пользователь не найден');
+    const userId = session.user.id
 
-    userData = userDoc.data();
-    if (addrDoc.exists) userData.addresses = addrDoc.data();
+    // 2. Загружаем данные из таблицы users
+    const { data: userRaw, error: userError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single()
 
-    renderData();
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('dataBlocks').style.display = 'block';
-  } catch (err) {
-    console.error(err);
-    alert('Ошибка загрузки данных');
+    if (userError) throw userError
+    if (!userRaw) throw new Error('Пользователь не найден')
+
+    // 3. Загружаем адреса из users_addresses (если есть)
+    const { data: addressRaw, error: addressError } = await supabase
+      .from('users_addresses')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle()
+
+    // Преобразуем snake_case -> camelCase для удобства
+    userData = toCamelCase(userRaw)
+    addressesData = addressRaw ? toCamelCase(addressRaw) : {}
+
+    // Скрываем загрузку, показываем блоки
+    document.getElementById('loading').style.display = 'none'
+    document.getElementById('dataBlocks').style.display = 'block'
+
+    // Отрисовываем данные
+    renderData()
+  } catch (error) {
+    console.error('Ошибка загрузки данных:', error)
+    document.getElementById('loading').textContent = 'Ошибка загрузки. Перезагрузите страницу.'
   }
 }
 
+// --- Отображение всех данных на странице ---
 function renderData() {
-  document.getElementById('surnameValue').textContent = userData.surname || '—';
-  updateStatus('surname', userData.surnameStatus);
+  // ФИО
+  document.getElementById('surnameValue').textContent = userData.surname || '—'
+  updateStatus('surname', userData.surnameStatus)
+  document.getElementById('nameValue').textContent = userData.name || '—'
+  updateStatus('name', userData.nameStatus)
+  document.getElementById('patronymicValue').textContent = userData.patronymic || '—'
+  updateStatus('patronymic', userData.patronymicStatus)
 
-  document.getElementById('nameValue').textContent = userData.name || '—';
-  updateStatus('name', userData.nameStatus);
+  // Дата и место рождения
+  document.getElementById('birthDateValue').textContent = userData.dateOfBirth || '—'
+  updateStatus('dateOfBirth', userData.dateOfBirthStatus)
+  document.getElementById('birthPlaceValue').textContent = userData.placeOfBirth || '—'
+  updateStatus('placeOfBirth', userData.placeOfBirthStatus)
 
-  document.getElementById('patronymicValue').textContent = userData.patronymic || '—';
+  // Контакты
+  document.getElementById('phoneValue').textContent = userData.phone || '—'
+  document.getElementById('emailValue').textContent = userData.email || '—'
 
-  document.getElementById('birthDateValue').textContent = userData.dateOfBirth || '—';
-  updateStatus('dateOfBirth', userData.dateOfBirthStatus);
+  // Личный код
+  document.getElementById('personalCodeValue').textContent = userData.personalCode || '—'
 
-  document.getElementById('birthPlaceValue').textContent = userData.placeOfBirth || '—';
-
-  document.getElementById('phoneValue').textContent = userData.phone || '—';
-  document.getElementById('emailValue').textContent = userData.email || '—';
-
-  document.getElementById('personalCodeValue').textContent = userData.personalCode || '—';
-
-  renderAddresses();
+  // Адреса
+  renderAddresses()
 }
 
+// --- Отображение адресов (без дат, т.к. в БД их пока нет) ---
 function renderAddresses() {
-  const container = document.getElementById('addressesContent');
-  const addr = userData.addresses || {};
+  const container = document.getElementById('addressesContent')
+  if (!container) return
 
-  const hasPermanent = addr.permanent && addr.permanent.trim();
-  const hasTemporary = addr.temporary && addr.temporary.trim();
-  const hasResidence = addr.residence && addr.residence.trim();
+  const hasPermanent = addressesData.permanent && addressesData.permanent.trim()
+  const hasTemporary = addressesData.temporary && addressesData.temporary.trim()
+  const hasResidence = addressesData.residence && addressesData.residence.trim()
 
   if (!hasPermanent && !hasTemporary && !hasResidence) {
-    container.innerHTML = '<div class="no-addresses">На ваше имя не зарегистрировано ни одного адреса.</div>';
-    return;
+    container.innerHTML = '<div class="no-addresses">На ваше имя не зарегистрировано ни одного адреса.</div>'
+    return
   }
 
-  let html = '';
-
+  let html = ''
   if (hasPermanent) {
     html += `<div class="address-block">
       <div class="address-title">Постоянная регистрация</div>
-      <div><strong>Адрес:</strong> ${addr.permanent}</div>
-      <div><strong>Период:</strong> ${formatPeriod(addr.permanentFrom, addr.permanentTo)}</div>
-    </div>`;
+      <div><strong>Адрес:</strong> ${addressesData.permanent}</div>
+    </div>`
   }
   if (hasTemporary) {
     html += `<div class="address-block">
       <div class="address-title">Временная регистрация</div>
-      <div><strong>Адрес:</strong> ${addr.temporary}</div>
-      <div><strong>Период:</strong> ${formatPeriod(addr.temporaryFrom, addr.temporaryTo)}</div>
-    </div>`;
+      <div><strong>Адрес:</strong> ${addressesData.temporary}</div>
+    </div>`
   }
   if (hasResidence) {
     html += `<div class="address-block">
       <div class="address-title">Место пребывания</div>
-      <div><strong>Адрес:</strong> ${addr.residence}</div>
-      <div><strong>Период:</strong> ${formatPeriod(addr.residenceFrom, addr.residenceTo)}</div>
-    </div>`;
+      <div><strong>Адрес:</strong> ${addressesData.residence}</div>
+    </div>`
   }
-
-  container.innerHTML = html;
+  container.innerHTML = html
 }
 
-function formatPeriod(from, to) {
-  if (!from && !to) return '—';
-  const f = from ? new Date(from).toLocaleDateString('ru-RU') : '...';
-  const t = to ? new Date(to).toLocaleDateString('ru-RU') : 'настоящее время';
-  return `${f} — ${t}`;
-}
-
+// --- Обновление статусного бейджа ---
 function updateStatus(field, status) {
-  const el = document.getElementById(`${field}Status`);
-  if (!el) return;
+  const el = document.getElementById(`${field}Status`)
+  if (!el) return
 
-  let text = '', className = '';
+  let text = '', className = ''
   if (status === 'verified') {
-    text = '✅ Подтверждено';
-    className = 'status-badge status-verified';
+    text = '✅ Подтверждено'
+    className = 'status-badge status-verified'
   } else if (status === 'oncheck') {
-    text = '⏳ На проверке';
-    className = 'status-badge status-pending';
+    text = '⏳ На проверке'
+    className = 'status-badge status-pending'
   } else if (status === 'rejected') {
-    text = '❌ Отклонено';
-    className = 'status-badge status-rejected';
+    text = '❌ Отклонено'
+    className = 'status-badge status-rejected'
   } else {
-    el.style.display = 'none';
-    return;
+    el.style.display = 'none'
+    return
   }
 
-  el.textContent = text;
-  el.className = className;
-  el.style.display = 'inline-block';
+  el.textContent = text
+  el.className = className
+  el.style.display = 'inline-block'
 }
 
-function openEditModal(type) {
-  currentEditType = type;
-  let title = '', content = '';
+// --- Открытие модального окна редактирования ---
+window.openEditModal = function(type) {
+  currentEditType = type
+  let title = '', content = ''
 
   if (type === 'fio') {
-    title = 'Изменение ФИО';
+    title = 'Изменение ФИО'
     content = `
       <div class="form-group">
         <label>Фамилия</label>
@@ -168,9 +182,9 @@ function openEditModal(type) {
         <label>Отчество</label>
         <input type="text" id="editPatronymic" class="form-input" value="${userData.patronymic || ''}">
       </div>
-    `;
+    `
   } else if (type === 'birth') {
-    title = 'Изменение даты и места рождения';
+    title = 'Изменение даты и места рождения'
     content = `
       <div class="form-group">
         <label>Дата рождения</label>
@@ -180,9 +194,9 @@ function openEditModal(type) {
         <label>Место рождения</label>
         <input type="text" id="editBirthPlace" class="form-input" value="${userData.placeOfBirth || ''}" required>
       </div>
-    `;
+    `
   } else if (type === 'contact') {
-    title = 'Изменение контактной информации';
+    title = 'Изменение контактной информации'
     content = `
       <div class="form-group">
         <label>Телефон</label>
@@ -192,85 +206,134 @@ function openEditModal(type) {
         <label>Email</label>
         <input type="email" id="editEmail" class="form-input" value="${userData.email || ''}" required>
       </div>
-    `;
+    `
   }
 
-  // ✅ Обновляем ТОЛЬКО тело, не трогая кнопки
-  document.getElementById('modalTitle').textContent = title;
-  document.getElementById('modalBody').innerHTML = content;
+  document.getElementById('modalTitle').textContent = title
+  document.getElementById('modalBody').innerHTML = content
 
-  const modal = document.getElementById('modal');
-  modal.style.display = 'flex';
-  setTimeout(() => {
-    modal.classList.add('active');
-  }, 10);
+  const modal = document.getElementById('modal')
+  modal.style.display = 'flex'
+  setTimeout(() => modal.classList.add('active'), 10)
 }
 
-function closeModal() {
-  const modal = document.getElementById('modal');
-  modal.classList.remove('active');
+// --- Закрытие модального окна ---
+window.closeModal = function() {
+  const modal = document.getElementById('modal')
+  modal.classList.remove('active')
   setTimeout(() => {
-    modal.style.display = 'none';
-    currentEditType = null;
-  }, 300);
+    modal.style.display = 'none'
+    currentEditType = null
+  }, 300)
 }
 
+// --- Сохранение изменений ---
 async function saveChanges() {
-  const userId = firebase.auth().currentUser?.uid;
-  if (!userId) return;
-
   try {
-    if (currentEditType === 'contact') {
-      const updates = {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) throw new Error('Нет активной сессии')
+
+    const userId = session.user.id
+    let updates = {}
+    let statusUpdates = {}
+
+    if (currentEditType === 'fio') {
+      updates = {
+        surname: document.getElementById('editSurname').value.trim(),
+        name: document.getElementById('editName').value.trim(),
+        patronymic: document.getElementById('editPatronymic').value.trim()
+      }
+      statusUpdates = {
+        surname_status: 'oncheck',
+        name_status: 'oncheck',
+        patronymic_status: 'oncheck'
+      }
+    } else if (currentEditType === 'birth') {
+      updates = {
+        date_of_birth: document.getElementById('editBirthDate').value,
+        place_of_birth: document.getElementById('editBirthPlace').value.trim()
+      }
+      statusUpdates = {
+        date_of_birth_status: 'oncheck',
+        place_of_birth_status: 'oncheck'
+      }
+    } else if (currentEditType === 'contact') {
+      updates = {
         phone: document.getElementById('editPhone').value.trim(),
         email: document.getElementById('editEmail').value.trim()
-      };
-      await firebase.firestore().collection('users').doc(userId).update(updates);
-      Object.assign(userData, updates);
-      renderData();
-      showResult('Контактная информация успешно обновлена', true);
-    } else {
-      let updates = {};
-      if (currentEditType === 'fio') {
-        updates = {
-          surname: document.getElementById('editSurname').value.trim(),
-          name: document.getElementById('editName').value.trim(),
-          patronymic: document.getElementById('editPatronymic').value.trim(),
-          surnameStatus: 'oncheck',
-          nameStatus: 'oncheck',
-          patronymicStatus: 'oncheck'
-        };
-      } else if (currentEditType === 'birth') {
-        updates = {
-          dateOfBirth: document.getElementById('editBirthDate').value,
-          placeOfBirth: document.getElementById('editBirthPlace').value.trim(),
-          dateOfBirthStatus: 'oncheck',
-          placeOfBirthStatus: 'oncheck'
-        };
       }
-
-      await firebase.firestore().collection('users').doc(userId).update(updates);
-      Object.assign(userData, updates);
-      renderData();
-      showResult('Изменения отправлены на проверку администратору. Это может занять до 24 часов.', true);
+      // Статусы телефона и email обычно остаются verified,
+      // но если хотим отправлять на проверку — раскомментировать:
+      // statusUpdates = {
+      //   phone_status: 'oncheck',
+      //   email_status: 'oncheck'
+      // }
     }
-  } catch (err) {
-    console.error(err);
-    showResult('Ошибка при сохранении данных', false);
+
+    // Объединяем обновления полей и статусов
+    const finalUpdates = { ...updates, ...statusUpdates }
+
+    // Отправляем запрос на обновление
+    const { error } = await supabase
+      .from('users')
+      .update(finalUpdates)
+      .eq('id', userId)
+
+    if (error) throw error
+
+    // Обновляем локальный объект userData
+    Object.assign(userData, toCamelCase(updates))
+    Object.assign(userData, toCamelCase(statusUpdates))
+
+    // Перерисовываем данные
+    renderData()
+
+    // Показываем сообщение об успехе
+    if (currentEditType === 'contact') {
+      showModalMessage('Контактная информация успешно обновлена', true)
+    } else {
+      showModalMessage('Изменения отправлены на проверку администратору. Это может занять до 24 часов.', true)
+    }
+  } catch (error) {
+    console.error('Ошибка сохранения:', error)
+    showModalMessage('Ошибка при сохранении данных', false)
   }
 }
 
-function showResult(message, success) {
-  const modalBody = document.getElementById('modalBody');
-  const modalFooter = document.querySelector('.modal-footer');
-  
-  // Показываем сообщение вместо формы
-  modalBody.innerHTML = `<div class="alert alert-${success ? 'success' : 'error'}">${message}</div>`;
-  modalFooter.style.display = 'none';
-  
+// --- Вывод сообщения в модальном окне ---
+function showModalMessage(message, success) {
+  const modalBody = document.getElementById('modalBody')
+  const modalFooter = document.querySelector('.modal-footer')
+
+  modalBody.innerHTML = `<div class="alert alert-${success ? 'success' : 'error'}">${message}</div>`
+  modalFooter.style.display = 'none'
+
   setTimeout(() => {
-    // Восстанавливаем форму и кнопки
-    modalFooter.style.display = 'flex';
-    closeModal();
-  }, 4000);
+    modalFooter.style.display = 'flex'
+    closeModal()
+  }, 4000)
 }
+
+// --- Назначение обработчиков после загрузки DOM ---
+document.addEventListener('DOMContentLoaded', () => {
+  // Загружаем данные
+  loadUserData()
+
+  // Обработчик кнопки сохранения в модалке
+  document.getElementById('saveBtn').addEventListener('click', saveChanges)
+
+  // Закрытие модалки по клику на оверлей
+  const modal = document.getElementById('modal')
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) closeModal()
+  })
+
+  // Закрытие по Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeModal()
+  })
+})
+
+// Экспортируем функции в глобальную область (для inline-обработчиков onclick)
+window.openEditModal = openEditModal
+window.closeModal = closeModal
