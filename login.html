@@ -244,79 +244,84 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-  const loginForm = document.querySelector('form');
-  
-  // Обработчик отправки формы
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const email = document.querySelector('input[type="email"]').value.trim();
-    const password = document.querySelector('input[type="password"]').value;
-    const userRole = document.querySelector('input[name="userType"]:checked')?.value || 'individual';
-    
-    try {
-      // Авторизация через Firebase
-      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
-      const user = userCredential.user;
-      
-      // Проверяем наличие данных пользователя в Firestore
-      const userDoc = await db.collection('users').doc(user.uid).get();
-      
-      if (userDoc.exists) {
-        // Успешная авторизация - перенаправляем в личный кабинет
-        window.location.href = 'profile.html';
-      } else {
-        // Пользователь авторизован в Firebase, но данных в Firestore нет
-        alert('Аккаунт не найден в системе. Обратитесь к администратору.');
-        await firebase.auth().signOut();
-      }
-    } catch (error) {
-      console.error('Ошибка авторизации:', error);
-      
-      let errorMessage = 'Ошибка авторизации. Проверьте данные и попробуйте снова.';
-      
-      if (error.code === 'auth/invalid-email') {
-        errorMessage = 'Неверный формат email';
-      } else if (error.code === 'auth/wrong-password') {
-        errorMessage = 'Неверный пароль';
-      } else if (error.code === 'auth/user-not-found') {
-        errorMessage = 'Пользователь с таким email не найден';
-      } else if (error.code === 'auth/too-many-requests') {
-        errorMessage = 'Слишком много попыток входа. Попробуйте позже.';
-      }
-      
-      alert(errorMessage);
+</script>
+
+<script type="module">
+  import { supabase } from './js/supabase-config.js'
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.getElementById('loginForm')
+    const googleBtn = document.getElementById('googleSignIn')
+    const alertDiv = document.getElementById('alertMessage')
+
+    function showAlert(message, type = 'error') {
+      alertDiv.className = `alert alert-${type}`
+      alertDiv.textContent = message
+      alertDiv.style.display = 'block'
+      setTimeout(() => alertDiv.style.display = 'none', 5000)
     }
-  });
-  
-  // Авторизация через Google
-  const googleLoginBtn = document.querySelector('#googleLogin');
-  if (googleLoginBtn) {
-    googleLoginBtn.addEventListener('click', async () => {
+
+    // Вход по email/паролю
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const email = document.getElementById('email').value.trim()
+      const password = document.getElementById('password').value
+
       try {
-        const result = await signInWithGoogle();
-        const user = result.user;
-        
-        // Проверяем наличие данных в Firestore
-        const userDoc = await db.collection('users').doc(user.uid).get();
-        
-        if (userDoc.exists) {
-          window.location.href = 'profile.html';
-        } else {
-          alert('Аккаунт не найден в системе. Обратитесь к администратору.');
-          await firebase.auth().signOut();
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        })
+
+        if (error) throw error
+
+        // Проверяем, есть ли запись пользователя в таблице users
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', data.user.id)
+          .single()
+
+        if (userError || !userData) {
+          // Если записи нет — разлогиниваем
+          await supabase.auth.signOut()
+          showAlert('Аккаунт не найден в системе. Обратитесь к администратору.', 'error')
+          return
         }
+
+        // Всё хорошо — переходим в личный кабинет
+        window.location.href = 'profile.html'
       } catch (error) {
-        console.error('Ошибка авторизации через Google:', error);
-        if (error.code !== 'auth/popup-closed-by-user') {
-          alert('Ошибка авторизации через Google');
+        console.error(error)
+        let message = 'Ошибка авторизации'
+        if (error.message.includes('Invalid login credentials')) {
+          message = 'Неверный email или пароль'
+        } else if (error.message.includes('Email not confirmed')) {
+          message = 'Подтвердите email, перейдя по ссылке в письме'
         }
+        showAlert(message, 'error')
       }
-    });
-  }
-});
+    })
+
+    // Вход через Google
+    if (googleBtn) {
+      googleBtn.addEventListener('click', async () => {
+        try {
+          const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: window.location.origin + '/profile.html'
+            }
+          })
+          if (error) throw error
+          // Перенаправление произойдёт автоматически
+        } catch (error) {
+          console.error(error)
+          showAlert('Ошибка авторизации через Google', 'error')
+        }
+      })
+    }
+  })
 </script>
 </body>
 </html>
