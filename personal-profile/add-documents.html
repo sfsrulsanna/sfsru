@@ -220,26 +220,26 @@
     </p>
   </footer>
 
-  <!-- Мобильное меню -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function () {
-      const menuToggle = document.getElementById('menuToggle');
-      const mainNav = document.getElementById('mainNav');
-      if (menuToggle && mainNav) {
-        menuToggle.addEventListener('click', () => {
-          mainNav.classList.toggle('nav-open');
-          menuToggle.classList.toggle('menu-open');
-          document.body.style.overflow = mainNav.classList.contains('nav-open') ? 'hidden' : '';
-        });
-        mainNav.querySelectorAll('a').forEach(link => {
-          link.addEventListener('click', () => {
-            mainNav.classList.remove('nav-open');
-            menuToggle.classList.remove('menu-open');
-            document.body.style.overflow = '';
-          });
-        });
+  <!-- ========== SUPABASE ========== -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
       }
-    });
+    }
+  </script>
+  <script type="module" src="../js/supabase-config.js"></script>
+  <script src="../js/mob-menu.js"></script>
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js'
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Проверка авторизации
+      const { data: { session }, error } = await supabase.auth.getSession()
+      if (error || !session) {
+        window.location.href = '../login.html'
+      }
+    })
   </script>
 </body>
 </html>

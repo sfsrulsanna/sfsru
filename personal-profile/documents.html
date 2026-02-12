@@ -383,173 +383,196 @@
     </p>
   </footer>
 
-  <!-- ========== БИБЛИОТЕКИ ========== -->
+  <!-- Библиотеки -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-  <script src="../js/firebase-config.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+      }
+    }
+  </script>
+  <script type="module" src="../js/supabase-config.js"></script>
   <script src="../js/mob-menu.js"></script>
 
-  <script>
-    let currentUser = null;
-    let userProfile = null;
-    let personalCode = null;
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js'
 
+    // --- Состояние ---
+    let userProfile = null
+    let personalCode = null
+
+    // --- Форматирование даты ---
     function formatDate(dateString) {
-      if (!dateString) return '—';
-      try { return new Date(dateString).toLocaleDateString('ru-RU'); } 
-      catch { return dateString; }
+      if (!dateString) return '—'
+      try { return new Date(dateString).toLocaleDateString('ru-RU') }
+      catch { return dateString }
     }
 
     function getStatusLabel(status) {
-      if (status === 'verified') return '✅ Подтверждено';
-      if (status === 'oncheck') return '⏳ На проверке';
-      if (status === 'rejected') return '❌ Отклонено';
-      return '—';
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-      // Гамбургер-меню (ваш существующий код)
-      
-      firebase.auth().onAuthStateChanged(async user => {
-        if (!user) return window.location.href = '../login.html';
-        currentUser = user;
-        await loadUserProfile(user.uid);
-        await loadDocuments();      // загружаем документы по userId
-        renderUserInfo();
-        renderDocumentsGrid();
-        hideLoading();
-      });
-    });
-
-    async function loadUserProfile(userId) {
-      try {
-        const userDoc = await firebase.firestore().collection('users').doc(userId).get();
-        if (userDoc.exists) {
-          userProfile = userDoc.data();
-          personalCode = userProfile.personalCode;
-        }
-      } catch (err) {
-        console.error('Ошибка загрузки профиля:', err);
-      }
-    }
-
-    // ========== ЗАГРУЗКА ДОКУМЕНТОВ ПО userId ==========
-    async function loadDocuments() {
-      try {
-        if (!currentUser) return;
-        const snapshot = await firebase.firestore()
-          .collection('documents')
-          .where('userId', '==', currentUser.uid)
-          .get();
-
-        window.userDocuments = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        }));
-        console.log(`Загружено документов: ${window.userDocuments.length}`);
-      } catch (err) {
-        console.error('Ошибка загрузки документов:', err);
-        window.userDocuments = [];
-      }
-    }
-
-    function renderUserInfo() {
-      if (!userProfile) return;
-
-      const fullName = `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() || '—';
-      safeSetText('fullName', fullName);
-      safeSetText('birthDate', formatDate(userProfile.dateOfBirth));
-      safeSetText('birthPlace', userProfile.placeOfBirth || '—');
-
-      // Пол из паспорта (если есть)
-      const passport = (window.userDocuments || []).find(d => d.documentType === 'passport');
-      const gender = passport?.gender || '—';
-      safeSetText('gender', gender);
-      safeSetText('personalCode', personalCode || '—');
-
-      // Фото
-      const avatarImg = document.getElementById('userAvatar');
-      if (avatarImg && personalCode) {
-        const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '');
-        const imgUrl = `../images/avatars/${safeCode}.jpg`;
-        const img = new Image();
-        img.onload = () => { avatarImg.src = imgUrl; };
-        img.onerror = () => { avatarImg.src = '../images/default-avatar.png'; };
-        img.src = imgUrl;
-      }
-
-      // QR-код
-      const qrContainer = document.getElementById('userQrCode');
-      if (qrContainer && personalCode) {
-        qrContainer.innerHTML = '';
-        try {
-          new QRCode(qrContainer, {
-            text: `https://e-pass-sfsru.web.app/${personalCode}/`,
-            width: 72,
-            height: 72,
-            colorDark: '#000',
-            colorLight: '#fff',
-            correctLevel: QRCode.CorrectLevel.L
-          });
-        } catch (e) { console.warn(e); }
-      }
-    }
-
-    function renderDocumentsGrid() {
-      const grid = document.getElementById('documentsGrid');
-      if (!grid) return;
-      grid.innerHTML = '';
-
-      const docs = window.userDocuments || [];
-
-      // Группируем по documentType, оставляем последний по дате
-      const docsByType = {};
-      docs.forEach(doc => {
-        const type = doc.documentType;
-        const createdAt = doc.createdAt?.toDate ? doc.createdAt.toDate() : new Date(0);
-        if (!docsByType[type] || createdAt > docsByType[type].createdAt) {
-          docsByType[type] = doc;
-        }
-      });
-
-      const docTypes = [
-        { type: 'passport', title: 'Паспорт гражданина СФСРЮ', url: 'passport.html' },
-        { type: 'foreignPassport', title: 'Заграничный паспорт', url: 'foreign-passport.html' },
-        // добавьте другие типы
-      ];
-
-      docTypes.forEach(item => {
-        const doc = docsByType[item.type];
-        if (!doc) return;
-
-        const card = document.createElement('a');
-        card.href = `${item.url}?id=${doc.id}`;
-        card.className = 'document-card';
-        card.innerHTML = `
-          <div class="document-title">${item.title}</div>
-          <div class="document-status">${getStatusLabel(doc.status)}</div>
-        `;
-        grid.appendChild(card);
-      });
-
-      if (grid.children.length === 0) {
-        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">У вас пока нет добавленных документов.</p>';
-      }
+      if (status === 'verified') return '✅ Подтверждено'
+      if (status === 'oncheck') return '⏳ На проверке'
+      if (status === 'rejected') return '❌ Отклонено'
+      return '—'
     }
 
     function safeSetText(id, text) {
-      const el = document.getElementById(id);
-      if (el) el.textContent = text;
+      const el = document.getElementById(id)
+      if (el) el.textContent = text
     }
 
-    function hideLoading() {
-      const loading = document.getElementById('loading');
-      if (loading) loading.style.display = 'none';
-      const content = document.getElementById('content');
-      if (content) content.style.display = 'block';
+    // --- Загрузка профиля и личного кода ---
+    async function loadUserProfile() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        window.location.href = '../login.html'
+        return
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('surname, name, patronymic, date_of_birth, place_of_birth, personal_code, gender')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error || !data) {
+        console.error('Ошибка загрузки профиля:', error)
+        return
+      }
+
+      userProfile = data
+      personalCode = data.personal_code
+      renderUserInfo()
     }
+
+    // --- Загрузка ВСЕХ документов по personal_code ---
+    async function loadAllDocuments() {
+      if (!personalCode) return []
+
+      // Массив всех таблиц документов
+      const tables = [
+        { type: 'passport', table: 'document_passport' },
+        { type: 'foreignPassport', table: 'document_foreign_passport' }
+        // Добавьте другие таблицы по мере создания
+      ]
+
+      let allDocs = []
+
+      for (const t of tables) {
+        const { data, error } = await supabase
+          .from(t.table)
+          .select('*')
+          .eq('personal_code', personalCode)
+          .order('created_at', { ascending: false })
+
+        if (!error && data) {
+          allDocs = allDocs.concat(data.map(d => ({
+            ...d,
+            documentType: t.type,
+            id: d.id
+          })))
+        }
+      }
+
+      return allDocs
+    }
+
+    // --- Отображение информации пользователя (без изменений) ---
+    function renderUserInfo() {
+      if (!userProfile) return
+      const fullName = `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() || '—'
+      safeSetText('fullName', fullName)
+      safeSetText('birthDate', formatDate(userProfile.date_of_birth))
+      safeSetText('birthPlace', userProfile.place_of_birth || '—')
+      safeSetText('gender', userProfile.gender || '—')
+      safeSetText('personalCode', userProfile.personal_code || '—')
+
+      // Аватар
+      const avatarImg = document.getElementById('userAvatar')
+      if (avatarImg && personalCode) {
+        const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '')
+        const imgUrl = `../images/avatars/${safeCode}.jpg`
+        const img = new Image()
+        img.onload = () => { avatarImg.src = imgUrl }
+        img.onerror = () => { avatarImg.src = '../images/default-avatar.png' }
+        img.src = imgUrl
+      }
+
+      // QR-код
+      const qrContainer = document.getElementById('userQrCode')
+      if (qrContainer && personalCode) {
+        qrContainer.innerHTML = ''
+        new QRCode(qrContainer, {
+          text: `https://e-pass-sfsru.web.app/${personalCode}/`,
+          width: 72,
+          height: 72,
+          colorDark: '#000',
+          colorLight: '#fff',
+          correctLevel: QRCode.CorrectLevel.L
+        })
+      }
+    }
+
+    // --- Отрисовка сетки документов ---
+    function renderDocumentsGrid(documents) {
+      const grid = document.getElementById('documentsGrid')
+      if (!grid) return
+
+      grid.innerHTML = ''
+
+      if (documents.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">У вас пока нет добавленных документов.</p>'
+        return
+      }
+
+      // Группируем по типу, берём последний по дате
+      const docsByType = {}
+      documents.forEach(doc => {
+        const type = doc.documentType
+        const createdAt = doc.created_at ? new Date(doc.created_at) : new Date(0)
+        if (!docsByType[type] || createdAt > new Date(docsByType[type].created_at)) {
+          docsByType[type] = doc
+        }
+      })
+
+      const docTypes = [
+        { type: 'passport', title: 'Паспорт гражданина СФСРЮ', url: 'passport.html' },
+        { type: 'foreignPassport', title: 'Заграничный паспорт', url: 'foreign-passport.html' }
+      ]
+
+      docTypes.forEach(item => {
+        const doc = docsByType[item.type]
+        if (!doc) return
+
+        const card = document.createElement('a')
+        card.href = `${item.url}?id=${doc.id}`
+        card.className = 'document-card'
+        card.innerHTML = `
+          <div class="document-header">
+            <div class="document-title">${item.title}</div>
+            <span class="document-status ${doc.status}">${getStatusLabel(doc.status)}</span>
+          </div>
+          <div class="document-fields">
+            <div class="document-field">
+              <span class="field-label">Серия/номер:</span>
+              <span class="field-value">${doc.series_number || doc.seriesNumber || '—'}</span>
+            </div>
+          </div>
+        `
+        grid.appendChild(card)
+      })
+    }
+
+    // --- Инициализация ---
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadUserProfile()
+      if (personalCode) {
+        const docs = await loadAllDocuments()
+        renderDocumentsGrid(docs)
+      }
+      document.getElementById('loading').style.display = 'none'
+      document.getElementById('content').style.display = 'block'
+    })
   </script>
 </body>
 </html>
