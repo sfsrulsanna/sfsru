@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Дашборд — Админ-панель СФСРЮ</title>
+  <!-- Единый стиль сайта -->
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Стили админки -->
+  <style>
+    .admin-container {
+      display: flex;
+      min-height: calc(100vh - 80px);
+    }
+    .sidebar {
+      width: 250px;
+      background: #f8f9fa;
+      border-right: 1px solid #e9ecef;
+      padding: 1.5rem 0;
+    }
+    .sidebar-header {
+      padding: 0 1.5rem 1.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .sidebar-header h2 {
+      font-size: 1.3rem;
+      color: #7b0000;
+      margin: 0;
+    }
+    .sidebar-nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .sidebar-nav li {
+      margin-bottom: 0.3rem;
+    }
+    .sidebar-nav a {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1.5rem;
+      color: #333;
+      text-decoration: none;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .sidebar-nav a:hover,
+    .sidebar-nav a.active {
+      background: linear-gradient(135deg, #7b0000, #c41e3a);
+      color: white;
+    }
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+    }
+    .page-header h1 {
+      color: #7b0000;
+      margin-bottom: 0.5rem;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #eee;
+    }
+    .card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    #userEmail {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-top: 0.3rem;
+    }
+  </style>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../images/gerb.png" alt="Герб СФСРЮ" />
+        <h1>СФСРЮ — Админка</h1>
+      </div>
+    </div>
+  </header>
+
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <div class="admin-container">
+    <!-- Боковое меню -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2><i class="fas fa-user-shield"></i> Админ-панель</h2>
+        <p id="userEmail">Загрузка...</p>
+      </div>
+      <nav class="sidebar-nav">
+        <ul>
+          <li><a href="dashboard.html" class="active"><i class="fas fa-tachometer-alt"></i> Дашборд</a></li>
+          <li><a href="user-management.html"><i class="fas fa-id-card"></i> Анкетные данные</a></li>
+          <li><a href="add-document.html"><i class="fas fa-file-medical"></i> Добавить документ</a></li>
+          <li><a href="address-management.html"><i class="fas fa-home"></i> Изменение адресов граждан</a></li>
+          <li><a href="view-users.html"><i class="fas fa-users"></i> Все пользователи</a></li>
+          <li style="margin-top: 30px;">
+            <a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+          </li>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Основной контент -->
+    <main class="main-content">
+      <div class="page-header">
+        <h1><i class="fas fa-tachometer-alt"></i> Панель администратора</h1>
+        <p>Вы вошли как системный администратор</p>
+      </div>
+
+      <div style="margin-top: 30px;">
+        <div class="card">
+          <div class="card-header">
+            <h3><i class="fas fa-info-circle"></i> Статистика</h3>
+          </div>
+          <div class="card-body">
+            <p>Здесь будет статистика системы...</p>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+
+  <script>
+    // Защита: только админ
+    firebase.auth().onAuthStateChanged(user => {
+      if (!user || user.email !== 'sfsru@admin.su') {
+        window.location.href = '../login.html';
+      } else {
+        document.getElementById('userEmail').textContent = user.email;
+      }
+    });
+
+    // Выход
+    document.getElementById('logoutBtn').addEventListener('click', (e) => {
+      e.preventDefault();
+      firebase.auth().signOut().then(() => {
+        window.location.href = '../login.html';
+      });
+    });
+  </script>
+</body>
+</html>

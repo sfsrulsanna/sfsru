@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Вход в личный кабинет — СФСРЮ</title>
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="images/favicons/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/favicons/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/favicons/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/favicons/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="images/favicons/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="images/favicons/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="images/favicons/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="images/favicons/apple-touch-icon-152x152.png" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-128.png" sizes="128x128" />
+<meta name="application-name" content="&nbsp;"/>
+<meta name="msapplication-TileColor" content="#FFFFFF" />
+<meta name="msapplication-TileImage" content="images/favicons/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="images/favicons/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="images/favicons/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="images/favicons/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="images/favicons/mstile-310x310.png" />
+  <!-- Единый стиль сайта -->
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Стили входа -->
+  <style>
+    .main-content {
+      padding: 3rem 0;
+      background: #ffffff;
+      min-height: 100vh;
+    }
+    .login-container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .login-title {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #7b0000;
+      font-size: 1.8rem;
+    }
+    .login-subtitle {
+      text-align: center;
+      margin-bottom: 2rem;
+      color: #666;
+    }
+    .role-selection {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .role-option {
+      flex: 1;
+      text-align: center;
+      padding: 1rem;
+      border: 2px solid #eee;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .role-option.selected {
+      border-color: #7b0000;
+      background: #fff8f8;
+    }
+    .role-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .role-name { font-weight: 600; margin-bottom: 0.25rem; }
+    .role-desc { font-size: 0.85rem; color: #666; }
+
+    .form-group { margin-bottom: 1.2rem; }
+    .form-label { display: block; margin-bottom: 0.4rem; font-weight: 500; }
+    .form-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .login-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #7b0000, #c41e3a);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .divider {
+      text-align: center;
+      margin: 1.5rem 0;
+      position: relative;
+      color: #888;
+    }
+    .divider::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #eee;
+      z-index: 1;
+    }
+    .divider span {
+      background: white;
+      padding: 0 1rem;
+      position: relative;
+      z-index: 2;
+    }
+    .google-btn {
+      width: 100%;
+      padding: 0.75rem;
+      background: white;
+      color: #333;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .login-links {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+    .login-links a {
+      color: #7b0000;
+      text-decoration: none;
+    }
+    .alert {
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+      display: none;
+    }
+    .alert-error {
+      background: rgba(220, 53, 69, 0.1);
+      color: #dc3545;
+    }
+    .alert-success {
+      background: rgba(40, 167, 69, 0.1);
+      color: #28a745;
+    }
+    @media (max-width: 768px) {
+      .role-selection { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Шапка -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+
+      <!-- Кнопка гамбургер -->
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="index.html" class="active">Главная</a></li>
+          <li><a href="news.html">Новости</a></li>
+          <li><a href="wiki/">Википедия</a></li>
+          <li><a href="healthcare.html">Здравоохранение</a></li>
+          <li><a href="services.html">Услуги</a></li>
+          <li><a href="profile.html">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <main class="main-content">
+    <div class="login-container">
+      <h2 class="login-title">Вход в личный кабинет</h2>
+      <p class="login-subtitle">Для доступа к государственным услугам и документам</p>
+
+      <div id="alertMessage" class="alert"></div>
+
+      <div class="role-selection">
+        <div class="role-option selected" data-role="individual">
+          <div class="role-icon">👤</div>
+          <div class="role-name">Физическое лицо</div>
+          <div class="role-desc">Граждане СФСРЮ</div>
+        </div>
+        <div class="role-option" data-role="legal">
+          <div class="role-icon">🏢</div>
+          <div class="role-name">Юридическое лицо</div>
+          <div class="role-desc">Организации и предприятия</div>
+        </div>
+      </div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email" class="form-label">Электронная почта</label>
+          <input type="email" id="email" class="form-input" placeholder="your.email@example.com" required />
+        </div>
+        <div class="form-group">
+          <label for="password" class="form-label">Пароль</label>
+          <input type="password" id="password" class="form-input" placeholder="Введите пароль" required />
+        </div>
+        <button type="submit" class="login-btn">Войти</button>
+      </form>
+
+      <div class="divider"><span>или</span></div>
+
+      <button class="google-btn" id="googleSignIn">
+        <span>Войти через Google</span>
+      </button>
+
+      <div class="login-links">
+        <a href="forgot-password.html">Забыли пароль?</a> |
+        <a href="register.html">Регистрация</a>
+      </div>
+    </div>
+  </main>
+
+  <!-- ПОДВАЛ -->
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>
+      Телефон: +7 (993) 609-81-26 | Почта:
+      <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
+    </p>
+  </footer>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+<script src="js/firebase-config.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const loginForm = document.querySelector('form');
+  
+  // Обработчик отправки формы
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const email = document.querySelector('input[type="email"]').value.trim();
+    const password = document.querySelector('input[type="password"]').value;
+    const userRole = document.querySelector('input[name="userType"]:checked')?.value || 'individual';
+    
+    try {
+      // Авторизация через Firebase
+      const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+      
+      // Проверяем наличие данных пользователя в Firestore
+      const userDoc = await db.collection('users').doc(user.uid).get();
+      
+      if (userDoc.exists) {
+        // Успешная авторизация - перенаправляем в личный кабинет
+        window.location.href = 'profile.html';
+      } else {
+        // Пользователь авторизован в Firebase, но данных в Firestore нет
+        alert('Аккаунт не найден в системе. Обратитесь к администратору.');
+        await firebase.auth().signOut();
+      }
+    } catch (error) {
+      console.error('Ошибка авторизации:', error);
+      
+      let errorMessage = 'Ошибка авторизации. Проверьте данные и попробуйте снова.';
+      
+      if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Неверный формат email';
+      } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Неверный пароль';
+      } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'Пользователь с таким email не найден';
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Слишком много попыток входа. Попробуйте позже.';
+      }
+      
+      alert(errorMessage);
+    }
+  });
+  
+  // Авторизация через Google
+  const googleLoginBtn = document.querySelector('#googleLogin');
+  if (googleLoginBtn) {
+    googleLoginBtn.addEventListener('click', async () => {
+      try {
+        const result = await signInWithGoogle();
+        const user = result.user;
+        
+        // Проверяем наличие данных в Firestore
+        const userDoc = await db.collection('users').doc(user.uid).get();
+        
+        if (userDoc.exists) {
+          window.location.href = 'profile.html';
+        } else {
+          alert('Аккаунт не найден в системе. Обратитесь к администратору.');
+          await firebase.auth().signOut();
+        }
+      } catch (error) {
+        console.error('Ошибка авторизации через Google:', error);
+        if (error.code !== 'auth/popup-closed-by-user') {
+          alert('Ошибка авторизации через Google');
+        }
+      }
+    });
+  }
+});
+</script>
+</body>
+</html>

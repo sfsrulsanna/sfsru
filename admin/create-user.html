@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создание пользователя - Админ-панель</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Защита страницы -->
+    <script type="module" src="js/protect.js"></script>
+</head>
+<body>
+    <!-- Боковая панель -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-user-shield"></i> Админ-панель</h2>
+            <p id="userEmail" style="font-size: 12px; opacity: 0.8;">Загрузка...</p>
+        </div>
+        
+        <div class="sidebar-nav">
+            <ul>
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Дашборд</a></li>
+                <li><a href="create-user.html" class="active"><i class="fas fa-user-plus"></i> Новый пользователь</a></li>
+                <li><a href="add-document.html"><i class="fas fa-file-medical"></i> Добавить документ</a></li>
+                <li><a href="view-users.html"><i class="fas fa-users"></i> Все пользователи</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Заголовок -->
+            <div class="page-header" style="margin-bottom: 30px;">
+                <h1><i class="fas fa-user-plus"></i> Создание нового пользователя</h1>
+                <p>Заполните все обязательные поля</p>
+            </div>
+
+            <!-- Форма создания пользователя -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user"></i> Основная информация</h3>
+                </div>
+                <div class="card-body">
+                    <form id="createUserForm">
+                        <div class="alert" id="formMessage" style="display: none;"></div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                            <div class="form-group">
+                                <label for="lastName">
+                                    <i class="fas fa-user"></i> Фамилия *
+                                </label>
+                                <input type="text" id="lastName" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="firstName">
+                                    <i class="fas fa-user"></i> Имя *
+                                </label>
+                                <input type="text" id="firstName" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="middleName">
+                                    <i class="fas fa-user"></i> Отчество
+                                </label>
+                                <input type="text" id="middleName" class="form-control">
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                            <div class="form-group">
+                                <label for="birthDate">
+                                    <i class="fas fa-birthday-cake"></i> Дата рождения *
+                                </label>
+                                <input type="date" id="birthDate" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="birthPlace">
+                                    <i class="fas fa-map-marker-alt"></i> Место рождения *
+                                </label>
+                                <input type="text" id="birthPlace" class="form-control" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="personalCode">
+                                    <i class="fas fa-fingerprint"></i> Личный код *
+                                </label>
+                                <input type="text" id="personalCode" class="form-control" required 
+                                       pattern="[0-9]{4}-[0-9]{4}" 
+                                       placeholder="XXXX-XXXX"
+                                       title="Формат: XXXX-XXXX (8 цифр)">
+                                <small style="color: #666; display: block; margin-top: 5px;">
+                                    Формат: XXXX-XXXX (8 цифр)
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 30px;">
+                            <h4><i class="fas fa-envelope"></i> Контактная информация</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-top: 15px;">
+                                <div class="form-group">
+                                    <label for="email">
+                                        <i class="fas fa-envelope"></i> Email *
+                                    </label>
+                                    <input type="email" id="email" class="form-control" required>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label for="phone">
+                                        <i class="fas fa-phone"></i> Телефон
+                                    </label>
+                                    <input type="tel" id="phone" class="form-control">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 30px;">
+                            <h4><i class="fas fa-home"></i> Адрес проживания</h4>
+                            <div style="display: grid; gap: 15px; margin-top: 15px;">
+                                <div class="form-group">
+                                    <label for="address">Адрес</label>
+                                    <input type="text" id="address" class="form-control">
+                                </div>
+                                
+                                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                                    <div class="form-group">
+                                        <label for="city">Город</label>
+                                        <input type="text" id="city" class="form-control">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="postalCode">Индекс</label>
+                                        <input type="text" id="postalCode" class="form-control">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                            <a href="dashboard.html" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Назад
+                            </a>
+                            
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-save"></i> Создать пользователя
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Информация -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-info-circle"></i> Информация</h3>
+                </div>
+                <div class="card-body">
+                    <p><strong>Личный код</strong> является уникальным идентификатором пользователя в системе.</p>
+                    <p><strong>Формат:</strong> XXXX-XXXX (8 цифр)</p>
+                    <p>Все документы будут привязываться к пользователю по этому коду.</p>
+                    <p>После создания пользователя вы сможете добавить ему документы.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/create-user.js"></script>
+</body>
+</html>

@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все пользователи - Админ-панель</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.min.css">
+    <!-- Защита страницы -->
+    <script type="module" src="js/protect.js"></script>
+    <style>
+        :root {
+            --status-active: #28a745;
+            --status-inactive: #dc3545;
+            --status-pending: #ffc107;
+            --status-blocked: #6c757d;
+        }
+        
+        .user-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+        }
+        
+        .user-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-color), #0056b3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        
+        .user-name {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .user-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        
+        .status-inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+        
+        .documents-count {
+            background: var(--primary-color);
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .search-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        
+        .stats-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .filter-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+        
+        .filter-tag {
+            background: #e9ecef;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-tag:hover {
+            background: #dee2e6;
+        }
+        
+        .filter-tag.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        /* Модальные окна */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .modal-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: calc(90vh - 120px);
+            overflow-y: auto;
+        }
+        
+        .modal-footer {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        /* Таблица документов */
+        .documents-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .documents-table th,
+        .documents-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .documents-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+        }
+        
+        .documents-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        /* Фотографии документов */
+        .document-images {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .image-preview {
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .image-preview img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        
+        .image-label {
+            padding: 10px;
+            background: #f8f9fa;
+            text-align: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* Формы документов */
+        .document-form-section {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .document-form-section h4 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .user-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .user-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .user-actions {
+                width: 100%;
+            }
+            
+            .user-actions button {
+                flex: 1;
+                min-width: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Боковая панель -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-user-shield"></i> Админ-панель</h2>
+            <p id="userEmail" style="font-size: 12px; opacity: 0.8;">Загрузка...</p>
+        </div>
+        
+        <div class="sidebar-nav">
+            <ul>
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Дашборд</a></li>
+                <li><a href="create-user.html"><i class="fas fa-user-plus"></i> Новый пользователь</a></li>
+                <li><a href="add-document.html"><i class="fas fa-file-medical"></i> Добавить документ</a></li>
+                <li><a href="view-users.html" class="active"><i class="fas fa-users"></i> Все пользователи</a></li>
+                <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Выйти</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Заголовок -->
+            <div class="page-header" style="margin-bottom: 30px;">
+                <h1><i class="fas fa-users"></i> Управление пользователями</h1>
+                <p>Просмотр и управление всеми пользователями системы</p>
+            </div>
+
+            <!-- Быстрые действия -->
+            <div class="quick-actions">
+                <a href="create-user.html" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i> Новый пользователь
+                </a>
+                <button id="refreshBtn" class="btn btn-secondary">
+                    <i class="fas fa-sync-alt"></i> Обновить
+                </button>
+                <button id="exportBtn" class="btn btn-success">
+                    <i class="fas fa-download"></i> Экспорт
+                </button>
+                <button id="showAllBtn" class="btn btn-outline-primary">
+                    <i class="fas fa-eye"></i> Показать всех
+                </button>
+                <button id="showActiveBtn" class="btn btn-outline-success">
+                    <i class="fas fa-check-circle"></i> Только активные
+                </button>
+            </div>
+
+            <!-- Статистика -->
+            <div class="stats-cards">
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: var(--primary-color);">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">Всего пользователей</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #28a745;">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="activeUsers">0</div>
+                    <div class="stat-label">Активных</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #007bff;">
+                        <i class="fas fa-user-plus fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="todayUsers">0</div>
+                    <div class="stat-label">Сегодня добавлено</div>
+                </div>
+                
+                <div class="stat-card">
+                    <div class="stat-icon" style="color: #17a2b8;">
+                        <i class="fas fa-file-alt fa-2x"></i>
+                    </div>
+                    <div class="stat-value" id="totalDocuments">0</div>
+                    <div class="stat-label">Всего документов</div>
+                </div>
+            </div>
+
+            <!-- Поиск и фильтры -->
+            <div class="search-container">
+                <div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; margin-bottom: 15px;">
+                    <div class="form-group">
+                        <input type="text" id="searchInput" class="form-control" 
+                               placeholder="Поиск по ФИО, личному коду, email или телефону...">
+                    </div>
+                    
+                    <select id="statusFilter" class="form-control" style="width: 200px;">
+                        <option value="">Все статусы</option>
+                        <option value="active">Активные</option>
+                        <option value="inactive">Неактивные</option>
+                        <option value="pending">На проверке</option>
+                    </select>
+                </div>
+                
+                <div class="filter-tags">
+                    <span class="filter-tag active" data-filter="">Все</span>
+                    <span class="filter-tag" data-filter="active">Активные</span>
+                    <span class="filter-tag" data-filter="inactive">Неактивные</span>
+                    <span class="filter-tag" data-filter="documents">С документами</span>
+                    <span class="filter-tag" data-filter="today">Добавлены сегодня</span>
+                </div>
+            </div>
+
+            <!-- Список пользователей -->
+            <div id="usersList">
+                <div style="text-align: center; padding: 60px; color: #666;">
+                    <i class="fas fa-spinner fa-spin fa-3x" style="margin-bottom: 20px;"></i>
+                    <h3>Загрузка пользователей...</h3>
+                </div>
+            </div>
+
+            <!-- Пагинация -->
+            <div style="display: flex; justify-content: center; align-items: center; margin-top: 30px; gap: 20px;">
+                <button id="prevPage" class="btn btn-outline-secondary" disabled>
+                    <i class="fas fa-chevron-left"></i> Назад
+                </button>
+                <div>
+                    <span id="pageInfo">Страница 1 из 1</span>
+                </div>
+                <button id="nextPage" class="btn btn-outline-secondary" disabled>
+                    Вперед <i class="fas fa-chevron-right"></i>
+                </button>
+                <select id="perPageSelect" class="form-control" style="width: auto;">
+                    <option value="10">10 на странице</option>
+                    <option value="25">25 на странице</option>
+                    <option value="50">50 на странице</option>
+                    <option value="100">100 на странице</option>
+                </select>
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно для документов пользователя -->
+    <div class="modal-overlay" id="documentsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-files"></i> Документы пользователя</h3>
+                <button onclick="closeModal('documentsModal')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+            <div class="modal-body" id="documentsContent">
+                <!-- Контент будет загружен динамически -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('documentsModal')" class="btn btn-secondary">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для просмотра пользователя -->
+    <div class="modal-overlay" id="viewUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-user"></i> Детальная информация</h3>
+                <button onclick="closeModal('viewUserModal')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+            <div class="modal-body" id="viewUserContent">
+                <!-- Контент будет загружен динамически -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('viewUserModal')" class="btn btn-secondary">Закрыть</button>
+                <button onclick="editCurrentUser()" class="btn btn-primary">Редактировать</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления документа -->
+    <div class="modal-overlay" id="addDocumentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-medical"></i> Добавить документ</h3>
+                <button onclick="closeModal('addDocumentModal')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+            <div class="modal-body" id="addDocumentContent">
+                <!-- Контент будет загружен динамически -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('addDocumentModal')" class="btn btn-secondary">Отмена</button>
+                <button onclick="saveNewDocument()" class="btn btn-primary">Сохранить документ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для просмотра документа -->
+    <div class="modal-overlay" id="viewDocumentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-file-alt"></i> Просмотр документа</h3>
+                <button onclick="closeModal('viewDocumentModal')" style="background: none; border: none; color: white; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+            <div class="modal-body" id="viewDocumentContent">
+                <!-- Контент будет загружен динамически -->
+            </div>
+            <div class="modal-footer">
+                <button onclick="closeModal('viewDocumentModal')" class="btn btn-secondary">Закрыть</button>
+                <button onclick="editCurrentDocument()" class="btn btn-primary">Редактировать</button>
+                <button onclick="deactivateCurrentDocument()" class="btn btn-warning">Деактивировать</button>
+                <button onclick="deleteCurrentDocument()" class="btn btn-danger">Удалить</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/view-users.js"></script>
+    <script>
+        // Глобальные переменные
+        let currentUserId = null;
+        let currentDocumentId = null;
+        let currentDocumentType = null;
+        
+        // Функции для работы с модальными окнами
+        function showModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+        
+        // Просмотр деталей пользователя
+        window.viewUserDetails = function(userId) {
+            currentUserId = userId;
+            
+            // Загрузка данных пользователя
+            // (эта функция должна быть реализована в view-users.js)
+            loadUserDetails(userId).then(userData => {
+                const content = `
+                    <div class="user-info-modal">
+                        <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                            <div class="user-avatar" style="width: 80px; height: 80px; font-size: 30px;">
+                                ${userData.lastName.charAt(0)}${userData.firstName.charAt(0)}
+                            </div>
+                            <div>
+                                <h2 style="margin: 0;">${userData.lastName} ${userData.firstName} ${userData.middleName || ''}</h2>
+                                <p style="color: #666; margin: 5px 0;">
+                                    <i class="fas fa-fingerprint"></i> ${userData.personalCode}
+                                </p>
+                                <span class="status-badge ${userData.status === 'active' ? 'status-active' : 'status-inactive'}">
+                                    ${userData.status === 'active' ? 'Активен' : 'Неактивен'}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+                            <div>
+                                <h4><i class="fas fa-info-circle"></i> Основная информация</h4>
+                                <div style="margin-top: 10px;">
+                                    <p><strong>Дата рождения:</strong> ${userData.birthDate ? new Date(userData.birthDate).toLocaleDateString('ru-RU') : 'Не указана'}</p>
+                                    <p><strong>Место рождения:</strong> ${userData.birthPlace || 'Не указано'}</p>
+                                    <p><strong>Email:</strong> ${userData.email || 'Не указан'}</p>
+                                    <p><strong>Телефон:</strong> ${userData.phone || 'Не указан'}</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h4><i class="fas fa-home"></i> Адрес</h4>
+                                <div style="margin-top: 10px;">
+                                    ${userData.address?.street ? `<p><strong>Адрес:</strong> ${userData.address.street}</p>` : ''}
+                                    ${userData.address?.city ? `<p><strong>Город:</strong> ${userData.address.city}</p>` : ''}
+                                    ${userData.address?.postalCode ? `<p><strong>Индекс:</strong> ${userData.address.postalCode}</p>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <h4><i class="fas fa-calendar"></i> Системная информация</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                                <p><strong>Дата создания:</strong> ${userData.createdAt ? new Date(userData.createdAt).toLocaleString('ru-RU') : 'Не указано'}</p>
+                                <p><strong>Создал:</strong> ${userData.createdBy || 'Система'}</p>
+                                <p><strong>Последнее обновление:</strong> ${userData.lastUpdated ? new Date(userData.lastUpdated).toLocaleString('ru-RU') : 'Не указано'}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.getElementById('viewUserContent').innerHTML = content;
+                showModal('viewUserModal');
+            });
+        };
+        
+        // Редактирование пользователя
+        window.editCurrentUser = function() {
+            if (currentUserId) {
+                // Переход на страницу редактирования
+                sessionStorage.setItem('editUserId', currentUserId);
+                window.location.href = 'create-user.html?edit=' + currentUserId;
+            }
+        };
+        
+        // Просмотр документов пользователя
+        window.viewUserDocuments = function(userId, userData) {
+            currentUserId = userId;
+            
+            // Загрузка документов пользователя
+            loadUserDocuments(userId).then(documents => {
+                let content = `
+                    <div>
+                        <div style="margin-bottom: 20px;">
+                            <h4><i class="fas fa-user"></i> ${userData.lastName} ${userData.firstName}</h4>
+                            <p style="color: #666;"><i class="fas fa-fingerprint"></i> ${userData.personalCode}</p>
+                        </div>
+                        
+                        <div style="margin-bottom: 20px;">
+                            <button onclick="showAddDocumentForm()" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Добавить документ
+                            </button>
+                        </div>
+                `;
+                
+                if (documents.length === 0) {
+                    content += `
+                        <div style="text-align: center; padding: 40px; background: #f8f9fa; border-radius: 8px;">
+                            <i class="fas fa-folder-open fa-3x" style="color: #6c757d; margin-bottom: 20px;"></i>
+                            <h4 style="color: #6c757d;">Документы не найдены</h4>
+                            <p>У этого пользователя еще нет добавленных документов</p>
+                        </div>
+                    `;
+                } else {
+                    content += `
+                        <div style="overflow-x: auto;">
+                            <table class="documents-table">
+                                <thead>
+                                    <tr>
+                                        <th>Тип документа</th>
+                                        <th>Номер</th>
+                                        <th>Дата выдачи</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    documents.forEach(doc => {
+                        const docName = getDocumentTypeName(doc.documentType);
+                        const issueDate = doc.data?.issueDate ? new Date(doc.data.issueDate).toLocaleDateString('ru-RU') : 'Не указана';
+                        const docNumber = doc.data?.seriesNumber || doc.data?.documentNumber || 'Без номера';
+                        
+                        content += `
+                            <tr>
+                                <td>
+                                    <div style="display: flex; align-items: center; gap: 10px;">
+                                        <i class="fas ${getDocumentIcon(doc.documentType)}" style="color: var(--primary-color);"></i>
+                                        ${docName}
+                                    </div>
+                                </td>
+                                <td><code>${docNumber}</code></td>
+                                <td>${issueDate}</td>
+                                <td>
+                                    <span class="status-badge ${doc.status === 'active' ? 'status-active' : 'status-inactive'}">
+                                        ${doc.status === 'active' ? 'Активен' : 'Неактивен'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div style="display: flex; gap: 5px;">
+                                        <button onclick="viewDocument('${doc.id}', '${doc.documentType}')" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="editDocument('${doc.id}', '${doc.documentType}')" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                    
+                    content += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                }
+                
+                content += `</div>`;
+                document.getElementById('documentsContent').innerHTML = content;
+                showModal('documentsModal');
+            });
+        };
+        
+        // Просмотр документа
+        window.viewDocument = function(documentId, documentType) {
+            currentDocumentId = documentId;
+            currentDocumentType = documentType;
+            
+            loadDocumentDetails(documentId).then(documentData => {
+                const docName = getDocumentTypeName(documentType);
+                let content = `
+                    <div>
+                        <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                            <i class="fas ${getDocumentIcon(documentType)}"></i> ${docName}
+                        </h3>
+                        
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                                <div>
+                                    <strong>Статус:</strong>
+                                    <span class="status-badge ${documentData.status === 'active' ? 'status-active' : 'status-inactive'}" style="margin-left: 10px;">
+                                        ${documentData.status === 'active' ? 'Активен' : 'Неактивен'}
+                                    </span>
+                                    ${documentData.blacklisted ? '<span style="background: #000; color: white; padding: 2px 8px; border-radius: 4px; margin-left: 10px; font-size: 12px;">Черный список</span>' : ''}
+                                </div>
+                                <div><strong>Добавлен:</strong> ${documentData.createdAt ? new Date(documentData.createdAt).toLocaleString('ru-RU') : 'Не указано'}</div>
+                                <div><strong>Добавил:</strong> ${documentData.createdBy || 'Система'}</div>
+                            </div>
+                        </div>
+                `;
+                
+                // Отображаем данные в зависимости от типа документа
+                if (documentData.data) {
+                    content += renderDocumentData(documentType, documentData.data);
+                }
+                
+                // Отображаем фотографии
+                if (documentData.files && Object.keys(documentData.files).length > 0) {
+                    content += `
+                        <div class="document-form-section">
+                            <h4><i class="fas fa-images"></i> Прикрепленные файлы</h4>
+                            <div class="document-images">
+                    `;
+                    
+                    Object.entries(documentData.files).forEach(([key, url]) => {
+                        const label = getFileLabel(key);
+                        content += `
+                            <div class="image-preview">
+                                <img src="${url}" alt="${label}" onerror="this.src='https://via.placeholder.com/200x150?text=Файл+не+загружен'">
+                                <div class="image-label">${label}</div>
+                            </div>
+                        `;
+                    });
+                    
+                    content += `
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                content += `</div>`;
+                document.getElementById('viewDocumentContent').innerHTML = content;
+                showModal('viewDocumentModal');
+            });
+        };
+        
+        // Редактирование документа
+        window.editDocument = function(documentId, documentType) {
+            sessionStorage.setItem('editDocumentId', documentId);
+            window.location.href = 'add-document.html?edit=' + documentId;
+        };
+        
+        window.editCurrentDocument = function() {
+            if (currentDocumentId) {
+                editDocument(currentDocumentId, currentDocumentType);
+            }
+        };
+        
+        // Деактивация документа
+        window.deactivateCurrentDocument = function() {
+            if (currentDocumentId && confirm('Вы уверены, что хотите деактивировать этот документ? Документ будет добавлен в черный список.')) {
+                deactivateDocument(currentDocumentId).then(() => {
+                    alert('Документ деактивирован');
+                    closeModal('viewDocumentModal');
+                    // Обновляем список документов
+                    if (currentUserId) {
+                        viewUserDocuments(currentUserId, {});
+                    }
+                });
+            }
+        };
+        
+        // Удаление документа
+        window.deleteCurrentDocument = function() {
+            if (currentDocumentId && confirm('⚠️ ВНИМАНИЕ: Вы уверены, что хотите полностью удалить этот документ?\n\nЭта операция необратима. Все данные и файлы будут удалены навсегда.')) {
+                deleteDocument(currentDocumentId).then(() => {
+                    alert('Документ удален');
+                    closeModal('viewDocumentModal');
+                    // Обновляем список документов
+                    if (currentUserId) {
+                        viewUserDocuments(currentUserId, {});
+                    }
+                });
+            }
+        };
+        
+        // Форма добавления документа
+        window.showAddDocumentForm = function() {
+            if (!currentUserId) return;
+            
+            const content = `
+                <div>
+                    <h4 style="margin-bottom: 20px;">Выберите тип документа для добавления</h4>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                        <div onclick="selectDocumentType('passport')" style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <i class="fas fa-passport fa-3x" style="color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <h5>Паспорт</h5>
+                            <p style="font-size: 12px; color: #666;">Внутренний паспорт гражданина</p>
+                        </div>
+                        
+                        <div onclick="selectDocumentType('foreign_passport')" style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <i class="fas fa-globe fa-3x" style="color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <h5>Загранпаспорт</h5>
+                            <p style="font-size: 12px; color: #666;">Паспорт для выезда за границу</p>
+                        </div>
+                        
+                        <div onclick="selectDocumentType('inn')" style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <i class="fas fa-id-card fa-3x" style="color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <h5>ИНН</h5>
+                            <p style="font-size: 12px; color: #666;">Идентификационный номер налогоплательщика</p>
+                        </div>
+                        
+                        <div onclick="selectDocumentType('nss')" style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <i class="fas fa-credit-card fa-3x" style="color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <h5>ИСС</h5>
+                            <p style="font-size: 12px; color: #666;">Номер социального счёта</p>
+                        </div>
+                        
+                        <div onclick="selectDocumentType('id_card')" style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <i class="fas fa-address-card fa-3x" style="color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <h5>ID-карта</h5>
+                            <p style="font-size: 12px; color: #666;">Удостоверение личности</p>
+                        </div>
+                        
+                        <div onclick="selectDocumentType('driver_license')" style="border: 2px solid #dee2e6; border-radius: 8px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;">
+                            <i class="fas fa-car fa-3x" style="color: var(--primary-color); margin-bottom: 10px;"></i>
+                            <h5>Водительские права</h5>
+                            <p style="font-size: 12px; color: #666;">Водительское удостоверение</p>
+                        </div>
+                    </div>
+                    
+                    <div id="documentFormContainer" style="margin-top: 30px; display: none;">
+                        <!-- Форма документа будет загружена динамически -->
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('addDocumentContent').innerHTML = content;
+            showModal('addDocumentModal');
+        };
+        
+        window.selectDocumentType = function(documentType) {
+            currentDocumentType = documentType;
+            
+            // Получаем данные пользователя
+            loadUserDetails(currentUserId).then(userData => {
+                const form = getDocumentForm(documentType, userData);
+                document.getElementById('documentFormContainer').innerHTML = form;
+                document.getElementById('documentFormContainer').style.display = 'block';
+                
+                // Прокручиваем к форме
+                document.getElementById('documentFormContainer').scrollIntoView({ behavior: 'smooth' });
+            });
+        };
+        
+        window.saveNewDocument = function() {
+            if (!currentUserId || !currentDocumentType) return;
+            
+            // Сбор данных из формы
+            const formData = collectDocumentFormData();
+            
+            // Валидация
+            if (!validateDocumentForm(formData, currentDocumentType)) {
+                alert('Заполните все обязательные поля');
+                return;
+            }
+            
+            // Сохранение документа
+            saveDocument(currentUserId, currentDocumentType, formData).then(() => {
+                alert('Документ успешно сохранен');
+                closeModal('addDocumentModal');
+                
+                // Обновляем список документов
+                viewUserDocuments(currentUserId, {});
+            }).catch(error => {
+                alert('Ошибка сохранения документа: ' + error.message);
+            });
+        };
+        
+        // Вспомогательные функции
+        function getDocumentTypeName(type) {
+            const types = {
+                'passport': 'Паспорт',
+                'foreign_passport': 'Загранпаспорт',
+                'inn': 'ИНН',
+                'nss': 'ИСС',
+                'id_card': 'ID-карта',
+                'driver_license': 'Водительские права',
+                'birth_certificate': 'Свидетельство о рождении',
+                'marriage_certificate': 'Свидетельство о браке'
+            };
+            return types[type] || type;
+        }
+        
+        function getDocumentIcon(type) {
+            const icons = {
+                'passport': 'fa-passport',
+                'foreign_passport': 'fa-globe',
+                'inn': 'fa-id-card',
+                'nss': 'fa-credit-card',
+                'id_card': 'fa-address-card',
+                'driver_license': 'fa-car',
+                'birth_certificate': 'fa-baby',
+                'marriage_certificate': 'fa-heart'
+            };
+            return icons[type] || 'fa-file-alt';
+        }
+        
+        function getFileLabel(key) {
+            const labels = {
+                'photo': 'Фото',
+                'barcode': 'Штрих-код',
+                'signature': 'Подпись',
+                'front': 'Лицевая сторона',
+                'back': 'Обратная сторона',
+                'file1': 'Файл 1',
+                'file2': 'Файл 2'
+            };
+            return labels[key] || key;
+        }
+        
+        // Закрытие модальных окон при клике на оверлей
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                }
+            });
+        });
+        
+        // Закрытие модальных окон при нажатии ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.style.display = 'none';
+                    document.body.style.overflow = 'auto';
+                });
+            }
+        });
+        
+        // Инициализация фильтров
+        document.querySelectorAll('.filter-tag').forEach(tag => {
+            tag.addEventListener('click', function() {
+                // Убираем активный класс у всех тегов
+                document.querySelectorAll('.filter-tag').forEach(t => {
+                    t.classList.remove('active');
+                });
+                
+                // Добавляем активный класс текущему тегу
+                this.classList.add('active');
+                
+                // Применяем фильтр
+                const filter = this.getAttribute('data-filter');
+                applyUserFilter(filter);
+            });
+        });
+        
+        // Обработчики для кнопок
+        document.getElementById('showAllBtn')?.addEventListener('click', function() {
+            loadUsers();
+        });
+        
+        document.getElementById('showActiveBtn')?.addEventListener('click', function() {
+            document.getElementById('statusFilter').value = 'active';
+            searchUsers();
+        });
+        
+        // Функции, которые должны быть реализованы в view-users.js
+        function loadUserDetails(userId) {
+            // Эта функция должна загружать детали пользователя из Firebase
+            return Promise.resolve({});
+        }
+        
+        function loadUserDocuments(userId) {
+            // Эта функция должна загружать документы пользователя из Firebase
+            return Promise.resolve([]);
+        }
+        
+        function loadDocumentDetails(documentId) {
+            // Эта функция должна загружать детали документа из Firebase
+            return Promise.resolve({});
+        }
+        
+        function deactivateDocument(documentId) {
+            // Эта функция должна деактивировать документ в Firebase
+            return Promise.resolve();
+        }
+        
+        function deleteDocument(documentId) {
+            // Эта функция должна удалять документ из Firebase
+            return Promise.resolve();
+        }
+        
+        function saveDocument(userId, documentType, formData) {
+            // Эта функция должна сохранять документ в Firebase
+            return Promise.resolve();
+        }
+        
+        function applyUserFilter(filter) {
+            // Эта функция должна применять фильтр к списку пользователей
+        }
+        
+        function renderDocumentData(documentType, data) {
+            // Эта функция должна рендерить данные документа в зависимости от типа
+            let content = '';
+            
+            switch(documentType) {
+                case 'passport':
+                    content = renderPassportData(data);
+                    break;
+                case 'foreign_passport':
+                    content = renderForeignPassportData(data);
+                    break;
+                case 'inn':
+                    content = renderINNData(data);
+                    break;
+                case 'nss':
+                    content = renderNSSData(data);
+                    break;
+                case 'id_card':
+                    content = renderIDCardData(data);
+                    break;
+                default:
+                    content = renderGeneralDocumentData(data);
+            }
+            
+            return content;
+        }
+        
+        function renderPassportData(data) {
+            return `
+                <div class="document-form-section">
+                    <h4><i class="fas fa-passport"></i> Данные паспорта</h4>
+                    <div class="form-grid">
+                        <div>
+                            <label>Серия и номер:</label>
+                            <p><strong>${data.seriesNumber || 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Дата выдачи:</label>
+                            <p><strong>${data.issueDate ? new Date(data.issueDate).toLocaleDateString('ru-RU') : 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Срок действия:</label>
+                            <p><strong>${data.expiryDate ? new Date(data.expiryDate).toLocaleDateString('ru-RU') : 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Кем выдан:</label>
+                            <p><strong>${data.issuedBy || 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Код подразделения:</label>
+                            <p><strong>${data.departmentCode || 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Пол:</label>
+                            <p><strong>${data.gender === 'male' ? 'Мужской' : data.gender === 'female' ? 'Женский' : 'Не указано'}</strong></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderForeignPassportData(data) {
+            return `
+                <div class="document-form-section">
+                    <h4><i class="fas fa-globe"></i> Данные загранпаспорта</h4>
+                    <div class="form-grid">
+                        <div>
+                            <label>Серия и номер:</label>
+                            <p><strong>${data.seriesNumber || 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Дата выдачи:</label>
+                            <p><strong>${data.issueDate ? new Date(data.issueDate).toLocaleDateString('ru-RU') : 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Срок действия:</label>
+                            <p><strong>${data.expiryDate ? new Date(data.expiryDate).toLocaleDateString('ru-RU') : 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>ФИО (латиница):</label>
+                            <p><strong>${data.lastNameLatin || 'Не указано'} ${data.firstNameLatin || ''}</strong></p>
+                        </div>
+                        <div>
+                            <label>Место рождения (латиница):</label>
+                            <p><strong>${data.birthPlaceLatin || 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Кем выдан:</label>
+                            <p><strong>${data.issuedByCyrillic || data.issuedByLatin || 'Не указано'}</strong></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderINNData(data) {
+            return `
+                <div class="document-form-section">
+                    <h4><i class="fas fa-id-card"></i> Данные ИНН</h4>
+                    <div class="form-grid">
+                        <div>
+                            <label>Номер ИНН:</label>
+                            <p><strong>${data.innNumber || 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Дата выдачи:</label>
+                            <p><strong>${data.issueDate ? new Date(data.issueDate).toLocaleDateString('ru-RU') : 'Не указано'}</strong></p>
+                        </div>
+                        <div>
+                            <label>Кем выдан:</label>
+                            <p><strong>${data.issuedBy || 'Не указано'}</strong></p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getDocumentForm(documentType, userData) {
+            // Эта функция должна возвращать HTML-форму для конкретного типа документа
+            // Реализация будет в отдельном файле
+            return '<div>Форма документа</div>';
+        }
+        
+        function collectDocumentFormData() {
+            // Эта функция должна собирать данные из формы документа
+            return {};
+        }
+        
+        function validateDocumentForm(formData, documentType) {
+            // Эта функция должна валидировать форму документа
+            return true;
+        }
+		// В функции отображения документов пользователя добавьте:
+function renderDocumentFiles(files) {
+    if (!files || Object.keys(files).length === 0) {
+        return '<p style="color: #666; font-style: italic;">Нет прикрепленных файлов</p>';
+    }
+    
+    let html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; margin-top: 10px;">';
+    
+    Object.entries(files).forEach(([key, fileData]) => {
+        let src = '';
+        let alt = key;
+        
+        if (fileData.url) {
+            // Фото с ImgBB
+            src = fileData.url;
+            alt = fileData.name || key;
+        } else if (fileData.base64) {
+            // Сгенерированный код (Base64)
+            src = fileData.base64;
+            alt = fileData.type || key;
+        }
+        
+        if (src) {
+            html += `
+                <div style="text-align: center;">
+                    <img src="${src}" 
+                         alt="${alt}" 
+                         style="max-width: 100%; max-height: 100px; border: 1px solid #ddd; border-radius: 4px;">
+                    <div style="font-size: 11px; color: #666; margin-top: 5px;">${key}</div>
+                </div>
+            `;
+        }
+    });
+    
+    html += '</div>';
+    return html;
+}
+    </script>
+</body>
+</html>

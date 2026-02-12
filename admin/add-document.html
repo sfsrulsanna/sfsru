@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление документа - Админ-панель</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.css">
+    <!-- Защита страницы -->
+    <script type="module" src="js/protect.js"></script>
+</head>
+<body>
+    <!-- Боковая панель -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h2><i class="fas fa-user-shield"></i> Админ-панель</h2>
+            <p id="userEmail" style="font-size: 12px; opacity: 0.8;"></p>
+        </div>
+        
+        <div class="sidebar-nav">
+            <ul>
+                <li><a href="dashboard.html"><i class="fas fa-tachometer-alt"></i> Дашборд</a></li>
+                <li><a href="create-user.html"><i class="fas fa-user-plus"></i> Новый пользователь</a></li>
+                <li><a href="add-document.html" class="active"><i class="fas fa-file-medical"></i> Добавить документ</a></li>
+                <li><a href="view-users.html"><i class="fas fa-users"></i> Все пользователи</a></li>
+                
+                <li class="nav-section">
+                    <span style="padding: 10px 20px; display: block; color: rgba(255,255,255,0.5); font-size: 12px;">
+                        <i class="fas fa-file-alt"></i> Быстрый доступ
+                    </span>
+                    <ul style="padding-left: 20px;">
+                        <li><a href="#" data-doc-type="passport"><i class="fas fa-passport"></i> Паспорт</a></li>
+                        <li><a href="#" data-doc-type="foreign_passport"><i class="fas fa-globe"></i> Загранпаспорт</a></li>
+                        <li><a href="#" data-doc-type="inn"><i class="fas fa-id-card"></i> ИНН</a></li>
+                        <li><a href="#" data-doc-type="nss"><i class="fas fa-credit-card"></i> ИСС</a></li>
+                        <li><a href="#" data-doc-type="id_card"><i class="fas fa-address-card"></i> ID-карта</a></li>
+                        <li><a href="#" data-doc-type="driver_license"><i class="fas fa-car"></i> Водительские права</a></li>
+                    </ul>
+                </li>
+                <li style="margin-top: 30px;">
+                    <a href="#" id="logoutBtn">
+                        <i class="fas fa-sign-out-alt"></i> Выйти
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <main class="main-content">
+        <div class="container">
+            <!-- Заголовок -->
+            <div class="page-header" style="margin-bottom: 30px;">
+                <h1><i class="fas fa-file-medical"></i> Добавление документа</h1>
+                <p>Выберите тип документа и заполните данные</p>
+            </div>
+
+            <!-- Основная форма -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-search"></i> Поиск пользователя</h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert" id="formMessage" style="display: none;"></div>
+                    
+                    <form id="searchForm">
+                        <div style="display: grid; grid-template-columns: 1fr auto; gap: 15px; align-items: end;">
+                            <div class="form-group">
+                                <label for="personalCode">
+                                    <i class="fas fa-fingerprint"></i> Личный код пользователя *
+                                </label>
+                                <input type="text" id="personalCode" class="form-control" required 
+                                       placeholder="Введите личный код или начните вводить фамилию" 
+                                       autocomplete="off">
+                                <small style="color: #666; display: block; margin-top: 5px;">
+                                    Формат: ХХХХ-XXXX (8 цифр)
+                                </small>
+                            </div>
+                            
+                            <button type="button" id="searchBtn" class="btn btn-primary">
+                                <i class="fas fa-search"></i> Найти
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Информация о пользователе -->
+                    <div id="userInfo" style="display: none; margin-top: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--secondary-color);">
+                        <h4><i class="fas fa-user-check"></i> Найден пользователь:</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 15px;">
+                            <div>
+                                <strong>ФИО:</strong> <span id="userFullName">-</span>
+                            </div>
+                            <div>
+                                <strong>Дата рождения:</strong> <span id="userBirthDate">-</span>
+                            </div>
+                            <div>
+                                <strong>Личный код:</strong> <code id="userPersonalCode">-</code>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Существующие документы -->
+            <div id="existingDocuments" style="display: none; margin-top: 20px; padding: 20px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #6c757d;">
+                <p style="margin: 0; color: #666;"><i class="fas fa-spinner fa-spin"></i> Загрузка документов...</p>
+            </div>
+
+            <!-- Форма документа -->
+            <div class="card" id="documentCard" style="display: none;">
+                <div class="card-header">
+                    <h3><i class="fas fa-file-alt"></i> Данные документа</h3>
+                </div>
+                <div class="card-body">
+                    <!-- Выбор типа документа -->
+                    <div class="form-group" style="margin-bottom: 30px;">
+                        <label for="documentType">
+                            <i class="fas fa-file"></i> Тип документа *
+                        </label>
+                        <select id="documentType" class="form-control" required>
+                            <option value="">Выберите тип документа</option>
+                            <optgroup label="Основные документы">
+                                <option value="passport">Паспорт гражданина</option>
+                                <option value="foreign_passport">Загранпаспорт</option>
+                                <option value="inn">ИНН (Идентификационный номер налогоплательщика)</option>
+                                <option value="nss">ИСС (Номер социального счёта)</option>
+                                <option value="id_card">ID-карта</option>
+                                <option value="driver_license">Водительское удостоверение</option>
+                            </optgroup>
+                        </select>
+                    </div>
+                    
+                    <!-- Контейнер для динамической формы -->
+                    <div id="documentFormContainer">
+                        <div style="text-align: center; padding: 40px; color: #666;">
+                            <i class="fas fa-file-alt fa-3x" style="margin-bottom: 20px;"></i>
+                            <p>Выберите тип документа для отображения формы</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Кнопки -->
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <a href="dashboard.html" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Назад
+                        </a>
+                        
+                        <button type="button" id="saveDocumentBtn" class="btn btn-primary" disabled>
+                            <i class="fas fa-save"></i> Сохранить документ
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Информация о системе -->
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-info-circle"></i> Информация</h3>
+                </div>
+                <div class="card-body">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px;">
+                        <div>
+                            <h4><i class="fas fa-shield-alt"></i> Безопасность данных</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="padding: 5px 0;">
+                                    <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
+                                    Все данные шифруются при передаче
+                                </li>
+                                <li style="padding: 5px 0;">
+                                    <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
+                                    Доступ только для авторизованных администраторов
+                                </li>
+                                <li style="padding: 5px 0;">
+                                    <i class="fas fa-check-circle" style="color: var(--success-color);"></i>
+                                    Все действия логируются
+                                </li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4><i class="fas fa-cloud-upload-alt"></i> Хранение файлов</h4>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="padding: 5px 0;">
+                                    <i class="fas fa-image"></i>
+                                    Фотографии: хранятся на ImgBB
+                                </li>
+                                <li style="padding: 5px 0;">
+                                    <i class="fas fa-barcode"></i>
+                                    Штрих-коды: генерируются автоматически
+                                </li>
+                                <li style="padding: 5px 0;">
+                                    <i class="fas fa-qrcode"></i>
+                                    QR-коды: генерируются автоматически
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Awesomplete для автодополнения -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/awesomplete/1.1.5/awesomplete.min.js"></script>
+    
+    <!-- Библиотеки для генерации кодов -->
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    
+    <script type="module" src="js/firebase-config.js"></script>
+    <script type="module" src="js/add-document.js"></script>
+</body>
+</html>

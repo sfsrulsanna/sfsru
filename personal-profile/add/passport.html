@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Добавить данные паспорта — СФСРЮ</title>
+  <!-- favicons -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
+  <!-- ... все favicon ссылки ... -->
+  <link rel="stylesheet" href="../../css/style.css" />
+  <style>
+    .profile-main {
+      padding: 2rem 0;
+      background: white;
+      min-height: 100vh;
+    }
+    .profile-container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .page-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .page-header h2 {
+      font-size: 1.8rem;
+      color: #7b091a;
+    }
+
+    .step-indicator {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.95rem;
+      color: #7b091a;
+    }
+
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    .record-block {
+      border: 1px solid #eee;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
+        <h1>СФСРЮ</h1>
+      </div>
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu" id="mainNav">
+        <ul>
+          <li><a href="../../index.html">Главная</a></li>
+          <li><a href="../../news.html">Новости</a></li>
+          <li><a href="../../wiki/">Википедия</a></li>
+          <li><a href="../../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../../services.html">Услуги</a></li>
+          <li><a href="../index.html" class="active">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <main class="main-content profile-main">
+    <div class="profile-container">
+      <div class="page-header">
+        <h2>Добавление паспорта гражданина СФСРЮ</h2>
+        <p>Заполните все необходимые данные</p>
+      </div>
+
+      <div class="step-indicator" id="stepIndicator">Шаг 1 из 7</div>
+
+      <form id="passportForm">
+        <div id="stepContent"></div>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 1.5rem;">
+          <button type="button" class="btn btn-secondary" id="prevBtn" style="display: none;">Назад</button>
+          <button type="button" class="btn btn-primary" id="nextBtn">Далее</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <!-- ПОДВАЛ -->
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>
+      Телефон: +7 (993) 609-81-26 | Почта:
+      <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
+    </p>
+  </footer>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="../../js/firebase-config.js"></script>
+
+  <script>
+    let currentStep = 1;
+    const totalSteps = 7;
+    let formData = {};
+    let userProfile = null;
+    let userPersonalCode = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
+      firebase.auth().onAuthStateChanged(async user => {
+        if (!user) return window.location.href = '../../login.html';
+        await loadUserProfile(user.uid);
+        updateStep();
+      });
+
+      document.getElementById('prevBtn').addEventListener('click', prevStep);
+      document.getElementById('nextBtn').addEventListener('click', nextStep);
+    });
+
+    async function loadUserProfile(userId) {
+      try {
+        const userDoc = await firebase.firestore().collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          userProfile = userDoc.data();
+          userPersonalCode = userProfile.personalCode;
+          // Предзаполняем форму
+          formData.surname = userProfile.surname || '';
+          formData.name = userProfile.name || '';
+          formData.patronymic = userProfile.patronymic || '';
+          formData.birthDate = userProfile.dateOfBirth || '';
+          formData.birthPlace = userProfile.placeOfBirth || '';
+          formData.gender = 'Мужской';
+          formData.personalCode = userPersonalCode || '';
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки профиля:', err);
+      }
+    }
+
+    function updateStep() {
+      document.getElementById('stepIndicator').textContent = `Шаг ${currentStep} из ${totalSteps}`;
+      document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-block' : 'none';
+      document.getElementById('nextBtn').textContent = currentStep === totalSteps ? 'Сохранить' : 'Далее';
+
+      let content = '';
+      switch (currentStep) {
+        case 1: content = step1(); break;
+        case 2: content = step2(); break;
+        case 3: content = step3(); break;
+        case 4: content = step4(); break;
+        case 5: content = step5(); break;
+        case 6: content = step6(); break;
+        case 7: content = step7(); break;
+      }
+      document.getElementById('stepContent').innerHTML = content;
+    }
+
+    // Шаг 1 — основные данные
+    function step1() {
+      return `
+        <div class="form-group">
+          <label>Фамилия</label>
+          <input type="text" id="surname" class="form-input" value="${formData.surname || ''}">
+        </div>
+        <div class="form-group">
+          <label>Имя</label>
+          <input type="text" id="name" class="form-input" value="${formData.name || ''}">
+        </div>
+        <div class="form-group">
+          <label>Отчество</label>
+          <input type="text" id="patronymic" class="form-input" value="${formData.patronymic || ''}">
+        </div>
+        <div class="form-group">
+          <label>Дата рождения</label>
+          <input type="date" id="birthDate" class="form-input" value="${formData.birthDate || ''}">
+        </div>
+        <div class="form-group">
+          <label>Место рождения</label>
+          <input type="text" id="birthPlace" class="form-input" value="${formData.birthPlace || ''}">
+        </div>
+        <div class="form-group">
+          <label>Пол</label>
+          <select id="gender" class="form-input">
+            <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+            <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Кем выдан</label>
+          <input type="text" id="issuedBy" class="form-input" value="${formData.issuedBy || ''}">
+        </div>
+        <div class="form-group">
+          <label>Дата выдачи</label>
+          <input type="date" id="issueDate" class="form-input" value="${formData.issueDate || ''}">
+        </div>
+        <div class="form-group">
+          <label>Дата окончания действия</label>
+          <input type="date" id="expiryDate" class="form-input" value="${formData.expiryDate || ''}">
+        </div>
+        <div class="form-group">
+          <label>Код подразделения</label>
+          <input type="text" id="departmentCode" class="form-input" value="${formData.departmentCode || ''}">
+        </div>
+        <div class="form-group">
+          <label>Серия и номер</label>
+          <input type="text" id="seriesNumber" class="form-input" value="${formData.seriesNumber || ''}">
+        </div>
+        <div class="form-group">
+          <label>Личный код</label>
+          <input type="text" id="personalCode" class="form-input" value="${formData.personalCode || ''}" readonly>
+        </div>
+      `;
+    }
+
+    // Шаг 2 — места жительства
+    function step2() {
+      const residences = formData.residences || [];
+      return `
+        <p><strong>Место жительства</strong></p>
+        <div id="residencesList">
+          ${residences.map((r, i) => `
+            <div class="record-block">
+              <div class="form-group">
+                <label>Адрес</label>
+                <input type="text" class="form-input residence-address" value="${r.address || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Дата регистрации</label>
+                <input type="date" class="form-input residence-reg" value="${r.registrationDate || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Дата снятия</label>
+                <input type="date" class="form-input residence-dereg" value="${r.deregistrationDate || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Тип жилья</label>
+                <input type="text" class="form-input residence-type" value="${r.housingType || ''}" data-index="${i}">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addResidence()">+ Добавить адрес</button>
+      `;
+    }
+
+    // Шаг 3 — семейное положение
+    function step3() {
+      const statuses = formData.maritalStatuses || [];
+      return `
+        <p><strong>Семейное положение</strong></p>
+        <div id="maritalList">
+          ${statuses.map((m, i) => `
+            <div class="record-block">
+              <div class="form-group">
+                <label>Статус</label>
+                <select class="form-input marital-status" data-index="${i}">
+                  <option value="Не состоит в зарегистрированном браке" ${m.status === 'Не состоит в зарегистрированном браке' ? 'selected' : ''}>Не состоит в зарегистрированном браке</option>
+                  <option value="В браке" ${m.status === 'В браке' ? 'selected' : ''}>В браке</option>
+                  <option value="В разводе" ${m.status === 'В разводе' ? 'selected' : ''}>В разводе</option>
+                  <option value="Вдовец/Вдова" ${m.status === 'Вдовец/Вдова' ? 'selected' : ''}>Вдовец/Вдова</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Дата изменения</label>
+                <input type="date" class="form-input marital-date" value="${m.changeDate || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>ФИО супруга</label>
+                <input type="text" class="form-input marital-spouse" value="${m.spouseName || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Номер акта</label>
+                <input type="text" class="form-input marital-act" value="${m.actNumber || ''}" data-index="${i}">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addMaritalRecord()">+ Добавить запись</button>
+      `;
+    }
+
+    // Шаг 4 — военная обязанность
+    function step4() {
+      return `
+        <p><strong>Военная обязанность</strong></p>
+        <div class="form-group">
+          <label>Военнообязанный</label>
+          <select id="isMilitary" class="form-input">
+            <option value="">—</option>
+            <option value="true" ${formData.isMilitaryObligated ? 'selected' : ''}>Да</option>
+            <option value="false" ${formData.isMilitaryObligated === false ? 'selected' : ''}>Нет</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Военный билет</label>
+          <input type="text" id="militaryIdn" class="form-input" value="${formData.militaryIdn || ''}">
+        </div>
+      `;
+    }
+
+    // Шаг 5 — ранее выданные паспорта
+    function step5() {
+      const passports = formData.previousPassports || [];
+      return `
+        <p><strong>Ранее выданные паспорта</strong></p>
+        <div id="passportsList">
+          ${passports.map((p, i) => `
+            <div class="record-block">
+              <div class="form-group">
+                <label>Серия и номер</label>
+                <input type="text" class="form-input passport-series" value="${p.seriesNumber || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Дата выдачи</label>
+                <input type="date" class="form-input passport-date" value="${p.issueDate || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Кем выдан</label>
+                <input type="text" class="form-input passport-issued" value="${p.issuedBy || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Причина замены</label>
+                <input type="text" class="form-input passport-reason" value="${p.reason || ''}" data-index="${i}">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addPreviousPassport()">+ Добавить паспорт</button>
+      `;
+    }
+
+    // Шаг 6 — ранее выданные загранпаспорта
+    function step6() {
+      const foreign = formData.previousForeignPassports || [];
+      return `
+        <p><strong>Ранее выданные заграничные паспорта</strong></p>
+        <div id="foreignList">
+          ${foreign.map((p, i) => `
+            <div class="record-block">
+              <div class="form-group">
+                <label>Серия и номер</label>
+                <input type="text" class="form-input foreign-series" value="${p.seriesNumber || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Дата выдачи</label>
+                <input type="date" class="form-input foreign-date" value="${p.issueDate || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Кем выдан</label>
+                <input type="text" class="form-input foreign-issued" value="${p.issuedBy || ''}" data-index="${i}">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addForeignPassport()">+ Добавить</button>
+      `;
+    }
+
+    // Шаг 7 — ранее выданные ID-карты
+    function step7() {
+      const idCards = formData.previousIdCards || [];
+      return `
+        <p><strong>Ранее выданные ID-карты</strong></p>
+        <div id="idCardList">
+          ${idCards.map((p, i) => `
+            <div class="record-block">
+              <div class="form-group">
+                <label>Серия и номер</label>
+                <input type="text" class="form-input idcard-series" value="${p.seriesNumber || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Дата выдачи</label>
+                <input type="date" class="form-input idcard-date" value="${p.issueDate || ''}" data-index="${i}">
+              </div>
+              <div class="form-group">
+                <label>Кем выдан</label>
+                <input type="text" class="form-input idcard-issued" value="${p.issuedBy || ''}" data-index="${i}">
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addIdCard()">+ Добавить</button>
+      `;
+    }
+
+    // ========== ФУНКЦИИ ДОБАВЛЕНИЯ ЗАПИСЕЙ ==========
+    function addResidence() {
+      const list = document.getElementById('residencesList');
+      const index = (formData.residences?.length || 0);
+      list.insertAdjacentHTML('beforeend', `
+        <div class="record-block">
+          <div class="form-group">
+            <label>Адрес</label>
+            <input type="text" class="form-input residence-address" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Дата регистрации</label>
+            <input type="date" class="form-input residence-reg" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Дата снятия</label>
+            <input type="date" class="form-input residence-dereg" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Тип жилья</label>
+            <input type="text" class="form-input residence-type" data-index="${index}">
+          </div>
+        </div>
+      `);
+    }
+
+    function addMaritalRecord() {
+      const list = document.getElementById('maritalList');
+      const index = (formData.maritalStatuses?.length || 0);
+      list.insertAdjacentHTML('beforeend', `
+        <div class="record-block">
+          <div class="form-group">
+            <label>Статус</label>
+            <select class="form-input marital-status" data-index="${index}">
+              <option value="Не состоит в зарегистрированном браке">Не состоит в зарегистрированном браке</option>
+              <option value="В браке">В браке</option>
+              <option value="В разводе">В разводе</option>
+              <option value="Вдовец/Вдова">Вдовец/Вдова</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Дата изменения</label>
+            <input type="date" class="form-input marital-date" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>ФИО супруга</label>
+            <input type="text" class="form-input marital-spouse" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Номер акта</label>
+            <input type="text" class="form-input marital-act" data-index="${index}">
+          </div>
+        </div>
+      `);
+    }
+
+    function addPreviousPassport() {
+      const list = document.getElementById('passportsList');
+      const index = (formData.previousPassports?.length || 0);
+      list.insertAdjacentHTML('beforeend', `
+        <div class="record-block">
+          <div class="form-group">
+            <label>Серия и номер</label>
+            <input type="text" class="form-input passport-series" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input passport-date" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input passport-issued" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Причина замены</label>
+            <input type="text" class="form-input passport-reason" data-index="${index}">
+          </div>
+        </div>
+      `);
+    }
+
+    function addForeignPassport() {
+      const list = document.getElementById('foreignList');
+      const index = (formData.previousForeignPassports?.length || 0);
+      list.insertAdjacentHTML('beforeend', `
+        <div class="record-block">
+          <div class="form-group">
+            <label>Серия и номер</label>
+            <input type="text" class="form-input foreign-series" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input foreign-date" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input foreign-issued" data-index="${index}">
+          </div>
+        </div>
+      `);
+    }
+
+    function addIdCard() {
+      const list = document.getElementById('idCardList');
+      const index = (formData.previousIdCards?.length || 0);
+      list.insertAdjacentHTML('beforeend', `
+        <div class="record-block">
+          <div class="form-group">
+            <label>Серия и номер</label>
+            <input type="text" class="form-input idcard-series" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input idcard-date" data-index="${index}">
+          </div>
+          <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input idcard-issued" data-index="${index}">
+          </div>
+        </div>
+      `);
+    }
+
+    // Сохранение данных текущего шага
+    function saveStepData() {
+      switch (currentStep) {
+        case 1:
+          formData.surname = document.getElementById('surname')?.value.trim() || '';
+          formData.name = document.getElementById('name')?.value.trim() || '';
+          formData.patronymic = document.getElementById('patronymic')?.value.trim() || '';
+          formData.birthDate = document.getElementById('birthDate')?.value || '';
+          formData.birthPlace = document.getElementById('birthPlace')?.value.trim() || '';
+          formData.gender = document.getElementById('gender')?.value || '';
+          formData.issuedBy = document.getElementById('issuedBy')?.value.trim() || '';
+          formData.issueDate = document.getElementById('issueDate')?.value || '';
+          formData.expiryDate = document.getElementById('expiryDate')?.value || '';
+          formData.departmentCode = document.getElementById('departmentCode')?.value.trim() || '';
+          formData.seriesNumber = document.getElementById('seriesNumber')?.value.trim() || '';
+          formData.personalCode = document.getElementById('personalCode')?.value.trim() || '';
+          break;
+        case 2:
+          formData.residences = Array.from(document.querySelectorAll('.residence-address')).map((el, i) => ({
+            address: el.value.trim(),
+            registrationDate: document.querySelector(`.residence-reg[data-index="${i}"]`)?.value || '',
+            deregistrationDate: document.querySelector(`.residence-dereg[data-index="${i}"]`)?.value || '',
+            housingType: document.querySelector(`.residence-type[data-index="${i}"]`)?.value.trim() || ''
+          }));
+          break;
+        case 3:
+          formData.maritalStatuses = Array.from(document.querySelectorAll('.marital-status')).map((el, i) => ({
+            status: el.value,
+            changeDate: document.querySelector(`.marital-date[data-index="${i}"]`)?.value || '',
+            spouseName: document.querySelector(`.marital-spouse[data-index="${i}"]`)?.value.trim() || '',
+            actNumber: document.querySelector(`.marital-act[data-index="${i}"]`)?.value.trim() || ''
+          }));
+          break;
+        case 4:
+          formData.isMilitaryObligated = document.getElementById('isMilitary')?.value === 'true';
+          formData.militaryIdn = document.getElementById('militaryIdn')?.value.trim() || '';
+          break;
+        case 5:
+          formData.previousPassports = Array.from(document.querySelectorAll('.passport-series')).map((el, i) => ({
+            seriesNumber: el.value.trim(),
+            issueDate: document.querySelector(`.passport-date[data-index="${i}"]`)?.value || '',
+            issuedBy: document.querySelector(`.passport-issued[data-index="${i}"]`)?.value.trim() || '',
+            reason: document.querySelector(`.passport-reason[data-index="${i}"]`)?.value.trim() || ''
+          }));
+          break;
+        case 6:
+          formData.previousForeignPassports = Array.from(document.querySelectorAll('.foreign-series')).map((el, i) => ({
+            seriesNumber: el.value.trim(),
+            issueDate: document.querySelector(`.foreign-date[data-index="${i}"]`)?.value || '',
+            issuedBy: document.querySelector(`.foreign-issued[data-index="${i}"]`)?.value.trim() || ''
+          }));
+          break;
+        case 7:
+          formData.previousIdCards = Array.from(document.querySelectorAll('.idcard-series')).map((el, i) => ({
+            seriesNumber: el.value.trim(),
+            issueDate: document.querySelector(`.idcard-date[data-index="${i}"]`)?.value || '',
+            issuedBy: document.querySelector(`.idcard-issued[data-index="${i}"]`)?.value.trim() || ''
+          }));
+          break;
+      }
+    }
+
+    function nextStep() {
+      saveStepData();
+      if (currentStep < totalSteps) {
+        currentStep++;
+        updateStep();
+      } else {
+        savePassport();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateStep();
+      }
+    }
+
+    async function savePassport() {
+      try {
+        const user = firebase.auth().currentUser;
+        if (!user) return;
+
+        const cleanData = JSON.parse(JSON.stringify(formData));
+        Object.keys(cleanData).forEach(key => {
+          if (cleanData[key] === undefined || cleanData[key] === null) delete cleanData[key];
+        });
+
+        // Обязательные поля
+        cleanData.personalCode = userPersonalCode;
+        cleanData.userId = user.uid;
+        cleanData.documentType = 'passport';
+        cleanData.status = 'oncheck';
+        cleanData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        cleanData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+
+        const docRef = await firebase.firestore().collection('documents').add(cleanData);
+        alert('Паспорт успешно добавлен на проверку!');
+        window.location.href = `../passport.html?id=${docRef.id}`;
+      } catch (err) {
+        console.error(err);
+        alert('Ошибка сохранения: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

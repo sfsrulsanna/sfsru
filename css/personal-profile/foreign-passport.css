@@ -1,0 +1,277 @@
+/* === ЦВЕТА === */
+:root {
+  --passport-border-color: #7b091a; /* по умолчанию — общегражданский */
+  --dark-red: #650E15;
+  --cream: #F5E7E7;
+  --white: #ffffff;
+}
+
+/* === ПАСПОРТ === */
+.passport-template {
+  background: var(--cream);
+  border: 12px solid var(--passport-border-color); /* ← новая переменная */
+  border-radius: 12px;
+  /* ... остальное без изменений ... */
+}
+
+.passport-header {
+  background: var(--passport-border-color); /* ← фон шапки паспорта */
+  color: var(--white);
+  /* ... */
+}
+
+.field-label,
+.series-number,
+.section-title,
+.section-title i,
+.info-item {
+  color: var(--passport-border-color); /* ← все текстовые элементы */
+  border-color: var(--passport-border-color); /* где нужно */
+}
+
+.info-table thead {
+  background: linear-gradient(135deg, var(--dark-red), var(--passport-border-color));
+  color: white;
+} 
+.country-name,
+.country-name-english,
+.document-type,
+.document-type-english {
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.country-name {
+  font-size: 1.9rem;
+  margin-bottom: 5px;
+}
+.country-name-english {
+  font-size: 1.4rem;
+  opacity: 0.9;
+  margin-bottom: 10px;
+}
+.document-type {
+  font-size: 1.5rem;
+  margin-top: 8px;
+}
+.document-type-english {
+  font-size: 1.2rem;
+  opacity: 0.85;
+}
+
+.passport-content {
+  padding: 28px;
+}
+
+/* === ПОЛЯ ДАННЫХ === */
+.data-field,
+.double-field {
+  margin-bottom: 18px;
+}
+.field-label {
+  color: var(--primary-red);
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+.field-label-english {
+  color: #87735C;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-bottom: 5px;
+}
+.field-value,
+.field-value-english {
+  font-size: 1.1rem;
+  border-bottom: 1px dashed #999;
+  padding-bottom: 5px;
+  min-height: 1.3em;
+}
+.field-value-english {
+  font-style: italic;
+  color: #555;
+}
+.series-number {
+  font-weight: bold;
+  font-size: 1.5rem;
+  letter-spacing: 3px;
+  color: var(--primary-red);
+}
+
+/* === ФОТО И ШТРИХ-КОД === */
+.personal-info-section {
+  display: flex;
+  gap: 30px;
+  margin-top: 20px;
+}
+.photo-barcode-section {
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.passport-photo-container {
+  width: 180px;
+  height: 240px;
+  border: 2px solid var(--primary-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--white);
+  margin-bottom: 15px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.passport-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.barcode-container {
+  text-align: left;
+  width: 100%;
+}
+.barcode {
+  width: 180px;
+  height: 50px;
+  border-radius: 8px;
+}
+.barcode-number {
+  font-family: 'OCR A', monospace;
+  font-size: 1rem;
+  letter-spacing: 2px;
+  margin-top: 5px;
+  color: var(--primary-red);
+  font-weight: bold;
+}
+.fio-section {
+  flex: 1;
+  max-width: calc(100% - 250px);
+}
+
+/* === ЗАГОЛОВКИ РАЗДЕЛОВ === */
+.section-title {
+  font-family: 'PT Serif', serif;
+  color: var(--primary-red);
+  font-size: 1.7rem;
+  margin: 35px 0 20px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary-red);
+  display: flex;
+  align-items: center;
+  font-weight: 700;
+}
+.section-title i {
+  margin-right: 12px;
+  font-size: 1.4rem;
+  color: var(--primary-red); /* ← иконка меняет цвет! */
+}
+
+/* === ТАБЛИЦЫ (визы и др.) === */
+.info-table {
+  width: 100%;
+  background: var(--cream);
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  padding: 0;
+  margin-bottom: 30px;
+  border: 2px solid var(--primary-red);
+  overflow: hidden;
+}
+.info-table table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 1rem;
+}
+.info-table thead {
+  background: linear-gradient(135deg, var(--dark-red) 0%, var(--primary-red) 100%);
+  color: white; /* ← белый текст на фоне! */
+}
+.info-table th,
+.info-table td {
+  padding: 12px 14px;
+  text-align: left;
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+}
+.info-table th:last-child,
+.info-table td:last-child {
+  border-right: none;
+}
+.info-table th {
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+.info-table td {
+  background-color: var(--cream);
+  border-bottom: 1px solid #eee;
+  font-size: 0.95rem;
+}
+
+/* === БЛОК ИНФОРМАЦИИ О ПАСПОРТЕ === */
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 25px;
+}
+.info-item {
+  padding: 15px;
+  background: white;
+  border-radius: 10px;
+  border-left: 3px solid var(--primary-red); /* ← цвет меняется! */
+}
+.info-label {
+  font-weight: 600;
+  color: var(--primary-red);
+  margin-bottom: 6px;
+}
+.info-value {
+  font-size: 1rem;
+  color: #333;
+}
+
+/* === ПОДПИСЬ === */
+.signature-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.signature-img {
+  height: 60px;
+  max-width: 200px;
+  border: 1px solid #ddd;
+  padding: 4px;
+  background: white;
+  border-radius: 6px;
+}
+
+/* === МОБИЛЬНАЯ АДАПТАЦИЯ === */
+@media (max-width: 768px) {
+  .personal-info-section {
+    flex-direction: column;
+    align-items: center;
+  }
+  .photo-barcode-section {
+    width: 100%;
+    align-items: center;
+  }
+  .passport-photo-container {
+    width: 160px;
+    height: 210px;
+  }
+  .barcode {
+    width: 160px;
+  }
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+  .section-title {
+    font-size: 1.4rem;
+  }
+  .info-table th,
+  .info-table td {
+    padding: 10px;
+    font-size: 0.9rem;
+  }
+}

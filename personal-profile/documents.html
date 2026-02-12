@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Мои документы — СФСРЮ</title>
+  <!-- favicons (полный набор, как в вашем проекте) -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
+
+  <!-- Единый стиль сайта -->
+  <link rel="stylesheet" href="../css/style.css" />
+  <!-- Стиль паспорта (для карточек) -->
+  <link rel="stylesheet" href="../css/personal-profile/passport.css" />
+  <!-- Иконки -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* ========== ОСНОВНЫЕ СТИЛИ ========== */
+    .profile-main {
+      padding: 2rem 0;
+      background: white;
+      min-height: 100vh;
+    }
+    .profile-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+    .page-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .page-header h2 {
+      font-size: 2rem;
+      color: #7b091a;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ========== БЛОК ЛИЧНОЙ ИНФОРМАЦИИ ========== */
+    .user-info-section {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border: 1px solid #eee;
+      position: relative;
+    }
+    .user-content {
+      display: flex;
+      gap: 2rem;
+      align-items: flex-start;
+    }
+    .user-avatar {
+      width: 165px;
+      height: 220px;
+      border-radius: 12px;
+      object-fit: contain;
+      image-rendering: -webkit-optimize-contrast;
+      image-rendering: crisp-edges;
+      border: 2px solid #ddd;
+    }
+    .user-data {
+      flex: 1;
+    }
+    .user-detail {
+      margin-bottom: 0.6rem;
+      font-size: 1.05rem;
+    }
+    .user-detail strong {
+      color: #7b091a;
+    }
+    .qr-code-container {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      width: 80px;
+      height: 80px;
+      background: white;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+    }
+    #userQrCode {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ========== КАРТОЧКИ ДОКУМЕНТОВ ========== */
+    .documents-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .document-card {
+      background: white;
+      border: 2px solid #e9ecef;
+      border-radius: 16px;
+      padding: 1.2rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+      transition: 0.2s;
+      display: flex;
+      flex-direction: column;
+    }
+    .document-card:hover {
+      border-color: #7b091a;
+      box-shadow: 0 6px 16px rgba(123,9,26,0.1);
+    }
+    .document-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .document-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #7b091a;
+    }
+    .document-status {
+      font-size: 0.8rem;
+      padding: 0.25rem 0.6rem;
+      border-radius: 20px;
+      background: rgba(40,167,69,0.1);
+      color: #28a745;
+    }
+    .document-status.pending {
+      background: rgba(255,193,7,0.1);
+      color: #856404;
+    }
+    .document-status.rejected {
+      background: rgba(220,53,69,0.1);
+      color: #dc3545;
+    }
+    .document-fields {
+      flex: 1;
+      margin: 0.5rem 0;
+      font-size: 0.9rem;
+    }
+    .document-field {
+      display: flex;
+      margin-bottom: 0.3rem;
+    }
+    .field-label {
+      width: 40%;
+      color: #666;
+    }
+    .field-value {
+      width: 60%;
+      font-weight: 500;
+    }
+    .document-actions {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 1rem;
+    }
+    .btn-edit, .btn-delete {
+      padding: 0.4rem 1rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    .btn-edit {
+      background: #7b091a;
+      color: white;
+    }
+    .btn-delete {
+      background: #dc3545;
+      color: white;
+    }
+
+    /* ========== УНИВЕРСАЛЬНОЕ МОДАЛЬНОЕ ОКНО ========== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 700px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 1.5rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+    }
+    .btn {
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .step-indicator {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      color: #7b091a;
+    }
+    .record-block {
+      border: 1px solid #eee;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+
+    /* ========== КНОПКА ДОБАВЛЕНИЯ ========== */
+    .add-btn {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      margin-top: 1rem;
+      display: inline-block;
+      text-decoration: none;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      font-size: 1.1rem;
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .user-content {
+        flex-direction: column;
+        text-align: center;
+      }
+      .documents-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== ШАПКА ========== -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+      <!-- Кнопка гамбургер -->
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../index.html">Главная</a></li>
+          <li><a href="../news.html">Новости</a></li>
+          <li><a href="../wiki/">Википедия</a></li>
+          <li><a href="../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../services.html">Услуги</a></li>
+          <li><a href="../profile.html" class="active">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ========== ОСНОВНОЙ КОНТЕНТ ========== -->
+  <main class="main-content profile-main">
+    <div class="profile-container">
+      <div class="page-header">
+        <h2>Мои документы</h2>
+        <p>Электронные копии ваших документов</p>
+      </div>
+
+      <div id="loading" class="loading">Загрузка данных...</div>
+
+      <div id="content" style="display: none;">
+        <!-- БЛОК ЛИЧНОЙ ИНФОРМАЦИИ -->
+        <div class="user-info-section">
+          <div class="qr-code-container">
+            <div id="userQrCode"></div>
+          </div>
+          <div class="user-content">
+            <img id="userAvatar" src="../images/default-avatar.png" alt="Фото" class="user-avatar" />
+            <div class="user-data">
+              <div class="user-detail"><strong>ФИО:</strong> <span id="fullName">—</span></div>
+              <div class="user-detail"><strong>Дата рождения:</strong> <span id="birthDate">—</span></div>
+              <div class="user-detail"><strong>Место рождения:</strong> <span id="birthPlace">—</span></div>
+              <div class="user-detail"><strong>Пол:</strong> <span id="gender">—</span></div>
+              <div class="user-detail"><strong>Личный код:</strong> <span id="personalCode">—</span></div>
+              <div class="user-detail"><strong>Гражданство:</strong> СФСРЮ</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- СЕТКА ДОКУМЕНТОВ -->
+        <div id="documentsGrid" class="documents-grid"></div>
+
+        <!-- КНОПКА ДОБАВЛЕНИЯ НОВОГО ДОКУМЕНТА -->
+        <div style="text-align: center; margin-top: 2rem;">
+          <a href="add-documents.html" class="add-btn">+ Добавить документ</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========== ПОДВАЛ ========== -->
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>
+      Телефон: +7 (993) 609-81-26 | Почта:
+      <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
+    </p>
+  </footer>
+
+  <!-- ========== БИБЛИОТЕКИ ========== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/mob-menu.js"></script>
+
+  <script>
+    let currentUser = null;
+    let userProfile = null;
+    let personalCode = null;
+
+    function formatDate(dateString) {
+      if (!dateString) return '—';
+      try { return new Date(dateString).toLocaleDateString('ru-RU'); } 
+      catch { return dateString; }
+    }
+
+    function getStatusLabel(status) {
+      if (status === 'verified') return '✅ Подтверждено';
+      if (status === 'oncheck') return '⏳ На проверке';
+      if (status === 'rejected') return '❌ Отклонено';
+      return '—';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      // Гамбургер-меню (ваш существующий код)
+      
+      firebase.auth().onAuthStateChanged(async user => {
+        if (!user) return window.location.href = '../login.html';
+        currentUser = user;
+        await loadUserProfile(user.uid);
+        await loadDocuments();      // загружаем документы по userId
+        renderUserInfo();
+        renderDocumentsGrid();
+        hideLoading();
+      });
+    });
+
+    async function loadUserProfile(userId) {
+      try {
+        const userDoc = await firebase.firestore().collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          userProfile = userDoc.data();
+          personalCode = userProfile.personalCode;
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки профиля:', err);
+      }
+    }
+
+    // ========== ЗАГРУЗКА ДОКУМЕНТОВ ПО userId ==========
+    async function loadDocuments() {
+      try {
+        if (!currentUser) return;
+        const snapshot = await firebase.firestore()
+          .collection('documents')
+          .where('userId', '==', currentUser.uid)
+          .get();
+
+        window.userDocuments = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        console.log(`Загружено документов: ${window.userDocuments.length}`);
+      } catch (err) {
+        console.error('Ошибка загрузки документов:', err);
+        window.userDocuments = [];
+      }
+    }
+
+    function renderUserInfo() {
+      if (!userProfile) return;
+
+      const fullName = `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() || '—';
+      safeSetText('fullName', fullName);
+      safeSetText('birthDate', formatDate(userProfile.dateOfBirth));
+      safeSetText('birthPlace', userProfile.placeOfBirth || '—');
+
+      // Пол из паспорта (если есть)
+      const passport = (window.userDocuments || []).find(d => d.documentType === 'passport');
+      const gender = passport?.gender || '—';
+      safeSetText('gender', gender);
+      safeSetText('personalCode', personalCode || '—');
+
+      // Фото
+      const avatarImg = document.getElementById('userAvatar');
+      if (avatarImg && personalCode) {
+        const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '');
+        const imgUrl = `../images/avatars/${safeCode}.jpg`;
+        const img = new Image();
+        img.onload = () => { avatarImg.src = imgUrl; };
+        img.onerror = () => { avatarImg.src = '../images/default-avatar.png'; };
+        img.src = imgUrl;
+      }
+
+      // QR-код
+      const qrContainer = document.getElementById('userQrCode');
+      if (qrContainer && personalCode) {
+        qrContainer.innerHTML = '';
+        try {
+          new QRCode(qrContainer, {
+            text: `https://e-pass-sfsru.web.app/${personalCode}/`,
+            width: 72,
+            height: 72,
+            colorDark: '#000',
+            colorLight: '#fff',
+            correctLevel: QRCode.CorrectLevel.L
+          });
+        } catch (e) { console.warn(e); }
+      }
+    }
+
+    function renderDocumentsGrid() {
+      const grid = document.getElementById('documentsGrid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const docs = window.userDocuments || [];
+
+      // Группируем по documentType, оставляем последний по дате
+      const docsByType = {};
+      docs.forEach(doc => {
+        const type = doc.documentType;
+        const createdAt = doc.createdAt?.toDate ? doc.createdAt.toDate() : new Date(0);
+        if (!docsByType[type] || createdAt > docsByType[type].createdAt) {
+          docsByType[type] = doc;
+        }
+      });
+
+      const docTypes = [
+        { type: 'passport', title: 'Паспорт гражданина СФСРЮ', url: 'passport.html' },
+        { type: 'foreignPassport', title: 'Заграничный паспорт', url: 'foreign-passport.html' },
+        // добавьте другие типы
+      ];
+
+      docTypes.forEach(item => {
+        const doc = docsByType[item.type];
+        if (!doc) return;
+
+        const card = document.createElement('a');
+        card.href = `${item.url}?id=${doc.id}`;
+        card.className = 'document-card';
+        card.innerHTML = `
+          <div class="document-title">${item.title}</div>
+          <div class="document-status">${getStatusLabel(doc.status)}</div>
+        `;
+        grid.appendChild(card);
+      });
+
+      if (grid.children.length === 0) {
+        grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center;">У вас пока нет добавленных документов.</p>';
+      }
+    }
+
+    function safeSetText(id, text) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    }
+
+    function hideLoading() {
+      const loading = document.getElementById('loading');
+      if (loading) loading.style.display = 'none';
+      const content = document.getElementById('content');
+      if (content) content.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
