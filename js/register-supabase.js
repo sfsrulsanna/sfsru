@@ -110,7 +110,7 @@ function getFormData() {
     birthPlace: document.getElementById('birthPlace').value.trim(),
     personalCode: document.getElementById('personalCode').value.trim(),
     phone: document.getElementById('phone').value,
-    email: document.getElementById('email').value.trim(),
+    email: document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase(),
     permanentAddress: document.getElementById('permanentAddress')?.value.trim() || '',
     temporaryAddress: document.getElementById('temporaryAddress')?.value.trim() || '',
     residenceAddress: document.getElementById('residenceAddress')?.value.trim() || ''
