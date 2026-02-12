@@ -1,14 +1,17 @@
 // js/register-supabase.js
 import { supabase } from './supabase-config.js'
 
+// --- Глобальные переменные состояния ---
 let currentStep = 1
 let accountType = null
 
+// --- Инициализация после загрузки DOM ---
 document.addEventListener('DOMContentLoaded', () => {
   initEventListeners()
   updateProgress()
 })
 
+// --- Привязка обработчиков ---
 function initEventListeners() {
   // Выбор типа аккаунта
   document.querySelectorAll('.account-type-option').forEach(el => {
@@ -29,12 +32,14 @@ function initEventListeners() {
   document.getElementById('registrationForm')?.addEventListener('submit', handleRegistration)
 }
 
+// --- Вспомогательные функции ---
 function togglePass(id) {
   const el = document.getElementById(id)
-  el.type = el.type === 'password' ? 'text' : 'password'
+  if (el) el.type = el.type === 'password' ? 'text' : 'password'
 }
 
-function selectAccountType() {
+// --- Функции шагов (доступны глобально для inline-обработчиков) ---
+window.selectAccountType = function() {
   const selected = document.querySelector('.account-type-option.selected')
   if (!selected) {
     showAlert('Выберите тип аккаунта', 'error')
@@ -51,9 +56,8 @@ function selectAccountType() {
   document.getElementById('step2Form').classList.add('active')
   updateProgress()
 }
-window.selectAccountType = selectAccountType
 
-function nextStep(step) {
+window.nextStep = function(step) {
   if (validateStep(step)) {
     document.getElementById(`step${step}Form`).classList.remove('active')
     currentStep = step + 1
@@ -62,16 +66,15 @@ function nextStep(step) {
     if (currentStep === 4) updateSummary()
   }
 }
-window.nextStep = nextStep
 
-function prevStep(step) {
+window.prevStep = function(step) {
   document.getElementById(`step${step}Form`).classList.remove('active')
   currentStep = step - 1
   document.getElementById(`step${currentStep}Form`).classList.add('active')
   updateProgress()
 }
-window.prevStep = prevStep
 
+// --- Валидация шагов ---
 function validateStep(step) {
   if (step === 2) {
     const fields = ['lastName', 'firstName', 'birthDate', 'birthPlace', 'personalCode']
@@ -87,6 +90,27 @@ function validateStep(step) {
       return false
     }
   } else if (step === 3) {
+    // --- ЖЁСТКАЯ ОЧИСТКА И ВАЛИДАЦИЯ EMAIL ---
+    const emailInput = document.getElementById('email')
+    let email = emailInput.value.trim()
+    // Удаляем ВСЕ пробельные символы внутри строки (включая неразрывные)
+    email = email.replace(/\s+/g, '')
+    // Приводим к нижнему регистру
+    email = email.toLowerCase()
+    // Записываем обратно в поле (чтобы пользователь видел очищенный)
+    emailInput.value = email
+
+    if (!email) {
+      showAlert('Введите email', 'error')
+      return false
+    }
+    // Проверка формата (стандартная регулярка)
+    const emailRegex = /^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/
+    if (!emailRegex.test(email)) {
+      showAlert('Введите корректный email (например: name@domain.com)', 'error')
+      return false
+    }
+
     const p = document.getElementById('password').value
     const cp = document.getElementById('confirmPassword').value
     if (p.length < 8 || !/(?=.*[a-zA-Z])(?=.*\d)/.test(p)) {
@@ -101,6 +125,7 @@ function validateStep(step) {
   return true
 }
 
+// --- Сбор данных формы ---
 function getFormData() {
   return {
     lastName: document.getElementById('lastName').value.trim(),
@@ -111,12 +136,14 @@ function getFormData() {
     personalCode: document.getElementById('personalCode').value.trim(),
     phone: document.getElementById('phone').value,
     email: document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase(),
-    permanentAddress: document.getElementById('permanentAddress')?.value.trim() || '',
-    temporaryAddress: document.getElementById('temporaryAddress')?.value.trim() || '',
-    residenceAddress: document.getElementById('residenceAddress')?.value.trim() || ''
+    // Поля адреса отсутствуют в текущей форме — добавляем заглушки
+    permanentAddress: '',
+    temporaryAddress: '',
+    residenceAddress: ''
   }
 }
 
+// --- Обновление сводки на шаге 4 ---
 function updateSummary() {
   const d = getFormData()
   document.getElementById('registrationSummary').innerHTML = `
@@ -129,14 +156,17 @@ function updateSummary() {
   `
 }
 
+// --- Обновление прогресс-бара ---
 function updateProgress() {
-  document.getElementById('progressFill').style.width = `${(currentStep / 4) * 100}%`
+  const progressFill = document.getElementById('progressFill')
+  if (progressFill) progressFill.style.width = `${(currentStep / 4) * 100}%`
   for (let i = 1; i <= 4; i++) {
     const el = document.getElementById(`step${i}`)
-    el?.classList.toggle('active', i === currentStep)
+    if (el) el.classList.toggle('active', i === currentStep)
   }
 }
 
+// --- Форматирование телефона ---
 function formatPhoneNumber(e) {
   let v = e.target.value.replace(/\D/g, '')
   if (v.length === 0) { e.target.value = ''; return }
@@ -149,6 +179,7 @@ function formatPhoneNumber(e) {
   e.target.value = f
 }
 
+// --- ОСНОВНАЯ ФУНКЦИЯ РЕГИСТРАЦИИ (ОТПРАВКА В SUPABASE) ---
 async function handleRegistration(e) {
   e.preventDefault()
 
@@ -159,6 +190,9 @@ async function handleRegistration(e) {
 
   const formData = getFormData()
   const password = document.getElementById('password').value
+
+  // Дополнительная очистка email на всякий случай
+  formData.email = formData.email.replace(/\s+/g, '').toLowerCase()
 
   showAlert('Регистрация...', 'info')
 
@@ -174,7 +208,15 @@ async function handleRegistration(e) {
       }
     })
 
-    if (authError) throw authError
+    if (authError) {
+      // Специальная обработка rate limit
+      if (authError.status === 429 || authError.message?.includes('rate limit')) {
+        showAlert('Слишком много попыток регистрации. Подождите несколько минут и повторите.', 'error')
+        return
+      }
+      throw authError
+    }
+
     if (!authData.user) throw new Error('Не удалось создать пользователя')
 
     const userId = authData.user.id
@@ -203,9 +245,13 @@ async function handleRegistration(e) {
         email_status: 'verified'
       })
 
-    if (userError) throw userError
+    if (userError) {
+      // Если не удалось сохранить данные, удаляем созданного пользователя (чистота)
+      await supabase.auth.admin.deleteUser(userId).catch(() => {})
+      throw userError
+    }
 
-    // 3. Сохраняем адреса (если есть)
+    // 3. Сохраняем адреса (если есть поля — пока заглушки)
     if (formData.permanentAddress || formData.temporaryAddress || formData.residenceAddress) {
       const { error: addressError } = await supabase
         .from('users_addresses')
@@ -218,18 +264,16 @@ async function handleRegistration(e) {
           temporary_status: 'oncheck',
           residence_status: 'oncheck'
         })
-
       if (addressError) throw addressError
     }
 
-    // 4. Показываем сообщение и личный код
+    // 4. Успех
     showAlert(`
       <strong>Регистрация завершена!</strong><br>
       На ваш email отправлено письмо для подтверждения.<br>
       Ваш личный код: <code>${formData.personalCode}</code>
     `, 'success')
 
-    // Сохраняем код в localStorage для отображения на профиле
     localStorage.setItem('personalCode', formData.personalCode)
 
     // Через 4 секунды переходим на страницу входа
@@ -237,21 +281,32 @@ async function handleRegistration(e) {
 
   } catch (error) {
     console.error('Registration error:', error)
-    let message = 'Ошибка регистрации'
-    if (error.message.includes('already registered')) {
+    let message = 'Ошибка регистрации. Попробуйте позже.'
+
+    if (error.message?.includes('Email')) {
+      message = 'Указанный email недопустим. Проверьте формат.'
+    } else if (error.message?.includes('already registered') || error.code === 'user_already_exists') {
       message = 'Этот email уже зарегистрирован'
-    } else if (error.message.includes('duplicate key')) {
+    } else if (error.message?.includes('duplicate key') || error.message?.includes('personal_code')) {
       message = 'Такой личный код уже используется'
+    } else if (error.code === '23505') { // уникальность
+      message = 'Такой email или личный код уже зарегистрированы'
     }
+
     showAlert(message, 'error')
   }
 }
 
+// --- Функция показа уведомлений ---
 function showAlert(message, type) {
   const el = document.getElementById('alertMessage')
   if (!el) return
   el.innerHTML = message
   el.className = `alert alert-${type}`
   el.style.display = 'block'
-  setTimeout(() => el.style.display = 'none', 5000)
+  // Автоскрытие через 7 секунд (для успеха — дольше, чтобы прочитали код)
+  const delay = type === 'success' ? 7000 : 5000
+  setTimeout(() => el.style.display = 'none', delay)
 }
+
+// Экспортируем ничего, но все функции уже в window

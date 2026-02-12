@@ -32,33 +32,31 @@
   <link rel="stylesheet" href="css/register.css" />
 </head>
 <body>
-  <!-- Шапка (без изменений) -->
+  <!-- Шапка -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
         <img src="images/gerb.png" alt="Герб СФСРЮ">
         <h1>СФСРЮ</h1>
       </div>
-
-      <!-- Кнопка гамбургер -->
       <button class="menu-toggle" aria-label="Открыть меню">
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
       </button>
-
       <nav class="nav-menu">
         <ul>
-          <li><a href="index.html" class="active">Главная</a></li>
+          <li><a href="index.html">Главная</a></li>
           <li><a href="news.html">Новости</a></li>
           <li><a href="wiki/">Википедия</a></li>
           <li><a href="healthcare.html">Здравоохранение</a></li>
           <li><a href="services.html">Услуги</a></li>
-          <li><a href="profile.html">Личный кабинет</a></li>
+          <li><a href="profile.html" class="active">Личный кабинет</a></li>
         </ul>
       </nav>
     </div>
   </header>
+  <div class="menu-overlay"></div>
 
   <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main class="main-content registration-main">
@@ -68,10 +66,10 @@
         <p class="registration-subtitle">Заполните анкету для получения доступа к государственным услугам</p>
       </div>
 
-      <!-- Прогресс бар (без изменений) -->
+      <!-- Прогресс бар -->
       <div class="progress-container">
         <div class="progress-bar">
-          <div id="progressFill" class="progress-fill"></div>
+          <div id="progressFill" class="progress-fill" style="width: 25%;"></div>
         </div>
         <div class="progress-steps">
           <div id="step1" class="step active">
@@ -93,10 +91,7 @@
         </div>
       </div>
 
-      <!-- ФОРМА РЕГИСТРАЦИИ (структура без изменений, только добавлены id для полей адреса, если они нужны) 
-           Примечание: поля permanentAddress, temporaryAddress, residenceAddress отсутствуют в исходной форме,
-           код обращается к ним через `?.value.trim() || ''`, поэтому ошибки не будет.
-           Если хотите собирать адреса — добавьте эти поля ниже. -->
+      <!-- ФОРМА РЕГИСТРАЦИИ -->
       <form id="registrationForm">
         <!-- Шаг 1: Тип аккаунта -->
         <div id="step1Form" class="form-step active">
@@ -145,14 +140,13 @@
             <input type="text" id="personalCode" class="form-input" placeholder="XXXX-XXXX" required />
             <small class="form-hint">Формат: 4 цифры, дефис, 4 цифры (например: 1234-5678)</small>
           </div>
-          <!-- Поля адреса (не обязательны, оставлены для совместимости, можно добавить позже) -->
           <div class="form-navigation">
             <button type="button" class="btn btn-prev" onclick="window.prevStep(2)">Назад</button>
             <button type="button" class="btn btn-next" onclick="window.nextStep(2)">Далее</button>
           </div>
         </div>
 
-        <!-- Шаг 3: Пароль -->
+        <!-- Шаг 3: Пароль и контакты -->
         <div id="step3Form" class="form-step">
           <div class="form-group">
             <label for="email" class="form-label">Электронная почта</label>
@@ -220,8 +214,7 @@
     </p>
   </footer>
 
-  <!-- ========== НОВЫЙ КОД ДЛЯ SUPABASE ========== -->
-  <!-- 1. Import map для Supabase (ES-модули) -->
+  <!-- ========== SUPABASE ========== -->
   <script type="importmap">
     {
       "imports": {
@@ -230,13 +223,11 @@
     }
   </script>
 
-  <!-- 2. Конфигурация Supabase (отдельный модуль) -->
+  <!-- Конфигурация Supabase (обязательно замени URL и ключ) -->
   <script type="module" src="js/supabase-config.js"></script>
-
-  <!-- 3. Скрипт регистрации (вся логика) -->
+  <!-- Скрипт регистрации -->
   <script type="module" src="js/register-supabase.js"></script>
-
-  <!-- Единое мобильное меню (оставляем, так как это статика) -->
+  <!-- Мобильное меню (старый, но исправленный) -->
   <script src="js/mob-menu.js"></script>
 </body>
 </html>
