@@ -25,7 +25,7 @@
   <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-
+  
   <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
   <!-- Иконки Font Awesome -->
@@ -609,16 +609,14 @@
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО (ОДИН ШАГ) -->
+  <!-- МОДАЛЬНОЕ ОКНО -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
-        <h4 id="modalTitle">Редактирование ID-карты</h4>
+        <h4 id="modalTitle">Добавление ID-карты</h4>
         <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
       </div>
-      <div class="modal-body" id="modalBody">
-        <!-- Динамически заполняется формой -->
-      </div>
+      <div class="modal-body" id="modalBody"></div>
       <div class="modal-footer">
         <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
         <button type="button" class="btn-primary" id="modalSaveBtn">Сохранить</button>
@@ -676,12 +674,12 @@
           const urlParams = new URLSearchParams(window.location.search)
           const id = urlParams.get('id')
           if (id) {
-            return supabase.from('documents_id_card').select('*').eq('id', id).single()
+            return supabase.from('documents_idcard').select('*').eq('id', id).single()
           } else {
             const { data: user } = await supabase.from('users').select('personal_code').eq('id', session.user.id).single()
             if (!user) return { data: null, error: 'No user' }
             const { data, error } = await supabase
-              .from('documents_id_card')
+              .from('documents_idcard')
               .select('*')
               .eq('personal_code', user.personal_code)
               .order('created_at', { ascending: false })
@@ -982,13 +980,13 @@
       let result
       if (currentDocId) {
         result = await supabase
-          .from('documents_id_card')
+          .from('documents_idcard')
           .update(formDataToSend)
           .eq('id', currentDocId)
       } else {
         formDataToSend.created_at = new Date().toISOString()
         result = await supabase
-          .from('documents_id_card')
+          .from('documents_idcard')
           .insert([formDataToSend])
           .select()
       }
