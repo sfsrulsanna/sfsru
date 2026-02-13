@@ -60,7 +60,7 @@
       transition: opacity 0.2s;
     }
     .edit-btn:hover, .flip-btn:hover { opacity: 0.9; }
-    .flip-btn { background: #6c757d; } /* серый для переворота */
+    .flip-btn { background: #6c757d; }
 
     /* ========== МОДАЛЬНОЕ ОКНО ========== */
     .modal-overlay {
@@ -170,7 +170,7 @@
       background: #fafafa;
     }
 
-    /* ========== СТИЛИ ДЛЯ КАРТОЧКИ (ВОССТАНОВЛЕНЫ ИЗ РАБОЧЕЙ ВЕРСИИ) ========== */
+    /* ========== СТИЛИ ДЛЯ КАРТОЧКИ ========== */
     :root {
       --card-pink: #fff9f9;
       --card-pink-dark: #e0c0c0;
@@ -189,7 +189,7 @@
       position: relative;
       width: 100%;
       height: 0;
-      padding-bottom: 60%; /* 5:3 aspect ratio */
+      padding-bottom: 60%;
       transform-style: preserve-3d;
       transition: transform 0.6s;
       cursor: pointer;
@@ -298,7 +298,6 @@
       gap: 0.3rem;
     }
 
-    /* Поле с меткой сверху, значением снизу */
     .field-block {
       display: flex;
       flex-direction: column;
@@ -326,7 +325,6 @@
       border-bottom: 1px dashed var(--card-pink-dark);
     }
 
-    /* Задняя сторона — также метка сверху, значение снизу */
     .card-back {
       display: flex;
       flex-direction: column;
@@ -427,7 +425,6 @@
       background: #f5f5f5;
     }
 
-    /* ========== АДАПТАЦИЯ ========== */
     @media (max-width: 600px) {
       .card { padding-bottom: 100%; }
       .front-content { flex-direction: column; }
@@ -439,7 +436,6 @@
   </style>
 </head>
 <body>
-  <!-- ШАПКА САЙТА -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -466,28 +462,20 @@
 
   <main class="main-content">
     <div class="container">
-      <!-- Индикатор загрузки -->
       <div id="loading" class="loading" style="text-align: center; padding: 3rem;">Загрузка данных...</div>
-
-      <!-- Блок "Нет данных" -->
       <div id="noData" style="display: none; text-align: center; padding: 3rem;">
         <p>У вас пока нет ID-карты.</p>
         <button class="edit-btn" id="addBtn">Добавить ID-карту</button>
       </div>
-
-      <!-- Контент с карточкой -->
       <div id="content" style="display: none;">
-        <!-- СТАТУС И КНОПКИ В ОДНОЙ СТРОКЕ -->
         <div class="status-and-edit">
           <span id="statusBadge" class="document-status" style="display: none;"></span>
           <button class="edit-btn" id="editBtn">Изменить данные</button>
           <button class="flip-btn" id="flipBtn">Перевернуть карту</button>
         </div>
 
-        <!-- КАРТОЧКА -->
         <div class="card-container">
           <div class="card" id="card">
-            <!-- Лицевая сторона -->
             <div class="card-front">
               <div class="card-header">
                 <div class="title">ЭЛЕКТРОННОЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</div>
@@ -500,7 +488,7 @@
                   </div>
                   <div class="signature-label">ЛИЧНАЯ ПОДПИСЬ</div>
                   <div class="signature">
-                    <img id="userSignature" src="../../images/default-signature.png" alt="Подпись" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\"width:100%;height:100%;background:#f0f0f0;border-radius:4px;\"></div>';">
+                    <img id="userSignature" src="../../images/default-avatar.png" alt="Подпись">
                   </div>
                 </div>
                 <div class="right-col">
@@ -547,19 +535,15 @@
                 </div>
               </div>
             </div>
-
-            <!-- Оборотная сторона -->
             <div class="card-back">
               <div class="card-header">
                 <div class="title">ЭЛЕКТРОННОЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</div>
                 <div class="subtitle">ГРАЖДАНИНА СФСРЮ</div>
               </div>
-              <!-- НОМЕР УДОСТОВЕРЕНИЯ -->
               <div class="back-block">
                 <span class="back-label">НОМЕР УДОСТОВЕРЕНИЯ</span>
                 <span class="back-value highlight-number" id="backCardNumber">—</span>
               </div>
-              <!-- КОД ПОДРАЗДЕЛЕНИЯ и ЛИЧНЫЙ КОД в одной строке -->
               <div class="double-back">
                 <div class="back-block">
                   <span class="back-label">КОД ПОДРАЗДЕЛЕНИЯ</span>
@@ -570,12 +554,10 @@
                   <span class="back-value" id="personalCode">—</span>
                 </div>
               </div>
-              <!-- КЕМ ВЫДАНО -->
               <div class="back-block">
                 <span class="back-label">КЕМ ВЫДАНО</span>
                 <span class="back-value" id="issuedBy">—</span>
               </div>
-              <!-- ПОЛИС ОМС и ГРУППА КРОВИ/РЕЗУС -->
               <div class="double-back">
                 <div class="back-block">
                   <span class="back-label">ПОЛИС ОМС</span>
@@ -586,7 +568,6 @@
                   <span class="back-value" id="blood">—</span>
                 </div>
               </div>
-              <!-- ИНН и НСС -->
               <div class="double-back">
                 <div class="back-block">
                   <span class="back-label">ИНН</span>
@@ -597,7 +578,6 @@
                   <span class="back-value" id="nss">—</span>
                 </div>
               </div>
-              <!-- АДРЕС РЕГИСТРАЦИИ + QR -->
               <div class="address-row">
                 <div class="back-block">
                   <span class="back-label">АДРЕС РЕГИСТРАЦИИ</span>
@@ -609,7 +589,6 @@
           </div>
         </div>
 
-        <!-- ТАБЛИЦА РАНЕЕ ВЫДАННЫХ ID-КАРТ -->
         <div class="previous-section">
           <h3 class="previous-title">Ранее выданные ID-карты</h3>
           <table class="previous-table">
@@ -635,7 +614,6 @@
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО (ДВА ШАГА) -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -651,7 +629,6 @@
     </div>
   </div>
 
-  <!-- БИБЛИОТЕКИ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script type="importmap">
     { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
@@ -659,29 +636,21 @@
   <script type="module" src="../../js/supabase-config.js"></script>
   <script src="../../js/mob-menu.js"></script>
 
-  <!-- ПОЛНЫЙ JS КОД (ИСПРАВЛЕННЫЙ) -->
   <script type="module">
     import { supabase } from '../../js/supabase-config.js'
 
-    // --- Глобальные переменные ---
     let currentDocId = null
     let documentData = {}
     let userPersonalCode = null
     let userProfile = null
-
-    // --- Для модального окна ---
     let currentStep = 1
     const totalSteps = 2
-    let formData = {} // данные формы (основные + previousCards)
+    let formData = {}
 
-    // --- Вспомогательные функции ---
     function formatDate(dateString) {
       if (!dateString) return '—'
-      try {
-        return new Date(dateString).toLocaleDateString('ru-RU')
-      } catch {
-        return dateString
-      }
+      try { return new Date(dateString).toLocaleDateString('ru-RU') }
+      catch { return dateString }
     }
 
     function getStatusLabel(status) {
@@ -693,21 +662,12 @@
 
     function escapeHTML(str) {
       if (!str) return ''
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;')
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')
     }
 
-    // --- Загрузка данных (параллельная) ---
     async function loadData() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) {
-        window.location.href = '../../login.html'
-        return
-      }
+      if (sessionError || !session) { window.location.href = '../../login.html'; return }
 
       const [profileResult, docResult] = await Promise.allSettled([
         supabase.from('users').select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender').eq('id', session.user.id).single(),
@@ -753,7 +713,6 @@
       }
     }
 
-    // --- Отрисовка карточки ---
     function renderCard(data) {
       document.getElementById('surname').textContent = data.surname || '—'
       document.getElementById('name').textContent = data.name || '—'
@@ -788,16 +747,10 @@
         photoImg.src = `../../images/avatars/${safeCode}.jpg`
         photoImg.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
         signatureImg.src = `../../images/avatars/signatures/${safeCode}.jpg`
-        signatureImg.onerror = function() { 
-          this.style.display = 'none'; 
-          this.parentNode.innerHTML = '<div style="width:100%;height:100%;background:#f0f0f0;border-radius:4px;"></div>';
-        }
+        signatureImg.onerror = () => { signatureImg.src = '../../images/default-avatar.png' }
       } else {
         photoImg.src = '../../images/default-avatar.png'
-        signatureImg.onerror = function() { 
-          this.style.display = 'none'; 
-          this.parentNode.innerHTML = '<div style="width:100%;height:100%;background:#f0f0f0;border-radius:4px;"></div>';
-        }
+        signatureImg.src = '../../images/default-avatar.png'
       }
 
       const qrContainer = document.getElementById('qrCode')
@@ -814,7 +767,6 @@
       }
     }
 
-    // --- Отрисовка таблицы ранее выданных карт ---
     function renderPreviousCards(cards) {
       const tbody = document.getElementById('previousCardsBody')
       if (!cards || cards.length === 0) {
@@ -831,7 +783,6 @@
       `).join('')
     }
 
-    // --- Переворот карты по клику на карточку и кнопке ---
     document.getElementById('card').addEventListener('click', (e) => {
       if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
         document.getElementById('card').classList.toggle('flipped')
@@ -841,7 +792,6 @@
       document.getElementById('card').classList.toggle('flipped')
     })
 
-    // --- МОДАЛЬНОЕ ОКНО (два шага) ---
     async function openAddModal() {
       currentStep = 1
       formData = {
@@ -865,12 +815,11 @@
         registration_address: '',
         previous_id_cards: []
       }
-      window.openModal('Добавление ID-карты')
+      openModal('Добавление ID-карты')
     }
 
     function openEditModal() {
       currentStep = 1
-      // Копируем все поля из documentData в formData, включая предыдущие карты
       formData = {
         surname: documentData.surname || '',
         name: documentData.name || '',
@@ -892,7 +841,7 @@
         registration_address: documentData.registration_address || '',
         previous_id_cards: documentData.previous_id_cards || []
       }
-      window.openModal('Редактирование ID-карты')
+      openModal('Редактирование ID-карты')
     }
 
     function openModal(title) {
@@ -1003,7 +952,7 @@
     function renderStep2() {
       const cards = formData.previous_id_cards || []
       let listHtml = cards.map((card, i) => `
-        <div class="record-block" data-index="${i}">
+        <div class="record-block">
           <div class="form-group">
             <label>Номер удостоверения</label>
             <input type="text" class="form-input prev-card-number" value="${escapeHTML(card.card_number || '')}">
@@ -1030,7 +979,6 @@
       `
     }
 
-    // --- Функции для работы с записями в шаге 2 ---
     window.addPrevCard = function() {
       const container = document.getElementById('prevCardsContainer')
       const html = `
@@ -1062,51 +1010,42 @@
       if (block) block.remove()
     }
 
-    // --- Сохранение данных текущего шага (исправлено: проверка на null) ---
     function saveStepData() {
       if (currentStep === 1) {
-        const getValue = (id) => {
-          const el = document.getElementById(id)
-          return el ? el.value : ''
-        }
-        formData.surname = getValue('surname')?.trim() || ''
-        formData.name = getValue('name')?.trim() || ''
-        formData.patronymic = getValue('patronymic')?.trim() || ''
-        formData.birth_date = getValue('birth_date') || ''
-        formData.birth_place = getValue('birth_place')?.trim() || ''
-        formData.gender = getValue('gender') || ''
-        formData.issue_date = getValue('issue_date') || ''
-        formData.expiry_date = getValue('expiry_date') || ''
-        formData.card_number = getValue('card_number')?.trim() || ''
-        formData.issued_by = getValue('issued_by')?.trim() || ''
-        formData.department_code = getValue('department_code')?.trim() || ''
-        formData.personal_code_ref = getValue('personal_code_ref')?.trim() || userPersonalCode
-        formData.oms_policy_number = getValue('oms_policy_number')?.trim() || ''
-        formData.blood_group = getValue('blood_group')?.trim() || ''
-        formData.rh_factor = getValue('rh_factor')?.trim() || ''
-        formData.inn_number = getValue('inn_number')?.trim() || ''
-        formData.nss_number = getValue('nss_number')?.trim() || ''
-        formData.registration_address = getValue('registration_address')?.trim() || ''
+        const getVal = id => document.getElementById(id)?.value || ''
+        formData.surname = getVal('surname').trim()
+        formData.name = getVal('name').trim()
+        formData.patronymic = getVal('patronymic').trim()
+        formData.birth_date = getVal('birth_date')
+        formData.birth_place = getVal('birth_place').trim()
+        formData.gender = getVal('gender')
+        formData.issue_date = getVal('issue_date')
+        formData.expiry_date = getVal('expiry_date')
+        formData.card_number = getVal('card_number').trim()
+        formData.issued_by = getVal('issued_by').trim()
+        formData.department_code = getVal('department_code').trim()
+        formData.personal_code_ref = getVal('personal_code_ref').trim() || userPersonalCode
+        formData.oms_policy_number = getVal('oms_policy_number').trim()
+        formData.blood_group = getVal('blood_group').trim()
+        formData.rh_factor = getVal('rh_factor').trim()
+        formData.inn_number = getVal('inn_number').trim()
+        formData.nss_number = getVal('nss_number').trim()
+        formData.registration_address = getVal('registration_address').trim()
       } else {
         const blocks = document.querySelectorAll('#prevCardsContainer .record-block')
         const cards = []
         blocks.forEach(block => {
-          const cardNumberEl = block.querySelector('.prev-card-number')
-          const issuedByEl = block.querySelector('.prev-issued-by')
-          const issueDateEl = block.querySelector('.prev-issue-date')
-          const expiryDateEl = block.querySelector('.prev-expiry-date')
           cards.push({
-            card_number: cardNumberEl ? cardNumberEl.value.trim() : '',
-            issued_by: issuedByEl ? issuedByEl.value.trim() : '',
-            issue_date: issueDateEl ? issueDateEl.value : '',
-            expiry_date: expiryDateEl ? expiryDateEl.value : ''
+            card_number: block.querySelector('.prev-card-number')?.value.trim() || '',
+            issued_by: block.querySelector('.prev-issued-by')?.value.trim() || '',
+            issue_date: block.querySelector('.prev-issue-date')?.value || '',
+            expiry_date: block.querySelector('.prev-expiry-date')?.value || ''
           })
         })
         formData.previous_id_cards = cards
       }
     }
 
-    // --- Навигация по шагам ---
     function nextStep() {
       saveStepData()
       if (currentStep < totalSteps) {
@@ -1124,7 +1063,6 @@
       }
     }
 
-    // --- Сохранение в Supabase ---
     async function saveDocument() {
       const newData = { ...formData }
       if (!newData.card_number) {
@@ -1135,16 +1073,10 @@
 
       let result
       if (currentDocId) {
-        result = await supabase
-          .from('documents_id_card')
-          .update(cleanData)
-          .eq('id', currentDocId)
+        result = await supabase.from('documents_id_card').update(cleanData).eq('id', currentDocId)
       } else {
         cleanData.created_at = new Date().toISOString()
-        result = await supabase
-          .from('documents_id_card')
-          .insert([cleanData])
-          .select()
+        result = await supabase.from('documents_id_card').insert([cleanData]).select()
       }
 
       if (result.error) {
@@ -1157,7 +1089,6 @@
       window.location.href = `id-card.html?id=${newId}`
     }
 
-    // --- Инициализация обработчиков ---
     document.addEventListener('DOMContentLoaded', async () => {
       await loadData()
       document.getElementById('addBtn')?.addEventListener('click', openAddModal)
@@ -1169,7 +1100,6 @@
       })
     })
 
-    // Экспорт в глобальную область
     window.openAddModal = openAddModal
     window.openEditModal = openEditModal
     window.openModal = openModal
