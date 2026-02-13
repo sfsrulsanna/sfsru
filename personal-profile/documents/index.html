@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Мои документы — СФСРЮ</title>
-  <!-- favicons (полный набор, как в вашем проекте) -->
+
+  <!-- favicons (полный набор) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -75,8 +76,6 @@
       height: 220px;
       border-radius: 12px;
       object-fit: contain;
-      image-rendering: -webkit-optimize-contrast;
-      image-rendering: crisp-edges;
       border: 2px solid #ddd;
     }
     .user-data {
@@ -122,6 +121,8 @@
       transition: 0.2s;
       display: flex;
       flex-direction: column;
+      text-decoration: none;
+      color: inherit;
     }
     .document-card:hover {
       border-color: #7b091a;
@@ -142,14 +143,16 @@
       font-size: 0.8rem;
       padding: 0.25rem 0.6rem;
       border-radius: 20px;
+    }
+    .status-verified {
       background: rgba(40,167,69,0.1);
       color: #28a745;
     }
-    .document-status.pending {
+    .status-pending {
       background: rgba(255,193,7,0.1);
       color: #856404;
     }
-    .document-status.rejected {
+    .status-rejected {
       background: rgba(220,53,69,0.1);
       color: #dc3545;
     }
@@ -169,110 +172,6 @@
     .field-value {
       width: 60%;
       font-weight: 500;
-    }
-    .document-actions {
-      display: flex;
-      gap: 0.8rem;
-      margin-top: 1rem;
-    }
-    .btn-edit, .btn-delete {
-      padding: 0.4rem 1rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      cursor: pointer;
-    }
-    .btn-edit {
-      background: #7b091a;
-      color: white;
-    }
-    .btn-delete {
-      background: #dc3545;
-      color: white;
-    }
-
-    /* ========== УНИВЕРСАЛЬНОЕ МОДАЛЬНОЕ ОКНО ========== */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.3s;
-    }
-    .modal-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-    .modal {
-      background: white;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 700px;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 1.5rem;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1.5rem;
-    }
-    .btn {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #7b091a, #a83232);
-      color: white;
-    }
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-    }
-    .form-group {
-      margin-bottom: 1.2rem;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 0.4rem;
-      font-weight: 500;
-    }
-    .form-input {
-      width: 100%;
-      padding: 0.6rem 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    .step-indicator {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 0.9rem;
-      color: #7b091a;
-    }
-    .record-block {
-      border: 1px solid #eee;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
     }
 
     /* ========== КНОПКА ДОБАВЛЕНИЯ ========== */
@@ -315,7 +214,6 @@
         <img src="../../images/gerb.png" alt="Герб СФСРЮ">
         <h1>СФСРЮ</h1>
       </div>
-      <!-- Кнопка гамбургер -->
       <button class="menu-toggle" aria-label="Открыть меню">
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
@@ -395,6 +293,7 @@
   <script type="module" src="../../js/supabase-config.js"></script>
   <script src="../../js/mob-menu.js"></script>
 
+  <!-- ========== ПОЛНЫЙ JS КОД (ДОПОЛНЕННЫЙ) ========== -->
   <script type="module">
     import { supabase } from '../../js/supabase-config.js'
 
@@ -449,12 +348,15 @@
     async function loadAllDocuments() {
       if (!personalCode) return []
 
-      // Массив всех таблиц документов
+      // Массив всех таблиц документов (добавлены новые)
       const tables = [
         { type: 'passport', table: 'document_passport' },
-        { type: 'foreignPassport', table: 'document_foreign_passport' }
-		{ type: 'inn', table: 'document_inn' }
-        // Добавьте другие таблицы по мере создания
+        { type: 'foreignPassport', table: 'document_foreign_passport' },
+        { type: 'inn', table: 'documents_inn' },
+        { type: 'nss', table: 'documents_nss' },                 // Номер социального счёта
+        { type: 'driverLicense', table: 'documents_driver_license' }, // Водительские права
+        { type: 'idCard', table: 'documents_id_card' },         // ID-карта
+        { type: 'militaryId', table: 'documents_military_id' }  // Военный билет
       ]
 
       let allDocs = []
@@ -478,7 +380,7 @@
       return allDocs
     }
 
-    // --- Отображение информации пользователя (без изменений) ---
+    // --- Отображение информации пользователя ---
     function renderUserInfo() {
       if (!userProfile) return
       const fullName = `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() || '—'
@@ -492,10 +394,10 @@
       const avatarImg = document.getElementById('userAvatar')
       if (avatarImg && personalCode) {
         const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '')
-        const imgUrl = `../images/avatars/${safeCode}.jpg`
+        const imgUrl = `../../images/avatars/${safeCode}.jpg`
         const img = new Image()
         img.onload = () => { avatarImg.src = imgUrl }
-        img.onerror = () => { avatarImg.src = '../images/default-avatar.png' }
+        img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
         img.src = imgUrl
       }
 
@@ -511,6 +413,28 @@
           colorLight: '#fff',
           correctLevel: QRCode.CorrectLevel.L
         })
+      }
+    }
+
+    // --- Функция получения номера документа в зависимости от типа ---
+    function getDocumentNumber(doc, type) {
+      switch (type) {
+        case 'passport':
+          return doc.series_number || doc.seriesNumber || '—'
+        case 'foreignPassport':
+          return doc.series_number || doc.seriesNumber || '—'
+        case 'inn':
+          return doc.inn_number || '—'
+        case 'nss':
+          return doc.nss_number || doc.number || '—'   // предположим поле nss_number
+        case 'driverLicense':
+          return doc.license_number || doc.series_number || '—'
+        case 'idCard':
+          return doc.card_number || doc.series_number || '—'
+        case 'militaryId':
+          return doc.ticket_number || doc.series_number || '—'
+        default:
+          return '—'
       }
     }
 
@@ -536,15 +460,24 @@
         }
       })
 
+      // Список поддерживаемых документов с названиями и путями к страницам
       const docTypes = [
         { type: 'passport', title: 'Паспорт гражданина СФСРЮ', url: 'passport.html' },
-        { type: 'foreignPassport', title: 'Заграничный паспорт', url: 'foreign-passport.html' }
-		{ type: 'inn', title: 'ИНН', url: 'inn.html' }
+        { type: 'foreignPassport', title: 'Заграничный паспорт', url: 'foreign-passport.html' },
+        { type: 'inn', title: 'ИНН', url: 'inn.html' },
+        { type: 'nss', title: 'Номер социального счёта (НСС)', url: 'nss.html' },
+        { type: 'driverLicense', title: 'Водительское удостоверение', url: 'driver-license.html' },
+        { type: 'idCard', title: 'ID-карта', url: 'id-card.html' },
+        { type: 'militaryId', title: 'Военный билет', url: 'military-id.html' }
       ]
 
       docTypes.forEach(item => {
         const doc = docsByType[item.type]
         if (!doc) return
+
+        const statusLabel = getStatusLabel(doc.status)
+        const statusClass = doc.status === 'verified' ? 'status-verified' : (doc.status === 'oncheck' ? 'status-pending' : 'status-rejected')
+        const number = getDocumentNumber(doc, item.type)
 
         const card = document.createElement('a')
         card.href = `${item.url}?id=${doc.id}`
@@ -552,12 +485,12 @@
         card.innerHTML = `
           <div class="document-header">
             <div class="document-title">${item.title}</div>
-            <span class="document-status ${doc.status}">${getStatusLabel(doc.status)}</span>
+            <span class="document-status ${statusClass}">${statusLabel}</span>
           </div>
           <div class="document-fields">
             <div class="document-field">
-              <span class="field-label">Серия и номер:</span>
-              <span class="field-value">${doc.series_number || doc.seriesNumber || '—'}</span>
+              <span class="field-label">Номер:</span>
+              <span class="field-value">${number}</span>
             </div>
           </div>
         `

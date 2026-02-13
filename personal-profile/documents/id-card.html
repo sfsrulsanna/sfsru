@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ID-карта — СФСРЮ</title>
+
+  <!-- favicons (укажите свои пути) -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+  <!-- ... остальные favicon ссылки ... -->
+
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/personal-profile/passport.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    /* ========== СТАТУС И КНОПКИ ========== */
+    .status-and-edit {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      margin: 2rem 0;
+    }
+    .document-status {
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .status-verified { background: rgba(40,167,69,0.15); color: #28a745; }
+    .status-pending { background: rgba(255,193,7,0.15); color: #856404; }
+    .status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
+    .edit-btn {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* ========== МОДАЛЬНОЕ ОКНО ========== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .modal-header h4 {
+      margin: 0;
+      color: #7b091a;
+    }
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      cursor: pointer;
+      color: #666;
+    }
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      border-top: 1px solid #eee;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1.5rem;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1.5rem;
+      cursor: pointer;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .form-textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* ========== ДОКУМЕНТ ========== */
+    .document-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: #f9f9f9;
+      border: 2px solid #7b091a;
+      border-radius: 16px;
+      padding: 2rem;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+    .info-item {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid #7b091a;
+    }
+    .info-label {
+      font-weight: 600;
+      color: #7b091a;
+      margin-bottom: 0.25rem;
+    }
+    .info-value {
+      word-break: break-word;
+    }
+    .qr-section {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    #qrCode {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto;
+    }
+    @media (max-width: 768px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../../index.html">Главная</a></li>
+          <li><a href="../../news.html">Новости</a></li>
+          <li><a href="../../wiki/">Википедия</a></li>
+          <li><a href="../../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../../services.html">Услуги</a></li>
+          <li><a href="../../profile.html" class="active">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="container">
+      <div id="loading" class="loading" style="text-align: center; padding: 3rem;">Загрузка данных...</div>
+
+      <div id="noData" style="display: none; text-align: center; padding: 3rem;">
+        <p>У вас пока нет ID-карты.</p>
+        <button class="edit-btn" id="addBtn">Добавить ID-карту</button>
+      </div>
+
+      <div id="content" style="display: none;">
+        <div class="document-container" id="docContainer"></div>
+        <div id="statusAndEditContainer"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
+
+  <!-- МОДАЛЬНОЕ ОКНО -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h4 id="modalTitle">Добавление ID-карты</h4>
+        <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
+        <button type="button" class="btn-primary" id="saveBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+      }
+    }
+  </script>
+  <script type="module" src="../../js/supabase-config.js"></script>
+  <script src="../../js/mob-menu.js"></script>
+
+  <script type="module">
+    import { supabase } from '../../js/supabase-config.js'
+
+    // --- Глобальные переменные ---
+    let currentDocId = null
+    let documentData = {}
+    let userPersonalCode = null
+    let userProfile = null
+
+    // --- Вспомогательные функции ---
+    function formatDate(dateString) {
+      if (!dateString) return '—'
+      try {
+        return new Date(dateString).toLocaleDateString('ru-RU')
+      } catch {
+        return dateString
+      }
+    }
+
+    function getStatusLabel(status) {
+      if (status === 'verified') return '✅ Подтверждено'
+      if (status === 'oncheck') return '⏳ На проверке'
+      if (status === 'rejected') return '❌ Отклонено'
+      return '—'
+    }
+
+    function getStatusClass(status) {
+      if (status === 'verified') return 'status-verified'
+      if (status === 'oncheck') return 'status-pending'
+      if (status === 'rejected') return 'status-rejected'
+      return 'document-status'
+    }
+
+    function escapeHTML(str) {
+      if (!str) return ''
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+    }
+
+    // --- Загрузка профиля ---
+    async function loadUserProfile() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        window.location.href = '../../login.html'
+        return
+      }
+      const { data, error } = await supabase
+        .from('users')
+        .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+        .eq('id', session.user.id)
+        .single()
+      if (error) {
+        console.error(error)
+        return
+      }
+      userPersonalCode = data.personal_code
+      userProfile = data
+    }
+
+    // --- Загрузка документа ---
+    async function loadDocument() {
+      await loadUserProfile()
+      const urlParams = new URLSearchParams(window.location.search)
+      currentDocId = urlParams.get('id')
+
+      let data = null
+      if (currentDocId) {
+        const { data: doc, error } = await supabase
+          .from('documents_id_card')
+          .select('*')
+          .eq('id', currentDocId)
+          .single()
+        if (!error) data = doc
+      } else {
+        const { data: docs, error } = await supabase
+          .from('documents_id_card')
+          .select('*')
+          .eq('personal_code', userPersonalCode)
+          .order('created_at', { ascending: false })
+          .limit(1)
+        if (!error && docs.length) {
+          data = docs[0]
+          currentDocId = data.id
+        }
+      }
+
+      if (data) {
+        documentData = data
+        renderDocument(data)
+        document.getElementById('loading').style.display = 'none'
+        document.getElementById('content').style.display = 'block'
+        document.getElementById('noData').style.display = 'none'
+      } else {
+        document.getElementById('loading').style.display = 'none'
+        document.getElementById('noData').style.display = 'block'
+      }
+    }
+
+    // --- Отрисовка документа ---
+    function renderDocument(data) {
+      const fullName = `${data.surname || ''} ${data.name || ''} ${data.patronymic || ''}`.trim() || '—'
+      const html = `
+        <div class="document-container">
+          <div class="qr-section">
+            <div id="qrCode"></div>
+            <p style="margin-top: 0.5rem; color: #666;">Отсканируйте QR-код для проверки подлинности</p>
+          </div>
+          <div class="info-grid">
+            <div class="info-item"><div class="info-label">ФИО</div><div class="info-value">${escapeHTML(fullName)}</div></div>
+            <div class="info-item"><div class="info-label">Дата рождения</div><div class="info-value">${formatDate(data.birth_date)}</div></div>
+            <div class="info-item"><div class="info-label">Место рождения</div><div class="info-value">${escapeHTML(data.birth_place || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Пол</div><div class="info-value">${escapeHTML(data.gender || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Дата выдачи</div><div class="info-value">${formatDate(data.issue_date)}</div></div>
+            <div class="info-item"><div class="info-label">Срок действия</div><div class="info-value">${formatDate(data.expiry_date)}</div></div>
+            <div class="info-item"><div class="info-label">Номер карты</div><div class="info-value">${escapeHTML(data.card_number || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Кем выдан</div><div class="info-value">${escapeHTML(data.issued_by || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Код подразделения</div><div class="info-value">${escapeHTML(data.department_code || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Личный код</div><div class="info-value">${escapeHTML(data.personal_code_ref || data.personal_code || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Полис ОМС</div><div class="info-value">${escapeHTML(data.oms_policy_number || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Группа крови</div><div class="info-value">${escapeHTML(data.blood_group || '—')}</div></div>
+            <div class="info-item"><div class="info-label">Резус-фактор</div><div class="info-value">${escapeHTML(data.rh_factor || '—')}</div></div>
+            <div class="info-item"><div class="info-label">ИНН</div><div class="info-value">${escapeHTML(data.inn_number || '—')}</div></div>
+            <div class="info-item"><div class="info-label">НСС</div><div class="info-value">${escapeHTML(data.nss_number || '—')}</div></div>
+            <div class="info-item" style="grid-column: span 2;">
+              <div class="info-label">Адрес регистрации</div>
+              <div class="info-value">${escapeHTML(data.registration_address || '—')}</div>
+            </div>
+          </div>
+        </div>
+      `
+      document.getElementById('docContainer').innerHTML = html
+
+      // QR-код из номера карты
+      if (data.card_number) {
+        new QRCode(document.getElementById('qrCode'), {
+          text: data.card_number,
+          width: 180,
+          height: 180
+        })
+      }
+
+      // Статус и кнопка редактирования
+      const statusHtml = `
+        <div class="status-and-edit">
+          <span class="${getStatusClass(data.status)}">${getStatusLabel(data.status)}</span>
+          <button class="edit-btn" id="editBtn">Изменить данные</button>
+        </div>
+      `
+      document.getElementById('statusAndEditContainer').innerHTML = statusHtml
+      document.getElementById('editBtn').addEventListener('click', () => {
+        window.formData = { ...data }
+        window.openEditModal()
+      })
+    }
+
+    // --- Модальное окно добавления/редактирования ---
+    let formData = {}
+
+    async function openAddModal() {
+      if (!userProfile) await loadUserProfile()
+      formData = {
+        surname: userProfile?.surname || '',
+        name: userProfile?.name || '',
+        patronymic: userProfile?.patronymic || '',
+        birth_date: userProfile?.date_of_birth || '',
+        birth_place: userProfile?.place_of_birth || '',
+        gender: userProfile?.gender || 'Мужской',
+        issue_date: '',
+        expiry_date: '',
+        card_number: '',
+        issued_by: '',
+        department_code: '',
+        personal_code_ref: userPersonalCode || '',
+        oms_policy_number: '',
+        blood_group: '',
+        rh_factor: '',
+        inn_number: '',
+        nss_number: '',
+        registration_address: ''
+      }
+      window.openModal('Добавление ID-карты')
+    }
+
+    function openEditModal() {
+      window.openModal('Редактирование ID-карты')
+    }
+
+    function openModal(title) {
+      document.getElementById('modalTitle').textContent = title
+      document.getElementById('modalOverlay').classList.add('active')
+      renderModalForm()
+    }
+
+    window.closeModal = function() {
+      document.getElementById('modalOverlay').classList.remove('active')
+    }
+
+    function renderModalForm() {
+      const modalBody = document.getElementById('modalBody')
+      modalBody.innerHTML = `
+        <div class="form-group">
+          <label>Фамилия</label>
+          <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
+        </div>
+        <div class="form-group">
+          <label>Имя</label>
+          <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name || '')}">
+        </div>
+        <div class="form-group">
+          <label>Отчество</label>
+          <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic || '')}">
+        </div>
+        <div class="form-group">
+          <label>Дата рождения</label>
+          <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Место рождения</label>
+          <input type="text" id="birth_place" class="form-input" value="${escapeHTML(formData.birth_place || '')}">
+        </div>
+        <div class="form-group">
+          <label>Пол</label>
+          <select id="gender" class="form-input">
+            <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+            <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Дата выдачи</label>
+          <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Срок действия</label>
+          <input type="date" id="expiry_date" class="form-input" value="${formData.expiry_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Номер карты</label>
+          <input type="text" id="card_number" class="form-input" value="${escapeHTML(formData.card_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Кем выдан</label>
+          <input type="text" id="issued_by" class="form-input" value="${escapeHTML(formData.issued_by || '')}">
+        </div>
+        <div class="form-group">
+          <label>Код подразделения</label>
+          <input type="text" id="department_code" class="form-input" value="${escapeHTML(formData.department_code || '')}">
+        </div>
+        <div class="form-group">
+          <label>Личный код</label>
+          <input type="text" id="personal_code_ref" class="form-input" value="${userPersonalCode || ''}" readonly>
+        </div>
+        <div class="form-group">
+          <label>Номер полиса ОМС</label>
+          <input type="text" id="oms_policy_number" class="form-input" value="${escapeHTML(formData.oms_policy_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Группа крови</label>
+          <input type="text" id="blood_group" class="form-input" value="${escapeHTML(formData.blood_group || '')}">
+        </div>
+        <div class="form-group">
+          <label>Резус-фактор</label>
+          <input type="text" id="rh_factor" class="form-input" value="${escapeHTML(formData.rh_factor || '')}">
+        </div>
+        <div class="form-group">
+          <label>ИНН</label>
+          <input type="text" id="inn_number" class="form-input" value="${escapeHTML(formData.inn_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Номер НСС</label>
+          <input type="text" id="nss_number" class="form-input" value="${escapeHTML(formData.nss_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Адрес регистрации</label>
+          <textarea id="registration_address" class="form-textarea" rows="2">${escapeHTML(formData.registration_address || '')}</textarea>
+        </div>
+      `
+    }
+
+    function collectFormData() {
+      return {
+        surname: document.getElementById('surname')?.value.trim() || '',
+        name: document.getElementById('name')?.value.trim() || '',
+        patronymic: document.getElementById('patronymic')?.value.trim() || '',
+        birth_date: document.getElementById('birth_date')?.value || '',
+        birth_place: document.getElementById('birth_place')?.value.trim() || '',
+        gender: document.getElementById('gender')?.value || '',
+        issue_date: document.getElementById('issue_date')?.value || '',
+        expiry_date: document.getElementById('expiry_date')?.value || '',
+        card_number: document.getElementById('card_number')?.value.trim() || '',
+        issued_by: document.getElementById('issued_by')?.value.trim() || '',
+        department_code: document.getElementById('department_code')?.value.trim() || '',
+        personal_code_ref: document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode,
+        oms_policy_number: document.getElementById('oms_policy_number')?.value.trim() || '',
+        blood_group: document.getElementById('blood_group')?.value.trim() || '',
+        rh_factor: document.getElementById('rh_factor')?.value.trim() || '',
+        inn_number: document.getElementById('inn_number')?.value.trim() || '',
+        nss_number: document.getElementById('nss_number')?.value.trim() || '',
+        registration_address: document.getElementById('registration_address')?.value.trim() || ''
+      }
+    }
+
+    async function saveDocument() {
+      const newData = collectFormData()
+      if (!newData.card_number) {
+        alert('Номер карты обязателен')
+        return
+      }
+      const cleanData = { ...newData, personal_code: userPersonalCode, status: 'oncheck', updated_at: new Date().toISOString() }
+
+      let result
+      if (currentDocId) {
+        result = await supabase
+          .from('documents_id_card')
+          .update(cleanData)
+          .eq('id', currentDocId)
+      } else {
+        cleanData.created_at = new Date().toISOString()
+        result = await supabase
+          .from('documents_id_card')
+          .insert([cleanData])
+          .select()
+      }
+
+      if (result.error) {
+        alert('Ошибка сохранения: ' + result.error.message)
+        return
+      }
+
+      window.closeModal()
+      const newId = currentDocId || result.data[0].id
+      window.location.href = `id-card.html?id=${newId}`
+    }
+
+    // --- Инициализация ---
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadDocument()
+      document.getElementById('addBtn')?.addEventListener('click', openAddModal)
+      document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
+    })
+
+    // Экспорт в глобальную область
+    window.openAddModal = openAddModal
+    window.openEditModal = openEditModal
+    window.openModal = openModal
+    window.closeModal = closeModal
+    window.formData = formData
+  </script>
+</body>
+</html>
