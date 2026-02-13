@@ -402,41 +402,29 @@ function createPreviousCardsForm() {
 }
 
 // --- Отображение списка добавленных карт на шаге 2 ---
-function renderPreviousCardsList() {
-  const container = document.getElementById('previousCardsList')
-  if (!container) return
-
-  if (!formData.previous_id_cards || formData.previous_id_cards.length === 0) {
-    container.innerHTML = '<p>Нет добавленных карт</p>'
+function renderPreviousCards(cards) {
+  console.log('renderPreviousCards called with:', cards)
+  // Если cards строка, попробуем распарсить
+  if (typeof cards === 'string') {
+    try {
+      cards = JSON.parse(cards)
+    } catch (e) {
+      cards = []
+    }
+  }
+  const tbody = document.getElementById('previousCardsBody')
+  if (!cards || cards.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Нет данных</td></tr>'
     return
   }
-
-  const table = document.createElement('table')
-  table.className = 'previous-table'
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th>Номер карты</th>
-        <th>Кем выдан</th>
-        <th>Дата выдачи</th>
-        <th>Срок действия</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      ${formData.previous_id_cards.map((card, index) => `
-        <tr>
-          <td>${escapeHTML(card.card_number)}</td>
-          <td>${escapeHTML(card.issued_by)}</td>
-          <td>${formatDate(card.issue_date)}</td>
-          <td>${formatDate(card.expiry_date)}</td>
-          <td><button type="button" class="btn-secondary" style="padding:0.2rem 0.5rem;" onclick="window.removePreviousCard(${index})">Удалить</button></td>
-        </tr>
-      `).join('')}
-    </tbody>
-  `
-  container.innerHTML = ''
-  container.appendChild(table)
+  tbody.innerHTML = cards.map(c => `
+    <tr>
+      <td>${escapeHTML(c.card_number || '')}</td>
+      <td>${escapeHTML(c.issued_by || '')}</td>
+      <td>${formatDate(c.issue_date)}</td>
+      <td>${formatDate(c.expiry_date)}</td>
+    </tr>
+  `).join('')
 }
 
 // --- Добавление новой предыдущей карты ---
@@ -566,7 +554,6 @@ async function saveDocument() {
     collectMainDataFromForm()
   }
 
-  // Проверка обязательных полей
   if (!formData.card_number) {
     alert('Номер карты обязателен')
     return
@@ -576,13 +563,8 @@ async function saveDocument() {
     ...formData,
     personal_code: userPersonalCode,
     status: 'oncheck',
-    updated_at: new Date().toISOString()
-  }
-  delete dataToSend.previous_id_cards // это поле будет добавлено отдельно, если есть
-
-  // Добавляем массив предыдущих карт, если он не пустой
-  if (formData.previous_id_cards && formData.previous_id_cards.length > 0) {
-    dataToSend.previous_id_cards = formData.previous_id_cards
+    updated_at: new Date().toISOString(),
+    previous_id_cards: formData.previous_id_cards || [] // всегда отправляем массив
   }
 
   console.log('Сохранение:', dataToSend)
@@ -608,7 +590,7 @@ async function saveDocument() {
     return
   }
 
-  console.log('Сохранение успешно')
+  console.log('Сохранение успешно, ответ:', result)
   window.closeModal()
   const newId = currentDocId || result.data[0].id
   window.location.href = `id-card.html?id=${newId}`
