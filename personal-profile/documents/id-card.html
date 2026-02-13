@@ -5,44 +5,225 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ID-карта — СФСРЮ</title>
 
-  <!-- favicons (укажите свои пути) -->
+  <!-- favicons (ваши пути) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
-  <meta name="application-name" content="&nbsp;"/>
-  <meta name="msapplication-TileColor" content="#FFFFFF" />
-  <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
-  <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
-  <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
-  <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
-  <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+  <!-- ... остальные favicon ссылки ... (можно оставить как есть) -->
 
-  <!-- Общие стили сайта -->
+  <!-- Общие стили сайта (если нужны) -->
   <link rel="stylesheet" href="../../css/style.css" />
-  <!-- Стили для ID-карты (с двухсторонней карточкой) -->
-  <link rel="stylesheet" href="../../css/personal-profile/id-card.css" />
-  <!-- Иконки Font Awesome -->
+  <!-- Иконки -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- Дополнительные стили для статуса и модального окна (если не входят в id-card.css) -->
   <style>
-    /* ========== СТАТУС И КНОПКИ ========== */
+    /* ========== ПОЛНЫЕ СТИЛИ ДЛЯ ID-КАРТЫ ========== */
+    :root {
+      --card-pink: #fff9f9;        /* очень бледно-розовый */
+      --card-pink-dark: #d4b6b6;
+      --text-dark: #5c3b3b;
+      --border-radius: 16px;
+      --shadow: 0 10px 25px rgba(0,0,0,0.05);
+    }
+
+    .card-container {
+      perspective: 1500px;
+      margin: 2rem auto;
+      max-width: 800px;
+    }
+
+    .card {
+      position: relative;
+      width: 100%;
+      height: 0;
+      padding-bottom: 62%; /* соотношение сторон ~ 5:3 */
+      transform-style: preserve-3d;
+      transition: transform 0.6s;
+      cursor: pointer;
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-front, .card-back {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: var(--border-radius);
+      background: var(--card-pink);
+      box-shadow: var(--shadow);
+      padding: 1rem 1.2rem;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      font-size: 0.8rem;
+      border: 1px solid var(--card-pink-dark);
+    }
+
+    .card-back {
+      transform: rotateY(180deg);
+    }
+
+    /* Заголовок */
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-dark);
+      text-align: center;
+      margin-bottom: 0.2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      line-height: 1.2;
+    }
+    .card-subtitle {
+      font-size: 0.75rem;
+      text-align: center;
+      color: var(--text-dark);
+      margin-bottom: 0.8rem;
+      border-bottom: 1px solid var(--card-pink-dark);
+      padding-bottom: 0.3rem;
+    }
+
+    /* Передняя сторона: колонки 1:4 */
+    .card-front {
+      display: grid;
+      grid-template-columns: 1fr 4fr;
+      gap: 0.8rem;
+      align-items: start;
+    }
+
+    .left-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .photo {
+      width: 100%;
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--card-pink-dark);
+    }
+    .photo img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .signature-label {
+      font-size: 0.5rem;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      margin-top: 0.1rem;
+      text-align: center;
+    }
+    .signature {
+      max-width: 100%;
+      border: 1px solid var(--card-pink-dark);
+      border-radius: 3px;
+      padding: 2px;
+      background: white;
+    }
+    .signature img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    /* Поля с меткой сверху */
+    .field-block {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px dashed var(--card-pink-dark);
+      padding-bottom: 0.2rem;
+      margin-bottom: 0.1rem;
+    }
+    .field-label {
+      font-weight: 600;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      font-size: 0.65rem;
+      letter-spacing: 0.3px;
+    }
+    .field-value {
+      font-weight: 500;
+      font-size: 0.75rem;
+      word-break: break-word;
+    }
+
+    /* Поля, которые располагаются в одну строку (дата+пол, дата выдачи+срок) */
+    .double-field {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .double-field .field-block {
+      flex: 1 1 auto;
+      min-width: 120px;
+    }
+
+    /* Задняя сторона */
+    .card-back {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .back-block {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px dashed var(--card-pink-dark);
+      padding-bottom: 0.2rem;
+    }
+    .back-label {
+      font-weight: 600;
+      color: var(--text-dark);
+      text-transform: uppercase;
+      font-size: 0.65rem;
+    }
+    .back-value {
+      font-weight: 500;
+      font-size: 0.75rem;
+      word-break: break-word;
+    }
+    .double-field .back-block {
+      flex: 1 1 auto;
+      min-width: 120px;
+    }
+
+    .qr-container {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 0.2rem;
+    }
+    .qr-code {
+      width: 60px;
+      height: 60px;
+      background: white;
+      border: 1px solid var(--card-pink-dark);
+      border-radius: 6px;
+      padding: 3px;
+    }
+    .qr-code canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    /* Статус и кнопки */
     .status-and-edit {
       display: flex;
       justify-content: center;
       align-items: center;
       gap: 1.5rem;
-      margin: 2rem 0;
+      margin: 1.5rem 0;
     }
     .status-badge {
       padding: 0.25rem 0.6rem;
@@ -53,28 +234,52 @@
     .status-verified { background: rgba(40,167,69,0.15); color: #28a745; }
     .status-pending { background: rgba(255,193,7,0.15); color: #856404; }
     .status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
-    .edit-btn {
-      background: linear-gradient(135deg, #7b091a, #a83232);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 0.6rem 1.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-    }
-    .flip-btn {
+
+    .edit-btn, .flip-btn {
       background: linear-gradient(135deg, #7b091a, #a83232);
       color: white;
       border: none;
       border-radius: 30px;
-      padding: 0.6rem 2rem;
-      font-size: 1rem;
+      padding: 0.5rem 2rem;
+      font-size: 0.9rem;
       cursor: pointer;
-      margin: 1rem auto;
+      transition: opacity 0.2s;
+      margin: 0.5rem auto;
       display: block;
     }
+    .flip-btn {
+      background: #6c757d; /* серый для переворота? но можно оставить красным, как пожелаете */
+    }
+    .edit-btn {
+      background: #6c757d; /* серый для изменения */
+    }
 
-    /* ========== МОДАЛЬНОЕ ОКНО ========== */
+    /* Мобильная адаптация */
+    @media (max-width: 600px) {
+      .card {
+        padding-bottom: 100%; /* квадратная */
+      }
+      .card-front {
+        grid-template-columns: 1fr;
+      }
+      .left-col {
+        flex-direction: row;
+        justify-content: center;
+        gap: 1rem;
+      }
+      .photo {
+        width: 30%;
+      }
+      .signature {
+        width: 30%;
+      }
+      .double-field {
+        flex-direction: column;
+        gap: 0.2rem;
+      }
+    }
+
+    /* ========== МОДАЛЬНОЕ ОКНО (стили) ========== */
     .modal-overlay {
       position: fixed;
       top: 0;
@@ -212,11 +417,11 @@
       <!-- Контент с карточкой (появляется, если есть данные) -->
       <div id="content" style="display: none;">
         <!-- СТАТУС -->
-        <div class="status-and-edit" style="text-align: center; margin-bottom: 1rem;">
+        <div class="status-and-edit">
           <span id="statusBadge" class="status-badge" style="display: none;"></span>
         </div>
 
-        <!-- Карточка (двусторонняя) -->
+        <!-- Карточка -->
         <div class="card-container">
           <div class="card" id="card">
             <!-- Передняя сторона -->
@@ -233,49 +438,49 @@
               <div class="right-col">
                 <div class="card-title">ЭЛЕКТРОННОЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</div>
                 <div class="card-subtitle">ГРАЖДАНИНА СФСРЮ</div>
-                <!-- ФАМИЛИЯ -->
+                <!-- Фамилия -->
                 <div class="field-block">
                   <span class="field-label">ФАМИЛИЯ</span>
                   <span class="field-value" id="surname">—</span>
                 </div>
-                <!-- ИМЯ -->
+                <!-- Имя -->
                 <div class="field-block">
                   <span class="field-label">ИМЯ</span>
                   <span class="field-value" id="name">—</span>
                 </div>
-                <!-- ОТЧЕСТВО -->
+                <!-- Отчество -->
                 <div class="field-block">
                   <span class="field-label">ОТЧЕСТВО</span>
                   <span class="field-value" id="patronymic">—</span>
                 </div>
-                <!-- ДАТА РОЖДЕНИЯ и ПОЛ в одной строке -->
+                <!-- Дата рождения и пол -->
                 <div class="double-field">
-                  <div class="field-block" style="display: inline-block; width: auto; margin-right: 1rem;">
+                  <div class="field-block">
                     <span class="field-label">ДАТА РОЖДЕНИЯ</span>
                     <span class="field-value" id="birthDate">—</span>
                   </div>
-                  <div class="field-block" style="display: inline-block; width: auto;">
+                  <div class="field-block">
                     <span class="field-label">ПОЛ</span>
                     <span class="field-value" id="gender">—</span>
                   </div>
                 </div>
-                <!-- МЕСТО РОЖДЕНИЯ -->
+                <!-- Место рождения -->
                 <div class="field-block">
                   <span class="field-label">МЕСТО РОЖДЕНИЯ</span>
                   <span class="field-value" id="birthPlace">—</span>
                 </div>
-                <!-- ДАТА ВЫДАЧИ и СРОК ДЕЙСТВИЯ -->
+                <!-- Дата выдачи и срок действия -->
                 <div class="double-field">
-                  <div class="field-block" style="display: inline-block; width: auto; margin-right: 1rem;">
+                  <div class="field-block">
                     <span class="field-label">ДАТА ВЫДАЧИ</span>
                     <span class="field-value" id="issueDate">—</span>
                   </div>
-                  <div class="field-block" style="display: inline-block; width: auto;">
+                  <div class="field-block">
                     <span class="field-label">СРОК ДЕЙСТВИЯ</span>
                     <span class="field-value" id="expiryDate">—</span>
                   </div>
                 </div>
-                <!-- НОМЕР УДОСТОВЕРЕНИЯ -->
+                <!-- Номер удостоверения -->
                 <div class="field-block">
                   <span class="field-label">НОМЕР УДОСТОВЕРЕНИЯ</span>
                   <span class="field-value" id="cardNumber">—</span>
@@ -284,49 +489,49 @@
             </div>
             <!-- Задняя сторона -->
             <div class="card-back">
-              <!-- НОМЕР УДОСТОВЕРЕНИЯ -->
+              <!-- Номер удостоверения -->
               <div class="back-block">
                 <span class="back-label">НОМЕР УДОСТОВЕРЕНИЯ</span>
                 <span class="back-value" id="backCardNumber">—</span>
               </div>
-              <!-- КОД ПОДРАЗДЕЛЕНИЯ -->
+              <!-- Код подразделения -->
               <div class="back-block">
                 <span class="back-label">КОД ПОДРАЗДЕЛЕНИЯ</span>
                 <span class="back-value" id="departmentCode">—</span>
               </div>
-              <!-- КЕМ ВЫДАНО -->
+              <!-- Кем выдано -->
               <div class="back-block">
                 <span class="back-label">КЕМ ВЫДАНО</span>
                 <span class="back-value" id="issuedBy">—</span>
               </div>
-              <!-- ЛИЧНЫЙ КОД -->
+              <!-- Личный код -->
               <div class="back-block">
                 <span class="back-label">ЛИЧНЫЙ КОД</span>
                 <span class="back-value" id="personalCode">—</span>
               </div>
-              <!-- ПОЛИС ОМС и ГРУППА КРОВИ/РЕЗУС -->
+              <!-- Полис ОМС и группа крови/резус -->
               <div class="double-field">
-                <div class="back-block" style="display: inline-block; width: auto; margin-right: 1rem;">
+                <div class="back-block">
                   <span class="back-label">ПОЛИС ОМС</span>
                   <span class="back-value" id="oms">—</span>
                 </div>
-                <div class="back-block" style="display: inline-block; width: auto;">
+                <div class="back-block">
                   <span class="back-label">ГРУППА КРОВИ/РЕЗУС</span>
                   <span class="back-value" id="blood">—</span>
                 </div>
               </div>
               <!-- ИНН и НСС -->
               <div class="double-field">
-                <div class="back-block" style="display: inline-block; width: auto; margin-right: 1rem;">
+                <div class="back-block">
                   <span class="back-label">ИНН</span>
                   <span class="back-value" id="inn">—</span>
                 </div>
-                <div class="back-block" style="display: inline-block; width: auto;">
+                <div class="back-block">
                   <span class="back-label">НСС</span>
                   <span class="back-value" id="nss">—</span>
                 </div>
               </div>
-              <!-- АДРЕС РЕГИСТРАЦИИ -->
+              <!-- Адрес регистрации -->
               <div class="back-block">
                 <span class="back-label">АДРЕС РЕГИСТРАЦИИ</span>
                 <span class="back-value" id="address">—</span>
@@ -339,24 +544,24 @@
           </div>
         </div>
 
-        <!-- Кнопка переворота карты -->
+        <!-- Кнопка переворота -->
         <button class="flip-btn" id="flipBtn">Перевернуть карту</button>
 
-        <!-- Кнопка редактирования (после карточки) -->
+        <!-- Кнопка редактирования -->
         <div style="text-align: center; margin-top: 1rem;">
-          <button class="edit-btn" id="editBtn" style="background: #6c757d;">Изменить данные</button>
+          <button class="edit-btn" id="editBtn">Изменить данные</button>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- ПОДВАЛ (без изменений) -->
+  <!-- ПОДВАЛ -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО (добавления/редактирования) -->
+  <!-- МОДАЛЬНОЕ ОКНО -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -379,7 +584,7 @@
   <script type="module" src="../../js/supabase-config.js"></script>
   <script src="../../js/mob-menu.js"></script>
 
-  <!-- ПОЛНЫЙ JS КОД (исправленный) -->
+  <!-- JS КОД (полный, исправленный, такой же как в предыдущих версиях) -->
   <script type="module">
     import { supabase } from '../../js/supabase-config.js'
 
@@ -558,7 +763,6 @@
     let formData = {}
 
     async function openAddModal() {
-      // Если профиль ещё не загружен, подгружаем (но он обычно уже есть)
       if (!userProfile) {
         const { data: { session } } = await supabase.auth.getSession()
         if (!session) return
@@ -592,7 +796,6 @@
     }
 
     function openEditModal() {
-      // Копируем текущие данные в formData
       formData = { ...documentData }
       window.openModal('Редактирование ID-карты')
     }
