@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Добавить данные ID-карты — СФСРЮ</title>
-  <!-- favicons -->
+  <title>Добавить ИНН — СФСРЮ</title>
+  <!-- favicons (пути с учётом вложенности) -->
 <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
 <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -25,7 +25,12 @@
 <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
 <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
 <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+
+  <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../../css/style.css" />
+  <!-- Иконки Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
   <style>
     .profile-main {
       padding: 2rem 0;
@@ -45,14 +50,6 @@
       font-size: 1.8rem;
       color: #7b091a;
     }
-
-    .step-indicator {
-      text-align: center;
-      margin-bottom: 1.5rem;
-      font-size: 0.95rem;
-      color: #7b091a;
-    }
-
     .form-group {
       margin-bottom: 1.2rem;
     }
@@ -61,19 +58,22 @@
       margin-bottom: 0.4rem;
       font-weight: 500;
     }
-    .form-input {
+    .form-input, .form-textarea {
       width: 100%;
       padding: 0.6rem 1rem;
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1rem;
     }
+    .form-textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
     .btn {
       padding: 0.6rem 1.2rem;
       border: none;
       border-radius: 6px;
       font-size: 1rem;
-      font-weight: 500;
       cursor: pointer;
     }
     .btn-primary {
@@ -84,37 +84,27 @@
       background: #6c757d;
       color: white;
     }
-    .record-block {
-      border: 1px solid #eee;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      background: #fafafa;
-    }
-    .dual-input {
+    .actions {
       display: flex;
-      gap: 10px;
-    }
-    .dual-input .form-group {
-      flex: 1;
-      margin-bottom: 0;
+      justify-content: space-between;
+      margin-top: 2rem;
     }
   </style>
 </head>
 <body>
-  <!-- ========== ШАПКА ========== -->
+  <!-- ШАПКА -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
-        <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
+        <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
         <h1>СФСРЮ</h1>
       </div>
-      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Открыть меню">
+      <button class="menu-toggle" aria-label="Открыть меню">
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
       </button>
-      <nav class="nav-menu" id="mainNav">
+      <nav class="nav-menu">
         <ul>
           <li><a href="../../../index.html">Главная</a></li>
           <li><a href="../../../news.html">Новости</a></li>
@@ -127,37 +117,57 @@
     </div>
   </header>
   <div class="menu-overlay"></div>
+
   <main class="main-content profile-main">
     <div class="profile-container">
       <div class="page-header">
-        <h2>Добавление ID-карты</h2>
-        <p>Заполните все данные</p>
+        <h2>Добавление ИНН</h2>
+        <p>Заполните данные</p>
       </div>
       <form id="addForm">
-        <!-- поля такие же, как в модалке -->
-        <div class="form-group"><label>Фамилия</label><input type="text" id="surname" class="form-input"></div>
-        <div class="form-group"><label>Имя</label><input type="text" id="name" class="form-input"></div>
-        <div class="form-group"><label>Отчество</label><input type="text" id="patronymic" class="form-input"></div>
-        <div class="form-group"><label>Дата рождения</label><input type="date" id="birth_date" class="form-input"></div>
-        <div class="form-group"><label>Место рождения</label><input type="text" id="birth_place" class="form-input"></div>
-        <div class="form-group"><label>Пол</label>
+        <div class="form-group">
+          <label>Номер ИНН</label>
+          <input type="text" id="inn_number" class="form-input" required>
+        </div>
+        <div class="form-group">
+          <label>Фамилия</label>
+          <input type="text" id="surname" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Имя</label>
+          <input type="text" id="name" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Отчество</label>
+          <input type="text" id="patronymic" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Пол</label>
           <select id="gender" class="form-input">
             <option value="Мужской">Мужской</option>
             <option value="Женский">Женский</option>
           </select>
         </div>
-        <div class="form-group"><label>Дата выдачи</label><input type="date" id="issue_date" class="form-input"></div>
-        <div class="form-group"><label>Срок действия</label><input type="date" id="expiry_date" class="form-input"></div>
-        <div class="form-group"><label>Номер карты</label><input type="text" id="card_number" class="form-input"></div>
-        <div class="form-group"><label>Кем выдан</label><input type="text" id="issued_by" class="form-input"></div>
-        <div class="form-group"><label>Код подразделения</label><input type="text" id="department_code" class="form-input"></div>
-        <div class="form-group"><label>Личный код</label><input type="text" id="personal_code_ref" class="form-input" readonly></div>
-        <div class="form-group"><label>Номер полиса ОМС</label><input type="text" id="oms_policy_number" class="form-input"></div>
-        <div class="form-group"><label>Группа крови</label><input type="text" id="blood_group" class="form-input"></div>
-        <div class="form-group"><label>Резус-фактор</label><input type="text" id="rh_factor" class="form-input"></div>
-        <div class="form-group"><label>ИНН</label><input type="text" id="inn_number" class="form-input"></div>
-        <div class="form-group"><label>Номер НСС</label><input type="text" id="nss_number" class="form-input"></div>
-        <div class="form-group"><label>Адрес регистрации</label><textarea id="registration_address" class="form-textarea" rows="2"></textarea></div>
+        <div class="form-group">
+          <label>Дата рождения</label>
+          <input type="date" id="birth_date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Место рождения</label>
+          <input type="text" id="birth_place" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Дата выдачи</label>
+          <input type="date" id="issue_date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Кем выдан</label>
+          <input type="text" id="issued_by" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Личный код</label>
+          <input type="text" id="personal_code_ref" class="form-input" readonly>
+        </div>
         <div class="actions">
           <button type="button" class="btn btn-secondary" onclick="history.back()">Отмена</button>
           <button type="submit" class="btn btn-primary">Сохранить</button>
@@ -165,7 +175,11 @@
       </form>
     </div>
   </main>
-  <footer class="footer">...</footer>
+
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
 
   <script type="importmap">
     { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
@@ -180,42 +194,41 @@
     async function loadUserProfile() {
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) { window.location.href = '../../../login.html'; return }
-      const { data, error } = await supabase.from('users').select('personal_code').eq('id', session.user.id).single()
+      const { data, error } = await supabase.from('users').select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender').eq('id', session.user.id).single()
       if (error) { console.error(error); return }
       userPersonalCode = data.personal_code
       document.getElementById('personal_code_ref').value = userPersonalCode || ''
+      // Предзаполним поля из профиля
+      document.getElementById('surname').value = data.surname || ''
+      document.getElementById('name').value = data.name || ''
+      document.getElementById('patronymic').value = data.patronymic || ''
+      document.getElementById('gender').value = data.gender || 'Мужской'
+      document.getElementById('birth_date').value = data.date_of_birth || ''
+      document.getElementById('birth_place').value = data.place_of_birth || ''
     }
 
     document.getElementById('addForm').addEventListener('submit', async (e) => {
       e.preventDefault()
       const formData = {
+        inn_number: document.getElementById('inn_number').value.trim(),
         surname: document.getElementById('surname').value.trim(),
         name: document.getElementById('name').value.trim(),
         patronymic: document.getElementById('patronymic').value.trim(),
+        gender: document.getElementById('gender').value,
         birth_date: document.getElementById('birth_date').value,
         birth_place: document.getElementById('birth_place').value.trim(),
-        gender: document.getElementById('gender').value,
         issue_date: document.getElementById('issue_date').value,
-        expiry_date: document.getElementById('expiry_date').value,
-        card_number: document.getElementById('card_number').value.trim(),
         issued_by: document.getElementById('issued_by').value.trim(),
-        department_code: document.getElementById('department_code').value.trim(),
         personal_code_ref: document.getElementById('personal_code_ref').value.trim(),
-        oms_policy_number: document.getElementById('oms_policy_number').value.trim(),
-        blood_group: document.getElementById('blood_group').value.trim(),
-        rh_factor: document.getElementById('rh_factor').value.trim(),
-        inn_number: document.getElementById('inn_number').value.trim(),
-        nss_number: document.getElementById('nss_number').value.trim(),
-        registration_address: document.getElementById('registration_address').value.trim(),
         personal_code: userPersonalCode,
         status: 'oncheck',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
-      if (!formData.card_number) { alert('Номер карты обязателен'); return }
-      const { data, error } = await supabase.from('documents_id_card').insert([formData]).select()
+      if (!formData.inn_number) { alert('Номер ИНН обязателен'); return }
+      const { data, error } = await supabase.from('documents_inn').insert([formData]).select()
       if (error) { alert('Ошибка: ' + error.message); return }
-      window.location.href = `../id-card.html`
+      window.location.href = `../inn.html`
     })
 
     loadUserProfile()
