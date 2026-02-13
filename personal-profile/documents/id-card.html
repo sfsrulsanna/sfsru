@@ -31,7 +31,6 @@
   <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- Встроенные стили для карточки и модального окна -->
   <style>
     /* ========== СТАТУС И КНОПКИ (как в passport.html) ========== */
     .status-and-edit {
@@ -281,10 +280,14 @@
       border-radius: 4px;
       padding: 2px;
       background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
     .signature img {
-      width: 100%;
-      height: 100%;
+      max-width: 100%;
+      max-height: 100%;
       object-fit: contain;
     }
 
@@ -295,6 +298,7 @@
       gap: 0.3rem;
     }
 
+    /* Поле с меткой сверху, значением снизу */
     .field-block {
       display: flex;
       flex-direction: column;
@@ -322,15 +326,15 @@
       border-bottom: 1px dashed var(--card-pink-dark);
     }
 
-    /* Задняя сторона */
+    /* Задняя сторона — теперь аналогично лицевой */
     .card-back {
       display: flex;
       flex-direction: column;
       gap: 0.4rem;
     }
-    .back-row {
+    .back-block {
       display: flex;
-      align-items: baseline;
+      flex-direction: column;
       border-bottom: 1px dashed var(--card-pink-dark);
       padding-bottom: 0.2rem;
     }
@@ -339,35 +343,27 @@
       color: var(--text-dark);
       font-size: 0.7rem;
       text-transform: uppercase;
-      width: 38%;
     }
     .back-value {
       font-weight: 500;
       font-size: 0.85rem;
-      width: 62%;
       word-break: break-word;
     }
-    .back-row.double {
+    .double-back {
       display: flex;
       gap: 1rem;
     }
-    .back-row.double .back-label {
-      width: auto;
-    }
-    .back-row.double .back-value {
-      width: auto;
+    .double-back .back-block {
+      flex: 1;
     }
     .address-row {
       display: flex;
-      align-items: center;
       gap: 0.5rem;
+      align-items: flex-start;
     }
-    .address-row .back-label {
-      width: 38%;
-    }
-    .address-row .back-value {
-      width: calc(62% - 70px); /* учитываем QR */
-      flex-shrink: 1;
+    .address-row .back-block {
+      flex: 1;
+      border-bottom: none; /* убираем линию, так как она будет у каждого блока внутри */
     }
     .qr-code {
       width: 60px;
@@ -403,28 +399,39 @@
     .previous-table {
       width: 100%;
       border-collapse: collapse;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
     }
     .previous-table th {
       background: #7b091a;
       color: white;
-      padding: 0.5rem;
+      padding: 0.75rem 0.5rem;
       text-align: left;
       font-size: 0.85rem;
+      font-weight: 600;
     }
     .previous-table td {
-      padding: 0.5rem;
+      padding: 0.75rem 0.5rem;
       border-bottom: 1px solid #eee;
+      font-size: 0.85rem;
     }
     .previous-table tr:last-child td {
       border-bottom: none;
     }
+    .previous-table tbody tr:hover {
+      background: #f5f5f5;
+    }
 
+    /* ========== АДАПТАЦИЯ ========== */
     @media (max-width: 600px) {
       .card { padding-bottom: 100%; }
       .front-content { flex-direction: column; }
       .left-col, .right-col { width: 100%; }
-      .double-field { flex-direction: column; gap: 0.3rem; }
+      .double-field, .double-back { flex-direction: column; gap: 0.3rem; }
       .address-row { flex-wrap: wrap; }
+      .status-and-edit { flex-direction: column; }
     }
   </style>
 </head>
@@ -490,7 +497,7 @@
                   </div>
                   <div class="signature-label">ЛИЧНАЯ ПОДПИСЬ</div>
                   <div class="signature">
-                    <img id="userSignature" src="../../images/default-signature.png" alt="Подпись">
+                    <img id="userSignature" src="../../images/default-signature.png" alt="Подпись" onerror="this.style.display='none'; this.parentNode.innerHTML='<div style=\"width:100%;height:100%;background:#f0f0f0;border-radius:4px;\"></div>';">
                   </div>
                 </div>
                 <div class="right-col">
@@ -545,40 +552,54 @@
                 <div class="subtitle">ГРАЖДАНИНА СФСРЮ</div>
               </div>
               <!-- НОМЕР УДОСТОВЕРЕНИЯ -->
-              <div class="back-row">
+              <div class="back-block">
                 <span class="back-label">НОМЕР УДОСТОВЕРЕНИЯ</span>
                 <span class="back-value highlight-number" id="backCardNumber">—</span>
               </div>
               <!-- КОД ПОДРАЗДЕЛЕНИЯ и ЛИЧНЫЙ КОД в одной строке -->
-              <div class="back-row double">
-                <span class="back-label">КОД ПОДРАЗДЕЛЕНИЯ</span>
-                <span class="back-value" id="departmentCode">—</span>
-                <span class="back-label" style="margin-left: 1rem;">ЛИЧНЫЙ КОД</span>
-                <span class="back-value" id="personalCode">—</span>
+              <div class="double-back">
+                <div class="back-block">
+                  <span class="back-label">КОД ПОДРАЗДЕЛЕНИЯ</span>
+                  <span class="back-value" id="departmentCode">—</span>
+                </div>
+                <div class="back-block">
+                  <span class="back-label">ЛИЧНЫЙ КОД</span>
+                  <span class="back-value" id="personalCode">—</span>
+                </div>
               </div>
               <!-- КЕМ ВЫДАНО -->
-              <div class="back-row">
+              <div class="back-block">
                 <span class="back-label">КЕМ ВЫДАНО</span>
                 <span class="back-value" id="issuedBy">—</span>
               </div>
               <!-- ПОЛИС ОМС и ГРУППА КРОВИ/РЕЗУС -->
-              <div class="back-row double">
-                <span class="back-label">ПОЛИС ОМС</span>
-                <span class="back-value" id="oms">—</span>
-                <span class="back-label" style="margin-left: 1rem;">ГРУППА КРОВИ И РЕЗУС-ФАКТОР</span>
-                <span class="back-value" id="blood">—</span>
+              <div class="double-back">
+                <div class="back-block">
+                  <span class="back-label">ПОЛИС ОМС</span>
+                  <span class="back-value" id="oms">—</span>
+                </div>
+                <div class="back-block">
+                  <span class="back-label">ГРУППА КРОВИ/РЕЗУС</span>
+                  <span class="back-value" id="blood">—</span>
+                </div>
               </div>
               <!-- ИНН и НСС -->
-              <div class="back-row double">
-                <span class="back-label">ИНН</span>
-                <span class="back-value" id="inn">—</span>
-                <span class="back-label" style="margin-left: 1rem;">НСС</span>
-                <span class="back-value" id="nss">—</span>
+              <div class="double-back">
+                <div class="back-block">
+                  <span class="back-label">ИНН</span>
+                  <span class="back-value" id="inn">—</span>
+                </div>
+                <div class="back-block">
+                  <span class="back-label">НСС</span>
+                  <span class="back-value" id="nss">—</span>
+                </div>
               </div>
               <!-- АДРЕС РЕГИСТРАЦИИ + QR -->
               <div class="address-row">
-                <span class="back-label">АДРЕС РЕГИСТРАЦИИ</span>
-                <span class="back-value" id="address">—</span>
+                <div class="back-block">
+                  <span class="back-label">АДРЕС РЕГИСТРАЦИИ</span>
+                  <span class="back-value" id="address">—</span>
+                </div>
                 <div id="qrCode" class="qr-code"></div>
               </div>
             </div>
@@ -588,7 +609,7 @@
         <!-- ТАБЛИЦА РАНЕЕ ВЫДАННЫХ ID-КАРТ -->
         <div class="previous-section">
           <h3 class="previous-title">Ранее выданные ID-карты</h3>
-          <table class="previous-table" id="previousCardsTable">
+          <table class="previous-table">
             <thead>
               <tr>
                 <th>Номер удостоверения</th>
@@ -635,7 +656,7 @@
   <script type="module" src="../../js/supabase-config.js"></script>
   <script src="../../js/mob-menu.js"></script>
 
-  <!-- ПОЛНЫЙ JS КОД -->
+  <!-- ПОЛНЫЙ JS КОД (ИСПРАВЛЕННЫЙ) -->
   <script type="module">
     import { supabase } from '../../js/supabase-config.js'
 
@@ -764,10 +785,16 @@
         photoImg.src = `../../images/avatars/${safeCode}.jpg`
         photoImg.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
         signatureImg.src = `../../images/avatars/signatures/${safeCode}.jpg`
-        signatureImg.onerror = () => { signatureImg.src = '../../images/default-avatar.png' }
+        signatureImg.onerror = function() { 
+          this.style.display = 'none'; 
+          this.parentNode.innerHTML = '<div style="width:100%;height:100%;background:#f0f0f0;border-radius:4px;"></div>';
+        }
       } else {
         photoImg.src = '../../images/default-avatar.png'
-        signatureImg.src = '../../images/default-avatar.png'
+        signatureImg.onerror = function() { 
+          this.style.display = 'none'; 
+          this.parentNode.innerHTML = '<div style="width:100%;height:100%;background:#f0f0f0;border-radius:4px;"></div>';
+        }
       }
 
       const qrContainer = document.getElementById('qrCode')
@@ -803,8 +830,7 @@
 
     // --- Переворот карты по клику на карточку и кнопке ---
     document.getElementById('card').addEventListener('click', (e) => {
-      // Чтобы не мешать кликам по кнопкам внутри карточки (их нет, но на всякий случай)
-      if (e.target.tagName !== 'BUTTON') {
+      if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
         document.getElementById('card').classList.toggle('flipped')
       }
     })
@@ -834,7 +860,7 @@
         inn_number: '',
         nss_number: '',
         registration_address: '',
-        previous_id_cards: [] // массив объектов
+        previous_id_cards: []
       }
       window.openModal('Добавление ID-карты')
     }
@@ -983,9 +1009,8 @@
     // --- Функции для работы с записями в шаге 2 ---
     window.addPrevCard = function() {
       const container = document.getElementById('prevCardsContainer')
-      const index = (formData.previous_id_cards?.length || 0)
       const html = `
-        <div class="record-block" data-index="${index}">
+        <div class="record-block">
           <div class="form-group">
             <label>Номер удостоверения</label>
             <input type="text" class="form-input prev-card-number">
@@ -1013,36 +1038,44 @@
       if (block) block.remove()
     }
 
-    // --- Сохранение данных текущего шага ---
+    // --- Сохранение данных текущего шага (исправлено: проверка на null) ---
     function saveStepData() {
       if (currentStep === 1) {
-        formData.surname = document.getElementById('surname')?.value.trim() || ''
-        formData.name = document.getElementById('name')?.value.trim() || ''
-        formData.patronymic = document.getElementById('patronymic')?.value.trim() || ''
-        formData.birth_date = document.getElementById('birth_date')?.value || ''
-        formData.birth_place = document.getElementById('birth_place')?.value.trim() || ''
-        formData.gender = document.getElementById('gender')?.value || ''
-        formData.issue_date = document.getElementById('issue_date')?.value || ''
-        formData.expiry_date = document.getElementById('expiry_date')?.value || ''
-        formData.card_number = document.getElementById('card_number')?.value.trim() || ''
-        formData.issued_by = document.getElementById('issued_by')?.value.trim() || ''
-        formData.department_code = document.getElementById('department_code')?.value.trim() || ''
-        formData.personal_code_ref = document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode
-        formData.oms_policy_number = document.getElementById('oms_policy_number')?.value.trim() || ''
-        formData.blood_group = document.getElementById('blood_group')?.value.trim() || ''
-        formData.rh_factor = document.getElementById('rh_factor')?.value.trim() || ''
-        formData.inn_number = document.getElementById('inn_number')?.value.trim() || ''
-        formData.nss_number = document.getElementById('nss_number')?.value.trim() || ''
-        formData.registration_address = document.getElementById('registration_address')?.value.trim() || ''
+        const getValue = (id) => {
+          const el = document.getElementById(id)
+          return el ? el.value : ''
+        }
+        formData.surname = getValue('surname')?.trim() || ''
+        formData.name = getValue('name')?.trim() || ''
+        formData.patronymic = getValue('patronymic')?.trim() || ''
+        formData.birth_date = getValue('birth_date') || ''
+        formData.birth_place = getValue('birth_place')?.trim() || ''
+        formData.gender = getValue('gender') || ''
+        formData.issue_date = getValue('issue_date') || ''
+        formData.expiry_date = getValue('expiry_date') || ''
+        formData.card_number = getValue('card_number')?.trim() || ''
+        formData.issued_by = getValue('issued_by')?.trim() || ''
+        formData.department_code = getValue('department_code')?.trim() || ''
+        formData.personal_code_ref = getValue('personal_code_ref')?.trim() || userPersonalCode
+        formData.oms_policy_number = getValue('oms_policy_number')?.trim() || ''
+        formData.blood_group = getValue('blood_group')?.trim() || ''
+        formData.rh_factor = getValue('rh_factor')?.trim() || ''
+        formData.inn_number = getValue('inn_number')?.trim() || ''
+        formData.nss_number = getValue('nss_number')?.trim() || ''
+        formData.registration_address = getValue('registration_address')?.trim() || ''
       } else {
         const blocks = document.querySelectorAll('#prevCardsContainer .record-block')
         const cards = []
         blocks.forEach(block => {
+          const cardNumberEl = block.querySelector('.prev-card-number')
+          const issuedByEl = block.querySelector('.prev-issued-by')
+          const issueDateEl = block.querySelector('.prev-issue-date')
+          const expiryDateEl = block.querySelector('.prev-expiry-date')
           cards.push({
-            card_number: block.querySelector('.prev-card-number')?.value.trim() || '',
-            issued_by: block.querySelector('.prev-issued-by')?.value.trim() || '',
-            issue_date: block.querySelector('.prev-issue-date')?.value || '',
-            expiry_date: block.querySelector('.prev-expiry-date')?.value || ''
+            card_number: cardNumberEl ? cardNumberEl.value.trim() : '',
+            issued_by: issuedByEl ? issuedByEl.value.trim() : '',
+            issue_date: issueDateEl ? issueDateEl.value : '',
+            expiry_date: expiryDateEl ? expiryDateEl.value : ''
           })
         })
         formData.previous_id_cards = cards
