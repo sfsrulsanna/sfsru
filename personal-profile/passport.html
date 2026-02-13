@@ -227,6 +227,8 @@
   <!-- ========== БИБЛИОТЕКИ ========== -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script type="module" src="../js/supabase-config.js"></script>
+  <script src="../js/mob-menu.js"></script>
 
   <!-- ========== SUPABASE ========== -->
   <script type="importmap">
@@ -236,9 +238,6 @@
       }
     }
   </script>
-  <script type="module" src="../js/supabase-config.js"></script>
-  <script src="../js/mob-menu.js"></script>
-
   <!-- ========== ПОЛНЫЙ JS КОД ========== -->
   <script type="module">
     import { supabase } from '../js/supabase-config.js'
@@ -350,40 +349,375 @@
       }
     }
 
-    // -------------------- ОТРИСОВКА ПАСПОРТА (СОКРАЩЁННО) --------------------
-    // (в вашем реальном коде здесь должен быть полный HTML шаблон)
-    function renderPassport(data) {
-      // Полная версия у вас уже есть, я приведу сокращённую для примера
-      const statusText = getStatusLabel(data.status)
-      const statusClass = getStatusClass(data.status)
+// -------------------- ОТРИСОВКА ПАСПОРТА (ПОЛНАЯ ВЕРСИЯ) --------------------
+function renderPassport(data) {
+  const statusText = getStatusLabel(data.status)
+  const statusClass = getStatusClass(data.status)
 
-      const html = `
-        <div class="passport-template">
-          <div class="passport-header">...</div>
-          <!-- Здесь полная вёрстка паспорта -->
+  // Устанавливаем цвет обложки (по умолчанию бордовый)
+  document.documentElement.style.setProperty('--primary-red', '#7b091a')
+
+  // Основной блок паспорта
+  const html = `
+    <div class="passport-template">
+      <div class="passport-header">
+        <div class="country-name">СФСР ЮЛЬСАННА</div>
+        <div class="document-type">ПАСПОРТ</div>
+      </div>
+      <div class="passport-content">
+        <!-- Серия и номер -->
+        <div class="data-field">
+          <div class="field-label">Серия и номер</div>
+          <div class="field-value series-number">${escapeHTML(data.series_number || '—')}</div>
         </div>
-      `
-      document.getElementById('passportContent').innerHTML = html
-      document.getElementById('passportContent').style.display = 'block'
+        <!-- Дата выдачи -->
+        <div class="data-field">
+          <div class="field-label">Дата выдачи</div>
+          <div class="field-value">${formatDate(data.issue_date)}</div>
+        </div>
+        <!-- Срок действия -->
+        <div class="data-field">
+          <div class="field-label">Срок действия</div>
+          <div class="field-value">${formatDate(data.expiry_date)}</div>
+        </div>
+        <!-- Кем выдан -->
+        <div class="data-field">
+          <div class="field-label">Кем выдан</div>
+          <div class="field-value">${escapeHTML(data.issued_by || '—')}</div>
+        </div>
+        <!-- Код подразделения -->
+        <div class="data-field">
+          <div class="field-label">Код подразделения</div>
+          <div class="field-value">${escapeHTML(data.department_code || '—')}</div>
+        </div>
+        <!-- Личный код -->
+        <div class="data-field">
+          <div class="field-label">Личный код</div>
+          <div class="field-value">${escapeHTML(data.personal_code || '—')}</div>
+        </div>
 
-      // Дополнительные секции, QR, штрихкод, фото – добавьте сами
+        <div class="passport-divider"></div>
 
-      // Кнопка редактирования
-      const statusAndEdit = document.createElement('div')
-      statusAndEdit.className = 'status-and-edit'
-      statusAndEdit.innerHTML = `
-        <span class="${statusClass}">${statusText}</span>
-        <button class="edit-btn" id="editPassportBtn">Изменить данные</button>
-      `
-      document.getElementById('passportContent').parentNode.insertBefore(statusAndEdit, document.getElementById('extraSections'))
+        <!-- Нижняя часть с фото, подписью, штрих-кодом, QR и данными -->
+        <div class="passport-lower">
+          <div class="photo-barcode-section">
+            <div class="passport-photo-container">
+              <img id="passportAvatar" src="../images/default-avatar.png" alt="Фото" class="passport-photo" />
+            </div>
+            <div class="barcode-container">
+              <svg id="passportBarcode" class="barcode"></svg>
+            </div>
+            <div style="text-align: center; margin-top: 15px;">
+              <div id="passportQrCode" style="display: inline-block; width: 80px; height: 80px;"></div>
+            </div>
+          </div>
 
-      document.getElementById('editPassportBtn').addEventListener('click', () => {
-        formData = { ...data }
-        openEditModal()
+          <div class="fio-section">
+            <!-- Фамилия -->
+            <div class="data-field">
+              <div class="field-label">Фамилия</div>
+              <div class="field-value">${escapeHTML(data.surname || '—')}</div>
+            </div>
+            <!-- Имя -->
+            <div class="data-field">
+              <div class="field-label">Имя</div>
+              <div class="field-value">${escapeHTML(data.name || '—')}</div>
+            </div>
+            <!-- Отчество -->
+            <div class="data-field">
+              <div class="field-label">Отчество</div>
+              <div class="field-value">${escapeHTML(data.patronymic || '—')}</div>
+            </div>
+            <!-- Пол -->
+            <div class="data-field">
+              <div class="field-label">Пол</div>
+              <div class="field-value">${escapeHTML(data.gender || '—')}</div>
+            </div>
+            <!-- Дата рождения -->
+            <div class="data-field">
+              <div class="field-label">Дата рождения</div>
+              <div class="field-value">${formatDate(data.birth_date)}</div>
+            </div>
+            <!-- Место рождения -->
+            <div class="data-field">
+              <div class="field-label">Место рождения</div>
+              <div class="field-value">${escapeHTML(data.birth_place || '—')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+
+  document.getElementById('passportContent').innerHTML = html
+  document.getElementById('passportContent').style.display = 'block'
+
+  // --- Дополнительные секции (история регистрации, семейное положение, воинская обязанность и т.д.) ---
+  let extraHtml = ''
+
+  // Места регистрации
+  if (data.residences && Array.isArray(data.residences) && data.residences.length > 0) {
+    extraHtml += `
+      <h3 class="section-title"><i class="fas fa-home"></i> История регистрации</h3>
+      <div class="info-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Адрес</th>
+              <th>Дата регистрации</th>
+              <th>Дата снятия</th>
+              <th>Тип жилья</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.residences.map(r => `
+              <tr>
+                <td>${escapeHTML(r.address || '—')}</td>
+                <td>${formatDate(r.registrationDate)}</td>
+                <td>${formatDate(r.deregistrationDate)}</td>
+                <td>${escapeHTML(r.housingType || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
+  // Семейное положение
+  if (data.marital_statuses && Array.isArray(data.marital_statuses) && data.marital_statuses.length > 0) {
+    extraHtml += `
+      <h3 class="section-title"><i class="fas fa-heart"></i> Семейное положение</h3>
+      <div class="info-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Статус</th>
+              <th>Дата изменения</th>
+              <th>ФИО супруга</th>
+              <th>Номер акта</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.marital_statuses.map(m => `
+              <tr>
+                <td>${escapeHTML(m.status || '—')}</td>
+                <td>${formatDate(m.changeDate)}</td>
+                <td>${escapeHTML(m.spouseName || '—')}</td>
+                <td>${escapeHTML(m.actNumber || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
+  // Воинская обязанность
+  if (data.is_military_obligated !== null && data.is_military_obligated !== undefined) {
+    extraHtml += `
+      <h3 class="section-title"><i class="fas fa-shield-alt"></i> Военная обязанность</h3>
+      <div class="info-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Военнообязанный</th>
+              <th>Военный билет</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>${data.is_military_obligated ? 'Да' : 'Нет'}</td>
+              <td>${escapeHTML(data.military_idn || '—')}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
+  // Ранее выданные паспорта
+  if (data.previous_passports && Array.isArray(data.previous_passports) && data.previous_passports.length > 0) {
+    extraHtml += `
+      <h3 class="section-title"><i class="fas fa-history"></i> Ранее выданные паспорта</h3>
+      <div class="info-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Серия и номер</th>
+              <th>Дата выдачи</th>
+              <th>Кем выдан</th>
+              <th>Причина замены</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.previous_passports.map(p => `
+              <tr>
+                <td>${escapeHTML(p.seriesNumber || '—')}</td>
+                <td>${formatDate(p.issueDate)}</td>
+                <td>${escapeHTML(p.issuedBy || '—')}</td>
+                <td>${escapeHTML(p.reason || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
+  // Ранее выданные заграничные паспорта
+  if (data.previous_foreign_passports && Array.isArray(data.previous_foreign_passports) && data.previous_foreign_passports.length > 0) {
+    extraHtml += `
+      <h3 class="section-title"><i class="fas fa-passport"></i> Ранее выданные заграничные паспорта</h3>
+      <div class="info-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Серия и номер</th>
+              <th>Дата выдачи</th>
+              <th>Кем выдан</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.previous_foreign_passports.map(p => `
+              <tr>
+                <td>${escapeHTML(p.seriesNumber || '—')}</td>
+                <td>${formatDate(p.issueDate)}</td>
+                <td>${escapeHTML(p.issuedBy || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
+  // Ранее выданные ID-карты
+  if (data.previous_id_cards && Array.isArray(data.previous_id_cards) && data.previous_id_cards.length > 0) {
+    extraHtml += `
+      <h3 class="section-title"><i class="fas fa-id-card"></i> Ранее выданные ID-карты</h3>
+      <div class="info-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Серия и номер</th>
+              <th>Дата выдачи</th>
+              <th>Кем выдан</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${data.previous_id_cards.map(p => `
+              <tr>
+                <td>${escapeHTML(p.seriesNumber || '—')}</td>
+                <td>${formatDate(p.issueDate)}</td>
+                <td>${escapeHTML(p.issuedBy || '—')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
+  }
+
+  if (extraHtml) {
+    document.getElementById('extraSections').innerHTML = extraHtml
+    document.getElementById('extraSections').style.display = 'block'
+  }
+
+  // --- Фото, QR, штрихкод, подпись ---
+  const personalCode = data.personal_code || ''
+  const avatarImg = document.getElementById('passportAvatar')
+  if (personalCode) {
+    const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '')
+    const imgUrl = `../images/avatars/${safeCode}.jpg`
+    const img = new Image()
+    img.onload = () => { avatarImg.src = imgUrl }
+    img.onerror = () => { avatarImg.src = '../images/default-avatar.png' }
+    img.src = imgUrl
+  }
+
+  const qrContainer = document.getElementById('passportQrCode')
+  if (qrContainer && personalCode) {
+    qrContainer.innerHTML = ''
+    try {
+      new QRCode(qrContainer, {
+        text: `https://e-pass-sfsru.web.app/${personalCode}/`,
+        width: 80,
+        height: 80,
+        colorDark: '#000',
+        colorLight: '#fff',
+        correctLevel: QRCode.CorrectLevel.L
       })
-
-      document.getElementById('loading').style.display = 'none'
+    } catch (e) {
+      console.warn('QR generation failed', e)
     }
+  }
+
+  const seriesNumber = (data.series_number || '').replace(/\s/g, '')
+  if (seriesNumber && seriesNumber.length >= 6) {
+    try {
+      JsBarcode("#passportBarcode", seriesNumber, {
+        format: "CODE128",
+        displayValue: false,
+        height: 50,
+        margin: 0
+      })
+    } catch (e) {
+      console.warn('Barcode generation failed', e)
+    }
+  }
+
+  // Подпись владельца (из отдельной папки)
+  const signatureImg = document.createElement('img')
+  signatureImg.id = 'passportSignature'
+  signatureImg.className = 'signature-img'
+  signatureImg.src = personalCode ? `../images/avatars/signatures/${personalCode.replace(/[^a-zA-Z0-9\-]/g, '')}.jpg` : '../images/default-signature.png'
+  signatureImg.alt = 'Подпись'
+  signatureImg.onerror = function() { this.src = '../images/default-signature.png' }
+  // Вставим подпись в блок extraSections, если нет отдельного контейнера
+  // Но лучше разместить её в info-item. Сейчас подпись уже есть в extraHtml? Нет, мы не добавили.
+  // Добавим блок подписи, если его нет.
+  if (!document.querySelector('.signature-container')) {
+    const infoGrid = document.querySelector('.info-grid')
+    if (infoGrid) {
+      infoGrid.insertAdjacentHTML('beforeend', `
+        <div class="info-item signature-container" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 10px; border-left: 3px solid #7b091a;">
+          <div class="info-label" style="font-weight: 600; color: #7b091a;">Подпись владельца</div>
+          <img id="passportSignature" src="${personalCode ? `../images/avatars/signatures/${personalCode.replace(/[^a-zA-Z0-9\-]/g, '')}.jpg` : '../images/default-signature.png'}" alt="Подпись" class="signature-img" style="height: 60px; max-width: 100px; border: 1px solid #ddd; padding: 4px; background: white; border-radius: 6px;">
+        </div>
+      `)
+    }
+  }
+
+  // --- Кнопка редактирования и статус ---
+  const statusAndEdit = document.createElement('div')
+  statusAndEdit.className = 'status-and-edit'
+  statusAndEdit.innerHTML = `
+    <span class="${statusClass}">${statusText}</span>
+    <button class="edit-btn" id="editPassportBtn">Изменить данные</button>
+  `
+  document.getElementById('passportContent').parentNode.insertBefore(statusAndEdit, document.getElementById('extraSections'))
+
+  document.getElementById('editPassportBtn').addEventListener('click', () => {
+    formData = { ...data }  // загружаем существующие данные в форму
+    openEditModal()
+  })
+
+  // Скрываем индикатор загрузки
+  const loadingEl = document.getElementById('loading')
+  if (loadingEl) loadingEl.style.display = 'none'
+}
+
+// -------------------- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЭСКЕЙПИНГА HTML --------------------
+function escapeHTML(str) {
+  if (!str) return '—'
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
     // -------------------- МОДАЛЬНОЕ ОКНО --------------------
     async function openAddModal() {
