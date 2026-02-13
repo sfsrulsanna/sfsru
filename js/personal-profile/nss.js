@@ -1,20 +1,14 @@
-  import { supabase } from '../supabase-config.js'
+  import { supabase } from '../../js/supabase-config.js'
 
-  // --- Глобальные переменные ---
   let currentDocId = null
   let documentData = {}
   let userPersonalCode = null
   let userProfile = null
   let formData = {}
 
-  // --- Вспомогательные функции ---
   function formatDate(dateString) {
     if (!dateString) return '—'
-    try {
-      return new Date(dateString).toLocaleDateString('ru-RU')
-    } catch {
-      return dateString
-    }
+    try { return new Date(dateString).toLocaleDateString('ru-RU') } catch { return dateString }
   }
 
   function getStatusLabel(status) {
@@ -24,27 +18,14 @@
     return '—'
   }
 
-  function escapeHTML(str) {
-    if (!str) return ''
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#039;')
-  }
-
-  // --- Загрузка данных ---
   async function loadData() {
     try {
-      // 1. Проверяем сессию
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
       if (sessionError || !session) {
         window.location.href = '../../login.html'
         return
       }
 
-      // 2. Загружаем профиль пользователя
       const { data: profile, error: profileError } = await supabase
         .from('users')
         .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
@@ -61,7 +42,6 @@
       userPersonalCode = profile.personal_code
       console.log('Профиль пользователя:', userProfile)
 
-      // 3. Определяем, какой документ загружать (по ID из URL или последний)
       const urlParams = new URLSearchParams(window.location.search)
       const idFromUrl = urlParams.get('id')
 
@@ -73,12 +53,7 @@
           .select('*')
           .eq('id', idFromUrl)
           .single()
-
-        if (error) {
-          console.error('Ошибка загрузки документа по ID:', error)
-        } else {
-          documentResult = { data, error: null }
-        }
+        if (!error) documentResult = { data }
       } else {
         const { data, error } = await supabase
           .from('documents_nss')
@@ -86,12 +61,7 @@
           .eq('personal_code', userPersonalCode)
           .order('created_at', { ascending: false })
           .limit(1)
-
-        if (error) {
-          console.error('Ошибка загрузки последнего документа:', error)
-        } else if (data && data.length > 0) {
-          documentResult = { data: data[0], error: null }
-        }
+        if (!error && data && data.length > 0) documentResult = { data: data[0] }
       }
 
       const loadingEl = document.getElementById('loading')
@@ -118,7 +88,6 @@
     }
   }
 
-  // --- Отрисовка документа ---
   function renderDocument(data) {
     document.getElementById('nssNumber').textContent = data.nss_number || '—'
     document.getElementById('surname').textContent = data.surname || '—'
@@ -130,7 +99,6 @@
     document.getElementById('issueDate').textContent = formatDate(data.issue_date)
     document.getElementById('issuedBy').textContent = data.issued_by || '—'
 
-    // QR-код
     const qrContainer = document.getElementById('qrCode')
     qrContainer.innerHTML = ''
     if (data.nss_number) {
@@ -151,7 +119,60 @@
     statusBadge.style.display = 'inline-block'
   }
 
-  // --- Функции для модального окна (должны быть глобальными) ---
+  // --- Модальное окно: создание формы через DOM ---
+  function renderModalForm() {
+    const modalBody = document.getElementById('modalBody')
+    if (!modalBody) {
+      console.error('modalBody not found')
+      return
+    }
+
+    // Очищаем содержимое
+    modalBody.innerHTML = ''
+
+    const fields = [
+      { id: 'nss_number', label: 'Номер НСС', type: 'text', value: formData.nss_number || '' },
+      { id: 'surname', label: 'Фамилия', type: 'text', value: formData.surname || '' },
+      { id: 'name', label: 'Имя', type: 'text', value: formData.name || '' },
+      { id: 'patronymic', label: 'Отчество', type: 'text', value: formData.patronymic || '' },
+      { id: 'gender', label: 'Пол', type: 'text', value: formData.gender || '', placeholder: 'Мужской / Женский' },
+      { id: 'birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date || '' },
+      { id: 'birth_place', label: 'Место рождения', type: 'text', value: formData.birth_place || '' },
+      { id: 'issue_date', label: 'Дата выдачи', type: 'date', value: formData.issue_date || '' },
+      { id: 'issued_by', label: 'Кем выдан', type: 'text', value: formData.issued_by || '' },
+      { id: 'personal_code_ref', label: 'Личный код', type: 'text', value: userPersonalCode || '', readonly: true }
+    ]
+
+    fields.forEach(field => {
+      const group = document.createElement('div')
+      group.className = 'form-group'
+
+      const label = document.createElement('label')
+      label.htmlFor = field.id
+      label.textContent = field.label
+      group.appendChild(label)
+
+      const input = document.createElement('input')
+      input.type = field.type
+      input.id = field.id
+      input.className = 'form-input'
+      input.value = field.value
+      if (field.placeholder) input.placeholder = field.placeholder
+      if (field.readonly) input.readOnly = true
+
+      group.appendChild(input)
+      modalBody.appendChild(group)
+    })
+
+    // Для отладки: проверим, что элементы созданы
+    console.log('Поля после рендера:',
+      document.getElementById('surname')?.value,
+      document.getElementById('name')?.value,
+      document.getElementById('patronymic')?.value
+    )
+  }
+
+  // --- Глобальные функции для кнопок ---
   window.closeModal = function() {
     document.getElementById('modalOverlay').classList.remove('active')
   }
@@ -162,53 +183,6 @@
     renderModalForm()
   }
 
-function renderModalForm() {
-  const modalBody = document.getElementById('modalBody');
-  if (!modalBody) {
-    console.error('modalBody not found');
-    return;
-  }
-
-  // Очищаем содержимое
-  modalBody.innerHTML = '';
-
-  // Создаём поля формы программно
-  const fields = [
-    { id: 'nss_number', label: 'Номер НСС', type: 'text', value: formData.nss_number || '' },
-    { id: 'surname', label: 'Фамилия', type: 'text', value: formData.surname || '' },
-    { id: 'name', label: 'Имя', type: 'text', value: formData.name || '' },
-    { id: 'patronymic', label: 'Отчество', type: 'text', value: formData.patronymic || '' },
-    { id: 'gender', label: 'Пол', type: 'text', value: formData.gender || '', placeholder: 'Мужской / Женский' },
-    { id: 'birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date || '' },
-    { id: 'birth_place', label: 'Место рождения', type: 'text', value: formData.birth_place || '' },
-    { id: 'issue_date', label: 'Дата выдачи', type: 'date', value: formData.issue_date || '' },
-    { id: 'issued_by', label: 'Кем выдан', type: 'text', value: formData.issued_by || '' },
-    { id: 'personal_code_ref', label: 'Личный код', type: 'text', value: userPersonalCode || '', readonly: true }
-  ];
-
-  fields.forEach(field => {
-    const group = document.createElement('div');
-    group.className = 'form-group';
-
-    const label = document.createElement('label');
-    label.htmlFor = field.id;
-    label.textContent = field.label;
-    group.appendChild(label);
-
-    const input = document.createElement('input');
-    input.type = field.type;
-    input.id = field.id;
-    input.className = 'form-input';
-    input.value = field.value;
-    if (field.placeholder) input.placeholder = field.placeholder;
-    if (field.readonly) input.readOnly = true;
-
-    group.appendChild(input);
-    modalBody.appendChild(group);
-  });
-}
-
-  // --- Открытие модалки для добавления ---
   window.openAddModal = function() {
     formData = {
       nss_number: '',
@@ -226,7 +200,6 @@ function renderModalForm() {
     openModal('Добавление НСС')
   }
 
-  // --- Открытие модалки для редактирования ---
   window.openEditModal = function() {
     formData = {
       nss_number: documentData.nss_number || '',
@@ -246,9 +219,10 @@ function renderModalForm() {
 
   // --- Сохранение ---
   async function saveDocument() {
+    // Получаем актуальные значения из DOM
     const getVal = (id) => {
       const el = document.getElementById(id)
-      return el ? (el.value?.trim() ?? '') : ''
+      return el ? el.value.trim() : ''
     }
 
     const formDataToSend = {
@@ -267,12 +241,12 @@ function renderModalForm() {
       updated_at: new Date().toISOString()
     }
 
+    console.log('Сохранение: отправляемые данные', formDataToSend)
+
     if (!formDataToSend.nss_number) {
-      alert('Номер НСС обязателен для заполнения')
+      alert('Номер НСС обязателен')
       return
     }
-
-    console.log('Сохранение: отправляемые данные', formDataToSend)
 
     let result
     if (currentDocId) {
