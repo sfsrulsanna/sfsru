@@ -363,19 +363,23 @@
       flex: 1;
       border-bottom: 1px dashed var(--card-pink-dark);
     }
-    .qr-code {
-      width: 60px;
-      height: 60px;
-      background: white;
-      border: 1px solid var(--card-pink-dark);
-      border-radius: 6px;
-      padding: 3px;
-      flex-shrink: 0;
-    }
-    .qr-code canvas {
-      width: 100% !important;
-      height: 100% !important;
-    }
+.qr-code {
+  width: 50px;
+  height: 50px;
+  background: white;
+  border: 1px solid var(--card-pink-dark);
+  border-radius: 6px;
+  padding: 0; /* убираем внутренние отступы */
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.qr-code canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
 
     .highlight-number {
       font-size: 1.2rem;
@@ -733,6 +737,9 @@
       document.getElementById('inn').textContent = data.inn_number || '—'
       document.getElementById('nss').textContent = data.nss_number || '—'
       document.getElementById('address').textContent = data.registration_address || '—'
+	  console.log('surname from data:', data.surname);
+	  console.log('name from data:', data.name);
+	  console.log('gender from data:', data.gender);
 
       const statusBadge = document.getElementById('statusBadge')
       const status = data.status || 'oncheck'
@@ -840,6 +847,7 @@
         nss_number: documentData.nss_number || '',
         registration_address: documentData.registration_address || '',
         previous_id_cards: documentData.previous_id_cards || []
+		console.log('Editing with data:', documentData);
       }
       openModal('Редактирование ID-карты')
     }
@@ -1077,6 +1085,7 @@
       } else {
         cleanData.created_at = new Date().toISOString()
         result = await supabase.from('documents_id_card').insert([cleanData]).select()
+		console.log('Saving data:', newData);
       }
 
       if (result.error) {
