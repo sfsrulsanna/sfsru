@@ -886,15 +886,15 @@
       `
     }
 
-    // --- Открытие модалки для добавления ---
+    // --- Открытие модалки для добавления (все поля пустые, кроме личного кода) ---
     function openAddModal() {
       formData = {
-        surname1: userProfile?.surname || '',
-        name1: userProfile?.name || '',
-        patronymic1: userProfile?.patronymic || '',
-        birth_date: userProfile?.date_of_birth || '',
-        birth_place: userProfile?.place_of_birth || '',
-        gender1: userProfile?.gender || 'Мужской',
+        surname1: '',
+        name1: '',
+        patronymic1: '',
+        birth_date: '',
+        birth_place: '',
+        gender1: '', // пустое поле, пользователь выберет
         issue_date: '',
         expiry_date: '',
         card_number: '',
@@ -911,17 +911,15 @@
       openModal('Добавление ID-карты')
     }
 
-    // --- Открытие модалки для редактирования ---
+    // --- Открытие модалки для редактирования (только данные из документа, без подстановки из профиля) ---
     function openEditModal() {
-      console.log('openEditModal: documentData =', documentData)
-      console.log('openEditModal: userProfile =', userProfile)
       formData = {
-        surname1: documentData.surname1 || userProfile?.surname || '',
-        name1: documentData.name1 || userProfile?.name || '',
-        patronymic1: documentData.patronymic1 || userProfile?.patronymic || '',
-        birth_date: documentData.birth_date || userProfile?.date_of_birth || '',
-        birth_place: documentData.birth_place || userProfile?.place_of_birth || '',
-        gender1: documentData.gender1 || userProfile?.gender || '',
+        surname1: documentData.surname1 || '',
+        name1: documentData.name1 || '',
+        patronymic1: documentData.patronymic1 || '',
+        birth_date: documentData.birth_date || '',
+        birth_place: documentData.birth_place || '',
+        gender1: documentData.gender1 || '',
         issue_date: documentData.issue_date || '',
         expiry_date: documentData.expiry_date || '',
         card_number: documentData.card_number || '',
@@ -935,7 +933,6 @@
         nss_number: documentData.nss_number || '',
         registration_address: documentData.registration_address || ''
       }
-      console.log('openEditModal: formData =', formData)
       openModal('Редактирование ID-карты')
     }
 
