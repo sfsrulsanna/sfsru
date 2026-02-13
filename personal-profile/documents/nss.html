@@ -25,9 +25,11 @@
   <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-
+  
   <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
+  <!-- Стили для НСС (зелёная тема) -->
+  <link rel="stylesheet" href="../../css/personal-profile/nss.css" />
   <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
@@ -50,7 +52,7 @@
     .status-pending { background: rgba(255,193,7,0.15); color: #856404; }
     .status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
     .edit-btn {
-      background: linear-gradient(135deg, #7b091a, #a83232);
+      background: linear-gradient(135deg, #2e7d32, #1b5e20);
       color: white;
       border: none;
       border-radius: 8px;
@@ -100,7 +102,7 @@
     }
     .modal-header h4 {
       margin: 0;
-      color: #7b091a;
+      color: #2e7d32;
     }
     .close-modal {
       background: none;
@@ -122,7 +124,7 @@
       border-top: 1px solid #eee;
     }
     .btn-primary {
-      background: linear-gradient(135deg, #7b091a, #a83232);
+      background: linear-gradient(135deg, #2e7d32, #1b5e20);
       color: white;
       border: none;
       border-radius: 6px;
@@ -151,62 +153,6 @@
       border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1rem;
-    }
-
-    /* ========== ДОКУМЕНТ ========== */
-    .document-container {
-      max-width: 700px;
-      margin: 0 auto;
-      background: white;
-      border: 2px solid #7b091a;
-      border-radius: 16px;
-      padding: 2rem;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    .document-title {
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: #7b091a;
-      text-align: center;
-      margin-bottom: 2rem;
-      border-bottom: 2px solid #7b091a;
-      padding-bottom: 0.5rem;
-    }
-    .nss-number {
-      font-size: 2rem;
-      font-weight: 700;
-      text-align: center;
-      margin: 2rem 0;
-      color: #7b091a;
-      letter-spacing: 2px;
-      font-family: 'Courier New', monospace;
-      background: #f9f7f4;
-      padding: 1rem;
-      border-radius: 8px;
-    }
-    .info-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-    .info-item {
-      border-bottom: 1px solid #eee;
-      padding-bottom: 0.5rem;
-    }
-    .info-label {
-      font-weight: 600;
-      color: #666;
-      font-size: 0.85rem;
-      text-transform: uppercase;
-    }
-    .info-value {
-      font-size: 1.1rem;
-      margin-top: 0.25rem;
-      word-break: break-word;
-    }
-
-    @media (max-width: 600px) {
-      .info-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -251,40 +197,49 @@
 
         <!-- ДОКУМЕНТ -->
         <div class="document-container">
-          <div class="document-title">НОМЕР СОЦИАЛЬНОГО СЧЁТА (НСС)</div>
-          <div class="nss-number" id="nssNumber">—</div>
-          <div class="info-grid">
-            <div class="info-item">
-              <div class="info-label">ФАМИЛИЯ</div>
-              <div class="info-value" id="surname">—</div>
+          <div class="document-header">
+            <div class="document-title">НОМЕР СОЦИАЛЬНОГО СЧЁТА</div>
+            <div class="document-subtitle">(НСС)</div>
+          </div>
+          <div class="document-content">
+            <div class="qr-section">
+              <div id="qrCode" class="qr-code"></div>
+              <div class="qr-label">Отсканируйте QR-код для проверки подлинности</div>
             </div>
-            <div class="info-item">
-              <div class="info-label">ИМЯ</div>
-              <div class="info-value" id="name">—</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">ОТЧЕСТВО</div>
-              <div class="info-value" id="patronymic">—</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">ПОЛ</div>
-              <div class="info-value" id="gender">—</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">ДАТА РОЖДЕНИЯ</div>
-              <div class="info-value" id="birthDate">—</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">МЕСТО РОЖДЕНИЯ</div>
-              <div class="info-value" id="birthPlace">—</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">ДАТА ВЫДАЧИ</div>
-              <div class="info-value" id="issueDate">—</div>
-            </div>
-            <div class="info-item">
-              <div class="info-label">КЕМ ВЫДАН</div>
-              <div class="info-value" id="issuedBy">—</div>
+            <div class="data-section">
+              <div class="inn-number" id="nssNumber">—</div>
+              <div class="info-line">
+                <span class="info-label">Фамилия</span>
+                <span class="info-value" id="surname">—</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Имя</span>
+                <span class="info-value" id="name">—</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Отчество</span>
+                <span class="info-value" id="patronymic">—</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Пол</span>
+                <span class="info-value" id="gender">—</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Дата рождения</span>
+                <span class="info-value" id="birthDate">—</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Место рождения</span>
+                <span class="info-value" id="birthPlace">—</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Дата выдачи</span>
+                <span class="info-value" id="issueDate">—</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Кем выдан</span>
+                <span class="info-value" id="issuedBy">—</span>
+              </div>
             </div>
           </div>
         </div>
@@ -297,7 +252,7 @@
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО (ОДИН ШАГ) -->
+  <!-- МОДАЛЬНОЕ ОКНО -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -327,7 +282,7 @@
     let documentData = {}
     let userPersonalCode = null
     let userProfile = null
-    let formData = {} // данные для модальной формы
+    let formData = {}
 
     // --- Вспомогательные функции ---
     function formatDate(dateString) {
@@ -411,6 +366,20 @@
       document.getElementById('issueDate').textContent = formatDate(data.issue_date)
       document.getElementById('issuedBy').textContent = data.issued_by || '—'
 
+      // QR-код из номера НСС
+      const qrContainer = document.getElementById('qrCode')
+      qrContainer.innerHTML = ''
+      if (data.nss_number) {
+        new QRCode(qrContainer, {
+          text: data.nss_number,
+          width: 180,
+          height: 180,
+          colorDark: '#000',
+          colorLight: '#fff',
+          correctLevel: QRCode.CorrectLevel.L
+        })
+      }
+
       const statusBadge = document.getElementById('statusBadge')
       const status = data.status || 'oncheck'
       statusBadge.className = `document-status status-${status}`
@@ -478,16 +447,16 @@
       `
     }
 
-    // --- Открытие модалки для добавления (все поля пустые) ---
+    // --- Открытие модалки для добавления ---
     function openAddModal() {
       formData = {
         nss_number: '',
-        surname: '',
-        name: '',
-        patronymic: '',
-        gender: '',
-        birth_date: '',
-        birth_place: '',
+        surname: userProfile?.surname || '',
+        name: userProfile?.name || '',
+        patronymic: userProfile?.patronymic || '',
+        gender: userProfile?.gender || '',
+        birth_date: userProfile?.date_of_birth || '',
+        birth_place: userProfile?.place_of_birth || '',
         issue_date: '',
         issued_by: '',
         personal_code_ref: userPersonalCode || ''
@@ -499,12 +468,12 @@
     function openEditModal() {
       formData = {
         nss_number: documentData.nss_number || '',
-        surname: documentData.surname || '',
-        name: documentData.name || '',
-        patronymic: documentData.patronymic || '',
-        gender: documentData.gender || '',
-        birth_date: documentData.birth_date || '',
-        birth_place: documentData.birth_place || '',
+        surname: documentData.surname || userProfile?.surname || '',
+        name: documentData.name || userProfile?.name || '',
+        patronymic: documentData.patronymic || userProfile?.patronymic || '',
+        gender: documentData.gender || userProfile?.gender || '',
+        birth_date: documentData.birth_date || userProfile?.date_of_birth || '',
+        birth_place: documentData.birth_place || userProfile?.place_of_birth || '',
         issue_date: documentData.issue_date || '',
         issued_by: documentData.issued_by || '',
         personal_code_ref: documentData.personal_code_ref || userPersonalCode || ''
@@ -535,8 +504,6 @@
         updated_at: new Date().toISOString()
       }
 
-      console.log('Saving data:', formDataToSend)
-
       if (!formDataToSend.nss_number) {
         alert('Номер НСС обязателен')
         return
@@ -562,7 +529,6 @@
         return
       }
 
-      console.log('Save successful, newId =', currentDocId || result.data[0].id)
       window.closeModal()
       const newId = currentDocId || result.data[0].id
       window.location.href = `nss.html?id=${newId}`
@@ -576,7 +542,6 @@
       document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
     })
 
-    // Экспорт в глобальную область (для inline-обработчиков)
     window.closeModal = closeModal
     window.openAddModal = openAddModal
     window.openEditModal = openEditModal
