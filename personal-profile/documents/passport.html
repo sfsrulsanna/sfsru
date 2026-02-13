@@ -698,10 +698,10 @@ function renderPassport(data) {
   const avatarImg = document.getElementById('passportAvatar')
   if (personalCode) {
     const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '')
-    const imgUrl = `../images/avatars/${safeCode}.jpg`
+    const imgUrl = `../../images/avatars/${safeCode}.jpg`
     const img = new Image()
     img.onload = () => { avatarImg.src = imgUrl }
-    img.onerror = () => { avatarImg.src = '../images/default-avatar.png' }
+    img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
     img.src = imgUrl
   }
 
@@ -733,28 +733,6 @@ function renderPassport(data) {
       })
     } catch (e) {
       console.warn('Barcode generation failed', e)
-    }
-  }
-
-  // Подпись владельца (из отдельной папки)
-  const signatureImg = document.createElement('img')
-  signatureImg.id = 'passportSignature'
-  signatureImg.className = 'signature-img'
-  signatureImg.src = personalCode ? `../images/avatars/signatures/${personalCode.replace(/[^a-zA-Z0-9\-]/g, '')}.jpg` : '../images/default-signature.png'
-  signatureImg.alt = 'Подпись'
-  signatureImg.onerror = function() { this.src = '../images/default-signature.png' }
-  // Вставим подпись в блок extraSections, если нет отдельного контейнера
-  // Но лучше разместить её в info-item. Сейчас подпись уже есть в extraHtml? Нет, мы не добавили.
-  // Добавим блок подписи, если его нет.
-  if (!document.querySelector('.signature-container')) {
-    const infoGrid = document.querySelector('.info-grid')
-    if (infoGrid) {
-      infoGrid.insertAdjacentHTML('beforeend', `
-        <div class="info-item signature-container" style="display: flex; align-items: center; gap: 15px; padding: 15px; background: #f9f9f9; border-radius: 10px; border-left: 3px solid #7b091a;">
-          <div class="info-label" style="font-weight: 600; color: #7b091a;">Подпись владельца</div>
-          <img id="passportSignature" src="${personalCode ? `../images/avatars/signatures/${personalCode.replace(/[^a-zA-Z0-9\-]/g, '')}.jpg` : '../images/default-signature.png'}" alt="Подпись" class="signature-img" style="height: 60px; max-width: 100px; border: 1px solid #ddd; padding: 4px; background: white; border-radius: 6px;">
-        </div>
-      `)
     }
   }
 
