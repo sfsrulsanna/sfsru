@@ -888,63 +888,66 @@
     }
 
     // --- Сохранение (как в add/id-card.html) ---
-    async function saveDocument() {
-      // Собираем данные из полей
-      const formDataToSend = {
-        surname: document.getElementById('surname')?.value.trim() || '',
-        name: document.getElementById('name')?.value.trim() || '',
-        patronymic: document.getElementById('patronymic')?.value.trim() || '',
-        birth_date: document.getElementById('birth_date')?.value || '',
-        birth_place: document.getElementById('birth_place')?.value.trim() || '',
-        gender: document.getElementById('gender')?.value || '',
-        issue_date: document.getElementById('issue_date')?.value || '',
-        expiry_date: document.getElementById('expiry_date')?.value || '',
-        card_number: document.getElementById('card_number')?.value.trim() || '',
-        issued_by: document.getElementById('issued_by')?.value.trim() || '',
-        department_code: document.getElementById('department_code')?.value.trim() || '',
-        personal_code_ref: document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode,
-        oms_policy_number: document.getElementById('oms_policy_number')?.value.trim() || '',
-        blood_group: document.getElementById('blood_group')?.value.trim() || '',
-        rh_factor: document.getElementById('rh_factor')?.value.trim() || '',
-        inn_number: document.getElementById('inn_number')?.value.trim() || '',
-        nss_number: document.getElementById('nss_number')?.value.trim() || '',
-        registration_address: document.getElementById('registration_address')?.value.trim() || '',
-        // Дополнительные поля для БД
-        personal_code: userPersonalCode,
-        status: 'oncheck',
-        updated_at: new Date().toISOString()
-      }
+async function saveDocument() {
+  // Безопасное получение значения по ID
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? (el.value?.trim() ?? '') : '';
+  };
 
-      if (!formDataToSend.card_number) {
-        alert('Номер карты обязателен')
-        return
-      }
+  const formDataToSend = {
+    surname: getVal('surname'),
+    name: getVal('name'),
+    patronymic: getVal('patronymic'),
+    birth_date: getVal('birth_date'),
+    birth_place: getVal('birth_place'),
+    gender: getVal('gender'),
+    issue_date: getVal('issue_date'),
+    expiry_date: getVal('expiry_date'),
+    card_number: getVal('card_number'),
+    issued_by: getVal('issued_by'),
+    department_code: getVal('department_code'),
+    personal_code_ref: getVal('personal_code_ref') || userPersonalCode,
+    oms_policy_number: getVal('oms_policy_number'),
+    blood_group: getVal('blood_group'),
+    rh_factor: getVal('rh_factor'),
+    inn_number: getVal('inn_number'),
+    nss_number: getVal('nss_number'),
+    registration_address: getVal('registration_address'),
+    // Системные поля
+    personal_code: userPersonalCode,
+    status: 'oncheck',
+    updated_at: new Date().toISOString()
+  };
 
-      let result
-      if (currentDocId) {
-        // Обновление
-        result = await supabase
-          .from('documents_id_card')
-          .update(formDataToSend)
-          .eq('id', currentDocId)
-      } else {
-        // Новая запись
-        formDataToSend.created_at = new Date().toISOString()
-        result = await supabase
-          .from('documents_id_card')
-          .insert([formDataToSend])
-          .select()
-      }
+  if (!formDataToSend.card_number) {
+    alert('Номер карты обязателен');
+    return;
+  }
 
-      if (result.error) {
-        alert('Ошибка сохранения: ' + result.error.message)
-        return
-      }
+  let result;
+  if (currentDocId) {
+    result = await supabase
+      .from('documents_id_card')
+      .update(formDataToSend)
+      .eq('id', currentDocId);
+  } else {
+    formDataToSend.created_at = new Date().toISOString();
+    result = await supabase
+      .from('documents_id_card')
+      .insert([formDataToSend])
+      .select();
+  }
 
-      window.closeModal()
-      const newId = currentDocId || result.data[0].id
-      window.location.href = `id-card.html?id=${newId}`
-    }
+  if (result.error) {
+    alert('Ошибка сохранения: ' + result.error.message);
+    return;
+  }
+
+  window.closeModal();
+  const newId = currentDocId || result.data[0].id;
+  window.location.href = `id-card.html?id=${newId}`;
+}
 
     // --- Открытие модалки для добавления ---
     function openAddModal() {
