@@ -32,7 +32,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
   <style>
-    /* ========== СТАТУС И КНОПКИ (как в passport.html) ========== */
+    /* ========== СТАТУС И КНОПКИ ========== */
     .status-and-edit {
       display: flex;
       justify-content: center;
@@ -117,7 +117,8 @@
     }
     .modal-footer {
       display: flex;
-      justify-content: space-between;
+      justify-content: flex-end;
+      gap: 1rem;
       padding: 1rem 1.5rem 1.5rem 1.5rem;
       border-top: 1px solid #eee;
     }
@@ -137,12 +138,6 @@
       padding: 0.6rem 1.5rem;
       cursor: pointer;
     }
-    .step-indicator {
-      text-align: center;
-      margin-bottom: 1rem;
-      color: #7b091a;
-      font-weight: 500;
-    }
     .form-group {
       margin-bottom: 1.2rem;
     }
@@ -161,13 +156,6 @@
     .form-textarea {
       resize: vertical;
       min-height: 60px;
-    }
-    .record-block {
-      border: 1px solid #eee;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      background: #fafafa;
     }
 
     /* ========== СТИЛИ ДЛЯ КАРТОЧКИ ========== */
@@ -480,6 +468,7 @@
 
         <div class="card-container">
           <div class="card" id="card">
+            <!-- Лицевая сторона -->
             <div class="card-front">
               <div class="card-header">
                 <div class="title">ЭЛЕКТРОННОЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</div>
@@ -539,6 +528,7 @@
                 </div>
               </div>
             </div>
+            <!-- Оборотная сторона -->
             <div class="card-back">
               <div class="card-header">
                 <div class="title">ЭЛЕКТРОННОЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</div>
@@ -593,6 +583,7 @@
           </div>
         </div>
 
+        <!-- ТАБЛИЦА РАНЕЕ ВЫДАННЫХ КАРТ -->
         <div class="previous-section">
           <h3 class="previous-title">Ранее выданные ID-карты</h3>
           <table class="previous-table">
@@ -618,17 +609,19 @@
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
+  <!-- МОДАЛЬНОЕ ОКНО (ОДИН ШАГ) -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
-        <h4 id="modalTitle">Добавление ID-карты</h4>
+        <h4 id="modalTitle">Редактирование ID-карты</h4>
         <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
       </div>
-      <div class="step-indicator" id="stepIndicator">Шаг 1 из 2</div>
-      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-body" id="modalBody">
+        <!-- Динамически заполняется формой -->
+      </div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" id="prevBtn" style="display: none;">Назад</button>
-        <button type="button" class="btn-primary" id="nextBtn">Далее</button>
+        <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
+        <button type="button" class="btn-primary" id="modalSaveBtn">Сохранить</button>
       </div>
     </div>
   </div>
@@ -647,10 +640,8 @@
     let documentData = {}
     let userPersonalCode = null
     let userProfile = null
-    let currentStep = 1
-    const totalSteps = 2
-    let formData = {}
 
+    // --- Вспомогательные функции ---
     function formatDate(dateString) {
       if (!dateString) return '—'
       try { return new Date(dateString).toLocaleDateString('ru-RU') }
@@ -669,9 +660,13 @@
       return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')
     }
 
+    // --- Загрузка данных ---
     async function loadData() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) { window.location.href = '../../login.html'; return }
+      if (sessionError || !session) {
+        window.location.href = '../../login.html'
+        return
+      }
 
       const [profileResult, docResult] = await Promise.allSettled([
         supabase.from('users').select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender').eq('id', session.user.id).single(),
@@ -717,6 +712,7 @@
       }
     }
 
+    // --- Отрисовка карточки ---
     function renderCard(data) {
       document.getElementById('surname').textContent = data.surname || '—'
       document.getElementById('name').textContent = data.name || '—'
@@ -737,8 +733,6 @@
       document.getElementById('inn').textContent = data.inn_number || '—'
       document.getElementById('nss').textContent = data.nss_number || '—'
       document.getElementById('address').textContent = data.registration_address || '—'
-
-      console.log('Данные для отображения:', data);
 
       const statusBadge = document.getElementById('statusBadge')
       const status = data.status || 'oncheck'
@@ -773,6 +767,7 @@
       }
     }
 
+    // --- Отрисовка таблицы ранее выданных карт ---
     function renderPreviousCards(cards) {
       const tbody = document.getElementById('previousCardsBody')
       if (!cards || cards.length === 0) {
@@ -789,6 +784,7 @@
       `).join('')
     }
 
+    // --- Переворот карты ---
     document.getElementById('card').addEventListener('click', (e) => {
       if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
         document.getElementById('card').classList.toggle('flipped')
@@ -798,90 +794,21 @@
       document.getElementById('card').classList.toggle('flipped')
     })
 
-    async function openAddModal() {
-      currentStep = 1
-      formData = {
-        surname: userProfile?.surname || '',
-        name: userProfile?.name || '',
-        patronymic: userProfile?.patronymic || '',
-        birth_date: userProfile?.date_of_birth || '',
-        birth_place: userProfile?.place_of_birth || '',
-        gender: userProfile?.gender || 'Мужской',
-        issue_date: '',
-        expiry_date: '',
-        card_number: '',
-        issued_by: '',
-        department_code: '',
-        personal_code_ref: userPersonalCode || '',
-        oms_policy_number: '',
-        blood_group: '',
-        rh_factor: '',
-        inn_number: '',
-        nss_number: '',
-        registration_address: '',
-        previous_id_cards: []
-      }
-      openModal('Добавление ID-карты')
-    }
-
-    function openEditModal() {
-      currentStep = 1
-      console.log('Редактирование, данные документа:', documentData);
-      console.log('Профиль пользователя:', userProfile);
-
-      // Явно заполняем все поля, приоритет: данные документа, затем профиль, затем пустая строка
-      formData = {
-        surname: documentData.surname || userProfile?.surname || '',
-        name: documentData.name || userProfile?.name || '',
-        patronymic: documentData.patronymic || userProfile?.patronymic || '',
-        birth_date: documentData.birth_date || userProfile?.date_of_birth || '',
-        birth_place: documentData.birth_place || userProfile?.place_of_birth || '',
-        gender: documentData.gender || userProfile?.gender || '',
-        issue_date: documentData.issue_date || '',
-        expiry_date: documentData.expiry_date || '',
-        card_number: documentData.card_number || '',
-        issued_by: documentData.issued_by || '',
-        department_code: documentData.department_code || '',
-        personal_code_ref: documentData.personal_code_ref || userPersonalCode || '',
-        oms_policy_number: documentData.oms_policy_number || '',
-        blood_group: documentData.blood_group || '',
-        rh_factor: documentData.rh_factor || '',
-        inn_number: documentData.inn_number || '',
-        nss_number: documentData.nss_number || '',
-        registration_address: documentData.registration_address || '',
-        previous_id_cards: documentData.previous_id_cards || []
-      }
-      console.log('formData после сборки:', formData);
-      openModal('Редактирование ID-карты')
-    }
-
+    // --- МОДАЛЬНОЕ ОКНО (ОДИН ШАГ) ---
     function openModal(title) {
       document.getElementById('modalTitle').textContent = title
       document.getElementById('modalOverlay').classList.add('active')
-      updateStep()
+      renderModalForm()
     }
 
     window.closeModal = function() {
       document.getElementById('modalOverlay').classList.remove('active')
-      currentStep = 1
     }
 
-    function updateStep() {
-      document.getElementById('stepIndicator').textContent = `Шаг ${currentStep} из ${totalSteps}`
-      document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-block' : 'none'
-      document.getElementById('nextBtn').textContent = currentStep === totalSteps ? 'Сохранить' : 'Далее'
-
-      let content = ''
-      if (currentStep === 1) {
-        content = renderStep1()
-      } else {
-        content = renderStep2()
-      }
-      document.getElementById('modalBody').innerHTML = content
-    }
-
-    function renderStep1() {
-      return `
+    // Рендер формы (полностью из add/id-card.html)
+    function renderModalForm() {
+      const modalBody = document.getElementById('modalBody')
+      modalBody.innerHTML = `
         <div class="form-group">
           <label>Фамилия</label>
           <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
@@ -960,136 +887,53 @@
       `
     }
 
-    function renderStep2() {
-      const cards = formData.previous_id_cards || []
-      let listHtml = cards.map((card, i) => `
-        <div class="record-block">
-          <div class="form-group">
-            <label>Номер удостоверения</label>
-            <input type="text" class="form-input prev-card-number" value="${escapeHTML(card.card_number || '')}">
-          </div>
-          <div class="form-group">
-            <label>Кем выдан</label>
-            <input type="text" class="form-input prev-issued-by" value="${escapeHTML(card.issued_by || '')}">
-          </div>
-          <div class="form-group">
-            <label>Дата выдачи</label>
-            <input type="date" class="form-input prev-issue-date" value="${card.issue_date || ''}">
-          </div>
-          <div class="form-group">
-            <label>Срок действия</label>
-            <input type="date" class="form-input prev-expiry-date" value="${card.expiry_date || ''}">
-          </div>
-          <button type="button" class="btn btn-secondary" onclick="window.removeCard(this)">Удалить</button>
-        </div>
-      `).join('')
-      return `
-        <p><strong>Ранее выданные ID-карты</strong></p>
-        <div id="prevCardsContainer">${listHtml}</div>
-        <button type="button" class="btn btn-secondary" id="addPrevCardBtn">+ Добавить карту</button>
-      `
-    }
-
-    window.addPrevCard = function() {
-      const container = document.getElementById('prevCardsContainer')
-      const html = `
-        <div class="record-block">
-          <div class="form-group">
-            <label>Номер удостоверения</label>
-            <input type="text" class="form-input prev-card-number">
-          </div>
-          <div class="form-group">
-            <label>Кем выдан</label>
-            <input type="text" class="form-input prev-issued-by">
-          </div>
-          <div class="form-group">
-            <label>Дата выдачи</label>
-            <input type="date" class="form-input prev-issue-date">
-          </div>
-          <div class="form-group">
-            <label>Срок действия</label>
-            <input type="date" class="form-input prev-expiry-date">
-          </div>
-          <button type="button" class="btn btn-secondary" onclick="window.removeCard(this)">Удалить</button>
-        </div>
-      `
-      container.insertAdjacentHTML('beforeend', html)
-    }
-
-    window.removeCard = function(btn) {
-      const block = btn.closest('.record-block')
-      if (block) block.remove()
-    }
-
-    function saveStepData() {
-      if (currentStep === 1) {
-        const getVal = id => document.getElementById(id)?.value || ''
-        formData.surname = getVal('surname').trim()
-        formData.name = getVal('name').trim()
-        formData.patronymic = getVal('patronymic').trim()
-        formData.birth_date = getVal('birth_date')
-        formData.birth_place = getVal('birth_place').trim()
-        formData.gender = getVal('gender')
-        formData.issue_date = getVal('issue_date')
-        formData.expiry_date = getVal('expiry_date')
-        formData.card_number = getVal('card_number').trim()
-        formData.issued_by = getVal('issued_by').trim()
-        formData.department_code = getVal('department_code').trim()
-        formData.personal_code_ref = getVal('personal_code_ref').trim() || userPersonalCode
-        formData.oms_policy_number = getVal('oms_policy_number').trim()
-        formData.blood_group = getVal('blood_group').trim()
-        formData.rh_factor = getVal('rh_factor').trim()
-        formData.inn_number = getVal('inn_number').trim()
-        formData.nss_number = getVal('nss_number').trim()
-        formData.registration_address = getVal('registration_address').trim()
-      } else {
-        const blocks = document.querySelectorAll('#prevCardsContainer .record-block')
-        const cards = []
-        blocks.forEach(block => {
-          cards.push({
-            card_number: block.querySelector('.prev-card-number')?.value.trim() || '',
-            issued_by: block.querySelector('.prev-issued-by')?.value.trim() || '',
-            issue_date: block.querySelector('.prev-issue-date')?.value || '',
-            expiry_date: block.querySelector('.prev-expiry-date')?.value || ''
-          })
-        })
-        formData.previous_id_cards = cards
-      }
-    }
-
-    function nextStep() {
-      saveStepData()
-      if (currentStep < totalSteps) {
-        currentStep++
-        updateStep()
-      } else {
-        saveDocument()
-      }
-    }
-
-    function prevStep() {
-      if (currentStep > 1) {
-        currentStep--
-        updateStep()
-      }
-    }
-
+    // --- Сохранение (как в add/id-card.html) ---
     async function saveDocument() {
-      const newData = { ...formData }
-      if (!newData.card_number) {
+      // Собираем данные из полей
+      const formDataToSend = {
+        surname: document.getElementById('surname')?.value.trim() || '',
+        name: document.getElementById('name')?.value.trim() || '',
+        patronymic: document.getElementById('patronymic')?.value.trim() || '',
+        birth_date: document.getElementById('birth_date')?.value || '',
+        birth_place: document.getElementById('birth_place')?.value.trim() || '',
+        gender: document.getElementById('gender')?.value || '',
+        issue_date: document.getElementById('issue_date')?.value || '',
+        expiry_date: document.getElementById('expiry_date')?.value || '',
+        card_number: document.getElementById('card_number')?.value.trim() || '',
+        issued_by: document.getElementById('issued_by')?.value.trim() || '',
+        department_code: document.getElementById('department_code')?.value.trim() || '',
+        personal_code_ref: document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode,
+        oms_policy_number: document.getElementById('oms_policy_number')?.value.trim() || '',
+        blood_group: document.getElementById('blood_group')?.value.trim() || '',
+        rh_factor: document.getElementById('rh_factor')?.value.trim() || '',
+        inn_number: document.getElementById('inn_number')?.value.trim() || '',
+        nss_number: document.getElementById('nss_number')?.value.trim() || '',
+        registration_address: document.getElementById('registration_address')?.value.trim() || '',
+        // Дополнительные поля для БД
+        personal_code: userPersonalCode,
+        status: 'oncheck',
+        updated_at: new Date().toISOString()
+      }
+
+      if (!formDataToSend.card_number) {
         alert('Номер карты обязателен')
         return
       }
-      const cleanData = { ...newData, personal_code: userPersonalCode, status: 'oncheck', updated_at: new Date().toISOString() }
-
-      console.log('Сохраняемые данные:', cleanData)
 
       let result
       if (currentDocId) {
-        result = await supabase.from('documents_id_card').update(cleanData).eq('id', currentDocId)
+        // Обновление
+        result = await supabase
+          .from('documents_id_card')
+          .update(formDataToSend)
+          .eq('id', currentDocId)
       } else {
-        cleanData.created_at = new Date().toISOString()
-        result = await supabase.from('documents_id_card').insert([cleanData]).select()
+        // Новая запись
+        formDataToSend.created_at = new Date().toISOString()
+        result = await supabase
+          .from('documents_id_card')
+          .insert([formDataToSend])
+          .select()
       }
 
       if (result.error) {
@@ -1102,26 +946,74 @@
       window.location.href = `id-card.html?id=${newId}`
     }
 
+    // --- Открытие модалки для добавления ---
+    function openAddModal() {
+      // Заполняем данными из профиля (кроме тех, что могут быть пустыми)
+      formData = {
+        surname: userProfile?.surname || '',
+        name: userProfile?.name || '',
+        patronymic: userProfile?.patronymic || '',
+        birth_date: userProfile?.date_of_birth || '',
+        birth_place: userProfile?.place_of_birth || '',
+        gender: userProfile?.gender || 'Мужской',
+        issue_date: '',
+        expiry_date: '',
+        card_number: '',
+        issued_by: '',
+        department_code: '',
+        personal_code_ref: userPersonalCode || '',
+        oms_policy_number: '',
+        blood_group: '',
+        rh_factor: '',
+        inn_number: '',
+        nss_number: '',
+        registration_address: ''
+      }
+      openModal('Добавление ID-карты')
+    }
+
+    // --- Открытие модалки для редактирования ---
+    function openEditModal() {
+      // Заполняем данными из документа, если есть, иначе из профиля
+      formData = {
+        surname: documentData.surname || userProfile?.surname || '',
+        name: documentData.name || userProfile?.name || '',
+        patronymic: documentData.patronymic || userProfile?.patronymic || '',
+        birth_date: documentData.birth_date || userProfile?.date_of_birth || '',
+        birth_place: documentData.birth_place || userProfile?.place_of_birth || '',
+        gender: documentData.gender || userProfile?.gender || '',
+        issue_date: documentData.issue_date || '',
+        expiry_date: documentData.expiry_date || '',
+        card_number: documentData.card_number || '',
+        issued_by: documentData.issued_by || '',
+        department_code: documentData.department_code || '',
+        personal_code_ref: documentData.personal_code_ref || userPersonalCode || '',
+        oms_policy_number: documentData.oms_policy_number || '',
+        blood_group: documentData.blood_group || '',
+        rh_factor: documentData.rh_factor || '',
+        inn_number: documentData.inn_number || '',
+        nss_number: documentData.nss_number || '',
+        registration_address: documentData.registration_address || ''
+      }
+      openModal('Редактирование ID-карты')
+    }
+
+    let formData = {} // используется в renderModalForm
+
+    // --- Инициализация ---
     document.addEventListener('DOMContentLoaded', async () => {
       await loadData()
       document.getElementById('addBtn')?.addEventListener('click', openAddModal)
       document.getElementById('editBtn')?.addEventListener('click', openEditModal)
-      document.getElementById('prevBtn')?.addEventListener('click', prevStep)
-      document.getElementById('nextBtn')?.addEventListener('click', nextStep)
-      document.addEventListener('click', (e) => {
-        if (e.target.id === 'addPrevCardBtn') addPrevCard()
-      })
+      document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
     })
 
+    // Экспорт в глобальную область
     window.openAddModal = openAddModal
     window.openEditModal = openEditModal
     window.openModal = openModal
     window.closeModal = closeModal
-    window.addPrevCard = addPrevCard
-    window.removeCard = removeCard
-    window.nextStep = nextStep
-    window.prevStep = prevStep
+    window.formData = formData
   </script>
-
 </body>
 </html>
