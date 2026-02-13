@@ -4,9 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Добавить данные заграничного паспорта — СФСРЮ</title>
-  <!-- favicons -->
+
+  <!-- favicons (скопируйте сюда свои полные ссылки) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-  <!-- ... все favicon ссылки ... -->
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
+
+  <!-- Единый стиль сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
   <style>
     .profile-main {
@@ -66,14 +87,13 @@
       background: #6c757d;
       color: white;
     }
-
     .record-block {
       border: 1px solid #eee;
       padding: 10px;
       margin-bottom: 10px;
       border-radius: 8px;
+      background: #fafafa;
     }
-
     .dual-input {
       display: flex;
       gap: 10px;
@@ -85,7 +105,7 @@
   </style>
 </head>
 <body>
-  <!-- ШАПКА -->
+  <!-- ========== ШАПКА ========== -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -109,8 +129,9 @@
       </nav>
     </div>
   </header>
+  <div class="menu-overlay"></div>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
+  <!-- ========== ОСНОВНОЙ КОНТЕНТ ========== -->
   <main class="main-content profile-main">
     <div class="profile-container">
       <div class="page-header">
@@ -131,7 +152,7 @@
     </div>
   </main>
 
-  <!-- ПОДВАЛ -->
+  <!-- ========== ПОДВАЛ ========== -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>
@@ -140,302 +161,381 @@
     </p>
   </footer>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
-  <script src="../../js/firebase-config.js"></script>
-
-  <script>
-    let currentStep = 1;
-    const totalSteps = 3;
-    let formData = {};
-    let userProfile = null;
-    let userPersonalCode = null;
-
-    document.addEventListener('DOMContentLoaded', function () {
-      firebase.auth().onAuthStateChanged(async user => {
-        if (!user) return window.location.href = '../../login.html';
-        await loadUserProfile(user.uid);
-        updateStep();
-      });
-
-      document.getElementById('prevBtn').addEventListener('click', prevStep);
-      document.getElementById('nextBtn').addEventListener('click', nextStep);
-    });
-
-    async function loadUserProfile(userId) {
-      try {
-        const userDoc = await firebase.firestore().collection('users').doc(userId).get();
-        if (userDoc.exists) {
-          userProfile = userDoc.data();
-          userPersonalCode = userProfile.personalCode;
-          // Предзаполняем форму
-          formData.personalCode = userPersonalCode || '';
-          formData.foreignPassportCitizenshipCyr = 'СФСР Юльсанна';
-          formData.foreignPassportCitizenshipLat = 'SFSR Ulsanna';
-        }
-      } catch (err) {
-        console.error('Ошибка загрузки профиля:', err);
+  <!-- ========== SUPABASE ========== -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
       }
     }
+  </script>
+  <script type="module" src="../../js/supabase-config.js"></script>
+  <script src="../../js/mob-menu.js"></script>
 
+  <!-- ========== ПОЛНЫЙ JS КОД ========== -->
+  <script type="module">
+    import { supabase } from '../../js/supabase-config.js'
+
+    // -------------------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --------------------
+    let currentStep = 1
+    const totalSteps = 3
+    let formData = {}
+    let userProfile = null
+    let userPersonalCode = null
+
+    // -------------------- ЗАГРУЗКА ПРОФИЛЯ --------------------
+    async function loadUserProfile() {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        window.location.href = '../../login.html'
+        return null
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('personal_code, surname, name, date_of_birth, place_of_birth, gender')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error) {
+        console.error('Ошибка загрузки профиля:', error)
+        alert('Не удалось загрузить профиль. Перезагрузите страницу.')
+        return null
+      }
+
+      userPersonalCode = data.personal_code
+      userProfile = data
+
+      // Предзаполняем форму
+      formData = {
+        personal_code: userPersonalCode || '',
+        surname_cyr: data.surname || '',
+        name_cyr: data.name || '',
+        birth_date: data.date_of_birth || '',
+        birth_place_cyr: data.place_of_birth || '',
+        gender_cyr: data.gender || 'Мужской',
+        citizenship_cyr: 'СФСР Юльсанна',
+        citizenship_lat: 'SFSR Ulsanna',
+        visas: []
+      }
+
+      return data
+    }
+
+    // -------------------- ОБНОВЛЕНИЕ ШАГА --------------------
     function updateStep() {
-      document.getElementById('stepIndicator').textContent = `Шаг ${currentStep} из ${totalSteps}`;
-      document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-block' : 'none';
-      document.getElementById('nextBtn').textContent = currentStep === totalSteps ? 'Сохранить' : 'Далее';
+      const stepIndicator = document.getElementById('stepIndicator')
+      if (stepIndicator) stepIndicator.textContent = `Шаг ${currentStep} из ${totalSteps}`
 
-      let content = '';
+      const prevBtn = document.getElementById('prevBtn')
+      if (prevBtn) prevBtn.style.display = currentStep > 1 ? 'inline-block' : 'none'
+
+      const nextBtn = document.getElementById('nextBtn')
+      if (nextBtn) nextBtn.textContent = currentStep === totalSteps ? 'Сохранить' : 'Далее'
+
+      let content = ''
       switch (currentStep) {
-        case 1: content = step1(); break;
-        case 2: content = step2(); break;
-        case 3: content = step3(); break;
+        case 1: content = renderStep1(); break
+        case 2: content = renderStep2(); break
+        case 3: content = renderStep3(); break
       }
-      document.getElementById('stepContent').innerHTML = content;
+      const stepContent = document.getElementById('stepContent')
+      if (stepContent) stepContent.innerHTML = content
     }
 
-    function step1() {
+    // -------------------- РЕНДЕР ШАГОВ --------------------
+    function renderStep1() {
       return `
         <div class="form-group">
           <label>Фамилия (кириллица)</label>
-          <input type="text" id="foreignPassportSurnameCyr" class="form-input" value="${formData.foreignPassportSurnameCyr || ''}">
+          <input type="text" id="surname_cyr" class="form-input" value="${escapeHTML(formData.surname_cyr || '')}">
         </div>
         <div class="form-group">
           <label>Фамилия (латиница)</label>
-          <input type="text" id="foreignPassportSurnameLat" class="form-input" value="${formData.foreignPassportSurnameLat || ''}">
+          <input type="text" id="surname_lat" class="form-input" value="${escapeHTML(formData.surname_lat || '')}">
         </div>
         <div class="form-group">
           <label>Имя (кириллица)</label>
-          <input type="text" id="foreignPassportNameCyr" class="form-input" value="${formData.foreignPassportNameCyr || ''}">
+          <input type="text" id="name_cyr" class="form-input" value="${escapeHTML(formData.name_cyr || '')}">
         </div>
         <div class="form-group">
           <label>Имя (латиница)</label>
-          <input type="text" id="foreignPassportNameLat" class="form-input" value="${formData.foreignPassportNameLat || ''}">
+          <input type="text" id="name_lat" class="form-input" value="${escapeHTML(formData.name_lat || '')}">
         </div>
         <div class="form-group">
           <label>Серия и номер</label>
-          <input type="text" id="foreignPassportSeries" class="form-input" value="${formData.foreignPassportSeries || ''}">
+          <input type="text" id="series_number" class="form-input" value="${escapeHTML(formData.series_number || '')}">
         </div>
         <div class="form-group">
           <label>Дата рождения</label>
-          <input type="date" id="foreignPassportBirthDate" class="form-input" value="${formData.foreignPassportBirthDate || ''}">
+          <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
         </div>
         <div class="form-group">
           <label>Место рождения (кириллица)</label>
-          <input type="text" id="foreignPassportBirthPlaceCyr" class="form-input" value="${formData.foreignPassportBirthPlaceCyr || ''}">
+          <input type="text" id="birth_place_cyr" class="form-input" value="${escapeHTML(formData.birth_place_cyr || '')}">
         </div>
         <div class="form-group">
           <label>Место рождения (латиница)</label>
-          <input type="text" id="foreignPassportBirthPlaceLat" class="form-input" value="${formData.foreignPassportBirthPlaceLat || ''}">
+          <input type="text" id="birth_place_lat" class="form-input" value="${escapeHTML(formData.birth_place_lat || '')}">
         </div>
         <div class="form-group">
           <label>Пол (кириллица)</label>
-          <input type="text" id="foreignPassportGenderCyr" class="form-input" value="${formData.foreignPassportGenderCyr || ''}">
+          <input type="text" id="gender_cyr" class="form-input" value="${escapeHTML(formData.gender_cyr || '')}">
         </div>
         <div class="form-group">
           <label>Пол (латиница)</label>
-          <input type="text" id="foreignPassportGenderLat" class="form-input" value="${formData.foreignPassportGenderLat || ''}">
+          <input type="text" id="gender_lat" class="form-input" value="${escapeHTML(formData.gender_lat || '')}">
         </div>
         <div class="form-group">
           <label>Гражданство (кириллица)</label>
-          <input type="text" id="foreignPassportCitizenshipCyr" class="form-input" value="${formData.foreignPassportCitizenshipCyr || 'СФСР Юльсанна'}">
+          <input type="text" id="citizenship_cyr" class="form-input" value="${escapeHTML(formData.citizenship_cyr || 'СФСР Юльсанна')}">
         </div>
         <div class="form-group">
           <label>Гражданство (латиница)</label>
-          <input type="text" id="foreignPassportCitizenshipLat" class="form-input" value="${formData.foreignPassportCitizenshipLat || 'SFSR Ulsanna'}">
+          <input type="text" id="citizenship_lat" class="form-input" value="${escapeHTML(formData.citizenship_lat || 'SFSR Ulsanna')}">
         </div>
         <div class="form-group">
           <label>Дата выдачи</label>
-          <input type="date" id="foreignPassportIssueDate" class="form-input" value="${formData.foreignPassportIssueDate || ''}">
+          <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}">
         </div>
         <div class="form-group">
           <label>Срок действия</label>
-          <input type="date" id="foreignPassportExpiryDate" class="form-input" value="${formData.foreignPassportExpiryDate || ''}">
+          <input type="date" id="expiry_date" class="form-input" value="${formData.expiry_date || ''}">
         </div>
         <div class="form-group">
           <label>Личный код</label>
-          <input type="text" id="personalCode" class="form-input" value="${formData.personalCode || ''}" readonly>
+          <input type="text" id="personal_code" class="form-input" value="${userPersonalCode || ''}" readonly>
         </div>
         <div class="form-group">
           <label>Кем выдан (кириллица)</label>
-          <input type="text" id="foreignPassportIssuedByCyr" class="form-input" value="${formData.foreignPassportIssuedByCyr || ''}">
+          <input type="text" id="issued_by_cyr" class="form-input" value="${escapeHTML(formData.issued_by_cyr || '')}">
         </div>
         <div class="form-group">
           <label>Кем выдан (латиница)</label>
-          <input type="text" id="foreignPassportIssuedByLat" class="form-input" value="${formData.foreignPassportIssuedByLat || ''}">
+          <input type="text" id="issued_by_lat" class="form-input" value="${escapeHTML(formData.issued_by_lat || '')}">
         </div>
-      `;
+      `
     }
 
-    function step2() {
+    function renderStep2() {
       return `
         <div class="form-group">
           <label>Тип паспорта</label>
-          <select id="foreignPassportType" class="form-input">
+          <select id="passport_type" class="form-input">
             <option value="">—</option>
-            <option value="Общегражданский" ${formData.foreignPassportType === 'Общегражданский' ? 'selected' : ''}>Общегражданский</option>
-            <option value="Дипломатический" ${formData.foreignPassportType === 'Дипломатический' ? 'selected' : ''}>Дипломатический</option>
-            <option value="Служебный" ${formData.foreignPassportType === 'Служебный' ? 'selected' : ''}>Служебный</option>
+            <option value="общегражданский" ${formData.passport_type === 'общегражданский' ? 'selected' : ''}>Общегражданский</option>
+            <option value="дипломатический" ${formData.passport_type === 'дипломатический' ? 'selected' : ''}>Дипломатический</option>
+            <option value="служебный" ${formData.passport_type === 'служебный' ? 'selected' : ''}>Служебный</option>
           </select>
         </div>
         <div class="form-group">
           <label>Биометрический</label>
-          <select id="foreignPassportIsBiometric" class="form-input">
+          <select id="is_biometric" class="form-input">
             <option value="">—</option>
-            <option value="true" ${formData.foreignPassportIsBiometric ? 'selected' : ''}>Да</option>
-            <option value="false" ${formData.foreignPassportIsBiometric === false ? 'selected' : ''}>Нет</option>
+            <option value="true" ${formData.is_biometric === true ? 'selected' : ''}>Да</option>
+            <option value="false" ${formData.is_biometric === false ? 'selected' : ''}>Нет</option>
           </select>
         </div>
         <div class="form-group">
           <label>Чип биометрических данных</label>
-          <select id="foreignPassportHasChip" class="form-input">
+          <select id="has_chip" class="form-input">
             <option value="">—</option>
-            <option value="true" ${formData.foreignPassportHasChip ? 'selected' : ''}>Есть</option>
-            <option value="false" ${formData.foreignPassportHasChip === false ? 'selected' : ''}>Нет</option>
+            <option value="true" ${formData.has_chip === true ? 'selected' : ''}>Есть</option>
+            <option value="false" ${formData.has_chip === false ? 'selected' : ''}>Нет</option>
           </select>
         </div>
         <div class="form-group">
           <label>Номер версии чипа</label>
-          <input type="text" id="foreignPassportChipVersion" class="form-input" value="${formData.foreignPassportChipVersion || ''}">
+          <input type="text" id="chip_version" class="form-input" value="${escapeHTML(formData.chip_version || '')}">
         </div>
-      `;
+      `
     }
 
-    function step3() {
-      const visas = formData.foreignPassportVisas || [];
-      return `
-        <p><strong>Сведения о визах</strong></p>
-        <div id="visasList">
-          ${visas.map((v, i) => `
-            <div class="record-block">
-              <div class="form-group">
-                <label>Страна</label>
-                <input type="text" class="form-input visa-country" value="${v.country || ''}" data-index="${i}">
-              </div>
-              <div class="form-group">
-                <label>Тип визы</label>
-                <input type="text" class="form-input visa-type" value="${v.type || ''}" data-index="${i}">
-              </div>
-              <div class="form-group">
-                <label>Дата выдачи</label>
-                <input type="date" class="form-input visa-issue" value="${v.issueDate || ''}" data-index="${i}">
-              </div>
-              <div class="form-group">
-                <label>Действительна до</label>
-                <input type="date" class="form-input visa-expiry" value="${v.expiryDate || ''}" data-index="${i}">
-              </div>
-            </div>
-          `).join('')}
-        </div>
-        <button type="button" class="btn btn-secondary" onclick="addVisa()">+ Добавить визу</button>
-      `;
-    }
-
-    function addVisa() {
-      const list = document.getElementById('visasList');
-      const index = (formData.foreignPassportVisas?.length || 0);
-      list.insertAdjacentHTML('beforeend', `
-        <div class="record-block">
+    function renderStep3() {
+      const visas = formData.visas || []
+      let listHtml = visas.map((v, i) => `
+        <div class="record-block" data-index="${i}">
           <div class="form-group">
             <label>Страна</label>
-            <input type="text" class="form-input visa-country" data-index="${index}">
+            <input type="text" class="form-input visa-country" value="${escapeHTML(v.country || '')}">
           </div>
           <div class="form-group">
             <label>Тип визы</label>
-            <input type="text" class="form-input visa-type" data-index="${index}">
+            <input type="text" class="form-input visa-type" value="${escapeHTML(v.type || '')}">
           </div>
           <div class="form-group">
             <label>Дата выдачи</label>
-            <input type="date" class="form-input visa-issue" data-index="${index}">
+            <input type="date" class="form-input visa-issue" value="${v.issueDate || ''}">
           </div>
           <div class="form-group">
             <label>Действительна до</label>
-            <input type="date" class="form-input visa-expiry" data-index="${index}">
+            <input type="date" class="form-input visa-expiry" value="${v.expiryDate || ''}">
           </div>
+          <button type="button" class="btn btn-secondary" onclick="window.removeRecord(this)">Удалить</button>
         </div>
-      `);
+      `).join('')
+
+      return `
+        <p><strong>Сведения о визах:</strong></p>
+        <div id="visasContainer">${listHtml}</div>
+        <button type="button" class="btn btn-secondary" id="addVisaBtn">+ Добавить визу</button>
+      `
     }
 
-    function saveStepData() {
-      switch (currentStep) {
-        case 1:
-          formData.foreignPassportSurnameCyr = document.getElementById('foreignPassportSurnameCyr')?.value.trim() || '';
-          formData.foreignPassportSurnameLat = document.getElementById('foreignPassportSurnameLat')?.value.trim() || '';
-          formData.foreignPassportNameCyr = document.getElementById('foreignPassportNameCyr')?.value.trim() || '';
-          formData.foreignPassportNameLat = document.getElementById('foreignPassportNameLat')?.value.trim() || '';
-          formData.foreignPassportSeries = document.getElementById('foreignPassportSeries')?.value.trim() || '';
-          formData.foreignPassportBirthDate = document.getElementById('foreignPassportBirthDate')?.value || '';
-          formData.foreignPassportBirthPlaceCyr = document.getElementById('foreignPassportBirthPlaceCyr')?.value.trim() || '';
-          formData.foreignPassportBirthPlaceLat = document.getElementById('foreignPassportBirthPlaceLat')?.value.trim() || '';
-          formData.foreignPassportGenderCyr = document.getElementById('foreignPassportGenderCyr')?.value.trim() || '';
-          formData.foreignPassportGenderLat = document.getElementById('foreignPassportGenderLat')?.value.trim() || '';
-          formData.foreignPassportCitizenshipCyr = document.getElementById('foreignPassportCitizenshipCyr')?.value.trim() || 'СФСР Юльсанна';
-          formData.foreignPassportCitizenshipLat = document.getElementById('foreignPassportCitizenshipLat')?.value.trim() || 'SFSR Ulsanna';
-          formData.foreignPassportIssueDate = document.getElementById('foreignPassportIssueDate')?.value || '';
-          formData.foreignPassportExpiryDate = document.getElementById('foreignPassportExpiryDate')?.value || '';
-          formData.personalCode = document.getElementById('personalCode')?.value.trim() || '';
-          formData.foreignPassportIssuedByCyr = document.getElementById('foreignPassportIssuedByCyr')?.value.trim() || '';
-          formData.foreignPassportIssuedByLat = document.getElementById('foreignPassportIssuedByLat')?.value.trim() || '';
-          break;
-        case 2:
-          formData.foreignPassportType = document.getElementById('foreignPassportType')?.value || '';
-          formData.foreignPassportIsBiometric = document.getElementById('foreignPassportIsBiometric')?.value === 'true';
-          formData.foreignPassportHasChip = document.getElementById('foreignPassportHasChip')?.value === 'true';
-          formData.foreignPassportChipVersion = document.getElementById('foreignPassportChipVersion')?.value.trim() || '';
-          break;
-        case 3:
-          formData.foreignPassportVisas = Array.from(document.querySelectorAll('.visa-country')).map((el, i) => ({
-            country: el.value.trim(),
-            type: document.querySelector(`.visa-type[data-index="${i}"]`)?.value.trim() || '',
-            issueDate: document.querySelector(`.visa-issue[data-index="${i}"]`)?.value || '',
-            expiryDate: document.querySelector(`.visa-expiry[data-index="${i}"]`)?.value || ''
-          }));
-          break;
+    // -------------------- ФУНКЦИИ ДОБАВЛЕНИЯ ЗАПИСЕЙ --------------------
+    window.addRecord = function(containerId, type) {
+      if (type === 'visas') {
+        const container = document.getElementById(containerId)
+        if (!container) return
+        const html = `
+          <div class="record-block">
+            <div class="form-group"><label>Страна</label><input type="text" class="form-input visa-country"></div>
+            <div class="form-group"><label>Тип визы</label><input type="text" class="form-input visa-type"></div>
+            <div class="form-group"><label>Дата выдачи</label><input type="date" class="form-input visa-issue"></div>
+            <div class="form-group"><label>Действительна до</label><input type="date" class="form-input visa-expiry"></div>
+            <button type="button" class="btn btn-secondary" onclick="window.removeRecord(this)">Удалить</button>
+          </div>
+        `
+        container.insertAdjacentHTML('beforeend', html)
       }
     }
 
+    window.removeRecord = function(btn) {
+      const block = btn.closest('.record-block')
+      if (block) block.remove()
+    }
+
+    // -------------------- СОХРАНЕНИЕ ДАННЫХ ШАГА --------------------
+    function saveStepData() {
+      switch (currentStep) {
+        case 1:
+          formData.surname_cyr = document.getElementById('surname_cyr')?.value.trim() || ''
+          formData.surname_lat = document.getElementById('surname_lat')?.value.trim() || ''
+          formData.name_cyr = document.getElementById('name_cyr')?.value.trim() || ''
+          formData.name_lat = document.getElementById('name_lat')?.value.trim() || ''
+          formData.series_number = document.getElementById('series_number')?.value.trim() || ''
+          formData.birth_date = document.getElementById('birth_date')?.value || ''
+          formData.birth_place_cyr = document.getElementById('birth_place_cyr')?.value.trim() || ''
+          formData.birth_place_lat = document.getElementById('birth_place_lat')?.value.trim() || ''
+          formData.gender_cyr = document.getElementById('gender_cyr')?.value.trim() || ''
+          formData.gender_lat = document.getElementById('gender_lat')?.value.trim() || ''
+          formData.citizenship_cyr = document.getElementById('citizenship_cyr')?.value.trim() || 'СФСР Юльсанна'
+          formData.citizenship_lat = document.getElementById('citizenship_lat')?.value.trim() || 'SFSR Ulsanna'
+          formData.issue_date = document.getElementById('issue_date')?.value || ''
+          formData.expiry_date = document.getElementById('expiry_date')?.value || ''
+          formData.personal_code = document.getElementById('personal_code')?.value.trim() || userPersonalCode
+          formData.issued_by_cyr = document.getElementById('issued_by_cyr')?.value.trim() || ''
+          formData.issued_by_lat = document.getElementById('issued_by_lat')?.value.trim() || ''
+          break
+        case 2:
+          formData.passport_type = document.getElementById('passport_type')?.value || null
+          const isBio = document.getElementById('is_biometric')?.value
+          formData.is_biometric = isBio === 'true' ? true : (isBio === 'false' ? false : null)
+          const chip = document.getElementById('has_chip')?.value
+          formData.has_chip = chip === 'true' ? true : (chip === 'false' ? false : null)
+          formData.chip_version = document.getElementById('chip_version')?.value.trim() || ''
+          break
+        case 3:
+          formData.visas = Array.from(document.querySelectorAll('#visasContainer .record-block')).map(block => ({
+            country: block.querySelector('.visa-country')?.value.trim() || '',
+            type: block.querySelector('.visa-type')?.value.trim() || '',
+            issueDate: block.querySelector('.visa-issue')?.value || '',
+            expiryDate: block.querySelector('.visa-expiry')?.value || ''
+          }))
+          break
+      }
+    }
+
+    // -------------------- НАВИГАЦИЯ ПО ШАГАМ --------------------
     function nextStep() {
-      saveStepData();
+      saveStepData()
       if (currentStep < totalSteps) {
-        currentStep++;
-        updateStep();
+        currentStep++
+        updateStep()
       } else {
-        savePassport();
+        saveForeignPassport()
       }
     }
 
     function prevStep() {
       if (currentStep > 1) {
-        currentStep--;
-        updateStep();
+        currentStep--
+        updateStep()
       }
     }
 
-    async function savePassport() {
+    // -------------------- СОХРАНЕНИЕ ЗАГРАНПАСПОРТА В SUPABASE --------------------
+    async function saveForeignPassport() {
       try {
-        const user = firebase.auth().currentUser;
-        if (!user) return;
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        if (sessionError || !session) {
+          alert('Ошибка авторизации')
+          return
+        }
 
-        const cleanData = JSON.parse(JSON.stringify(formData));
+        if (!userPersonalCode) {
+          alert('Личный код не загружен')
+          return
+        }
+
+        // Подготовка данных: удаляем null/undefined, преобразуем имена полей в snake_case
+        const cleanData = { ...formData }
         Object.keys(cleanData).forEach(key => {
-          if (cleanData[key] === undefined || cleanData[key] === null) delete cleanData[key];
-        });
+          if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
+        })
 
-        cleanData.personalCode = userPersonalCode;
-        cleanData.userId = user.uid;
-        cleanData.documentType = 'foreignPassport';
-        cleanData.status = 'oncheck';
-        cleanData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        cleanData.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+        // Добавляем обязательные поля
+        cleanData.personal_code = userPersonalCode
+        cleanData.status = 'oncheck'
+        cleanData.updated_at = new Date().toISOString()
+        cleanData.created_at = new Date().toISOString()
 
-        const docRef = await firebase.firestore().collection('documents').add(cleanData);
-        alert('Заграничный паспорт успешно добавлен на проверку!');
-        window.location.href = `../foreign-passport.html?id=${docRef.id}`;
+        const { data, error } = await supabase
+          .from('document_foreign_passport')
+          .insert([cleanData])
+          .select()
+
+        if (error) throw error
+
+        const newId = data[0].id
+        window.location.href = `../foreign-passport.html?id=${newId}`
       } catch (err) {
-        console.error(err);
-        alert('Ошибка сохранения: ' + err.message);
+        console.error('Ошибка сохранения:', err)
+        alert('Ошибка сохранения: ' + err.message)
       }
     }
+
+    // -------------------- ЭСКЕЙПИНГ HTML --------------------
+    function escapeHTML(str) {
+      if (!str) return ''
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+    }
+
+    // -------------------- ИНИЦИАЛИЗАЦИЯ --------------------
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadUserProfile()
+      updateStep()
+
+      // Кнопки навигации
+      document.getElementById('prevBtn')?.addEventListener('click', prevStep)
+      document.getElementById('nextBtn')?.addEventListener('click', nextStep)
+
+      // Делегирование для кнопок добавления виз
+      document.addEventListener('click', (e) => {
+        if (e.target.id === 'addVisaBtn') window.addRecord('visasContainer', 'visas')
+      })
+    })
+
+    // Экспорт в глобальную область (для inline-обработчиков)
+    window.addRecord = addRecord
+    window.removeRecord = removeRecord
+    window.nextStep = nextStep
+    window.prevStep = prevStep
   </script>
 </body>
 </html>
