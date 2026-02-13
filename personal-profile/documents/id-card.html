@@ -27,10 +27,14 @@
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
 
+  <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
-  <link rel="stylesheet" href="../../css/personal-profile/id-card.css" />
+  <!-- Стили для ID-карты (с двухсторонней карточкой) -->
+  <link rel="stylesheet" href="../../css/id-card.css" />
+  <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
+  <!-- Дополнительные стили для статуса и модального окна (если не входят в id-card.css) -->
   <style>
     /* ========== СТАТУС И КНОПКИ ========== */
     .status-and-edit {
@@ -40,7 +44,7 @@
       gap: 1.5rem;
       margin: 2rem 0;
     }
-    .document-status {
+    .status-badge {
       padding: 0.25rem 0.6rem;
       border-radius: 6px;
       font-size: 0.85rem;
@@ -57,6 +61,17 @@
       padding: 0.6rem 1.5rem;
       font-size: 1rem;
       cursor: pointer;
+    }
+    .flip-btn {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 0.6rem 2rem;
+      font-size: 1rem;
+      cursor: pointer;
+      margin: 1rem auto;
+      display: block;
     }
 
     /* ========== МОДАЛЬНОЕ ОКНО ========== */
@@ -157,7 +172,7 @@
   </style>
 </head>
 <body>
-  <!-- ШАПКА -->
+  <!-- ШАПКА (без изменений) -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -182,6 +197,7 @@
     </div>
   </header>
 
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main class="main-content">
     <div class="container">
       <!-- Индикатор загрузки -->
@@ -190,11 +206,17 @@
       <!-- Блок "Нет данных" -->
       <div id="noData" style="display: none; text-align: center; padding: 3rem;">
         <p>У вас пока нет ID-карты.</p>
-        <button class="flip-btn" id="addBtn">Добавить ID-карту</button>
+        <button class="edit-btn" id="addBtn">Добавить ID-карту</button>
       </div>
 
-      <!-- Контент с карточкой -->
+      <!-- Контент с карточкой (появляется, если есть данные) -->
       <div id="content" style="display: none;">
+        <!-- ЗДЕСЬ РАЗМЕЩАЕМ СТАТУС -->
+        <div class="status-and-edit" style="text-align: center; margin-bottom: 1rem;">
+          <span id="statusBadge" class="status-badge" style="display: none;"></span>
+        </div>
+
+        <!-- Карточка (двусторонняя) -->
         <div class="card-container">
           <div class="card" id="card">
             <!-- Передняя сторона -->
@@ -285,22 +307,25 @@
             </div>
           </div>
         </div>
+
+        <!-- Кнопка переворота карты -->
         <button class="flip-btn" id="flipBtn">Перевернуть карту</button>
+
         <!-- Кнопка редактирования (после карточки) -->
         <div style="text-align: center; margin-top: 1rem;">
-          <button class="flip-btn" id="editBtn" style="background: #6c757d;">Изменить данные</button>
+          <button class="edit-btn" id="editBtn" style="background: #6c757d;">Изменить данные</button>
         </div>
       </div>
     </div>
   </main>
 
-  <!-- ПОДВАЛ -->
+  <!-- ПОДВАЛ (без изменений) -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО (для добавления/редактирования) – оставляем как было, не меняем -->
+  <!-- МОДАЛЬНОЕ ОКНО (добавления/редактирования) -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
@@ -323,6 +348,7 @@
   <script type="module" src="../../js/supabase-config.js"></script>
   <script src="../../js/mob-menu.js"></script>
 
+  <!-- ПОЛНЫЙ JS КОД (исправленный) -->
   <script type="module">
     import { supabase } from '../../js/supabase-config.js'
 
@@ -460,7 +486,7 @@
       if (statusClass) {
         statusBadge.className = `status-badge ${statusClass}`
         statusBadge.textContent = statusText
-        statusBadge.style.display = 'block'
+        statusBadge.style.display = 'inline-block'
       }
 
       // Фото и подпись
@@ -471,7 +497,7 @@
         photoImg.src = `../../images/avatars/${safeCode}.jpg`
         photoImg.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
         signatureImg.src = `../../images/avatars/signatures/${safeCode}.jpg`
-        signatureImg.onerror = () => { signatureImg.src = '../../images/default-avatar.png' } // если нет подписи, ставим аватар как заглушку
+        signatureImg.onerror = () => { signatureImg.src = '../../images/default-avatar.png' }
       } else {
         photoImg.src = '../../images/default-avatar.png'
         signatureImg.src = '../../images/default-avatar.png'
@@ -501,7 +527,16 @@
     let formData = {}
 
     async function openAddModal() {
-      if (!userProfile) await loadUserProfile()
+      // Если профиль ещё не загружен, подгружаем (но он обычно уже есть)
+      if (!userProfile) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const { data, error } = await supabase.from('users').select('*').eq('id', session.user.id).single()
+        if (!error && data) {
+          userProfile = data
+          userPersonalCode = data.personal_code
+        }
+      }
       formData = {
         surname: userProfile?.surname || '',
         name: userProfile?.name || '',
@@ -526,6 +561,8 @@
     }
 
     function openEditModal() {
+      // Копируем текущие данные в formData
+      formData = { ...documentData }
       window.openModal('Редактирование ID-карты')
     }
 
@@ -677,9 +714,10 @@
 
     // --- Инициализация ---
     document.addEventListener('DOMContentLoaded', async () => {
-      await loadDocument()
+      await loadData()  // ← ИСПРАВЛЕНО: было loadDocument, стало loadData
       document.getElementById('addBtn')?.addEventListener('click', openAddModal)
       document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
+      document.getElementById('editBtn')?.addEventListener('click', openEditModal)
     })
 
     // Экспорт в глобальную область
