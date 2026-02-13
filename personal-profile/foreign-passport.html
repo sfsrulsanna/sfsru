@@ -11,7 +11,8 @@
   <link rel="stylesheet" href="../css/personal-profile/passport.css" />
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 <style>
-  /* === ОБЩИЕ СТИЛИ (можно оставить ваши, но я привожу полную версию) === */
+<style>
+  /* === ОБЩИЕ СТИЛИ === */
   .profile-main {
     padding: 2rem 0;
     background: white;
@@ -36,9 +37,9 @@
     --service-blue: #0d2a4d;
   }
 
-  /* === КНОПКИ === */
+  /* === КНОПКИ — ГРАДИЕНТ ОДНОТОННЫЙ === */
   .add-btn, .edit-btn, .btn-primary {
-    background: linear-gradient(135deg, var(--primary-red), #a83232);
+    background: linear-gradient(135deg, var(--primary-red), color-mix(in srgb, var(--primary-red), black 25%));
     color: white;
     border: none;
     border-radius: 8px;
@@ -82,7 +83,7 @@
   .status-pending { background: rgba(255,193,7,0.15); color: #856404; }
   .status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
 
-  /* === МОДАЛЬНОЕ ОКНО (ИСПРАВЛЕНО) === */
+  /* === МОДАЛЬНОЕ ОКНО === */
   .modal-overlay {
     position: fixed;
     top: 0;
@@ -180,7 +181,7 @@
     background: #fafafa;
   }
 
-  /* === ЗАГОЛОВКИ СЕКЦИЙ (используют переменную цвета) === */
+  /* === ЗАГОЛОВКИ СЕКЦИЙ === */
   .section-title {
     font-family: 'PT Serif', serif;
     color: var(--primary-red);
@@ -238,24 +239,51 @@
     border-bottom: none;
   }
 
-  /* === QR-КОД — ТЕПЕРЬ ПОД ШТРИХ-КОДОМ === */
+  /* === ФОТО, ШТРИХ-КОД, QR — КАК В ПАСПОРТЕ === */
+  .passport-lower {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    align-items: flex-start;
+  }
   .photo-barcode-section {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 10px;
+    flex: 0 0 auto;
+  }
+  .passport-photo-container {
+    width: 120px;
+    height: 160px;
+    border: 1px solid #ccc;
+    background: #f5f5f5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .passport-photo {
     width: 120px;
     height: 160px;
     object-fit: cover;
-    border: 1px solid #ccc;
   }
   .barcode-container {
-    margin-top: 10px;
+    width: 200px;
+    text-align: center;
+  }
+  .barcode {
+    width: 200px;
+    height: 50px;
   }
   .qr-code-container {
-    margin-top: 10px;
+    margin-top: 5px;
     text-align: center;
+  }
+  .fio-and-details {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
   .signature-img {
     height: 60px;
@@ -266,7 +294,7 @@
     border-radius: 6px;
   }
 
-  /* === АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ === */
+  /* === АДАПТАЦИЯ === */
   @media (max-width: 768px) {
     .modal {
       width: 95%;
@@ -280,6 +308,7 @@
     }
     .passport-lower {
       flex-direction: column;
+      align-items: center;
     }
   }
 </style>
@@ -521,59 +550,57 @@
 
           <div class="passport-divider"></div>
 
-          <div class="passport-lower">
-            <div class="photo-barcode-section">
-              <div class="passport-photo-container">
-                <img id="passportAvatar" src="../images/default-avatar.png" alt="Фото" class="passport-photo" />
-              </div>
-              <div class="barcode-container">
-                <svg id="passportBarcode" class="barcode"></svg>
-              </div>
-              <div class="qr-code-container">
-                <div id="passportQrCode"></div>
-              </div>
-            </div>
+<div class="passport-lower">
+  <div class="photo-barcode-section">
+    <div class="passport-photo-container">
+      <img id="passportAvatar" src="../images/default-avatar.png" alt="Фото" class="passport-photo" />
+    </div>
+    <div class="barcode-container">
+      <svg id="passportBarcode" class="barcode"></svg>
+    </div>
+    <div class="qr-code-container">
+      <div id="passportQrCode"></div>
+    </div>
+  </div>
 
-            <div class="fio-and-details">
-              <div class="data-field">
-                <div class="field-label">Фамилия</div>
-                <div class="field-label-english">Surname</div>
-                <div class="field-value">${escapeHTML(data.surname_cyr || '—')}</div>
-                <div class="field-value-english">${escapeHTML(data.surname_lat || '—')}</div>
-              </div>
-              <div class="data-field">
-                <div class="field-label">Имя</div>
-                <div class="field-label-english">Given names</div>
-                <div class="field-value">${escapeHTML(data.name_cyr || '—')}</div>
-                <div class="field-value-english">${escapeHTML(data.name_lat || '—')}</div>
-              </div>
-              <div class="data-field">
-                <div class="field-label">Пол</div>
-                <div class="field-label-english">Sex</div>
-                <div class="field-value">${escapeHTML(data.gender_cyr || '—')}</div>
-                <div class="field-value-english">${escapeHTML(data.gender_lat || '—')}</div>
-              </div>
-              <div class="data-field">
-                <div class="field-label">Дата рождения</div>
-                <div class="field-label-english">Date of birth</div>
-                <div class="field-value">${formatDate(data.birth_date)}</div>
-              </div>
-              <div class="data-field">
-                <div class="field-label">Место рождения</div>
-                <div class="field-label-english">Place of birth</div>
-                <div class="field-value">${escapeHTML(data.birth_place_cyr || '—')}</div>
-                <div class="field-value-english">${escapeHTML(data.birth_place_lat || '—')}</div>
-              </div>
-              <div class="data-field">
-                <div class="field-label">Гражданство</div>
-                <div class="field-label-english">Citizenship</div>
-                <div class="field-value">${escapeHTML(data.citizenship_cyr || 'СФСР Юльсанна')}</div>
-                <div class="field-value-english">${escapeHTML(data.citizenship_lat || 'SFSR Ulsanna')}</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+  <div class="fio-and-details">
+    <div class="data-field">
+      <div class="field-label">Фамилия</div>
+      <div class="field-label-english">Surname</div>
+      <div class="field-value">${escapeHTML(data.surname_cyr || '—')}</div>
+      <div class="field-value-english">${escapeHTML(data.surname_lat || '—')}</div>
+    </div>
+    <div class="data-field">
+      <div class="field-label">Имя</div>
+      <div class="field-label-english">Given names</div>
+      <div class="field-value">${escapeHTML(data.name_cyr || '—')}</div>
+      <div class="field-value-english">${escapeHTML(data.name_lat || '—')}</div>
+    </div>
+    <div class="data-field">
+      <div class="field-label">Пол</div>
+      <div class="field-label-english">Sex</div>
+      <div class="field-value">${escapeHTML(data.gender_cyr || '—')}</div>
+      <div class="field-value-english">${escapeHTML(data.gender_lat || '—')}</div>
+    </div>
+    <div class="data-field">
+      <div class="field-label">Дата рождения</div>
+      <div class="field-label-english">Date of birth</div>
+      <div class="field-value">${formatDate(data.birth_date)}</div>
+    </div>
+    <div class="data-field">
+      <div class="field-label">Место рождения</div>
+      <div class="field-label-english">Place of birth</div>
+      <div class="field-value">${escapeHTML(data.birth_place_cyr || '—')}</div>
+      <div class="field-value-english">${escapeHTML(data.birth_place_lat || '—')}</div>
+    </div>
+    <div class="data-field">
+      <div class="field-label">Гражданство</div>
+      <div class="field-label-english">Citizenship</div>
+      <div class="field-value">${escapeHTML(data.citizenship_cyr || 'СФСР Юльсанна')}</div>
+      <div class="field-value-english">${escapeHTML(data.citizenship_lat || 'SFSR Ulsanna')}</div>
+    </div>
+  </div>
+</div>
     `
 
     document.getElementById('passportContent').innerHTML = html
