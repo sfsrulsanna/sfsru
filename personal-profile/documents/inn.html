@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ИНН — СФСРЮ</title>
+
+  <!-- favicons (скопируйте полный набор из вашего проекта) -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+  <!-- Единый стиль сайта -->
+  <link rel="stylesheet" href="../../css/style.css" />
+  <!-- Специфические стили для ИНН -->
+  <link rel="stylesheet" href="../../css/inn.css" />
+
+  <!-- Иконки Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+  <style>
+    /* ========== СТАТУС И КНОПКИ ========== */
+    .status-and-edit {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 1.5rem;
+      margin: 2rem 0 1rem;
+    }
+    .document-status {
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+    .status-verified { background: rgba(40,167,69,0.15); color: #28a745; }
+    .status-pending { background: rgba(255,193,7,0.15); color: #856404; }
+    .status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
+    .edit-btn {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .edit-btn:hover { opacity: 0.9; }
+
+    /* ========== МОДАЛЬНОЕ ОКНО ========== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 2000;
+      opacity: 0;
+      visibility: hidden;
+      transition: 0.3s;
+    }
+    .modal-overlay.active {
+      opacity: 1;
+      visibility: visible;
+    }
+    .modal {
+      background: white;
+      border-radius: 16px;
+      width: 90%;
+      max-width: 600px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.5rem 1.5rem 0.5rem 1.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .modal-header h4 {
+      margin: 0;
+      color: #7b091a;
+      font-size: 1.25rem;
+    }
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.8rem;
+      line-height: 1;
+      cursor: pointer;
+      color: #666;
+      padding: 0;
+    }
+    .close-modal:hover { color: #7b091a; }
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 1rem;
+      padding: 1rem 1.5rem 1.5rem 1.5rem;
+      border-top: 1px solid #eee;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1.5rem;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .no-data-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .modal { width: 95%; max-height: 85vh; }
+      .no-data-actions { flex-direction: column; align-items: center; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ========== ШАПКА ========== -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
+        <h1>СФСРЮ</h1>
+      </div>
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../../index.html">Главная</a></li>
+          <li><a href="../../news.html">Новости</a></li>
+          <li><a href="../../wiki/">Википедия</a></li>
+          <li><a href="../../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../../services.html">Услуги</a></li>
+          <li><a href="../index.html" class="active">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="menu-overlay"></div>
+
+  <!-- ========== ОСНОВНОЙ КОНТЕНТ ========== -->
+  <main class="main-content">
+    <div class="container">
+      <!-- Индикатор загрузки -->
+      <div id="loading" class="loading" style="text-align: center; padding: 3rem; display: block;">
+        Загрузка данных...
+      </div>
+
+      <!-- Блок "Нет данных" -->
+      <div id="noData" style="display: none; text-align: center; padding: 3rem;">
+        <p>У вас пока нет свидетельства ИНН.</p>
+        <div class="no-data-actions">
+          <button class="edit-btn" id="addInnBtn">Добавить ИНН</button>
+          <a href="../../services/documents/inn/" class="edit-btn" style="background: #0d4d26; text-decoration: none; color: white; display: inline-block;">Получить ИНН</a>
+        </div>
+      </div>
+
+      <!-- Контент с данными ИНН (изначально скрыт) -->
+      <div id="content" style="display: none;">
+        <div class="document-container" id="innContainer"></div>
+        <!-- Кнопка статуса и редактирования -->
+        <div id="statusAndEditContainer"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========== ПОДВАЛ ========== -->
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>
+      Телефон: +7 (993) 609-81-26 | Почта:
+      <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
+    </p>
+  </footer>
+
+  <!-- ========== МОДАЛЬНОЕ ОКНО ========== -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h4 id="modalTitle">Добавление ИНН</h4>
+        <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
+        <button type="button" class="btn-primary" id="saveInnBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- ========== БИБЛИОТЕКИ ========== -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+
+  <!-- ========== SUPABASE ========== -->
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+      }
+    }
+  </script>
+  <script type="module" src="../../js/supabase-config.js"></script>
+  <script src="../../js/mob-menu.js"></script>
+
+  <!-- ========== ПОЛНЫЙ JS КОД ========== -->
+  <script type="module">
+    import { supabase } from '../../js/supabase-config.js'
+
+    // -------------------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --------------------
+    let currentDocId = null
+    let documentData = {}
+    let userPersonalCode = null
+    let userProfile = null
+
+    // -------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --------------------
+    function formatDate(dateString) {
+      if (!dateString) return '—'
+      try {
+        const date = new Date(dateString)
+        const day = String(date.getDate()).padStart(2, '0')
+        const month = String(date.getMonth() + 1).padStart(2, '0')
+        const year = date.getFullYear()
+        return `${day}.${month}.${year}`
+      } catch {
+        return dateString
+      }
+    }
+
+    function getStatusLabel(status) {
+      if (status === 'verified') return '✅ Подтверждено'
+      if (status === 'oncheck') return '⏳ На проверке'
+      if (status === 'rejected') return '❌ Отклонено'
+      return '—'
+    }
+
+    function getStatusClass(status) {
+      if (status === 'verified') return 'document-status status-verified'
+      if (status === 'oncheck') return 'document-status status-pending'
+      if (status === 'rejected') return 'document-status status-rejected'
+      return 'document-status'
+    }
+
+    // -------------------- ЗАГРУЗКА ПРОФИЛЯ --------------------
+    async function loadUserProfile() {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      if (sessionError || !session) {
+        window.location.href = '../../login.html'
+        return null
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+        .eq('id', session.user.id)
+        .single()
+
+      if (error) {
+        console.error('Ошибка загрузки профиля:', error)
+        document.getElementById('loading').textContent = 'Ошибка загрузки профиля. Перезагрузите страницу.'
+        return null
+      }
+
+      userPersonalCode = data.personal_code
+      userProfile = data
+      return data
+    }
+
+    // -------------------- ЗАГРУЗКА ДОКУМЕНТА ИНН --------------------
+    async function loadInnDocument() {
+      try {
+        const profile = await loadUserProfile()
+        if (!profile) return
+
+        const urlParams = new URLSearchParams(window.location.search)
+        currentDocId = urlParams.get('id')
+
+        let data = null
+        if (currentDocId) {
+          const { data: doc, error } = await supabase
+            .from('documents_inn')
+            .select('*')
+            .eq('id', currentDocId)
+            .single()
+          if (error) throw error
+          data = doc
+        } else {
+          const { data: docs, error } = await supabase
+            .from('documents_inn')
+            .select('*')
+            .eq('personal_code', userPersonalCode)
+            .order('created_at', { ascending: false })
+            .limit(1)
+          if (error) throw error
+          data = docs?.[0]
+          if (data) currentDocId = data.id
+        }
+
+        if (data) {
+          documentData = data
+          renderInn(data)
+          document.getElementById('loading').style.display = 'none'
+          document.getElementById('content').style.display = 'block'
+          document.getElementById('noData').style.display = 'none'
+        } else {
+          document.getElementById('loading').style.display = 'none'
+          document.getElementById('noData').style.display = 'block'
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки ИНН:', err)
+        document.getElementById('loading').textContent = 'Ошибка загрузки данных'
+      }
+    }
+
+    // -------------------- ОТРИСОВКА ДОКУМЕНТА --------------------
+    function renderInn(data) {
+      const fullName = `${data.surname || ''} ${data.name || ''} ${data.patronymic || ''}`.trim() || '—'
+
+      const innHtml = `
+        <div class="document-container">
+          <div class="document-header">
+            <div class="document-title">СВИДЕТЕЛЬСТВО</div>
+            <div class="document-subtitle">О ПОСТАНОВКЕ НА УЧЕТ В НАЛОГОВОМ ОРГАНЕ</div>
+          </div>
+          <div class="document-content">
+            <div class="qr-section">
+              <div id="qrCodeContainer" style="width: 180px; height: 180px; margin-bottom: 15px;"></div>
+              <div class="qr-label">Отсканируйте QR-код для проверки подлинности</div>
+            </div>
+            <div class="data-section">
+              <div class="inn-number">${escapeHTML(data.inn_number || '—')}</div>
+              <div class="info-line">
+                <span class="info-label">ФИО</span>
+                <span class="info-value">${escapeHTML(fullName)}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Пол</span>
+                <span class="info-value">${escapeHTML(data.gender || '—')}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Дата рождения</span>
+                <span class="info-value">${formatDate(data.birth_date)}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Место рождения</span>
+                <span class="info-value">${escapeHTML(data.birth_place || '—')}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Дата выдачи</span>
+                <span class="info-value">${formatDate(data.issue_date)}</span>
+              </div>
+              <div class="info-line">
+                <span class="info-label">Кем выдан</span>
+                <span class="info-value">${escapeHTML(data.issued_by || '—')}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `
+
+      document.getElementById('innContainer').innerHTML = innHtml
+
+      const qrContainer = document.getElementById('qrCodeContainer')
+      if (qrContainer && data.inn_number) {
+        qrContainer.innerHTML = ''
+        try {
+          new QRCode(qrContainer, {
+            text: data.inn_number,
+            width: 180,
+            height: 180,
+            colorDark: '#000',
+            colorLight: '#fff',
+            correctLevel: QRCode.CorrectLevel.L
+          })
+        } catch (e) { console.warn('QR error', e) }
+      }
+
+      const statusText = getStatusLabel(data.status)
+      const statusClass = getStatusClass(data.status)
+      const statusHtml = `
+        <div class="status-and-edit">
+          <span class="${statusClass}">${statusText}</span>
+          <button class="edit-btn" id="editInnBtn">Изменить данные</button>
+        </div>
+      `
+      document.getElementById('statusAndEditContainer').innerHTML = statusHtml
+
+      document.getElementById('editInnBtn').addEventListener('click', () => {
+        window.formData = { ...data }
+        window.openEditModal()
+      })
+    }
+
+    // -------------------- МОДАЛЬНОЕ ОКНО --------------------
+    let formData = {}
+
+    async function openAddModal() {
+      if (!userProfile) await loadUserProfile()
+      formData = {
+        inn_number: '',
+        surname: userProfile?.surname || '',
+        name: userProfile?.name || '',
+        patronymic: userProfile?.patronymic || '',
+        gender: userProfile?.gender || 'Мужской',
+        birth_date: userProfile?.date_of_birth || '',
+        birth_place: userProfile?.place_of_birth || '',
+        issue_date: '',
+        issued_by: '',
+        personal_code: userPersonalCode || ''
+      }
+      window.openModal('Добавление ИНН')
+    }
+
+    function openEditModal() {
+      window.openModal('Редактирование ИНН')
+    }
+
+    function openModal(title) {
+      const titleEl = document.getElementById('modalTitle')
+      if (titleEl) titleEl.textContent = title
+      const overlay = document.getElementById('modalOverlay')
+      if (overlay) overlay.classList.add('active')
+      renderModalForm()
+    }
+
+    window.closeModal = function() {
+      const overlay = document.getElementById('modalOverlay')
+      if (overlay) overlay.classList.remove('active')
+    }
+
+    function renderModalForm() {
+      const modalBody = document.getElementById('modalBody')
+      modalBody.innerHTML = `
+        <div class="form-group">
+          <label>Номер ИНН</label>
+          <input type="text" id="inn_number" class="form-input" value="${escapeHTML(formData.inn_number || '')}" placeholder="12 цифр">
+        </div>
+        <div class="form-group">
+          <label>Фамилия</label>
+          <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
+        </div>
+        <div class="form-group">
+          <label>Имя</label>
+          <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name || '')}">
+        </div>
+        <div class="form-group">
+          <label>Отчество</label>
+          <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic || '')}">
+        </div>
+        <div class="form-group">
+          <label>Пол</label>
+          <select id="gender" class="form-input">
+            <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+            <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Дата рождения</label>
+          <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Место рождения</label>
+          <input type="text" id="birth_place" class="form-input" value="${escapeHTML(formData.birth_place || '')}">
+        </div>
+        <div class="form-group">
+          <label>Дата выдачи</label>
+          <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Кем выдан</label>
+          <input type="text" id="issued_by" class="form-input" value="${escapeHTML(formData.issued_by || '')}">
+        </div>
+        <div class="form-group">
+          <label>Личный код</label>
+          <input type="text" id="personal_code" class="form-input" value="${userPersonalCode || ''}" readonly>
+        </div>
+      `
+    }
+
+    function collectFormData() {
+      return {
+        inn_number: document.getElementById('inn_number')?.value.trim() || '',
+        surname: document.getElementById('surname')?.value.trim() || '',
+        name: document.getElementById('name')?.value.trim() || '',
+        patronymic: document.getElementById('patronymic')?.value.trim() || '',
+        gender: document.getElementById('gender')?.value || '',
+        birth_date: document.getElementById('birth_date')?.value || '',
+        birth_place: document.getElementById('birth_place')?.value.trim() || '',
+        issue_date: document.getElementById('issue_date')?.value || '',
+        issued_by: document.getElementById('issued_by')?.value.trim() || '',
+        personal_code: document.getElementById('personal_code')?.value.trim() || userPersonalCode
+      }
+    }
+
+    async function saveInn() {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) { alert('Ошибка авторизации'); return }
+        if (!userPersonalCode) { alert('Личный код не загружен'); return }
+
+        const newData = collectFormData()
+        if (!newData.inn_number) { alert('Номер ИНН обязателен'); return }
+
+        const cleanData = { ...newData }
+        Object.keys(cleanData).forEach(key => {
+          if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
+        })
+
+        cleanData.personal_code = userPersonalCode
+        cleanData.status = 'oncheck'
+        cleanData.updated_at = new Date().toISOString()
+
+        let result
+        if (currentDocId) {
+          result = await supabase
+            .from('documents_inn')
+            .update(cleanData)
+            .eq('id', currentDocId)
+        } else {
+          cleanData.created_at = new Date().toISOString()
+          result = await supabase
+            .from('documents_inn')
+            .insert([cleanData])
+            .select()
+        }
+
+        if (result.error) throw result.error
+
+        window.closeModal()
+        const newId = currentDocId || result.data[0].id
+        window.location.href = `inn.html?id=${newId}`
+      } catch (err) {
+        console.error('Ошибка сохранения:', err)
+        alert('Ошибка сохранения: ' + err.message)
+      }
+    }
+
+    // -------------------- ЭСКЕЙПИНГ HTML --------------------
+    function escapeHTML(str) {
+      if (!str) return ''
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
+    }
+
+    // -------------------- ИНИЦИАЛИЗАЦИЯ --------------------
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadInnDocument()
+
+      document.getElementById('addInnBtn')?.addEventListener('click', openAddModal)
+      document.getElementById('saveInnBtn')?.addEventListener('click', saveInn)
+    })
+
+    // Экспорт в глобальную область
+    window.openAddModal = openAddModal
+    window.openEditModal = openEditModal
+    window.openModal = openModal
+    window.closeModal = closeModal
+    window.formData = formData
+  </script>
+</body>
+</html>
