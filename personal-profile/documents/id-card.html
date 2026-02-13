@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ID-карта — СФСРЮ</title>
-  <!-- favicons (укажите свои пути) -->
+  <!-- favicons (ваши пути) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -363,23 +363,23 @@
       flex: 1;
       border-bottom: 1px dashed var(--card-pink-dark);
     }
-.qr-code {
-  width: 50px;
-  height: 50px;
-  background: white;
-  border: 1px solid var(--card-pink-dark);
-  border-radius: 6px;
-  padding: 0; /* убираем внутренние отступы */
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.qr-code canvas {
-  width: 100% !important;
-  height: 100% !important;
-  display: block;
-}
+    .qr-code {
+      width: 60px;
+      height: 60px;
+      background: white;
+      border: 1px solid var(--card-pink-dark);
+      border-radius: 6px;
+      padding: 0;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-code canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
 
     .highlight-number {
       font-size: 1.2rem;
@@ -737,9 +737,11 @@
       document.getElementById('inn').textContent = data.inn_number || '—'
       document.getElementById('nss').textContent = data.nss_number || '—'
       document.getElementById('address').textContent = data.registration_address || '—'
-	  console.log('surname from data:', data.surname);
-	  console.log('name from data:', data.name);
-	  console.log('gender from data:', data.gender);
+
+      // Отладка
+      console.log('surname from data:', data.surname);
+      console.log('name from data:', data.name);
+      console.log('gender from data:', data.gender);
 
       const statusBadge = document.getElementById('statusBadge')
       const status = data.status || 'oncheck'
@@ -827,13 +829,14 @@
 
     function openEditModal() {
       currentStep = 1
+      // Используем данные из документа, но если они отсутствуют, подставляем из профиля
       formData = {
-        surname: documentData.surname || '',
-        name: documentData.name || '',
-        patronymic: documentData.patronymic || '',
-        birth_date: documentData.birth_date || '',
-        birth_place: documentData.birth_place || '',
-        gender: documentData.gender || '',
+        surname: documentData.surname || userProfile?.surname || '',
+        name: documentData.name || userProfile?.name || '',
+        patronymic: documentData.patronymic || userProfile?.patronymic || '',
+        birth_date: documentData.birth_date || userProfile?.date_of_birth || '',
+        birth_place: documentData.birth_place || userProfile?.place_of_birth || '',
+        gender: documentData.gender || userProfile?.gender || '',
         issue_date: documentData.issue_date || '',
         expiry_date: documentData.expiry_date || '',
         card_number: documentData.card_number || '',
@@ -1078,13 +1081,14 @@
       }
       const cleanData = { ...newData, personal_code: userPersonalCode, status: 'oncheck', updated_at: new Date().toISOString() }
 
+      console.log('Saving data:', newData) // отладка
+
       let result
       if (currentDocId) {
         result = await supabase.from('documents_id_card').update(cleanData).eq('id', currentDocId)
       } else {
         cleanData.created_at = new Date().toISOString()
         result = await supabase.from('documents_id_card').insert([cleanData]).select()
-		console.log('Saving data:', newData);
       }
 
       if (result.error) {
