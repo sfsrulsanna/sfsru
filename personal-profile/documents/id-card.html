@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ID-карта — СФСРЮ</title>
-  <!-- favicons (ваши пути) -->
+  <!-- favicons (укажите свои пути) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -25,12 +25,15 @@
   <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+  <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
+  <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 
-  <!-- Встроенные стили для карточки (чтобы гарантировать точное соответствие) -->
+  <!-- Встроенные стили для карточки и модального окна -->
   <style>
-    /* ========== СТАТУС И КНОПКИ ========== */
+    /* ========== СТАТУС И КНОПКИ (как в passport.html) ========== */
     .status-and-edit {
       display: flex;
       justify-content: center;
@@ -38,7 +41,7 @@
       gap: 1.5rem;
       margin: 2rem 0;
     }
-    .status-badge {
+    .document-status {
       padding: 0.25rem 0.6rem;
       border-radius: 6px;
       font-size: 0.85rem;
@@ -47,7 +50,7 @@
     .status-verified { background: rgba(40,167,69,0.15); color: #28a745; }
     .status-pending { background: rgba(255,193,7,0.15); color: #856404; }
     .status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
-    .edit-btn {
+    .edit-btn, .flip-btn {
       background: linear-gradient(135deg, #7b091a, #a83232);
       color: white;
       border: none;
@@ -55,18 +58,10 @@
       padding: 0.6rem 1.5rem;
       font-size: 1rem;
       cursor: pointer;
+      transition: opacity 0.2s;
     }
-    .flip-btn {
-      background: linear-gradient(135deg, #7b091a, #a83232);
-      color: white;
-      border: none;
-      border-radius: 30px;
-      padding: 0.6rem 2rem;
-      font-size: 1rem;
-      cursor: pointer;
-      margin: 1rem auto;
-      display: block;
-    }
+    .edit-btn:hover, .flip-btn:hover { opacity: 0.9; }
+    .flip-btn { background: #6c757d; } /* серый для переворота */
 
     /* ========== МОДАЛЬНОЕ ОКНО ========== */
     .modal-overlay {
@@ -92,7 +87,7 @@
       background: white;
       border-radius: 16px;
       width: 90%;
-      max-width: 600px;
+      max-width: 700px;
       max-height: 90vh;
       display: flex;
       flex-direction: column;
@@ -123,8 +118,7 @@
     }
     .modal-footer {
       display: flex;
-      justify-content: flex-end;
-      gap: 1rem;
+      justify-content: space-between;
       padding: 1rem 1.5rem 1.5rem 1.5rem;
       border-top: 1px solid #eee;
     }
@@ -144,6 +138,12 @@
       padding: 0.6rem 1.5rem;
       cursor: pointer;
     }
+    .step-indicator {
+      text-align: center;
+      margin-bottom: 1rem;
+      color: #7b091a;
+      font-weight: 500;
+    }
     .form-group {
       margin-bottom: 1.2rem;
     }
@@ -162,6 +162,13 @@
     .form-textarea {
       resize: vertical;
       min-height: 60px;
+    }
+    .record-block {
+      border: 1px solid #eee;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background: #fafafa;
     }
 
     /* ========== СТИЛИ ДЛЯ КАРТОЧКИ ========== */
@@ -207,14 +214,13 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
-      font-size: 0.9rem; /* чуть больше */
+      font-size: 0.9rem;
     }
 
     .card-back {
       transform: rotateY(180deg);
     }
 
-    /* Заголовок карточки (общий для обеих сторон) */
     .card-header {
       text-align: center;
       margin-bottom: 0.75rem;
@@ -235,17 +241,15 @@
       margin-top: 0.1rem;
     }
 
-    /* Контейнер для двух колонок (только на лицевой стороне) */
     .front-content {
       display: flex;
       gap: 1rem;
       flex: 1;
-      min-height: 0; /* для flexbox */
+      min-height: 0;
     }
 
-    /* Левая колонка (фото и подпись) */
     .left-col {
-      width: 20%; /* примерно 1/5, чтобы соблюсти пропорцию 1:4 */
+      width: 20%;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -284,16 +288,13 @@
       object-fit: contain;
     }
 
-    /* Правая колонка (данные) */
     .right-col {
       width: 80%;
       display: flex;
       flex-direction: column;
       gap: 0.3rem;
-      overflow-y: auto; /* на случай переполнения, но не должно */
     }
 
-    /* Поле данных (метка сверху, значение снизу) */
     .field-block {
       display: flex;
       flex-direction: column;
@@ -312,25 +313,24 @@
       word-break: break-word;
     }
 
-    /* Строка с двумя полями (например, дата рождения + пол) */
     .double-field {
       display: flex;
       gap: 1rem;
     }
     .double-field .field-block {
-      flex: 1; /* равная ширина */
+      flex: 1;
       border-bottom: 1px dashed var(--card-pink-dark);
     }
 
-    /* Задняя сторона: все поля в одной колонке */
+    /* Задняя сторона */
     .card-back {
       display: flex;
       flex-direction: column;
-      gap: 0.5rem;
+      gap: 0.4rem;
     }
-    .back-block {
+    .back-row {
       display: flex;
-      flex-direction: column;
+      align-items: baseline;
       border-bottom: 1px dashed var(--card-pink-dark);
       padding-bottom: 0.2rem;
     }
@@ -339,25 +339,35 @@
       color: var(--text-dark);
       font-size: 0.7rem;
       text-transform: uppercase;
+      width: 38%;
     }
     .back-value {
       font-weight: 500;
       font-size: 0.85rem;
+      width: 62%;
       word-break: break-word;
     }
-
-    /* Номер удостоверения выделен */
-    .highlight-number {
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #7b091a;
-    }
-
-    /* QR-код */
-    .qr-container {
+    .back-row.double {
       display: flex;
-      justify-content: flex-end;
-      margin-top: 0.2rem;
+      gap: 1rem;
+    }
+    .back-row.double .back-label {
+      width: auto;
+    }
+    .back-row.double .back-value {
+      width: auto;
+    }
+    .address-row {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .address-row .back-label {
+      width: 38%;
+    }
+    .address-row .back-value {
+      width: calc(62% - 70px); /* учитываем QR */
+      flex-shrink: 1;
     }
     .qr-code {
       width: 60px;
@@ -366,32 +376,60 @@
       border: 1px solid var(--card-pink-dark);
       border-radius: 6px;
       padding: 3px;
+      flex-shrink: 0;
     }
     .qr-code canvas {
       width: 100% !important;
       height: 100% !important;
     }
 
-    /* Адаптация для мобильных */
+    .highlight-number {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #7b091a;
+    }
+
+    /* ========== ТАБЛИЦА РАНЕЕ ВЫДАННЫХ КАРТ ========== */
+    .previous-section {
+      margin-top: 2rem;
+    }
+    .previous-title {
+      font-size: 1.2rem;
+      color: #7b091a;
+      border-bottom: 2px solid #7b091a;
+      padding-bottom: 0.3rem;
+      margin-bottom: 1rem;
+    }
+    .previous-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .previous-table th {
+      background: #7b091a;
+      color: white;
+      padding: 0.5rem;
+      text-align: left;
+      font-size: 0.85rem;
+    }
+    .previous-table td {
+      padding: 0.5rem;
+      border-bottom: 1px solid #eee;
+    }
+    .previous-table tr:last-child td {
+      border-bottom: none;
+    }
+
     @media (max-width: 600px) {
-      .card {
-        padding-bottom: 100%;
-      }
-      .front-content {
-        flex-direction: column;
-      }
-      .left-col, .right-col {
-        width: 100%;
-      }
-      .double-field {
-        flex-direction: column;
-        gap: 0.3rem;
-      }
+      .card { padding-bottom: 100%; }
+      .front-content { flex-direction: column; }
+      .left-col, .right-col { width: 100%; }
+      .double-field { flex-direction: column; gap: 0.3rem; }
+      .address-row { flex-wrap: wrap; }
     }
   </style>
 </head>
 <body>
-  <!-- ШАПКА САЙТА (без изменений) -->
+  <!-- ШАПКА САЙТА -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -418,15 +456,22 @@
 
   <main class="main-content">
     <div class="container">
+      <!-- Индикатор загрузки -->
       <div id="loading" class="loading" style="text-align: center; padding: 3rem;">Загрузка данных...</div>
+
+      <!-- Блок "Нет данных" -->
       <div id="noData" style="display: none; text-align: center; padding: 3rem;">
         <p>У вас пока нет ID-карты.</p>
         <button class="edit-btn" id="addBtn">Добавить ID-карту</button>
       </div>
+
+      <!-- Контент с карточкой -->
       <div id="content" style="display: none;">
-        <!-- СТАТУС -->
+        <!-- СТАТУС И КНОПКИ В ОДНОЙ СТРОКЕ -->
         <div class="status-and-edit">
-          <span id="statusBadge" class="status-badge" style="display: none;"></span>
+          <span id="statusBadge" class="document-status" style="display: none;"></span>
+          <button class="edit-btn" id="editBtn">Изменить данные</button>
+          <button class="flip-btn" id="flipBtn">Перевернуть карту</button>
         </div>
 
         <!-- КАРТОЧКА -->
@@ -439,7 +484,6 @@
                 <div class="subtitle">ГРАЖДАНИНА СФСРЮ</div>
               </div>
               <div class="front-content">
-                <!-- Левая колонка: фото и подпись -->
                 <div class="left-col">
                   <div class="photo">
                     <img id="userPhoto" src="../../images/default-avatar.png" alt="Фото">
@@ -449,24 +493,19 @@
                     <img id="userSignature" src="../../images/default-signature.png" alt="Подпись">
                   </div>
                 </div>
-                <!-- Правая колонка: данные -->
                 <div class="right-col">
-                  <!-- ФАМИЛИЯ -->
                   <div class="field-block">
                     <span class="field-label">ФАМИЛИЯ</span>
                     <span class="field-value" id="surname">—</span>
                   </div>
-                  <!-- ИМЯ -->
                   <div class="field-block">
                     <span class="field-label">ИМЯ</span>
                     <span class="field-value" id="name">—</span>
                   </div>
-                  <!-- ОТЧЕСТВО -->
                   <div class="field-block">
                     <span class="field-label">ОТЧЕСТВО</span>
                     <span class="field-value" id="patronymic">—</span>
                   </div>
-                  <!-- ДАТА РОЖДЕНИЯ и ПОЛ -->
                   <div class="double-field">
                     <div class="field-block">
                       <span class="field-label">ДАТА РОЖДЕНИЯ</span>
@@ -477,12 +516,10 @@
                       <span class="field-value" id="gender">—</span>
                     </div>
                   </div>
-                  <!-- МЕСТО РОЖДЕНИЯ -->
                   <div class="field-block">
                     <span class="field-label">МЕСТО РОЖДЕНИЯ</span>
                     <span class="field-value" id="birthPlace">—</span>
                   </div>
-                  <!-- ДАТА ВЫДАЧИ и СРОК ДЕЙСТВИЯ -->
                   <div class="double-field">
                     <div class="field-block">
                       <span class="field-label">ДАТА ВЫДАЧИ</span>
@@ -493,7 +530,6 @@
                       <span class="field-value" id="expiryDate">—</span>
                     </div>
                   </div>
-                  <!-- НОМЕР УДОСТОВЕРЕНИЯ (выделен) -->
                   <div class="field-block">
                     <span class="field-label">НОМЕР УДОСТОВЕРЕНИЯ</span>
                     <span class="field-value highlight-number" id="cardNumber">—</span>
@@ -508,88 +544,90 @@
                 <div class="title">ЭЛЕКТРОННОЕ УДОСТОВЕРЕНИЕ ЛИЧНОСТИ</div>
                 <div class="subtitle">ГРАЖДАНИНА СФСРЮ</div>
               </div>
-              <!-- НОМЕР УДОСТОВЕРЕНИЯ (повтор) -->
-              <div class="back-block">
+              <!-- НОМЕР УДОСТОВЕРЕНИЯ -->
+              <div class="back-row">
                 <span class="back-label">НОМЕР УДОСТОВЕРЕНИЯ</span>
                 <span class="back-value highlight-number" id="backCardNumber">—</span>
               </div>
-              <!-- КОД ПОДРАЗДЕЛЕНИЯ -->
-              <div class="back-block">
+              <!-- КОД ПОДРАЗДЕЛЕНИЯ и ЛИЧНЫЙ КОД в одной строке -->
+              <div class="back-row double">
                 <span class="back-label">КОД ПОДРАЗДЕЛЕНИЯ</span>
                 <span class="back-value" id="departmentCode">—</span>
+                <span class="back-label" style="margin-left: 1rem;">ЛИЧНЫЙ КОД</span>
+                <span class="back-value" id="personalCode">—</span>
               </div>
               <!-- КЕМ ВЫДАНО -->
-              <div class="back-block">
+              <div class="back-row">
                 <span class="back-label">КЕМ ВЫДАНО</span>
                 <span class="back-value" id="issuedBy">—</span>
               </div>
-              <!-- ЛИЧНЫЙ КОД -->
-              <div class="back-block">
-                <span class="back-label">ЛИЧНЫЙ КОД</span>
-                <span class="back-value" id="personalCode">—</span>
-              </div>
               <!-- ПОЛИС ОМС и ГРУППА КРОВИ/РЕЗУС -->
-              <div class="double-field">
-                <div class="back-block">
-                  <span class="back-label">ПОЛИС ОМС</span>
-                  <span class="back-value" id="oms">—</span>
-                </div>
-                <div class="back-block">
-                  <span class="back-label">ГРУППА КРОВИ И РЕЗУС-ФАКТОР</span>
-                  <span class="back-value" id="blood">—</span>
-                </div>
+              <div class="back-row double">
+                <span class="back-label">ПОЛИС ОМС</span>
+                <span class="back-value" id="oms">—</span>
+                <span class="back-label" style="margin-left: 1rem;">ГРУППА КРОВИ И РЕЗУС-ФАКТОР</span>
+                <span class="back-value" id="blood">—</span>
               </div>
               <!-- ИНН и НСС -->
-              <div class="double-field">
-                <div class="back-block">
-                  <span class="back-label">ИНН</span>
-                  <span class="back-value" id="inn">—</span>
-                </div>
-                <div class="back-block">
-                  <span class="back-label">НСС</span>
-                  <span class="back-value" id="nss">—</span>
-                </div>
+              <div class="back-row double">
+                <span class="back-label">ИНН</span>
+                <span class="back-value" id="inn">—</span>
+                <span class="back-label" style="margin-left: 1rem;">НСС</span>
+                <span class="back-value" id="nss">—</span>
               </div>
-              <!-- АДРЕС РЕГИСТРАЦИИ -->
-              <div class="back-block">
+              <!-- АДРЕС РЕГИСТРАЦИИ + QR -->
+              <div class="address-row">
                 <span class="back-label">АДРЕС РЕГИСТРАЦИИ</span>
                 <span class="back-value" id="address">—</span>
-              </div>
-              <!-- QR-код -->
-              <div class="qr-container">
                 <div id="qrCode" class="qr-code"></div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Кнопки -->
-        <button class="flip-btn" id="flipBtn">Перевернуть карту</button>
-        <div style="text-align: center; margin-top: 1rem;">
-          <button class="edit-btn" id="editBtn" style="background: #6c757d;">Изменить данные</button>
+        <!-- ТАБЛИЦА РАНЕЕ ВЫДАННЫХ ID-КАРТ -->
+        <div class="previous-section">
+          <h3 class="previous-title">Ранее выданные ID-карты</h3>
+          <table class="previous-table" id="previousCardsTable">
+            <thead>
+              <tr>
+                <th>Номер удостоверения</th>
+                <th>Кем выдан</th>
+                <th>Дата выдачи</th>
+                <th>Срок действия</th>
+              </tr>
+            </thead>
+            <tbody id="previousCardsBody">
+              <tr><td colspan="4" style="text-align: center;">Нет данных</td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
   </main>
 
-  <footer class="footer">...</footer> <!-- подвал опущен для краткости, но должен быть -->
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО (как в предыдущей версии) -->
+  <!-- МОДАЛЬНОЕ ОКНО (ДВА ШАГА) -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
         <h4 id="modalTitle">Добавление ID-карты</h4>
         <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
       </div>
+      <div class="step-indicator" id="stepIndicator">Шаг 1 из 2</div>
       <div class="modal-body" id="modalBody"></div>
       <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
-        <button type="button" class="btn-primary" id="saveBtn">Сохранить</button>
+        <button type="button" class="btn-secondary" id="prevBtn" style="display: none;">Назад</button>
+        <button type="button" class="btn-primary" id="nextBtn">Далее</button>
       </div>
     </div>
   </div>
 
-  <!-- БИБЛИОТЕКИ И СКРИПТЫ (без изменений, как в предыдущем ответе) -->
+  <!-- БИБЛИОТЕКИ -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script type="importmap">
     { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
@@ -597,6 +635,7 @@
   <script type="module" src="../../js/supabase-config.js"></script>
   <script src="../../js/mob-menu.js"></script>
 
+  <!-- ПОЛНЫЙ JS КОД -->
   <script type="module">
     import { supabase } from '../../js/supabase-config.js'
 
@@ -606,10 +645,19 @@
     let userPersonalCode = null
     let userProfile = null
 
+    // --- Для модального окна ---
+    let currentStep = 1
+    const totalSteps = 2
+    let formData = {} // данные формы (основные + previousCards)
+
+    // --- Вспомогательные функции ---
     function formatDate(dateString) {
       if (!dateString) return '—'
-      try { return new Date(dateString).toLocaleDateString('ru-RU') }
-      catch { return dateString }
+      try {
+        return new Date(dateString).toLocaleDateString('ru-RU')
+      } catch {
+        return dateString
+      }
     }
 
     function getStatusLabel(status) {
@@ -621,23 +669,40 @@
 
     function escapeHTML(str) {
       if (!str) return ''
-      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;')
     }
 
+    // --- Загрузка данных (параллельная) ---
     async function loadData() {
       const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) { window.location.href = '../../login.html'; return }
+      if (sessionError || !session) {
+        window.location.href = '../../login.html'
+        return
+      }
 
       const [profileResult, docResult] = await Promise.allSettled([
         supabase.from('users').select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender').eq('id', session.user.id).single(),
         (async () => {
           const urlParams = new URLSearchParams(window.location.search)
           const id = urlParams.get('id')
-          if (id) return supabase.from('documents_id_card').select('*').eq('id', id).single()
-          const { data: user } = await supabase.from('users').select('personal_code').eq('id', session.user.id).single()
-          if (!user) return { data: null, error: 'No user' }
-          const { data, error } = await supabase.from('documents_id_card').select('*').eq('personal_code', user.personal_code).order('created_at',{ascending:false}).limit(1)
-          return { data: data?.[0], error }
+          if (id) {
+            return supabase.from('documents_id_card').select('*').eq('id', id).single()
+          } else {
+            const { data: user } = await supabase.from('users').select('personal_code').eq('id', session.user.id).single()
+            if (!user) return { data: null, error: 'No user' }
+            const { data, error } = await supabase
+              .from('documents_id_card')
+              .select('*')
+              .eq('personal_code', user.personal_code)
+              .order('created_at', { ascending: false })
+              .limit(1)
+            return { data: data?.[0], error }
+          }
         })()
       ])
 
@@ -654,6 +719,7 @@
         documentData = docResult.value.data
         currentDocId = documentData.id
         renderCard(documentData)
+        renderPreviousCards(documentData.previous_id_cards || [])
         document.getElementById('loading').style.display = 'none'
         document.getElementById('content').style.display = 'block'
         document.getElementById('noData').style.display = 'none'
@@ -663,8 +729,8 @@
       }
     }
 
+    // --- Отрисовка карточки ---
     function renderCard(data) {
-      // Лицевая сторона
       document.getElementById('surname').textContent = data.surname || '—'
       document.getElementById('name').textContent = data.name || '—'
       document.getElementById('patronymic').textContent = data.patronymic || '—'
@@ -674,8 +740,6 @@
       document.getElementById('issueDate').textContent = formatDate(data.issue_date)
       document.getElementById('expiryDate').textContent = formatDate(data.expiry_date)
       document.getElementById('cardNumber').textContent = data.card_number || '—'
-
-      // Оборотная сторона
       document.getElementById('backCardNumber').textContent = data.card_number || '—'
       document.getElementById('departmentCode').textContent = data.department_code || '—'
       document.getElementById('issuedBy').textContent = data.issued_by || '—'
@@ -687,26 +751,12 @@
       document.getElementById('nss').textContent = data.nss_number || '—'
       document.getElementById('address').textContent = data.registration_address || '—'
 
-      // Статус
       const statusBadge = document.getElementById('statusBadge')
       const status = data.status || 'oncheck'
-      if (status === 'verified') {
-        statusBadge.className = 'status-badge status-verified'
-        statusBadge.textContent = '✅ Подтверждено'
-        statusBadge.style.display = 'inline-block'
-      } else if (status === 'oncheck') {
-        statusBadge.className = 'status-badge status-pending'
-        statusBadge.textContent = '⏳ На проверке'
-        statusBadge.style.display = 'inline-block'
-      } else if (status === 'rejected') {
-        statusBadge.className = 'status-badge status-rejected'
-        statusBadge.textContent = '❌ Отклонено'
-        statusBadge.style.display = 'inline-block'
-      } else {
-        statusBadge.style.display = 'none'
-      }
+      statusBadge.className = `document-status status-${status}`
+      statusBadge.textContent = getStatusLabel(status)
+      statusBadge.style.display = 'inline-block'
 
-      // Фото и подпись
       const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
       const photoImg = document.getElementById('userPhoto')
       const signatureImg = document.getElementById('userSignature')
@@ -720,7 +770,6 @@
         signatureImg.src = '../../images/default-avatar.png'
       }
 
-      // QR-код
       const qrContainer = document.getElementById('qrCode')
       qrContainer.innerHTML = ''
       if (userPersonalCode) {
@@ -735,24 +784,37 @@
       }
     }
 
-    // --- Переворот карты ---
+    // --- Отрисовка таблицы ранее выданных карт ---
+    function renderPreviousCards(cards) {
+      const tbody = document.getElementById('previousCardsBody')
+      if (!cards || cards.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align: center;">Нет данных</td></tr>'
+        return
+      }
+      tbody.innerHTML = cards.map(c => `
+        <tr>
+          <td>${escapeHTML(c.card_number || '')}</td>
+          <td>${escapeHTML(c.issued_by || '')}</td>
+          <td>${formatDate(c.issue_date)}</td>
+          <td>${formatDate(c.expiry_date)}</td>
+        </tr>
+      `).join('')
+    }
+
+    // --- Переворот карты по клику на карточку и кнопке ---
+    document.getElementById('card').addEventListener('click', (e) => {
+      // Чтобы не мешать кликам по кнопкам внутри карточки (их нет, но на всякий случай)
+      if (e.target.tagName !== 'BUTTON') {
+        document.getElementById('card').classList.toggle('flipped')
+      }
+    })
     document.getElementById('flipBtn').addEventListener('click', () => {
       document.getElementById('card').classList.toggle('flipped')
     })
 
-    // --- Модальное окно добавления/редактирования ---
-    let formData = {}
-
+    // --- МОДАЛЬНОЕ ОКНО (два шага) ---
     async function openAddModal() {
-      if (!userProfile) {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) return
-        const { data, error } = await supabase.from('users').select('*').eq('id', session.user.id).single()
-        if (!error && data) {
-          userProfile = data
-          userPersonalCode = data.personal_code
-        }
-      }
+      currentStep = 1
       formData = {
         surname: userProfile?.surname || '',
         name: userProfile?.name || '',
@@ -771,29 +833,45 @@
         rh_factor: '',
         inn_number: '',
         nss_number: '',
-        registration_address: ''
+        registration_address: '',
+        previous_id_cards: [] // массив объектов
       }
       window.openModal('Добавление ID-карты')
     }
 
     function openEditModal() {
-      formData = { ...documentData }
+      currentStep = 1
+      formData = { ...documentData, previous_id_cards: documentData.previous_id_cards || [] }
       window.openModal('Редактирование ID-карты')
     }
 
     function openModal(title) {
       document.getElementById('modalTitle').textContent = title
       document.getElementById('modalOverlay').classList.add('active')
-      renderModalForm()
+      updateStep()
     }
 
     window.closeModal = function() {
       document.getElementById('modalOverlay').classList.remove('active')
+      currentStep = 1
     }
 
-    function renderModalForm() {
-      const modalBody = document.getElementById('modalBody')
-      modalBody.innerHTML = `
+    function updateStep() {
+      document.getElementById('stepIndicator').textContent = `Шаг ${currentStep} из ${totalSteps}`
+      document.getElementById('prevBtn').style.display = currentStep > 1 ? 'inline-block' : 'none'
+      document.getElementById('nextBtn').textContent = currentStep === totalSteps ? 'Сохранить' : 'Далее'
+
+      let content = ''
+      if (currentStep === 1) {
+        content = renderStep1()
+      } else {
+        content = renderStep2()
+      }
+      document.getElementById('modalBody').innerHTML = content
+    }
+
+    function renderStep1() {
+      return `
         <div class="form-group">
           <label>Фамилия</label>
           <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
@@ -872,31 +950,126 @@
       `
     }
 
-    function collectFormData() {
-      return {
-        surname: document.getElementById('surname')?.value.trim() || '',
-        name: document.getElementById('name')?.value.trim() || '',
-        patronymic: document.getElementById('patronymic')?.value.trim() || '',
-        birth_date: document.getElementById('birth_date')?.value || '',
-        birth_place: document.getElementById('birth_place')?.value.trim() || '',
-        gender: document.getElementById('gender')?.value || '',
-        issue_date: document.getElementById('issue_date')?.value || '',
-        expiry_date: document.getElementById('expiry_date')?.value || '',
-        card_number: document.getElementById('card_number')?.value.trim() || '',
-        issued_by: document.getElementById('issued_by')?.value.trim() || '',
-        department_code: document.getElementById('department_code')?.value.trim() || '',
-        personal_code_ref: document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode,
-        oms_policy_number: document.getElementById('oms_policy_number')?.value.trim() || '',
-        blood_group: document.getElementById('blood_group')?.value.trim() || '',
-        rh_factor: document.getElementById('rh_factor')?.value.trim() || '',
-        inn_number: document.getElementById('inn_number')?.value.trim() || '',
-        nss_number: document.getElementById('nss_number')?.value.trim() || '',
-        registration_address: document.getElementById('registration_address')?.value.trim() || ''
+    function renderStep2() {
+      const cards = formData.previous_id_cards || []
+      let listHtml = cards.map((card, i) => `
+        <div class="record-block" data-index="${i}">
+          <div class="form-group">
+            <label>Номер удостоверения</label>
+            <input type="text" class="form-input prev-card-number" value="${escapeHTML(card.card_number || '')}">
+          </div>
+          <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input prev-issued-by" value="${escapeHTML(card.issued_by || '')}">
+          </div>
+          <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input prev-issue-date" value="${card.issue_date || ''}">
+          </div>
+          <div class="form-group">
+            <label>Срок действия</label>
+            <input type="date" class="form-input prev-expiry-date" value="${card.expiry_date || ''}">
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="window.removeCard(this)">Удалить</button>
+        </div>
+      `).join('')
+      return `
+        <p><strong>Ранее выданные ID-карты</strong></p>
+        <div id="prevCardsContainer">${listHtml}</div>
+        <button type="button" class="btn btn-secondary" id="addPrevCardBtn">+ Добавить карту</button>
+      `
+    }
+
+    // --- Функции для работы с записями в шаге 2 ---
+    window.addPrevCard = function() {
+      const container = document.getElementById('prevCardsContainer')
+      const index = (formData.previous_id_cards?.length || 0)
+      const html = `
+        <div class="record-block" data-index="${index}">
+          <div class="form-group">
+            <label>Номер удостоверения</label>
+            <input type="text" class="form-input prev-card-number">
+          </div>
+          <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input prev-issued-by">
+          </div>
+          <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input prev-issue-date">
+          </div>
+          <div class="form-group">
+            <label>Срок действия</label>
+            <input type="date" class="form-input prev-expiry-date">
+          </div>
+          <button type="button" class="btn btn-secondary" onclick="window.removeCard(this)">Удалить</button>
+        </div>
+      `
+      container.insertAdjacentHTML('beforeend', html)
+    }
+
+    window.removeCard = function(btn) {
+      const block = btn.closest('.record-block')
+      if (block) block.remove()
+    }
+
+    // --- Сохранение данных текущего шага ---
+    function saveStepData() {
+      if (currentStep === 1) {
+        formData.surname = document.getElementById('surname')?.value.trim() || ''
+        formData.name = document.getElementById('name')?.value.trim() || ''
+        formData.patronymic = document.getElementById('patronymic')?.value.trim() || ''
+        formData.birth_date = document.getElementById('birth_date')?.value || ''
+        formData.birth_place = document.getElementById('birth_place')?.value.trim() || ''
+        formData.gender = document.getElementById('gender')?.value || ''
+        formData.issue_date = document.getElementById('issue_date')?.value || ''
+        formData.expiry_date = document.getElementById('expiry_date')?.value || ''
+        formData.card_number = document.getElementById('card_number')?.value.trim() || ''
+        formData.issued_by = document.getElementById('issued_by')?.value.trim() || ''
+        formData.department_code = document.getElementById('department_code')?.value.trim() || ''
+        formData.personal_code_ref = document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode
+        formData.oms_policy_number = document.getElementById('oms_policy_number')?.value.trim() || ''
+        formData.blood_group = document.getElementById('blood_group')?.value.trim() || ''
+        formData.rh_factor = document.getElementById('rh_factor')?.value.trim() || ''
+        formData.inn_number = document.getElementById('inn_number')?.value.trim() || ''
+        formData.nss_number = document.getElementById('nss_number')?.value.trim() || ''
+        formData.registration_address = document.getElementById('registration_address')?.value.trim() || ''
+      } else {
+        const blocks = document.querySelectorAll('#prevCardsContainer .record-block')
+        const cards = []
+        blocks.forEach(block => {
+          cards.push({
+            card_number: block.querySelector('.prev-card-number')?.value.trim() || '',
+            issued_by: block.querySelector('.prev-issued-by')?.value.trim() || '',
+            issue_date: block.querySelector('.prev-issue-date')?.value || '',
+            expiry_date: block.querySelector('.prev-expiry-date')?.value || ''
+          })
+        })
+        formData.previous_id_cards = cards
       }
     }
 
+    // --- Навигация по шагам ---
+    function nextStep() {
+      saveStepData()
+      if (currentStep < totalSteps) {
+        currentStep++
+        updateStep()
+      } else {
+        saveDocument()
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--
+        updateStep()
+      }
+    }
+
+    // --- Сохранение в Supabase ---
     async function saveDocument() {
-      const newData = collectFormData()
+      const newData = { ...formData }
       if (!newData.card_number) {
         alert('Номер карты обязателен')
         return
@@ -927,12 +1100,16 @@
       window.location.href = `id-card.html?id=${newId}`
     }
 
-    // --- Инициализация ---
+    // --- Инициализация обработчиков ---
     document.addEventListener('DOMContentLoaded', async () => {
       await loadData()
       document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-      document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
       document.getElementById('editBtn')?.addEventListener('click', openEditModal)
+      document.getElementById('prevBtn')?.addEventListener('click', prevStep)
+      document.getElementById('nextBtn')?.addEventListener('click', nextStep)
+      document.addEventListener('click', (e) => {
+        if (e.target.id === 'addPrevCardBtn') addPrevCard()
+      })
     })
 
     // Экспорт в глобальную область
@@ -940,7 +1117,10 @@
     window.openEditModal = openEditModal
     window.openModal = openModal
     window.closeModal = closeModal
-    window.formData = formData
+    window.addPrevCard = addPrevCard
+    window.removeCard = removeCard
+    window.nextStep = nextStep
+    window.prevStep = prevStep
   </script>
 </body>
 </html>
