@@ -246,12 +246,13 @@
   <script type="module">
     import { supabase } from '../js/supabase-config.js'
 
-    // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
-    let currentStep = 1
-    const totalSteps = 7
-    let formData = {}               // текущие данные формы
-    let userPersonalCode = null    // личный код текущего пользователя
-    let currentDocId = null        // ID текущего документа (если есть)
+  // --- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ---
+  let currentStep = 1
+  const totalSteps = 7
+  let formData = {}
+  let userPersonalCode = null
+  let currentDocId = null
+  let userProfile = null      // объявлена глобально, изначально null
 
     // --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
     function formatDate(dateString) {
@@ -281,73 +282,74 @@
       return 'document-status'
     }
 
-    // --- ЗАГРУЗКА ПРОФИЛЯ ПОЛЬЗОВАТЕЛЯ (personal_code) ---
-    async function loadUserProfile() {
-      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-      if (sessionError || !session) {
-        window.location.href = '../login.html'
-        return null
-      }
-
-      const { data, error } = await supabase
-        .from('users')
-        .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
-        .eq('id', session.user.id)
-        .single()
-
-      if (error || !data) {
-        console.error('Ошибка загрузки профиля:', error)
-        return null
-      }
-
-      userPersonalCode = data.personal_code
-      return data
+  // --- ЗАГРУЗКА ПРОФИЛЯ ---
+  async function loadUserProfile() {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError || !session) {
+      window.location.href = '../login.html'
+      return null
     }
 
-    // --- ЗАГРУЗКА ПАСПОРТА (по ID или последнего по personal_code) ---
-    async function loadPassport() {
-      try {
-        const profile = await loadUserProfile()
-        if (!profile || !userPersonalCode) {
-          throw new Error('Не удалось загрузить профиль')
-        }
+    const { data, error } = await supabase
+      .from('users')
+      .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+      .eq('id', session.user.id)
+      .single()
 
-        const urlParams = new URLSearchParams(window.location.search)
-        currentDocId = urlParams.get('id')
-
-        let data = null
-        if (currentDocId) {
-          const { data: doc, error } = await supabase
-            .from('document_passport')
-            .select('*')
-            .eq('id', currentDocId)
-            .single()
-          if (error) throw error
-          data = doc
-        } else {
-          // Ищем последний паспорт по personal_code
-          const { data: docs, error } = await supabase
-            .from('document_passport')
-            .select('*')
-            .eq('personal_code', userPersonalCode)
-            .order('created_at', { ascending: false })
-            .limit(1)
-          if (error) throw error
-          data = docs?.[0]
-          if (data) currentDocId = data.id
-        }
-
-        if (data) {
-          renderPassport(data)
-        } else {
-          document.getElementById('loading').style.display = 'none'
-          document.getElementById('noData').style.display = 'block'
-        }
-      } catch (err) {
-        console.error('Ошибка загрузки паспорта:', err)
-        document.getElementById('loading').textContent = 'Ошибка загрузки данных'
-      }
+    if (error || !data) {
+      console.error('Ошибка загрузки профиля:', error)
+      // Показываем сообщение об ошибке и не продолжаем
+      document.getElementById('loading').textContent = 'Ошибка загрузки профиля. Перезагрузите страницу.'
+      return null
     }
+
+    userPersonalCode = data.personal_code
+    userProfile = data
+    return data
+  }
+
+  // --- ЗАГРУЗКА ПАСПОРТА ---
+  async function loadForeignPassport() {
+    try {
+      const profile = await loadUserProfile()
+      if (!profile) return  // ошибка загрузки профиля – дальше не идём
+
+      const urlParams = new URLSearchParams(window.location.search)
+      currentDocId = urlParams.get('id')
+
+      let data = null
+      if (currentDocId) {
+        const { data: doc, error } = await supabase
+          .from('document_passport')
+          .select('*')
+          .eq('id', currentDocId)
+          .single()
+        if (error) throw error
+        data = doc
+      } else {
+        const { data: docs, error } = await supabase
+          .from('document_passport')
+          .select('*')
+          .eq('personal_code', userPersonalCode)
+          .order('created_at', { ascending: false })
+          .limit(1)
+        if (error) throw error
+        data = docs?.[0]
+        if (data) currentDocId = data.id
+      }
+
+      if (data) {
+        renderPassport(data)
+      } else {
+        document.getElementById('loading').style.display = 'none'
+        document.getElementById('noData').style.display = 'block'
+      }
+    } catch (err) {
+      console.error('Ошибка загрузки паспорта:', err)
+      document.getElementById('loading').textContent = 'Ошибка загрузки данных'
+    }
+  }
+
 
     // --- ОТРИСОВКА ПАСПОРТА (полная) ---
     function renderPassport(data) {
@@ -616,42 +618,51 @@
       document.getElementById('loading').style.display = 'none'
     }
 
-    // --- МОДАЛЬНОЕ ОКНО ---
-    function openAddModal() {
-      currentStep = 1
-      // Заполняем данными из профиля, если они есть
-      formData = {
-        personal_code: userPersonalCode || '',
-        surname: userProfile?.surname || '',
-        name: userProfile?.name || '',
-        patronymic: userProfile?.patronymic || '',
-        birth_date: userProfile?.date_of_birth || '',
-        birth_place: userProfile?.place_of_birth || '',
-        gender: userProfile?.gender || 'Мужской',
-        residences: [],
-        marital_statuses: [],
-        previous_passports: [],
-        previous_foreign_passports: [],
-        previous_id_cards: []
+  // --- МОДАЛЬНОЕ ОКНО (ИСПРАВЛЕНО) ---
+  async function openAddModal() {
+    // Убеждаемся, что профиль загружен
+    if (!userProfile) {
+      await loadUserProfile()
+      if (!userProfile) {
+        alert('Не удалось загрузить профиль. Попробуйте перезагрузить страницу.')
+        return
       }
-      openModal('Добавление паспорта')
     }
 
-    function openEditModal() {
-      currentStep = 1
-      openModal('Редактирование паспорта')
+    currentStep = 1
+    formData = {
+      personal_code: userPersonalCode || '',
+      surname: userProfile?.surname || '',
+      name: userProfile?.name || '',
+      patronymic: userProfile?.patronymic || '',
+      birth_date: userProfile?.date_of_birth || '',
+      birth_place: userProfile?.place_of_birth || '',
+      gender: userProfile?.gender || 'Мужской',
+      residences: [],
+      marital_statuses: [],
+      previous_passports: [],
+      previous_foreign_passports: [],
+      previous_id_cards: []
     }
+    openModal('Добавление паспорта')
+  }
 
-    function openModal(title) {
-      document.getElementById('modalTitle').textContent = title
-      document.getElementById('modalOverlay').classList.add('active')
-      updateStep()
-    }
+  function openEditModal() {
+    currentStep = 1
+    openModal('Редактирование паспорта')
+  }
 
-    window.closeModal = function() {
-      document.getElementById('modalOverlay').classList.remove('active')
-      currentStep = 1
-    }
+  function openModal(title) {
+    document.getElementById('modalTitle').textContent = title
+    document.getElementById('modalOverlay').classList.add('active')
+    updateStep()
+  }
+
+  window.closeModal = function() {
+    document.getElementById('modalOverlay').classList.remove('active')
+    currentStep = 1
+  }
+
 
     function updateStep() {
       document.getElementById('stepIndicator').textContent = `Шаг ${currentStep} из ${totalSteps}`
@@ -1138,6 +1149,38 @@
     window.prevStep = prevStep
     window.addRecord = addRecord
     window.removeRecord = removeRecord
-  </script>
+
+  // --- ПРИВЯЗКА ОБРАБОТЧИКОВ ---
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadForeignPassport()
+
+    // Кнопка "Добавить паспорт" – теперь вешаем обработчик, который вызывает исправленную openAddModal
+    const addBtn = document.getElementById('addPassportBtn')
+    if (addBtn) {
+      addBtn.addEventListener('click', openAddModal)
+    }
+
+    document.getElementById('prevBtn')?.addEventListener('click', prevStep)
+    document.getElementById('nextBtn')?.addEventListener('click', nextStep)
+
+    // Делегирование для динамических кнопок
+    document.addEventListener('click', (e) => {
+      if (e.target.id === 'addResidenceBtn') addRecord('residencesContainer', 'residences')
+      if (e.target.id === 'addMaritalBtn') addRecord('maritalContainer', 'marital')
+      if (e.target.id === 'addPrevPassportBtn') addRecord('prevPassportsContainer', 'prevPassport')
+      if (e.target.id === 'addPrevForeignBtn') addRecord('prevForeignContainer', 'prevForeign')
+      if (e.target.id === 'addPrevIdCardBtn') addRecord('prevIdCardsContainer', 'prevIdCard')
+    })
+  })
+
+  // Экспорт в window (для inline-обработчиков вроде onclick)
+  window.openAddModal = openAddModal
+  window.openEditModal = openEditModal
+  window.closeModal = closeModal
+  window.nextStep = nextStep
+  window.prevStep = prevStep
+  window.addRecord = addRecord
+  window.removeRecord = removeRecord
+</script>
 </body>
 </html>
