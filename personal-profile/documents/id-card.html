@@ -342,6 +342,13 @@
       }
     }
 
+    function getStatusLabel(status) {
+      if (status === 'verified') return '✅ Подтверждено'
+      if (status === 'oncheck') return '⏳ На проверке'
+      if (status === 'rejected') return '❌ Отклонено'
+      return '—'
+    }
+
     function escapeHTML(str) {
       if (!str) return ''
       return String(str)
@@ -369,7 +376,16 @@
           if (id) {
             return supabase.from('documents_id_card').select('*').eq('id', id).single()
           } else {
-            return supabase.from('documents_id_card').select('*').eq('personal_code', userPersonalCode).order('created_at', { ascending: false }).limit(1).then(res => ({ data: res.data?.[0], error: res.error }))
+            // сначала получаем personal_code, потом ищем документ
+            const { data: user } = await supabase.from('users').select('personal_code').eq('id', session.user.id).single()
+            if (!user) return { data: null, error: 'No user' }
+            const { data, error } = await supabase
+              .from('documents_id_card')
+              .select('*')
+              .eq('personal_code', user.personal_code)
+              .order('created_at', { ascending: false })
+              .limit(1)
+            return { data: data?.[0], error }
           }
         })()
       ])
@@ -424,6 +440,29 @@
       document.getElementById('nss').textContent = data.nss_number || '—'
       document.getElementById('address').textContent = data.registration_address || '—'
 
+      // Статус
+      const statusBadge = document.getElementById('statusBadge')
+      const status = data.status || 'oncheck'
+      let statusClass = ''
+      let statusText = ''
+      if (status === 'verified') {
+        statusClass = 'status-verified'
+        statusText = '✅ Подтверждено'
+      } else if (status === 'oncheck') {
+        statusClass = 'status-pending'
+        statusText = '⏳ На проверке'
+      } else if (status === 'rejected') {
+        statusClass = 'status-rejected'
+        statusText = '❌ Отклонено'
+      } else {
+        statusBadge.style.display = 'none'
+      }
+      if (statusClass) {
+        statusBadge.className = `status-badge ${statusClass}`
+        statusBadge.textContent = statusText
+        statusBadge.style.display = 'block'
+      }
+
       // Фото и подпись
       const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
       const photoImg = document.getElementById('userPhoto')
@@ -432,10 +471,10 @@
         photoImg.src = `../../images/avatars/${safeCode}.jpg`
         photoImg.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
         signatureImg.src = `../../images/avatars/signatures/${safeCode}.jpg`
-        signatureImg.onerror = () => { signatureImg.src = '../../images/default-signature.png' }
+        signatureImg.onerror = () => { signatureImg.src = '../../images/default-avatar.png' } // если нет подписи, ставим аватар как заглушку
       } else {
         photoImg.src = '../../images/default-avatar.png'
-        signatureImg.src = '../../images/default-signature.png'
+        signatureImg.src = '../../images/default-avatar.png'
       }
 
       // QR-код личного кода на обороте
