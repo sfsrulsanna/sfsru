@@ -738,10 +738,7 @@
       document.getElementById('nss').textContent = data.nss_number || '—'
       document.getElementById('address').textContent = data.registration_address || '—'
 
-      // Отладка
-      console.log('surname from data:', data.surname);
-      console.log('name from data:', data.name);
-      console.log('gender from data:', data.gender);
+      console.log('Данные для отображения:', data);
 
       const statusBadge = document.getElementById('statusBadge')
       const status = data.status || 'oncheck'
@@ -829,7 +826,10 @@
 
     function openEditModal() {
       currentStep = 1
-      // Используем данные из документа, но если они отсутствуют, подставляем из профиля
+      console.log('Редактирование, данные документа:', documentData);
+      console.log('Профиль пользователя:', userProfile);
+
+      // Явно заполняем все поля, приоритет: данные документа, затем профиль, затем пустая строка
       formData = {
         surname: documentData.surname || userProfile?.surname || '',
         name: documentData.name || userProfile?.name || '',
@@ -851,6 +851,7 @@
         registration_address: documentData.registration_address || '',
         previous_id_cards: documentData.previous_id_cards || []
       }
+      console.log('formData после сборки:', formData);
       openModal('Редактирование ID-карты')
     }
 
@@ -1081,7 +1082,7 @@
       }
       const cleanData = { ...newData, personal_code: userPersonalCode, status: 'oncheck', updated_at: new Date().toISOString() }
 
-      console.log('Saving data:', newData) // отладка
+      console.log('Сохраняемые данные:', cleanData)
 
       let result
       if (currentDocId) {
@@ -1121,5 +1122,6 @@
     window.nextStep = nextStep
     window.prevStep = prevStep
   </script>
+
 </body>
 </html>
