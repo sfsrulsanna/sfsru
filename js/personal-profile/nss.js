@@ -1,4 +1,4 @@
-  import { supabase } from '../../js/supabase-config.js'
+  import { supabase } from '../supabase-config.js'
 
   // --- Глобальные переменные ---
   let currentDocId = null
@@ -68,7 +68,6 @@
       let documentResult = null
 
       if (idFromUrl) {
-        // Загружаем конкретный документ
         const { data, error } = await supabase
           .from('documents_nss')
           .select('*')
@@ -81,7 +80,6 @@
           documentResult = { data, error: null }
         }
       } else {
-        // Загружаем последний документ пользователя
         const { data, error } = await supabase
           .from('documents_nss')
           .select('*')
@@ -96,7 +94,6 @@
         }
       }
 
-      // 4. Обрабатываем результат загрузки документа
       const loadingEl = document.getElementById('loading')
       const contentEl = document.getElementById('content')
       const noDataEl = document.getElementById('noData')
@@ -111,7 +108,6 @@
         contentEl.style.display = 'block'
         noDataEl.style.display = 'none'
       } else {
-        // Нет документа
         loadingEl.style.display = 'none'
         contentEl.style.display = 'none'
         noDataEl.style.display = 'block'
@@ -155,15 +151,15 @@
     statusBadge.style.display = 'inline-block'
   }
 
-  // --- Модальное окно ---
+  // --- Функции для модального окна (должны быть глобальными) ---
+  window.closeModal = function() {
+    document.getElementById('modalOverlay').classList.remove('active')
+  }
+
   function openModal(title) {
     document.getElementById('modalTitle').textContent = title
     document.getElementById('modalOverlay').classList.add('active')
     renderModalForm()
-  }
-
-  window.closeModal = function() {
-    document.getElementById('modalOverlay').classList.remove('active')
   }
 
   function renderModalForm() {
@@ -213,7 +209,7 @@
   }
 
   // --- Открытие модалки для добавления ---
-  function openAddModal() {
+  window.openAddModal = function() {
     formData = {
       nss_number: '',
       surname: userProfile?.surname || '',
@@ -231,7 +227,7 @@
   }
 
   // --- Открытие модалки для редактирования ---
-  function openEditModal() {
+  window.openEditModal = function() {
     formData = {
       nss_number: documentData.nss_number || '',
       surname: documentData.surname || userProfile?.surname || '',
@@ -250,7 +246,6 @@
 
   // --- Сохранение ---
   async function saveDocument() {
-    // Собираем данные из формы
     const getVal = (id) => {
       const el = document.getElementById(id)
       return el ? (el.value?.trim() ?? '') : ''
@@ -262,7 +257,7 @@
       name: getVal('name'),
       patronymic: getVal('patronymic'),
       gender: getVal('gender'),
-      birth_date: getVal('birth_date') || null,  // если пусто, ставим null
+      birth_date: getVal('birth_date') || null,
       birth_place: getVal('birth_place'),
       issue_date: getVal('issue_date') || null,
       issued_by: getVal('issued_by'),
@@ -272,7 +267,6 @@
       updated_at: new Date().toISOString()
     }
 
-    // Проверка обязательного поля
     if (!formDataToSend.nss_number) {
       alert('Номер НСС обязателен для заполнения')
       return
@@ -282,19 +276,17 @@
 
     let result
     if (currentDocId) {
-      // Обновление существующего документа
       result = await supabase
         .from('documents_nss')
         .update(formDataToSend)
         .eq('id', currentDocId)
-        .select() // возвращаем обновлённую запись
+        .select()
     } else {
-      // Вставка нового документа
       formDataToSend.created_at = new Date().toISOString()
       result = await supabase
         .from('documents_nss')
         .insert([formDataToSend])
-        .select() // возвращаем вставленную запись
+        .select()
     }
 
     if (result.error) {
@@ -305,20 +297,21 @@
 
     console.log('Сохранение успешно, ответ:', result)
 
-    // Закрываем модалку
-    closeModal()
+    window.closeModal()
+
+    const savedId = currentDocId || (result.data && result.data[0]?.id)
+    if (savedId) {
+      window.location.href = `nss.html?id=${savedId}`
+    } else {
+      window.location.reload()
+    }
+  }
 
   // --- Инициализация ---
   document.addEventListener('DOMContentLoaded', async () => {
     await loadData()
 
-    // Назначаем обработчики
-    document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-    document.getElementById('editBtn')?.addEventListener('click', openEditModal)
+    document.getElementById('addBtn')?.addEventListener('click', window.openAddModal)
+    document.getElementById('editBtn')?.addEventListener('click', window.openEditModal)
     document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
   })
-
-  // Делаем функции доступными глобально (для onclick в HTML)
-  window.closeModal = closeModal
-  window.openAddModal = openAddModal
-  window.openEditModal = openEditModal
