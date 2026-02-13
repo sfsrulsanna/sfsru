@@ -535,7 +535,7 @@
                   <span class="back-value" id="oms">—</span>
                 </div>
                 <div class="back-block">
-                  <span class="back-label">ГРУППА КРОВИ/РЕЗУС</span>
+                  <span class="back-label">ГРУППА КРОВИ И РЕЗУС-ФАКТОР</span>
                   <span class="back-value" id="blood">—</span>
                 </div>
               </div>
@@ -740,22 +740,207 @@
       document.getElementById('card').classList.toggle('flipped')
     })
 
-    // --- Модальное окно (аналогично предыдущей версии, но для краткости опустим детали) ---
-    // (Здесь должен быть полный код модалки, как в предыдущих ответах. 
-    // Мы предполагаем, что он остаётся без изменений, поэтому не копируем его повторно,
-    // чтобы не раздувать ответ. Вы можете вставить его из предыдущей версии.)
-    // Для демонстрации я оставлю заглушки:
-
+    // --- Модальное окно добавления/редактирования ---
     let formData = {}
-    window.openAddModal = function() { alert('Добавление'); }
-    window.openEditModal = function() { alert('Редактирование'); }
-    window.openModal = function(title) { document.getElementById('modalTitle').textContent = title; document.getElementById('modalOverlay').classList.add('active'); }
-    window.closeModal = function() { document.getElementById('modalOverlay').classList.remove('active'); }
-    document.getElementById('addBtn')?.addEventListener('click', window.openAddModal)
-    document.getElementById('editBtn')?.addEventListener('click', window.openEditModal)
-    document.getElementById('saveBtn')?.addEventListener('click', function() { alert('Сохранено'); window.closeModal(); })
 
-    loadData()
+    async function openAddModal() {
+      if (!userProfile) {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) return
+        const { data, error } = await supabase.from('users').select('*').eq('id', session.user.id).single()
+        if (!error && data) {
+          userProfile = data
+          userPersonalCode = data.personal_code
+        }
+      }
+      formData = {
+        surname: userProfile?.surname || '',
+        name: userProfile?.name || '',
+        patronymic: userProfile?.patronymic || '',
+        birth_date: userProfile?.date_of_birth || '',
+        birth_place: userProfile?.place_of_birth || '',
+        gender: userProfile?.gender || 'Мужской',
+        issue_date: '',
+        expiry_date: '',
+        card_number: '',
+        issued_by: '',
+        department_code: '',
+        personal_code_ref: userPersonalCode || '',
+        oms_policy_number: '',
+        blood_group: '',
+        rh_factor: '',
+        inn_number: '',
+        nss_number: '',
+        registration_address: ''
+      }
+      window.openModal('Добавление ID-карты')
+    }
+
+    function openEditModal() {
+      formData = { ...documentData }
+      window.openModal('Редактирование ID-карты')
+    }
+
+    function openModal(title) {
+      document.getElementById('modalTitle').textContent = title
+      document.getElementById('modalOverlay').classList.add('active')
+      renderModalForm()
+    }
+
+    window.closeModal = function() {
+      document.getElementById('modalOverlay').classList.remove('active')
+    }
+
+    function renderModalForm() {
+      const modalBody = document.getElementById('modalBody')
+      modalBody.innerHTML = `
+        <div class="form-group">
+          <label>Фамилия</label>
+          <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
+        </div>
+        <div class="form-group">
+          <label>Имя</label>
+          <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name || '')}">
+        </div>
+        <div class="form-group">
+          <label>Отчество</label>
+          <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic || '')}">
+        </div>
+        <div class="form-group">
+          <label>Дата рождения</label>
+          <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Место рождения</label>
+          <input type="text" id="birth_place" class="form-input" value="${escapeHTML(formData.birth_place || '')}">
+        </div>
+        <div class="form-group">
+          <label>Пол</label>
+          <select id="gender" class="form-input">
+            <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+            <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Дата выдачи</label>
+          <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Срок действия</label>
+          <input type="date" id="expiry_date" class="form-input" value="${formData.expiry_date || ''}">
+        </div>
+        <div class="form-group">
+          <label>Номер карты</label>
+          <input type="text" id="card_number" class="form-input" value="${escapeHTML(formData.card_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Кем выдан</label>
+          <input type="text" id="issued_by" class="form-input" value="${escapeHTML(formData.issued_by || '')}">
+        </div>
+        <div class="form-group">
+          <label>Код подразделения</label>
+          <input type="text" id="department_code" class="form-input" value="${escapeHTML(formData.department_code || '')}">
+        </div>
+        <div class="form-group">
+          <label>Личный код</label>
+          <input type="text" id="personal_code_ref" class="form-input" value="${userPersonalCode || ''}" readonly>
+        </div>
+        <div class="form-group">
+          <label>Номер полиса ОМС</label>
+          <input type="text" id="oms_policy_number" class="form-input" value="${escapeHTML(formData.oms_policy_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Группа крови</label>
+          <input type="text" id="blood_group" class="form-input" value="${escapeHTML(formData.blood_group || '')}">
+        </div>
+        <div class="form-group">
+          <label>Резус-фактор</label>
+          <input type="text" id="rh_factor" class="form-input" value="${escapeHTML(formData.rh_factor || '')}">
+        </div>
+        <div class="form-group">
+          <label>ИНН</label>
+          <input type="text" id="inn_number" class="form-input" value="${escapeHTML(formData.inn_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Номер НСС</label>
+          <input type="text" id="nss_number" class="form-input" value="${escapeHTML(formData.nss_number || '')}">
+        </div>
+        <div class="form-group">
+          <label>Адрес регистрации</label>
+          <textarea id="registration_address" class="form-textarea" rows="2">${escapeHTML(formData.registration_address || '')}</textarea>
+        </div>
+      `
+    }
+
+    function collectFormData() {
+      return {
+        surname: document.getElementById('surname')?.value.trim() || '',
+        name: document.getElementById('name')?.value.trim() || '',
+        patronymic: document.getElementById('patronymic')?.value.trim() || '',
+        birth_date: document.getElementById('birth_date')?.value || '',
+        birth_place: document.getElementById('birth_place')?.value.trim() || '',
+        gender: document.getElementById('gender')?.value || '',
+        issue_date: document.getElementById('issue_date')?.value || '',
+        expiry_date: document.getElementById('expiry_date')?.value || '',
+        card_number: document.getElementById('card_number')?.value.trim() || '',
+        issued_by: document.getElementById('issued_by')?.value.trim() || '',
+        department_code: document.getElementById('department_code')?.value.trim() || '',
+        personal_code_ref: document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode,
+        oms_policy_number: document.getElementById('oms_policy_number')?.value.trim() || '',
+        blood_group: document.getElementById('blood_group')?.value.trim() || '',
+        rh_factor: document.getElementById('rh_factor')?.value.trim() || '',
+        inn_number: document.getElementById('inn_number')?.value.trim() || '',
+        nss_number: document.getElementById('nss_number')?.value.trim() || '',
+        registration_address: document.getElementById('registration_address')?.value.trim() || ''
+      }
+    }
+
+    async function saveDocument() {
+      const newData = collectFormData()
+      if (!newData.card_number) {
+        alert('Номер карты обязателен')
+        return
+      }
+      const cleanData = { ...newData, personal_code: userPersonalCode, status: 'oncheck', updated_at: new Date().toISOString() }
+
+      let result
+      if (currentDocId) {
+        result = await supabase
+          .from('documents_id_card')
+          .update(cleanData)
+          .eq('id', currentDocId)
+      } else {
+        cleanData.created_at = new Date().toISOString()
+        result = await supabase
+          .from('documents_id_card')
+          .insert([cleanData])
+          .select()
+      }
+
+      if (result.error) {
+        alert('Ошибка сохранения: ' + result.error.message)
+        return
+      }
+
+      window.closeModal()
+      const newId = currentDocId || result.data[0].id
+      window.location.href = `id-card.html?id=${newId}`
+    }
+
+    // --- Инициализация ---
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadData()
+      document.getElementById('addBtn')?.addEventListener('click', openAddModal)
+      document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
+      document.getElementById('editBtn')?.addEventListener('click', openEditModal)
+    })
+
+    // Экспорт в глобальную область
+    window.openAddModal = openAddModal
+    window.openEditModal = openEditModal
+    window.openModal = openModal
+    window.closeModal = closeModal
+    window.formData = formData
   </script>
 </body>
 </html>
