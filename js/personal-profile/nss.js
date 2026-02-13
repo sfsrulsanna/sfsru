@@ -162,51 +162,51 @@
     renderModalForm()
   }
 
-  function renderModalForm() {
-    const modalBody = document.getElementById('modalBody')
-    modalBody.innerHTML = `
-      <div class="form-group">
-        <label>Номер НСС</label>
-        <input type="text" id="nss_number" class="form-input" value="${escapeHTML(formData.nss_number || '')}">
-      </div>
-      <div class="form-group">
-        <label>Фамилия</label>
-        <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
-      </div>
-      <div class="form-group">
-        <label>Имя</label>
-        <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name || '')}">
-      </div>
-      <div class="form-group">
-        <label>Отчество</label>
-        <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic || '')}">
-      </div>
-      <div class="form-group">
-        <label>Пол</label>
-        <input type="text" id="gender" class="form-input" value="${escapeHTML(formData.gender || '')}" placeholder="Мужской / Женский">
-      </div>
-      <div class="form-group">
-        <label>Дата рождения</label>
-        <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
-      </div>
-      <div class="form-group">
-        <label>Место рождения</label>
-        <input type="text" id="birth_place" class="form-input" value="${escapeHTML(formData.birth_place || '')}">
-      </div>
-      <div class="form-group">
-        <label>Дата выдачи</label>
-        <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}">
-      </div>
-      <div class="form-group">
-        <label>Кем выдан</label>
-        <input type="text" id="issued_by" class="form-input" value="${escapeHTML(formData.issued_by || '')}">
-      </div>
-      <div class="form-group">
-        <label>Личный код</label>
-        <input type="text" id="personal_code_ref" class="form-input" value="${userPersonalCode || ''}" readonly>
-      </div>
-    `
+function renderModalForm() {
+  const modalBody = document.getElementById('modalBody');
+  if (!modalBody) {
+    console.error('modalBody not found');
+    return;
   }
+
+  // Очищаем содержимое
+  modalBody.innerHTML = '';
+
+  // Создаём поля формы программно
+  const fields = [
+    { id: 'nss_number', label: 'Номер НСС', type: 'text', value: formData.nss_number || '' },
+    { id: 'surname', label: 'Фамилия', type: 'text', value: formData.surname || '' },
+    { id: 'name', label: 'Имя', type: 'text', value: formData.name || '' },
+    { id: 'patronymic', label: 'Отчество', type: 'text', value: formData.patronymic || '' },
+    { id: 'gender', label: 'Пол', type: 'text', value: formData.gender || '', placeholder: 'Мужской / Женский' },
+    { id: 'birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date || '' },
+    { id: 'birth_place', label: 'Место рождения', type: 'text', value: formData.birth_place || '' },
+    { id: 'issue_date', label: 'Дата выдачи', type: 'date', value: formData.issue_date || '' },
+    { id: 'issued_by', label: 'Кем выдан', type: 'text', value: formData.issued_by || '' },
+    { id: 'personal_code_ref', label: 'Личный код', type: 'text', value: userPersonalCode || '', readonly: true }
+  ];
+
+  fields.forEach(field => {
+    const group = document.createElement('div');
+    group.className = 'form-group';
+
+    const label = document.createElement('label');
+    label.htmlFor = field.id;
+    label.textContent = field.label;
+    group.appendChild(label);
+
+    const input = document.createElement('input');
+    input.type = field.type;
+    input.id = field.id;
+    input.className = 'form-input';
+    input.value = field.value;
+    if (field.placeholder) input.placeholder = field.placeholder;
+    if (field.readonly) input.readOnly = true;
+
+    group.appendChild(input);
+    modalBody.appendChild(group);
+  });
+}
 
   // --- Открытие модалки для добавления ---
   window.openAddModal = function() {
