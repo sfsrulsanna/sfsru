@@ -137,6 +137,50 @@ function renderModalForm() {
     return;
   }
 
+  modalBody.innerHTML = '';
+
+  const fields = [
+    { id: 'edit_nss_number', label: 'Номер НСС', type: 'text', value: formData.nss_number || '' },
+    { id: 'edit_surname', label: 'Фамилия', type: 'text', value: formData.surname || '' },
+    { id: 'edit_name', label: 'Имя', type: 'text', value: formData.name || '' },
+    { id: 'edit_patronymic', label: 'Отчество', type: 'text', value: formData.patronymic || '' },
+    { id: 'edit_gender', label: 'Пол', type: 'text', value: formData.gender || '', placeholder: 'Мужской / Женский' },
+    { id: 'edit_birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date || '' },
+    { id: 'edit_birth_place', label: 'Место рождения', type: 'text', value: formData.birth_place || '' },
+    { id: 'edit_issue_date', label: 'Дата выдачи', type: 'date', value: formData.issue_date || '' },
+    { id: 'edit_issued_by', label: 'Кем выдан', type: 'text', value: formData.issued_by || '' },
+    { id: 'edit_personal_code_ref', label: 'Личный код', type: 'text', value: userPersonalCode || '', readonly: true }
+  ];
+
+  fields.forEach(field => {
+    const group = document.createElement('div');
+    group.className = 'form-group';
+
+    const label = document.createElement('label');
+    label.htmlFor = field.id;
+    label.textContent = field.label;
+    group.appendChild(label);
+
+    const input = document.createElement('input');
+    input.type = field.type;
+    input.id = field.id;
+    input.className = 'form-input';
+    input.value = field.value;
+    if (field.placeholder) input.placeholder = field.placeholder;
+    if (field.readonly) input.readOnly = true;
+
+    group.appendChild(input);
+    modalBody.appendChild(group);
+  });
+
+  // Проверка
+  console.log('Поля после рендера (edit_*):');
+  ['edit_surname', 'edit_name', 'edit_patronymic', 'edit_gender'].forEach(id => {
+    const el = document.getElementById(id);
+    console.log(`${id}:`, el, el ? el.value : 'NOT FOUND');
+  });
+}
+
   // Очищаем содержимое
   modalBody.innerHTML = '';
 
@@ -203,8 +247,8 @@ window.openEditModal = function() {
 
 // --- Сохранение ---
 async function saveDocument() {
-  // Проверим наличие всех полей перед сохранением
-  const requiredIds = ['nss_number', 'surname', 'name', 'patronymic', 'gender', 'birth_date', 'birth_place', 'issue_date', 'issued_by', 'personal_code_ref'];
+  // Проверка наличия полей (с новыми id)
+  const requiredIds = ['edit_nss_number', 'edit_surname', 'edit_name', 'edit_patronymic', 'edit_gender', 'edit_birth_date', 'edit_birth_place', 'edit_issue_date', 'edit_issued_by', 'edit_personal_code_ref'];
   const missing = [];
   requiredIds.forEach(id => {
     if (!document.getElementById(id)) missing.push(id);
@@ -221,16 +265,16 @@ async function saveDocument() {
   };
 
   const formDataToSend = {
-    nss_number: getVal('nss_number'),
-    surname: getVal('surname'),
-    name: getVal('name'),
-    patronymic: getVal('patronymic'),
-    gender: getVal('gender'),
-    birth_date: getVal('birth_date') || null,
-    birth_place: getVal('birth_place'),
-    issue_date: getVal('issue_date') || null,
-    issued_by: getVal('issued_by'),
-    personal_code_ref: getVal('personal_code_ref') || userPersonalCode,
+    nss_number: getVal('edit_nss_number'),
+    surname: getVal('edit_surname'),
+    name: getVal('edit_name'),
+    patronymic: getVal('edit_patronymic'),
+    gender: getVal('edit_gender'),
+    birth_date: getVal('edit_birth_date') || null,
+    birth_place: getVal('edit_birth_place'),
+    issue_date: getVal('edit_issue_date') || null,
+    issued_by: getVal('edit_issued_by'),
+    personal_code_ref: getVal('edit_personal_code_ref') || userPersonalCode,
     personal_code: userPersonalCode,
     status: 'oncheck',
     updated_at: new Date().toISOString()
@@ -242,6 +286,9 @@ async function saveDocument() {
   }
 
   console.log('Сохранение: отправляемые данные', formDataToSend);
+
+  // ... остальной код без изменений
+}
 
   let result;
   if (currentDocId) {
