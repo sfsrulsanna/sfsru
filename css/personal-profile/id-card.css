@@ -1,7 +1,7 @@
-/* ========== ОСНОВНЫЕ СТИЛИ ДЛЯ ID-КАРТЫ ========== */
+/* ========== id-card.css ========== */
 :root {
-  --card-pink: #fce4e4;
-  --card-pink-dark: #d4a5a5;
+  --card-pink: #fdf0f0;        /* более бледный розовый */
+  --card-pink-dark: #d9b3b3;
   --text-dark: #5c3b3b;
   --border-radius: 16px;
   --shadow: 0 10px 25px rgba(0,0,0,0.1);
@@ -10,14 +10,14 @@
 .card-container {
   perspective: 1500px;
   margin: 2rem auto;
-  max-width: 700px;
+  max-width: 750px;            /* чуть шире, чтобы вместить текст */
 }
 
 .card {
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: 60%; /* соотношение сторон ~ 5:3 */
+  padding-bottom: 60%;          /* соотношение сторон 5:3 */
   transform-style: preserve-3d;
   transition: transform 0.6s;
   cursor: pointer;
@@ -37,10 +37,11 @@
   border-radius: var(--border-radius);
   background: var(--card-pink);
   box-shadow: var(--shadow);
-  padding: 1.5rem;
+  padding: 1rem 1.2rem;         /* уменьшенные отступы */
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: hidden;             /* убираем прокрутку */
+  font-size: 0.85rem;           /* базовый шрифт меньше */
 }
 
 .card-back {
@@ -49,176 +50,213 @@
 
 /* Заголовки */
 .card-title {
-  font-size: 1.2rem;
+  font-size: 1rem;              /* уменьшен */
   font-weight: 700;
   color: var(--text-dark);
   text-align: center;
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.15rem;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
 }
 .card-subtitle {
-  font-size: 0.9rem;
+  font-size: 0.75rem;           /* уменьшен */
   text-align: center;
   color: var(--text-dark);
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   border-bottom: 1px solid var(--card-pink-dark);
-  padding-bottom: 0.5rem;
+  padding-bottom: 0.3rem;
 }
 
-/* Левая колонка (1/3) */
+/* Передняя сторона: две колонки 1:6 */
 .card-front {
   display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 1rem;
+  grid-template-columns: 1fr 6fr; /* левая колонка 1 часть, правая 6 */
+  gap: 0.8rem;
+  align-items: start;
 }
+
 .left-col {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
 }
+
 .photo {
   width: 100%;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow: hidden;
-  border: 2px solid var(--card-pink-dark);
+  border: 1px solid var(--card-pink-dark);
 }
 .photo img {
   width: 100%;
   height: auto;
   display: block;
 }
+
 .signature-label {
-  font-size: 0.7rem;
+  font-size: 0.5rem;            /* очень мелко */
   color: var(--text-dark);
   text-transform: uppercase;
-  margin-top: 0.25rem;
+  margin-top: 0.1rem;
 }
 .signature {
   max-width: 100%;
   height: auto;
   border: 1px solid var(--card-pink-dark);
-  border-radius: 4px;
+  border-radius: 3px;
   padding: 2px;
   background: white;
 }
+.signature img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
 
-/* Правая колонка */
 .right-col {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.3rem;
+  overflow: hidden;
 }
+
 .field-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
   border-bottom: 1px dashed var(--card-pink-dark);
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.2rem;
+  font-size: 0.75rem;           /* мелкий шрифт */
 }
 .field-label {
   font-weight: 600;
   color: var(--text-dark);
-  font-size: 0.8rem;
-  width: 40%;
+  width: 38%;                    /* чуть уже, чтобы вмещалось */
   text-transform: uppercase;
+  font-size: 0.7rem;
 }
 .field-value {
-  font-size: 0.9rem;
-  color: #000;
-  width: 60%;
+  width: 62%;
   word-break: break-word;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+.small-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem;
 }
 .small-row .field-label {
   width: auto;
-  margin-right: 0.5rem;
+  margin-right: 0.2rem;
 }
 .small-row .field-value {
   width: auto;
 }
 
-/* Оборотная сторона */
+/* Задняя сторона */
 .card-back {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: 0.5rem;
+  font-size: 0.75rem;
 }
 .back-row {
   display: flex;
-  flex-wrap: wrap;
   align-items: baseline;
   border-bottom: 1px dashed var(--card-pink-dark);
-  padding-bottom: 0.25rem;
+  padding-bottom: 0.2rem;
 }
 .back-label {
   font-weight: 600;
   color: var(--text-dark);
-  font-size: 0.8rem;
-  width: 40%;
+  width: 38%;
   text-transform: uppercase;
+  font-size: 0.7rem;
 }
 .back-value {
-  font-size: 0.9rem;
-  color: #000;
-  width: 60%;
+  width: 62%;
   word-break: break-word;
+  font-weight: 500;
+  font-size: 0.75rem;
 }
+.back-row.small-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+.back-row.small-row .back-label {
+  width: auto;
+}
+.back-row.small-row .back-value {
+  width: auto;
+}
+
 .qr-container {
   display: flex;
   justify-content: flex-end;
-  margin-top: 0.5rem;
+  margin-top: 0.2rem;
 }
 .qr-code {
-  width: 80px;
-  height: 80px;
+  width: 60px;                  /* уменьшен QR */
+  height: 60px;
   background: white;
   border: 1px solid var(--card-pink-dark);
-  border-radius: 8px;
-  padding: 4px;
+  border-radius: 6px;
+  padding: 3px;
+}
+.qr-code img, .qr-code canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
-/* Кнопка переворота */
-.flip-btn {
-  display: block;
-  margin: 1rem auto;
+/* Кнопки */
+.flip-btn, .edit-btn {
   background: linear-gradient(135deg, #7b091a, #a83232);
   color: white;
   border: none;
   border-radius: 30px;
-  padding: 0.6rem 2rem;
-  font-size: 1rem;
+  padding: 0.5rem 1.8rem;
+  font-size: 0.9rem;
   cursor: pointer;
   transition: opacity 0.2s;
+  margin: 0.5rem auto;
+  display: block;
 }
-.flip-btn:hover {
+.flip-btn:hover, .edit-btn:hover {
   opacity: 0.9;
+}
+.edit-btn {
+  background: #6c757d;           /* серый для изменения */
 }
 
 /* Адаптация для мобильных */
 @media (max-width: 600px) {
   .card {
-    padding-bottom: 100%; /* квадратная карточка на мобильных */
+    padding-bottom: 100%;        /* квадратная карточка */
   }
   .card-front {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr;   /* на мобильных одна колонка */
     grid-template-rows: auto auto;
+    gap: 0.5rem;
   }
   .left-col {
     flex-direction: row;
     justify-content: space-around;
+    align-items: center;
   }
   .photo {
     width: 40%;
   }
-  .signature-label {
-    text-align: center;
+  .signature {
+    width: 40%;
   }
-  .field-row {
-    flex-direction: column;
+  .field-row, .back-row {
+    flex-wrap: wrap;
   }
-  .field-label, .field-value {
+  .field-label, .field-value, .back-label, .back-value {
     width: 100%;
   }
 }
