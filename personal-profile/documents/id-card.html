@@ -25,7 +25,7 @@
   <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-  
+
   <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
   <!-- Иконки Font Awesome -->
@@ -487,15 +487,15 @@
                 <div class="right-col">
                   <div class="field-block">
                     <span class="field-label">ФАМИЛИЯ</span>
-                    <span class="field-value" id="surname">—</span>
+                    <span class="field-value" id="surname1">—</span>
                   </div>
                   <div class="field-block">
                     <span class="field-label">ИМЯ</span>
-                    <span class="field-value" id="name">—</span>
+                    <span class="field-value" id="name1">—</span>
                   </div>
                   <div class="field-block">
                     <span class="field-label">ОТЧЕСТВО</span>
-                    <span class="field-value" id="patronymic">—</span>
+                    <span class="field-value" id="patronymic1">—</span>
                   </div>
                   <div class="double-field">
                     <div class="field-block">
@@ -504,7 +504,7 @@
                     </div>
                     <div class="field-block">
                       <span class="field-label">ПОЛ</span>
-                      <span class="field-value" id="gender">—</span>
+                      <span class="field-value" id="gender1">—</span>
                     </div>
                   </div>
                   <div class="field-block">
@@ -714,11 +714,11 @@
 
     // --- Отрисовка карточки ---
     function renderCard(data) {
-      document.getElementById('surname').textContent = data.surname || '—'
-      document.getElementById('name').textContent = data.name || '—'
-      document.getElementById('patronymic').textContent = data.patronymic || '—'
+      document.getElementById('surname1').textContent = data.surname1 || '—'
+      document.getElementById('name1').textContent = data.name1 || '—'
+      document.getElementById('patronymic1').textContent = data.patronymic1 || '—'
       document.getElementById('birthDate').textContent = formatDate(data.birth_date)
-      document.getElementById('gender').textContent = data.gender || '—'
+      document.getElementById('gender1').textContent = data.gender1 || '—'
       document.getElementById('birthPlace').textContent = data.birth_place || '—'
       document.getElementById('issueDate').textContent = formatDate(data.issue_date)
       document.getElementById('expiryDate').textContent = formatDate(data.expiry_date)
@@ -810,15 +810,15 @@
       modalBody.innerHTML = `
         <div class="form-group">
           <label>Фамилия</label>
-          <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
+          <input type="text" id="surname1" class="form-input" value="${escapeHTML(formData.surname1 || '')}">
         </div>
         <div class="form-group">
           <label>Имя</label>
-          <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name || '')}">
+          <input type="text" id="name1" class="form-input" value="${escapeHTML(formData.name1 || '')}">
         </div>
         <div class="form-group">
           <label>Отчество</label>
-          <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic || '')}">
+          <input type="text" id="patronymic1" class="form-input" value="${escapeHTML(formData.patronymic1 || '')}">
         </div>
         <div class="form-group">
           <label>Дата рождения</label>
@@ -830,9 +830,9 @@
         </div>
         <div class="form-group">
           <label>Пол</label>
-          <select id="gender" class="form-input">
-            <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
-            <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+          <select id="gender1" class="form-input">
+            <option value="Мужской" ${formData.gender1 === 'Мужской' ? 'selected' : ''}>Мужской</option>
+            <option value="Женский" ${formData.gender1 === 'Женский' ? 'selected' : ''}>Женский</option>
           </select>
         </div>
         <div class="form-group">
@@ -889,12 +889,12 @@
     // --- Открытие модалки для добавления ---
     function openAddModal() {
       formData = {
-        surname: userProfile?.surname || '',
-        name: userProfile?.name || '',
-        patronymic: userProfile?.patronymic || '',
+        surname1: userProfile?.surname || '',
+        name1: userProfile?.name || '',
+        patronymic1: userProfile?.patronymic || '',
         birth_date: userProfile?.date_of_birth || '',
         birth_place: userProfile?.place_of_birth || '',
-        gender: userProfile?.gender || 'Мужской',
+        gender1: userProfile?.gender || 'Мужской',
         issue_date: '',
         expiry_date: '',
         card_number: '',
@@ -916,12 +916,12 @@
       console.log('openEditModal: documentData =', documentData)
       console.log('openEditModal: userProfile =', userProfile)
       formData = {
-        surname: documentData.surname || userProfile?.surname || '',
-        name: documentData.name || userProfile?.name || '',
-        patronymic: documentData.patronymic || userProfile?.patronymic || '',
+        surname1: documentData.surname1 || userProfile?.surname || '',
+        name1: documentData.name1 || userProfile?.name || '',
+        patronymic1: documentData.patronymic1 || userProfile?.patronymic || '',
         birth_date: documentData.birth_date || userProfile?.date_of_birth || '',
         birth_place: documentData.birth_place || userProfile?.place_of_birth || '',
-        gender: documentData.gender || userProfile?.gender || '',
+        gender1: documentData.gender1 || userProfile?.gender || '',
         issue_date: documentData.issue_date || '',
         expiry_date: documentData.expiry_date || '',
         card_number: documentData.card_number || '',
@@ -947,12 +947,12 @@
       }
 
       const formDataToSend = {
-        surname: getVal('surname'),
-        name: getVal('name'),
-        patronymic: getVal('patronymic'),
+        surname1: getVal('surname1'),
+        name1: getVal('name1'),
+        patronymic1: getVal('patronymic1'),
         birth_date: getVal('birth_date'),
         birth_place: getVal('birth_place'),
-        gender: getVal('gender'),
+        gender1: getVal('gender1'),
         issue_date: getVal('issue_date'),
         expiry_date: getVal('expiry_date'),
         card_number: getVal('card_number'),
