@@ -170,7 +170,7 @@
       background: #fafafa;
     }
 
-    /* ========== СТИЛИ ДЛЯ КАРТОЧКИ ========== */
+    /* ========== СТИЛИ ДЛЯ КАРТОЧКИ (ВОССТАНОВЛЕНЫ ИЗ РАБОЧЕЙ ВЕРСИИ) ========== */
     :root {
       --card-pink: #fff9f9;
       --card-pink-dark: #e0c0c0;
@@ -326,7 +326,7 @@
       border-bottom: 1px dashed var(--card-pink-dark);
     }
 
-    /* Задняя сторона — теперь аналогично лицевой */
+    /* Задняя сторона — также метка сверху, значение снизу */
     .card-back {
       display: flex;
       flex-direction: column;
@@ -363,7 +363,7 @@
     }
     .address-row .back-block {
       flex: 1;
-      border-bottom: none; /* убираем линию, так как она будет у каждого блока внутри */
+      border-bottom: 1px dashed var(--card-pink-dark);
     }
     .qr-code {
       width: 60px;
@@ -388,6 +388,9 @@
     /* ========== ТАБЛИЦА РАНЕЕ ВЫДАННЫХ КАРТ ========== */
     .previous-section {
       margin-top: 2rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
     }
     .previous-title {
       font-size: 1.2rem;
@@ -867,7 +870,28 @@
 
     function openEditModal() {
       currentStep = 1
-      formData = { ...documentData, previous_id_cards: documentData.previous_id_cards || [] }
+      // Копируем все поля из documentData в formData, включая предыдущие карты
+      formData = {
+        surname: documentData.surname || '',
+        name: documentData.name || '',
+        patronymic: documentData.patronymic || '',
+        birth_date: documentData.birth_date || '',
+        birth_place: documentData.birth_place || '',
+        gender: documentData.gender || '',
+        issue_date: documentData.issue_date || '',
+        expiry_date: documentData.expiry_date || '',
+        card_number: documentData.card_number || '',
+        issued_by: documentData.issued_by || '',
+        department_code: documentData.department_code || '',
+        personal_code_ref: documentData.personal_code_ref || userPersonalCode || '',
+        oms_policy_number: documentData.oms_policy_number || '',
+        blood_group: documentData.blood_group || '',
+        rh_factor: documentData.rh_factor || '',
+        inn_number: documentData.inn_number || '',
+        nss_number: documentData.nss_number || '',
+        registration_address: documentData.registration_address || '',
+        previous_id_cards: documentData.previous_id_cards || []
+      }
       window.openModal('Редактирование ID-карты')
     }
 
