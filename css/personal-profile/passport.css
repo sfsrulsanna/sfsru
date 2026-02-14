@@ -384,58 +384,64 @@
   display: block;
 }
 
-/* Телефоны (≤480px) */
-@media (max-width: 480px) {
-  .passport-template {
-    padding: 0.5rem;
-  }
-
-  .series-number {
-    font-size: 1rem;
-  }
-}
-
-/* Планшеты (≤768px) */
-@media (max-width: 768px) {
-  .passport-template {
-    font-size: 0.8rem;
-  }
-
-  .passport-template .data-field {
-    margin-bottom: 0.4rem;
-  }
-
+/* ===== ТЕЛЕФОНЫ И НЕБОЛЬШИЕ ПЛАНШЕТЫ (горизонтальное расположение) ===== */
+@media (max-width: 900px) {
   .passport-lower {
-    flex-direction: column;
-    align-items: center;
+    flex-direction: row !important;     /* фото и данные рядом */
+    align-items: flex-start;
+    gap: 1rem;
   }
 
   .photo-barcode-section {
+    flex: 0 0 35%;                      /* занимает ~35% ширины */
     display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 1rem;
-    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
   }
 
   .passport-photo-container {
-    width: 100px;
+    width: 100%;                         /* адаптивная ширина */
+    max-width: 130px;                     /* но не больше 130px */
+    aspect-ratio: 3 / 4;                  /* пропорция фото */
+    margin-bottom: 0;
   }
 
   .barcode-container {
-    width: 180px;
+    width: 100%;
+    max-width: 150px;
+  }
+
+  #passportBarcode {
+    max-width: 100%;
+    height: auto;
+  }
+
+  #passportQrCode {
+    width: 60px !important;
+    height: 60px !important;
   }
 
   .fio-section {
-    width: 100%;
+    flex: 1;                              /* занимает остаток */
+    min-width: 0;                         /* предотвращает выталкивание */
+  }
+
+  .data-field {
+    margin-bottom: 0.4rem;
+  }
+
+  .series-number {
+    font-size: 1.2rem;
+    word-break: break-word;
   }
 
   .info-table th,
   .info-table td,
   .previous-table th,
   .previous-table td {
-    font-size: 0.75rem;
-    padding: 0.5rem 0.25rem;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.3rem;
   }
 }
 
