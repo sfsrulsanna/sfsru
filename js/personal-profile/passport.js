@@ -425,24 +425,35 @@ function renderPassport(data) {
     }
   }
 
-  // --- Кнопка редактирования и статус ---
-  const statusAndEdit = document.createElement('div')
-  statusAndEdit.className = 'status-and-edit'
-  statusAndEdit.innerHTML = `
-    <span class="${statusClass}">${statusText}</span>
-    <button class="edit-btn" id="editPassportBtn">Изменить данные</button>
-  `
-  document.getElementById('passportContent').parentNode.insertBefore(statusAndEdit, document.getElementById('extraSections'))
+// --- Кнопка редактирования и статус ---
+const statusAndEdit = document.createElement('div')
+statusAndEdit.className = 'status-and-edit'
 
-  document.getElementById('editPassportBtn').addEventListener('click', () => {
-    formData = { ...data }  // загружаем существующие данные в форму
+// Кнопка замены паспорта (общая для всех статусов)
+const replaceBtn = document.createElement('a')
+replaceBtn.href = '../../services/documents/passport/'
+replaceBtn.className = 'edit-btn' // используем тот же стиль, что и у кнопок
+replaceBtn.textContent = 'Заменить паспорт'
+
+// Кнопка изменения данных (только если статус не verified)
+let editBtn = null
+if (data.status !== 'verified') {
+  editBtn = document.createElement('button')
+  editBtn.className = 'edit-btn'
+  editBtn.id = 'editPassportBtn'
+  editBtn.textContent = 'Изменить данные'
+  editBtn.addEventListener('click', () => {
+    formData = { ...data }
     openEditModal()
   })
-
-  // Скрываем индикатор загрузки
-  const loadingEl = document.getElementById('loading')
-  if (loadingEl) loadingEl.style.display = 'none'
 }
+
+// Собираем блок
+statusAndEdit.innerHTML = `<span class="${statusClass}">${statusText}</span>`
+if (editBtn) statusAndEdit.appendChild(editBtn)
+statusAndEdit.appendChild(replaceBtn)
+
+document.getElementById('passportContent').parentNode.insertBefore(statusAndEdit, document.getElementById('extraSections'))
 
 // -------------------- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЭСКЕЙПИНГА HTML --------------------
 function escapeHTML(str) {
