@@ -77,7 +77,7 @@ async function loadForeignPassport() {
         .from('document_foreign_passport')
         .select('*')
         .eq('id', currentDocId)
-        .maybeSingle()  // ← вместо .single()
+        .maybeSingle()
       if (error) throw error
       data = doc
     } else {
@@ -107,17 +107,24 @@ async function loadForeignPassport() {
 
 // -------------------- ОТРИСОВКА ЗАГРАНПАСПОРТА --------------------
 function renderPassport(data) {
-  // ... начало функции без изменений ...
+  const statusText = getStatusLabel(data.status)
+  const statusClass = getStatusClass(data.status)
+
+  // Устанавливаем цветовую переменную в зависимости от типа паспорта
+  let borderColor = '#7b091a'
+  if (data.passport_type === 'дипломатический') borderColor = '#0d4d26'
+  else if (data.passport_type === 'служебный') borderColor = '#0d2a4d'
+  document.documentElement.style.setProperty('--primary-red', borderColor)
 
   // Определяем заголовки в зависимости от типа паспорта
-  let docTypeCyr = 'ЗАГРАНИЧНЫЙ ПАСПОРТ';
-  let docTypeEng = 'FOREIGN PASSPORT';
+  let docTypeCyr = 'ЗАГРАНИЧНЫЙ ПАСПОРТ'
+  let docTypeEng = 'FOREIGN PASSPORT'
   if (data.passport_type === 'дипломатический') {
-    docTypeCyr = 'ДИПЛОМАТИЧЕСКИЙ ЗАГРАНИЧНЫЙ ПАСПОРТ';
-    docTypeEng = 'DIPLOMATIC FOREIGN PASSPORT';
+    docTypeCyr = 'ДИПЛОМАТИЧЕСКИЙ ЗАГРАНИЧНЫЙ ПАСПОРТ'
+    docTypeEng = 'DIPLOMATIC FOREIGN PASSPORT'
   } else if (data.passport_type === 'служебный') {
-    docTypeCyr = 'СЛУЖЕБНЫЙ ЗАГРАНИЧНЫЙ ПАСПОРТ';
-    docTypeEng = 'SERVICE FOREIGN PASSPORT';
+    docTypeCyr = 'СЛУЖЕБНЫЙ ЗАГРАНИЧНЫЙ ПАСПОРТ'
+    docTypeEng = 'SERVICE FOREIGN PASSPORT'
   }
 
   const html = `
@@ -127,22 +134,6 @@ function renderPassport(data) {
         <div class="country-name-english">SFSR ULSANNA</div>
         <div class="document-type">${docTypeCyr}</div>
         <div class="document-type-english">${docTypeEng}</div>
-      </div>
-
-  // Устанавливаем цветовую переменную в зависимости от типа паспорта
-  let borderColor = '#7b091a'
-  if (data.passport_type === 'дипломатический') borderColor = '#0d4d26'
-  else if (data.passport_type === 'служебный') borderColor = '#0d2a4d'
-  document.documentElement.style.setProperty('--primary-red', borderColor)
-
-  // Основной HTML-шаблон паспорта
-  const html = `
-    <div class="passport-template">
-      <div class="passport-header">
-        <div class="country-name">СФСР ЮЛЬСАННА</div>
-        <div class="country-name-english">SFSR ULSANNA</div>
-        <div class="document-type">ЗАГРАНИЧНЫЙ ПАСПОРТ</div>
-        <div class="document-type-english">FOREIGN PASSPORT</div>
       </div>
       <div class="passport-content">
         <div class="data-field">
@@ -338,7 +329,7 @@ function renderPassport(data) {
     } catch (e) { console.warn('Barcode error', e) }
   }
 
-  // --- Кнопка редактирования и статус (НОВАЯ ЛОГИКА) ---
+  // --- Кнопка редактирования и статус ---
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
 
