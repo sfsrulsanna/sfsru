@@ -1,12 +1,4 @@
-	{
-      "imports": {
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-      }
-    }
-  </script>
-  <!-- ========== ПОЛНЫЙ JS КОД ========== -->
-  <script type="module">
-    import { supabase } from '../../js/supabase-config.js'
+	import { supabase } from '../../js/supabase-config.js'
 
     // -------------------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --------------------
     let currentStep = 1
