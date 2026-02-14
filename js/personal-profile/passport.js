@@ -72,25 +72,25 @@ async function loadPassport() {
     currentDocId = urlParams.get('id')
 
     let data = null
-    if (currentDocId) {
-      const { data: doc, error } = await supabase
-        .from('document_passport')
-        .select('*')
-        .eq('id', currentDocId)
-        .single()
-      if (error) throw error
-      data = doc
-    } else {
-      const { data: docs, error } = await supabase
-        .from('document_passport')
-        .select('*')
-        .eq('personal_code', userPersonalCode)
-        .order('created_at', { ascending: false })
-        .limit(1)
-      if (error) throw error
-      data = docs?.[0]
-      if (data) currentDocId = data.id
-    }
+if (currentDocId) {
+  const { data: doc, error } = await supabase
+    .from('document_passport')
+    .select('*')
+    .eq('id', currentDocId)
+    .maybeSingle()  // изменено с .single()
+  if (error) throw error
+  data = doc
+} else {
+  const { data: docs, error } = await supabase
+    .from('document_passport')
+    .select('*')
+    .eq('personal_code', userPersonalCode)
+    .order('created_at', { ascending: false })
+    .limit(1)
+  if (error) throw error
+  data = docs?.[0]
+  if (data) currentDocId = data.id
+}
 
     if (data) {
       renderPassport(data)
