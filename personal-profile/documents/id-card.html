@@ -456,6 +456,65 @@
   margin-bottom: 0.5rem;
   color: #7b091a;
 }
+.too-small-message {
+  display: none;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+
+@media (max-width: 400px) {
+  .too-small-message {
+    display: block;
+  }
+  /* Скрываем карту и связанные элементы */
+  .card-container,
+  #passportContent,
+  .extra-sections,
+  .status-and-edit,
+  .passport-template,
+  .previous-section {
+    display: none !important;
+  }
+}
+.info-table,
+.previous-table {
+  overflow-x: auto;
+}
+.flip-btn,
+.edit-btn,
+.add-btn {
+  background: linear-gradient(135deg, #7b091a, #a83232);
+  color: white;
+  border: none;
+  border-radius: 8px;         /* было 30px */
+  padding: 0.6rem 1.5rem;     /* было 0.5rem 1.8rem */
+  font-size: 1rem;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  margin: 0.5rem auto;
+  display: inline-block;       /* для кнопок в блоке статуса */
+}
+.flip-btn {
+  background: #6c757d;         /* серая кнопка переворота */
+}
+.edit-btn:hover,
+.flip-btn:hover {
+  opacity: 0.9;
+}
+@media (max-width: 600px) {
+  /* существующие стили ... */
+  .previous-table th,
+  .previous-table td {
+    font-size: 0.7rem;
+    padding: 0.5rem 0.25rem;
+  }
+}
   </style>
 </head>
 <body>
@@ -484,6 +543,9 @@
   </header>
 
   <main class="main-content">
+  <div class="too-small-message" style="display: none;">
+  ⚠️ Ваше устройство слишком маленькое для отображения документа.
+</div>
     <div class="container">
       <div id="loading" class="loading" style="text-align: center; padding: 3rem;">Загрузка данных...</div>
       <div id="noData" style="display: none; text-align: center; padding: 3rem;">
