@@ -107,8 +107,27 @@ async function loadForeignPassport() {
 
 // -------------------- ОТРИСОВКА ЗАГРАНПАСПОРТА --------------------
 function renderPassport(data) {
-  const statusText = getStatusLabel(data.status)
-  const statusClass = getStatusClass(data.status)
+  // ... начало функции без изменений ...
+
+  // Определяем заголовки в зависимости от типа паспорта
+  let docTypeCyr = 'ЗАГРАНИЧНЫЙ ПАСПОРТ';
+  let docTypeEng = 'FOREIGN PASSPORT';
+  if (data.passport_type === 'дипломатический') {
+    docTypeCyr = 'ДИПЛОМАТИЧЕСКИЙ ЗАГРАНИЧНЫЙ ПАСПОРТ';
+    docTypeEng = 'DIPLOMATIC FOREIGN PASSPORT';
+  } else if (data.passport_type === 'служебный') {
+    docTypeCyr = 'СЛУЖЕБНЫЙ ЗАГРАНИЧНЫЙ ПАСПОРТ';
+    docTypeEng = 'SERVICE FOREIGN PASSPORT';
+  }
+
+  const html = `
+    <div class="passport-template">
+      <div class="passport-header">
+        <div class="country-name">СФСР ЮЛЬСАННА</div>
+        <div class="country-name-english">SFSR ULSANNA</div>
+        <div class="document-type">${docTypeCyr}</div>
+        <div class="document-type-english">${docTypeEng}</div>
+      </div>
 
   // Устанавливаем цветовую переменную в зависимости от типа паспорта
   let borderColor = '#7b091a'
