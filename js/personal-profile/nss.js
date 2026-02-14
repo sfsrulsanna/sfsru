@@ -1,15 +1,21 @@
 import { supabase } from '../../js/supabase-config.js'
 
+// -------------------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --------------------
 let currentDocId = null
 let documentData = {}
 let userPersonalCode = null
 let userProfile = null
-let formData = {}
+let formData = {} // данные для модальной формы
 
+// -------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --------------------
 function formatDate(dateString) {
   if (!dateString) return '—'
   try {
-    return new Date(dateString).toLocaleDateString('ru-RU')
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}.${month}.${year}`
   } catch {
     return dateString
   }
@@ -22,116 +28,220 @@ function getStatusLabel(status) {
   return '—'
 }
 
-async function loadData() {
+function getStatusClass(status) {
+  if (status === 'verified') return 'document-status status-verified'
+  if (status === 'oncheck') return 'document-status status-pending'
+  if (status === 'rejected') return 'document-status status-rejected'
+  return 'document-status'
+}
+
+// -------------------- ЗАГРУЗКА ПРОФИЛЯ --------------------
+async function loadUserProfile() {
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+  if (sessionError || !session) {
+    window.location.href = '../../login.html'
+    return null
+  }
+
+  const { data, error } = await supabase
+    .from('users')
+    .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+    .eq('id', session.user.id)
+    .single()
+
+  if (error) {
+    console.error('Ошибка загрузки профиля:', error)
+    document.getElementById('loading').textContent = 'Ошибка загрузки профиля. Перезагрузите страницу.'
+    return null
+  }
+
+  userPersonalCode = data.personal_code
+  userProfile = data
+  return data
+}
+
+// -------------------- ЗАГРУЗКА ДОКУМЕНТА НСС --------------------
+async function loadNssDocument() {
   try {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-    if (sessionError || !session) {
-      window.location.href = '../../login.html'
-      return
-    }
-
-    const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
-      .eq('id', session.user.id)
-      .single()
-
-    if (profileError || !profile) {
-      console.error('Ошибка загрузки профиля:', profileError)
-      document.getElementById('loading').textContent = 'Ошибка загрузки профиля'
-      return
-    }
-
-    userProfile = profile
-    userPersonalCode = profile.personal_code
-    console.log('Профиль пользователя:', userProfile)
+    const profile = await loadUserProfile()
+    if (!profile) return
 
     const urlParams = new URLSearchParams(window.location.search)
-    const idFromUrl = urlParams.get('id')
+    currentDocId = urlParams.get('id')
 
-    let documentResult = null
-
-    if (idFromUrl) {
-      const { data, error } = await supabase
+    let data = null
+    if (currentDocId) {
+      const { data: doc, error } = await supabase
         .from('documents_nss')
         .select('*')
-        .eq('id', idFromUrl)
-        .single()
-      if (!error) documentResult = { data }
+        .eq('id', currentDocId)
+        .maybeSingle() // используем maybeSingle
+      if (error) throw error
+      data = doc
     } else {
-      const { data, error } = await supabase
+      const { data: docs, error } = await supabase
         .from('documents_nss')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
         .limit(1)
-      if (!error && data && data.length > 0) documentResult = { data: data[0] }
+      if (error) throw error
+      data = docs?.[0]
+      if (data) currentDocId = data.id
     }
 
-    const loadingEl = document.getElementById('loading')
-    const contentEl = document.getElementById('content')
-    const noDataEl = document.getElementById('noData')
-
-    if (documentResult && documentResult.data) {
-      documentData = documentResult.data
-      currentDocId = documentData.id
-      console.log('Загружен документ:', documentData)
-
-      renderDocument(documentData)
-      loadingEl.style.display = 'none'
-      contentEl.style.display = 'block'
-      noDataEl.style.display = 'none'
+    if (data) {
+      documentData = data
+      renderNss(data)
+      document.getElementById('loading').style.display = 'none'
+      document.getElementById('content').style.display = 'block'
+      document.getElementById('noData').style.display = 'none'
     } else {
-      loadingEl.style.display = 'none'
-      contentEl.style.display = 'none'
-      noDataEl.style.display = 'block'
+      document.getElementById('loading').style.display = 'none'
+      document.getElementById('noData').style.display = 'block'
     }
   } catch (err) {
-    console.error('Необработанная ошибка в loadData:', err)
-    document.getElementById('loading').textContent = 'Произошла критическая ошибка'
+    console.error('Ошибка загрузки НСС:', err)
+    document.getElementById('loading').textContent = 'Ошибка загрузки данных'
   }
 }
 
-function renderDocument(data) {
-  document.getElementById('nssNumber').textContent = data.nss_number || '—'
-  document.getElementById('surname').textContent = data.surname || '—'
-  document.getElementById('name').textContent = data.name || '—'
-  document.getElementById('patronymic').textContent = data.patronymic || '—'
-  document.getElementById('gender').textContent = data.gender || '—'
-  document.getElementById('birthDate').textContent = formatDate(data.birth_date)
-  document.getElementById('birthPlace').textContent = data.birth_place || '—'
-  document.getElementById('issueDate').textContent = formatDate(data.issue_date)
-  document.getElementById('issuedBy').textContent = data.issued_by || '—'
+// -------------------- ОТРИСОВКА ДОКУМЕНТА --------------------
+function renderNss(data) {
+  const html = `
+    <div class="document-container">
+      <div class="document-header">
+        <div class="document-title">НОМЕР СОЦИАЛЬНОГО СЧЁТА</div>
+        <div class="document-subtitle">(НСС)</div>
+      </div>
+      <div class="document-content">
+        <div class="qr-section">
+          <div id="qrCode" class="qr-code"></div>
+          <div class="qr-label">Отсканируйте QR-код для проверки подлинности</div>
+        </div>
+        <div class="data-section">
+          <div class="inn-number" id="nssNumber">${escapeHTML(data.nss_number || '—')}</div>
+          <div class="info-line">
+            <span class="info-label">Фамилия</span>
+            <span class="info-value" id="surname">${escapeHTML(data.surname || '—')}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Имя</span>
+            <span class="info-value" id="name">${escapeHTML(data.name || '—')}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Отчество</span>
+            <span class="info-value" id="patronymic">${escapeHTML(data.patronymic || '—')}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Пол</span>
+            <span class="info-value" id="gender">${escapeHTML(data.gender || '—')}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Дата рождения</span>
+            <span class="info-value" id="birthDate">${formatDate(data.birth_date)}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Место рождения</span>
+            <span class="info-value" id="birthPlace">${escapeHTML(data.birth_place || '—')}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Дата выдачи</span>
+            <span class="info-value" id="issueDate">${formatDate(data.issue_date)}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Кем выдан</span>
+            <span class="info-value" id="issuedBy">${escapeHTML(data.issued_by || '—')}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `
+
+  document.getElementById('content').innerHTML = html + '<div id="statusAndEditContainer"></div>'
 
   const qrContainer = document.getElementById('qrCode')
-  qrContainer.innerHTML = ''
-  if (data.nss_number) {
-    new QRCode(qrContainer, {
-      text: data.nss_number,
-      width: 180,
-      height: 180,
-      colorDark: '#000',
-      colorLight: '#fff',
-      correctLevel: QRCode.CorrectLevel.L
-    })
+  if (qrContainer && data.nss_number) {
+    qrContainer.innerHTML = ''
+    try {
+      new QRCode(qrContainer, {
+        text: data.nss_number,
+        width: 180,
+        height: 180,
+        colorDark: '#000',
+        colorLight: '#fff',
+        correctLevel: QRCode.CorrectLevel.L
+      })
+    } catch (e) { console.warn('QR error', e) }
   }
 
-  const statusBadge = document.getElementById('statusBadge')
-  const status = data.status || 'oncheck'
-  statusBadge.className = `document-status status-${status}`
-  statusBadge.textContent = getStatusLabel(status)
-  statusBadge.style.display = 'inline-block'
+  const statusText = getStatusLabel(data.status)
+  const statusClass = getStatusClass(data.status)
+
+  const statusAndEdit = document.createElement('div')
+  statusAndEdit.className = 'status-and-edit'
+
+  const statusSpan = document.createElement('span')
+  statusSpan.className = statusClass
+  statusSpan.textContent = statusText
+  statusAndEdit.appendChild(statusSpan)
+
+  // Кнопка замены (ссылка на получение нового НСС) — всегда видна
+  const replaceLink = document.createElement('a')
+  replaceLink.href = '../../services/documents/nss/'
+  replaceLink.className = 'edit-btn'
+  replaceLink.textContent = 'Заменить НСС'
+  statusAndEdit.appendChild(replaceLink)
+
+  // Кнопка изменения данных (только если статус не verified)
+  if (data.status !== 'verified') {
+    const editBtn = document.createElement('button')
+    editBtn.className = 'edit-btn'
+    editBtn.id = 'editNssBtn'
+    editBtn.textContent = 'Изменить данные'
+    editBtn.addEventListener('click', () => {
+      formData = { ...data }
+      openEditModal()
+    })
+    statusAndEdit.appendChild(editBtn)
+  }
+
+  document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
 }
 
-// --- Модальное окно ---
-window.closeModal = function() {
-  document.getElementById('modalOverlay').classList.remove('active')
+// -------------------- МОДАЛЬНОЕ ОКНО --------------------
+async function openAddModal() {
+  if (!userProfile) await loadUserProfile()
+  formData = {
+    nss_number: '',
+    surname: userProfile?.surname || '',
+    name: userProfile?.name || '',
+    patronymic: userProfile?.patronymic || '',
+    gender: userProfile?.gender || 'Мужской',
+    birth_date: userProfile?.date_of_birth || '',
+    birth_place: userProfile?.place_of_birth || '',
+    issue_date: '',
+    issued_by: '',
+    personal_code: userPersonalCode || ''
+  }
+  openModal('Добавление НСС')
+}
+
+function openEditModal() {
+  openModal('Редактирование НСС')
 }
 
 function openModal(title) {
-  document.getElementById('modalTitle').textContent = title
-  document.getElementById('modalOverlay').classList.add('active')
+  const titleEl = document.getElementById('modalTitle')
+  if (titleEl) titleEl.textContent = title
+  const overlay = document.getElementById('modalOverlay')
+  if (overlay) overlay.classList.add('active')
   renderModalForm()
+}
+
+window.closeModal = function() {
+  const overlay = document.getElementById('modalOverlay')
+  if (overlay) overlay.classList.remove('active')
 }
 
 function renderModalForm() {
@@ -184,126 +294,86 @@ function renderModalForm() {
   })
 }
 
-// --- Открытие модалки для добавления ---
-window.openAddModal = function() {
-  formData = {
-    nss_number: '',
-    surname: userProfile?.surname || '',
-    name: userProfile?.name || '',
-    patronymic: userProfile?.patronymic || '',
-    gender: userProfile?.gender || '',
-    birth_date: userProfile?.date_of_birth || '',
-    birth_place: userProfile?.place_of_birth || '',
-    issue_date: '',
-    issued_by: '',
-    personal_code_ref: userPersonalCode || ''
+function collectFormData() {
+  return {
+    nss_number: document.getElementById('edit_nss_number')?.value.trim() || '',
+    surname: document.getElementById('edit_surname')?.value.trim() || '',
+    name: document.getElementById('edit_name')?.value.trim() || '',
+    patronymic: document.getElementById('edit_patronymic')?.value.trim() || '',
+    gender: document.getElementById('edit_gender')?.value || '',
+    birth_date: document.getElementById('edit_birth_date')?.value || '',
+    birth_place: document.getElementById('edit_birth_place')?.value.trim() || '',
+    issue_date: document.getElementById('edit_issue_date')?.value || '',
+    issued_by: document.getElementById('edit_issued_by')?.value.trim() || '',
+    personal_code: document.getElementById('edit_personal_code_ref')?.value.trim() || userPersonalCode
   }
-  console.log('Добавление: начальные данные формы', formData)
-  openModal('Добавление НСС')
 }
 
-// --- Открытие модалки для редактирования ---
-window.openEditModal = function() {
-  formData = {
-    nss_number: documentData.nss_number || '',
-    surname: documentData.surname || userProfile?.surname || '',
-    name: documentData.name || userProfile?.name || '',
-    patronymic: documentData.patronymic || userProfile?.patronymic || '',
-    gender: documentData.gender || userProfile?.gender || '',
-    birth_date: documentData.birth_date || userProfile?.date_of_birth || '',
-    birth_place: documentData.birth_place || userProfile?.place_of_birth || '',
-    issue_date: documentData.issue_date || '',
-    issued_by: documentData.issued_by || '',
-    personal_code_ref: documentData.personal_code_ref || userPersonalCode || ''
-  }
-  console.log('Редактирование: начальные данные формы', formData)
-  openModal('Редактирование НСС')
-}
-
-// --- Сохранение ---
 async function saveDocument() {
-  // Проверка наличия полей (с новыми id)
-  const requiredIds = [
-    'edit_nss_number', 'edit_surname', 'edit_name', 'edit_patronymic',
-    'edit_gender', 'edit_birth_date', 'edit_birth_place',
-    'edit_issue_date', 'edit_issued_by', 'edit_personal_code_ref'
-  ]
-  const missing = []
-  requiredIds.forEach(id => {
-    if (!document.getElementById(id)) missing.push(id)
-  })
-  if (missing.length > 0) {
-    console.error('Отсутствуют элементы формы:', missing)
-    alert('Ошибка: не удалось найти поля формы. Попробуйте открыть модальное окно заново.')
-    return
-  }
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { alert('Ошибка авторизации'); return }
+    if (!userPersonalCode) { alert('Личный код не загружен'); return }
 
-  const getVal = (id) => {
-    const el = document.getElementById(id)
-    return el ? (el.value?.trim() ?? '') : ''
-  }
+    const newData = collectFormData()
+    if (!newData.nss_number) { alert('Номер НСС обязателен'); return }
 
-  const formDataToSend = {
-    nss_number: getVal('edit_nss_number'),
-    surname: getVal('edit_surname'),
-    name: getVal('edit_name'),
-    patronymic: getVal('edit_patronymic'),
-    gender: getVal('edit_gender'),
-    birth_date: getVal('edit_birth_date') || null,
-    birth_place: getVal('edit_birth_place'),
-    issue_date: getVal('edit_issue_date') || null,
-    issued_by: getVal('edit_issued_by'),
-    personal_code_ref: getVal('edit_personal_code_ref') || userPersonalCode,
-    personal_code: userPersonalCode,
-    status: 'oncheck',
-    updated_at: new Date().toISOString()
-  }
+    const cleanData = { ...newData }
+    Object.keys(cleanData).forEach(key => {
+      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
+    })
 
-  if (!formDataToSend.nss_number) {
-    alert('Номер НСС обязателен для заполнения')
-    return
-  }
+    cleanData.personal_code = userPersonalCode
+    cleanData.status = 'oncheck'
+    cleanData.updated_at = new Date().toISOString()
 
-  console.log('Сохранение: отправляемые данные', formDataToSend)
+    let result
+    if (currentDocId) {
+      result = await supabase
+        .from('documents_nss')
+        .update(cleanData)
+        .eq('id', currentDocId)
+        .select()
+    } else {
+      cleanData.created_at = new Date().toISOString()
+      result = await supabase
+        .from('documents_nss')
+        .insert([cleanData])
+        .select()
+    }
 
-  let result
-  if (currentDocId) {
-    result = await supabase
-      .from('documents_nss')
-      .update(formDataToSend)
-      .eq('id', currentDocId)
-      .select()
-  } else {
-    formDataToSend.created_at = new Date().toISOString()
-    result = await supabase
-      .from('documents_nss')
-      .insert([formDataToSend])
-      .select()
-  }
+    if (result.error) throw result.error
 
-  if (result.error) {
-    console.error('Ошибка сохранения:', result.error)
-    alert('Ошибка сохранения: ' + result.error.message)
-    return
-  }
-
-  console.log('Сохранение успешно, ответ:', result)
-
-  window.closeModal()
-
-  const savedId = currentDocId || (result.data && result.data[0]?.id)
-  if (savedId) {
-    window.location.href = `nss.html?id=${savedId}`
-  } else {
-    window.location.reload()
+    window.closeModal()
+    const newId = currentDocId || result.data[0].id
+    window.location.href = `nss.html?id=${newId}`
+  } catch (err) {
+    console.error('Ошибка сохранения:', err)
+    alert('Ошибка сохранения: ' + err.message)
   }
 }
 
-// --- Инициализация ---
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadData()
+// -------------------- ЭСКЕЙПИНГ HTML --------------------
+function escapeHTML(str) {
+  if (!str) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
 
-  document.getElementById('addBtn')?.addEventListener('click', window.openAddModal)
-  document.getElementById('editBtn')?.addEventListener('click', window.openEditModal)
+// -------------------- ИНИЦИАЛИЗАЦИЯ --------------------
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadNssDocument()
+
+  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
   document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
 })
+
+// Экспорт в глобальную область для inline-обработчиков
+window.openAddModal = openAddModal
+window.openEditModal = openEditModal
+window.openModal = openModal
+window.closeModal = closeModal
