@@ -32,129 +32,6 @@
   <link rel="stylesheet" href="../../css/personal-profile/nss.css" />
   <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-
-  <style>
-    /* ========== СТАТУС И КНОПКИ ========== */
-    .status-and-edit {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 1.5rem;
-      margin: 2rem 0;
-    }
-    .document-status {
-      padding: 0.25rem 0.6rem;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      font-weight: 500;
-    }
-    .status-verified { background: rgba(40,167,69,0.15); color: #28a745; }
-    .status-pending { background: rgba(255,193,7,0.15); color: #856404; }
-    .status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
-    .edit-btn {
-      background: linear-gradient(135deg, #2e7d32, #1b5e20);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      padding: 0.6rem 1.5rem;
-      font-size: 1rem;
-      cursor: pointer;
-      transition: opacity 0.2s;
-    }
-    .edit-btn:hover { opacity: 0.9; }
-
-    /* ========== МОДАЛЬНОЕ ОКНО ========== */
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.6);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.3s;
-    }
-    .modal-overlay.active {
-      opacity: 1;
-      visibility: visible;
-    }
-    .modal {
-      background: white;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 600px;
-      max-height: 90vh;
-      display: flex;
-      flex-direction: column;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 1.5rem 1.5rem 0.5rem 1.5rem;
-      border-bottom: 1px solid #eee;
-    }
-    .modal-header h4 {
-      margin: 0;
-      color: #2e7d32;
-    }
-    .close-modal {
-      background: none;
-      border: none;
-      font-size: 1.8rem;
-      cursor: pointer;
-      color: #666;
-    }
-    .modal-body {
-      padding: 1.5rem;
-      overflow-y: auto;
-      flex: 1;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 1rem;
-      padding: 1rem 1.5rem 1.5rem 1.5rem;
-      border-top: 1px solid #eee;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, #2e7d32, #1b5e20);
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1.5rem;
-      cursor: pointer;
-    }
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      padding: 0.6rem 1.5rem;
-      cursor: pointer;
-    }
-    .form-group {
-      margin-bottom: 1.2rem;
-    }
-    .form-group label {
-      display: block;
-      margin-bottom: 0.4rem;
-      font-weight: 500;
-    }
-    .form-input, .form-textarea {
-      width: 100%;
-      padding: 0.6rem 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-  </style>
 </head>
 <body>
   <header class="header">
@@ -183,66 +60,22 @@
 
   <main class="main-content">
     <div class="container">
+      <!-- Сообщение для очень маленьких экранов -->
+      <div class="too-small-message" style="display: none;">
+        ⚠️ Ваше устройство слишком маленькое для отображения документа.
+      </div>
+
       <div id="loading" class="loading" style="text-align: center; padding: 3rem;">Загрузка данных...</div>
       <div id="noData" style="display: none; text-align: center; padding: 3rem;">
         <p>У вас пока нет НСС.</p>
-        <button class="edit-btn" id="addBtn">Добавить НСС</button>
+        <div class="no-data-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+          <button class="edit-btn" id="addBtn">Добавить НСС</button>
+          <a href="../../services/documents/nss/" class="edit-btn">Получить НСС</a>
+        </div>
       </div>
       <div id="content" style="display: none;">
-        <!-- СТАТУС И КНОПКА РЕДАКТИРОВАНИЯ -->
-        <div class="status-and-edit">
-          <span id="statusBadge" class="document-status" style="display: none;"></span>
-          <button class="edit-btn" id="editBtn">Изменить данные</button>
-        </div>
-
-        <!-- ДОКУМЕНТ -->
-        <div class="document-container">
-          <div class="document-header">
-            <div class="document-title">НОМЕР СОЦИАЛЬНОГО СЧЁТА</div>
-            <div class="document-subtitle">(НСС)</div>
-          </div>
-          <div class="document-content">
-            <div class="qr-section">
-              <div id="qrCode" class="qr-code"></div>
-              <div class="qr-label">Отсканируйте QR-код для проверки подлинности</div>
-            </div>
-            <div class="data-section">
-              <div class="inn-number" id="nssNumber">—</div>
-              <div class="info-line">
-                <span class="info-label">Фамилия</span>
-                <span class="info-value" id="surname">—</span>
-              </div>
-              <div class="info-line">
-                <span class="info-label">Имя</span>
-                <span class="info-value" id="name">—</span>
-              </div>
-              <div class="info-line">
-                <span class="info-label">Отчество</span>
-                <span class="info-value" id="patronymic">—</span>
-              </div>
-              <div class="info-line">
-                <span class="info-label">Пол</span>
-                <span class="info-value" id="gender">—</span>
-              </div>
-              <div class="info-line">
-                <span class="info-label">Дата рождения</span>
-                <span class="info-value" id="birthDate">—</span>
-              </div>
-              <div class="info-line">
-                <span class="info-label">Место рождения</span>
-                <span class="info-value" id="birthPlace">—</span>
-              </div>
-              <div class="info-line">
-                <span class="info-label">Дата выдачи</span>
-                <span class="info-value" id="issueDate">—</span>
-              </div>
-              <div class="info-line">
-                <span class="info-label">Кем выдан</span>
-                <span class="info-value" id="issuedBy">—</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        <!-- Документ будет вставлен сюда через JS -->
+        <div id="statusAndEditContainer"></div>
       </div>
     </div>
   </main>

@@ -1,9 +1,33 @@
-/* /css/inn.css */
+/* ===== nss.css ===== */
+:root {
+  --primary-green: #2e7d32;
+  --dark-green: #1b5e20;
+  --secondary-gray: #6c757d;
+  --cream-bg: #e8f5e9;
+  --beige-border: #c8e6c9;
+  --text-green: #2e7d32;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* ===== БАЗОВЫЙ РАЗМЕР ШРИФТА (адаптивный) ===== */
+html {
+  font-size: 16px;
+}
+@media (max-width: 700px) {
+  html {
+    font-size: clamp(12px, 3vw, 16px);
+  }
+}
+
+/* ===== КОНТЕЙНЕР ДОКУМЕНТА ===== */
 .document-container {
   max-width: 900px;
   margin: 0 auto 30px;
-  background: #e8f5e9;
-  border: 15px solid #c8e6c9;
+  background: var(--cream-bg);
+  border: 15px solid var(--beige-border);
   border-radius: 15px;
   padding: 0;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
@@ -12,8 +36,8 @@
 }
 
 .document-header {
-  background: #c8e6c9;
-  color: #2e7d32;
+  background: var(--beige-border);
+  color: var(--text-green);
   padding: 25px;
   text-align: center;
   margin-bottom: 20px;
@@ -21,16 +45,9 @@
   position: relative;
 }
 
+/* Убраны декоративные псевдоэлементы */
 .document-header::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 95%;
-  height: 15px;
-  background: #c8e6c9;
-  border-radius: 0 0 15px 15px;
+  display: none;
 }
 
 .document-title {
@@ -39,29 +56,21 @@
   margin-bottom: 5px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #2e7d32;
+  color: var(--text-green);
 }
 
 .document-subtitle {
   font-size: 1.3rem;
   font-weight: 700;
   margin-top: 10px;
-  color: #2e7d32;
+  color: var(--text-green);
   position: relative;
   display: inline-block;
   padding: 0 20px;
 }
 
 .document-subtitle::after {
-  content: "";
-  position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 100%;
-  height: 15px;
-  background: #c8e6c9;
-  border-radius: 0 0 15px 15px;
-  z-index: 1;
+  display: none;
 }
 
 .document-content {
@@ -109,7 +118,7 @@
   font-weight: 700;
   text-align: center;
   margin: 0 0 30px 0;
-  color: #2e7d32;
+  color: var(--text-green);
   letter-spacing: 2px;
   font-family: 'Courier New', monospace;
   padding: 15px;
@@ -137,7 +146,7 @@
   color: #000;
 }
 
-/* Информационный блок */
+/* Информационный блок (скрыт, если не используется) */
 .inn-info-container {
   max-width: 900px;
   margin: 0 auto 40px;
@@ -153,27 +162,12 @@
 }
 
 .inn-info::before {
-  content: "\f05a";
-  font-family: "Font Awesome 6 Free";
-  font-weight: 900;
-  position: absolute;
-  left: -10px;
-  top: -10px;
-  background: #2e7d32;
-  color: white;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  display: none; /* убран декоративный элемент */
 }
 
 .inn-info-title {
   font-weight: 700;
-  color: #2e7d32;
+  color: var(--text-green);
   margin-bottom: 10px;
   display: flex;
   align-items: center;
@@ -185,52 +179,220 @@
   line-height: 1.6;
 }
 
-/* === Мобильная адаптация === */
+/* ===== КНОПКИ (унифицированы как в passport) ===== */
+.add-btn,
+.edit-btn,
+.btn,
+.btn-primary,
+.btn-secondary,
+a.add-btn,
+a.edit-btn,
+.document-status {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.add-btn,
+.edit-btn,
+.btn-primary,
+a.add-btn,
+a.edit-btn {
+  background: var(--primary-green);
+  color: white;
+}
+
+.add-btn:hover,
+.edit-btn:hover,
+.btn-primary:hover,
+a.add-btn:hover,
+a.edit-btn:hover {
+  background: var(--dark-green);
+}
+
+.btn-secondary {
+  background: var(--secondary-gray) !important;
+  color: white;
+}
+.btn-secondary:hover {
+  background: #5a6268 !important;
+}
+
+/* ===== СТАТУС ДОКУМЕНТА ===== */
+.status-and-edit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2rem 0 1rem;
+}
+
+.document-status {
+  background: transparent;
+}
+.status-verified {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+.status-pending {
+  background: rgba(255, 193, 7, 0.15);
+  color: #856404;
+}
+.status-rejected {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+.modal-header h4 {
+  margin: 0;
+  color: var(--primary-green);
+  font-size: 1.25rem;
+}
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}
+.close-modal:hover { color: var(--primary-green); }
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid #eee;
+}
+.form-group {
+  margin-bottom: 1.2rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+.form-input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
+.too-small-message {
+  display: none;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+@media (max-width: 320px) {
+  .too-small-message {
+    display: block;
+  }
+  .document-container,
+  .status-and-edit,
+  .modal-overlay {
+    display: none !important;
+  }
+}
+
+/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
 @media (max-width: 768px) {
   .document-container {
     border-width: 10px;
   }
-
   .document-header {
     padding: 15px;
   }
-
   .document-title {
     font-size: 1.5rem;
   }
-
   .document-subtitle {
     font-size: 1.1rem;
   }
-
   .document-content {
     flex-direction: column;
     padding: 0 20px 20px;
     gap: 20px;
   }
-
+  /* QR-код перемещаем вниз */
   .qr-section {
+    order: 2;
     width: 100%;
     margin-top: 20px;
     padding: 20px;
   }
-
+  .data-section {
+    order: 1;
+  }
   .inn-number {
     font-size: 20px;
     padding: 10px;
   }
-
   .info-line {
     flex-direction: column;
     font-size: 16px;
   }
-
   .info-label {
     width: 100%;
     margin-bottom: 5px;
-  }
-
-  .inn-info {
-    padding: 20px;
   }
 }
