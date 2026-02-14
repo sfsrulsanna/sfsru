@@ -1,4 +1,6 @@
-/* ===== passport.css (единое масштабирование через rem) ===== */
+/* ===== passport.css ===== */
+/* Полный код для паспорта гражданина и заграничного паспорта */
+
 :root {
   --primary-red: #7b091a;
   --dark-red: #650E15;
@@ -23,23 +25,6 @@ html {
 @media (max-width: 700px) {
   html {
     font-size: clamp(12px, 3vw, 16px);
-  }
-}
-
-/* На очень маленьких экранах (≤400px) базовый шрифт не меньше 12px,
-   но паспорт всё ещё виден, просто становится очень компактным.
-   Если хотите скрыть при ≤320px — оставим тот же механизм.
-*/
-@media (max-width: 320px) {
-  .too-small-message {
-    display: block;
-  }
-  #passportContent,
-  .extra-sections,
-  .status-and-edit,
-  .passport-template,
-  .previous-section {
-    display: none !important;
   }
 }
 
@@ -79,6 +64,12 @@ html {
   transition: opacity 0.2s ease;
 }
 
+.add-btn:hover,
+.edit-btn:hover,
+.btn:hover {
+  opacity: 0.9;
+}
+
 .btn-secondary {
   background: var(--secondary-gray) !important;
 }
@@ -99,9 +90,20 @@ html {
   font-weight: 500;
 }
 
-.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
-.status-pending { background: rgba(255, 193, 7, 0.15); color: #856404; }
-.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.status-verified {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+
+.status-pending {
+  background: rgba(255, 193, 7, 0.15);
+  color: #856404;
+}
+
+.status-rejected {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
 
 /* ===== МОДАЛЬНОЕ ОКНО ===== */
 .modal-overlay {
@@ -269,7 +271,7 @@ html {
   color: var(--primary-red);
 }
 
-/* ===== ТАБЛИЦЫ (теперь в rem) ===== */
+/* ===== ТАБЛИЦЫ ===== */
 .info-table,
 .previous-table {
   overflow-x: auto;
@@ -298,8 +300,8 @@ html {
 .previous-table th,
 .info-table td,
 .previous-table td {
-  padding: 0.8rem 1rem;          /* теперь в rem, будет масштабироваться */
-  font-size: 1rem;                /* 1rem = текущий базовый шрифт html */
+  padding: 0.8rem 1rem;          /* масштабируется через rem */
+  font-size: 1rem;
 }
 
 .info-table th,
@@ -308,10 +310,25 @@ html {
   border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
+.info-table th:last-child,
+.previous-table th:last-child {
+  border-right: none;
+}
+
 .info-table td,
 .previous-table td {
   background-color: #ffffff;
   border-bottom: 1px solid #eee;
+}
+
+.info-table tbody tr:last-child td,
+.previous-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.info-table tbody tr:nth-child(even) td,
+.previous-table tbody tr:nth-child(even) td {
+  background-color: #f9f9f9;
 }
 
 .info-table tbody tr:hover td,
@@ -319,16 +336,40 @@ html {
   background-color: rgba(123, 9, 26, 0.05);
 }
 
-/* ===== QR-код (фиксированный размер, не масштабируется) ===== */
+/* Закругление углов таблицы */
+.info-table thead tr th:first-child,
+.previous-table thead tr th:first-child {
+  border-top-left-radius: 12px;
+}
+
+.info-table thead tr th:last-child,
+.previous-table thead tr th:last-child {
+  border-top-right-radius: 12px;
+}
+
+.info-table tbody tr:last-child td:first-child,
+.previous-table tbody tr:last-child td:first-child {
+  border-bottom-left-radius: 12px;
+}
+
+.info-table tbody tr:last-child td:last-child,
+.previous-table tbody tr:last-child td:last-child {
+  border-bottom-right-radius: 12px;
+}
+
+/* ===== QR-код (фиксированный размер) ===== */
 #passportQrCode {
   width: 80px;
   height: 80px;
+  max-width: 80px;
   display: inline-block;
 }
 
 .qr-code-container {
-  text-align: center;
+  width: 100%;
   margin-top: 1rem;
+  display: flex;
+  justify-content: center;
 }
 
 /* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
@@ -419,8 +460,7 @@ html {
 
 /* Левая колонка (фото, штрих-код) */
 .photo-barcode-section {
-  flex: 0 0 200px;                /* фиксированная ширина в пикселях? Нет, лучше в rem */
-  width: 12rem;                    /* 192px при базовом 16px, будет масштабироваться */
+  flex: 0 0 12rem;                /* ширина в rem, масштабируется */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -476,8 +516,23 @@ html {
   margin: 1.5rem 0;
 }
 
-/* ===== ЯВНОЕ ОТОБРАЖЕНИЕ ПАСПОРТА ===== */
+/* ===== ЯВНОЕ ОТОБРАЖЕНИЕ ПАСПОРТА НА ВСЕХ ЭКРАНАХ ===== */
 #passportContent,
 .passport-template {
   display: block;
+}
+
+/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (скрываем паспорт) ===== */
+@media (max-width: 320px) {
+  .too-small-message {
+    display: block;
+  }
+  .card-container,
+  #passportContent,
+  .extra-sections,
+  .status-and-edit,
+  .passport-template,
+  .previous-section {
+    display: none !important;
+  }
 }
