@@ -1,6 +1,4 @@
-/* ===== passport.css (адаптивная версия) ===== */
-/* Общие стили для паспорта гражданина и заграничного паспорта */
-
+/* ===== passport.css (финальная адаптивная версия) ===== */
 :root {
   --primary-red: #7b091a;
   --dark-red: #650E15;
@@ -373,8 +371,8 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
   position: relative;
   overflow: hidden;
-  /* Базовый размер шрифта: масштабируется пропорционально ширине контейнера */
-  font-size: clamp(0.7rem, 2vw, 1rem);
+  /* Базовый размер шрифта: плавно масштабируется */
+  font-size: clamp(0.75rem, 2.2vw, 1rem);
 }
 
 .passport-header {
@@ -387,7 +385,7 @@
 }
 
 .country-name {
-  font-size: 2.2em;  /* относительно базового шрифта .passport-template */
+  font-size: 2.2em;
   font-weight: 700;
   margin-bottom: 0.2em;
   text-transform: uppercase;
@@ -430,7 +428,7 @@
   color: var(--primary-red);
 }
 
-/* Компоновка нижней части паспорта (всегда горизонтальная) */
+/* Нижняя часть паспорта: всегда горизонтальная */
 .passport-lower,
 .personal-info-section {
   display: flex;
@@ -439,13 +437,13 @@
 }
 
 .photo-barcode-section {
-  width: 25%;  /* занимает 25% ширины родителя */
+  width: 25%; /* занимает 25% ширины */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-/* Фото с фиксированной пропорцией 3:4 */
+/* Фото с пропорцией 3:4 */
 .passport-photo-container {
   width: 100%;
   aspect-ratio: 3 / 4;
@@ -488,7 +486,7 @@
 
 .fio-section {
   flex: 1;
-  min-width: 0; /* предотвращает выталкивание */
+  min-width: 0;
 }
 
 /* Разделитель */
@@ -512,20 +510,11 @@
   max-width: 100%;
   height: auto;
 }
-/* ===== ДОПОЛНИТЕЛЬНОЕ УМЕНЬШЕНИЕ ДЛЯ ОЧЕНЬ УЗКИХ ЭКРАНОВ (НО НЕ СКРЫВАЕМ) ===== */
-@media (max-width: 500px) {
-  .passport-template {
-    font-size: 0.6rem; /* принудительно уменьшаем, если vw даёт слишком большой */
-  }
-  .series-number {
-    font-size: 1.2em;
-  }
-  .photo-barcode-section {
-    width: 30%; /* чуть шире для читаемости */
-  }
-  .barcode-number {
-    font-size: 0.6em;
-  }
+
+/* ===== ЯВНОЕ ОТОБРАЖЕНИЕ ПАСПОРТА НА ВСЕХ ЭКРАНАХ ===== */
+#passportContent,
+.passport-template {
+  display: block;
 }
 
 /* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (только для совсем узких устройств) ===== */
@@ -541,10 +530,4 @@
   .previous-section {
     display: none !important;
   }
-}
-
-/* ===== ЯВНОЕ ОТОБРАЖЕНИЕ ПАСПОРТА НА ВСЕХ ОСТАЛЬНЫХ ЭКРАНАХ ===== */
-#passportContent,
-.passport-template {
-  display: block;
 }
