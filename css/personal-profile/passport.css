@@ -1,4 +1,4 @@
-/* ===== passport.css (финальная версия) ===== */
+/* ===== passport.css (единое масштабирование через rem) ===== */
 :root {
   --primary-red: #7b091a;
   --dark-red: #650E15;
@@ -12,6 +12,35 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
+}
+
+/* ===== БАЗОВЫЙ РАЗМЕР ШРИФТА (адаптивный) ===== */
+html {
+  font-size: 16px; /* базовый для десктопа */
+}
+
+/* На экранах уже 700px начинаем плавно уменьшать базовый шрифт */
+@media (max-width: 700px) {
+  html {
+    font-size: clamp(12px, 3vw, 16px);
+  }
+}
+
+/* На очень маленьких экранах (≤400px) базовый шрифт не меньше 12px,
+   но паспорт всё ещё виден, просто становится очень компактным.
+   Если хотите скрыть при ≤320px — оставим тот же механизм.
+*/
+@media (max-width: 320px) {
+  .too-small-message {
+    display: block;
+  }
+  #passportContent,
+  .extra-sections,
+  .status-and-edit,
+  .passport-template,
+  .previous-section {
+    display: none !important;
+  }
 }
 
 /* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
@@ -50,12 +79,6 @@
   transition: opacity 0.2s ease;
 }
 
-.add-btn:hover,
-.edit-btn:hover,
-.btn:hover {
-  opacity: 0.9;
-}
-
 .btn-secondary {
   background: var(--secondary-gray) !important;
 }
@@ -76,20 +99,9 @@
   font-weight: 500;
 }
 
-.status-verified {
-  background: rgba(40, 167, 69, 0.15);
-  color: #28a745;
-}
-
-.status-pending {
-  background: rgba(255, 193, 7, 0.15);
-  color: #856404;
-}
-
-.status-rejected {
-  background: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
-}
+.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-pending { background: rgba(255, 193, 7, 0.15); color: #856404; }
+.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
 
 /* ===== МОДАЛЬНОЕ ОКНО ===== */
 .modal-overlay {
@@ -257,10 +269,11 @@
   color: var(--primary-red);
 }
 
-/* ===== ТАБЛИЦЫ (теперь масштабируются) ===== */
+/* ===== ТАБЛИЦЫ (теперь в rem) ===== */
 .info-table,
 .previous-table {
   overflow-x: auto;
+  margin-bottom: 2rem;
 }
 
 .info-table table,
@@ -285,8 +298,8 @@
 .previous-table th,
 .info-table td,
 .previous-table td {
-  padding: 0.8em 1em;              /* относительные отступы */
-  font-size: 1em;                   /* размер шрифта наследуется от паспорта */
+  padding: 0.8rem 1rem;          /* теперь в rem, будет масштабироваться */
+  font-size: 1rem;                /* 1rem = текущий базовый шрифт html */
 }
 
 .info-table th,
@@ -295,25 +308,10 @@
   border-right: 1px solid rgba(255, 255, 255, 0.15);
 }
 
-.info-table th:last-child,
-.previous-table th:last-child {
-  border-right: none;
-}
-
 .info-table td,
 .previous-table td {
   background-color: #ffffff;
   border-bottom: 1px solid #eee;
-}
-
-.info-table tbody tr:last-child td,
-.previous-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.info-table tbody tr:nth-child(even) td,
-.previous-table tbody tr:nth-child(even) td {
-  background-color: #f9f9f9;
 }
 
 .info-table tbody tr:hover td,
@@ -321,33 +319,16 @@
   background-color: rgba(123, 9, 26, 0.05);
 }
 
-/* Закругление углов таблицы */
-.info-table thead tr th:first-child,
-.previous-table thead tr th:first-child {
-  border-top-left-radius: 12px;
-}
-
-.info-table thead tr th:last-child,
-.previous-table thead tr th:last-child {
-  border-top-right-radius: 12px;
-}
-
-.info-table tbody tr:last-child td:first-child,
-.previous-table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 12px;
-}
-
-.info-table tbody tr:last-child td:last-child,
-.previous-table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 12px;
-}
-
-/* ===== QR-код (фиксированный размер) ===== */
+/* ===== QR-код (фиксированный размер, не масштабируется) ===== */
 #passportQrCode {
   width: 80px;
   height: 80px;
-  max-width: 80px;   /* не растягивается */
   display: inline-block;
+}
+
+.qr-code-container {
+  text-align: center;
+  margin-top: 1rem;
 }
 
 /* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
@@ -363,101 +344,95 @@
   max-width: 400px;
 }
 
-/* ===== СТИЛИ ПАСПОРТА (полностью адаптивные) ===== */
+/* ===== СТИЛИ ПАСПОРТА (все размеры в rem) ===== */
 .passport-template {
   background: #ffffff;
-  border: 12px solid var(--primary-red);
+  border: 0.75rem solid var(--primary-red); /* 12px при базовом 16px */
   border-radius: 12px;
   padding: 0;
   width: 100%;
   max-width: 900px;
-  margin: 0 auto 35px;
+  margin: 0 auto 2rem;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-  position: relative;
   overflow: hidden;
-  /* Базовый шрифт масштабируется */
-  font-size: clamp(0.75rem, 2.2vw, 1rem);
 }
 
 .passport-header {
   background: var(--primary-red);
   color: var(--white);
-  padding: 2.5% 2%;
+  padding: 1.5rem 1rem;
   text-align: center;
   border-bottom: 2px solid var(--dark-red);
   font-family: 'PT Serif', serif;
 }
 
 .country-name {
-  font-size: 2.2em;
+  font-size: 2.2rem;
   font-weight: 700;
-  margin-bottom: 0.2em;
+  margin-bottom: 0.2rem;
   text-transform: uppercase;
   letter-spacing: 1px;
 }
 
 .document-type {
-  font-size: 1.8em;
+  font-size: 1.8rem;
   font-weight: 700;
-  margin-top: 0.2em;
+  margin-top: 0.2rem;
 }
 
 .passport-content {
-  padding: 3%;
+  padding: 1.5rem;
   font-family: 'PT Serif', serif;
 }
 
 .data-field {
-  margin-bottom: 1.2em;
+  margin-bottom: 1rem;
 }
 
 .field-label {
   color: var(--primary-red);
-  font-size: 0.9em;
+  font-size: 0.9rem;
   font-weight: 700;
-  margin-bottom: 0.3em;
+  margin-bottom: 0.2rem;
 }
 
 .field-value {
-  font-size: 1em;
+  font-size: 1rem;
   border-bottom: 1px dashed #999;
-  padding-bottom: 0.3em;
-  min-height: 1.3em;
+  padding-bottom: 0.3rem;
 }
 
 .series-number {
   font-weight: bold;
-  font-size: 1.4em;
+  font-size: 1.5rem;
   letter-spacing: 2px;
   color: var(--primary-red);
 }
 
-/* Нижняя часть: всегда flex (горизонтально) */
+/* Нижняя часть: всегда горизонтальная */
 .passport-lower,
 .personal-info-section {
   display: flex;
-  gap: 3%;
-  margin-top: 1.5em;
+  gap: 1.5rem;
+  margin-top: 1.5rem;
 }
 
-/* Левая колонка с фото и кодом */
+/* Левая колонка (фото, штрих-код) */
 .photo-barcode-section {
-  flex: 0 0 25%;                  /* занимает 25% ширины */
+  flex: 0 0 200px;                /* фиксированная ширина в пикселях? Нет, лучше в rem */
+  width: 12rem;                    /* 192px при базовом 16px, будет масштабироваться */
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
 
-/* Фото сохраняет пропорции */
+/* Фото с пропорциями 3:4 */
 .passport-photo-container {
   width: 100%;
   aspect-ratio: 3 / 4;
   border: 2px solid var(--primary-red);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--white);
-  margin-bottom: 0.8em;
+  margin-bottom: 0.8rem;
   overflow: hidden;
   border-radius: 12px;
 }
@@ -469,80 +444,40 @@
 }
 
 .barcode-container {
-  text-align: left;
   width: 100%;
 }
 
 .barcode {
   width: 100%;
   height: auto;
-  max-height: 50px;
+  max-height: 3rem;               /* 48px при базовом 16px */
   border-radius: 8px;
 }
 
 .barcode-number {
   font-family: 'OCR A', monospace;
-  font-size: 0.8em;
+  font-size: 0.8rem;
   letter-spacing: 1px;
-  margin-top: 0.3em;
+  margin-top: 0.3rem;
   color: var(--primary-red);
   font-weight: bold;
 }
 
 /* Правая колонка */
 .fio-section {
-  flex: 1;                        /* занимает остаток */
-  min-width: 0;                    /* предотвращает переполнение */
+  flex: 1;
+  min-width: 0;
 }
 
 /* Разделитель */
 .passport-divider {
   height: 2px;
   background: var(--primary-red);
-  margin: 1.5em 3%;
+  margin: 1.5rem 0;
 }
 
-/* Контейнер для QR (центрирование) */
-.qr-code-container {
-  width: 100%;
-  margin-top: 1em;
-  display: flex;
-  justify-content: center;
-}
-
-/* ===== АДАПТАЦИЯ ДЛЯ УЗКИХ ЭКРАНОВ (НО СТРУКТУРУ НЕ ЛОМАЕМ) ===== */
-@media (max-width: 500px) {
-  /* На узких экранах фиксируем минимальную ширину фото, чтобы оно не исчезало */
-  .photo-barcode-section {
-    flex: 0 0 130px;               /* фиксированная ширина, не меньше 130px */
-  }
-  /* Можно чуть уменьшить шрифт */
-  .passport-template {
-    font-size: 0.7rem;
-  }
-  /* Убираем лишние отступы */
-  .passport-lower {
-    gap: 1%;
-  }
-}
-
-/* ===== ЯВНОЕ ОТОБРАЖЕНИЕ ПАСПОРТА НА ВСЕХ ЭКРАНАХ ===== */
+/* ===== ЯВНОЕ ОТОБРАЖЕНИЕ ПАСПОРТА ===== */
 #passportContent,
 .passport-template {
   display: block;
-}
-
-/* ===== ОЧЕНЬ МАЛЕНЬКИЕ ЭКРАНЫ (скрываем паспорт) ===== */
-@media (max-width: 320px) {
-  .too-small-message {
-    display: block;
-  }
-  .card-container,
-  #passportContent,
-  .extra-sections,
-  .status-and-edit,
-  .passport-template,
-  .previous-section {
-    display: none !important;
-  }
 }
