@@ -199,6 +199,20 @@ function renderCard(data) {
   const container = document.querySelector('.card-container')
   container.parentNode.insertBefore(statusAndEdit, container)
 }
+  // ... после создания statusAndEdit ...
+
+  // Переворот карты по клику (без кнопки)
+  const cardEl = document.getElementById('card')
+  if (cardEl) {
+    // Убираем старые обработчики, если были
+    cardEl.removeEventListener('click', window.toggleFlip)
+    window.toggleFlip = function(e) {
+      if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && e.target.tagName !== 'IMG') {
+        e.currentTarget.classList.toggle('flipped')
+      }
+    }
+    cardEl.addEventListener('click', window.toggleFlip)
+  }
 
 // --- Отрисовка таблицы ранее выданных карт на основной странице ---
 function renderPreviousCardsTable(cards) {
