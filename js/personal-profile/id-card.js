@@ -24,7 +24,7 @@ let formData = {
   inn_number: '',
   nss_number: '',
   registration_address: '',
-  previous_id_cards: [] // массив предыдущих карт
+  previous_id_cards: []
 }
 let currentStep = 1 // 1 - основные данные, 2 - предыдущие карты
 
@@ -40,6 +40,13 @@ function getStatusLabel(status) {
   if (status === 'oncheck') return '⏳ На проверке'
   if (status === 'rejected') return '❌ Отклонено'
   return '—'
+}
+
+function getStatusClass(status) {
+  if (status === 'verified') return 'document-status status-verified'
+  if (status === 'oncheck') return 'document-status status-pending'
+  if (status === 'rejected') return 'document-status status-rejected'
+  return 'document-status'
 }
 
 function escapeHTML(str) {
@@ -61,7 +68,7 @@ async function loadData() {
       const urlParams = new URLSearchParams(window.location.search)
       const id = urlParams.get('id')
       if (id) {
-        return supabase.from('documents_idcard').select('*').eq('id', id).single()
+        return supabase.from('documents_idcard').select('*').eq('id', id).maybeSingle()
       } else {
         const { data: user } = await supabase.from('users').select('personal_code').eq('id', session.user.id).single()
         if (!user) return { data: null, error: 'No user' }
@@ -88,7 +95,6 @@ async function loadData() {
   if (docResult.status === 'fulfilled' && !docResult.value.error && docResult.value.data) {
     documentData = docResult.value.data
     currentDocId = documentData.id
-    // Если previous_id_cards пришло строкой (например, если в БД тип text), преобразуем в массив
     if (typeof documentData.previous_id_cards === 'string') {
       try {
         documentData.previous_id_cards = JSON.parse(documentData.previous_id_cards)
@@ -129,12 +135,6 @@ function renderCard(data) {
   document.getElementById('nss').textContent = data.nss_number || '—'
   document.getElementById('address').textContent = data.registration_address || '—'
 
-  const statusBadge = document.getElementById('statusBadge')
-  const status = data.status || 'oncheck'
-  statusBadge.className = `document-status status-${status}`
-  statusBadge.textContent = getStatusLabel(status)
-  statusBadge.style.display = 'inline-block'
-
   // Фото и подпись
   const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
   const photoImg = document.getElementById('userPhoto')
@@ -162,6 +162,42 @@ function renderCard(data) {
       correctLevel: QRCode.CorrectLevel.L
     })
   }
+
+  // --- Кнопка статуса и редактирования (НОВАЯ ЛОГИКА) ---
+  const statusText = getStatusLabel(data.status)
+  const statusClass = getStatusClass(data.status)
+
+  const statusAndEdit = document.createElement('div')
+  statusAndEdit.className = 'status-and-edit'
+
+  const statusSpan = document.createElement('span')
+  statusSpan.className = statusClass
+  statusSpan.textContent = statusText
+  statusAndEdit.appendChild(statusSpan)
+
+  // Кнопка замены (ссылка на получение новой ID-карты)
+  const replaceLink = document.createElement('a')
+  replaceLink.href = '../../services/documents/id-card/'
+  replaceLink.className = 'edit-btn'
+  replaceLink.textContent = 'Заменить ID-карту'
+  statusAndEdit.appendChild(replaceLink)
+
+  // Кнопка изменения данных (только если статус не verified)
+  if (data.status !== 'verified') {
+    const editBtn = document.createElement('button')
+    editBtn.className = 'edit-btn'
+    editBtn.id = 'editBtn'
+    editBtn.textContent = 'Изменить данные'
+    editBtn.addEventListener('click', () => {
+      formData = { ...data }
+      openEditModal()
+    })
+    statusAndEdit.appendChild(editBtn)
+  }
+
+  // Вставляем блок перед карточкой (после заголовка статуса)
+  const container = document.querySelector('.card-container')
+  container.parentNode.insertBefore(statusAndEdit, container)
 }
 
 // --- Отрисовка таблицы ранее выданных карт на основной странице ---
@@ -181,15 +217,8 @@ function renderPreviousCardsTable(cards) {
   `).join('')
 }
 
-// --- Переворот карты ---
-document.getElementById('card')?.addEventListener('click', (e) => {
-  if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A') {
-    document.getElementById('card').classList.toggle('flipped')
-  }
-})
-document.getElementById('flipBtn')?.addEventListener('click', () => {
-  document.getElementById('card').classList.toggle('flipped')
-})
+// --- Переворот карты (удалён по требованию, поэтому убираем обработчики) ---
+// Обработчики удалены
 
 // ================== МОДАЛЬНОЕ ОКНО ==================
 window.closeModal = function() {
@@ -211,7 +240,6 @@ function renderModalStep() {
   const stepsContainer = document.createElement('div')
   stepsContainer.className = 'modal-steps'
 
-  // Индикатор шагов
   const stepsIndicator = document.createElement('div')
   stepsIndicator.className = 'steps-indicator'
   stepsIndicator.innerHTML = `
@@ -231,7 +259,6 @@ function renderModalStep() {
 
   stepsContainer.appendChild(stepContent)
 
-  // Навигационные кнопки
   const navButtons = document.createElement('div')
   navButtons.className = 'step-nav-buttons'
   navButtons.style.display = 'flex'
@@ -350,7 +377,6 @@ function createPreviousCardsForm() {
   const container = document.createElement('div')
   container.className = 'previous-cards-form'
 
-  // Поля для добавления новой записи
   const addSection = document.createElement('div')
   addSection.className = 'add-card-section'
   addSection.innerHTML = '<h5>Добавить предыдущую карту</h5>'
@@ -390,7 +416,6 @@ function createPreviousCardsForm() {
 
   container.appendChild(addSection)
 
-  // Список уже добавленных карт
   const listSection = document.createElement('div')
   listSection.className = 'cards-list-section'
   listSection.innerHTML = '<h5>Добавленные карты</h5>'
@@ -462,7 +487,6 @@ window.addPreviousCard = function() {
   if (!formData.previous_id_cards) formData.previous_id_cards = []
   formData.previous_id_cards.push(newCard)
 
-  // Очистить поля ввода
   document.getElementById('prev_card_number').value = ''
   document.getElementById('prev_issued_by').value = ''
   document.getElementById('prev_issue_date').value = ''
@@ -555,7 +579,6 @@ function openEditModal() {
 
 // --- Сохранение документа ---
 async function saveDocument() {
-  // Если мы на втором шаге, просто сохраняем (данные уже в formData)
   if (currentStep === 2) {
     // ничего дополнительно не собираем
   } else {
@@ -572,7 +595,7 @@ async function saveDocument() {
     personal_code: userPersonalCode,
     status: 'oncheck',
     updated_at: new Date().toISOString(),
-    previous_id_cards: formData.previous_id_cards || [] // всегда массив
+    previous_id_cards: formData.previous_id_cards || []
   }
 
   console.log('Сохранение:', dataToSend)
@@ -608,11 +631,11 @@ async function saveDocument() {
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
   document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('editBtn')?.addEventListener('click', openEditModal)
+  // Обработчик для editBtn теперь создаётся динамически в renderCard, поэтому здесь не нужен
   document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
 })
 
-// Экспорт в глобальную область (для inline-обработчиков)
+// Экспорт в глобальную область
 window.closeModal = closeModal
 window.openAddModal = openAddModal
 window.openEditModal = openEditModal
