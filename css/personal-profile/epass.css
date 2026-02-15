@@ -1,0 +1,366 @@
+/* ===== epass.css ===== */
+:root {
+  --primary-red: #7b091a;
+  --dark-red: #650E15;
+  --secondary-gray: #6c757d;
+  --card-pink: #fff9f9;
+  --card-pink-dark: #e0c0c0;
+  --text-dark: #5c3b3b;
+  --border-radius: 16px;
+  --shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== БАЗОВЫЙ РАЗМЕР ШРИФТА (адаптивный) ===== */
+html {
+  font-size: 16px;
+}
+@media (max-width: 700px) {
+  html {
+    font-size: clamp(12px, 3vw, 16px);
+  }
+}
+
+/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
+.main-content {
+  padding: 2rem 0;
+  background: white;
+  min-height: 100vh;
+}
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+.loading, .no-data {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* ===== КНОПКИ (унифицированы) ===== */
+.add-btn,
+.edit-btn,
+.btn,
+.btn-primary,
+.btn-secondary,
+a.add-btn,
+a.edit-btn,
+.document-status {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.add-btn,
+.edit-btn,
+.btn-primary,
+a.add-btn,
+a.edit-btn {
+  background: var(--primary-red);
+  color: white;
+}
+.add-btn:hover,
+.edit-btn:hover,
+.btn-primary:hover,
+a.add-btn:hover,
+a.edit-btn:hover {
+  background: var(--dark-red);
+}
+
+.btn-secondary {
+  background: var(--secondary-gray) !important;
+  color: white;
+}
+.btn-secondary:hover {
+  background: #5a6268 !important;
+}
+
+/* ===== СТАТУС ДОКУМЕНТА ===== */
+.status-and-edit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+.document-status {
+  background: transparent;
+}
+.status-verified {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+.status-pending {
+  background: rgba(255, 193, 7, 0.15);
+  color: #856404;
+}
+.status-rejected {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+
+/* ===== КАРТОЧКА E-PASS ===== */
+.epass-card {
+  background: var(--card-pink);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  padding: 1.5rem;
+  margin: 2rem auto;
+  max-width: 800px;
+  border: 1px solid var(--card-pink-dark);
+}
+
+.epass-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  border-bottom: 2px solid var(--card-pink-dark);
+  padding-bottom: 0.5rem;
+}
+.epass-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.epass-body {
+  display: flex;
+  gap: 2rem;
+}
+
+.epass-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.data-row {
+  display: flex;
+  border-bottom: 1px dashed var(--card-pink-dark);
+  padding-bottom: 0.3rem;
+}
+.data-label {
+  font-weight: 600;
+  color: var(--text-dark);
+  width: 40%;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+}
+.data-value {
+  font-weight: 500;
+  width: 60%;
+  font-size: 0.9rem;
+  word-break: break-word;
+}
+#age {
+  font-size: 0.8rem;
+  color: #666;
+  margin-left: 0.3rem;
+}
+
+.epass-right {
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.photo-container {
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--card-pink-dark);
+}
+.epass-photo {
+  width: 100%;
+  height: auto;
+  display: block;
+  aspect-ratio: 3/4;
+  object-fit: cover;
+}
+
+.qr-container {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+.qr-code {
+  width: 80px;
+  height: 80px;
+  background: white;
+  border: 1px solid var(--card-pink-dark);
+  border-radius: 6px;
+  padding: 3px;
+}
+.qr-code canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+.modal-header h4 {
+  margin: 0;
+  color: var(--primary-red);
+  font-size: 1.25rem;
+}
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}
+.close-modal:hover { color: var(--primary-red); }
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid #eee;
+}
+.form-group {
+  margin-bottom: 1.2rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+.form-input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+/* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
+.too-small-message {
+  display: none;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+@media (max-width: 320px) {
+  .too-small-message {
+    display: block;
+  }
+  .epass-card,
+  #content,
+  .status-and-edit,
+  .modal-overlay {
+    display: none !important;
+  }
+}
+
+/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ===== */
+@media (max-width: 600px) {
+  .epass-body {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .epass-right {
+    width: 100%;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+  }
+  .photo-container {
+    width: 100px;
+  }
+  .qr-code {
+    width: 60px;
+    height: 60px;
+  }
+  .data-row {
+    font-size: 0.8rem;
+  }
+  .data-label {
+    width: 45%;
+  }
+  .data-value {
+    width: 55%;
+  }
+  .status-and-edit {
+    flex-direction: column;
+    margin: 1rem 0;
+  }
+  .status-and-edit .edit-btn,
+  .status-and-edit a.edit-btn {
+    font-size: 0.9rem;
+    padding: 0.4rem 1rem;
+  }
+}
+
+@media (min-width: 601px) and (max-width: 900px) {
+  .epass-right {
+    width: 150px;
+  }
+}
