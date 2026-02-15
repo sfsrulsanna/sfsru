@@ -1,6 +1,6 @@
 import { supabase } from '../../js/supabase-config.js'
 
-// --- Глобальные переменные ---
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let currentDocId = null
 let documentData = {}
 let userPersonalCode = null
@@ -26,13 +26,20 @@ let formData = {
   registration_address: '',
   previous_id_cards: []
 }
-let currentStep = 1 // 1 - основные данные, 2 - предыдущие карты
+let currentStep = 1 // 1 – основные данные, 2 – предыдущие карты
 
-// --- Вспомогательные функции ---
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function formatDate(dateString) {
   if (!dateString) return '—'
-  try { return new Date(dateString).toLocaleDateString('ru-RU') }
-  catch { return dateString }
+  try {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}.${month}.${year}`
+  } catch {
+    return dateString
+  }
 }
 
 function getStatusLabel(status) {
@@ -51,70 +58,100 @@ function getStatusClass(status) {
 
 function escapeHTML(str) {
   if (!str) return ''
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;')
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
 
-// --- Загрузка данных из Supabase ---
+// ==================== ЗАГРУЗКА ДАННЫХ ====================
 async function loadData() {
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession()
-  if (sessionError || !session) {
-    window.location.href = '../../login.html'
-    return
-  }
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError || !session) {
+      window.location.href = '../../login.html'
+      return
+    }
 
-  const [profileResult, docResult] = await Promise.allSettled([
-    supabase.from('users').select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender').eq('id', session.user.id).single(),
-    (async () => {
-      const urlParams = new URLSearchParams(window.location.search)
-      const id = urlParams.get('id')
-      if (id) {
-        return supabase.from('documents_idcard').select('*').eq('id', id).maybeSingle()
-      } else {
-        const { data: user } = await supabase.from('users').select('personal_code').eq('id', session.user.id).single()
-        if (!user) return { data: null, error: 'No user' }
-        const { data, error } = await supabase
-          .from('documents_idcard')
-          .select('*')
-          .eq('personal_code', user.personal_code)
-          .order('created_at', { ascending: false })
-          .limit(1)
-        return { data: data?.[0], error }
-      }
-    })()
-  ])
+    // Загрузка профиля пользователя
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+      .eq('id', session.user.id)
+      .single()
 
-  if (profileResult.status === 'fulfilled' && !profileResult.value.error) {
-    userProfile = profileResult.value.data
-    userPersonalCode = userProfile.personal_code
-  } else {
-    console.error('Ошибка профиля')
-    document.getElementById('loading').textContent = 'Ошибка загрузки профиля'
-    return
-  }
+    if (profileError || !profile) {
+      console.error('Ошибка загрузки профиля:', profileError)
+      document.getElementById('loading').textContent = 'Ошибка загрузки профиля'
+      return
+    }
 
-  if (docResult.status === 'fulfilled' && !docResult.value.error && docResult.value.data) {
-    documentData = docResult.value.data
-    currentDocId = documentData.id
-    if (typeof documentData.previous_id_cards === 'string') {
-      try {
-        documentData.previous_id_cards = JSON.parse(documentData.previous_id_cards)
-      } catch {
-        documentData.previous_id_cards = []
+    userProfile = profile
+    userPersonalCode = profile.personal_code
+
+    // Определяем ID документа из URL или ищем последний
+    const urlParams = new URLSearchParams(window.location.search)
+    const idFromUrl = urlParams.get('id')
+
+    let data = null
+    if (idFromUrl) {
+      const { data: doc, error } = await supabase
+        .from('documents_idcard')
+        .select('*')
+        .eq('id', idFromUrl)
+        .maybeSingle()
+      if (!error && doc) data = doc
+    } else {
+      const { data: docs, error } = await supabase
+        .from('documents_idcard')
+        .select('*')
+        .eq('personal_code', userPersonalCode)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (!error && docs && docs.length > 0) {
+        data = docs[0]
       }
     }
-    renderCard(documentData)
-    renderPreviousCardsTable(documentData.previous_id_cards || [])
-    document.getElementById('loading').style.display = 'none'
-    document.getElementById('content').style.display = 'block'
-    document.getElementById('noData').style.display = 'none'
-  } else {
-    document.getElementById('loading').style.display = 'none'
-    document.getElementById('noData').style.display = 'block'
+
+    const loadingEl = document.getElementById('loading')
+    const contentEl = document.getElementById('content')
+    const noDataEl = document.getElementById('noData')
+
+    if (data) {
+      documentData = data
+      currentDocId = data.id
+
+      // Парсим previous_id_cards, если пришло строкой
+      if (typeof documentData.previous_id_cards === 'string') {
+        try {
+          documentData.previous_id_cards = JSON.parse(documentData.previous_id_cards)
+        } catch {
+          documentData.previous_id_cards = []
+        }
+      }
+
+      renderCard(documentData)
+      renderPreviousCardsTable(documentData.previous_id_cards || [])
+
+      loadingEl.style.display = 'none'
+      contentEl.style.display = 'block'
+      noDataEl.style.display = 'none'
+    } else {
+      loadingEl.style.display = 'none'
+      contentEl.style.display = 'none'
+      noDataEl.style.display = 'block'
+    }
+  } catch (err) {
+    console.error('Необработанная ошибка в loadData:', err)
+    document.getElementById('loading').textContent = 'Произошла критическая ошибка'
   }
 }
 
-// --- Отрисовка карточки (лицевая и оборотная стороны) ---
+// ==================== ОТРИСОВКА КАРТОЧКИ ====================
 function renderCard(data) {
+  // Заполняем поля на лицевой стороне
   document.getElementById('surname1').textContent = data.surname1 || '—'
   document.getElementById('name1').textContent = data.name1 || '—'
   document.getElementById('patronymic1').textContent = data.patronymic1 || '—'
@@ -124,6 +161,8 @@ function renderCard(data) {
   document.getElementById('issueDate').textContent = formatDate(data.issue_date)
   document.getElementById('expiryDate').textContent = formatDate(data.expiry_date)
   document.getElementById('cardNumber').textContent = data.card_number || '—'
+
+  // Оборотная сторона
   document.getElementById('backCardNumber').textContent = data.card_number || '—'
   document.getElementById('departmentCode').textContent = data.department_code || '—'
   document.getElementById('issuedBy').textContent = data.issued_by || '—'
@@ -149,7 +188,7 @@ function renderCard(data) {
     signatureImg.src = '../../images/default-avatar.png'
   }
 
-  // QR-код
+  // QR-код (личный код)
   const qrContainer = document.getElementById('qrCode')
   qrContainer.innerHTML = ''
   if (userPersonalCode) {
@@ -163,26 +202,27 @@ function renderCard(data) {
     })
   }
 
-  // --- Кнопка статуса и редактирования (НОВАЯ ЛОГИКА) ---
+  // --- Блок статуса и кнопок ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
 
+  // Статус
   const statusSpan = document.createElement('span')
   statusSpan.className = statusClass
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  // Кнопка замены (ссылка на получение новой ID-карты)
+  // Ссылка "Заменить ID-карту" (всегда)
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/id-card/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить ID-карту'
   statusAndEdit.appendChild(replaceLink)
 
-  // Кнопка изменения данных (только если статус не verified)
+  // Кнопка "Изменить данные" (только если статус не verified)
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
@@ -195,26 +235,31 @@ function renderCard(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
-  // Вставляем блок перед карточкой (после заголовка статуса)
-  const container = document.querySelector('.card-container')
-  container.parentNode.insertBefore(statusAndEdit, container)
-}
-  // ... после создания statusAndEdit ...
+  // Вставляем блок после карточки, но перед таблицей "Ранее выданные карты"
+  const cardContainer = document.querySelector('.card-container')
+  const previousSection = document.querySelector('.previous-section')
+  if (previousSection) {
+    cardContainer.parentNode.insertBefore(statusAndEdit, previousSection)
+  } else {
+    cardContainer.parentNode.insertBefore(statusAndEdit, cardContainer.nextSibling)
+  }
 
-  // Переворот карты по клику (без кнопки)
+  // --- Переворот карты по клику ---
   const cardEl = document.getElementById('card')
   if (cardEl) {
-    // Убираем старые обработчики, если были
     cardEl.removeEventListener('click', window.toggleFlip)
     window.toggleFlip = function(e) {
-      if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'A' && e.target.tagName !== 'IMG') {
-        e.currentTarget.classList.toggle('flipped')
+      // Игнорируем клики по интерактивным элементам
+      const tag = e.target.tagName
+      if (tag !== 'BUTTON' && tag !== 'A' && tag !== 'IMG') {
+        cardEl.classList.toggle('flipped')
       }
     }
     cardEl.addEventListener('click', window.toggleFlip)
   }
+}
 
-// --- Отрисовка таблицы ранее выданных карт на основной странице ---
+// ==================== ТАБЛИЦА РАНЕЕ ВЫДАННЫХ КАРТ ====================
 function renderPreviousCardsTable(cards) {
   const tbody = document.getElementById('previousCardsBody')
   if (!cards || cards.length === 0) {
@@ -231,7 +276,7 @@ function renderPreviousCardsTable(cards) {
   `).join('')
 }
 
-// ================== МОДАЛЬНОЕ ОКНО ==================
+// ==================== МОДАЛЬНОЕ ОКНО ====================
 window.closeModal = function() {
   document.getElementById('modalOverlay').classList.remove('active')
   currentStep = 1
@@ -251,6 +296,7 @@ function renderModalStep() {
   const stepsContainer = document.createElement('div')
   stepsContainer.className = 'modal-steps'
 
+  // Индикатор шагов
   const stepsIndicator = document.createElement('div')
   stepsIndicator.className = 'steps-indicator'
   stepsIndicator.innerHTML = `
@@ -270,6 +316,7 @@ function renderModalStep() {
 
   stepsContainer.appendChild(stepContent)
 
+  // Кнопки навигации
   const navButtons = document.createElement('div')
   navButtons.className = 'step-nav-buttons'
   navButtons.style.display = 'flex'
@@ -591,7 +638,7 @@ function openEditModal() {
 // --- Сохранение документа ---
 async function saveDocument() {
   if (currentStep === 2) {
-    // ничего дополнительно не собираем
+    // На втором шаге данные уже в formData
   } else {
     collectMainDataFromForm()
   }
@@ -638,17 +685,17 @@ async function saveDocument() {
   window.location.href = `id-card.html?id=${newId}`
 }
 
-// --- Инициализация ---
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
+
   document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  // Обработчик для editBtn теперь создаётся динамически в renderCard, поэтому здесь не нужен
   document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
 })
 
-// Экспорт в глобальную область
-window.closeModal = closeModal
+// Экспорт в глобальную область (для inline-обработчиков)
 window.openAddModal = openAddModal
 window.openEditModal = openEditModal
+window.closeModal = closeModal
 window.addPreviousCard = addPreviousCard
 window.removePreviousCard = removePreviousCard
