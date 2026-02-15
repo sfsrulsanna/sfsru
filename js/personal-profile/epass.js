@@ -139,37 +139,55 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА КАРТОЧКИ ====================
 function renderCard(data) {
-  document.getElementById('surname').textContent = data.surname || '—'
-  document.getElementById('name').textContent = data.name || '—'
-  document.getElementById('patronymic').textContent = data.patronymic || '—'
-  document.getElementById('birthDate').textContent = formatDate(data.birth_date)
-  document.getElementById('age').textContent = calculateAge(data.birth_date)
-  document.getElementById('gender').textContent = data.gender || '—'
-  document.getElementById('personalCode').textContent = data.personal_code_ref || userPersonalCode || '—'
-  document.getElementById('epassNumber').textContent = data.epass_number || '—'
+  // Безопасная установка текста
+  const setText = (id, text) => {
+    const el = document.getElementById(id)
+    if (el) el.textContent = text
+    else console.warn(`Element #${id} not found`)
+  }
 
+  setText('surname', data.surname || '—')
+  setText('name', data.name || '—')
+  setText('patronymic', data.patronymic || '—')
+  setText('birthDate', formatDate(data.birth_date))
+  setText('age', calculateAge(data.birth_date))
+  setText('gender', data.gender || '—')
+  setText('personalCode', data.personal_code_ref || userPersonalCode || '—')
+  setText('epassNumber', data.epass_number || '—')
+
+  // Фото
   const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
   const photoImg = document.getElementById('userPhoto')
-  if (safeCode) {
-    photoImg.src = `../../images/avatars/${safeCode}.jpg`
-    photoImg.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
+  if (photoImg) {
+    if (safeCode) {
+      photoImg.src = `../../images/avatars/${safeCode}.jpg`
+      photoImg.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
+    } else {
+      photoImg.src = '../../images/default-avatar.png'
+    }
   } else {
-    photoImg.src = '../../images/default-avatar.png'
+    console.warn('Element #userPhoto not found')
   }
 
+  // QR-код
   const qrContainer = document.getElementById('qrCode')
-  qrContainer.innerHTML = ''
-  if (userPersonalCode) {
-    new QRCode(qrContainer, {
-      text: userPersonalCode,
-      width: 80,
-      height: 80,
-      colorDark: '#000',
-      colorLight: '#fff',
-      correctLevel: QRCode.CorrectLevel.L
-    })
+  if (qrContainer) {
+    qrContainer.innerHTML = ''
+    if (userPersonalCode) {
+      new QRCode(qrContainer, {
+        text: userPersonalCode,
+        width: 80,
+        height: 80,
+        colorDark: '#000',
+        colorLight: '#fff',
+        correctLevel: QRCode.CorrectLevel.L
+      })
+    }
+  } else {
+    console.warn('Element #qrCode not found')
   }
 
+  // --- Блок статуса и кнопок ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
@@ -200,22 +218,31 @@ function renderCard(data) {
   }
 
   const card = document.querySelector('.epass-card')
-  card.parentNode.insertBefore(statusAndEdit, card.nextSibling)
+  if (card && card.parentNode) {
+    card.parentNode.insertBefore(statusAndEdit, card.nextSibling)
+  } else {
+    console.warn('Card element not found for inserting buttons')
+  }
 }
 
 // ==================== МОДАЛЬНОЕ ОКНО ====================
 window.closeModal = function() {
-  document.getElementById('modalOverlay').classList.remove('active')
+  const overlay = document.getElementById('modalOverlay')
+  if (overlay) overlay.classList.remove('active')
 }
 
 function openModal(title) {
-  document.getElementById('modalTitle').textContent = title
-  document.getElementById('modalOverlay').classList.add('active')
+  const titleEl = document.getElementById('modalTitle')
+  if (titleEl) titleEl.textContent = title
+  const overlay = document.getElementById('modalOverlay')
+  if (overlay) overlay.classList.add('active')
   renderModalForm()
 }
 
 function renderModalForm() {
   const modalBody = document.getElementById('modalBody')
+  if (!modalBody) return
+
   modalBody.innerHTML = `
     <div class="form-group">
       <label>Фамилия</label>
