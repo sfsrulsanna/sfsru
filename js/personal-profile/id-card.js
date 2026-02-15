@@ -163,6 +163,38 @@ function renderCard(data) {
     })
   }
 
+  // --- Кнопка статуса и редактирования (НОВАЯ ЛОГИКА) ---
+  const statusText = getStatusLabel(data.status)
+  const statusClass = getStatusClass(data.status)
+
+  const statusAndEdit = document.createElement('div')
+  statusAndEdit.className = 'status-and-edit'
+
+  const statusSpan = document.createElement('span')
+  statusSpan.className = statusClass
+  statusSpan.textContent = statusText
+  statusAndEdit.appendChild(statusSpan)
+
+  // Кнопка замены (ссылка на получение новой ID-карты)
+  const replaceLink = document.createElement('a')
+  replaceLink.href = '../../services/documents/id-card/'
+  replaceLink.className = 'edit-btn'
+  replaceLink.textContent = 'Заменить ID-карту'
+  statusAndEdit.appendChild(replaceLink)
+
+  // Кнопка изменения данных (только если статус не verified)
+  if (data.status !== 'verified') {
+    const editBtn = document.createElement('button')
+    editBtn.className = 'edit-btn'
+    editBtn.id = 'editBtn'
+    editBtn.textContent = 'Изменить данные'
+    editBtn.addEventListener('click', () => {
+      formData = { ...data }
+      openEditModal()
+    })
+    statusAndEdit.appendChild(editBtn)
+  }
+
   // Вставляем блок перед карточкой (после заголовка статуса)
   const container = document.querySelector('.card-container')
   container.parentNode.insertBefore(statusAndEdit, container)
