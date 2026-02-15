@@ -76,7 +76,6 @@ async function loadData() {
     }
     userId = session.user.id
 
-    // Загрузка профиля пользователя
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
@@ -139,7 +138,6 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА КАРТОЧКИ ====================
 function renderCard(data) {
-  // Безопасная установка текста
   const setText = (id, text) => {
     const el = document.getElementById(id)
     if (el) el.textContent = text
@@ -155,7 +153,6 @@ function renderCard(data) {
   setText('personalCode', data.personal_code_ref || userPersonalCode || '—')
   setText('epassNumber', data.epass_number || '—')
 
-  // Фото
   const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
   const photoImg = document.getElementById('userPhoto')
   if (photoImg) {
@@ -165,11 +162,8 @@ function renderCard(data) {
     } else {
       photoImg.src = '../../images/default-avatar.png'
     }
-  } else {
-    console.warn('Element #userPhoto not found')
   }
 
-  // QR-код
   const qrContainer = document.getElementById('qrCode')
   if (qrContainer) {
     qrContainer.innerHTML = ''
@@ -183,11 +177,8 @@ function renderCard(data) {
         correctLevel: QRCode.CorrectLevel.L
       })
     }
-  } else {
-    console.warn('Element #qrCode not found')
   }
 
-  // --- Блок статуса и кнопок ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
@@ -220,8 +211,6 @@ function renderCard(data) {
   const card = document.querySelector('.epass-card')
   if (card && card.parentNode) {
     card.parentNode.insertBefore(statusAndEdit, card.nextSibling)
-  } else {
-    console.warn('Card element not found for inserting buttons')
   }
 }
 
@@ -243,52 +232,62 @@ function renderModalForm() {
   const modalBody = document.getElementById('modalBody')
   if (!modalBody) return
 
-  modalBody.innerHTML = `
-    <div class="form-group">
-      <label>Фамилия</label>
-      <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
-    </div>
-    <div class="form-group">
-      <label>Имя</label>
-      <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name || '')}">
-    </div>
-    <div class="form-group">
-      <label>Отчество</label>
-      <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения</label>
-      <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Пол</label>
-      <select id="gender" class="form-input">
-        <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
-        <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Номер E-Pass</label>
-      <input type="text" id="epass_number" class="form-input" value="${escapeHTML(formData.epass_number || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код</label>
-      <input type="text" id="personal_code_ref" class="form-input" value="${userPersonalCode || ''}" readonly>
-    </div>
-  `
+  modalBody.innerHTML = ''
+  const fields = [
+    { id: 'edit_surname', label: 'Фамилия', type: 'text', value: formData.surname },
+    { id: 'edit_name', label: 'Имя', type: 'text', value: formData.name },
+    { id: 'edit_patronymic', label: 'Отчество', type: 'text', value: formData.patronymic },
+    { id: 'edit_birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date },
+    { id: 'edit_gender', label: 'Пол', type: 'select', options: ['Мужской', 'Женский'], value: formData.gender },
+    { id: 'edit_epass_number', label: 'Номер E-Pass', type: 'text', value: formData.epass_number },
+    { id: 'edit_personal_code_ref', label: 'Личный код', type: 'text', value: userPersonalCode, readonly: true }
+  ]
+
+  fields.forEach(field => {
+    const group = document.createElement('div')
+    group.className = 'form-group'
+
+    const label = document.createElement('label')
+    label.htmlFor = field.id
+    label.textContent = field.label
+    group.appendChild(label)
+
+    if (field.type === 'select') {
+      const select = document.createElement('select')
+      select.id = field.id
+      select.className = 'form-input'
+      field.options.forEach(opt => {
+        const option = document.createElement('option')
+        option.value = opt
+        option.textContent = opt
+        if (opt === field.value) option.selected = true
+        select.appendChild(option)
+      })
+      group.appendChild(select)
+    } else {
+      const input = document.createElement('input')
+      input.type = field.type
+      input.id = field.id
+      input.className = 'form-input'
+      input.value = field.value || ''
+      if (field.readonly) input.readOnly = true
+      group.appendChild(input)
+    }
+
+    modalBody.appendChild(group)
+  })
 }
 
 function collectFormData() {
   const getVal = (id) => (document.getElementById(id)?.value || '').trim()
-
   return {
-    surname: getVal('surname'),
-    name: getVal('name'),
-    patronymic: getVal('patronymic'),
-    birth_date: getVal('birth_date'),
-    gender: getVal('gender'),
-    epass_number: getVal('epass_number'),
-    personal_code_ref: getVal('personal_code_ref') || userPersonalCode
+    surname: getVal('edit_surname'),
+    name: getVal('edit_name'),
+    patronymic: getVal('edit_patronymic'),
+    birth_date: getVal('edit_birth_date'),
+    gender: getVal('edit_gender'),
+    epass_number: getVal('edit_epass_number'),
+    personal_code_ref: getVal('edit_personal_code_ref') || userPersonalCode
   }
 }
 
@@ -317,8 +316,6 @@ async function saveDocument() {
       updated_at: new Date().toISOString()
     }
 
-    console.log('Сохранение:', dataToSend)
-
     let result
     if (currentDocId) {
       result = await supabase
@@ -336,7 +333,6 @@ async function saveDocument() {
 
     if (result.error) throw result.error
 
-    console.log('Сохранение успешно, ответ:', result)
     window.closeModal()
     const newId = currentDocId || result.data[0].id
     window.location.href = `epass.html?id=${newId}`
@@ -376,7 +372,6 @@ function openEditModal() {
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
-
   document.getElementById('addBtn')?.addEventListener('click', openAddModal)
   document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
 })
