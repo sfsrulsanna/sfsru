@@ -138,6 +138,7 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА КАРТОЧКИ ====================
 function renderCard(data) {
+  // Устанавливаем значения полей
   const setText = (id, text) => {
     const el = document.getElementById(id)
     if (el) el.textContent = text
@@ -147,12 +148,18 @@ function renderCard(data) {
   setText('surname', data.surname || '—')
   setText('name', data.name || '—')
   setText('patronymic', data.patronymic || '—')
-  setText('birthDate', formatDate(data.birth_date))
-  setText('age', calculateAge(data.birth_date))
+  
+  // Дата рождения и возраст отдельно
+  const birthEl = document.getElementById('birthDate')
+  if (birthEl) birthEl.textContent = formatDate(data.birth_date)
+  const ageEl = document.getElementById('age')
+  if (ageEl) ageEl.textContent = calculateAge(data.birth_date)
+
   setText('gender', data.gender || '—')
   setText('personalCode', data.personal_code_ref || userPersonalCode || '—')
   setText('epassNumber', data.epass_number || '—')
 
+  // Фото
   const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
   const photoImg = document.getElementById('userPhoto')
   if (photoImg) {
@@ -164,6 +171,7 @@ function renderCard(data) {
     }
   }
 
+  // QR-код
   const qrContainer = document.getElementById('qrCode')
   if (qrContainer) {
     qrContainer.innerHTML = ''
@@ -179,6 +187,7 @@ function renderCard(data) {
     }
   }
 
+  // --- Блок статуса и кнопок ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 

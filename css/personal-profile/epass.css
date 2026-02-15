@@ -1,4 +1,4 @@
-/* ===== epass.css (финальная версия) ===== */
+/* ===== epass.css (вертикальная карточка) ===== */
 :root {
   --primary-red: #7b091a;
   --dark-red: #650E15;
@@ -114,7 +114,7 @@ a.edit-btn:hover {
   color: #dc3545;
 }
 
-/* ===== КАРТОЧКА E-PASS ===== */
+/* ===== КАРТОЧКА E-PASS (вертикальная, нормальная) ===== */
 .epass-card {
   position: relative;
   background: var(--card-pink);
@@ -122,20 +122,18 @@ a.edit-btn:hover {
   box-shadow: var(--shadow);
   padding: 1.5rem;
   margin: 2rem auto;
-  max-width: 800px;
+  max-width: 700px; /* ограничение ширины, но не фикс */
   border: 1px solid var(--card-pink-dark);
-  aspect-ratio: 4 / 3; /* высота 4, ширина 3 */
-  overflow-y: auto; /* если контент не влезает, появится прокрутка */
 }
 
 .epass-header {
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
   border-bottom: 2px solid var(--card-pink-dark);
   padding-bottom: 0.5rem;
 }
 .epass-title {
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--text-dark);
   text-transform: uppercase;
@@ -144,24 +142,23 @@ a.edit-btn:hover {
 
 .epass-body {
   display: flex;
-  gap: 1.5rem;
-  height: calc(100% - 3rem); /* оставляем место под заголовок */
+  gap: 2rem;
+  margin-bottom: 1.5rem; /* место для QR */
 }
 
-/* Левая колонка – вертикальное расположение */
+/* Левая колонка – данные, вертикально */
 .epass-left {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  overflow-y: auto;
+  gap: 1rem;
 }
 
 .data-row {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; /* метка сверху, значение снизу */
   border-bottom: 1px dashed var(--card-pink-dark);
-  padding-bottom: 0.2rem;
+  padding-bottom: 0.3rem;
 }
 
 .data-label {
@@ -179,6 +176,7 @@ a.edit-btn:hover {
   color: #000;
 }
 
+/* Возраст рядом с датой */
 #age {
   font-size: 0.9rem;
   color: #666;
@@ -189,10 +187,10 @@ a.edit-btn:hover {
 /* Правая колонка – фото */
 .epass-right {
   width: 150px;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
 }
 
 .photo-container {
@@ -347,14 +345,14 @@ a.edit-btn:hover {
   .epass-right {
     width: 100%;
     flex-direction: row;
-    justify-content: space-around;
-    align-items: center;
+    justify-content: center;
+    gap: 1rem;
   }
   .photo-container {
-    width: 100px;
+    width: 120px;
   }
   .qr-corner {
-    position: static; /* на мобильных QR возвращается под фото */
+    position: static; /* на мобильных QR под фото */
     width: 60px;
     height: 60px;
     margin-top: 0.5rem;
