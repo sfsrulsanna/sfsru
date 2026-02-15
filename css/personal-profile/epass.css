@@ -1,4 +1,4 @@
-/* ===== epass.css (вертикальная карточка) ===== */
+/* ===== epass.css (финальная версия с корректной мобильной адаптацией) ===== */
 :root {
   --primary-red: #7b091a;
   --dark-red: #650E15;
@@ -114,7 +114,7 @@ a.edit-btn:hover {
   color: #dc3545;
 }
 
-/* ===== КАРТОЧКА E-PASS (вертикальная, нормальная) ===== */
+/* ===== КАРТОЧКА E-PASS ===== */
 .epass-card {
   position: relative;
   background: var(--card-pink);
@@ -122,7 +122,7 @@ a.edit-btn:hover {
   box-shadow: var(--shadow);
   padding: 1.5rem;
   margin: 2rem auto;
-  max-width: 700px; /* ограничение ширины, но не фикс */
+  max-width: 700px;
   border: 1px solid var(--card-pink-dark);
 }
 
@@ -143,10 +143,10 @@ a.edit-btn:hover {
 .epass-body {
   display: flex;
   gap: 2rem;
-  margin-bottom: 1.5rem; /* место для QR */
+  margin-bottom: 1.5rem;
 }
 
-/* Левая колонка – данные, вертикально */
+/* Левая колонка – данные */
 .epass-left {
   flex: 1;
   display: flex;
@@ -156,7 +156,7 @@ a.edit-btn:hover {
 
 .data-row {
   display: flex;
-  flex-direction: column; /* метка сверху, значение снизу */
+  flex-direction: column;
   border-bottom: 1px dashed var(--card-pink-dark);
   padding-bottom: 0.3rem;
 }
@@ -176,7 +176,6 @@ a.edit-btn:hover {
   color: #000;
 }
 
-/* Возраст рядом с датой */
 #age {
   font-size: 0.9rem;
   color: #666;
@@ -336,33 +335,37 @@ a.edit-btn:hover {
   }
 }
 
-/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ===== */
+/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ (≤600px) ===== */
 @media (max-width: 600px) {
+  /* Сохраняем горизонтальное расположение колонок */
   .epass-body {
-    flex-direction: column;
+    flex-direction: row;
     gap: 1rem;
   }
+  /* Уменьшаем правую колонку (фото) */
   .epass-right {
-    width: 100%;
-    flex-direction: row;
-    justify-content: center;
-    gap: 1rem;
+    width: 100px;
+    flex-shrink: 0;
   }
   .photo-container {
-    width: 120px;
+    width: 100%;
   }
+  /* QR-код остаётся в правом нижнем углу, но меньше */
   .qr-corner {
-    position: static; /* на мобильных QR под фото */
-    width: 60px;
-    height: 60px;
-    margin-top: 0.5rem;
+    width: 50px;
+    height: 50px;
+    bottom: 1rem;
+    right: 1rem;
+    position: absolute;
   }
+  /* Уменьшаем шрифт в левой колонке */
   .data-label {
     font-size: 0.7rem;
   }
   .data-value {
     font-size: 0.9rem;
   }
+  /* Кнопки статуса вертикально */
   .status-and-edit {
     flex-direction: column;
     margin: 1rem 0;
@@ -374,6 +377,7 @@ a.edit-btn:hover {
   }
 }
 
+/* ===== ПЛАНШЕТЫ (601px - 900px) ===== */
 @media (min-width: 601px) and (max-width: 900px) {
   .epass-right {
     width: 130px;
