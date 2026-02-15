@@ -5,6 +5,7 @@ let currentDocId = null
 let documentData = {}
 let userPersonalCode = null
 let userProfile = null
+let userId = null
 let formData = {
   surname: '',
   name: '',
@@ -73,12 +74,13 @@ async function loadData() {
       window.location.href = '../../login.html'
       return
     }
+    userId = session.user.id
 
     // Загрузка профиля пользователя
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
-      .eq('id', session.user.id)
+      .eq('id', userId)
       .single()
 
     if (profileError || !profile) {
@@ -137,7 +139,6 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА КАРТОЧКИ ====================
 function renderCard(data) {
-  // Заполняем поля
   document.getElementById('surname').textContent = data.surname || '—'
   document.getElementById('name').textContent = data.name || '—'
   document.getElementById('patronymic').textContent = data.patronymic || '—'
@@ -147,7 +148,6 @@ function renderCard(data) {
   document.getElementById('personalCode').textContent = data.personal_code_ref || userPersonalCode || '—'
   document.getElementById('epassNumber').textContent = data.epass_number || '—'
 
-  // Фото
   const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
   const photoImg = document.getElementById('userPhoto')
   if (safeCode) {
@@ -157,7 +157,6 @@ function renderCard(data) {
     photoImg.src = '../../images/default-avatar.png'
   }
 
-  // QR-код (личный код)
   const qrContainer = document.getElementById('qrCode')
   qrContainer.innerHTML = ''
   if (userPersonalCode) {
@@ -171,7 +170,6 @@ function renderCard(data) {
     })
   }
 
-  // --- Блок статуса и кнопок ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
@@ -183,14 +181,12 @@ function renderCard(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  // Ссылка "Заменить E-Pass" (всегда)
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/epass/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить E-Pass'
   statusAndEdit.appendChild(replaceLink)
 
-  // Кнопка "Изменить данные" (только если статус не verified)
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
@@ -203,7 +199,6 @@ function renderCard(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
-  // Вставляем блок после карточки
   const card = document.querySelector('.epass-card')
   card.parentNode.insertBefore(statusAndEdit, card.nextSibling)
 }
@@ -257,14 +252,16 @@ function renderModalForm() {
 }
 
 function collectFormData() {
+  const getVal = (id) => (document.getElementById(id)?.value || '').trim()
+
   return {
-    surname: document.getElementById('surname')?.value.trim() || '',
-    name: document.getElementById('name')?.value.trim() || '',
-    patronymic: document.getElementById('patronymic')?.value.trim() || '',
-    birth_date: document.getElementById('birth_date')?.value || '',
-    gender: document.getElementById('gender')?.value || '',
-    epass_number: document.getElementById('epass_number')?.value.trim() || '',
-    personal_code_ref: document.getElementById('personal_code_ref')?.value.trim() || userPersonalCode
+    surname: getVal('surname'),
+    name: getVal('name'),
+    patronymic: getVal('patronymic'),
+    birth_date: getVal('birth_date'),
+    gender: getVal('gender'),
+    epass_number: getVal('epass_number'),
+    personal_code_ref: getVal('personal_code_ref') || userPersonalCode
   }
 }
 
@@ -285,27 +282,34 @@ async function saveDocument() {
       if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
     })
 
-    cleanData.personal_code = userPersonalCode
-    cleanData.status = 'oncheck'
-    cleanData.updated_at = new Date().toISOString()
+    const dataToSend = {
+      ...cleanData,
+      user_id: session.user.id,
+      personal_code: userPersonalCode,
+      status: 'oncheck',
+      updated_at: new Date().toISOString()
+    }
+
+    console.log('Сохранение:', dataToSend)
 
     let result
     if (currentDocId) {
       result = await supabase
         .from('documents_epass')
-        .update(cleanData)
+        .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
-      cleanData.created_at = new Date().toISOString()
+      dataToSend.created_at = new Date().toISOString()
       result = await supabase
         .from('documents_epass')
-        .insert([cleanData])
+        .insert([dataToSend])
         .select()
     }
 
     if (result.error) throw result.error
 
+    console.log('Сохранение успешно, ответ:', result)
     window.closeModal()
     const newId = currentDocId || result.data[0].id
     window.location.href = `epass.html?id=${newId}`
