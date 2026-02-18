@@ -1,22 +1,21 @@
-// Весь код обёрнут в IIFE, чтобы избежать конфликтов с глобальными переменными
+// foreign-agent.js
 (function() {
     "use strict";
 
-    // Проверяем, загружена ли библиотека Supabase
     if (typeof supabase === 'undefined') {
-        console.error('Библиотека Supabase не загружена. Подключите её перед этим скриптом.');
+        console.error('Библиотека Supabase не загружена.');
         return;
     }
 
-    // --- Конфигурация ---
-    const SUPABASE_URL = 'https://your-project.supabase.co'; // Замените на ваш URL
-    const SUPABASE_ANON_KEY = 'your-anon-key';               // Замените на ваш anon key
+    const SUPABASE_URL = 'https://your-project.supabase.co'; // ЗАМЕНИТЕ
+    const SUPABASE_ANON_KEY = 'your-anon-key';               // ЗАМЕНИТЕ
     const AGENTS_TABLE = 'registry_agents';
+    const LOGIN_PAGE = '../../login.html'; // относительный путь к странице входа
 
-    // --- Инициализация клиента Supabase ---
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // --- DOM элементы ---
+    // DOM элементы
+    const authBlock = document.getElementById('authBlock');
     const accessMessageDiv = document.getElementById('accessMessage');
     const tableWrapper = document.getElementById('tableWrapper');
     const agentsTbody = document.getElementById('agentsTbody');
@@ -43,7 +42,7 @@
     const modalAccountOpenDate = document.getElementById('modalAccountOpenDate');
     const modalMore = document.getElementById('modalMore');
 
-    // --- Вспомогательные функции ---
+    // Вспомогательные функции (escapeHTML, autoLinkifyItem, linkifyList) – без изменений
     function escapeHTML(unsafe) {
         return unsafe.replace(/[&<>"]/g, function(m) {
             if (m === '&') return '&amp;';
@@ -55,16 +54,13 @@
     }
 
     function autoLinkifyItem(item) {
-        // email
         if (item.includes('@') && !item.startsWith('http')) {
             return `<a href="mailto:${escapeHTML(item)}">${escapeHTML(item)}</a>`;
         }
-        // телефон
         if (/^[\+]?[\d\s\(\)\-]{5,}$/.test(item.replace(/\s/g, ''))) {
             let cleaned = item.replace(/[^\d+]/g, '');
             return `<a href="tel:${escapeHTML(cleaned)}">${escapeHTML(item)}</a>`;
         }
-        // URL
         let url = item;
         if (!/^https?:\/\//i.test(url)) {
             url = 'https://' + url;
@@ -78,9 +74,7 @@
         let linkedItems = items.map(item => {
             if (type === 'url') {
                 let url = item;
-                if (!/^https?:\/\//i.test(url)) {
-                    url = 'https://' + url;
-                }
+                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
                 return `<a href="${escapeHTML(url)}" target="_blank" rel="noopener noreferrer">${escapeHTML(item)}</a>`;
             } else if (type === 'email') {
                 return `<a href="mailto:${escapeHTML(item)}">${escapeHTML(item)}</a>`;
@@ -94,7 +88,7 @@
         return linkedItems.join(', ');
     }
 
-    // --- Управление сообщениями ---
+    // Функции для отображения сообщений
     function showMessage(text, type = 'info') {
         accessMessageDiv.textContent = text;
         accessMessageDiv.className = `access-message ${type}`;
@@ -105,10 +99,29 @@
         accessMessageDiv.style.display = 'none';
     }
 
-    // --- Проверка доступа ---
-    async function checkAccess() {
-        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-        if (sessionError || !session) {
+    // Отрисовка блока авторизации
+    function renderAuthBlock(session) {
+        if (!authBlock) return;
+        if (session) {
+            const user = session.user;
+            authBlock.innerHTML = `
+                <span class="user-email">${escapeHTML(user.email)}</span>
+                <button class="auth-button" id="logoutButton">Выйти</button>
+            `;
+            document.getElementById('logoutButton')?.addEventListener('click', async () => {
+                await supabaseClient.auth.signOut();
+                // После выхода страница перезагрузится или обновится через слушатель
+            });
+        } else {
+            authBlock.innerHTML = `
+                <a href="${LOGIN_PAGE}" class="auth-button">Войти</a>
+            `;
+        }
+    }
+
+    // Проверка доступа (авторизация + паспорт)
+    async function checkAccess(session) {
+        if (!session) {
             showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
             return false;
         }
@@ -137,7 +150,7 @@
         return true;
     }
 
-    // --- Загрузка данных ---
+    // Загрузка данных
     async function loadAgents() {
         const { data: agents, error } = await supabaseClient
             .from(AGENTS_TABLE)
@@ -149,14 +162,12 @@
             showMessage('Не удалось загрузить данные реестра.', 'error');
             return [];
         }
-
         return agents || [];
     }
 
-    // --- Отрисовка таблицы ---
+    // Отрисовка таблицы
     function renderTable(agents) {
         agentsTbody.innerHTML = '';
-
         agents.forEach((agent, index) => {
             const row = document.createElement('tr');
             row.setAttribute('data-agent-id', agent.id);
@@ -172,16 +183,12 @@
                 <td>${inclusionDate}</td>
                 <td>${exclusionDate}</td>
             `;
-
             row.addEventListener('click', () => openModal(agent));
-
             agentsTbody.appendChild(row);
         });
-
         tableWrapper.style.display = 'block';
     }
 
-    // --- Открытие модального окна ---
     function openModal(agent) {
         modalFullName.textContent = agent.full_name || '—';
         modalAlias.textContent = agent.alias || '—';
@@ -211,35 +218,55 @@
         document.body.style.overflow = 'auto';
     }
 
-    // --- Инициализация ---
-    async function initPage() {
-        const hasAccess = await checkAccess();
-        if (!hasAccess) return;
+    // Инициализация: получаем сессию и запускаем слушатель изменений
+    async function init() {
+        // Слушаем изменения аутентификации
+        supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            renderAuthBlock(session);
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+                const hasAccess = await checkAccess(session);
+                if (hasAccess) {
+                    const agents = await loadAgents();
+                    if (agents.length > 0) renderTable(agents);
+                    else showMessage('В реестре пока нет записей.', 'info');
+                } else {
+                    tableWrapper.style.display = 'none';
+                }
+            } else if (event === 'SIGNED_OUT') {
+                showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
+                tableWrapper.style.display = 'none';
+                agentsTbody.innerHTML = ''; // очистка таблицы
+            }
+        });
 
-        const agents = await loadAgents();
-        if (agents.length > 0) {
-            renderTable(agents);
+        // Получаем начальную сессию
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        renderAuthBlock(session);
+        if (session) {
+            const hasAccess = await checkAccess(session);
+            if (hasAccess) {
+                const agents = await loadAgents();
+                if (agents.length > 0) renderTable(agents);
+                else showMessage('В реестре пока нет записей.', 'info');
+            }
         } else {
-            showMessage('В реестре пока нет записей.', 'info');
+            showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
         }
     }
 
-    // --- Обработчики событий ---
+    // Обработчики модального окна
     modalClose.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) closeModal();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
-            closeModal();
-        }
+        if (e.key === 'Escape' && modalOverlay.classList.contains('active')) closeModal();
     });
 
     // Мобильное меню
     const menuToggle = document.getElementById('menuToggle');
     const navMenu = document.getElementById('navMenu');
     const menuOverlay = document.getElementById('menuOverlay');
-
     if (menuToggle) {
         menuToggle.addEventListener('click', () => {
             menuToggle.classList.toggle('active');
@@ -248,7 +275,6 @@
             document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : 'auto';
         });
     }
-
     if (menuOverlay) {
         menuOverlay.addEventListener('click', () => {
             menuToggle.classList.remove('active');
@@ -258,6 +284,5 @@
         });
     }
 
-    // Запуск
-    initPage();
+    init();
 })();
