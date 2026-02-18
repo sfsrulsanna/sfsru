@@ -1,17 +1,16 @@
 (function() {
     "use strict";
 
-    // Проверка загрузки Supabase
     if (typeof supabase === 'undefined') {
         console.error('Библиотека Supabase не загружена. Подключите её перед этим скриптом.');
         return;
     }
 
     // -------------------- КОНФИГУРАЦИЯ --------------------
-    const SUPABASE_URL = 'https://your-project.supabase.co'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ URL
-    const SUPABASE_ANON_KEY = 'your-anon-key';               // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ ANON KEY
+    const SUPABASE_URL = 'https://your-project.supabase.co'; // ЗАМЕНИТЕ
+    const SUPABASE_ANON_KEY = 'your-anon-key';               // ЗАМЕНИТЕ
     const AGENTS_TABLE = 'registry_agents';
-    const LOGIN_PAGE = '../../login.html'; // относительный путь к странице входа
+    const LOGIN_PAGE = '../../login.html';
 
     // -------------------- ИНИЦИАЛИЗАЦИЯ КЛИЕНТА --------------------
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -56,16 +55,13 @@
     }
 
     function autoLinkifyItem(item) {
-        // email
         if (item.includes('@') && !item.startsWith('http')) {
             return `<a href="mailto:${escapeHTML(item)}">${escapeHTML(item)}</a>`;
         }
-        // телефон
         if (/^[\+]?[\d\s\(\)\-]{5,}$/.test(item.replace(/\s/g, ''))) {
             let cleaned = item.replace(/[^\d+]/g, '');
             return `<a href="tel:${escapeHTML(cleaned)}">${escapeHTML(item)}</a>`;
         }
-        // URL
         let url = item;
         if (!/^https?:\/\//i.test(url)) {
             url = 'https://' + url;
@@ -116,7 +112,6 @@
             `;
             document.getElementById('logoutButton')?.addEventListener('click', async () => {
                 await supabaseClient.auth.signOut();
-                // Сессия изменится, сработает onAuthStateChange и обновит UI
             });
         } else {
             authBlock.innerHTML = `<a href="${LOGIN_PAGE}" class="auth-button">Войти</a>`;
@@ -226,9 +221,31 @@
 
     // -------------------- ОСНОВНАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ --------------------
     async function init() {
-        // Получаем начальную сессию
-        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-        if (sessionError) console.error('Ошибка получения сессии:', sessionError);
+        console.log('Инициализация страницы...');
+        
+        // Диагностика: проверим, есть ли ключи в localStorage
+        console.log('Ключи localStorage:', Object.keys(localStorage));
+
+        // Пытаемся получить сессию
+        let { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) {
+            console.error('Ошибка получения сессии:', sessionError);
+        }
+
+        // Если сессии нет, пробуем обновить (может быть, есть refresh token)
+        if (!session) {
+            console.log('Сессия не найдена, пробуем обновить...');
+            const { data, error: refreshError } = await supabaseClient.auth.refreshSession();
+            if (refreshError) {
+                console.error('Ошибка обновления сессии:', refreshError);
+            } else {
+                session = data.session;
+                console.log('Сессия обновлена:', session);
+            }
+        } else {
+            console.log('Сессия получена:', session);
+        }
+
         renderAuthBlock(session);
 
         // Проверяем доступ
@@ -256,7 +273,6 @@
             console.log('Auth event:', event);
             renderAuthBlock(session);
             if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-                // При входе или обновлении токена перепроверяем доступ и загружаем данные
                 const hasAccess = await checkAccess(session);
                 if (hasAccess) {
                     const agents = await loadAgents();
@@ -285,7 +301,7 @@
         }
     });
 
-    // -------------------- МОБИЛЬНОЕ МЕНЮ (из исходного кода) --------------------
+    // -------------------- МОБИЛЬНОЕ МЕНЮ --------------------
     const menuToggle = document.getElementById('menuToggle');
     const navMenu = document.getElementById('navMenu');
     const menuOverlay = document.getElementById('menuOverlay');
