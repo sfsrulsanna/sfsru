@@ -125,12 +125,12 @@
             return false;
         }
         const user = session.user;
-        console.log('Проверка паспорта для пользователя:', user.id);
+        console.log('Проверка паспорта для пользователя:', id);
 
         const { data: passport, error } = await supabaseClient
             .from('document_passport')
             .select('status')
-            .eq('id', user.id)
+            .eq('id', id)
             .eq('status', 'verified')
             .maybeSingle();
 
