@@ -130,7 +130,7 @@
         const { data: passport, error } = await supabaseClient
             .from('document_passport')
             .select('status')
-            .eq('user_id', user.id)
+            .eq('id', user.id)
             .eq('status', 'verified')
             .maybeSingle();
 
