@@ -1,20 +1,22 @@
-// foreign-agent.js
 (function() {
     "use strict";
 
+    // Проверка загрузки Supabase
     if (typeof supabase === 'undefined') {
-        console.error('Библиотека Supabase не загружена.');
+        console.error('Библиотека Supabase не загружена. Подключите её перед этим скриптом.');
         return;
     }
 
-const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+    // -------------------- КОНФИГУРАЦИЯ --------------------
+    const SUPABASE_URL = 'https://your-project.supabase.co'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ URL
+    const SUPABASE_ANON_KEY = 'your-anon-key';               // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ ANON KEY
     const AGENTS_TABLE = 'registry_agents';
     const LOGIN_PAGE = '../../login.html'; // относительный путь к странице входа
 
+    // -------------------- ИНИЦИАЛИЗАЦИЯ КЛИЕНТА --------------------
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // DOM элементы
+    // -------------------- DOM ЭЛЕМЕНТЫ --------------------
     const authBlock = document.getElementById('authBlock');
     const accessMessageDiv = document.getElementById('accessMessage');
     const tableWrapper = document.getElementById('tableWrapper');
@@ -42,7 +44,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     const modalAccountOpenDate = document.getElementById('modalAccountOpenDate');
     const modalMore = document.getElementById('modalMore');
 
-    // Вспомогательные функции (escapeHTML, autoLinkifyItem, linkifyList) – без изменений
+    // -------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --------------------
     function escapeHTML(unsafe) {
         return unsafe.replace(/[&<>"]/g, function(m) {
             if (m === '&') return '&amp;';
@@ -54,13 +56,16 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     }
 
     function autoLinkifyItem(item) {
+        // email
         if (item.includes('@') && !item.startsWith('http')) {
             return `<a href="mailto:${escapeHTML(item)}">${escapeHTML(item)}</a>`;
         }
+        // телефон
         if (/^[\+]?[\d\s\(\)\-]{5,}$/.test(item.replace(/\s/g, ''))) {
             let cleaned = item.replace(/[^\d+]/g, '');
             return `<a href="tel:${escapeHTML(cleaned)}">${escapeHTML(item)}</a>`;
         }
+        // URL
         let url = item;
         if (!/^https?:\/\//i.test(url)) {
             url = 'https://' + url;
@@ -88,18 +93,19 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         return linkedItems.join(', ');
     }
 
-    // Функции для отображения сообщений
+    // -------------------- УПРАВЛЕНИЕ СООБЩЕНИЯМИ --------------------
     function showMessage(text, type = 'info') {
+        if (!accessMessageDiv) return;
         accessMessageDiv.textContent = text;
         accessMessageDiv.className = `access-message ${type}`;
         accessMessageDiv.style.display = 'block';
     }
 
     function hideMessage() {
-        accessMessageDiv.style.display = 'none';
+        if (accessMessageDiv) accessMessageDiv.style.display = 'none';
     }
 
-    // Отрисовка блока авторизации
+    // -------------------- ОТРИСОВКА БЛОКА АВТОРИЗАЦИИ --------------------
     function renderAuthBlock(session) {
         if (!authBlock) return;
         if (session) {
@@ -110,64 +116,62 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             `;
             document.getElementById('logoutButton')?.addEventListener('click', async () => {
                 await supabaseClient.auth.signOut();
-                // После выхода страница перезагрузится или обновится через слушатель
+                // Сессия изменится, сработает onAuthStateChange и обновит UI
             });
         } else {
-            authBlock.innerHTML = `
-                <a href="${LOGIN_PAGE}" class="auth-button">Войти</a>
-            `;
+            authBlock.innerHTML = `<a href="${LOGIN_PAGE}" class="auth-button">Войти</a>`;
         }
     }
 
-    // Проверка доступа (авторизация + паспорт)
+    // -------------------- ПРОВЕРКА ДОСТУПА (ПАСПОРТ) --------------------
     async function checkAccess(session) {
         if (!session) {
-            showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
+            console.log('Нет сессии');
             return false;
         }
-
         const user = session.user;
+        console.log('Проверка паспорта для пользователя:', user.id);
 
-        const { data: passport, error: passportError } = await supabaseClient
+        const { data: passport, error } = await supabaseClient
             .from('document_passport')
             .select('status')
             .eq('user_id', user.id)
             .eq('status', 'verified')
             .maybeSingle();
 
-        if (passportError) {
-            console.error('Ошибка при проверке паспорта:', passportError);
-            showMessage('Ошибка при проверке паспорта. Попробуйте позже.', 'error');
+        if (error) {
+            console.error('Ошибка при проверке паспорта:', error);
             return false;
         }
-
-        if (!passport) {
-            showMessage('У вас нет подтвержденного паспорта гражданина СФСРЮ. Доступ запрещён.', 'error');
-            return false;
-        }
-
-        hideMessage();
-        return true;
+        console.log('Результат проверки паспорта:', passport);
+        return !!passport;
     }
 
-    // Загрузка данных
+    // -------------------- ЗАГРУЗКА ДАННЫХ ИЗ ТАБЛИЦЫ --------------------
     async function loadAgents() {
-        const { data: agents, error } = await supabaseClient
+        console.log('Загрузка данных из таблицы', AGENTS_TABLE);
+        const { data, error } = await supabaseClient
             .from(AGENTS_TABLE)
             .select('*')
             .order('id', { ascending: true });
 
         if (error) {
             console.error('Ошибка загрузки данных:', error);
-            showMessage('Не удалось загрузить данные реестра.', 'error');
-            return [];
+            return null;
         }
-        return agents || [];
+        console.log('Загружено записей:', data?.length);
+        return data || [];
     }
 
-    // Отрисовка таблицы
+    // -------------------- ОТРИСОВКА ТАБЛИЦЫ --------------------
     function renderTable(agents) {
+        if (!agentsTbody || !tableWrapper) return;
         agentsTbody.innerHTML = '';
+        if (!agents || agents.length === 0) {
+            showMessage('В реестре пока нет записей.', 'info');
+            tableWrapper.style.display = 'none';
+            return;
+        }
         agents.forEach((agent, index) => {
             const row = document.createElement('tr');
             row.setAttribute('data-agent-id', agent.id);
@@ -187,8 +191,10 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             agentsTbody.appendChild(row);
         });
         tableWrapper.style.display = 'block';
+        hideMessage();
     }
 
+    // -------------------- ОТКРЫТИЕ МОДАЛЬНОГО ОКНА --------------------
     function openModal(agent) {
         modalFullName.textContent = agent.full_name || '—';
         modalAlias.textContent = agent.alias || '—';
@@ -218,55 +224,72 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         document.body.style.overflow = 'auto';
     }
 
-    // Инициализация: получаем сессию и запускаем слушатель изменений
+    // -------------------- ОСНОВНАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ --------------------
     async function init() {
-        // Слушаем изменения аутентификации
+        // Получаем начальную сессию
+        const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) console.error('Ошибка получения сессии:', sessionError);
+        renderAuthBlock(session);
+
+        // Проверяем доступ
+        const hasAccess = await checkAccess(session);
+        if (!hasAccess) {
+            if (session) {
+                showMessage('У вас нет подтвержденного паспорта гражданина СФСРЮ. Доступ запрещён.', 'error');
+            } else {
+                showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
+            }
+            tableWrapper.style.display = 'none';
+            return;
+        }
+
+        // Загружаем данные
+        const agents = await loadAgents();
+        if (agents === null) {
+            showMessage('Не удалось загрузить данные реестра.', 'error');
+            return;
+        }
+        renderTable(agents);
+
+        // Подписка на изменения авторизации
         supabaseClient.auth.onAuthStateChange(async (event, session) => {
+            console.log('Auth event:', event);
             renderAuthBlock(session);
-            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION') {
+            if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+                // При входе или обновлении токена перепроверяем доступ и загружаем данные
                 const hasAccess = await checkAccess(session);
                 if (hasAccess) {
                     const agents = await loadAgents();
-                    if (agents.length > 0) renderTable(agents);
-                    else showMessage('В реестре пока нет записей.', 'info');
+                    renderTable(agents);
                 } else {
+                    showMessage('У вас нет подтвержденного паспорта.', 'error');
                     tableWrapper.style.display = 'none';
+                    agentsTbody.innerHTML = '';
                 }
             } else if (event === 'SIGNED_OUT') {
                 showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
                 tableWrapper.style.display = 'none';
-                agentsTbody.innerHTML = ''; // очистка таблицы
+                agentsTbody.innerHTML = '';
             }
         });
-
-        // Получаем начальную сессию
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        renderAuthBlock(session);
-        if (session) {
-            const hasAccess = await checkAccess(session);
-            if (hasAccess) {
-                const agents = await loadAgents();
-                if (agents.length > 0) renderTable(agents);
-                else showMessage('В реестре пока нет записей.', 'info');
-            }
-        } else {
-            showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
-        }
     }
 
-    // Обработчики модального окна
+    // -------------------- ОБРАБОТЧИКИ МОДАЛЬНОГО ОКНА --------------------
     modalClose.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', (e) => {
         if (e.target === modalOverlay) closeModal();
     });
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modalOverlay.classList.contains('active')) closeModal();
+        if (e.key === 'Escape' && modalOverlay.classList.contains('active')) {
+            closeModal();
+        }
     });
 
-    // Мобильное меню
+    // -------------------- МОБИЛЬНОЕ МЕНЮ (из исходного кода) --------------------
     const menuToggle = document.getElementById('menuToggle');
     const navMenu = document.getElementById('navMenu');
     const menuOverlay = document.getElementById('menuOverlay');
+
     if (menuToggle) {
         menuToggle.addEventListener('click', () => {
             menuToggle.classList.toggle('active');
@@ -275,6 +298,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : 'auto';
         });
     }
+
     if (menuOverlay) {
         menuOverlay.addEventListener('click', () => {
             menuToggle.classList.remove('active');
@@ -284,5 +308,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         });
     }
 
+    // -------------------- ЗАПУСК --------------------
     init();
 })();
