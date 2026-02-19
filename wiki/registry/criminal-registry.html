@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="googlebot" content="noindex">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Реестр разыскиваемых лиц (уголовные дела) | СФСРЮ</title>
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <!-- Подключаем внешний CSS -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
+    <!-- Подключаем Supabase JS -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" id="menuToggle">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu" id="navMenu">
+                <ul>
+                    <li><a href="../../index.html">Главная</a></li>
+                    <li><a href="../../news.html">Новости</a></li>
+                    <li><a href="../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../services.html">Услуги</a></li>
+                    <li><a href="../../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+            <div class="menu-overlay" id="menuOverlay"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="registry-container">
+            <!-- Блок авторизации -->
+            <div class="auth-section" id="authSection"></div>
+
+            <h1 class="page-title">Реестр разыскиваемых лиц (по уголовным делам)</h1>
+            <p class="page-subtitle">Федеральный розыск СФСРЮ</p>
+
+            <div id="accessMessage" class="access-message"></div>
+
+            <!-- Контейнер для карточек -->
+            <div class="cards-grid" id="cardsGrid">
+                <!-- карточки будут добавлены динамически -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно с подробной информацией -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalFullName">Загрузка...</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-content">
+                    <!-- Левая колонка с фото -->
+                    <div class="modal-photo-section">
+                        <div class="main-photo">
+                            <img id="modalMainPhoto" src="" alt="Фото" class="main-photo-img">
+                        </div>
+                        <div class="photo-thumbnails" id="photoThumbnails">
+                            <!-- миниатюры дополнительных фото -->
+                        </div>
+                    </div>
+                    <!-- Правая колонка с данными -->
+                    <div class="modal-info-section">
+                        <div class="info-table">
+                            <div class="info-row">
+                                <span class="info-label">Дата рождения</span>
+                                <span class="info-value" id="modalBirthDate">—</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Место рождения</span>
+                                <span class="info-value" id="modalBirthPlace">—</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Пол</span>
+                                <span class="info-value" id="modalGender">—</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Гражданство</span>
+                                <span class="info-value" id="modalCitizenship">—</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Статья УК</span>
+                                <span class="info-value" id="modalCrimeArticle">—</span>
+                            </div>
+                        </div>
+                        <div class="details-section">
+                            <h3>Подробная информация</h3>
+                            <p id="modalDetails">—</p>
+                        </div>
+                        <div class="documents-section">
+                            <h3>Документы и материалы дела</h3>
+                            <div id="documentsList" class="documents-list">
+                                <!-- список ссылок на PDF -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Подвал сайта -->
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <!-- Подключаем основной JS -->
+    <script src="../../js/registry/criminal-registry.js" defer></script>
+</body>
+</html>
