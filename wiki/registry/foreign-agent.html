@@ -62,9 +62,7 @@
     <main class="main-content">
         <div class="registry-container">
             <!-- Блок авторизации (теперь здесь) -->
-            <div class="auth-section" id="authSection">
-                <!-- будет заполнен через JS -->
-            </div>
+            <div class="auth-section" id="authSection"></div>
 
             <h1 class="page-title">Реестр лиц, осуществляющих деятельность под иностранным влиянием</h1>
             <p class="page-subtitle">Федеральный реестр, ведущийся в соответствии с законодательством СФСРЮ</p>
@@ -92,78 +90,85 @@
         </div>
     </main>
 
-    <!-- Модальное окно (без изменений, но стили улучшим) -->
-<div class="modal-body">
-    <div class="agent-info-table">
-        <div class="info-row">
-            <div class="info-label">Основания для включения</div>
-            <div class="info-value" id="modalReason">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Дата включения в реестр</div>
-            <div class="info-value" id="modalInclusionDate">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Дата исключения из реестра</div>
-            <div class="info-value" id="modalExclusionDate">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Доменное имя информационного ресурса</div>
-            <div class="info-value" id="modalDomain">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Тип иностранного агента</div>
-            <div class="info-value" id="modalType">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">ИНН</div>
-            <div class="info-value" id="modalINN">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">НСС (при наличии)</div>
-            <div class="info-value" id="modalNSS">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Дата рождения / образования организации</div>
-            <div class="info-value" id="modalBirthDate">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Электронная почта</div>
-            <div class="info-value" id="modalEmail">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Номер телефона</div>
-            <div class="info-value" id="modalPhoneNumber">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Номер специального счета</div>
-            <div class="info-value" id="modalAccountNumber">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Наименование и местонахождение банка</div>
-            <div class="info-value" id="modalBankName">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">БИК уполномоченного банка</div>
-            <div class="info-value" id="modalBIC">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Номер корреспондентского счета</div>
-            <div class="info-value" id="modalCorrAccount">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Дата открытия специального счета</div>
-            <div class="info-value" id="modalAccountOpenDate">—</div>
-        </div>
-        <div class="info-row">
-            <div class="info-label">Дополнительные данные</div>
-            <div class="info-value" id="modalMore">—</div>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <span class="warning-badge">⚠ Информация Министерства юстиции СФСРЮ</span>
-    </div>
-</div>
+    <!-- Модальное окно в виде таблицы -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalFullName">Загрузка...</h2>
+                <p class="modal-subtitle" id="modalAlias">Загрузка...</p>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="agent-info-table">
+                    <div class="info-row">
+                        <div class="info-label">Основания для включения</div>
+                        <div class="info-value" id="modalReason">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Дата включения в реестр</div>
+                        <div class="info-value" id="modalInclusionDate">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Дата исключения из реестра</div>
+                        <div class="info-value" id="modalExclusionDate">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Доменное имя информационного ресурса</div>
+                        <div class="info-value" id="modalDomain">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Тип иностранного агента</div>
+                        <div class="info-value" id="modalType">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">ИНН</div>
+                        <div class="info-value" id="modalINN">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">НСС (при наличии)</div>
+                        <div class="info-value" id="modalNSS">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Дата рождения / образования организации</div>
+                        <div class="info-value" id="modalBirthDate">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Электронная почта</div>
+                        <div class="info-value" id="modalEmail">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Номер телефона</div>
+                        <div class="info-value" id="modalPhoneNumber">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Номер специального счета</div>
+                        <div class="info-value" id="modalAccountNumber">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Наименование и местонахождение банка</div>
+                        <div class="info-value" id="modalBankName">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">БИК уполномоченного банка</div>
+                        <div class="info-value" id="modalBIC">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Номер корреспондентского счета</div>
+                        <div class="info-value" id="modalCorrAccount">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Дата открытия специального счета</div>
+                        <div class="info-value" id="modalAccountOpenDate">—</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Дополнительные данные</div>
+                        <div class="info-value" id="modalMore">—</div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <span class="warning-badge">⚠ Информация Министерства юстиции СФСРЮ</span>
+                </div>
+            </div>
         </div>
     </div>
 
