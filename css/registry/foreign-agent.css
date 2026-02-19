@@ -256,3 +256,103 @@
     from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
 }
+/* Модальное окно - табличный вид */
+.modal-header {
+    background: linear-gradient(135deg, #ff6666, #cc0000);
+    color: white;
+    padding: 1rem 1.5rem; /* уменьшен padding */
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.modal-title {
+    font-size: 1.4rem; /* уменьшен */
+    font-weight: 700;
+    margin: 0 0 0.25rem 0;
+    padding-right: 2rem;
+}
+.modal-subtitle {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin: 0;
+}
+.modal-close {
+    top: 10px;
+    right: 15px;
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+/* Таблица данных */
+.agent-info-table {
+    display: grid;
+    grid-template-columns: 1fr 2fr; /* две колонки: метка и значение */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+}
+
+.info-row {
+    display: contents; /* чтобы дочерние элементы стали ячейками грида */
+}
+
+.info-label,
+.info-value {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #eee;
+    background: white;
+    word-break: break-word; /* разрешаем перенос длинных слов, но без разрыва середины (стандартно) */
+    line-height: 1.5;
+}
+
+.info-label {
+    font-weight: 600;
+    background: #f9f9f9;
+    border-right: 1px solid #eee;
+}
+
+/* Убираем нижнюю границу у последней строки */
+.info-row:last-child .info-label,
+.info-row:last-child .info-value {
+    border-bottom: none;
+}
+
+/* Мобильная версия: одна колонка */
+@media (max-width: 768px) {
+    .agent-info-table {
+        grid-template-columns: 1fr; /* одна колонка */
+    }
+    .info-label {
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        background: #f0f0f0; /* чуть темнее для отделения */
+    }
+    /* Для мобильных разрешаем перенос слов (без принудительных разрывов) */
+    .info-value {
+        word-break: break-word;
+        overflow-wrap: break-word;
+    }
+}
+
+.modal-footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 2px solid #ffcccc;
+    text-align: right;
+}
+
+.warning-badge {
+    display: inline-block;
+    background: #ffebee;
+    color: #c62828;
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
