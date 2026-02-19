@@ -33,7 +33,7 @@
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <!-- Шапка сайта -->
+    <!-- Шапка (без блока авторизации) -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -55,45 +55,44 @@
                     <li><a href="../../profile.html">Личный кабинет</a></li>
                 </ul>
             </nav>
-            <!-- Блок авторизации -->
-            <div class="auth-block" id="authBlock">
-                <!-- Сюда будет вставлена кнопка входа/выхода и email -->
-            </div>
             <div class="menu-overlay" id="menuOverlay"></div>
         </div>
     </header>
 
-    <!-- Основной контент -->
     <main class="main-content">
         <div class="registry-container">
+            <!-- Блок авторизации (теперь здесь) -->
+            <div class="auth-section" id="authSection">
+                <!-- будет заполнен через JS -->
+            </div>
+
             <h1 class="page-title">Реестр лиц, осуществляющих деятельность под иностранным влиянием</h1>
             <p class="page-subtitle">Федеральный реестр, ведущийся в соответствии с законодательством СФСРЮ</p>
 
-            <!-- Блок для сообщений о доступе -->
             <div id="accessMessage" class="access-message"></div>
 
-            <!-- Обёртка для закругления таблицы (изначально скрыта) -->
+            <!-- Обёртка для таблицы (изначально скрыта) -->
             <div class="table-wrapper" id="tableWrapper" style="display: none;">
                 <table class="registry-table" id="agentsTable">
                     <thead>
                         <tr>
-                            <th>№ п/п</th>
+                            <th>№</th>
                             <th>Полное наименование / ФИО</th>
-                            <th>«Псевдоним»</th>
-                            <th>Основания для включения</th>
-                            <th>Дата включения в реестр</th>
-                            <th>Дата исключения из реестра</th>
+                            <th>Псевдоним</th>
+                            <th>Основания</th>
+                            <th>Дата включения</th>
+                            <th>Дата исключения</th>
                         </tr>
                     </thead>
                     <tbody id="agentsTbody">
-                        <!-- Строки будут добавлены динамически -->
+                        <!-- строки динамически -->
                     </tbody>
                 </table>
             </div>
         </div>
     </main>
 
-    <!-- Модальное окно с подробной информацией -->
+    <!-- Модальное окно (без изменений, но стили улучшим) -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <div class="modal-header">
@@ -103,79 +102,82 @@
             </div>
             <div class="modal-body">
                 <div class="agent-info-grid">
+                    <!-- Левая колонка -->
                     <div class="info-group">
                         <div class="info-row">
-                            <span class="info-label">Основания для включения:</span>
-                            <span class="info-value" id="modalReason">Загрузка...</span>
+                            <span class="info-label">Основания:</span>
+                            <span class="info-value" id="modalReason">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Дата включения в реестр:</span>
-                            <span class="info-value" id="modalInclusionDate">Загрузка...</span>
+                            <span class="info-label">Дата включения:</span>
+                            <span class="info-value" id="modalInclusionDate">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Дата исключения из реестра:</span>
-                            <span class="info-value" id="modalExclusionDate">Загрузка...</span>
+                            <span class="info-label">Дата исключения:</span>
+                            <span class="info-value" id="modalExclusionDate">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Доменное имя информационного ресурса:</span>
-                            <span class="info-value" id="modalDomain">Загрузка...</span>
+                            <span class="info-label">Домены:</span>
+                            <span class="info-value" id="modalDomain">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Тип иностранного агента:</span>
-                            <span class="info-value" id="modalType">Загрузка...</span>
+                            <span class="info-label">Тип:</span>
+                            <span class="info-value" id="modalType">—</span>
                         </div>
                     </div>
+                    <!-- Средняя колонка -->
                     <div class="info-group">
                         <div class="info-row">
                             <span class="info-label">ИНН:</span>
-                            <span class="info-value" id="modalINN">Загрузка...</span>
+                            <span class="info-value" id="modalINN">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">НСС (при наличии):</span>
-                            <span class="info-value" id="modalNSS">Загрузка...</span>
+                            <span class="info-label">НСС:</span>
+                            <span class="info-value" id="modalNSS">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Дата рождения / образования организации:</span>
-                            <span class="info-value" id="modalBirthDate">Загрузка...</span>
+                            <span class="info-label">Дата рождения/регистрации:</span>
+                            <span class="info-value" id="modalBirthDate">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Электронная почта:</span>
-                            <span class="info-value" id="modalEmail">Загрузка...</span>
+                            <span class="info-label">Email:</span>
+                            <span class="info-value" id="modalEmail">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Номер телефона:</span>
-                            <span class="info-value" id="modalPhoneNumber">Загрузка...</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Номер специального счета:</span>
-                            <span class="info-value" id="modalAccountNumber">Загрузка...</span>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Наименование и местонахождение банка:</span>
-                            <span class="info-value" id="modalBankName">Загрузка...</span>
+                            <span class="info-label">Телефон:</span>
+                            <span class="info-value" id="modalPhoneNumber">—</span>
                         </div>
                     </div>
+                    <!-- Правая колонка -->
                     <div class="info-group">
                         <div class="info-row">
-                            <span class="info-label">БИК уполномоченного банка:</span>
-                            <span class="info-value" id="modalBIC">Загрузка...</span>
+                            <span class="info-label">Счет:</span>
+                            <span class="info-value" id="modalAccountNumber">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Номер корреспондентского счета:</span>
-                            <span class="info-value" id="modalCorrAccount">Загрузка...</span>
+                            <span class="info-label">Банк:</span>
+                            <span class="info-value" id="modalBankName">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Дата открытия специального счета:</span>
-                            <span class="info-value" id="modalAccountOpenDate">Загрузка...</span>
+                            <span class="info-label">БИК:</span>
+                            <span class="info-value" id="modalBIC">—</span>
                         </div>
                         <div class="info-row">
-                            <span class="info-label">Дополнительные данные:</span>
-                            <span class="info-value" id="modalMore">Загрузка...</span>
+                            <span class="info-label">Корр. счет:</span>
+                            <span class="info-value" id="modalCorrAccount">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Дата открытия счета:</span>
+                            <span class="info-value" id="modalAccountOpenDate">—</span>
+                        </div>
+                        <div class="info-row">
+                            <span class="info-label">Дополнительно:</span>
+                            <span class="info-value" id="modalMore">—</span>
                         </div>
                     </div>
                 </div>
-                <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 2px solid #ffcccc;">
-                    <span class="warning-badge">⚠ Информация предоставлена Министерством юстиции СФСРЮ</span>
+                <div class="modal-footer">
+                    <span class="warning-badge">⚠ Информация Министерства юстиции СФСРЮ</span>
                 </div>
             </div>
         </div>

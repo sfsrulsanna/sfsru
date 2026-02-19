@@ -1,4 +1,4 @@
-/* Общие стили для страницы реестра */
+/* Общие стили */
 .registry-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -22,60 +22,49 @@
     text-align: center;
 }
 
-/* Обёртка таблицы */
-.table-wrapper {
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+/* Секция авторизации */
+.auth-section {
+    text-align: center;
     margin-bottom: 2rem;
 }
-
-/* Стили для таблицы */
-.registry-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: white;
-}
-
-.registry-table thead tr {
+.auth-button {
+    display: inline-block;
     background: linear-gradient(135deg, #ff6666, #cc0000);
-}
-
-.registry-table th {
     color: white;
+    padding: 0.75rem 2rem;
+    border-radius: 40px;
+    text-decoration: none;
     font-weight: 600;
-    padding: 1rem;
-    text-align: left;
-    font-size: 0.95rem;
-}
-
-.registry-table td {
-    padding: 0.9rem 1rem;
-    border-bottom: 1px solid #eee;
-    font-size: 0.95rem;
-    color: #333;
-}
-
-.registry-table tbody tr {
+    border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: transform 0.2s;
 }
-
-.registry-table tbody tr:hover {
-    background-color: #fff9f9;
-    transform: scale(1.005);
+.auth-button:hover {
+    transform: scale(1.05);
 }
-
-.registry-table tbody tr:hover td:first-child {
+.user-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    background: #f8f8f8;
+    padding: 0.5rem 1.5rem;
+    border-radius: 40px;
+    border: 1px solid #ddd;
+}
+.user-email {
+    color: #333;
+    font-weight: 500;
+}
+.logout-btn {
+    background: none;
+    border: none;
     color: #cc0000;
     font-weight: 600;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
 }
 
-.registry-table tbody tr:nth-child(even) {
-    background-color: #fff5f5;
-}
-
-/* Сообщения о доступе */
+/* Сообщения доступа */
 .access-message {
     text-align: center;
     padding: 2rem;
@@ -84,23 +73,50 @@
     margin-bottom: 2rem;
     display: none;
 }
+.access-message.error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+.access-message.success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+.access-message.info { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
 
-.access-message.error {
-    background-color: #ffebee;
-    color: #c62828;
-    border: 1px solid #ef9a9a;
+/* Таблица */
+.table-wrapper {
+    border-radius: 16px;
+    overflow-x: auto;  /* горизонтальный скролл на мобильных */
+    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    -webkit-overflow-scrolling: touch;
 }
-
-.access-message.success {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    border: 1px solid #a5d6a7;
+.registry-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    min-width: 600px; /* обеспечивает скролл на узких экранах */
 }
-
-.access-message.info {
-    background-color: #e3f2fd;
-    color: #1565c0;
-    border: 1px solid #90caf9;
+.registry-table thead tr {
+    background: linear-gradient(135deg, #ff6666, #cc0000);
+}
+.registry-table th {
+    color: white;
+    font-weight: 600;
+    padding: 1rem;
+    text-align: left;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+.registry-table td {
+    padding: 0.9rem 1rem;
+    border-bottom: 1px solid #eee;
+    font-size: 0.95rem;
+    color: #333;
+}
+.registry-table tbody tr {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+.registry-table tbody tr:hover {
+    background-color: #fff9f9;
+}
+.registry-table tbody tr:nth-child(even) {
+    background-color: #fff5f5;
 }
 
 /* Модальное окно */
@@ -118,15 +134,11 @@
     align-items: center;
     animation: fadeIn 0.3s ease;
 }
-
-.modal-overlay.active {
-    display: flex;
-}
-
+.modal-overlay.active { display: flex; }
 .modal {
     background: white;
     border-radius: 12px;
-    max-width: 900px;
+    max-width: 1000px;
     width: 95%;
     max-height: 90vh;
     overflow-y: auto;
@@ -134,7 +146,6 @@
     position: relative;
     animation: slideUp 0.4s ease;
 }
-
 .modal-header {
     background: linear-gradient(135deg, #ff6666, #cc0000);
     color: white;
@@ -143,19 +154,17 @@
     top: 0;
     z-index: 10;
 }
-
 .modal-title {
     font-size: 1.8rem;
     font-weight: 700;
     margin: 0 0 0.5rem 0;
+    padding-right: 2rem;
 }
-
 .modal-subtitle {
     font-size: 1rem;
     opacity: 0.9;
     margin: 0;
 }
-
 .modal-close {
     position: absolute;
     top: 15px;
@@ -170,49 +179,53 @@
     cursor: pointer;
     transition: all 0.2s ease;
 }
-
 .modal-close:hover {
     background: rgba(255, 255, 255, 0.5);
     transform: rotate(90deg);
 }
-
 .modal-body {
     padding: 2rem;
 }
-
+/* Сетка для информации - три колонки на десктопе, одна на мобильном */
 .agent-info-grid {
-    display: block;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
 }
-
 .info-group {
-    margin-bottom: 1.5rem;
+    break-inside: avoid;
 }
-
 .info-row {
     display: flex;
     margin-bottom: 0.8rem;
     line-height: 1.6;
+    border-bottom: 1px dashed #f0f0f0;
+    padding-bottom: 0.5rem;
 }
-
 .info-label {
     font-weight: 600;
     color: #555;
-    min-width: 220px;
+    min-width: 130px;
     flex-shrink: 0;
-    margin-right: 0.75rem;
 }
-
 .info-value {
     color: #222;
     flex-grow: 1;
     word-break: break-word;
 }
-
-.info-value.empty {
-    color: #999;
-    font-style: italic;
+.info-value a {
+    color: #cc0000;
+    text-decoration: none;
 }
-
+.info-value a:hover {
+    text-decoration: underline;
+}
+.modal-footer {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #ffcccc;
+    text-align: right;
+}
 .warning-badge {
     display: inline-block;
     background: #ffebee;
@@ -221,7 +234,17 @@
     border-radius: 20px;
     font-size: 0.85rem;
     font-weight: 600;
-    margin-top: 0.5rem;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .registry-container { padding: 1rem; }
+    .page-title { font-size: 1.6rem; }
+    .agent-info-grid { grid-template-columns: 1fr; gap: 1rem; }
+    .info-label { min-width: 120px; }
+    .modal { width: 95%; max-height: 85vh; }
+    .registry-table { min-width: 100%; } /* на маленьких экранах таблица будет скроллиться, но мы уже задали overflow-x */
+    .registry-table th, .registry-table td { white-space: nowrap; }
 }
 
 /* Анимации */
@@ -229,86 +252,7 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
-
 @keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-
-/* Блок авторизации в шапке */
-.auth-block {
-    display: flex;
-    align-items: center;
-    margin-left: auto;
-    padding: 0 1rem;
-}
-
-.auth-block .user-email {
-    color: white;
-    margin-right: 1rem;
-    font-size: 0.9rem;
-}
-
-.auth-block .auth-button {
-    background: white;
-    color: #cc0000;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    text-decoration: none;
-    transition: background 0.2s;
-}
-
-.auth-block .auth-button:hover {
-    background: #f0f0f0;
-}
-
-/* Адаптивность */
-@media (max-width: 768px) {
-    .registry-container {
-        padding: 1rem;
-    }
-
-    .page-title {
-        font-size: 1.6rem;
-    }
-
-    .registry-table {
-        font-size: 0.85rem;
-    }
-
-    .registry-table th,
-    .registry-table td {
-        padding: 0.7rem 0.5rem;
-    }
-
-    .info-label {
-        min-width: 150px;
-        margin-right: 0.5rem;
-    }
-
-    .modal {
-        width: 95%;
-        max-height: 85vh;
-    }
-
-    .auth-block {
-        margin-left: 0;
-        padding: 1rem;
-        flex-direction: column;
-        align-items: flex-start;
-    }
-    .auth-block .user-email {
-        margin-bottom: 0.5rem;
-    }
-}
-
-/* Стили для шапки и подвала можно добавить из общего style.css */

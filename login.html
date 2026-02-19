@@ -238,82 +238,76 @@
     </p>
   </footer>
     <script src="js/mob-menu.js"></script>
-<script type="module">
-  import { supabase } from './js/supabase-config.js'
+    <script type="module">
+        import { supabase } from './js/supabase-config.js'
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const loginForm = document.getElementById('loginForm')
-    const googleBtn = document.getElementById('googleSignIn')
-    const alertDiv = document.getElementById('alertMessage')
+        // Получаем redirect из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirectTo = urlParams.get('redirect') || '/profile.html'; // по умолчанию профиль
 
-    function showAlert(message, type = 'error') {
-      alertDiv.className = `alert alert-${type}`
-      alertDiv.textContent = message
-      alertDiv.style.display = 'block'
-      setTimeout(() => alertDiv.style.display = 'none', 5000)
-    }
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('loginForm')
+            const googleBtn = document.getElementById('googleSignIn')
+            const alertDiv = document.getElementById('alertMessage')
 
-    // Вход по email/паролю
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault()
-      const email = document.getElementById('email').value.trim()
-      const password = document.getElementById('password').value
-
-      try {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password
-        })
-
-        if (error) throw error
-
-        // Проверяем, есть ли запись пользователя в таблице users
-        const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', data.user.id)
-          .single()
-
-        if (userError || !userData) {
-          // Если записи нет — разлогиниваем
-          await supabase.auth.signOut()
-          showAlert('Аккаунт не найден в системе. Обратитесь к администратору.', 'error')
-          return
-        }
-
-        // Всё хорошо — переходим в личный кабинет
-        window.location.href = 'profile.html'
-      } catch (error) {
-        console.error(error)
-        let message = 'Ошибка авторизации'
-        if (error.message.includes('Invalid login credentials')) {
-          message = 'Неверный email или пароль'
-        } else if (error.message.includes('Email not confirmed')) {
-          message = 'Подтвердите email, перейдя по ссылке в письме'
-        }
-        showAlert(message, 'error')
-      }
-    })
-
-    // Вход через Google
-    if (googleBtn) {
-      googleBtn.addEventListener('click', async () => {
-        try {
-          const { data, error } = await supabase.auth.signInWithOAuth({
-            provider: 'google',
-            options: {
-              redirectTo: window.location.origin + '/profile.html'
+            function showAlert(message, type = 'error') {
+                alertDiv.className = `alert alert-${type}`
+                alertDiv.textContent = message
+                alertDiv.style.display = 'block'
+                setTimeout(() => alertDiv.style.display = 'none', 5000)
             }
-          })
-          if (error) throw error
-          // Перенаправление произойдёт автоматически
-        } catch (error) {
-          console.error(error)
-          showAlert('Ошибка авторизации через Google', 'error')
-        }
-      })
-    }
-  })
-</script>
+
+            // Вход по email/паролю
+            loginForm.addEventListener('submit', async (e) => {
+                e.preventDefault()
+                const email = document.getElementById('email').value.trim()
+                const password = document.getElementById('password').value
+
+                try {
+                    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+                    if (error) throw error
+
+                    // Проверка наличия пользователя в таблице users (как в исходном)
+                    const { data: userData, error: userError } = await supabase
+                        .from('users')
+                        .select('*')
+                        .eq('id', data.user.id)
+                        .single()
+                    if (userError || !userData) {
+                        await supabase.auth.signOut()
+                        showAlert('Аккаунт не найден в системе. Обратитесь к администратору.', 'error')
+                        return
+                    }
+
+                    // Успешный вход – перенаправляем на сохранённый URL
+                    window.location.href = redirectTo
+                } catch (error) {
+                    console.error(error)
+                    let message = 'Ошибка авторизации'
+                    if (error.message.includes('Invalid login credentials')) message = 'Неверный email или пароль'
+                    else if (error.message.includes('Email not confirmed')) message = 'Подтвердите email, перейдя по ссылке в письме'
+                    showAlert(message, 'error')
+                }
+            })
+
+            // Вход через Google
+            if (googleBtn) {
+                googleBtn.addEventListener('click', async () => {
+                    try {
+                        const { error } = await supabase.auth.signInWithOAuth({
+                            provider: 'google',
+                            options: {
+                                redirectTo: window.location.origin + redirectTo  // передаём целевой URL
+                            }
+                        })
+                        if (error) throw error
+                    } catch (error) {
+                        console.error(error)
+                        showAlert('Ошибка авторизации через Google', 'error')
+                    }
+                })
+            }
+        })
+    </script>
 </body>
 </html>
