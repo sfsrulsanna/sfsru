@@ -57,22 +57,30 @@
     }
 
     // -------------------- НОВАЯ ФУНКЦИЯ: ПОЛУЧЕНИЕ ПОДПИСАННОГО URL --------------------
-    async function getSignedUrl(filePath) {
-        try {
-            const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
-                body: { path: filePath }
-            });
-            
-            if (error) {
-                console.error('Ошибка вызова функции:', error);
-                return null;
-            }
-            return data.signedUrl;
-        } catch (error) {
-            console.error('Ошибка получения подписанного URL:', error);
+async function getSignedUrl(filePath) {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+            console.error('Нет активной сессии');
             return null;
         }
+        const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
+            body: { path: filePath },
+            headers: {
+                Authorization: `Bearer ${session.access_token}`
+            }
+        });
+        
+        if (error) {
+            console.error('Ошибка вызова функции:', error);
+            return null;
+        }
+        return data.signedUrl;
+    } catch (error) {
+        console.error('Ошибка получения подписанного URL:', error);
+        return null;
     }
+}
 
     // -------------------- БЛОК АВТОРИЗАЦИИ --------------------
     function renderAuthSection(session) {
