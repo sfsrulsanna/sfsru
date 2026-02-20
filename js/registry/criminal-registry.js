@@ -1,3 +1,5 @@
+// criminal-registry.js (обновленная версия)
+
 (function() {
     "use strict";
 
@@ -7,8 +9,8 @@
     }
 
     // -------------------- КОНФИГУРАЦИЯ --------------------
-const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+	const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+	const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
     const CRIMINAL_TABLE = 'registry_criminal';
     const LOGIN_PAGE = '../../login.html';
 
@@ -52,6 +54,24 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     }
     function hideMessage() {
         if (accessMessageDiv) accessMessageDiv.style.display = 'none';
+    }
+
+    // -------------------- НОВАЯ ФУНКЦИЯ: ПОЛУЧЕНИЕ ПОДПИСАННОГО URL --------------------
+    async function getSignedUrl(filePath) {
+        try {
+            const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
+                body: { path: filePath }
+            });
+            
+            if (error) {
+                console.error('Ошибка вызова функции:', error);
+                return null;
+            }
+            return data.signedUrl;
+        } catch (error) {
+            console.error('Ошибка получения подписанного URL:', error);
+            return null;
+        }
     }
 
     // -------------------- БЛОК АВТОРИЗАЦИИ --------------------
@@ -117,51 +137,46 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         return !!passport;
     }
 
-    // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
-async function getSignedUrlForClient(filePath) {
-  try {
-    const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
-      body: { path: filePath }
-    })
-    
-    if (error) throw error
-    return data.signedUrl
-  } catch (error) {
-    console.error('Ошибка получения подписанного URL:', error)
-    return null
-  }
-}
+    // -------------------- ЗАГРУЗКА ДАННЫХ (ОБНОВЛЕННАЯ) --------------------
+    async function loadCriminals() {
+        const { data, error } = await supabaseClient
+            .from(CRIMINAL_TABLE)
+            .select('*')
+            .order('id', { ascending: true });
+        
+        if (error) {
+            console.error('Ошибка загрузки данных:', error);
+            return null;
+        }
 
-// Обновленная функция loadCriminals
-async function loadCriminals() {
-  const { data, error } = await supabaseClient
-    .from(CRIMINAL_TABLE)
-    .select('*')
-    .order('id', { ascending: true });
-  
-  if (error) {
-    console.error('Ошибка загрузки данных:', error);
-    return null;
-  }
+        // Для каждого преступника получаем подписанные URL для фото и документов
+        for (const criminal of data || []) {
+            // Обрабатываем фото
+            if (criminal.photo_paths && criminal.photo_paths.length > 0) {
+                criminal.photoUrls = await Promise.all(
+                    criminal.photo_paths.map(path => getSignedUrl(path))
+                );
+                // Фильтруем неудачные загрузки
+                criminal.photoUrls = criminal.photoUrls.filter(url => url !== null);
+            } else {
+                criminal.photoUrls = [];
+            }
 
-  // Для каждого преступника получаем подписанные URL
-  for (const criminal of data || []) {
-    if (criminal.photos && criminal.photos.length > 0) {
-      criminal.photoUrls = await Promise.all(
-        criminal.photos.map(path => getSignedUrlForClient(path))
-      );
+            // Обрабатываем документы
+            if (criminal.document_paths && criminal.document_paths.length > 0) {
+                criminal.documentUrls = await Promise.all(
+                    criminal.document_paths.map(path => getSignedUrl(path))
+                );
+                criminal.documentUrls = criminal.documentUrls.filter(url => url !== null);
+            } else {
+                criminal.documentUrls = [];
+            }
+        }
+        
+        return data || [];
     }
-    if (criminal.documents && criminal.documents.length > 0) {
-      criminal.documentUrls = await Promise.all(
-        criminal.documents.map(path => getSignedUrlForClient(path))
-      );
-    }
-  }
-  
-  return data || [];
-}
 
-    // -------------------- ОТРИСОВКА КАРТОЧЕК --------------------
+    // -------------------- ОТРИСОВКА КАРТОЧЕК (ОБНОВЛЕННАЯ) --------------------
     function renderCards(criminals) {
         cardsGrid.innerHTML = '';
         if (!criminals || criminals.length === 0) {
@@ -174,7 +189,10 @@ async function loadCriminals() {
             card.setAttribute('data-id', criminal.id);
 
             // Основное фото (первое из массива или заглушка)
-            const mainPhoto = (criminal.photos && criminal.photos.length > 0) ? criminal.photos[0] : 'https://via.placeholder.com/300x200?text=Нет+фото';
+            const mainPhoto = (criminal.photoUrls && criminal.photoUrls.length > 0) 
+                ? criminal.photoUrls[0] 
+                : 'https://via.placeholder.com/300x200?text=Нет+фото';
+            
             const birthDate = criminal.birth_date ? new Date(criminal.birth_date).toLocaleDateString('ru-RU') : '—';
 
             card.innerHTML = `
@@ -190,15 +208,16 @@ async function loadCriminals() {
         hideMessage();
     }
 
-    // -------------------- МОДАЛЬНОЕ ОКНО --------------------
+    // -------------------- МОДАЛЬНОЕ ОКНО (ОБНОВЛЕННОЕ) --------------------
     function openModal(criminal) {
         modalFullName.textContent = criminal.full_name || '—';
 
-        // Фотографии
-        const photos = criminal.photos || [];
+        // Фотографии (используем подписанные URL)
+        const photos = criminal.photoUrls || [];
         if (photos.length > 0) {
             modalMainPhoto.src = photos[0];
             modalMainPhoto.alt = criminal.full_name;
+            
             // Миниатюры
             photoThumbnails.innerHTML = '';
             photos.forEach((photo, index) => {
@@ -227,13 +246,12 @@ async function loadCriminals() {
         modalCrimeArticle.textContent = criminal.crime_article || '—';
         modalDetails.textContent = criminal.details || '—';
 
-        // Документы
-        const docs = criminal.documents || [];
+        // Документы (используем подписанные URL)
+        const docs = criminal.documentUrls || [];
         documentsList.innerHTML = '';
         if (docs.length > 0) {
-            docs.forEach(doc => {
-                // Предполагаем, что doc — это URL
-                const fileName = doc.split('/').pop() || 'Документ';
+            docs.forEach((doc, index) => {
+                const fileName = `Документ ${index + 1}`;
                 const link = document.createElement('a');
                 link.href = doc;
                 link.target = '_blank';
