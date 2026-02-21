@@ -29,8 +29,6 @@
 
   <!-- Единый стиль сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
-  <!-- Стиль паспорта (для карточек) -->
-  <link rel="stylesheet" href="../../css/personal-profile/passport.css" />
   <!-- Иконки -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 
@@ -65,6 +63,8 @@
       box-shadow: 0 4px 12px rgba(0,0,0,0.08);
       border: 1px solid #eee;
       position: relative;
+      display: flex;
+      flex-direction: column;
     }
     .user-content {
       display: flex;
@@ -103,6 +103,26 @@
     #userQrCode {
       width: 100%;
       height: 100%;
+    }
+    /* Кнопка "Мой E-Pass" в правом нижнем углу блока */
+    .epass-button {
+      position: absolute;
+      bottom: 15px;
+      right: 15px;
+      background: #7b091a;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: opacity 0.2s;
+      box-shadow: 0 2px 8px rgba(123,9,26,0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .epass-button:hover {
+      opacity: 0.9;
     }
 
     /* ========== КАРТОЧКИ ДОКУМЕНТОВ ========== */
@@ -174,6 +194,57 @@
       font-weight: 500;
     }
 
+    /* ========== РАЗДЕЛЫ ========== */
+    .section-title {
+      font-size: 1.5rem;
+      color: #7b091a;
+      margin: 2rem 0 1rem;
+      border-bottom: 2px solid #7b091a;
+      padding-bottom: 0.3rem;
+    }
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin: 1rem 0;
+    }
+    .action-btn {
+      background: linear-gradient(135deg, #7b091a, #a83232);
+      color: white;
+      border: none;
+      border-radius: 30px;
+      padding: 0.6rem 1.8rem;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: opacity 0.2s;
+    }
+    .action-btn:hover {
+      opacity: 0.9;
+    }
+    .special-documents {
+      display: none; /* скрыт по умолчанию */
+      margin: 2rem 0;
+    }
+    .special-documents.visible {
+      display: block;
+    }
+    .special-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .special-item {
+      background: #f1f3f5;
+      border-radius: 8px;
+      padding: 0.8rem 1.5rem;
+      color: #495057;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
     /* ========== КНОПКА ДОБАВЛЕНИЯ ========== */
     .add-btn {
       background: linear-gradient(135deg, #7b091a, #a83232);
@@ -195,13 +266,40 @@
       color: #666;
     }
 
+    /* ========== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ========== */
     @media (max-width: 768px) {
       .user-content {
         flex-direction: column;
         text-align: center;
       }
+      .user-avatar {
+        margin: 0 auto;
+      }
+      .qr-code-container {
+        width: 60px;
+        height: 60px;
+        top: 10px;
+        right: 10px;
+      }
+      .epass-button {
+        position: static;
+        margin-top: 1rem;
+        align-self: flex-end;
+      }
       .documents-grid {
         grid-template-columns: 1fr;
+      }
+      .button-row {
+        flex-direction: column;
+      }
+      .action-btn {
+        text-align: center;
+      }
+      .special-list {
+        flex-direction: column;
+      }
+      .special-item {
+        text-align: center;
       }
     }
   </style>
@@ -259,10 +357,41 @@
               <div class="user-detail"><strong>Гражданство:</strong> СФСРЮ</div>
             </div>
           </div>
+          <!-- Кнопка "Мой E-Pass" в правом нижнем углу -->
+          <a href="epass.html" class="epass-button">
+            <i class="fas fa-passport"></i> Мой E-Pass
+          </a>
         </div>
 
-        <!-- СЕТКА ДОКУМЕНТОВ -->
+        <!-- СЕТКА ДОКУМЕНТОВ (сюда добавляются карточки всех типов) -->
         <div id="documentsGrid" class="documents-grid"></div>
+
+        <!-- КНОПКИ "СВИДЕТЕЛЬСТВА" И "ОБРАЗОВАНИЕ" -->
+        <div class="button-row">
+          <a href="../../certificates/" class="action-btn">Свидетельства</a>
+          <a href="../../education/" class="action-btn">Образование</a>
+        </div>
+
+        <!-- БЛОК "СПЕЦИАЛЬНЫЕ ДОКУМЕНТЫ" (скрыт по умолчанию) -->
+        <div class="special-documents" id="specialDocs">
+          <h3 class="section-title">Специальные документы</h3>
+          <div class="special-list">
+            <a href="president.html" class="special-item">Удостоверение Президента СФСРЮ</a>
+            <a href="vice-president.html" class="special-item">Удостоверение Вице-президента СФСРЮ</a>
+            <a href="council-chair.html" class="special-item">Удостоверение Председателя Совета Федерации СФСРЮ</a>
+            <a href="gov-chair.html" class="special-item">Удостоверение Председателя Правительства СФСРЮ</a>
+            <a href="deputy.html" class="special-item">Удостоверение депутата Совета Федерации СФСРЮ</a>
+            <a href="judge.html" class="special-item">Удостоверение судьи</a>
+            <a href="lawyer.html" class="special-item">Удостоверение адвоката</a>
+          </div>
+        </div>
+
+        <!-- БЛОК "БИЛЕТЫ" -->
+        <h3 class="section-title">Билеты</h3>
+        <div class="button-row">
+          <a href="../../tickets/avia/" class="action-btn">Авиабилеты</a>
+          <a href="../../tickets/railway/" class="action-btn">Железнодорожные билеты</a>
+        </div>
 
         <!-- КНОПКА ДОБАВЛЕНИЯ НОВОГО ДОКУМЕНТА -->
         <div style="text-align: center; margin-top: 2rem;">
@@ -293,7 +422,7 @@
   <script type="module" src="../../js/supabase-config.js"></script>
   <script src="../../js/mob-menu.js"></script>
 
-  <!-- ========== ПОЛНЫЙ JS КОД (ДОПОЛНЕННЫЙ) ========== -->
+  <!-- ========== ПОЛНЫЙ JS КОД (ОБНОВЛЁННЫЙ) ========== -->
   <script type="module">
     import { supabase } from '../../js/supabase-config.js'
 
@@ -328,9 +457,10 @@
         return
       }
 
+      // Добавляем поле role в запрос (если оно есть в таблице users)
       const { data, error } = await supabase
         .from('users')
-        .select('surname, name, patronymic, date_of_birth, place_of_birth, personal_code, gender')
+        .select('surname, name, patronymic, date_of_birth, place_of_birth, personal_code, gender, role')
         .eq('id', session.user.id)
         .single()
 
@@ -342,21 +472,32 @@
       userProfile = data
       personalCode = data.personal_code
       renderUserInfo()
+
+      // Показываем блок специальных документов, если роль === 'special' (или другое условие)
+      const specialBlock = document.getElementById('specialDocs')
+      if (specialBlock) {
+        if (data.role === 'special' || data.role === 'admin' || data.personal_code?.includes('SPECIAL')) {
+          specialBlock.classList.add('visible')
+        }
+      }
     }
 
-    // --- Загрузка ВСЕХ документов по personal_code ---
+    // --- Загрузка ВСЕХ документов по personal_code (включая новые) ---
     async function loadAllDocuments() {
       if (!personalCode) return []
 
-      // Массив всех таблиц документов (добавлены новые)
       const tables = [
         { type: 'passport', table: 'document_passport' },
         { type: 'foreignPassport', table: 'document_foreign_passport' },
         { type: 'inn', table: 'documents_inn' },
-        { type: 'nss', table: 'documents_nss' },                 // Номер социального счёта
-        { type: 'driverLicense', table: 'documents_driver_license' }, // Водительские права
-        { type: 'idCard', table: 'documents_idcard' },         // ID-карта
-        { type: 'militaryId', table: 'documents_military_id' }  // Военный билет
+        { type: 'nss', table: 'documents_nss' },
+        { type: 'driverLicense', table: 'documents_driver_license' },
+        { type: 'idCard', table: 'documents_idcard' },
+        { type: 'militaryId', table: 'documents_military_id' },
+        { type: 'oms', table: 'documents_oms' },
+        { type: 'pension', table: 'documents_pension' },
+        { type: 'disability', table: 'documents_disability' },
+        { type: 'internationalDriving', table: 'documents_international_driving' }
       ]
 
       let allDocs = []
@@ -416,7 +557,7 @@
       }
     }
 
-    // --- Функция получения номера документа в зависимости от типа ---
+    // --- Функция получения номера документа в зависимости от типа (с учётом новых) ---
     function getDocumentNumber(doc, type) {
       switch (type) {
         case 'passport':
@@ -426,13 +567,21 @@
         case 'inn':
           return doc.inn_number || '—'
         case 'nss':
-          return doc.nss_number || doc.number || '—'   // предположим поле nss_number
+          return doc.nss_number || doc.number || '—'
         case 'driverLicense':
           return doc.license_number || doc.series_number || '—'
         case 'idCard':
           return doc.card_number || doc.series_number || '—'
         case 'militaryId':
           return doc.ticket_number || doc.series_number || '—'
+        case 'oms':
+          return doc.oms_number || doc.number || '—'
+        case 'pension':
+          return doc.pension_number || doc.number || '—'
+        case 'disability':
+          return doc.disability_number || doc.number || '—'
+        case 'internationalDriving':
+          return doc.license_number || doc.series_number || '—'
         default:
           return '—'
       }
@@ -460,15 +609,19 @@
         }
       })
 
-      // Список поддерживаемых документов с названиями и путями к страницам
+      // Все поддерживаемые типы документов (включая новые)
       const docTypes = [
         { type: 'passport', title: 'Паспорт гражданина СФСРЮ', url: 'passport.html' },
-        { type: 'foreignPassport', title: 'Заграничный паспорт', url: 'foreign-passport.html' },
+        { type: 'foreignPassport', title: 'Заграничный паспорт гражданина СФСРЮ', url: 'foreign-passport.html' },
         { type: 'inn', title: 'ИНН', url: 'inn.html' },
         { type: 'nss', title: 'Номер социального счёта (НСС)', url: 'nss.html' },
         { type: 'driverLicense', title: 'Водительское удостоверение', url: 'driver-license.html' },
         { type: 'idCard', title: 'ID-карта', url: 'id-card.html' },
-        { type: 'militaryId', title: 'Военный билет', url: 'military-id.html' }
+        { type: 'militaryId', title: 'Военный билет', url: 'military-id.html' },
+        { type: 'oms', title: 'Полис ОМС', url: 'oms.html' },
+        { type: 'pension', title: 'Удостоверение пенсионера', url: 'pension.html' },
+        { type: 'disability', title: 'Инвалидность', url: 'disability.html' },
+        { type: 'internationalDriving', title: 'Международное водительское удостоверение', url: 'international-driving.html' }
       ]
 
       docTypes.forEach(item => {
