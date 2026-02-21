@@ -8,8 +8,8 @@
     }
 
     // -------------------- КОНФИГУРАЦИЯ --------------------
-    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ваш ключ
+	const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+	const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
     const CRIMINAL_TABLE = 'registry_criminal';
     const LOGIN_PAGE = '../../login.html';
 
@@ -55,18 +55,31 @@
         if (accessMessageDiv) accessMessageDiv.style.display = 'none';
     }
 
-    // -------------------- ФУНКЦИЯ ДЛЯ ПУБЛИЧНОГО URL --------------------
-    function getPublicUrl(filePath) {
-        try {
-            const { data } = supabaseClient.storage
-                .from('criminal-files')
-                .getPublicUrl(filePath);
-            return data.publicUrl;
-        } catch (error) {
-            console.error('Ошибка получения публичного URL:', error);
+    // -------------------- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ПОДПИСАННОГО URL --------------------
+async function getSignedUrl(filePath) {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+            console.error('Нет активной сессии');
             return null;
         }
+        console.log('Токен (первые 20 символов):', session.access_token.substring(0, 20));
+        
+        const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
+            body: { path: filePath }
+        });
+
+        if (error) {
+            console.error('Ошибка вызова функции:', error);
+            return null;
+        }
+        console.log('Ответ функции:', data);
+        return data.signedUrl;
+    } catch (error) {
+        console.error('Ошибка получения подписанного URL:', error);
+        return null;
     }
+}
 
     // -------------------- БЛОК АВТОРИЗАЦИИ --------------------
     function renderAuthSection(session) {
@@ -131,7 +144,7 @@
         return !!passport;
     }
 
-    // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
+    // -------------------- ЗАГРУЗКА ДАННЫХ (С ПОДПИСАННЫМИ URL) --------------------
     async function loadCriminals() {
         const { data, error } = await supabaseClient
             .from(CRIMINAL_TABLE)
@@ -143,19 +156,22 @@
             return null;
         }
 
+        // Для каждого преступника получаем подписанные URL для фото и документов
         for (const criminal of data || []) {
             if (criminal.photo_paths && criminal.photo_paths.length > 0) {
-                criminal.photoUrls = criminal.photo_paths
-                    .map(path => getPublicUrl(path))
-                    .filter(url => url !== null);
+                const signedUrls = await Promise.all(
+                    criminal.photo_paths.map(path => getSignedUrl(path))
+                );
+                criminal.photoUrls = signedUrls.filter(url => url !== null);
             } else {
                 criminal.photoUrls = [];
             }
 
             if (criminal.document_paths && criminal.document_paths.length > 0) {
-                criminal.documentUrls = criminal.document_paths
-                    .map(path => getPublicUrl(path))
-                    .filter(url => url !== null);
+                const signedUrls = await Promise.all(
+                    criminal.document_paths.map(path => getSignedUrl(path))
+                );
+                criminal.documentUrls = signedUrls.filter(url => url !== null);
             } else {
                 criminal.documentUrls = [];
             }
@@ -164,7 +180,7 @@
         return data || [];
     }
 
-    // -------------------- SVG-ЗАГЛУШКИ --------------------
+    // -------------------- SVG-ЗАГЛУШКИ (встроенные, без внешних запросов) --------------------
     const noPhotoSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;200&quot; viewBox=&quot;0 0 300 200&quot;%3E%3Crect width=&quot;300&quot; height=&quot;200&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot; fill=&quot;%23999&quot;%3EНет фото%3C/text%3E%3C/svg%3E';
     const errorSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;200&quot; viewBox=&quot;0 0 300 200&quot;%3E%3Crect width=&quot;300&quot; height=&quot;200&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot; fill=&quot;%23999&quot;%3EОшибка загрузки%3C/text%3E%3C/svg%3E';
     const noPhotoModalSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;400&quot; height=&quot;300&quot; viewBox=&quot;0 0 400 300&quot;%3E%3Crect width=&quot;400&quot; height=&quot;300&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;16&quot; fill=&quot;%23999&quot;%3EНет фото%3C/text%3E%3C/svg%3E';
@@ -181,6 +197,7 @@
             card.className = 'card';
             card.setAttribute('data-id', criminal.id);
 
+            // Основное фото (первое из массива или заглушка)
             const mainPhoto = (criminal.photoUrls && criminal.photoUrls.length > 0) 
                 ? criminal.photoUrls[0] 
                 : noPhotoSVG;
@@ -204,6 +221,7 @@
     function openModal(criminal) {
         modalFullName.textContent = criminal.full_name || '—';
 
+        // Фотографии (используем подписанные URL)
         const photos = criminal.photoUrls || [];
         if (photos.length > 0) {
             modalMainPhoto.src = photos[0];
@@ -229,6 +247,7 @@
             photoThumbnails.innerHTML = '';
         }
 
+        // Данные
         modalBirthDate.textContent = criminal.birth_date ? new Date(criminal.birth_date).toLocaleDateString('ru-RU') : '—';
         modalBirthPlace.textContent = criminal.birth_place || '—';
         modalGender.textContent = criminal.gender || '—';
@@ -236,6 +255,7 @@
         modalCrimeArticle.textContent = criminal.crime_article || '—';
         modalDetails.textContent = criminal.details || '—';
 
+        // Документы (используем подписанные URL)
         const docs = criminal.documentUrls || [];
         documentsList.innerHTML = '';
         if (docs.length > 0) {
