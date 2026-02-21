@@ -1,16 +1,15 @@
-// criminal-registry.js (обновленная версия)
-
+// criminal-registry.js
 (function() {
     "use strict";
 
     if (typeof supabase === 'undefined') {
-        console.error('Библиотека Supabase не загружена.');
+        console.error('Библиотека Supabase не загружена. Подключите её перед этим скриптом.');
         return;
     }
 
     // -------------------- КОНФИГУРАЦИЯ --------------------
-    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co'; // ЗАМЕНИТЕ
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ЗАМЕНИТЕ
+    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ URL
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'; // ЗАМЕНИТЕ НА РЕАЛЬНЫЙ ANON KEY
     const CRIMINAL_TABLE = 'registry_criminal';
     const LOGIN_PAGE = '../../login.html';
 
@@ -56,17 +55,25 @@
         if (accessMessageDiv) accessMessageDiv.style.display = 'none';
     }
 
-    // -------------------- НОВАЯ ФУНКЦИЯ: ПОЛУЧЕНИЕ ПОДПИСАННОГО URL --------------------
+    // -------------------- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ПОДПИСАННОГО URL --------------------
     async function getSignedUrl(filePath) {
         try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) {
+                console.error('Нет активной сессии');
+                return null;
+            }
+            
             const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
                 body: { path: filePath }
+                // SDK сам добавит Authorization и apikey
             });
-            
+
             if (error) {
                 console.error('Ошибка вызова функции:', error);
                 return null;
             }
+            
             return data.signedUrl;
         } catch (error) {
             console.error('Ошибка получения подписанного URL:', error);
@@ -137,7 +144,7 @@
         return !!passport;
     }
 
-    // -------------------- ЗАГРУЗКА ДАННЫХ (ОБНОВЛЕННАЯ) --------------------
+    // -------------------- ЗАГРУЗКА ДАННЫХ (С ПОДПИСАННЫМИ URL) --------------------
     async function loadCriminals() {
         const { data, error } = await supabaseClient
             .from(CRIMINAL_TABLE)
@@ -151,23 +158,20 @@
 
         // Для каждого преступника получаем подписанные URL для фото и документов
         for (const criminal of data || []) {
-            // Обрабатываем фото
             if (criminal.photo_paths && criminal.photo_paths.length > 0) {
-                criminal.photoUrls = await Promise.all(
+                const signedUrls = await Promise.all(
                     criminal.photo_paths.map(path => getSignedUrl(path))
                 );
-                // Фильтруем неудачные загрузки
-                criminal.photoUrls = criminal.photoUrls.filter(url => url !== null);
+                criminal.photoUrls = signedUrls.filter(url => url !== null);
             } else {
                 criminal.photoUrls = [];
             }
 
-            // Обрабатываем документы
             if (criminal.document_paths && criminal.document_paths.length > 0) {
-                criminal.documentUrls = await Promise.all(
+                const signedUrls = await Promise.all(
                     criminal.document_paths.map(path => getSignedUrl(path))
                 );
-                criminal.documentUrls = criminal.documentUrls.filter(url => url !== null);
+                criminal.documentUrls = signedUrls.filter(url => url !== null);
             } else {
                 criminal.documentUrls = [];
             }
@@ -176,7 +180,12 @@
         return data || [];
     }
 
-    // -------------------- ОТРИСОВКА КАРТОЧЕК (ОБНОВЛЕННАЯ) --------------------
+    // -------------------- SVG-ЗАГЛУШКИ (встроенные, без внешних запросов) --------------------
+    const noPhotoSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;200&quot; viewBox=&quot;0 0 300 200&quot;%3E%3Crect width=&quot;300&quot; height=&quot;200&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot; fill=&quot;%23999&quot;%3EНет фото%3C/text%3E%3C/svg%3E';
+    const errorSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;200&quot; viewBox=&quot;0 0 300 200&quot;%3E%3Crect width=&quot;300&quot; height=&quot;200&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot; fill=&quot;%23999&quot;%3EОшибка загрузки%3C/text%3E%3C/svg%3E';
+    const noPhotoModalSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;400&quot; height=&quot;300&quot; viewBox=&quot;0 0 400 300&quot;%3E%3Crect width=&quot;400&quot; height=&quot;300&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;16&quot; fill=&quot;%23999&quot;%3EНет фото%3C/text%3E%3C/svg%3E';
+
+    // -------------------- ОТРИСОВКА КАРТОЧЕК --------------------
     function renderCards(criminals) {
         cardsGrid.innerHTML = '';
         if (!criminals || criminals.length === 0) {
@@ -191,12 +200,12 @@
             // Основное фото (первое из массива или заглушка)
             const mainPhoto = (criminal.photoUrls && criminal.photoUrls.length > 0) 
                 ? criminal.photoUrls[0] 
-                : 'https://via.placeholder.com/300x200?text=Нет+фото';
+                : noPhotoSVG;
             
             const birthDate = criminal.birth_date ? new Date(criminal.birth_date).toLocaleDateString('ru-RU') : '—';
 
             card.innerHTML = `
-                <img src="${escapeHTML(mainPhoto)}" alt="Фото" class="card-image" onerror="this.src='https://via.placeholder.com/300x200?text=Ошибка'">
+                <img src="${escapeHTML(mainPhoto)}" alt="Фото" class="card-image" onerror="this.src='${errorSVG}'">
                 <div class="card-content">
                     <div class="card-name">${escapeHTML(criminal.full_name || '')}</div>
                     <div class="card-birth">Дата рождения: ${birthDate}</div>
@@ -208,7 +217,7 @@
         hideMessage();
     }
 
-    // -------------------- МОДАЛЬНОЕ ОКНО (ОБНОВЛЕННОЕ) --------------------
+    // -------------------- МОДАЛЬНОЕ ОКНО --------------------
     function openModal(criminal) {
         modalFullName.textContent = criminal.full_name || '—';
 
@@ -218,13 +227,13 @@
             modalMainPhoto.src = photos[0];
             modalMainPhoto.alt = criminal.full_name;
             
-            // Миниатюры
             photoThumbnails.innerHTML = '';
             photos.forEach((photo, index) => {
                 const thumb = document.createElement('img');
                 thumb.src = photo;
                 thumb.alt = `Фото ${index+1}`;
                 thumb.className = 'thumbnail';
+                thumb.onerror = function() { this.src = errorSVG; };
                 if (index === 0) thumb.classList.add('active');
                 thumb.addEventListener('click', () => {
                     modalMainPhoto.src = photo;
@@ -234,7 +243,7 @@
                 photoThumbnails.appendChild(thumb);
             });
         } else {
-            modalMainPhoto.src = 'https://via.placeholder.com/400x300?text=Нет+фото';
+            modalMainPhoto.src = noPhotoModalSVG;
             photoThumbnails.innerHTML = '';
         }
 
