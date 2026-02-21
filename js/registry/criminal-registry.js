@@ -1,10 +1,9 @@
-// criminal-registry.js (обновленная версия)
-
+// criminal-registry.js
 (function() {
     "use strict";
 
     if (typeof supabase === 'undefined') {
-        console.error('Библиотека Supabase не загружена.');
+        console.error('Библиотека Supabase не загружена. Подключите её перед этим скриптом.');
         return;
     }
 
@@ -56,19 +55,18 @@
         if (accessMessageDiv) accessMessageDiv.style.display = 'none';
     }
 
-    // -------------------- НОВАЯ ФУНКЦИЯ: ПОЛУЧЕНИЕ ПОДПИСАННОГО URL --------------------
-async function getPublicUrl(filePath) {
-    try {
-        const { data } = supabaseClient.storage
-            .from('criminal-files')
-            .getPublicUrl(filePath);
-        
-        return data.publicUrl;
-    } catch (error) {
-        console.error('Ошибка получения публичного URL:', error);
-        return null;
+    // -------------------- НОВАЯ ФУНКЦИЯ: ПОЛУЧЕНИЕ ПУБЛИЧНОГО URL (ВРЕМЕННОЕ РЕШЕНИЕ) --------------------
+    function getPublicUrl(filePath) {
+        try {
+            const { data } = supabaseClient.storage
+                .from('criminal-files')
+                .getPublicUrl(filePath);
+            return data.publicUrl;
+        } catch (error) {
+            console.error('Ошибка получения публичного URL:', error);
+            return null;
+        }
     }
-}
 
     // -------------------- БЛОК АВТОРИЗАЦИИ --------------------
     function renderAuthSection(session) {
@@ -133,7 +131,7 @@ async function getPublicUrl(filePath) {
         return !!passport;
     }
 
-    // -------------------- ЗАГРУЗКА ДАННЫХ (ОБНОВЛЕННАЯ) --------------------
+    // -------------------- ЗАГРУЗКА ДАННЫХ (ИСПОЛЬЗУЕМ ПУБЛИЧНЫЕ URL) --------------------
     async function loadCriminals() {
         const { data, error } = await supabaseClient
             .from(CRIMINAL_TABLE)
@@ -145,25 +143,22 @@ async function getPublicUrl(filePath) {
             return null;
         }
 
-        // Для каждого преступника получаем подписанные URL для фото и документов
+        // Для каждого преступника получаем публичные URL для фото и документов
         for (const criminal of data || []) {
             // Обрабатываем фото
             if (criminal.photo_paths && criminal.photo_paths.length > 0) {
-                criminal.photoUrls = await Promise.all(
-                    criminal.photo_paths.map(path => getSignedUrl(path))
-                );
-                // Фильтруем неудачные загрузки
-                criminal.photoUrls = criminal.photoUrls.filter(url => url !== null);
+                criminal.photoUrls = criminal.photo_paths
+                    .map(path => getPublicUrl(path))
+                    .filter(url => url !== null);
             } else {
                 criminal.photoUrls = [];
             }
 
             // Обрабатываем документы
             if (criminal.document_paths && criminal.document_paths.length > 0) {
-                criminal.documentUrls = await Promise.all(
-                    criminal.document_paths.map(path => getSignedUrl(path))
-                );
-                criminal.documentUrls = criminal.documentUrls.filter(url => url !== null);
+                criminal.documentUrls = criminal.document_paths
+                    .map(path => getPublicUrl(path))
+                    .filter(url => url !== null);
             } else {
                 criminal.documentUrls = [];
             }
@@ -172,7 +167,7 @@ async function getPublicUrl(filePath) {
         return data || [];
     }
 
-    // -------------------- ОТРИСОВКА КАРТОЧЕК (ОБНОВЛЕННАЯ) --------------------
+    // -------------------- ОТРИСОВКА КАРТОЧЕК --------------------
     function renderCards(criminals) {
         cardsGrid.innerHTML = '';
         if (!criminals || criminals.length === 0) {
@@ -187,12 +182,12 @@ async function getPublicUrl(filePath) {
             // Основное фото (первое из массива или заглушка)
             const mainPhoto = (criminal.photoUrls && criminal.photoUrls.length > 0) 
                 ? criminal.photoUrls[0] 
-                : 'https://via.placeholder.com/300x200?text=Нет+фото';
+                : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\' viewBox=\'0 0 300 200\'%3E%3Crect width=\'300\' height=\'200\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%%25\' y=\'50%%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23999\'%3EНет фото%3C/text%3E%3C/svg%3E';
             
             const birthDate = criminal.birth_date ? new Date(criminal.birth_date).toLocaleDateString('ru-RU') : '—';
 
             card.innerHTML = `
-                <img src="${escapeHTML(mainPhoto)}" alt="Фото" class="card-image" onerror="this.src='https://via.placeholder.com/300x200?text=Ошибка'">
+                <img src="${escapeHTML(mainPhoto)}" alt="Фото" class="card-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\' viewBox=\'0 0 300 200\'%3E%3Crect width=\'300\' height=\'200\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%%25\' y=\'50%%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23999\'%3EОшибка загрузки%3C/text%3E%3C/svg%3E'">
                 <div class="card-content">
                     <div class="card-name">${escapeHTML(criminal.full_name || '')}</div>
                     <div class="card-birth">Дата рождения: ${birthDate}</div>
@@ -204,11 +199,11 @@ async function getPublicUrl(filePath) {
         hideMessage();
     }
 
-    // -------------------- МОДАЛЬНОЕ ОКНО (ОБНОВЛЕННОЕ) --------------------
+    // -------------------- МОДАЛЬНОЕ ОКНО --------------------
     function openModal(criminal) {
         modalFullName.textContent = criminal.full_name || '—';
 
-        // Фотографии (используем подписанные URL)
+        // Фотографии (используем публичные URL)
         const photos = criminal.photoUrls || [];
         if (photos.length > 0) {
             modalMainPhoto.src = photos[0];
@@ -230,7 +225,7 @@ async function getPublicUrl(filePath) {
                 photoThumbnails.appendChild(thumb);
             });
         } else {
-            modalMainPhoto.src = 'https://via.placeholder.com/400x300?text=Нет+фото';
+            modalMainPhoto.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\' viewBox=\'0 0 400 300\'%3E%3Crect width=\'400\' height=\'300\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%%25\' y=\'50%%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'16\' fill=\'%23999\'%3EНет фото%3C/text%3E%3C/svg%3E';
             photoThumbnails.innerHTML = '';
         }
 
@@ -242,7 +237,7 @@ async function getPublicUrl(filePath) {
         modalCrimeArticle.textContent = criminal.crime_article || '—';
         modalDetails.textContent = criminal.details || '—';
 
-        // Документы (используем подписанные URL)
+        // Документы (используем публичные URL)
         const docs = criminal.documentUrls || [];
         documentsList.innerHTML = '';
         if (docs.length > 0) {
