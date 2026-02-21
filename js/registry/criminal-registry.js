@@ -56,30 +56,30 @@
     }
 
     // -------------------- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ПОДПИСАННОГО URL --------------------
-    async function getSignedUrl(filePath) {
-        try {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                console.error('Нет активной сессии');
-                return null;
-            }
-            
-            const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
-                body: { path: filePath }
-                // SDK сам добавит Authorization и apikey
-            });
-
-            if (error) {
-                console.error('Ошибка вызова функции:', error);
-                return null;
-            }
-            
-            return data.signedUrl;
-        } catch (error) {
-            console.error('Ошибка получения подписанного URL:', error);
+async function getSignedUrl(filePath) {
+    try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) {
+            console.error('Нет активной сессии');
             return null;
         }
+        console.log('Токен (первые 20 символов):', session.access_token.substring(0, 20));
+        
+        const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
+            body: { path: filePath }
+        });
+
+        if (error) {
+            console.error('Ошибка вызова функции:', error);
+            return null;
+        }
+        console.log('Ответ функции:', data);
+        return data.signedUrl;
+    } catch (error) {
+        console.error('Ошибка получения подписанного URL:', error);
+        return null;
     }
+}
 
     // -------------------- БЛОК АВТОРИЗАЦИИ --------------------
     function renderAuthSection(session) {
