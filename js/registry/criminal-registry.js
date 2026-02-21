@@ -57,31 +57,15 @@
     }
 
     // -------------------- НОВАЯ ФУНКЦИЯ: ПОЛУЧЕНИЕ ПОДПИСАННОГО URL --------------------
-async function getSignedUrl(filePath) {
+async function getPublicUrl(filePath) {
     try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (!session) {
-            console.error('Нет активной сессии');
-            return null;
-        }
+        const { data } = supabaseClient.storage
+            .from('criminal-files')
+            .getPublicUrl(filePath);
         
-        // Не передаём headers, полагаемся на автоматическое добавление
-        const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
-            body: { path: filePath }
-        });
-        
-        if (error) {
-            console.error('Ошибка вызова функции:', error);
-            return null;
-        }
-        
-        console.log('Ответ функции:', data);
-        
-        // Если функция вернула signedUrl (после исправления), используем его
-        // Пока вернём заглушку для отладки
-        return data.signedUrl || null;
+        return data.publicUrl;
     } catch (error) {
-        console.error('Ошибка получения подписанного URL:', error);
+        console.error('Ошибка получения публичного URL:', error);
         return null;
     }
 }
