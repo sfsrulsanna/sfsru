@@ -303,13 +303,30 @@ function renderStep1() {
   `
 }
 
-// --- Шаг 2: страховые организации ---
+// --- Шаг 2: страховые организации (с формой для добавления) ---
 function renderStep2() {
   return `
     <div class="form-group">
-      <label>Страховые организации</label>
+      <label>Добавить организацию</label>
+      <div class="add-org-form">
+        <div class="form-group">
+          <label>Наименование организации</label>
+          <input type="text" id="org_name" class="form-input" placeholder="Например: Страховая компания «МедСтрах»">
+        </div>
+        <div class="form-group">
+          <label>Дата начала действия</label>
+          <input type="date" id="org_start_date" class="form-input">
+        </div>
+        <div class="form-group">
+          <label>Кем подписано</label>
+          <input type="text" id="org_signed_by" class="form-input" placeholder="Должность и ФИО">
+        </div>
+        <button type="button" class="btn btn-primary" id="addOrgBtn">Добавить организацию</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Добавленные организации</label>
       <div id="organizationsContainer"></div>
-      <button type="button" class="btn btn-secondary" id="addOrgBtn" style="margin-top: 0.5rem;">+ Добавить организацию</button>
     </div>
   `
 }
@@ -351,19 +368,31 @@ function renderOrganizationsList() {
   container.appendChild(table)
 }
 
-// --- Добавление новой организации ---
+// --- Добавление новой организации из формы ---
 window.addOrganization = function() {
-  const name = prompt('Введите наименование организации:')
-  if (!name) return
-  const startDate = prompt('Введите дату начала (ГГГГ-ММ-ДД):')
-  const signedBy = prompt('Введите кем подписано:')
+  const name = document.getElementById('org_name')?.value.trim()
+  const startDate = document.getElementById('org_start_date')?.value
+  const signedBy = document.getElementById('org_signed_by')?.value.trim()
+
+  if (!name) {
+    alert('Введите наименование организации')
+    return
+  }
+
   const newOrg = {
     name: name,
     start_date: startDate || null,
     signed_by: signedBy || ''
   }
+
   if (!formData.insurance_organizations) formData.insurance_organizations = []
   formData.insurance_organizations.push(newOrg)
+
+  // Очистить поля ввода
+  document.getElementById('org_name').value = ''
+  document.getElementById('org_start_date').value = ''
+  document.getElementById('org_signed_by').value = ''
+
   renderOrganizationsList()
 }
 
