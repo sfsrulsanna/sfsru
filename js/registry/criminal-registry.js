@@ -64,18 +64,22 @@ async function getSignedUrl(filePath) {
             console.error('Нет активной сессии');
             return null;
         }
+        
+        // Не передаём headers, полагаемся на автоматическое добавление
         const { data, error } = await supabaseClient.functions.invoke('get-signed-url', {
-            body: { path: filePath },
-            headers: {
-                Authorization: `Bearer ${session.access_token}`
-            }
+            body: { path: filePath }
         });
         
         if (error) {
             console.error('Ошибка вызова функции:', error);
             return null;
         }
-        return data.signedUrl;
+        
+        console.log('Ответ функции:', data);
+        
+        // Если функция вернула signedUrl (после исправления), используем его
+        // Пока вернём заглушку для отладки
+        return data.signedUrl || null;
     } catch (error) {
         console.error('Ошибка получения подписанного URL:', error);
         return null;
