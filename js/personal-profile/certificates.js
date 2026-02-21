@@ -132,7 +132,7 @@ function renderCertificatesGrid(certificates) {
 
   // Статическая карточка для архивных свидетельств (всегда видна)
   const archiveCard = document.createElement('a')
-  archiveCard.href = '../archive-certificates/index.html'
+  archiveCard.href = 'archive.html'
   archiveCard.className = 'certificate-card'
   archiveCard.innerHTML = `
     <div class="certificate-header">
