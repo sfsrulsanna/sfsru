@@ -55,7 +55,7 @@
         if (accessMessageDiv) accessMessageDiv.style.display = 'none';
     }
 
-    // -------------------- НОВАЯ ФУНКЦИЯ: ПОЛУЧЕНИЕ ПУБЛИЧНОГО URL (ВРЕМЕННОЕ РЕШЕНИЕ) --------------------
+    // -------------------- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ПУБЛИЧНОГО URL --------------------
     function getPublicUrl(filePath) {
         try {
             const { data } = supabaseClient.storage
@@ -131,7 +131,7 @@
         return !!passport;
     }
 
-    // -------------------- ЗАГРУЗКА ДАННЫХ (ИСПОЛЬЗУЕМ ПУБЛИЧНЫЕ URL) --------------------
+    // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
     async function loadCriminals() {
         const { data, error } = await supabaseClient
             .from(CRIMINAL_TABLE)
@@ -167,6 +167,11 @@
         return data || [];
     }
 
+    // -------------------- SVG-ЗАГЛУШКИ (встроенные, без внешних запросов) --------------------
+    const noPhotoSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;200&quot; viewBox=&quot;0 0 300 200&quot;%3E%3Crect width=&quot;300&quot; height=&quot;200&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot; fill=&quot;%23999&quot;%3EНет фото%3C/text%3E%3C/svg%3E';
+    const errorSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;200&quot; viewBox=&quot;0 0 300 200&quot;%3E%3Crect width=&quot;300&quot; height=&quot;200&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot; fill=&quot;%23999&quot;%3EОшибка загрузки%3C/text%3E%3C/svg%3E';
+    const noPhotoModalSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;400&quot; height=&quot;300&quot; viewBox=&quot;0 0 400 300&quot;%3E%3Crect width=&quot;400&quot; height=&quot;300&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;16&quot; fill=&quot;%23999&quot;%3EНет фото%3C/text%3E%3C/svg%3E';
+
     // -------------------- ОТРИСОВКА КАРТОЧЕК --------------------
     function renderCards(criminals) {
         cardsGrid.innerHTML = '';
@@ -182,12 +187,12 @@
             // Основное фото (первое из массива или заглушка)
             const mainPhoto = (criminal.photoUrls && criminal.photoUrls.length > 0) 
                 ? criminal.photoUrls[0] 
-                : 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\' viewBox=\'0 0 300 200\'%3E%3Crect width=\'300\' height=\'200\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%%25\' y=\'50%%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23999\'%3EНет фото%3C/text%3E%3C/svg%3E';
+                : noPhotoSVG;
             
             const birthDate = criminal.birth_date ? new Date(criminal.birth_date).toLocaleDateString('ru-RU') : '—';
 
             card.innerHTML = `
-                <img src="${escapeHTML(mainPhoto)}" alt="Фото" class="card-image" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'200\' viewBox=\'0 0 300 200\'%3E%3Crect width=\'300\' height=\'200\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%%25\' y=\'50%%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'14\' fill=\'%23999\'%3EОшибка загрузки%3C/text%3E%3C/svg%3E'">
+                <img src="${escapeHTML(mainPhoto)}" alt="Фото" class="card-image" onerror="this.src='${errorSVG}'">
                 <div class="card-content">
                     <div class="card-name">${escapeHTML(criminal.full_name || '')}</div>
                     <div class="card-birth">Дата рождения: ${birthDate}</div>
@@ -216,6 +221,7 @@
                 thumb.src = photo;
                 thumb.alt = `Фото ${index+1}`;
                 thumb.className = 'thumbnail';
+                thumb.onerror = function() { this.src = errorSVG; }; // обработчик ошибки для миниатюр
                 if (index === 0) thumb.classList.add('active');
                 thumb.addEventListener('click', () => {
                     modalMainPhoto.src = photo;
@@ -225,7 +231,7 @@
                 photoThumbnails.appendChild(thumb);
             });
         } else {
-            modalMainPhoto.src = 'data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'400\' height=\'300\' viewBox=\'0 0 400 300\'%3E%3Crect width=\'400\' height=\'300\' fill=\'%23f0f0f0\'/%3E%3Ctext x=\'50%%25\' y=\'50%%25\' dominant-baseline=\'middle\' text-anchor=\'middle\' font-family=\'Arial\' font-size=\'16\' fill=\'%23999\'%3EНет фото%3C/text%3E%3C/svg%3E';
+            modalMainPhoto.src = noPhotoModalSVG;
             photoThumbnails.innerHTML = '';
         }
 
