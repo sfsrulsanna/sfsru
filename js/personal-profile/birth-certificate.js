@@ -170,11 +170,21 @@ function renderCertificate(data) {
   const motherSurname = motherNameParts[0] || '—'
   const motherFirstPatronymic = motherNameParts.slice(1).join(' ') || '—'
 
-  // Форматируем дату актовой записи для отображения в русском стиле
-  const actDate = data.registry_act_date ? new Date(data.registry_act_date) : null
-  const actYear = actDate ? actDate.getFullYear() : '____'
-  const actMonth = actDate ? actDate.getMonth() + 1 : '__'
-  const actDay = actDate ? actDate.getDate() : '__'
+  // Форматируем дату актовой записи для отображения в русском стиле с месяцем буквами
+  let actYear = '____'
+  let actMonth = '______'
+  let actDay = '__'
+  
+  if (data.registry_act_date) {
+    const actDate = new Date(data.registry_act_date)
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ]
+    actYear = actDate.getFullYear()
+    actMonth = months[actDate.getMonth()]
+    actDay = String(actDate.getDate()).padStart(2, '0')
+  }
 
   const html = `
     <div class="certificate-container">
@@ -222,16 +232,21 @@ function renderCertificate(data) {
             <span class="value">${actDay}</span>
             <span class="label">числа</span>
           </div>
-          <div class="registration-line">
-            <span class="label">составлена запись акта о рождении №</span>
-            <span class="value">${escapeHTML(data.registry_act_number || '—')}</span>
+          <div class="act-number">
+            составлена запись акта о рождении № ${escapeHTML(data.registry_act_number || '—')}
           </div>
         </div>
         
         <!-- Родители -->
-        <div class="parents-block">
+        <div class="parents-section">
+          <!-- Отец -->
           <div class="parent-block">
-            <div class="parent-surname">${escapeHTML(fatherSurname)}</div>
+            <div class="parent-title">Отец</div>
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(fatherSurname)}</div>
+              <div class="field-line"></div>
+              <div class="field-label">фамилия</div>
+            </div>
             <div class="field-block">
               <div class="field-value">${escapeHTML(fatherFirstPatronymic)}</div>
               <div class="field-line"></div>
@@ -249,8 +264,14 @@ function renderCertificate(data) {
             </div>
           </div>
           
+          <!-- Мать -->
           <div class="parent-block">
-            <div class="parent-surname">${escapeHTML(motherSurname)}</div>
+            <div class="parent-title">Мать</div>
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(motherSurname)}</div>
+              <div class="field-line"></div>
+              <div class="field-label">фамилия</div>
+            </div>
             <div class="field-block">
               <div class="field-value">${escapeHTML(motherFirstPatronymic)}</div>
               <div class="field-line"></div>
@@ -269,9 +290,12 @@ function renderCertificate(data) {
           </div>
         </div>
         
-        <!-- Место государственной регистрации (3 строки) -->
-        <div class="registration-place">
-          ${escapeHTML(data.registry_place || '—')}
+        <!-- Место государственной регистрации -->
+        <div class="registration-place-block">
+          <div class="registration-place-title">Место государственной регистрации</div>
+          <div class="registration-place-text">
+            ${escapeHTML(data.registry_place || '—')}
+          </div>
         </div>
         
         <!-- Правая колонка: дата выдачи и руководитель -->
@@ -330,7 +354,6 @@ function renderCertificate(data) {
 
   document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
 }
-
 // ==================== МОДАЛЬНОЕ ОКНО ====================
 window.closeModal = function() {
   document.getElementById('modalOverlay').classList.remove('active')
