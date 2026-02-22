@@ -1,0 +1,432 @@
+/* ===== birth-certificate.css ===== */
+:root {
+  --primary-green: #2e7d32;
+  --dark-green: #1b5e20;
+  --secondary-gray: #6c757d;
+  --certificate-bg: #f5f7e9;
+  --certificate-border: #c5d1a5;
+  --field-bg: #e8ecd9;
+  --text-dark: #5c3b3b;
+  --border-radius: 16px;
+  --shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ===== БАЗОВЫЙ РАЗМЕР ШРИФТА (адаптивный) ===== */
+html {
+  font-size: 16px;
+}
+@media (max-width: 700px) {
+  html {
+    font-size: clamp(12px, 3vw, 16px);
+  }
+}
+
+/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
+.main-content {
+  padding: 2rem 0;
+  background: white;
+  min-height: 100vh;
+}
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+.loading, .no-data {
+  text-align: center;
+  padding: 3rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+/* ===== КНОПКИ (унифицированы) ===== */
+.add-btn,
+.edit-btn,
+.btn,
+.btn-primary,
+.btn-secondary,
+a.add-btn,
+a.edit-btn,
+.document-status {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s ease, background 0.2s ease;
+}
+
+.add-btn,
+.edit-btn,
+.btn-primary,
+a.add-btn,
+a.edit-btn {
+  background: var(--primary-green);
+  color: white;
+}
+.add-btn:hover,
+.edit-btn:hover,
+.btn-primary:hover,
+a.add-btn:hover,
+a.edit-btn:hover {
+  background: var(--dark-green);
+}
+
+.btn-secondary {
+  background: var(--secondary-gray) !important;
+  color: white;
+}
+.btn-secondary:hover {
+  background: #5a6268 !important;
+}
+
+/* ===== СТАТУС ДОКУМЕНТА ===== */
+.status-and-edit {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 2rem 0;
+}
+.document-status {
+  background: transparent;
+}
+.status-verified {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+.status-pending {
+  background: rgba(255, 193, 7, 0.15);
+  color: #856404;
+}
+.status-rejected {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+.status-archived {
+  background: rgba(108, 117, 125, 0.15);
+  color: #6c757d;
+}
+
+/* ===== КАРТОЧКА СВИДЕТЕЛЬСТВА ===== */
+.certificate-container {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  background: var(--certificate-bg);
+  border: 20px solid var(--certificate-border);
+  border-radius: 30px;
+  padding: 0;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.certificate-header {
+  background: var(--certificate-border);
+  color: var(--primary-green);
+  padding: 1.5rem;
+  text-align: center;
+  margin-bottom: 0;
+  font-family: 'PT Serif', 'Times New Roman', Times, serif;
+  border-bottom: 2px solid var(--dark-green);
+}
+
+.certificate-header .title {
+  font-size: 2.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--primary-green);
+}
+
+.certificate-header .subtitle {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-top: 0.3rem;
+  color: var(--primary-green);
+}
+
+.certificate-content {
+  padding: 2rem;
+}
+
+/* ===== ПОЛЯ СВИДЕТЕЛЬСТВА ===== */
+.field-block {
+  margin-bottom: 1.5rem;
+}
+
+.field-value {
+  text-align: center;
+  font-size: 1.3rem;
+  font-weight: 500;
+  margin-bottom: 0.2rem;
+  color: #000;
+}
+
+.field-line {
+  height: 2px;
+  background: var(--field-bg);
+  width: 100%;
+  margin: 0.2rem 0 0.3rem;
+}
+
+.field-label {
+  text-align: center;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #666;
+  letter-spacing: 0.3px;
+}
+
+/* Длинные значения могут переноситься */
+.field-value {
+  word-break: break-word;
+}
+
+/* Специальные блоки */
+.registration-block {
+  margin: 1.5rem 0;
+}
+
+.registration-line {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  align-items: baseline;
+}
+
+.registration-line .label {
+  font-weight: 600;
+  color: var(--primary-green);
+  min-width: 80px;
+}
+
+.registration-line .value {
+  font-size: 1.1rem;
+}
+
+.act-number {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #000;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+/* Родители */
+.parents-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin: 1.5rem 0;
+}
+
+.parent-block {
+  border-top: 1px dashed var(--certificate-border);
+  padding-top: 1rem;
+}
+
+.parent-surname {
+  font-size: 1.2rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--primary-green);
+  margin-bottom: 0.2rem;
+}
+
+/* Место регистрации (3 строки) */
+.registration-place {
+  margin: 1.5rem 0;
+  text-align: center;
+  font-size: 1.1rem;
+  line-height: 1.4;
+}
+
+/* Правая колонка для даты выдачи и подписи */
+.right-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  margin: 2rem 0 1rem;
+}
+
+.info-row {
+  text-align: right;
+  margin-bottom: 0.5rem;
+}
+
+.info-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-style: italic;
+  margin-right: 0.3rem;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* Серия и номер (темно-бордовый) */
+.series-number {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #7b091a;
+  letter-spacing: 2px;
+  margin: 1.5rem 0 0.5rem;
+  font-family: 'Courier New', monospace;
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+.modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+.modal {
+  background: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 700px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 1.5rem 0.5rem;
+  border-bottom: 1px solid #eee;
+}
+.modal-header h4 {
+  margin: 0;
+  color: var(--primary-green);
+  font-size: 1.25rem;
+}
+.close-modal {
+  background: none;
+  border: none;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+}
+.close-modal:hover { color: var(--primary-green); }
+.modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  padding: 1rem 1.5rem 1.5rem;
+  border-top: 1px solid #eee;
+}
+.form-group {
+  margin-bottom: 1.2rem;
+}
+.form-group label {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+.form-input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+.form-input[readonly] {
+  background: #f5f5f5;
+  cursor: not-allowed;
+}
+
+/* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
+.too-small-message {
+  display: none;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+@media (max-width: 320px) {
+  .too-small-message {
+    display: block;
+  }
+  .certificate-container,
+  #content,
+  .status-and-edit,
+  .modal-overlay {
+    display: none !important;
+  }
+}
+
+/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ===== */
+@media (max-width: 600px) {
+  .certificate-header .title {
+    font-size: 1.5rem;
+  }
+  .certificate-header .subtitle {
+    font-size: 1rem;
+  }
+  .certificate-content {
+    padding: 1rem;
+  }
+  .field-value {
+    font-size: 1.1rem;
+  }
+  .parents-block {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  .registration-line {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .right-info {
+    align-items: center;
+  }
+  .series-number {
+    font-size: 1.2rem;
+  }
+  .status-and-edit {
+    flex-direction: column;
+  }
+}
