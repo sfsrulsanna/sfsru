@@ -307,8 +307,6 @@ function renderCertificate(data) {
           </div>
           <div class="info-row">
             <span class="info-label">Руководитель органа ЗАГС</span>
-          </div>
-          <div class="info-row">
             <span class="info-value">${escapeHTML(data.registry_official || '—')}</span>
           </div>
         </div>
@@ -355,6 +353,7 @@ function renderCertificate(data) {
 
   document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
 }
+
 // ==================== МОДАЛЬНОЕ ОКНО ====================
 window.closeModal = function() {
   document.getElementById('modalOverlay').classList.remove('active')
