@@ -1,4 +1,4 @@
-/* ===== birth-certificate.css (исправленная, чистая версия) ===== */
+/* ===== birth-certificate.css – оптимизированная версия ===== */
 :root {
   --primary-green: #2e7d32;
   --border-green: #c5d1a5;
@@ -15,20 +15,26 @@
 html {
   font-size: 16px;
 }
-@media (max-width: 700px) {
-  html { font-size: clamp(12px, 3vw, 16px); }
+
+body {
+  overflow-x: hidden;
+  width: 100%;
 }
 
 .main-content {
   padding: 2rem 0;
   background: white;
   min-height: 100vh;
+  width: 100%;
 }
+
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
+  width: 100%;
 }
+
 .loading, .no-data {
   text-align: center;
   padding: 3rem 1rem;
@@ -36,32 +42,41 @@ html {
   color: #666;
 }
 
-/* КНОПКИ (без изменений, можно оставить как есть) */
-
-/* ===== КАРТОЧКА – ОДНА ЦЕЛЬНАЯ РАМКА ===== */
+/* ===== КАРТОЧКА – ИСПРАВЛЕНА ВЕРСИЯ ===== */
 .certificate-container {
   max-width: 800px;
   margin: 0 auto 30px;
-  background: #f5f7e9;                /* единый фон */
-  border: 12px solid #c5d1a5;         /* единственная рамка */
+  background: #f5f7e9;
+  border: 12px solid #c5d1a5;
   border-radius: 20px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   overflow: hidden;
   font-family: 'Times New Roman', Times, serif;
+  position: relative;
+  width: 100%;
+}
+
+/* Убираем возможные вложенные контейнеры с границами */
+.certificate-container * {
+  box-sizing: border-box;
 }
 
 .certificate-header {
-  background: #c5d1a5;                /* шапка того же цвета, что и рамка */
+  background: #c5d1a5;
   padding: 1rem;
   text-align: center;
+  border-bottom: none;
 }
+
 .certificate-header .title {
   font-size: 2rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
   color: var(--primary-green);
+  line-height: 1.2;
 }
+
 .certificate-header .subtitle {
   font-size: 1.2rem;
   font-weight: 700;
@@ -70,26 +85,32 @@ html {
 }
 
 .certificate-content {
-  padding: 1.2rem;
+  padding: 1.5rem;
+  width: 100%;
 }
 
-/* ПОЛЯ */
+/* ===== ПОЛЯ ===== */
 .field-block {
   margin-bottom: 0.8rem;
+  width: 100%;
 }
+
 .field-value {
   text-align: center;
   font-size: 1.2rem;
   font-weight: 500;
   margin-bottom: 0.1rem;
   color: var(--text-dark);
+  word-wrap: break-word;
 }
+
 .field-line {
   height: 1px;
   background: var(--field-bg);
   width: 100%;
   margin: 0.1rem 0 0.2rem;
 }
+
 .field-label {
   text-align: center;
   font-size: 0.8rem;
@@ -97,96 +118,390 @@ html {
   color: var(--primary-green);
 }
 
-/* АКТОВАЯ ЗАПИСЬ (одна строка) */
-.act-line {
+/* ===== АКТОВАЯ ЗАПИСЬ ===== */
+.registration-block {
   margin: 1rem 0;
   font-size: 0.95rem;
   color: var(--primary-green);
-}
-.act-line span {
-  color: var(--text-dark);
-  font-weight: 500;
+  line-height: 1.5;
+  text-align: center;
 }
 
-/* РОДИТЕЛИ – отец/мать в одной строке с фамилией */
+.registration-block .label {
+  color: var(--primary-green);
+}
+
+.registration-block .value {
+  color: var(--text-dark);
+  font-weight: 500;
+  margin: 0 0.2rem;
+}
+
+/* ===== РОДИТЕЛИ ===== */
+.parents-section {
+  margin: 1.5rem 0;
+}
+
 .parent-block {
   margin-bottom: 1.2rem;
 }
+
 .parent-row {
   display: flex;
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.3rem;
+  flex-wrap: wrap;
 }
+
 .parent-title {
   font-size: 1rem;
   font-weight: 500;
   color: var(--primary-green);
   white-space: nowrap;
 }
+
 .parent-row .field-block {
   flex: 1;
   margin-bottom: 0;
+  min-width: 200px;
 }
+
 .parent-row .field-block .field-value {
   text-align: left;
 }
 
-/* МЕСТО РЕГИСТРАЦИИ (одна строка) */
-.place-row {
+/* ===== МЕСТО РЕГИСТРАЦИИ ===== */
+.registration-row {
   display: flex;
   align-items: baseline;
   gap: 0.3rem;
   margin: 1rem 0;
+  flex-wrap: wrap;
 }
-.place-label {
+
+.registration-row .label {
   color: var(--primary-green);
   font-size: 0.95rem;
-  white-space: nowrap;
 }
-.place-value {
+
+.registration-row .value {
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-dark);
 }
 
-/* ПРАВАЯ ИНФОРМАЦИЯ */
+/* ===== ПРАВАЯ ИНФОРМАЦИЯ ===== */
 .right-info {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   margin: 1.2rem 0;
 }
-.right-row {
+
+.info-row {
   display: flex;
   align-items: baseline;
   gap: 0.3rem;
+  margin-bottom: 0.5rem;
 }
-.right-label {
+
+.info-label {
   color: var(--primary-green);
   font-size: 0.95rem;
 }
-.right-value {
+
+.info-value {
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-dark);
 }
 
-/* СЕРИЯ И НОМЕР */
+/* ===== СЕРИЯ И НОМЕР ===== */
 .series-number {
   text-align: center;
   font-size: 1.3rem;
   font-weight: 600;
   color: #7b091a;
   letter-spacing: 1px;
-  margin: 1rem 0 0.3rem;
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.5rem;
 }
 
-/* МОБИЛЬНАЯ АДАПТАЦИЯ */
+/* ===== СТАТУС И КНОПКИ ===== */
+.status-and-edit {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 1.5rem 0;
+  padding: 0 1rem;
+}
+
+.document-status {
+  padding: 0.5rem 1rem;
+  border-radius: 5px;
+  font-weight: 500;
+}
+
+.status-verified {
+  background: #d4edda;
+  color: #155724;
+}
+
+.status-pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.status-rejected {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.status-archived {
+  background: #e2e3e5;
+  color: #383d41;
+}
+
+.edit-btn {
+  padding: 0.5rem 1rem;
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 0.9rem;
+}
+
+.edit-btn:hover {
+  background: #1b5e20;
+}
+
+/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
+@media (max-width: 768px) {
+  html {
+    font-size: 14px;
+  }
+  
+  .container {
+    padding: 0 0.5rem;
+  }
+  
+  .certificate-container {
+    border-width: 8px;
+    border-radius: 12px;
+    margin: 0 auto 20px;
+  }
+  
+  .certificate-header .title {
+    font-size: 1.5rem;
+  }
+  
+  .certificate-header .subtitle {
+    font-size: 1rem;
+  }
+  
+  .certificate-content {
+    padding: 1rem;
+  }
+  
+  .field-value {
+    font-size: 1rem;
+  }
+  
+  .field-label {
+    font-size: 0.75rem;
+  }
+  
+  .parent-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .parent-row .field-block {
+    min-width: 100%;
+  }
+  
+  .registration-block {
+    font-size: 0.85rem;
+  }
+  
+  .registration-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .right-info {
+    align-items: center;
+    text-align: center;
+  }
+  
+  .series-number {
+    font-size: 1.1rem;
+  }
+  
+  .status-and-edit {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  .edit-btn {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+  
+  .certificate-container {
+    border-width: 6px;
+    border-radius: 10px;
+  }
+  
+  .certificate-header {
+    padding: 0.75rem;
+  }
+  
+  .certificate-header .title {
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+  
+  .certificate-content {
+    padding: 0.75rem;
+  }
+  
+  .field-value {
+    font-size: 0.9rem;
+  }
+  
+  .parent-title {
+    font-size: 0.9rem;
+  }
+  
+  .series-number {
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+  }
+}
+
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  overflow-y: auto;
+}
+
+.modal-overlay.active {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 2rem 1rem;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 10px;
+  padding: 2rem;
+  max-width: 600px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.modal-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--primary-green);
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+  color: var(--primary-green);
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 1.5rem;
+}
+
+.btn-cancel {
+  padding: 0.5rem 1rem;
+  background: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.btn-save {
+  padding: 0.5rem 1rem;
+  background: var(--primary-green);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
 @media (max-width: 600px) {
-  .certificate-header .title { font-size: 1.5rem; }
-  .certificate-header .subtitle { font-size: 1rem; }
-  .field-value { font-size: 1rem; }
-  .right-info { align-items: center; }
-  .series-number { font-size: 1.2rem; }
+  .modal-overlay.active {
+    padding: 1rem 0.5rem;
+  }
+  
+  .modal-content {
+    padding: 1rem;
+  }
+  
+  .modal-actions {
+    flex-direction: column;
+  }
+  
+  .btn-cancel, .btn-save {
+    width: 100%;
+  }
 }
