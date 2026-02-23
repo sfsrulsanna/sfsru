@@ -542,13 +542,11 @@ async function saveDocument() {
       if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
     })
 
-    const dataToSend = {
-      ...cleanData,
-      user_id: session.user.id,
-      personal_code: userPersonalCode,
-      status: 'oncheck',
-      updated_at: new Date().toISOString()
-    }
+const dataToSend = {
+  ...cleanData,
+  status: 'oncheck',
+  updated_at: new Date().toISOString()
+}
 
     let result
     if (currentDocId) {
