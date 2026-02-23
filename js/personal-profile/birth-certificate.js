@@ -312,7 +312,6 @@ function renderCertificate(data) {
           ${escapeHTML(data.certificate_series_number || '—')}
         </div>
       </div>
-    </div>
   `
 
   document.getElementById('certificateContainer').innerHTML = html
