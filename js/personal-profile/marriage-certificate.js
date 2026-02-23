@@ -292,12 +292,11 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Дата заключения брака (значение, линия, подпись) -->
-      <div class="field-block">
-        <div class="field-value">${escapeHTML(marriageDate)}</div>
-        <div class="field-line"></div>
-        <div class="field-label">заключили брак</div>
-      </div>
+<!-- Дата заключения брака (одна строка) -->
+<div class="marriage-row">
+  <span class="label">заключили брак</span>
+  <span class="value">${escapeHTML(marriageDate)}</span>
+</div>
 
       <!-- Актовая запись -->
       <div class="registration-block">
