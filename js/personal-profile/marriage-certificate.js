@@ -224,15 +224,18 @@ function renderCertificate(data) {
               <div class="field-label">место рождения</div>
             </div>
           </div>
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(data.husband_citizenship || '—')}</div>
-            <div class="field-line"></div>
-            <div class="field-label">гражданство</div>
-          </div>
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(data.husband_nationality || '—')}</div>
-            <div class="field-line"></div>
-            <div class="field-label">национальность</div>
+          <!-- Гражданство и национальность в одной строке -->
+          <div class="citizenship-row">
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(data.husband_citizenship || '—')}</div>
+              <div class="field-line"></div>
+              <div class="field-label">гражданство</div>
+            </div>
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(data.husband_nationality || '—')}</div>
+              <div class="field-line"></div>
+              <div class="field-label">национальность</div>
+            </div>
           </div>
           <div class="field-block">
             <div class="field-value">${escapeHTML(data.husband_personal_code || '—')}</div>
@@ -268,15 +271,17 @@ function renderCertificate(data) {
               <div class="field-label">место рождения</div>
             </div>
           </div>
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(data.wife_citizenship || '—')}</div>
-            <div class="field-line"></div>
-            <div class="field-label">гражданство</div>
-          </div>
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(data.wife_nationality || '—')}</div>
-            <div class="field-line"></div>
-            <div class="field-label">национальность</div>
+          <div class="citizenship-row">
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(data.wife_citizenship || '—')}</div>
+              <div class="field-line"></div>
+              <div class="field-label">гражданство</div>
+            </div>
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(data.wife_nationality || '—')}</div>
+              <div class="field-line"></div>
+              <div class="field-label">национальность</div>
+            </div>
           </div>
           <div class="field-block">
             <div class="field-value">${escapeHTML(data.wife_personal_code || '—')}</div>
@@ -305,7 +310,7 @@ function renderCertificate(data) {
         <span class="value">${escapeHTML(data.registry_act_number || '—')}</span>
       </div>
 
-      <!-- Присвоенные фамилии -->
+      <!-- Присвоенные фамилии (вертикально) -->
       <div class="assigned-row">
         <div class="assigned-item">
           <div class="field-block">
@@ -350,7 +355,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок
+  // Блок статуса и кнопок (без изменений)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
