@@ -157,7 +157,7 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 function renderCertificate(data) {
-  // Разбиваем ФИО на части для отображения
+  // Разбиваем ФИО на части
   const childNameParts = (data.child_full_name || '').split(' ')
   const childSurname = childNameParts[0] || '—'
   const childFirstPatronymic = childNameParts.slice(1).join(' ') || '—'
@@ -170,11 +170,10 @@ function renderCertificate(data) {
   const motherSurname = motherNameParts[0] || '—'
   const motherFirstPatronymic = motherNameParts.slice(1).join(' ') || '—'
 
-  // Форматируем дату актовой записи для отображения в русском стиле с месяцем буквами
+  // Дата актовой записи
   let actYear = '____'
   let actMonth = '______'
   let actDay = '__'
-  
   if (data.registry_act_date) {
     const actDate = new Date(data.registry_act_date)
     const months = [
@@ -221,32 +220,29 @@ function renderCertificate(data) {
           <div class="field-label">место рождения</div>
         </div>
         
-        <!-- Актовая запись -->
+        <!-- Актовая запись (одна строка) -->
         <div class="registration-block">
-          <div class="registration-line">
-            <span class="label">о чем</span>
-            <span class="value">${actYear}</span>
-            <span class="label">года</span>
-            <span class="value">${actMonth}</span>
-            <span class="label">месяца</span>
-            <span class="value">${actDay}</span>
-            <span class="label">числа</span>
-          </div>
-          <div class="act-number">
-            <span class="label">составлена запись акта о рождении №</span>
-            <span class="value">${escapeHTML(data.registry_act_number || '—')}</span>
-          </div>
+          <span class="label">о чем</span>
+          <span class="value">${actYear}</span>
+          <span class="label">года</span>
+          <span class="value">${actMonth}</span>
+          <span class="label">месяца</span>
+          <span class="value">${actDay}</span>
+          <span class="label">числа составлена запись акта о рождении №</span>
+          <span class="value">${escapeHTML(data.registry_act_number || '—')}</span>
         </div>
         
         <!-- Родители -->
         <div class="parents-section">
           <!-- Отец -->
           <div class="parent-block">
-            <div class="parent-title">Отец</div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(fatherSurname)}</div>
-              <div class="field-line"></div>
-              <div class="field-label">фамилия</div>
+            <div class="parent-row">
+              <span class="parent-title">Отец</span>
+              <div class="field-block">
+                <div class="field-value">${escapeHTML(fatherSurname)}</div>
+                <div class="field-line"></div>
+                <div class="field-label">фамилия</div>
+              </div>
             </div>
             <div class="field-block">
               <div class="field-value">${escapeHTML(fatherFirstPatronymic)}</div>
@@ -267,11 +263,13 @@ function renderCertificate(data) {
           
           <!-- Мать -->
           <div class="parent-block">
-            <div class="parent-title">Мать</div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(motherSurname)}</div>
-              <div class="field-line"></div>
-              <div class="field-label">фамилия</div>
+            <div class="parent-row">
+              <span class="parent-title">Мать</span>
+              <div class="field-block">
+                <div class="field-value">${escapeHTML(motherSurname)}</div>
+                <div class="field-line"></div>
+                <div class="field-label">фамилия</div>
+              </div>
             </div>
             <div class="field-block">
               <div class="field-value">${escapeHTML(motherFirstPatronymic)}</div>
@@ -291,12 +289,10 @@ function renderCertificate(data) {
           </div>
         </div>
         
-        <!-- Место государственной регистрации -->
-        <div class="registration-place-block">
-          <div class="registration-place-title">Место государственной регистрации</div>
-          <div class="registration-place-text">
-            ${escapeHTML(data.registry_place || '—')}
-          </div>
+        <!-- Место государственной регистрации (одна строка) -->
+        <div class="registration-row">
+          <span class="label">Место государственной регистрации:</span>
+          <span class="value">${escapeHTML(data.registry_place || '—')}</span>
         </div>
         
         <!-- Правая колонка: дата выдачи и руководитель -->
@@ -311,7 +307,7 @@ function renderCertificate(data) {
           </div>
         </div>
         
-        <!-- Серия и номер (темно-бордовый) -->
+        <!-- Серия и номер -->
         <div class="series-number">
           ${escapeHTML(data.certificate_series_number || '—')}
         </div>
@@ -321,7 +317,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // --- Блок статуса и кнопок ---
+  // --- Блок статуса и кнопок (без изменений) ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
