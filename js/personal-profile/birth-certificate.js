@@ -448,10 +448,11 @@ function renderModalForm() {
       <input type="date" id="edit_registry_act_date" class="form-input" value="${formData.registry_act_date || ''}">
     </div>
     
-    <div class="form-group">
-      <label>Место регистрации</label>
-      <input type="text" id="edit_registry_place" class="form-input" value="${escapeHTML(formData.registry_place || '')}">
-    </div>
+<!-- Место государственной регистрации -->
+<div class="registration-row">
+  <span class="label">Место государственной регистрации:</span>
+  <span class="value">${escapeHTML(data.registry_place || '—')}</span>
+</div>
     
     <div class="form-group">
       <label>Руководитель органа ЗАГС</label>

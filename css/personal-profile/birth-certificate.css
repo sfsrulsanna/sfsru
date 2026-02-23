@@ -169,23 +169,44 @@ html {
   text-align: center;
 }
 
-/* ===== МЕСТО РЕГИСТРАЦИИ ===== */
+/* ===== МЕСТО РЕГИСТРАЦИИ (одна строка) ===== */
 .registration-row {
   display: flex;
   align-items: baseline;
   gap: 0.3rem;
   margin: 1rem 0;
+  flex-wrap: nowrap;
 }
 
 .registration-row .label {
   color: var(--primary-green);
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .registration-row .value {
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-dark);
+  word-break: break-word;
+}
+
+/* На мобильных - сплошной текст */
+@media (max-width: 600px) {
+  .registration-row {
+    display: inline;
+    flex-wrap: wrap;
+  }
+  
+  .registration-row .label,
+  .registration-row .value {
+    display: inline;
+    white-space: normal;
+  }
+  
+  .registration-row .label::after {
+    content: " ";
+  }
 }
 
 /* ===== ПРАВАЯ ИНФОРМАЦИЯ ===== */
