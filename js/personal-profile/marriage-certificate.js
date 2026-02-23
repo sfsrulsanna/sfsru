@@ -130,7 +130,7 @@ async function loadData() {
       const { data: docs, error } = await supabase
         .from('documents_marriage_certificate')
         .select('*')
-        .eq('personal_code', userPersonalCode)
+        .or(`husband_personal_code.eq.${userPersonalCode},wife_personal_code.eq.${userPersonalCode}`)
         .order('created_at', { ascending: false })
         .limit(1)
       if (!error && docs && docs.length > 0) {
@@ -542,11 +542,11 @@ async function saveDocument() {
       if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
     })
 
-const dataToSend = {
-  ...cleanData,
-  status: 'oncheck',
-  updated_at: new Date().toISOString()
-}
+    const dataToSend = {
+      ...cleanData,
+      status: 'oncheck',
+      updated_at: new Date().toISOString()
+    }
 
     let result
     if (currentDocId) {
@@ -582,7 +582,7 @@ function openAddModal() {
     husband_birth_place: '',
     husband_citizenship: '',
     husband_nationality: '',
-    husband_personal_code: '',
+    husband_personal_code: userPersonalCode || '', // по умолчанию ставим текущего пользователя
     wife_full_name: '',
     wife_birth_date: '',
     wife_birth_place: '',
