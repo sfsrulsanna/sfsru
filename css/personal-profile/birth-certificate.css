@@ -1,4 +1,4 @@
-/* ===== birth-certificate.css – оптимизированная версия ===== */
+/* ===== birth-certificate.css – исправленная версия ===== */
 :root {
   --primary-green: #2e7d32;
   --border-green: #c5d1a5;
@@ -16,23 +16,20 @@ html {
   font-size: 16px;
 }
 
-body {
-  overflow-x: hidden;
-  width: 100%;
+@media (max-width: 700px) {
+  html { font-size: clamp(12px, 3vw, 16px); }
 }
 
 .main-content {
   padding: 2rem 0;
   background: white;
   min-height: 100vh;
-  width: 100%;
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 1rem;
-  width: 100%;
+  padding: 0 1.5rem;
 }
 
 .loading, .no-data {
@@ -46,24 +43,19 @@ body {
 .certificate-container {
   max-width: 800px;
   margin: 0 auto 30px;
-  background: #f5f7e9;                /* единый фон */
-  border: 12px solid #c5d1a5;         /* единственная рамка */
+  background: #f5f7e9;
+  border: 12px solid #c5d1a5;
   border-radius: 20px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
   overflow: hidden;
   font-family: 'Times New Roman', Times, serif;
 }
 
-/* Убираем возможные вложенные контейнеры с границами */
-.certificate-container * {
-  box-sizing: border-box;
-}
-
+/* Шапка */
 .certificate-header {
   background: #c5d1a5;
   padding: 1rem;
   text-align: center;
-  border-bottom: none;
 }
 
 .certificate-header .title {
@@ -72,7 +64,6 @@ body {
   text-transform: uppercase;
   letter-spacing: 2px;
   color: var(--primary-green);
-  line-height: 1.2;
 }
 
 .certificate-header .subtitle {
@@ -83,14 +74,12 @@ body {
 }
 
 .certificate-content {
-  padding: 1.5rem;
-  width: 100%;
+  padding: 1.2rem;
 }
 
 /* ===== ПОЛЯ ===== */
 .field-block {
   margin-bottom: 0.8rem;
-  width: 100%;
 }
 
 .field-value {
@@ -99,7 +88,6 @@ body {
   font-weight: 500;
   margin-bottom: 0.1rem;
   color: var(--text-dark);
-  word-wrap: break-word;
 }
 
 .field-line {
@@ -121,8 +109,6 @@ body {
   margin: 1rem 0;
   font-size: 0.95rem;
   color: var(--primary-green);
-  line-height: 1.5;
-  text-align: center;
 }
 
 .registration-block .label {
@@ -132,7 +118,6 @@ body {
 .registration-block .value {
   color: var(--text-dark);
   font-weight: 500;
-  margin: 0 0.2rem;
 }
 
 /* ===== РОДИТЕЛИ ===== */
@@ -149,7 +134,6 @@ body {
   align-items: center;
   gap: 0.5rem;
   margin-bottom: 0.3rem;
-  flex-wrap: wrap;
 }
 
 .parent-title {
@@ -157,16 +141,16 @@ body {
   font-weight: 500;
   color: var(--primary-green);
   white-space: nowrap;
+  min-width: 80px;
 }
 
 .parent-row .field-block {
   flex: 1;
   margin-bottom: 0;
-  min-width: 200px;
 }
 
 .parent-row .field-block .field-value {
-  text-align: left;
+  text-align: center;
 }
 
 /* ===== МЕСТО РЕГИСТРАЦИИ ===== */
@@ -175,7 +159,6 @@ body {
   align-items: baseline;
   gap: 0.3rem;
   margin: 1rem 0;
-  flex-wrap: wrap;
 }
 
 .registration-row .label {
@@ -222,8 +205,7 @@ body {
   font-weight: 600;
   color: #7b091a;
   letter-spacing: 1px;
-  margin: 1.5rem 0 0.5rem;
-  padding: 0.5rem;
+  margin: 1rem 0 0.3rem;
 }
 
 /* ===== СТАТУС И КНОПКИ ===== */
@@ -234,7 +216,6 @@ body {
   justify-content: center;
   flex-wrap: wrap;
   margin: 1.5rem 0;
-  padding: 0 1rem;
 }
 
 .document-status {
@@ -280,114 +261,16 @@ body {
 }
 
 /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
-@media (max-width: 768px) {
-  html {
-    font-size: 14px;
-  }
-  
-  .container {
-    padding: 0 0.5rem;
-  }
-  
-  .certificate-container {
-    border-width: 8px;
-    border-radius: 12px;
-    margin: 0 auto 20px;
-  }
-  
-  .certificate-header .title {
-    font-size: 1.5rem;
-  }
-  
-  .certificate-header .subtitle {
-    font-size: 1rem;
-  }
-  
-  .certificate-content {
-    padding: 1rem;
-  }
-  
-  .field-value {
-    font-size: 1rem;
-  }
-  
-  .field-label {
-    font-size: 0.75rem;
-  }
-  
-  .parent-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .parent-row .field-block {
-    min-width: 100%;
-  }
-  
-  .registration-block {
-    font-size: 0.85rem;
-  }
-  
-  .registration-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .right-info {
-    align-items: center;
-    text-align: center;
-  }
-  
-  .series-number {
-    font-size: 1.1rem;
-  }
-  
-  .status-and-edit {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
-  
-  .edit-btn {
-    width: 100%;
-    text-align: center;
-  }
-}
-
-@media (max-width: 480px) {
-  html {
-    font-size: 12px;
-  }
-  
-  .certificate-container {
-    border-width: 6px;
-    border-radius: 10px;
-  }
-  
-  .certificate-header {
-    padding: 0.75rem;
-  }
-  
-  .certificate-header .title {
-    font-size: 1.2rem;
-    letter-spacing: 1px;
-  }
-  
-  .certificate-content {
-    padding: 0.75rem;
-  }
-  
-  .field-value {
-    font-size: 0.9rem;
-  }
-  
-  .parent-title {
-    font-size: 0.9rem;
-  }
-  
-  .series-number {
-    font-size: 1rem;
-    letter-spacing: 0.5px;
-  }
+@media (max-width: 600px) {
+  .certificate-header .title { font-size: 1.5rem; }
+  .certificate-header .subtitle { font-size: 1rem; }
+  .field-value { font-size: 1rem; }
+  .parent-row { flex-direction: column; align-items: stretch; }
+  .parent-title { text-align: center; }
+  .right-info { align-items: center; }
+  .series-number { font-size: 1.2rem; }
+  .status-and-edit { flex-direction: column; gap: 0.5rem; }
+  .edit-btn { width: 100%; text-align: center; }
 }
 
 /* ===== МОДАЛЬНОЕ ОКНО ===== */

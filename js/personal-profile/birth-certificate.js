@@ -6,6 +6,7 @@ let documentData = {}
 let userPersonalCode = null
 let userProfile = null
 let userId = null
+
 let formData = {
   child_full_name: '',
   child_birth_date: '',
@@ -82,7 +83,7 @@ function escapeHTML(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
+    .replace(/'/g, '&#39;')
 }
 
 // ==================== ЗАГРУЗКА ДАННЫХ ====================
@@ -93,6 +94,7 @@ async function loadData() {
       window.location.href = '../../login.html'
       return
     }
+
     userId = session.user.id
 
     const { data: profile, error: profileError } = await supabase
@@ -171,9 +173,9 @@ function renderCertificate(data) {
   const motherFirstPatronymic = motherNameParts.slice(1).join(' ') || '—'
 
   // Дата актовой записи
-  let actYear = '____'
-  let actMonth = '______'
-  let actDay = '__'
+  let actYear = ''
+  let actMonth = '____'
+  let actDay = ''
   if (data.registry_act_date) {
     const actDate = new Date(data.registry_act_date)
     const months = [
@@ -186,154 +188,154 @@ function renderCertificate(data) {
   }
 
   const html = `
-    <div class="certificate-container">
-      <div class="certificate-header">
-        <div class="title">СВИДЕТЕЛЬСТВО</div>
-        <div class="subtitle">О РОЖДЕНИИ</div>
+    <div class="certificate-header">
+      <div class="title">СВИДЕТЕЛЬСТВО</div>
+      <div class="subtitle">О РОЖДЕНИИ</div>
+    </div>
+    
+    <div class="certificate-content">
+      <!-- Фамилия ребенка -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(childSurname)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">фамилия</div>
       </div>
-      <div class="certificate-content">
-        <!-- Фамилия -->
-        <div class="field-block">
-          <div class="field-value">${escapeHTML(childSurname)}</div>
-          <div class="field-line"></div>
-          <div class="field-label">фамилия</div>
-        </div>
-        
-        <!-- Имя Отчество -->
-        <div class="field-block">
-          <div class="field-value">${escapeHTML(childFirstPatronymic)}</div>
-          <div class="field-line"></div>
-          <div class="field-label">имя отчество</div>
-        </div>
-        
-        <!-- Дата рождения -->
-        <div class="field-block">
-          <div class="field-value">${formatDateForRussian(data.child_birth_date)}</div>
-          <div class="field-line"></div>
-          <div class="field-label">дата рождения</div>
-        </div>
-        
-        <!-- Место рождения (3 строки) -->
-        <div class="field-block">
-          <div class="field-value">${escapeHTML(data.child_birth_place || '—')}</div>
-          <div class="field-line"></div>
-          <div class="field-label">место рождения</div>
-        </div>
-        
-        <!-- Актовая запись (одна строка) -->
-        <div class="registration-block">
-          <span class="label">о чем</span>
-          <span class="value">${actYear}</span>
-          <span class="label">года</span>
-          <span class="value">${actMonth}</span>
-          <span class="label">месяца</span>
-          <span class="value">${actDay}</span>
-          <span class="label">числа составлена запись акта о рождении №</span>
-          <span class="value">${escapeHTML(data.registry_act_number || '—')}</span>
-        </div>
-        
-        <!-- Родители -->
-        <div class="parents-section">
-          <!-- Отец -->
-          <div class="parent-block">
-            <div class="parent-row">
-              <span class="parent-title">Отец</span>
-              <div class="field-block">
-                <div class="field-value">${escapeHTML(fatherSurname)}</div>
-                <div class="field-line"></div>
-                <div class="field-label">фамилия</div>
-              </div>
-            </div>
+      
+      <!-- Имя Отчество -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(childFirstPatronymic)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">имя отчество</div>
+      </div>
+      
+      <!-- Дата рождения -->
+      <div class="field-block">
+        <div class="field-value">${formatDateForRussian(data.child_birth_date)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">дата рождения</div>
+      </div>
+      
+      <!-- Место рождения -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.child_birth_place || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">место рождения</div>
+      </div>
+      
+      <!-- Актовая запись -->
+      <div class="registration-block">
+        <span class="label">о чем</span>
+        <span class="value">${actYear}</span>
+        <span class="label">года</span>
+        <span class="value">${actMonth}</span>
+        <span class="label">месяца</span>
+        <span class="value">${actDay}</span>
+        <span class="label">числа составлена запись акта о рождении №</span>
+        <span class="value">${escapeHTML(data.registry_act_number || '—')}</span>
+      </div>
+      
+      <!-- Родители -->
+      <div class="parents-section">
+        <!-- Отец -->
+        <div class="parent-block">
+          <div class="parent-row">
+            <span class="parent-title">Отец</span>
             <div class="field-block">
-              <div class="field-value">${escapeHTML(fatherFirstPatronymic)}</div>
+              <div class="field-value">${escapeHTML(fatherSurname)}</div>
               <div class="field-line"></div>
-              <div class="field-label">имя отчество</div>
-            </div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(data.father_citizenship || '—')}</div>
-              <div class="field-line"></div>
-              <div class="field-label">гражданство</div>
-            </div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(data.father_nationality || '—')}</div>
-              <div class="field-line"></div>
-              <div class="field-label">национальность</div>
+              <div class="field-label">фамилия</div>
             </div>
           </div>
-          
-          <!-- Мать -->
-          <div class="parent-block">
-            <div class="parent-row">
-              <span class="parent-title">Мать</span>
-              <div class="field-block">
-                <div class="field-value">${escapeHTML(motherSurname)}</div>
-                <div class="field-line"></div>
-                <div class="field-label">фамилия</div>
-              </div>
-            </div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(motherFirstPatronymic)}</div>
-              <div class="field-line"></div>
-              <div class="field-label">имя отчество</div>
-            </div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(data.mother_citizenship || '—')}</div>
-              <div class="field-line"></div>
-              <div class="field-label">гражданство</div>
-            </div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(data.mother_nationality || '—')}</div>
-              <div class="field-line"></div>
-              <div class="field-label">национальность</div>
-            </div>
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(fatherFirstPatronymic)}</div>
+            <div class="field-line"></div>
+            <div class="field-label">имя отчество</div>
+          </div>
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(data.father_citizenship || '—')}</div>
+            <div class="field-line"></div>
+            <div class="field-label">гражданство</div>
+          </div>
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(data.father_nationality || '—')}</div>
+            <div class="field-line"></div>
+            <div class="field-label">национальность</div>
           </div>
         </div>
         
-        <!-- Место государственной регистрации (одна строка) -->
-        <div class="registration-row">
-          <span class="label">Место государственной регистрации:</span>
-          <span class="value">${escapeHTML(data.registry_place || '—')}</span>
-        </div>
-        
-        <!-- Правая колонка: дата выдачи и руководитель -->
-        <div class="right-info">
-          <div class="info-row">
-            <span class="info-label">Дата выдачи:</span>
-            <span class="info-value">${formatDate(data.issue_date)}</span>
+        <!-- Мать -->
+        <div class="parent-block">
+          <div class="parent-row">
+            <span class="parent-title">Мать</span>
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(motherSurname)}</div>
+              <div class="field-line"></div>
+              <div class="field-label">фамилия</div>
+            </div>
           </div>
-          <div class="info-row">
-            <span class="info-label">Руководитель органа ЗАГС</span>
-            <span class="info-value">${escapeHTML(data.registry_official || '—')}</span>
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(motherFirstPatronymic)}</div>
+            <div class="field-line"></div>
+            <div class="field-label">имя отчество</div>
           </div>
-        </div>
-        
-        <!-- Серия и номер -->
-        <div class="series-number">
-          ${escapeHTML(data.certificate_series_number || '—')}
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(data.mother_citizenship || '—')}</div>
+            <div class="field-line"></div>
+            <div class="field-label">гражданство</div>
+          </div>
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(data.mother_nationality || '—')}</div>
+            <div class="field-line"></div>
+            <div class="field-label">национальность</div>
+          </div>
         </div>
       </div>
+      
+      <!-- Место государственной регистрации -->
+      <div class="registration-row">
+        <span class="label">Место государственной регистрации:</span>
+        <span class="value">${escapeHTML(data.registry_place || '—')}</span>
+      </div>
+      
+      <!-- Правая колонка: дата выдачи и руководитель -->
+      <div class="right-info">
+        <div class="info-row">
+          <span class="info-label">Дата выдачи:</span>
+          <span class="info-value">${formatDate(data.issue_date)}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Руководитель органа ЗАГС</span>
+          <span class="info-value">${escapeHTML(data.registry_official || '—')}</span>
+        </div>
+      </div>
+      
+      <!-- Серия и номер -->
+      <div class="series-number">
+        ${escapeHTML(data.certificate_series_number || '—')}
+      </div>
+    </div>
   `
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // --- Блок статуса и кнопок (без изменений) ---
+  // Блок статуса и кнопок
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
-
+  
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
-
+  
   const statusSpan = document.createElement('span')
   statusSpan.className = statusClass
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
-
+  
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/birth-certificate/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить свидетельство'
   statusAndEdit.appendChild(replaceLink)
-
+  
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
@@ -345,7 +347,7 @@ function renderCertificate(data) {
     })
     statusAndEdit.appendChild(editBtn)
   }
-
+  
   document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
 }
 
@@ -363,23 +365,26 @@ function openModal(title) {
 function renderModalForm() {
   const modalBody = document.getElementById('modalBody')
   if (!modalBody) return
-
+  
   modalBody.innerHTML = `
     <div class="form-group">
       <label>ФИО ребёнка (полностью)</label>
       <input type="text" id="edit_child_full_name" class="form-input" value="${escapeHTML(formData.child_full_name || '')}">
     </div>
+    
     <div class="form-group">
       <label>Дата рождения ребёнка</label>
       <input type="date" id="edit_child_birth_date" class="form-input" value="${formData.child_birth_date || ''}">
     </div>
+    
     <div class="form-group">
       <label>Место рождения ребёнка</label>
       <input type="text" id="edit_child_birth_place" class="form-input" value="${escapeHTML(formData.child_birth_place || '')}">
     </div>
+    
     <div class="form-group">
       <label>Личный код ребёнка</label>
-      <input type="text" id="edit_child_personal_code" class="form-input" value="${escapeHTML(formData.child_personal_code || userPersonalCode || '')}">
+      <input type="text" id="edit_child_personal_code" class="form-input" value="${escapeHTML(formData.child_personal_code || '')}">
     </div>
     
     <h4>Отец</h4>
@@ -387,60 +392,70 @@ function renderModalForm() {
       <label>ФИО отца</label>
       <input type="text" id="edit_father_full_name" class="form-input" value="${escapeHTML(formData.father_full_name || '')}">
     </div>
+    
     <div class="form-group">
       <label>Гражданство отца</label>
       <input type="text" id="edit_father_citizenship" class="form-input" value="${escapeHTML(formData.father_citizenship || '')}">
     </div>
+    
     <div class="form-group">
       <label>Национальность отца</label>
       <input type="text" id="edit_father_nationality" class="form-input" value="${escapeHTML(formData.father_nationality || '')}">
     </div>
+    
     <div class="form-group">
       <label>Личный код отца</label>
       <input type="text" id="edit_father_personal_code" class="form-input" value="${escapeHTML(formData.father_personal_code || '')}">
     </div>
-    
+
     <h4>Мать</h4>
     <div class="form-group">
       <label>ФИО матери</label>
       <input type="text" id="edit_mother_full_name" class="form-input" value="${escapeHTML(formData.mother_full_name || '')}">
     </div>
+    
     <div class="form-group">
       <label>Гражданство матери</label>
       <input type="text" id="edit_mother_citizenship" class="form-input" value="${escapeHTML(formData.mother_citizenship || '')}">
     </div>
+    
     <div class="form-group">
       <label>Национальность матери</label>
       <input type="text" id="edit_mother_nationality" class="form-input" value="${escapeHTML(formData.mother_nationality || '')}">
     </div>
+    
     <div class="form-group">
       <label>Личный код матери</label>
       <input type="text" id="edit_mother_personal_code" class="form-input" value="${escapeHTML(formData.mother_personal_code || '')}">
     </div>
-    
+
     <h4>Актовая запись</h4>
     <div class="form-group">
       <label>Номер актовой записи</label>
       <input type="text" id="edit_registry_act_number" class="form-input" value="${escapeHTML(formData.registry_act_number || '')}">
     </div>
+    
     <div class="form-group">
       <label>Дата актовой записи</label>
       <input type="date" id="edit_registry_act_date" class="form-input" value="${formData.registry_act_date || ''}">
     </div>
+    
     <div class="form-group">
       <label>Место регистрации</label>
       <input type="text" id="edit_registry_place" class="form-input" value="${escapeHTML(formData.registry_place || '')}">
     </div>
+    
     <div class="form-group">
       <label>Руководитель органа ЗАГС</label>
       <input type="text" id="edit_registry_official" class="form-input" value="${escapeHTML(formData.registry_official || '')}">
     </div>
-    
+
     <h4>Свидетельство</h4>
     <div class="form-group">
       <label>Серия и номер свидетельства</label>
       <input type="text" id="edit_certificate_series_number" class="form-input" value="${escapeHTML(formData.certificate_series_number || '')}">
     </div>
+    
     <div class="form-group">
       <label>Дата выдачи</label>
       <input type="date" id="edit_issue_date" class="form-input" value="${formData.issue_date || ''}">
@@ -477,8 +492,9 @@ async function saveDocument() {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { alert('Ошибка авторизации'); return }
     if (!userPersonalCode) { alert('Личный код не загружен'); return }
-
+    
     const newData = collectFormData()
+    
     if (!newData.certificate_series_number) {
       alert('Серия и номер свидетельства обязательны')
       return
