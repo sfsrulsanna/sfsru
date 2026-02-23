@@ -387,53 +387,61 @@ function renderModalForm() {
       <input type="text" id="edit_child_personal_code" class="form-input" value="${escapeHTML(formData.child_personal_code || '')}">
     </div>
     
-    <h4>Отец</h4>
-    <div class="form-group">
-      <label>ФИО отца</label>
-      <input type="text" id="edit_father_full_name" class="form-input" value="${escapeHTML(formData.father_full_name || '')}">
+<!-- Родители -->
+<div class="parents-section">
+  <!-- Отец -->
+  <div class="parent-block">
+    <div class="parent-row">
+      <span class="parent-title">Отец</span>
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(fatherSurname)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">фамилия</div>
+      </div>
     </div>
-    
-    <div class="form-group">
-      <label>Гражданство отца</label>
-      <input type="text" id="edit_father_citizenship" class="form-input" value="${escapeHTML(formData.father_citizenship || '')}">
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(fatherFirstPatronymic)}</div>
+      <div class="field-line"></div>
+      <div class="field-label">имя отчество</div>
     </div>
-    
-    <div class="form-group">
-      <label>Национальность отца</label>
-      <input type="text" id="edit_father_nationality" class="form-input" value="${escapeHTML(formData.father_nationality || '')}">
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(data.father_citizenship || '—')}</div>
+      <div class="field-line"></div>
+      <div class="field-label">гражданство</div>
     </div>
-    
-    <div class="form-group">
-      <label>Личный код отца</label>
-      <input type="text" id="edit_father_personal_code" class="form-input" value="${escapeHTML(formData.father_personal_code || '')}">
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(data.father_nationality || '—')}</div>
+      <div class="field-line"></div>
+      <div class="field-label">национальность</div>
     </div>
-
-    <h4>Мать</h4>
-    <div class="form-group">
-      <label>ФИО матери</label>
-      <input type="text" id="edit_mother_full_name" class="form-input" value="${escapeHTML(formData.mother_full_name || '')}">
+  </div>
+  
+  <!-- Мать -->
+  <div class="parent-block">
+    <div class="parent-row">
+      <span class="parent-title">Мать</span>
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(motherSurname)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">фамилия</div>
+      </div>
     </div>
-    
-    <div class="form-group">
-      <label>Гражданство матери</label>
-      <input type="text" id="edit_mother_citizenship" class="form-input" value="${escapeHTML(formData.mother_citizenship || '')}">
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(motherFirstPatronymic)}</div>
+      <div class="field-line"></div>
+      <div class="field-label">имя отчество</div>
     </div>
-    
-    <div class="form-group">
-      <label>Национальность матери</label>
-      <input type="text" id="edit_mother_nationality" class="form-input" value="${escapeHTML(formData.mother_nationality || '')}">
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(data.mother_citizenship || '—')}</div>
+      <div class="field-line"></div>
+      <div class="field-label">гражданство</div>
     </div>
-    
-    <div class="form-group">
-      <label>Личный код матери</label>
-      <input type="text" id="edit_mother_personal_code" class="form-input" value="${escapeHTML(formData.mother_personal_code || '')}">
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(data.mother_nationality || '—')}</div>
+      <div class="field-line"></div>
+      <div class="field-label">национальность</div>
     </div>
-
-    <h4>Актовая запись</h4>
-    <div class="form-group">
-      <label>Номер актовой записи</label>
-      <input type="text" id="edit_registry_act_number" class="form-input" value="${escapeHTML(formData.registry_act_number || '')}">
-    </div>
+  </div>
     
     <div class="form-group">
       <label>Дата актовой записи</label>
