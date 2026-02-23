@@ -1,12 +1,11 @@
-/* ===== birth-certificate.css ===== */
+/* ===== birth-certificate.css (исправленная, без двойного дна) ===== */
 :root {
   --primary-green: #2e7d32;
   --dark-green: #1b5e20;
   --secondary-gray: #6c757d;
-  --certificate-bg: #f5f7e9;
-  --certificate-border: #c5d1a5;
-  --field-bg: #e8ecd9;
-  --border-radius: 12px;
+  --certificate-bg: #f5f7e9;        /* единый фон свидетельства */
+  --certificate-border: #c5d1a5;    /* цвет рамки */
+  --field-bg: #d9e0c5;              /* цвет полосок под текстом */
   --shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
@@ -42,7 +41,7 @@ html {
   color: #666;
 }
 
-/* КНОПКИ (унифицированы) */
+/* ===== КНОПКИ (унифицированы) ===== */
 .add-btn,
 .edit-btn,
 .btn,
@@ -88,7 +87,7 @@ a.edit-btn:hover {
   background: #5a6268 !important;
 }
 
-/* СТАТУС ДОКУМЕНТА */
+/* ===== СТАТУС ДОКУМЕНТА ===== */
 .status-and-edit {
   display: flex;
   justify-content: center;
@@ -116,25 +115,23 @@ a.edit-btn:hover {
   color: #6c757d;
 }
 
-/* КАРТОЧКА СВИДЕТЕЛЬСТВА */
+/* ===== КАРТОЧКА СВИДЕТЕЛЬСТВА (ОДНО ПОЛОТНО) ===== */
 .certificate-container {
   max-width: 800px;
   margin: 0 auto 30px;
-  background: var(--certificate-bg);
-  border: 10px solid var(--certificate-border);
+  background: var(--certificate-bg);     /* единый фон */
+  border: 12px solid var(--certificate-border); /* одна рамка */
   border-radius: 20px;
-  padding: 0;
   box-shadow: var(--shadow);
   overflow: hidden;
   font-family: 'Times New Roman', Times, serif;
 }
 
+/* Шапка без лишних границ */
 .certificate-header {
   background: var(--certificate-border);
   padding: 1rem;
   text-align: center;
-  font-family: 'PT Serif', 'Times New Roman', Times, serif;
-  border-bottom: 1px solid var(--primary-green);
 }
 
 .certificate-header .title {
@@ -156,7 +153,7 @@ a.edit-btn:hover {
   padding: 1.2rem;
 }
 
-/* ПОЛЯ СВИДЕТЕЛЬСТВА */
+/* ===== ПОЛЯ ===== */
 .field-block {
   margin-bottom: 0.8rem;
 }
@@ -184,118 +181,88 @@ a.edit-btn:hover {
   letter-spacing: 0.3px;
 }
 
-/* Специальные блоки */
+/* Актовая запись (одна строка) */
 .registration-block {
   margin: 1rem 0;
+  line-height: 1.4;
 }
-
-.registration-line {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  margin-bottom: 0.3rem;
-  align-items: baseline;
-  justify-content: flex-start; /* выравнивание по левому краю */
-}
-
-.registration-line .label {
-  font-weight: 400;
+.registration-block .label {
   color: var(--primary-green);
   font-size: 0.9rem;
   font-style: normal;
-}
-
-.registration-line .value {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #000;
-}
-
-.act-number {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #000;
-  margin: 0.5rem 0;
-  text-align: left;
-}
-
-.act-number .label {
   font-weight: 400;
-  color: var(--primary-green);
-  font-size: 0.9rem;
-  font-style: normal;
+}
+.registration-block .value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #000;
+  margin-right: 0.3rem;
 }
 
-/* Родители */
+/* Родители: строка "Отец" + фамилия */
 .parents-section {
   margin: 1.2rem 0;
 }
-
 .parent-block {
   margin-bottom: 1.2rem;
-  border-bottom: 1px dashed var(--certificate-border);
-  padding-bottom: 0.8rem;
 }
-
-.parent-block:last-child {
-  border-bottom: none;
+.parent-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
 }
-
-.parent-title {
+.parent-row .parent-title {
   font-size: 1rem;
   font-weight: 500;
   color: var(--primary-green);
-  margin-bottom: 0.2rem; /* уменьшено для близости к фамилии */
-  text-align: left;
   font-style: normal;
+  white-space: nowrap;
+}
+.parent-row .field-block {
+  flex: 1;
+  margin-bottom: 0;
 }
 
-/* Место регистрации */
-.registration-place-block {
-  margin: 1.2rem 0;
+/* Место регистрации (одна строка) */
+.registration-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  margin: 1rem 0;
 }
-
-.registration-place-title {
+.registration-row .label {
+  color: var(--primary-green);
   font-size: 0.9rem;
-  font-weight: 400;
-  color: var(--primary-green);
-  margin-bottom: 0.2rem;
   font-style: normal;
-  text-align: left;
+  font-weight: 400;
+  white-space: nowrap;
 }
-
-.registration-place-text {
+.registration-row .value {
   font-size: 1rem;
-  line-height: 1.3;
-  color: #000;
   font-weight: 500;
-  text-align: left; /* выравнивание влево */
-  /* white-space: nowrap; */ /* убрано, чтобы не ломать длинные строки */
+  color: #000;
 }
 
-/* Правая информация (дата и подпись) */
+/* Правая информация */
 .right-info {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   margin: 1.2rem 0 0.8rem;
 }
-
 .info-row {
-  text-align: right;
-  margin-bottom: 0.2rem;
   display: flex;
   align-items: baseline;
   gap: 0.2rem;
+  margin-bottom: 0.2rem;
 }
-
 .info-label {
-  font-size: 0.9rem;
   color: var(--primary-green);
-  font-style: normal; /* убран курсив */
+  font-size: 0.9rem;
+  font-style: normal;
   font-weight: 400;
 }
-
 .info-value {
   font-size: 1rem;
   font-weight: 500;
@@ -313,7 +280,7 @@ a.edit-btn:hover {
   font-family: 'Times New Roman', Times, serif;
 }
 
-/* МОДАЛЬНОЕ ОКНО (без изменений) */
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -397,6 +364,7 @@ a.edit-btn:hover {
   cursor: not-allowed;
 }
 
+/* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
 .too-small-message {
   display: none;
   text-align: center;
@@ -420,6 +388,7 @@ a.edit-btn:hover {
   }
 }
 
+/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ ===== */
 @media (max-width: 600px) {
   .certificate-header .title {
     font-size: 1.5rem;
@@ -433,10 +402,8 @@ a.edit-btn:hover {
   .field-value {
     font-size: 1rem;
   }
-  .registration-line {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.2rem;
+  .registration-block {
+    font-size: 0.9rem;
   }
   .right-info {
     align-items: center;
@@ -447,55 +414,4 @@ a.edit-btn:hover {
   .status-and-edit {
     flex-direction: column;
   }
-}
-/* ===== ДОПОЛНЕНИЯ И ИСПРАВЛЕНИЯ ===== */
-
-/* Убираем нижнюю границу у шапки (убираем лишнюю линию) */
-.certificate-header {
-  border-bottom: none;
-}
-
-/* Родительская строка для заголовка "Отец"/"Мать" и фамилии */
-.parent-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
-}
-.parent-row .parent-title {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--primary-green);
-  font-style: normal;
-  white-space: nowrap;
-}
-.parent-row .field-block {
-  flex: 1;
-  margin-bottom: 0;
-}
-
-/* Место регистрации в одну строку */
-.registration-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  margin: 1rem 0;
-}
-.registration-row .label {
-  font-size: 0.9rem;
-  color: var(--primary-green);
-  font-style: normal;
-  font-weight: 400;
-  white-space: nowrap;
-}
-.registration-row .value {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #000;
-}
-
-/* Актовая запись в одну строку – используем существующие классы .label и .value */
-.registration-block .label,
-.registration-block .value {
-  display: inline;
 }
