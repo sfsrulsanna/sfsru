@@ -403,11 +403,20 @@ function renderModalForm() {
       <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
     </div>
 
-    <h4>Новые данные</h4>
-    <div class="form-group">
-      <label>Новое ФИО (полностью)</label>
-      <input type="text" id="edit_new_full_name" class="form-input" value="${escapeHTML(formData.new_full_name || '')}">
+<!-- Новое ФИО (две строки) -->
+<div class="marriage-row">
+  <span class="marriage-label">переменил(а) фамилию, имя, отчество на</span>
+  <div class="new-name-fields">
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(newSurname)}</div>
+      <div class="field-line"></div>  <!-- линия только здесь -->
     </div>
+    <div class="field-block" style="margin-top: 0.5rem;">
+      <div class="field-value">${escapeHTML(newRest)}</div>
+      <!-- поле без линии -->
+    </div>
+  </div>
+</div>
 
     <h4>Актовая запись</h4>
     <div class="form-group">
