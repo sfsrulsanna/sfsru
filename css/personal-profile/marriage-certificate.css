@@ -1,11 +1,13 @@
-/* ===== marriage-certificate.css – розовая тема (исправленная) ===== */
+/* ===== marriage-certificate.css – полная версия ===== */
 :root {
-  --primary-pink: #c44569;      /* более насыщенный розовый */
+  --primary-pink: #c44569;      /* основной розовый */
   --dark-pink: #9e3a55;         /* тёмный оттенок */
+  --secondary-gray: #6c757d;
   --light-pink-bg: #ffe9e9;     /* светло-розовый фон карточки */
   --border-pink: #e6b0aa;       /* цвет рамки */
   --field-bg: #f8d7da;          /* фон полосок под текстом */
   --text-dark: #000;
+  --maroon: #7b091a;            /* тёмно-бордовый для серии */
 }
 
 * {
@@ -82,6 +84,7 @@ html {
 /* ===== ПОЛЯ ===== */
 .field-block {
   margin-bottom: 0.8rem;
+  min-width: 0; /* для правильного переноса в flex-контейнере */
 }
 
 .field-value {
@@ -90,6 +93,9 @@ html {
   font-weight: 500;
   margin-bottom: 0.1rem;
   color: var(--text-dark);
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .field-line {
@@ -106,30 +112,30 @@ html {
   color: var(--primary-pink);
 }
 
-/* ===== АКТОВАЯ ЗАПИСЬ ===== */
-.registration-block {
-  margin: 1rem 0;
+/* ===== АКТОВАЯ ЗАПИСЬ (без подписи, с линией) ===== */
+.act-record {
+  margin: 1.5rem 0;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--field-bg);
+}
+
+.act-record .text {
   font-size: 0.95rem;
   color: var(--primary-pink);
 }
 
-.registration-block .label {
-  color: var(--primary-pink);
-}
-
-.registration-block .value {
+.act-record .text .number {
   color: var(--text-dark);
   font-weight: 500;
 }
 
-/* ===== СТРОКИ ДЛЯ ДАТЫ/МЕСТА РОЖДЕНИЯ И ГРАЖДАНСТВА/НАЦИОНАЛЬНОСТИ ===== */
-.birth-row,
+/* ===== СТРОКИ ДЛЯ ДВУХ ПОЛЕЙ В РЯД ===== */
 .citizenship-row {
   display: flex;
   gap: 1rem;
   margin-bottom: 0.8rem;
 }
-.birth-row .field-block,
+
 .citizenship-row .field-block {
   flex: 1;
   min-width: 120px;
@@ -146,80 +152,84 @@ html {
 }
 
 .spouse-row {
-  position: relative;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
   margin-bottom: 0.8rem;
 }
 
 .spouse-title {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
   font-size: 1rem;
   font-weight: 500;
   color: var(--primary-pink);
   white-space: nowrap;
-  z-index: 1;
+  flex-shrink: 0;
 }
 
 .spouse-row .field-block {
-  width: 100%;
+  flex: 1;
   margin-bottom: 0;
 }
 
-.spouse-row .field-block .field-value {
-  text-align: center;
-  padding: 0 80px;
+/* ===== СТРОКА ЗАКЛЮЧЕНИЯ БРАКА ===== */
+.marriage-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 1.5rem 0;
 }
 
-/* ===== ПРИСВОЕННЫЕ ФАМИЛИИ (как у блока "Муж") ===== */
+.marriage-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-pink);
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: 120px; /* стандартная ширина */
+}
+
+/* Расширенная метка для длинных надписей */
+.wide-label {
+  width: 220px;
+}
+
+.marriage-field {
+  flex: 1;
+  min-width: 0;
+}
+
+.marriage-field .field-value {
+  text-align: left; /* выравнивание по левому краю, как в примере */
+}
+
+/* ===== ПРИСВОЕННЫЕ ФАМИЛИИ ===== */
 .assigned-section {
   margin: 1.5rem 0;
 }
+
 .assigned-row {
   display: flex;
   align-items: baseline;
   gap: 1rem;
   margin-bottom: 1rem;
 }
+
 .assigned-label {
   font-size: 1rem;
   font-weight: 500;
   color: var(--primary-pink);
   white-space: nowrap;
+  flex-shrink: 0;
   width: 120px;
 }
+
 .assigned-field {
   flex: 1;
-  margin-bottom: 0;
+  min-width: 0;
 }
+
 .assigned-field .field-value {
-  text-align: left; /* или center, как вам удобнее */
-}
-.assigned-field .field-line {
-  margin-top: 0.1rem;
-}
-
-/* ===== МЕСТО РЕГИСТРАЦИИ ===== */
-.registration-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  margin: 1rem 0;
-  flex-wrap: nowrap;
-}
-
-.registration-row .label {
-  color: var(--primary-pink);
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-
-.registration-row .value {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-dark);
-  word-break: break-word;
+  text-align: left;
 }
 
 /* ===== ПРАВАЯ ИНФОРМАЦИЯ ===== */
@@ -240,12 +250,15 @@ html {
 .info-label {
   color: var(--primary-pink);
   font-size: 0.95rem;
+  white-space: nowrap;
 }
 
 .info-value {
   font-size: 1rem;
   font-weight: 500;
   color: var(--text-dark);
+  word-break: break-word;
+  text-align: right;
 }
 
 /* ===== СЕРИЯ И НОМЕР ===== */
@@ -253,7 +266,7 @@ html {
   text-align: center;
   font-size: 1.3rem;
   font-weight: 600;
-  color: #7b091a; /* оставим тёмно-бордовый */
+  color: var(--maroon);
   letter-spacing: 1px;
   margin: 1rem 0 0.3rem;
 }
@@ -323,7 +336,7 @@ a.edit-btn:hover {
 }
 
 .btn-secondary {
-  background: #6c757d !important;
+  background: var(--secondary-gray) !important;
   color: white;
 }
 .btn-secondary:hover {
@@ -335,17 +348,56 @@ a.edit-btn:hover {
   .certificate-header .title { font-size: 1.5rem; }
   .certificate-header .subtitle { font-size: 1rem; }
   .field-value { font-size: 1rem; }
-  .spouse-row { flex-direction: column; align-items: stretch; }
-  .spouse-title { text-align: center; }
-  .right-info { align-items: center; }
-  .series-number { font-size: 1.2rem; }
-  .status-and-edit { flex-direction: column; }
-  .edit-btn { width: 100%; text-align: center; }
-  .birth-row, .citizenship-row { flex-direction: column; gap: 0.5rem; }
-  .assigned-row { gap: 0.5rem; }
+
+  /* Вертикальное расположение рядов */
+  .spouse-row,
+  .marriage-row,
+  .assigned-row,
+  .citizenship-row,
+  .info-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.2rem;
+  }
+
+  .spouse-title,
+  .marriage-label,
+  .assigned-label,
+  .info-label {
+    width: auto;
+    text-align: left;
+    margin-bottom: 0.2rem;
+  }
+
+  .marriage-field .field-value,
+  .assigned-field .field-value {
+    text-align: center;
+  }
+
+  .right-info {
+    align-items: center;
+  }
+
+  .series-number {
+    font-size: 1.2rem;
+  }
+
+  .status-and-edit {
+    flex-direction: column;
+  }
+
+  .edit-btn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .citizenship-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
 }
 
-/* ===== МОДАЛЬНОЕ ОКНО (как в других документах) ===== */
+/* ===== МОДАЛЬНОЕ ОКНО ===== */
 .modal-overlay {
   display: none;
   position: fixed;
@@ -436,6 +488,7 @@ a.edit-btn:hover {
   cursor: not-allowed;
 }
 
+/* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
 .too-small-message {
   display: none;
   text-align: center;
@@ -457,100 +510,4 @@ a.edit-btn:hover {
   .modal-overlay {
     display: none !important;
   }
-}
-/* ===== ПОЯСНИТЕЛЬНАЯ СТРОКА (ПЕРЕД ПРИСВОЕННЫМИ ФАМИЛИЯМИ) ===== */
-.section-label {
-  margin: 1.2rem 0 0.5rem 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--primary-pink);
-  text-align: left;
-}
-/* ===== СТРОКА ЗАКЛЮЧЕНИЯ БРАКА ===== */
-.marriage-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.3rem;
-  margin: 1rem 0;
-  flex-wrap: wrap;
-}
-.marriage-row .label {
-  color: var(--primary-pink);
-  font-size: 0.95rem;
-  white-space: nowrap;
-}
-.marriage-row .value {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--text-dark);
-  word-break: break-word;
-}
-/* ===== СТРОКА ЗАКЛЮЧЕНИЯ БРАКА (как у "Муж") ===== */
-.marriage-row {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  margin: 1.5rem 0;
-}
-.marriage-label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--primary-pink);
-  white-space: nowrap;
-  width: 120px; /* ширина, чтобы дата начиналась на одном уровне */
-}
-.marriage-field {
-  flex: 1;
-  margin-bottom: 0;
-}
-.marriage-field .field-value {
-  text-align: center; /* можно left, если нужно */
-}
-/* Поле актовой записи – как обычное поле */
-.act-record-field .field-value {
-  font-size: 1.2rem; /* такой же, как у даты брака */
-  text-align: center;
-  word-break: break-word;
-}
-/* ===== АКТОВАЯ ЗАПИСЬ (как в старом варианте, но с линией) ===== */
-.act-record {
-  margin: 1.5rem 0;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--field-bg); /* линия как у полей */
-}
-.act-record .text {
-  font-size: 0.95rem;
-  color: var(--primary-pink);
-}
-.act-record .text .number {
-  color: var(--text-dark);
-  font-weight: 500;
-}
-/* Широкая надпись для длинных меток */
-.wide-label {
-  width: 220px; /* чтобы поместилось "Место государственной регистрации" */
-}
-/* Разрешить перенос длинных строк в значениях полей */
-.field-value {
-  word-break: break-word;
-  overflow-wrap: break-word;
-  white-space: normal;
-}
-
-/* Убедиться, что поле занимает оставшееся место и может сужаться */
-.field-block {
-  min-width: 0; /* позволяет flex-элементу стать уже своего содержимого */
-  width: 100%;
-}
-
-/* Для рядов с меткой и полем: поле занимает оставшееся место */
-.marriage-row .field-block {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Если метка слишком длинная, можно увеличить её ширину */
-.wide-label {
-  width: 220px; /* достаточно для "Место государственной регистрации" */
-  flex-shrink: 0;
 }
