@@ -301,14 +301,12 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- АКТОВАЯ ЗАПИСЬ (в виде обычного поля с линией) -->
-      <div class="field-block act-record-field">
-        <div class="field-value">
-          о чем ${actYear} года ${actMonth} месяца ${actDay} числа составлена запись акта о заключении брака № ${escapeHTML(data.registry_act_number || '—')}
-        </div>
-        <div class="field-line"></div>
-        <div class="field-label">актовая запись</div>
-      </div>
+<!-- Актовая запись (без подписи, с линией) -->
+<div class="act-record">
+  <div class="text">
+    о чем <span class="number">${actYear}</span> года <span class="number">${actMonth}</span> месяца <span class="number">${actDay}</span> числа составлена запись акта о заключении брака № <span class="number">${escapeHTML(data.registry_act_number || '—')}</span>
+  </div>
+</div>
 
       <!-- Присвоенные фамилии (новый дизайн) -->
       <div class="assigned-section">
