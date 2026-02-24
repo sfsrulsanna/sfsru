@@ -311,22 +311,23 @@ function renderCertificate(data) {
         </div>
       </div>
 
-<!-- Основание расторжения (с переносом) -->
-<div class="marriage-row has-wide-label">
-  <span class="marriage-label wide-label">на основании</span>
-  <div class="field-block marriage-field">
-    <div class="field-value">${escapeHTML(data.divorce_basis || '—')}</div>
-    <div class="field-line"></div>
-  </div>
-</div>
-<!-- Основание расторжения (дата) - центрировано -->
-<div class="marriage-row has-wide-label date-field">
-  <span class="marriage-label wide-label">от</span>
-  <div class="field-block marriage-field">
-    <div class="field-value">${escapeHTML(basisDate)}</div>
-    <div class="field-line"></div>
-  </div>
-</div>
+      <!-- Основание расторжения (текст) - оставляем с переносом -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">на основании</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(data.divorce_basis || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+
+      <!-- Основание расторжения (дата) - теперь как обычное поле: надпись "от" слева, дата справа с линией -->
+      <div class="marriage-row">
+        <span class="marriage-label">от</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(basisDate)}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
 
       <!-- Актовая запись -->
       <div class="act-record">
@@ -386,7 +387,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Свидетельство выдано (владелец) -->
+      <!-- Свидетельство выдано (владелец) - значение должно центрироваться (уже по умолчанию) -->
       <div class="marriage-row">
         <span class="marriage-label">Свидетельство выдано</span>
         <div class="field-block marriage-field">
