@@ -152,34 +152,56 @@ html {
 
 /* ===== АКТОВАЯ ЗАПИСЬ – МОБИЛЬНАЯ ВЕРСИЯ ===== */
 @media (max-width: 600px) {
-  /* Общие настройки для карточки уже есть, а это для актовой записи */
   .act-record {
-    margin: 0.5rem 0;          /* уменьшаем внешние отступы */
+    margin: 0.5rem 0;
   }
+
+  /* Основная строка с годом, месяцем, числом */
   .act-row {
-    display: flex;             /* возвращаем flex */
-    flex-direction: row;       /* горизонтальное расположение */
-    flex-wrap: wrap;           /* разрешаем перенос */
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.2rem 0.3rem;        /* минимальные отступы между элементами */
-    margin-bottom: 0.2rem;     /* отступ между двумя строками */
+    gap: 0.3rem 0.5rem;
+    margin-bottom: 0.3rem;
   }
+
   .act-label {
-    white-space: nowrap;       /* надписи не переносим */
-    font-size: 0.85rem;        /* чуть меньше */
+    white-space: nowrap;
+    font-size: 0.9rem;
+    color: var(--primary-pink);
   }
+
   .act-field {
-    flex: 0 1 auto;            /* не растягиваются, размер по содержимому */
-    min-width: 50px;           /* минимальная ширина для поля */
-    margin-bottom: 0;          /* убираем лишний отступ */
-  }
-  .act-field .field-value {
-    font-size: 1rem;           /* чуть меньше, но можно 1.1rem */
+    flex: 1 1 0;            /* поле занимает всё свободное пространство */
+    min-width: 50px;         /* минимальная ширина для узких экранов */
     margin-bottom: 0;
-    text-align: left;          /* или center – как удобнее */
   }
+
+  .act-field .field-value {
+    font-size: 1.1rem;
+    margin-bottom: 0;
+    text-align: center;      /* значение по центру линии */
+  }
+
   .act-field .field-line {
-    margin: 0.1rem 0 0;        /* подгоняем линию */
+    margin: 0.1rem 0 0;
+    width: 100%;
+  }
+
+  /* Строка с номером актовой записи */
+  .act-row:last-child {
+    flex-wrap: wrap;
+  }
+
+  .act-row:last-child .act-label {
+    white-space: normal;      /* разрешаем перенос длинной надписи */
+    flex: 0 0 auto;           /* не растягиваем */
+  }
+
+  .act-row:last-child .act-field {
+    flex: 1 1 0;              /* поле под номером занимает остаток */
+    min-width: 80px;
   }
 }
 
