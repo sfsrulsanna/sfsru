@@ -326,21 +326,29 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Место государственной регистрации -->
-      <div class="registration-row">
-        <span class="label">Место государственной регистрации:</span>
-        <span class="value">${escapeHTML(data.registry_place || '—')}</span>
+      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (новый блок) -->
+      <div class="marriage-row">
+        <span class="marriage-label wide-label">Место государственной регистрации</span>
+        <div class="field-block marriage-field">
+          <div class="field-value" style="text-align: left;">${escapeHTML(data.registry_place || '—')}</div>
+          <div class="field-line"></div>
+        </div>
       </div>
 
-      <!-- Правая информация -->
+      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (новый блок) -->
+      <div class="marriage-row">
+        <span class="marriage-label wide-label">Место выдачи свидетельства</span>
+        <div class="field-block marriage-field">
+          <div class="field-value" style="text-align: left;">${escapeHTML(data.issue_place || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+
+      <!-- ПРАВАЯ ИНФОРМАЦИЯ (без места выдачи) -->
       <div class="right-info">
         <div class="info-row">
           <span class="info-label">Дата выдачи:</span>
           <span class="info-value">${formatDate(data.issue_date)}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Место выдачи:</span>
-          <span class="info-value">${escapeHTML(data.issue_place || '—')}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Руководитель органа ЗАГС</span>
