@@ -155,15 +155,10 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 function renderCertificate(data) {
-  // Разбиваем старое ФИО на части
+  // Разбиваем старое ФИО на части (для двух полей)
   const oldNameParts = (data.old_full_name || '').split(' ')
   const oldSurname = oldNameParts[0] || '—'
   const oldFirstPatronymic = oldNameParts.slice(1).join(' ') || '—'
-
-  // Разбиваем новое ФИО на части
-  const newNameParts = (data.new_full_name || '').split(' ')
-  const newSurname = newNameParts[0] || '—'
-  const newRest = newNameParts.slice(1).join(' ') || '—'
 
   // Дата актовой записи
   let actYear = ''
@@ -236,18 +231,12 @@ function renderCertificate(data) {
         </div>
       </div>
       
-      <!-- Новое ФИО (две строки) -->
-      <div class="marriage-row">
-        <span class="marriage-label">переменил(а) фамилию, имя, отчество на</span>
-        <div class="new-name-fields">
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(newSurname)}</div>
-            <div class="field-line"></div>
-          </div>
-          <div class="field-block" style="margin-top: 0.5rem;">
-            <div class="field-value">${escapeHTML(newRest)}</div>
-            <div class="field-line"></div>
-          </div>
+      <!-- Новое ФИО (как место регистрации: надпись сверху, поле на всю ширину) -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">переменил(а) фамилию, имя, отчество на</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(data.new_full_name || '—')}</div>
+          <div class="field-line"></div>
         </div>
       </div>
       
@@ -403,18 +392,11 @@ function renderModalForm() {
       <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
     </div>
 
-<!-- Новое ФИО (две строки, как место регистрации) -->
-<div class="marriage-row has-wide-label">
-  <span class="marriage-label wide-label">переменил(а) фамилию, имя, отчество на</span>
-  <div class="field-block marriage-field" style="margin-bottom: 0.8rem;">
-    <div class="field-value">${escapeHTML(newSurname)}</div>
-    <div class="field-line"></div>
-  </div>
-  <div class="field-block marriage-field">
-    <div class="field-value">${escapeHTML(newRest)}</div>
-    <div class="field-line"></div>
-  </div>
-</div>
+    <h4>Новые данные</h4>
+    <div class="form-group">
+      <label>Новое ФИО (полностью)</label>
+      <input type="text" id="edit_new_full_name" class="form-input" value="${escapeHTML(formData.new_full_name || '')}">
+    </div>
 
     <h4>Актовая запись</h4>
     <div class="form-group">
