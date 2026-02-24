@@ -144,8 +144,8 @@ function renderCertificatesGrid(certificates) {
     </div>
     <div class="certificate-fields">
       <div class="certificate-field">
-        <span class="field-label">Перейти к архиву</span>
-        <span class="field-value">→</span>
+        <span class="field-label">Перейти к архиву </span>
+        <span class="field-value"> →</span>
       </div>
     </div>
   `
@@ -167,7 +167,7 @@ function renderCertificatesGrid(certificates) {
       </div>
       <div class="certificate-fields">
         <div class="certificate-field">
-          <span class="field-label">Номер:</span>
+          <span class="field-label">Серия и номер:</span>
           <span class="field-value">${number}</span>
         </div>
       </div>
