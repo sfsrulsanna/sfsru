@@ -155,7 +155,7 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 function renderCertificate(data) {
-  // Разбиваем старое ФИО на части (для двух полей)
+  // Разбиваем старое ФИО на части
   const oldNameParts = (data.old_full_name || '').split(' ')
   const oldSurname = oldNameParts[0] || '—'
   const oldFirstPatronymic = oldNameParts.slice(1).join(' ') || '—'
@@ -231,7 +231,7 @@ function renderCertificate(data) {
         </div>
       </div>
       
-      <!-- Новое ФИО (как место регистрации: надпись сверху, поле на всю ширину) -->
+      <!-- Новое ФИО (как поле с надписью сверху) -->
       <div class="marriage-row has-wide-label">
         <span class="marriage-label wide-label">переменил(а) фамилию, имя, отчество на</span>
         <div class="field-block marriage-field">
