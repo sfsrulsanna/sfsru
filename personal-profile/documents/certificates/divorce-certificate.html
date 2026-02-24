@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Свидетельство о расторжении брака — СФСРЮ</title>
+  <!-- favicons (как в других документах) -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+
+  <!-- Общие стили сайта -->
+  <link rel="stylesheet" href="../../../css/style.css" />
+  <!-- Стили для свидетельства о расторжении брака -->
+  <link rel="stylesheet" href="../../../css/personal-profile/divorce-certificate.css" />
+  <!-- Иконки -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+</head>
+<body>
+  <!-- ШАПКА -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
+        <h1>СФСРЮ</h1>
+      </div>
+      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu" id="mainNav">
+        <ul>
+          <li><a href="../../../index.html">Главная</a></li>
+          <li><a href="../../../news.html">Новости</a></li>
+          <li><a href="../../../wiki/">Википедия</a></li>
+          <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../../../services.html">Услуги</a></li>
+          <li><a href="../../index.html" class="active">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="too-small-message" style="display: none;">
+      ⚠️ Ваше устройство слишком маленькое для отображения документа.
+    </div>
+    <div class="container">
+      <div id="loading" class="loading">Загрузка данных...</div>
+      <div id="noData" style="display: none; text-align: center; padding: 3rem;">
+        <p>У вас пока нет свидетельства о расторжении брака.</p>
+        <div class="no-data-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+          <button class="edit-btn" id="addBtn">Добавить свидетельство</button>
+          <a href="../../services/documents/divorce-certificate/" class="edit-btn">Получить свидетельство</a>
+        </div>
+      </div>
+      <div id="content" style="display: none;">
+        <!-- Карточка свидетельства о расторжении брака -->
+        <div class="certificate-container" id="certificateContainer"></div>
+        <!-- Блок статуса и кнопок -->
+        <div id="statusAndEditContainer"></div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ПОДВАЛ -->
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
+
+  <!-- МОДАЛЬНОЕ ОКНО -->
+  <div id="modalOverlay" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h4 id="modalTitle">Добавление свидетельства о расторжении брака</h4>
+        <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
+        <button type="button" class="btn-primary" id="saveBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script type="importmap">
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+  </script>
+  <script type="module" src="../../../js/supabase-config.js"></script>
+  <script src="../../../js/mob-menu.js"></script>
+  <script src="../../../js/personal-profile/divorce-certificate.js" type="module"></script>
+</body>
+</html>
