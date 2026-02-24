@@ -8,23 +8,20 @@ let userProfile = null
 let userId = null
 
 let formData = {
-  husband_full_name: '',
-  husband_birth_date: '',
-  husband_birth_place: '',
-  husband_citizenship: '',
-  husband_nationality: '',
-  husband_personal_code: '',
-  wife_full_name: '',
-  wife_birth_date: '',
-  wife_birth_place: '',
-  wife_citizenship: '',
-  wife_nationality: '',
-  wife_personal_code: '',
-  marriage_date: '',
+  child_full_name: '',
+  child_birth_date: '',
+  child_birth_place: '',
+  child_personal_code: '',
+  father_full_name: '',
+  father_citizenship: '',
+  father_nationality: '',
+  father_personal_code: '',
+  mother_full_name: '',
+  mother_citizenship: '',
+  mother_nationality: '',
+  mother_personal_code: '',
   registry_act_number: '',
   registry_act_date: '',
-  assigned_surname_husband: '',
-  assigned_surname_wife: '',
   registry_place: '',
   registry_official: '',
   certificate_series_number: '',
@@ -122,16 +119,16 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_marriage_certificate')
+        .from('documents_birth_certificate')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_marriage_certificate')
+        .from('documents_birth_certificate')
         .select('*')
-        .or(`husband_personal_code.eq.${userPersonalCode},wife_personal_code.eq.${userPersonalCode}`)
+        .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
         .limit(1)
       if (!error && docs && docs.length > 0) {
@@ -163,17 +160,18 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 function renderCertificate(data) {
-  // Разбиваем ФИО супругов на части
-  const husbandNameParts = (data.husband_full_name || '').split(' ')
-  const husbandSurname = husbandNameParts[0] || '—'
-  const husbandFirstPatronymic = husbandNameParts.slice(1).join(' ') || '—'
+  // Разбиваем ФИО
+  const childNameParts = (data.child_full_name || '').split(' ')
+  const childSurname = childNameParts[0] || '—'
+  const childFirstPatronymic = childNameParts.slice(1).join(' ') || '—'
 
-  const wifeNameParts = (data.wife_full_name || '').split(' ')
-  const wifeSurname = wifeNameParts[0] || '—'
-  const wifeFirstPatronymic = wifeNameParts.slice(1).join(' ') || '—'
+  const fatherNameParts = (data.father_full_name || '').split(' ')
+  const fatherSurname = fatherNameParts[0] || '—'
+  const fatherFirstPatronymic = fatherNameParts.slice(1).join(' ') || '—'
 
-  // Дата брака
-  const marriageDate = data.marriage_date ? formatDateForRussian(data.marriage_date) : '—'
+  const motherNameParts = (data.mother_full_name || '').split(' ')
+  const motherSurname = motherNameParts[0] || '—'
+  const motherFirstPatronymic = motherNameParts.slice(1).join(' ') || '—'
 
   // Дата актовой записи
   let actYear = ''
@@ -193,114 +191,110 @@ function renderCertificate(data) {
   const html = `
     <div class="certificate-header">
       <div class="title">СВИДЕТЕЛЬСТВО</div>
-      <div class="subtitle">О ЗАКЛЮЧЕНИИ БРАКА</div>
+      <div class="subtitle">О РОЖДЕНИИ</div>
     </div>
     
     <div class="certificate-content">
-      <!-- МУЖ -->
-      <div class="spouse-section">
-        <div class="spouse-block">
-          <div class="spouse-row">
+      <!-- Ребёнок -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(childSurname)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">фамилия</div>
+      </div>
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(childFirstPatronymic)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">имя отчество</div>
+      </div>
+      <div class="field-block">
+        <div class="field-value">${formatDateForRussian(data.child_birth_date)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">дата рождения</div>
+      </div>
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.child_birth_place || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">место рождения</div>
+      </div>
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.child_personal_code || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">личный код</div>
+      </div>
+
+      <!-- Родители -->
+      <div class="parents-section">
+        <!-- Отец -->
+        <div class="parent-block">
+          <div class="parent-row">
+            <span class="parent-title">Отец</span>
             <div class="field-block">
-              <div class="field-value">${escapeHTML(husbandSurname)}</div>
+              <div class="field-value">${escapeHTML(fatherSurname)}</div>
               <div class="field-line"></div>
               <div class="field-label">фамилия</div>
             </div>
           </div>
           <div class="field-block">
-            <div class="field-value">${escapeHTML(husbandFirstPatronymic)}</div>
+            <div class="field-value">${escapeHTML(fatherFirstPatronymic)}</div>
             <div class="field-line"></div>
             <div class="field-label">имя отчество</div>
-          </div>
-          <!-- Дата рождения отдельно -->
-          <div class="field-block">
-            <div class="field-value">${formatDateForRussian(data.husband_birth_date)}</div>
-            <div class="field-line"></div>
-            <div class="field-label">дата рождения</div>
-          </div>
-          <!-- Место рождения отдельно -->
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(data.husband_birth_place || '—')}</div>
-            <div class="field-line"></div>
-            <div class="field-label">место рождения</div>
           </div>
           <!-- Гражданство и национальность в одной строке -->
           <div class="citizenship-row">
             <div class="field-block">
-              <div class="field-value">${escapeHTML(data.husband_citizenship || '—')}</div>
+              <div class="field-value">${escapeHTML(data.father_citizenship || '—')}</div>
               <div class="field-line"></div>
               <div class="field-label">гражданство</div>
             </div>
             <div class="field-block">
-              <div class="field-value">${escapeHTML(data.husband_nationality || '—')}</div>
+              <div class="field-value">${escapeHTML(data.father_nationality || '—')}</div>
               <div class="field-line"></div>
               <div class="field-label">национальность</div>
             </div>
           </div>
           <div class="field-block">
-            <div class="field-value">${escapeHTML(data.husband_personal_code || '—')}</div>
+            <div class="field-value">${escapeHTML(data.father_personal_code || '—')}</div>
             <div class="field-line"></div>
             <div class="field-label">личный код</div>
           </div>
         </div>
 
-        <!-- ЖЕНА -->
-        <div class="spouse-block">
-          <div class="spouse-row">
-            <span class="spouse-title">и</span>
+        <!-- Мать -->
+        <div class="parent-block">
+          <div class="parent-row">
+            <span class="parent-title">Мать</span>
             <div class="field-block">
-              <div class="field-value">${escapeHTML(wifeSurname)}</div>
+              <div class="field-value">${escapeHTML(motherSurname)}</div>
               <div class="field-line"></div>
               <div class="field-label">фамилия</div>
             </div>
           </div>
           <div class="field-block">
-            <div class="field-value">${escapeHTML(wifeFirstPatronymic)}</div>
+            <div class="field-value">${escapeHTML(motherFirstPatronymic)}</div>
             <div class="field-line"></div>
             <div class="field-label">имя отчество</div>
           </div>
-          <!-- Дата рождения отдельно -->
-          <div class="field-block">
-            <div class="field-value">${formatDateForRussian(data.wife_birth_date)}</div>
-            <div class="field-line"></div>
-            <div class="field-label">дата рождения</div>
-          </div>
-          <!-- Место рождения отдельно -->
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(data.wife_birth_place || '—')}</div>
-            <div class="field-line"></div>
-            <div class="field-label">место рождения</div>
-          </div>
           <div class="citizenship-row">
             <div class="field-block">
-              <div class="field-value">${escapeHTML(data.wife_citizenship || '—')}</div>
+              <div class="field-value">${escapeHTML(data.mother_citizenship || '—')}</div>
               <div class="field-line"></div>
               <div class="field-label">гражданство</div>
             </div>
             <div class="field-block">
-              <div class="field-value">${escapeHTML(data.wife_nationality || '—')}</div>
+              <div class="field-value">${escapeHTML(data.mother_nationality || '—')}</div>
               <div class="field-line"></div>
               <div class="field-label">национальность</div>
             </div>
           </div>
           <div class="field-block">
-            <div class="field-value">${escapeHTML(data.wife_personal_code || '—')}</div>
+            <div class="field-value">${escapeHTML(data.mother_personal_code || '—')}</div>
             <div class="field-line"></div>
             <div class="field-label">личный код</div>
           </div>
         </div>
       </div>
 
-      <!-- Дата заключения брака (как у "Муж") -->
-      <div class="marriage-row">
-        <span class="marriage-label">заключили брак</span>
-        <div class="field-block marriage-field">
-          <div class="field-value">${escapeHTML(marriageDate)}</div>
-          <div class="field-line"></div>
-        </div>
-      </div>
-
-      <!-- Актовая запись (новая структура с линиями) -->
+      <!-- Актовая запись -->
       <div class="act-record">
         <div class="act-row">
           <span class="act-label">о чем</span>
@@ -321,7 +315,7 @@ function renderCertificate(data) {
           <span class="act-label">числа</span>
         </div>
         <div class="act-row">
-          <span class="act-label">составлена запись акта о заключении брака №</span>
+          <span class="act-label">составлена запись акта о рождении №</span>
           <div class="field-block act-field">
             <div class="field-value">${escapeHTML(data.registry_act_number || '—')}</div>
             <div class="field-line"></div>
@@ -329,43 +323,25 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Присвоенные фамилии (новый дизайн) -->
-      <div class="assigned-section">
-        <div class="assigned-row">
-          <span class="assigned-label">мужу</span>
-          <div class="field-block assigned-field">
-            <div class="field-value">${escapeHTML(data.assigned_surname_husband || '—')}</div>
-            <div class="field-line"></div>
-          </div>
-        </div>
-        <div class="assigned-row">
-          <span class="assigned-label">жене</span>
-          <div class="field-block assigned-field">
-            <div class="field-value">${escapeHTML(data.assigned_surname_wife || '—')}</div>
-            <div class="field-line"></div>
-          </div>
-        </div>
-      </div>
-
-      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (исключение – не центрируется) -->
-      <div class="marriage-row has-wide-label">
-        <span class="marriage-label wide-label">Место государственной регистрации</span>
-        <div class="field-block marriage-field">
+      <!-- Место государственной регистрации -->
+      <div class="place-row">
+        <span class="place-label">Место государственной регистрации</span>
+        <div class="field-block place-field">
           <div class="field-value">${escapeHTML(data.registry_place || '—')}</div>
           <div class="field-line"></div>
         </div>
       </div>
 
-      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (исключение – не центрируется) -->
-      <div class="marriage-row has-wide-label">
-        <span class="marriage-label wide-label">Место выдачи свидетельства</span>
-        <div class="field-block marriage-field">
+      <!-- Место выдачи свидетельства -->
+      <div class="place-row">
+        <span class="place-label">Место выдачи свидетельства</span>
+        <div class="field-block place-field">
           <div class="field-value">${escapeHTML(data.issue_place || '—')}</div>
           <div class="field-line"></div>
         </div>
       </div>
 
-      <!-- ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ -->
+      <!-- Правая информация -->
       <div class="right-info-container">
         <div class="right-row">
           <span class="right-label">Дата выдачи:</span>
@@ -405,7 +381,7 @@ function renderCertificate(data) {
   statusAndEdit.appendChild(statusSpan)
   
   const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/marriage-certificate/'
+  replaceLink.href = '../../services/documents/birth-certificate/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить свидетельство'
   statusAndEdit.appendChild(replaceLink)
@@ -441,62 +417,58 @@ function renderModalForm() {
   if (!modalBody) return
 
   modalBody.innerHTML = `
-    <h4>Муж</h4>
+    <h4>Ребёнок</h4>
     <div class="form-group">
-      <label>ФИО мужа (полностью)</label>
-      <input type="text" id="edit_husband_full_name" class="form-input" value="${escapeHTML(formData.husband_full_name || '')}">
+      <label>ФИО ребёнка (полностью)</label>
+      <input type="text" id="edit_child_full_name" class="form-input" value="${escapeHTML(formData.child_full_name || '')}">
     </div>
     <div class="form-group">
-      <label>Дата рождения мужа</label>
-      <input type="date" id="edit_husband_birth_date" class="form-input" value="${formData.husband_birth_date || ''}">
+      <label>Дата рождения ребёнка</label>
+      <input type="date" id="edit_child_birth_date" class="form-input" value="${formData.child_birth_date || ''}">
     </div>
     <div class="form-group">
-      <label>Место рождения мужа</label>
-      <input type="text" id="edit_husband_birth_place" class="form-input" value="${escapeHTML(formData.husband_birth_place || '')}">
+      <label>Место рождения ребёнка</label>
+      <input type="text" id="edit_child_birth_place" class="form-input" value="${escapeHTML(formData.child_birth_place || '')}">
     </div>
     <div class="form-group">
-      <label>Гражданство мужа</label>
-      <input type="text" id="edit_husband_citizenship" class="form-input" value="${escapeHTML(formData.husband_citizenship || '')}">
-    </div>
-    <div class="form-group">
-      <label>Национальность мужа</label>
-      <input type="text" id="edit_husband_nationality" class="form-input" value="${escapeHTML(formData.husband_nationality || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код мужа</label>
-      <input type="text" id="edit_husband_personal_code" class="form-input" value="${escapeHTML(formData.husband_personal_code || '')}">
+      <label>Личный код ребёнка</label>
+      <input type="text" id="edit_child_personal_code" class="form-input" value="${escapeHTML(formData.child_personal_code || userPersonalCode || '')}">
     </div>
 
-    <h4>Жена</h4>
+    <h4>Отец</h4>
     <div class="form-group">
-      <label>ФИО жены (полностью)</label>
-      <input type="text" id="edit_wife_full_name" class="form-input" value="${escapeHTML(formData.wife_full_name || '')}">
+      <label>ФИО отца (полностью)</label>
+      <input type="text" id="edit_father_full_name" class="form-input" value="${escapeHTML(formData.father_full_name || '')}">
     </div>
     <div class="form-group">
-      <label>Дата рождения жены</label>
-      <input type="date" id="edit_wife_birth_date" class="form-input" value="${formData.wife_birth_date || ''}">
+      <label>Гражданство отца</label>
+      <input type="text" id="edit_father_citizenship" class="form-input" value="${escapeHTML(formData.father_citizenship || '')}">
     </div>
     <div class="form-group">
-      <label>Место рождения жены</label>
-      <input type="text" id="edit_wife_birth_place" class="form-input" value="${escapeHTML(formData.wife_birth_place || '')}">
+      <label>Национальность отца</label>
+      <input type="text" id="edit_father_nationality" class="form-input" value="${escapeHTML(formData.father_nationality || '')}">
     </div>
     <div class="form-group">
-      <label>Гражданство жены</label>
-      <input type="text" id="edit_wife_citizenship" class="form-input" value="${escapeHTML(formData.wife_citizenship || '')}">
-    </div>
-    <div class="form-group">
-      <label>Национальность жены</label>
-      <input type="text" id="edit_wife_nationality" class="form-input" value="${escapeHTML(formData.wife_nationality || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код жены</label>
-      <input type="text" id="edit_wife_personal_code" class="form-input" value="${escapeHTML(formData.wife_personal_code || '')}">
+      <label>Личный код отца</label>
+      <input type="text" id="edit_father_personal_code" class="form-input" value="${escapeHTML(formData.father_personal_code || '')}">
     </div>
 
-    <h4>Брак</h4>
+    <h4>Мать</h4>
     <div class="form-group">
-      <label>Дата заключения брака</label>
-      <input type="date" id="edit_marriage_date" class="form-input" value="${formData.marriage_date || ''}">
+      <label>ФИО матери (полностью)</label>
+      <input type="text" id="edit_mother_full_name" class="form-input" value="${escapeHTML(formData.mother_full_name || '')}">
+    </div>
+    <div class="form-group">
+      <label>Гражданство матери</label>
+      <input type="text" id="edit_mother_citizenship" class="form-input" value="${escapeHTML(formData.mother_citizenship || '')}">
+    </div>
+    <div class="form-group">
+      <label>Национальность матери</label>
+      <input type="text" id="edit_mother_nationality" class="form-input" value="${escapeHTML(formData.mother_nationality || '')}">
+    </div>
+    <div class="form-group">
+      <label>Личный код матери</label>
+      <input type="text" id="edit_mother_personal_code" class="form-input" value="${escapeHTML(formData.mother_personal_code || '')}">
     </div>
 
     <h4>Актовая запись</h4>
@@ -507,16 +479,6 @@ function renderModalForm() {
     <div class="form-group">
       <label>Номер актовой записи</label>
       <input type="text" id="edit_registry_act_number" class="form-input" value="${escapeHTML(formData.registry_act_number || '')}">
-    </div>
-
-    <h4>Фамилии после брака</h4>
-    <div class="form-group">
-      <label>Присвоенная фамилия мужу</label>
-      <input type="text" id="edit_assigned_surname_husband" class="form-input" value="${escapeHTML(formData.assigned_surname_husband || '')}">
-    </div>
-    <div class="form-group">
-      <label>Присвоенная фамилия жене</label>
-      <input type="text" id="edit_assigned_surname_wife" class="form-input" value="${escapeHTML(formData.assigned_surname_wife || '')}">
     </div>
 
     <h4>Свидетельство</h4>
@@ -546,23 +508,20 @@ function renderModalForm() {
 function collectFormData() {
   const getVal = (id) => (document.getElementById(id)?.value || '').trim()
   return {
-    husband_full_name: getVal('edit_husband_full_name'),
-    husband_birth_date: getVal('edit_husband_birth_date'),
-    husband_birth_place: getVal('edit_husband_birth_place'),
-    husband_citizenship: getVal('edit_husband_citizenship'),
-    husband_nationality: getVal('edit_husband_nationality'),
-    husband_personal_code: getVal('edit_husband_personal_code'),
-    wife_full_name: getVal('edit_wife_full_name'),
-    wife_birth_date: getVal('edit_wife_birth_date'),
-    wife_birth_place: getVal('edit_wife_birth_place'),
-    wife_citizenship: getVal('edit_wife_citizenship'),
-    wife_nationality: getVal('edit_wife_nationality'),
-    wife_personal_code: getVal('edit_wife_personal_code'),
-    marriage_date: getVal('edit_marriage_date'),
-    registry_act_date: getVal('edit_registry_act_date'),
+    child_full_name: getVal('edit_child_full_name'),
+    child_birth_date: getVal('edit_child_birth_date'),
+    child_birth_place: getVal('edit_child_birth_place'),
+    child_personal_code: getVal('edit_child_personal_code'),
+    father_full_name: getVal('edit_father_full_name'),
+    father_citizenship: getVal('edit_father_citizenship'),
+    father_nationality: getVal('edit_father_nationality'),
+    father_personal_code: getVal('edit_father_personal_code'),
+    mother_full_name: getVal('edit_mother_full_name'),
+    mother_citizenship: getVal('edit_mother_citizenship'),
+    mother_nationality: getVal('edit_mother_nationality'),
+    mother_personal_code: getVal('edit_mother_personal_code'),
     registry_act_number: getVal('edit_registry_act_number'),
-    assigned_surname_husband: getVal('edit_assigned_surname_husband'),
-    assigned_surname_wife: getVal('edit_assigned_surname_wife'),
+    registry_act_date: getVal('edit_registry_act_date'),
     registry_place: getVal('edit_registry_place'),
     registry_official: getVal('edit_registry_official'),
     certificate_series_number: getVal('edit_certificate_series_number'),
@@ -591,6 +550,8 @@ async function saveDocument() {
 
     const dataToSend = {
       ...cleanData,
+      user_id: session.user.id,
+      personal_code: userPersonalCode,
       status: 'oncheck',
       updated_at: new Date().toISOString()
     }
@@ -598,14 +559,14 @@ async function saveDocument() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_marriage_certificate')
+        .from('documents_birth_certificate')
         .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
       dataToSend.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_marriage_certificate')
+        .from('documents_birth_certificate')
         .insert([dataToSend])
         .select()
     }
@@ -614,7 +575,7 @@ async function saveDocument() {
 
     window.closeModal()
     const newId = currentDocId || result.data[0].id
-    window.location.href = `marriage-certificate.html?id=${newId}`
+    window.location.href = `birth-certificate.html?id=${newId}`
   } catch (err) {
     console.error('Ошибка сохранения:', err)
     alert('Ошибка сохранения: ' + err.message)
@@ -624,23 +585,20 @@ async function saveDocument() {
 // ==================== ОТКРЫТИЕ МОДАЛОК ====================
 function openAddModal() {
   formData = {
-    husband_full_name: '',
-    husband_birth_date: '',
-    husband_birth_place: '',
-    husband_citizenship: '',
-    husband_nationality: '',
-    husband_personal_code: userPersonalCode || '',
-    wife_full_name: '',
-    wife_birth_date: '',
-    wife_birth_place: '',
-    wife_citizenship: '',
-    wife_nationality: '',
-    wife_personal_code: '',
-    marriage_date: '',
-    registry_act_date: '',
+    child_full_name: '',
+    child_birth_date: '',
+    child_birth_place: '',
+    child_personal_code: userPersonalCode || '',
+    father_full_name: '',
+    father_citizenship: '',
+    father_nationality: '',
+    father_personal_code: '',
+    mother_full_name: '',
+    mother_citizenship: '',
+    mother_nationality: '',
+    mother_personal_code: '',
     registry_act_number: '',
-    assigned_surname_husband: '',
-    assigned_surname_wife: '',
+    registry_act_date: '',
     registry_place: '',
     registry_official: '',
     certificate_series_number: '',
@@ -648,12 +606,12 @@ function openAddModal() {
     issue_place: '',
     status: 'oncheck'
   }
-  openModal('Добавление свидетельства о браке')
+  openModal('Добавление свидетельства о рождении')
 }
 
 function openEditModal() {
   formData = { ...documentData }
-  openModal('Редактирование свидетельства о браке')
+  openModal('Редактирование свидетельства о рождении')
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
