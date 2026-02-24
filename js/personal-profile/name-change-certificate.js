@@ -155,10 +155,15 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 function renderCertificate(data) {
-  // Разбиваем старое ФИО на части для отображения
+  // Разбиваем старое ФИО на части
   const oldNameParts = (data.old_full_name || '').split(' ')
   const oldSurname = oldNameParts[0] || '—'
   const oldFirstPatronymic = oldNameParts.slice(1).join(' ') || '—'
+
+  // Разбиваем новое ФИО на части
+  const newNameParts = (data.new_full_name || '').split(' ')
+  const newSurname = newNameParts[0] || '—'
+  const newRest = newNameParts.slice(1).join(' ') || '—'
 
   // Дата актовой записи
   let actYear = ''
@@ -231,12 +236,18 @@ function renderCertificate(data) {
         </div>
       </div>
       
-      <!-- Новое ФИО -->
+      <!-- Новое ФИО (две строки) -->
       <div class="marriage-row">
         <span class="marriage-label">переменил(а) фамилию, имя, отчество на</span>
-        <div class="field-block marriage-field">
-          <div class="field-value">${escapeHTML(data.new_full_name || '—')}</div>
-          <div class="field-line"></div>
+        <div class="new-name-fields">
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(newSurname)}</div>
+            <div class="field-line"></div>
+          </div>
+          <div class="field-block" style="margin-top: 0.5rem;">
+            <div class="field-value">${escapeHTML(newRest)}</div>
+            <div class="field-line"></div>
+          </div>
         </div>
       </div>
       
