@@ -311,21 +311,21 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Основание расторжения -->
-      <div class="marriage-row">
-        <span class="marriage-label">на основании</span>
-        <div class="field-block marriage-field">
-          <div class="field-value">${escapeHTML(data.divorce_basis || '—')}</div>
-          <div class="field-line"></div>
-        </div>
-      </div>
-      <div class="marriage-row">
-        <span class="marriage-label">от</span>
-        <div class="field-block marriage-field">
-          <div class="field-value">${escapeHTML(basisDate)}</div>
-          <div class="field-line"></div>
-        </div>
-      </div>
+<!-- Основание расторжения (с переносом) -->
+<div class="marriage-row has-wide-label">
+  <span class="marriage-label wide-label">на основании</span>
+  <div class="field-block marriage-field">
+    <div class="field-value">${escapeHTML(data.divorce_basis || '—')}</div>
+    <div class="field-line"></div>
+  </div>
+</div>
+<div class="marriage-row has-wide-label">
+  <span class="marriage-label wide-label">от</span>
+  <div class="field-block marriage-field">
+    <div class="field-value">${escapeHTML(basisDate)}</div>
+    <div class="field-line"></div>
+  </div>
+</div>
 
       <!-- Актовая запись -->
       <div class="act-record">
