@@ -201,7 +201,6 @@ function renderCertificate(data) {
       <div class="spouse-section">
         <div class="spouse-block">
           <div class="spouse-row">
-            <span class="spouse-title">Муж</span>
             <div class="field-block">
               <div class="field-value">${escapeHTML(husbandSurname)}</div>
               <div class="field-line"></div>
