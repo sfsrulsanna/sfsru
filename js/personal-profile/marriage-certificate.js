@@ -301,16 +301,13 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Актовая запись -->
-      <div class="registration-block">
-        <span class="label">о чем</span>
-        <span class="value">${actYear}</span>
-        <span class="label">года</span>
-        <span class="value">${actMonth}</span>
-        <span class="label">месяца</span>
-        <span class="value">${actDay}</span>
-        <span class="label">числа составлена запись акта о заключении брака №</span>
-        <span class="value">${escapeHTML(data.registry_act_number || '—')}</span>
+      <!-- АКТОВАЯ ЗАПИСЬ (в виде обычного поля с линией) -->
+      <div class="field-block act-record-field">
+        <div class="field-value">
+          о чем ${actYear} года ${actMonth} месяца ${actDay} числа составлена запись акта о заключении брака № ${escapeHTML(data.registry_act_number || '—')}
+        </div>
+        <div class="field-line"></div>
+        <div class="field-label">актовая запись</div>
       </div>
 
       <!-- Присвоенные фамилии (новый дизайн) -->
@@ -362,7 +359,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок
+  // Блок статуса и кнопок (без изменений)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
