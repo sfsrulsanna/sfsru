@@ -325,7 +325,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (не центрировать) -->
+      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (исключение – не центрируется) -->
       <div class="marriage-row has-wide-label">
         <span class="marriage-label wide-label">Место государственной регистрации</span>
         <div class="field-block marriage-field">
@@ -334,7 +334,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (не центрировать) -->
+      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (исключение – не центрируется) -->
       <div class="marriage-row has-wide-label">
         <span class="marriage-label wide-label">Место выдачи свидетельства</span>
         <div class="field-block marriage-field">
@@ -343,11 +343,11 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- ПРАВАЯ ИНФОРМАЦИЯ (без места выдачи) -->
+      <!-- ПРАВАЯ ИНФОРМАЦИЯ (с датой выдачи в русском формате) -->
       <div class="right-info">
         <div class="info-row">
           <span class="info-label">Дата выдачи:</span>
-          <span class="info-value">${formatDate(data.issue_date)}</span>
+          <span class="info-value">${formatDateForRussian(data.issue_date)}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Руководитель органа ЗАГС</span>
@@ -364,7 +364,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок (без изменений)
+  // Блок статуса и кнопок
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   

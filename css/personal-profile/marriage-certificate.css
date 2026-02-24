@@ -122,7 +122,7 @@ html {
 .act-record .text {
   font-size: 0.95rem;
   color: var(--primary-pink);
-  text-align: center; /* центрируем текст актовой записи */
+  text-align: center;
 }
 
 .act-record .text .number {
@@ -148,7 +148,7 @@ html {
 .assigned-row {
   position: relative;
   margin: 1.5rem 0;
-  min-height: 3rem; /* чтобы подпись не налезала на следующее поле */
+  min-height: 3rem;
 }
 
 .spouse-title,
@@ -162,11 +162,10 @@ html {
   color: var(--primary-pink);
   white-space: nowrap;
   z-index: 2;
-  background: var(--light-pink-bg); /* фон как у карточки, чтобы перекрывать */
+  background: var(--light-pink-bg);
   padding-right: 0.5rem;
 }
 
-/* Поле значения занимает всю ширину */
 .spouse-row .field-block,
 .marriage-row .field-block,
 .assigned-row .field-block {
@@ -174,7 +173,6 @@ html {
   margin-bottom: 0;
 }
 
-/* Значение по центру */
 .spouse-row .field-value,
 .marriage-row .field-value,
 .assigned-row .field-value {
@@ -183,32 +181,45 @@ html {
   width: 100%;
 }
 
-/* Для мобильных - убираем абсолютное позиционирование */
-@media (max-width: 600px) {
-  .spouse-row,
-  .marriage-row,
-  .assigned-row {
-    position: static;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  
-  .spouse-title,
-  .marriage-label,
-  .assigned-label {
-    position: static;
-    background: none;
-    padding-right: 0;
-    margin-bottom: 0.2rem;
-    width: auto;
-  }
-  
-  .spouse-row .field-value,
-  .marriage-row .field-value,
-  .assigned-row .field-value {
-    text-align: center !important;
-  }
+/* Исключение для места регистрации и выдачи – они не центрируются */
+.marriage-row.has-wide-label {
+  position: static;
+  display: block;
+  min-height: auto;
+  margin: 1rem 0;
+}
+
+.marriage-row.has-wide-label .marriage-label.wide-label {
+  position: static;
+  display: block;
+  width: 100%;
+  margin-bottom: 0.3rem;
+  text-align: left;
+  background: none;
+  padding-right: 0;
+}
+
+.marriage-row.has-wide-label .marriage-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.marriage-row.has-wide-label .marriage-field .field-value {
+  text-align: left !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.5;
+  white-space: normal;
+  display: block;
+  width: 100%;
+}
+
+.wide-label {
+  width: 240px;
 }
 
 /* ===== ПРАВАЯ ИНФОРМАЦИЯ ===== */
@@ -233,7 +244,7 @@ html {
 }
 
 .info-value {
-  font-size: 1rem;
+  font-size: 1.2rem;  /* увеличили до размера даты брака */
   font-weight: 500;
   color: var(--text-dark);
   word-break: break-word;
@@ -332,6 +343,33 @@ a.edit-btn:hover {
   .certificate-header .title { font-size: 1.5rem; }
   .certificate-header .subtitle { font-size: 1rem; }
   .field-value { font-size: 1rem; }
+  
+  .spouse-row,
+  .marriage-row,
+  .assigned-row {
+    position: static;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    min-height: auto;
+    margin: 1rem 0;
+  }
+  
+  .spouse-title,
+  .marriage-label,
+  .assigned-label {
+    position: static;
+    background: none;
+    padding-right: 0;
+    margin-bottom: 0.2rem;
+    width: auto;
+  }
+  
+  .spouse-row .field-value,
+  .marriage-row .field-value,
+  .assigned-row .field-value {
+    text-align: center !important;
+  }
   
   .citizenship-row,
   .info-row {
