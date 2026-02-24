@@ -343,15 +343,21 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- ПРАВАЯ ИНФОРМАЦИЯ (с датой выдачи в русском формате) -->
-      <div class="right-info">
-        <div class="info-row">
-          <span class="info-label">Дата выдачи:</span>
-          <span class="info-value">${formatDateForRussian(data.issue_date)}</span>
+      <!-- ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ -->
+      <div class="right-info-container">
+        <div class="right-row">
+          <span class="right-label">Дата выдачи:</span>
+          <div class="field-block right-field">
+            <div class="field-value">${formatDateForRussian(data.issue_date)}</div>
+            <div class="field-line"></div>
+          </div>
         </div>
-        <div class="info-row">
-          <span class="info-label">Руководитель органа ЗАГС</span>
-          <span class="info-value">${escapeHTML(data.registry_official || '—')}</span>
+        <div class="right-row">
+          <span class="right-label">Руководитель органа ЗАГС</span>
+          <div class="field-block right-field">
+            <div class="field-value">${escapeHTML(data.registry_official || '—')}</div>
+            <div class="field-line"></div>
+          </div>
         </div>
       </div>
 
