@@ -374,6 +374,7 @@ function renderModalForm() {
     
     <div class="form-group">
       <label>Дата рождения ребёнка</label>
+            <span class="spouse-title">родился(лась)</span>
       <input type="date" id="edit_child_birth_date" class="form-input" value="${formData.child_birth_date || ''}">
     </div>
     
