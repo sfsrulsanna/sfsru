@@ -301,12 +301,12 @@ function renderCertificate(data) {
         </div>
       </div>
 
-<!-- Актовая запись (без подписи, с линией) -->
-<div class="act-record">
-  <div class="text">
-    о чем <span class="number">${actYear}</span> года <span class="number">${actMonth}</span> месяца <span class="number">${actDay}</span> числа составлена запись акта о заключении брака № <span class="number">${escapeHTML(data.registry_act_number || '—')}</span>
-  </div>
-</div>
+      <!-- Актовая запись (без подписи, с линией) -->
+      <div class="act-record">
+        <div class="text">
+          о чем <span class="number">${actYear}</span> года <span class="number">${actMonth}</span> месяца <span class="number">${actDay}</span> числа составлена запись акта о заключении брака № <span class="number">${escapeHTML(data.registry_act_number || '—')}</span>
+        </div>
+      </div>
 
       <!-- Присвоенные фамилии (новый дизайн) -->
       <div class="assigned-section">
@@ -326,23 +326,23 @@ function renderCertificate(data) {
         </div>
       </div>
 
-<!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (новый блок) -->
-<div class="marriage-row has-wide-label">
-  <span class="marriage-label wide-label">Место государственной регистрации</span>
-  <div class="field-block marriage-field">
-    <div class="field-value">${escapeHTML(data.registry_place || '—')}</div>
-    <div class="field-line"></div>
-  </div>
-</div>
+      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (не центрировать) -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">Место государственной регистрации</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(data.registry_place || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
 
-<!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (новый блок) -->
-<div class="marriage-row has-wide-label">
-  <span class="marriage-label wide-label">Место выдачи свидетельства</span>
-  <div class="field-block marriage-field">
-    <div class="field-value">${escapeHTML(data.issue_place || '—')}</div>
-    <div class="field-line"></div>
-  </div>
-</div>
+      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (не центрировать) -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">Место выдачи свидетельства</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(data.issue_place || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
 
       <!-- ПРАВАЯ ИНФОРМАЦИЯ (без места выдачи) -->
       <div class="right-info">
