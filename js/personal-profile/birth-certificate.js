@@ -215,6 +215,7 @@ function renderCertificate(data) {
         <div class="field-block">
           <div class="field-value">${formatDateForRussian(data.child_birth_date)}</div>
           <div class="field-line"></div>
+          <div class="field-label">число, месяц, год рождения</div>
         </div>
         <div class="field-block">
           <div class="field-value">${escapeHTML(data.child_personal_code || '—')}</div>
