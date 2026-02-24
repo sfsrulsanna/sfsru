@@ -15,6 +15,8 @@ function getStatusLabel(status) {
   if (status === 'verified') return '✅ Подтверждено'
   if (status === 'oncheck') return '⏳ На проверке'
   if (status === 'rejected') return '❌ Отклонено'
+  // архивные не выводятся, но метка оставлена для возможных других целей
+  if (status === 'archived') return '📦 Архивный'
   return '—'
 }
 
@@ -103,6 +105,7 @@ async function loadAllCertificates() {
       .from(cert.table)
       .select('*')
       .eq('personal_code', personalCode)
+      .neq('status', 'archived') // исключаем архивные
       .order('created_at', { ascending: false })
       .limit(1)
 
@@ -120,8 +123,9 @@ async function loadAllCertificates() {
 }
 
 function getCertificateNumber(cert) {
-  // Предполагаем, что в таблице есть поле certificate_number или number
-  return cert.certificate_number || cert.number || '—'
+  // В таблицах свидетельств поле называется certificate_series_number
+  // На случай других названий оставляем запасные варианты
+  return cert.certificate_series_number || cert.certificate_number || cert.number || '—'
 }
 
 function renderCertificatesGrid(certificates) {
@@ -147,7 +151,7 @@ function renderCertificatesGrid(certificates) {
   `
   grid.appendChild(archiveCard)
 
-  // Динамические карточки
+  // Динамические карточки (не архивные)
   certificates.forEach(cert => {
     const statusLabel = getStatusLabel(cert.status)
     const statusClass = cert.status === 'verified' ? 'status-verified' : (cert.status === 'oncheck' ? 'status-pending' : 'status-rejected')
