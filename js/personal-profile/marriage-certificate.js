@@ -300,10 +300,32 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Актовая запись (без подписи, с линией) -->
+      <!-- Актовая запись (новая структура с линиями) -->
       <div class="act-record">
-        <div class="text">
-          о чем <span class="number">${actYear}</span> года <span class="number">${actMonth}</span> месяца <span class="number">${actDay}</span> числа составлена запись акта о заключении брака № <span class="number">${escapeHTML(data.registry_act_number || '—')}</span>
+        <div class="act-row">
+          <span class="act-label">о чем</span>
+          <div class="field-block act-field">
+            <div class="field-value">${actYear}</div>
+            <div class="field-line"></div>
+          </div>
+          <span class="act-label">года</span>
+          <div class="field-block act-field">
+            <div class="field-value">${actMonth}</div>
+            <div class="field-line"></div>
+          </div>
+          <span class="act-label">месяца</span>
+          <div class="field-block act-field">
+            <div class="field-value">${actDay}</div>
+            <div class="field-line"></div>
+          </div>
+          <span class="act-label">числа</span>
+        </div>
+        <div class="act-row">
+          <span class="act-label">составлена запись акта о заключении брака №</span>
+          <div class="field-block act-field">
+            <div class="field-value">${escapeHTML(data.registry_act_number || '—')}</div>
+            <div class="field-line"></div>
+          </div>
         </div>
       </div>
 
