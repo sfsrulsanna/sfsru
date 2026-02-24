@@ -403,18 +403,16 @@ function renderModalForm() {
       <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
     </div>
 
-<!-- Новое ФИО (две строки) -->
-<div class="marriage-row">
-  <span class="marriage-label">переменил(а) фамилию, имя, отчество на</span>
-  <div class="new-name-fields">
-    <div class="field-block">
-      <div class="field-value">${escapeHTML(newSurname)}</div>
-      <div class="field-line"></div>  <!-- линия только здесь -->
-    </div>
-    <div class="field-block" style="margin-top: 0.5rem;">
-      <div class="field-value">${escapeHTML(newRest)}</div>
-      <!-- поле без линии -->
-    </div>
+<!-- Новое ФИО (две строки, как место регистрации) -->
+<div class="marriage-row has-wide-label">
+  <span class="marriage-label wide-label">переменил(а) фамилию, имя, отчество на</span>
+  <div class="field-block marriage-field" style="margin-bottom: 0.8rem;">
+    <div class="field-value">${escapeHTML(newSurname)}</div>
+    <div class="field-line"></div>
+  </div>
+  <div class="field-block marriage-field">
+    <div class="field-value">${escapeHTML(newRest)}</div>
+    <div class="field-line"></div>
   </div>
 </div>
 
