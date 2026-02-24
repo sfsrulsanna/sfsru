@@ -631,15 +631,3 @@ document.addEventListener('DOMContentLoaded', async () => {
 window.openAddModal = openAddModal
 window.openEditModal = openEditModal
 window.closeModal = closeModal
-
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadData()
-  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
-})
-
-// Экспорт в глобальную область
-window.openAddModal = openAddModal
-window.openEditModal = openEditModal
-window.closeModal = closeModal
