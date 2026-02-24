@@ -319,7 +319,8 @@ function renderCertificate(data) {
     <div class="field-line"></div>
   </div>
 </div>
-<div class="marriage-row has-wide-label">
+<!-- Основание расторжения (дата) - центрировано -->
+<div class="marriage-row has-wide-label date-field">
   <span class="marriage-label wide-label">от</span>
   <div class="field-block marriage-field">
     <div class="field-value">${escapeHTML(basisDate)}</div>
