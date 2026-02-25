@@ -1,17 +1,14 @@
 // js/register-supabase.js
 import { supabase } from './supabase-config.js'
 
-// --- Состояние ---
 let currentStep = 1
-let accountType = null
+let accountType = null // 'citizen', 'subject', 'organization'
 
-// --- Инициализация ---
 document.addEventListener('DOMContentLoaded', () => {
   initEventListeners()
   updateProgress()
 })
 
-// --- Обработчики событий ---
 function initEventListeners() {
   // Выбор типа аккаунта
   document.querySelectorAll('.account-type-option').forEach(el => {
@@ -32,13 +29,12 @@ function initEventListeners() {
   document.getElementById('registrationForm')?.addEventListener('submit', handleRegistration)
 }
 
-// --- Переключение видимости пароля ---
 function togglePass(id) {
   const el = document.getElementById(id)
   if (el) el.type = el.type === 'password' ? 'text' : 'password'
 }
 
-// --- Шаг 1: выбор типа аккаунта ---
+// Шаг 1: выбор типа аккаунта
 window.selectAccountType = function() {
   const selected = document.querySelector('.account-type-option.selected')
   if (!selected) {
@@ -46,10 +42,13 @@ window.selectAccountType = function() {
     return
   }
   accountType = selected.dataset.type
-  if (accountType === 'organization') {
-    window.location.href = 'organization/register.html'
-    return
-  }
+
+  // Показываем соответствующие поля на шаге 2
+  document.querySelectorAll('.category-fields').forEach(el => el.style.display = 'none')
+  if (accountType === 'citizen') document.getElementById('citizenFields').style.display = 'block'
+  else if (accountType === 'subject') document.getElementById('subjectFields').style.display = 'block'
+  else if (accountType === 'organization') document.getElementById('orgFields').style.display = 'block'
+
   // Переход на шаг 2
   document.getElementById('step1Form').classList.remove('active')
   currentStep = 2
@@ -57,7 +56,7 @@ window.selectAccountType = function() {
   updateProgress()
 }
 
-// --- Шаг вперёд ---
+// Шаг вперёд
 window.nextStep = function(step) {
   if (validateStep(step)) {
     document.getElementById(`step${step}Form`).classList.remove('active')
@@ -68,7 +67,7 @@ window.nextStep = function(step) {
   }
 }
 
-// --- Шаг назад ---
+// Шаг назад
 window.prevStep = function(step) {
   document.getElementById(`step${step}Form`).classList.remove('active')
   currentStep = step - 1
@@ -76,23 +75,61 @@ window.prevStep = function(step) {
   updateProgress()
 }
 
-// --- Валидация шагов ---
+// Валидация шага
 function validateStep(step) {
   if (step === 2) {
-    const fields = ['lastName', 'firstName', 'birthDate', 'birthPlace', 'personalCode']
-    for (let f of fields) {
-      if (!document.getElementById(f).value.trim()) {
-        showAlert('Заполните все обязательные поля', 'error')
+    // Валидация в зависимости от типа
+    if (!accountType) {
+      showAlert('Сначала выберите тип аккаунта', 'error')
+      return false
+    }
+
+    if (accountType === 'citizen') {
+      const fields = ['lastName', 'firstName', 'birthDate', 'birthPlace', 'personalCode', 'gender']
+      for (let f of fields) {
+        const el = document.getElementById(f)
+        if (!el || !el.value.trim()) {
+          showAlert('Заполните все обязательные поля', 'error')
+          return false
+        }
+      }
+      const pc = document.getElementById('personalCode').value.trim()
+      if (!/^\d{4}-\d{4}$/.test(pc)) {
+        showAlert('Личный код должен быть в формате XXXX-XXXX', 'error')
+        return false
+      }
+    } else if (accountType === 'subject') {
+      const fields = ['subjectFullName', 'subjectBirthDate', 'subjectBirthPlace', 'subjectGender', 'nationality', 'passportNumber']
+      for (let f of fields) {
+        const el = document.getElementById(f)
+        if (!el || !el.value.trim()) {
+          showAlert('Заполните все обязательные поля', 'error')
+          return false
+        }
+      }
+    } else if (accountType === 'organization') {
+      const fields = ['orgName', 'inn', 'ogrn', 'address', 'contactPerson']
+      for (let f of fields) {
+        const el = document.getElementById(f)
+        if (!el || !el.value.trim()) {
+          showAlert('Заполните все обязательные поля', 'error')
+          return false
+        }
+      }
+      // Проверка ИНН (10 или 12 цифр)
+      const inn = document.getElementById('inn').value.trim()
+      if (!/^\d{10}$|^\d{12}$/.test(inn)) {
+        showAlert('ИНН должен содержать 10 или 12 цифр', 'error')
+        return false
+      }
+      const ogrn = document.getElementById('ogrn').value.trim()
+      if (!/^\d{13}$/.test(ogrn)) {
+        showAlert('ОГРН должен содержать 13 цифр', 'error')
         return false
       }
     }
-    const pc = document.getElementById('personalCode').value.trim()
-    if (!/^\d{4}-\d{4}$/.test(pc)) {
-      showAlert('Личный код должен быть в формате XXXX-XXXX (например: 1234-5678)', 'error')
-      return false
-    }
   } else if (step === 3) {
-    // Очистка и проверка email
+    // Email и пароль общие для всех
     let email = document.getElementById('email').value.trim()
     email = email.replace(/\s+/g, '').toLowerCase()
     document.getElementById('email').value = email
@@ -121,34 +158,83 @@ function validateStep(step) {
   return true
 }
 
-// --- Сбор данных формы ---
+// Сбор данных в зависимости от типа
 function getFormData() {
-  return {
-    lastName: document.getElementById('lastName').value.trim(),
-    firstName: document.getElementById('firstName').value.trim(),
-    middleName: document.getElementById('middleName').value.trim(),
-    birthDate: document.getElementById('birthDate').value,
-    birthPlace: document.getElementById('birthPlace').value.trim(),
-    personalCode: document.getElementById('personalCode').value.trim(),
-    phone: document.getElementById('phone').value,
-    email: document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase()
+  const base = {
+    email: document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase(),
+    phone: document.getElementById('phone').value.trim()
+  }
+
+  if (accountType === 'citizen') {
+    return {
+      ...base,
+      category: 'citizen',
+      last_name: document.getElementById('lastName').value.trim(),
+      first_name: document.getElementById('firstName').value.trim(),
+      middle_name: document.getElementById('middleName').value.trim() || null,
+      birth_date: document.getElementById('birthDate').value,
+      birth_place: document.getElementById('birthPlace').value.trim(),
+      personal_code: document.getElementById('personalCode').value.trim(),
+      gender: document.getElementById('gender').value
+    }
+  } else if (accountType === 'subject') {
+    return {
+      ...base,
+      category: 'subject',
+      full_name: document.getElementById('subjectFullName').value.trim(),
+      birth_date: document.getElementById('subjectBirthDate').value,
+      birth_place: document.getElementById('subjectBirthPlace').value.trim(),
+      gender: document.getElementById('subjectGender').value,
+      nationality: document.getElementById('nationality').value.trim(),
+      passport_number: document.getElementById('passportNumber').value.trim()
+    }
+  } else if (accountType === 'organization') {
+    return {
+      ...base,
+      category: 'organization',
+      organization_name: document.getElementById('orgName').value.trim(),
+      inn: document.getElementById('inn').value.trim(),
+      kpp: document.getElementById('kpp').value.trim() || null,
+      ogrn: document.getElementById('ogrn').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      contact_person: document.getElementById('contactPerson').value.trim()
+    }
   }
 }
 
-// --- Обновление сводки на шаге 4 ---
+// Обновление сводки на шаге 4
 function updateSummary() {
   const d = getFormData()
-  document.getElementById('registrationSummary').innerHTML = `
-    <div class="summary-item"><span class="summary-label">ФИО:</span> <span class="summary-value">${d.lastName} ${d.firstName} ${d.middleName}</span></div>
-    <div class="summary-item"><span class="summary-label">Дата рождения:</span> <span class="summary-value">${d.birthDate}</span></div>
-    <div class="summary-item"><span class="summary-label">Место рождения:</span> <span class="summary-value">${d.birthPlace}</span></div>
-    <div class="summary-item"><span class="summary-label">Личный код:</span> <span class="summary-value">${d.personalCode}</span></div>
-    <div class="summary-item"><span class="summary-label">Email:</span> <span class="summary-value">${d.email}</span></div>
-    <div class="summary-item"><span class="summary-label">Телефон:</span> <span class="summary-value">${d.phone}</span></div>
-  `
+  let html = ''
+  if (accountType === 'citizen') {
+    html = `
+      <div class="summary-item"><span class="summary-label">ФИО:</span> <span class="summary-value">${d.last_name} ${d.first_name} ${d.middle_name || ''}</span></div>
+      <div class="summary-item"><span class="summary-label">Дата рождения:</span> <span class="summary-value">${d.birth_date}</span></div>
+      <div class="summary-item"><span class="summary-label">Место рождения:</span> <span class="summary-value">${d.birth_place}</span></div>
+      <div class="summary-item"><span class="summary-label">Личный код:</span> <span class="summary-value">${d.personal_code}</span></div>
+      <div class="summary-item"><span class="summary-label">Пол:</span> <span class="summary-value">${d.gender}</span></div>
+    `
+  } else if (accountType === 'subject') {
+    html = `
+      <div class="summary-item"><span class="summary-label">ФИО:</span> <span class="summary-value">${d.full_name}</span></div>
+      <div class="summary-item"><span class="summary-label">Дата рождения:</span> <span class="summary-value">${d.birth_date}</span></div>
+      <div class="summary-item"><span class="summary-label">Место рождения:</span> <span class="summary-value">${d.birth_place}</span></div>
+      <div class="summary-item"><span class="summary-label">Гражданство:</span> <span class="summary-value">${d.nationality}</span></div>
+      <div class="summary-item"><span class="summary-label">Паспорт:</span> <span class="summary-value">${d.passport_number}</span></div>
+    `
+  } else if (accountType === 'organization') {
+    html = `
+      <div class="summary-item"><span class="summary-label">Организация:</span> <span class="summary-value">${d.organization_name}</span></div>
+      <div class="summary-item"><span class="summary-label">ИНН:</span> <span class="summary-value">${d.inn}</span></div>
+      <div class="summary-item"><span class="summary-label">ОГРН:</span> <span class="summary-value">${d.ogrn}</span></div>
+      <div class="summary-item"><span class="summary-label">Адрес:</span> <span class="summary-value">${d.address}</span></div>
+    `
+  }
+  html += `<div class="summary-item"><span class="summary-label">Email:</span> <span class="summary-value">${d.email}</span></div>`
+  html += `<div class="summary-item"><span class="summary-label">Телефон:</span> <span class="summary-value">${d.phone || '—'}</span></div>`
+  document.getElementById('registrationSummary').innerHTML = html
 }
 
-// --- Обновление прогресс-бара ---
 function updateProgress() {
   const fill = document.getElementById('progressFill')
   if (fill) fill.style.width = `${(currentStep / 4) * 100}%`
@@ -158,7 +244,6 @@ function updateProgress() {
   }
 }
 
-// --- Форматирование телефона (маска) ---
 function formatPhoneNumber(e) {
   let v = e.target.value.replace(/\D/g, '')
   if (v.length === 0) { e.target.value = ''; return }
@@ -171,7 +256,6 @@ function formatPhoneNumber(e) {
   e.target.value = f
 }
 
-// --- ОСНОВНАЯ ФУНКЦИЯ РЕГИСТРАЦИИ (ВЫЗОВ SUPABASE) ---
 async function handleRegistration(e) {
   e.preventDefault()
 
@@ -182,23 +266,18 @@ async function handleRegistration(e) {
 
   const formData = getFormData()
   const password = document.getElementById('password').value
-  formData.email = formData.email.replace(/\s+/g, '').toLowerCase()
 
   showAlert('Регистрация...', 'info')
 
   try {
+    // 1. Создание пользователя в auth.users
     const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: password,
       options: {
         data: {
-          lastName: formData.lastName,
-          firstName: formData.firstName,
-          middleName: formData.middleName,
-          birthDate: formData.birthDate,
-          birthPlace: formData.birthPlace,
-          personalCode: formData.personalCode,
-          phone: formData.phone
+          category: accountType,
+          ...formData // передаём все данные в metadata (опционально)
         }
       }
     })
@@ -211,14 +290,70 @@ async function handleRegistration(e) {
       throw error
     }
 
-    // Успешная регистрация
+    const userId = data.user.id
+
+    // 2. Сохранение данных в соответствующую таблицу
+    let tableName, record
+    if (accountType === 'citizen') {
+      tableName = 'citizens'
+      record = {
+        id: userId,
+        personal_code: formData.personal_code,
+        last_name: formData.last_name,
+        first_name: formData.first_name,
+        middle_name: formData.middle_name,
+        birth_date: formData.birth_date,
+        birth_place: formData.birth_place,
+        gender: formData.gender,
+        phone: formData.phone,
+        email: formData.email,
+        account_type: 'standard',
+        role: 'user'
+      }
+    } else if (accountType === 'subject') {
+      tableName = 'subjects'
+      record = {
+        id: userId,
+        full_name: formData.full_name,
+        birth_date: formData.birth_date,
+        birth_place: formData.birth_place,
+        gender: formData.gender,
+        nationality: formData.nationality,
+        passport_number: formData.passport_number,
+        phone: formData.phone,
+        email: formData.email,
+        account_type: 'standard',
+        role: 'user'
+      }
+    } else if (accountType === 'organization') {
+      tableName = 'legal_entities'
+      record = {
+        id: userId,
+        organization_name: formData.organization_name,
+        inn: formData.inn,
+        kpp: formData.kpp,
+        ogrn: formData.ogrn,
+        address: formData.address,
+        phone: formData.phone,
+        email: formData.email,
+        contact_person: formData.contact_person,
+        account_type: 'standard',
+        role: 'user'
+      }
+    }
+
+    const { error: insertError } = await supabase
+      .from(tableName)
+      .insert([record])
+
+    if (insertError) throw insertError
+
+    // Успех
     showAlert(`
       <strong>Регистрация завершена!</strong><br>
-      ${data.user?.confirmed_at ? 'Аккаунт активирован.' : 'На ваш email отправлено письмо для подтверждения.'}<br>
-      Ваш личный код: <strong>${formData.personalCode}</strong>
+      ${data.user?.confirmed_at ? 'Аккаунт активирован.' : 'На ваш email отправлено письмо для подтверждения.'}
     `, 'success')
 
-    localStorage.setItem('personalCode', formData.personalCode)
     setTimeout(() => window.location.href = 'login.html', 4000)
 
   } catch (error) {
@@ -229,17 +364,18 @@ async function handleRegistration(e) {
       message = 'Указанный email недопустим.'
     } else if (error.message?.includes('already registered') || error.code === 'user_already_exists') {
       message = 'Этот email уже зарегистрирован'
-    } else if (error.message?.includes('duplicate key') || error.message?.includes('personal_code')) {
-      message = 'Такой личный код уже используется'
-    } else if (error.code === '23505') {
-      message = 'Такой email или личный код уже зарегистрированы'
+    } else if (error.code === '23505') { // unique violation
+      if (error.message?.includes('personal_code')) message = 'Такой личный код уже используется'
+      else if (error.message?.includes('passport_number')) message = 'Такой номер паспорта уже используется'
+      else if (error.message?.includes('inn')) message = 'Такой ИНН уже зарегистрирован'
+      else if (error.message?.includes('ogrn')) message = 'Такой ОГРН уже зарегистрирован'
+      else message = 'Данные уже существуют в системе'
     }
 
     showAlert(message, 'error')
   }
 }
 
-// --- Отображение уведомлений ---
 function showAlert(message, type) {
   const el = document.getElementById('alertMessage')
   if (!el) return

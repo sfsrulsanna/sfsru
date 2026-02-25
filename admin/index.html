@@ -3,59 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход - Админ панель</title>
-    <link rel="stylesheet" href="css/auth.css">
-    <link rel="stylesheet" href="css/style.css">
+    <title>Панель управления — Администратор СФСРЮ</title>
+    <!-- favicons (как в других страницах) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
+
+    <!-- Общие стили сайта (минимум) -->
+    <link rel="stylesheet" href="../css/style.css">
+    <!-- Стили админки -->
+    <link rel="stylesheet" href="css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Supabase import map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
 </head>
 <body>
-    <div class="auth-container">
-        <div class="auth-card">
-            <div class="auth-header">
-                <i class="fas fa-lock fa-3x"></i>
-                <h1>Доступ администратора</h1>
-                <p>Используйте учетные данные администратора</p>
+    <!-- Упрощённый хедер админки (без мобильного меню) -->
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <img src="../images/gerb.png" alt="Герб СФСРЮ" height="40">
+                <span>СФСРЮ / Административная панель</span>
             </div>
-            
-            <form id="loginForm" class="auth-form">
-                <div class="form-group">
-                    <label for="email">
-                        <i class="fas fa-user-shield"></i> Администратор
-                    </label>
-                    <input type="email" id="email" 
-                           value="sfsru@admin.su" 
-                           readonly
-                           class="form-control email-field">
-                    <small class="text-muted">Это единственный разрешенный email</small>
-                </div>
-                
-                <div class="form-group">
-                    <label for="password">
-                        <i class="fas fa-key"></i> Пароль
-                    </label>
-                    <input type="password" id="password" 
-                           class="form-control" 
-                           placeholder="Введите пароль администратора"
-                           required
-                           autocomplete="current-password">
-                </div>
-                
-                <button type="submit" class="btn btn-primary btn-block">
-                    <i class="fas fa-sign-in-alt"></i> Войти в панель управления
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
                 </button>
-                
-                <div id="errorMessage" class="alert alert-error mt-3" style="display: none;"></div>
-                
-                <div class="mt-3 text-center text-muted">
-                    <small>
-                        <i class="fas fa-info-circle"></i>
-                        Все действия записываются в лог
-                    </small>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </header>
 
-    <script type="module" src="js/auth.js"></script>
+    <main class="admin-main">
+        <div class="container">
+            <h1 class="page-title">Управление свидетельствами</h1>
+            <p class="page-description">Выберите раздел для работы с документами.</p>
+
+            <div class="admin-cards">
+                <!-- Список всех свидетельств -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-list"></i></div>
+                    <h3>Все свидетельства</h3>
+                    <p>Просмотр, фильтрация и редактирование всех записей.</p>
+                    <a href="certificates/list.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- Добавление нового свидетельства -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
+                    <h3>Добавить свидетельство</h3>
+                    <p>Создание новой записи (для любого гражданина).</p>
+                    <a href="certificates/add.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- Подтверждение свидетельств (модерация) -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3>Подтверждение</h3>
+                    <p>Просмотр записей со статусом «на проверке» и изменение статуса.</p>
+                    <a href="certificates/verify.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- Актовые книги -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-book"></i></div>
+                    <h3>Актовые книги</h3>
+                    <p>Просмотр и ведение актовых записей.</p>
+                    <a href="certificates/registry-books.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- Поиск по номеру/серии -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-search"></i></div>
+                    <h3>Поиск по номеру</h3>
+                    <p>Быстрый поиск свидетельства по серии и номеру.</p>
+                    <a href="certificates/search.html" class="btn-primary">Перейти</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="admin-footer">
+        <p>&copy; 2026 СФСРЮ. Все действия протоколируются.</p>
+    </footer>
+
+    <script type="module">
+        import { supabase } from '../../js/supabase-config.js';
+
+        // Проверка сессии и роли администратора
+        async function checkAdmin() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const { data: profile, error } = await supabase
+                .from('users')
+                .select('role, email')
+                .eq('id', session.user.id)
+                .single();
+
+            if (error || profile?.role !== 'admin') {
+                // Если не админ — разлогиниваем и отправляем на вход
+                await supabase.auth.signOut();
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Показываем email в хедере
+            document.getElementById('adminEmail').textContent = profile.email || session.user.email;
+        }
+
+        checkAdmin();
+
+        // Выход
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'login.html';
+        });
+    </script>
 </body>
 </html>

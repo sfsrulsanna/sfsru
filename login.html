@@ -308,6 +308,15 @@
                 })
             }
         })
+// После успешного входа
+const { data: { user } } = await supabase.auth.getUser()
+const category = user?.user_metadata?.category || 'citizen' // по умолчанию гражданин
+
+let redirectPath = '/profile.html' // для граждан
+if (category === 'subject') redirectPath = '/subject-profile.html'
+else if (category === 'organization') redirectPath = '/organization-profile.html'
+
+window.location.href = redirectPath
     </script>
 </body>
 </html>

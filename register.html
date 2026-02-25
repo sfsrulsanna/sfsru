@@ -95,17 +95,23 @@
       <form id="registrationForm">
         <!-- Шаг 1: Тип аккаунта -->
         <div id="step1Form" class="form-step active">
-          <div class="account-type-selection">
-            <div class="account-type-option" data-type="citizen">
-              <div class="account-icon">👤</div>
-              <div class="account-name">Гражданин</div>
-              <div class="account-desc">Физическое лицо, резидент СФСРЮ</div>
-            </div>
-            <div class="account-type-option" data-type="organization">
-              <div class="account-icon">🏢</div>
-              <div class="account-name">Организация</div>
-              <div class="account-desc">Юридическое лицо, предприятие или учреждение</div>
-            </div>
+<div class="account-type-selection">
+  <div class="account-type-option" data-type="citizen">
+    <div class="account-icon">👤</div>
+    <div class="account-name">Гражданин</div>
+    <div class="account-desc">Физическое лицо, резидент СФСРЮ</div>
+  </div>
+  <div class="account-type-option" data-type="subject">
+    <div class="account-icon">🌍</div>
+    <div class="account-name">Подданный</div>
+    <div class="account-desc">Иностранный гражданин или лицо с особым статусом</div>
+  </div>
+  <div class="account-type-option" data-type="organization">
+    <div class="account-icon">🏢</div>
+    <div class="account-name">Организация</div>
+    <div class="account-desc">Юридическое лицо, предприятие или учреждение</div>
+  </div>
+</div>
           </div>
           <div class="form-navigation">
             <div></div>
@@ -113,38 +119,107 @@
           </div>
         </div>
 
-        <!-- Шаг 2: Личные данные -->
-        <div id="step2Form" class="form-step">
-          <div class="form-group">
-            <label for="lastName" class="form-label">Фамилия</label>
-            <input type="text" id="lastName" class="form-input" required />
-          </div>
-          <div class="form-group">
-            <label for="firstName" class="form-label">Имя</label>
-            <input type="text" id="firstName" class="form-input" required />
-          </div>
-          <div class="form-group">
-            <label for="middleName" class="form-label">Отчество</label>
-            <input type="text" id="middleName" class="form-input" />
-          </div>
-          <div class="form-group">
-            <label for="birthDate" class="form-label">Дата рождения</label>
-            <input type="date" id="birthDate" class="form-input" required />
-          </div>
-          <div class="form-group">
-            <label for="birthPlace" class="form-label">Место рождения</label>
-            <input type="text" id="birthPlace" class="form-input" placeholder="Город, область, страна" required />
-          </div>
-          <div class="form-group">
-            <label for="personalCode" class="form-label">Личный код (выдан МВД СФСРЮ)</label>
-            <input type="text" id="personalCode" class="form-input" placeholder="XXXX-XXXX" required />
-            <small class="form-hint">Формат: 4 цифры, дефис, 4 цифры (например: 1234-5678)</small>
-          </div>
-          <div class="form-navigation">
-            <button type="button" class="btn btn-prev" onclick="window.prevStep(2)">Назад</button>
-            <button type="button" class="btn btn-next" onclick="window.nextStep(2)">Далее</button>
-          </div>
-        </div>
+<!-- Блок для гражданина (по умолчанию скрыт) -->
+<div id="citizenFields" class="category-fields" style="display: none;">
+  <h3>Данные гражданина</h3>
+  <div class="form-group">
+    <label for="lastName">Фамилия</label>
+    <input type="text" id="lastName" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="firstName">Имя</label>
+    <input type="text" id="firstName" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="middleName">Отчество</label>
+    <input type="text" id="middleName" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="birthDate">Дата рождения</label>
+    <input type="date" id="birthDate" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="birthPlace">Место рождения</label>
+    <input type="text" id="birthPlace" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="personalCode">Личный код (выдан МВД)</label>
+    <input type="text" id="personalCode" class="form-input" placeholder="XXXX-XXXX" />
+    <small class="form-hint">Формат: 4 цифры, дефис, 4 цифры</small>
+  </div>
+  <div class="form-group">
+    <label for="gender">Пол</label>
+    <select id="gender" class="form-input">
+      <option value="">Выберите</option>
+      <option value="male">Мужской</option>
+      <option value="female">Женский</option>
+      <option value="other">Другой</option>
+    </select>
+  </div>
+</div>
+
+<!-- Блок для подданного -->
+<div id="subjectFields" class="category-fields" style="display: none;">
+  <h3>Данные подданного</h3>
+  <div class="form-group">
+    <label for="subjectFullName">ФИО полностью</label>
+    <input type="text" id="subjectFullName" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="subjectBirthDate">Дата рождения</label>
+    <input type="date" id="subjectBirthDate" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="subjectBirthPlace">Место рождения</label>
+    <input type="text" id="subjectBirthPlace" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="subjectGender">Пол</label>
+    <select id="subjectGender" class="form-input">
+      <option value="">Выберите</option>
+      <option value="male">Мужской</option>
+      <option value="female">Женский</option>
+      <option value="other">Другой</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label for="nationality">Гражданство</label>
+    <input type="text" id="nationality" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="passportNumber">Номер паспорта</label>
+    <input type="text" id="passportNumber" class="form-input" />
+  </div>
+</div>
+
+<!-- Блок для организации -->
+<div id="orgFields" class="category-fields" style="display: none;">
+  <h3>Данные организации</h3>
+  <div class="form-group">
+    <label for="orgName">Название организации</label>
+    <input type="text" id="orgName" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="inn">ИНН</label>
+    <input type="text" id="inn" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="kpp">КПП</label>
+    <input type="text" id="kpp" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="ogrn">ОГРН</label>
+    <input type="text" id="ogrn" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="address">Юридический адрес</label>
+    <input type="text" id="address" class="form-input" />
+  </div>
+  <div class="form-group">
+    <label for="contactPerson">Контактное лицо (ФИО)</label>
+    <input type="text" id="contactPerson" class="form-input" />
+  </div>
+</div>
 
         <!-- Шаг 3: Пароль и контакты -->
         <div id="step3Form" class="form-step">
