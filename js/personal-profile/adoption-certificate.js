@@ -248,7 +248,6 @@ function renderCertificate(data) {
         </div>
       </div>
 
-// ========== ПЕРВЫЙ ОПЕКУН (ОТЕЦ) ==========
 <div class="guardian-section">
   <div class="guardian-block">
     <!-- Строка с меткой "опекуны" и фамилией отца -->

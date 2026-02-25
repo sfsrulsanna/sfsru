@@ -7,7 +7,7 @@
   --border-color: #7fc1e8;         /* рамка */
   --field-bg: #b8d9f5;             /* полоски под текстом */
   --text-dark: #000;
-  --maroon: #7b091a;                /* серия и номер (можно оставить) */
+  --maroon: #7b091a;                /* серия и номер */
 }
 
 * {
@@ -80,7 +80,7 @@ html {
   padding: 1.2rem;
 }
 
-/* ===== ПОЛЯ ===== */
+/* ===== ОБЩИЕ ПОЛЯ ===== */
 .field-block {
   margin-bottom: 0.8rem;
   min-width: 0;
@@ -112,14 +112,20 @@ html {
   color: var(--primary-blue);
 }
 
-/* ===== СПЕЦИАЛЬНЫЕ СТРОКИ ===== */
-.spouse-row, .guardian-row, .child-row {
+/* ===== СТРОКИ С МЕТКАМИ (как для супругов) ===== */
+.guardian-row,
+.marriage-row,
+.assigned-row,
+.new-data-row {
   position: relative;
   margin: 1.5rem 0;
   min-height: 3rem;
 }
 
-.spouse-title, .guardian-title, .child-title {
+.guardian-label,
+.marriage-label,
+.assigned-label,
+.new-data-label {
   position: absolute;
   left: 0;
   top: 0;
@@ -132,7 +138,70 @@ html {
   padding-right: 0.5rem;
 }
 
-/* Для блоков опекунов используем аналогичные классы */
+.guardian-row .field-block,
+.marriage-row .field-block,
+.assigned-row .field-block,
+.new-data-row .field-block {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.guardian-row .field-value,
+.marriage-row .field-value,
+.assigned-row .field-value,
+.new-data-row .field-value {
+  text-align: center !important;
+  display: block;
+  width: 100%;
+}
+
+/* Для строк с длинными метками (например, место регистрации) */
+.marriage-row.has-wide-label {
+  position: static;
+  display: block;
+  min-height: auto;
+  margin: 1rem 0;
+}
+
+.marriage-row.has-wide-label .marriage-label.wide-label {
+  position: static;
+  display: block;
+  width: 100%;
+  margin-bottom: 0.3rem;
+  text-align: left;
+  background: none;
+  padding-right: 0;
+}
+
+.marriage-row.has-wide-label .marriage-field {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.marriage-row.has-wide-label .marriage-field .field-value {
+  text-align: left !important;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+  line-height: 1.5;
+  white-space: normal;
+  display: block;
+  width: 100%;
+}
+
+/* Центрирование даты в поле "от" (если используется) */
+.marriage-row.has-wide-label.date-field .field-value {
+  text-align: center !important;
+}
+
+.wide-label {
+  width: 240px;
+}
+
+/* ===== БЛОК ОПЕКУНОВ ===== */
 .guardian-section {
   margin-top: 1rem;
 }
@@ -141,17 +210,36 @@ html {
   margin-bottom: 1.5rem;
 }
 
+/* Для строки с "опекуны" и фамилией отца используем абсолютное позиционирование,
+   чтобы фамилия центрировалась, а метка была поверх слева */
 .guardian-row {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  position: relative;
+  margin: 1.5rem 0 0.5rem;
+  min-height: 3rem;
 }
 
 .guardian-label {
-  font-size: 0.95rem;
+  position: absolute;
+  left: 0;
+  top: 0;
+  font-size: 1rem;
+  font-weight: 500;
   color: var(--primary-blue);
   white-space: nowrap;
+  z-index: 2;
+  background: var(--light-bg);
+  padding-right: 0.5rem;
+}
+
+.guardian-row .field-block {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.guardian-row .field-value {
+  text-align: center !important;
+  display: block;
+  width: 100%;
 }
 
 /* ===== ДАТА РОЖДЕНИЯ + ЛИЧНЫЙ КОД ===== */
@@ -217,19 +305,6 @@ html {
   background: var(--field-bg);
   width: 100%;
   margin: 0.1rem 0 0.2rem;
-}
-
-/* ===== НОВЫЕ ДАННЫЕ РЕБЁНКА ===== */
-.new-data-row {
-  margin: 1rem 0;
-}
-
-.new-data-label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--primary-blue);
-  display: inline-block;
-  margin-right: 0.5rem;
 }
 
 /* ===== ПРАВАЯ ИНФОРМАЦИЯ ===== */
@@ -368,7 +443,9 @@ a.edit-btn:hover {
   .field-value { font-size: 1rem; }
 
   .guardian-row,
-  .child-row {
+  .marriage-row,
+  .assigned-row,
+  .new-data-row {
     position: static;
     display: flex;
     flex-direction: column;
@@ -377,13 +454,22 @@ a.edit-btn:hover {
     margin: 1rem 0;
   }
 
-  .guardian-title,
-  .child-title {
+  .guardian-label,
+  .marriage-label,
+  .assigned-label,
+  .new-data-label {
     position: static;
     background: none;
     padding-right: 0;
     margin-bottom: 0.2rem;
     width: auto;
+  }
+
+  .guardian-row .field-value,
+  .marriage-row .field-value,
+  .assigned-row .field-value,
+  .new-data-row .field-value {
+    text-align: center !important;
   }
 
   .citizenship-row,
