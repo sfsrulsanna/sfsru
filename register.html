@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Регистрация — СФСРЮ</title>
 
-  <!-- Favicons (без изменений) -->
+  <!-- Favicons -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/favicons/apple-touch-icon-72x72.png" />
@@ -27,9 +27,44 @@
   <meta name="msapplication-wide310x150logo" content="images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="images/favicons/mstile-310x310.png" />
 
-  <!-- Стили (без изменений) -->
+  <!-- Общие стили -->
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/register.css" />
+  <style>
+    /* Дополнительные стили для новых полей */
+    .category-fields {
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px solid #eee;
+    }
+    .category-fields h3 {
+      color: #7b0000;
+      margin-bottom: 1.2rem;
+      font-size: 1.3rem;
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.5rem 0;
+      border-bottom: 1px dashed #ddd;
+    }
+    .summary-label {
+      font-weight: 600;
+      color: #555;
+    }
+    .summary-value {
+      color: #333;
+    }
+    .account-type-option {
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .account-type-option.selected {
+      border-color: #7b0000;
+      background: #fff8f8;
+      transform: scale(1.02);
+    }
+  </style>
 </head>
 <body>
   <!-- Шапка -->
@@ -58,7 +93,6 @@
   </header>
   <div class="menu-overlay"></div>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main class="main-content registration-main">
     <div class="registration-container">
       <div class="registration-header">
@@ -91,27 +125,26 @@
         </div>
       </div>
 
-      <!-- ФОРМА РЕГИСТРАЦИИ -->
+      <!-- ФОРМА -->
       <form id="registrationForm">
-        <!-- Шаг 1: Тип аккаунта -->
+        <!-- Шаг 1: выбор типа аккаунта -->
         <div id="step1Form" class="form-step active">
-<div class="account-type-selection">
-  <div class="account-type-option" data-type="citizen">
-    <div class="account-icon">👤</div>
-    <div class="account-name">Гражданин</div>
-    <div class="account-desc">Физическое лицо, резидент СФСРЮ</div>
-  </div>
-  <div class="account-type-option" data-type="subject">
-    <div class="account-icon">🌍</div>
-    <div class="account-name">Подданный</div>
-    <div class="account-desc">Иностранный гражданин или лицо с особым статусом</div>
-  </div>
-  <div class="account-type-option" data-type="organization">
-    <div class="account-icon">🏢</div>
-    <div class="account-name">Организация</div>
-    <div class="account-desc">Юридическое лицо, предприятие или учреждение</div>
-  </div>
-</div>
+          <div class="account-type-selection">
+            <div class="account-type-option" data-type="citizen">
+              <div class="account-icon">👤</div>
+              <div class="account-name">Гражданин</div>
+              <div class="account-desc">Физическое лицо, резидент СФСРЮ</div>
+            </div>
+            <div class="account-type-option" data-type="subject">
+              <div class="account-icon">🌍</div>
+              <div class="account-name">Подданный</div>
+              <div class="account-desc">Иностранный гражданин или лицо с особым статусом</div>
+            </div>
+            <div class="account-type-option" data-type="organization">
+              <div class="account-icon">🏢</div>
+              <div class="account-name">Организация</div>
+              <div class="account-desc">Юридическое лицо, предприятие или учреждение</div>
+            </div>
           </div>
           <div class="form-navigation">
             <div></div>
@@ -119,109 +152,117 @@
           </div>
         </div>
 
-<!-- Блок для гражданина (по умолчанию скрыт) -->
-<div id="citizenFields" class="category-fields" style="display: none;">
-  <h3>Данные гражданина</h3>
-  <div class="form-group">
-    <label for="lastName">Фамилия</label>
-    <input type="text" id="lastName" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="firstName">Имя</label>
-    <input type="text" id="firstName" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="middleName">Отчество</label>
-    <input type="text" id="middleName" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="birthDate">Дата рождения</label>
-    <input type="date" id="birthDate" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="birthPlace">Место рождения</label>
-    <input type="text" id="birthPlace" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="personalCode">Личный код (выдан МВД)</label>
-    <input type="text" id="personalCode" class="form-input" placeholder="XXXX-XXXX" />
-    <small class="form-hint">Формат: 4 цифры, дефис, 4 цифры</small>
-  </div>
-  <div class="form-group">
-    <label for="gender">Пол</label>
-    <select id="gender" class="form-input">
-      <option value="">Выберите</option>
-      <option value="male">Мужской</option>
-      <option value="female">Женский</option>
-      <option value="other">Другой</option>
-    </select>
-  </div>
-</div>
+        <!-- Шаг 2: данные (поля подгружаются динамически) -->
+        <div id="step2Form" class="form-step">
+          <!-- Блок для гражданина -->
+          <div id="citizenFields" class="category-fields" style="display: none;">
+            <h3>Данные гражданина</h3>
+            <div class="form-group">
+              <label for="lastName">Фамилия</label>
+              <input type="text" id="lastName" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="firstName">Имя</label>
+              <input type="text" id="firstName" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="middleName">Отчество</label>
+              <input type="text" id="middleName" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="birthDate">Дата рождения</label>
+              <input type="date" id="birthDate" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="birthPlace">Место рождения</label>
+              <input type="text" id="birthPlace" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="personalCode">Личный код (выдан МВД)</label>
+              <input type="text" id="personalCode" class="form-input" placeholder="XXXX-XXXX" />
+              <small class="form-hint">Формат: 4 цифры, дефис, 4 цифры</small>
+            </div>
+            <div class="form-group">
+              <label for="gender">Пол</label>
+              <select id="gender" class="form-input">
+                <option value="">Выберите</option>
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+                <option value="other">Другой</option>
+              </select>
+            </div>
+          </div>
 
-<!-- Блок для подданного -->
-<div id="subjectFields" class="category-fields" style="display: none;">
-  <h3>Данные подданного</h3>
-  <div class="form-group">
-    <label for="subjectFullName">ФИО полностью</label>
-    <input type="text" id="subjectFullName" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="subjectBirthDate">Дата рождения</label>
-    <input type="date" id="subjectBirthDate" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="subjectBirthPlace">Место рождения</label>
-    <input type="text" id="subjectBirthPlace" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="subjectGender">Пол</label>
-    <select id="subjectGender" class="form-input">
-      <option value="">Выберите</option>
-      <option value="male">Мужской</option>
-      <option value="female">Женский</option>
-      <option value="other">Другой</option>
-    </select>
-  </div>
-  <div class="form-group">
-    <label for="nationality">Гражданство</label>
-    <input type="text" id="nationality" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="passportNumber">Номер паспорта</label>
-    <input type="text" id="passportNumber" class="form-input" />
-  </div>
-</div>
+          <!-- Блок для подданного -->
+          <div id="subjectFields" class="category-fields" style="display: none;">
+            <h3>Данные подданного</h3>
+            <div class="form-group">
+              <label for="subjectFullName">ФИО полностью</label>
+              <input type="text" id="subjectFullName" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="subjectBirthDate">Дата рождения</label>
+              <input type="date" id="subjectBirthDate" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="subjectBirthPlace">Место рождения</label>
+              <input type="text" id="subjectBirthPlace" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="subjectGender">Пол</label>
+              <select id="subjectGender" class="form-input">
+                <option value="">Выберите</option>
+                <option value="male">Мужской</option>
+                <option value="female">Женский</option>
+                <option value="other">Другой</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="nationality">Гражданство (подданство)</label>
+              <input type="text" id="nationality" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="passportNumber">Номер паспорта</label>
+              <input type="text" id="passportNumber" class="form-input" />
+            </div>
+          </div>
 
-<!-- Блок для организации -->
-<div id="orgFields" class="category-fields" style="display: none;">
-  <h3>Данные организации</h3>
-  <div class="form-group">
-    <label for="orgName">Название организации</label>
-    <input type="text" id="orgName" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="inn">ИНН</label>
-    <input type="text" id="inn" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="kpp">КПП</label>
-    <input type="text" id="kpp" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="ogrn">ОГРН</label>
-    <input type="text" id="ogrn" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="address">Юридический адрес</label>
-    <input type="text" id="address" class="form-input" />
-  </div>
-  <div class="form-group">
-    <label for="contactPerson">Контактное лицо (ФИО)</label>
-    <input type="text" id="contactPerson" class="form-input" />
-  </div>
-</div>
+          <!-- Блок для организации -->
+          <div id="orgFields" class="category-fields" style="display: none;">
+            <h3>Данные организации</h3>
+            <div class="form-group">
+              <label for="orgName">Название организации</label>
+              <input type="text" id="orgName" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="inn">ИНН</label>
+              <input type="text" id="inn" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="kpp">КПП</label>
+              <input type="text" id="kpp" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="ogrn">ОГРН</label>
+              <input type="text" id="ogrn" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="address">Юридический адрес</label>
+              <input type="text" id="address" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label for="contactPerson">Контактное лицо (ФИО)</label>
+              <input type="text" id="contactPerson" class="form-input" />
+            </div>
+          </div>
 
-        <!-- Шаг 3: Пароль и контакты -->
+          <div class="form-navigation">
+            <button type="button" class="btn btn-prev" onclick="window.prevStep(2)">Назад</button>
+            <button type="button" class="btn btn-next" onclick="window.nextStep(2)">Далее</button>
+          </div>
+        </div>
+
+        <!-- Шаг 3: пароль и контакты (общие) -->
         <div id="step3Form" class="form-step">
           <div class="form-group">
             <label for="email" class="form-label">Электронная почта</label>
@@ -252,7 +293,7 @@
           </div>
         </div>
 
-        <!-- Шаг 4: Подтверждение -->
+        <!-- Шаг 4: подтверждение -->
         <div id="step4Form" class="form-step">
           <div class="agreement-checkboxes">
             <label class="checkbox-group">
@@ -280,7 +321,7 @@
     </div>
   </main>
 
-  <!-- ПОДВАЛ -->
+  <!-- Подвал -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>
@@ -289,7 +330,7 @@
     </p>
   </footer>
 
-  <!-- ========== SUPABASE ========== -->
+  <!-- Supabase и скрипты -->
   <script type="importmap">
     {
       "imports": {
@@ -297,12 +338,8 @@
       }
     }
   </script>
-
-  <!-- Конфигурация Supabase (обязательно замени URL и ключ) -->
   <script type="module" src="js/supabase-config.js"></script>
-  <!-- Скрипт регистрации -->
   <script type="module" src="js/register-supabase.js"></script>
-  <!-- Мобильное меню (старый, но исправленный) -->
   <script src="js/mob-menu.js"></script>
 </body>
 </html>
