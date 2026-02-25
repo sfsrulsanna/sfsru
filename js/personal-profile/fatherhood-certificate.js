@@ -370,14 +370,15 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Новое ФИО ребёнка после установления отцовства -->
-      <div class="marriage-row has-wide-label">
-        <span class="marriage-label wide-label">после установления отцовства ребенку присвоены:</span>
-        <div class="field-block marriage-field">
-          <div class="field-value">${escapeHTML(data.new_child_full_name || '—')}</div>
-          <div class="field-line"></div>
-        </div>
-      </div>
+<!-- Новое ФИО ребёнка после установления отцовства -->
+<div class="marriage-row has-wide-label">
+  <span class="marriage-label wide-label">после установления отцовства ребенку присвоены:</span>
+  <div class="field-block marriage-field">
+    <div class="field-value" style="text-align: center !important;">${escapeHTML(data.new_child_full_name || '—')}</div>
+    <div class="field-line"></div>
+            <div class="field-label">фамилия, имя, отчество</div>
+  </div>
+</div>
 
       <!-- Место государственной регистрации -->
       <div class="marriage-row has-wide-label">
