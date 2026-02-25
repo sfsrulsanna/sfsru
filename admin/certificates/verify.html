@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Подтверждение свидетельств — Админ панель СФСРЮ</title>
+    <!-- favicons (сокращено) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <!-- ... остальные favicons ... -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .certificates-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .certificates-table th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .certificates-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        .certificates-table tr:hover {
+            background: #f5f5f5;
+        }
+        .btn-verify, .btn-reject, .btn-view {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-right: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-verify { background: #28a745; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+        .btn-view { background: #6c757d; color: white; }
+        .btn-verify:hover, .btn-reject:hover, .btn-view:hover { opacity: 0.9; }
+        .loading, .no-data, .error {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+        .error { color: #dc3545; }
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem;
+            border-radius: 4px;
+            color: white;
+            z-index: 1000;
+            display: none;
+        }
+        .notification.success { background: #28a745; }
+        .notification.error { background: #dc3545; }
+    </style>
+    <script type="importmap">
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+    </script>
+</head>
+<body>
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ" height="40">
+                <span>СФСРЮ / Подтверждение свидетельств</span>
+            </div>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <div class="container">
+            <h1 class="page-title">Свидетельства на проверке</h1>
+            <p class="page-description">Записи со статусом "oncheck". Подтвердите или отклоните каждую.</p>
+
+            <div id="notification" class="notification"></div>
+
+            <table class="certificates-table">
+                <thead>
+                    <tr>
+                        <th>Тип</th>
+                        <th>ID записи</th>
+                        <th>Владелец</th>
+                        <th>Личный код</th>
+                        <th>Дата создания</th>
+                        <th>Действия</th>
+                        <th>Просмотр</th>
+                    </tr>
+                </thead>
+                <tbody id="certificatesTableBody">
+                    <tr><td colspan="7" class="loading">Загрузка...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <footer class="admin-footer">
+        <p>&copy; 2026 СФСРЮ. Все действия протоколируются.</p>
+    </footer>
+
+    <script type="module" src="js/verify.js"></script>
+    <script type="module">
+        import { supabase } from '../../../js/supabase-config.js';
+
+        async function checkAdmin() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '../login.html';
+                return;
+            }
+            const { data: profile, error } = await supabase
+                .from('users')
+                .select('role, email')
+                .eq('id', session.user.id)
+                .single();
+            if (error || profile?.role !== 'admin') {
+                await supabase.auth.signOut();
+                window.location.href = '../login.html';
+                return;
+            }
+            document.getElementById('adminEmail').textContent = profile.email || session.user.email;
+        }
+        checkAdmin();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '../login.html';
+        });
+    </script>
+</body>
+</html>

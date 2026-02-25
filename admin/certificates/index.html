@@ -1,128 +1,100 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Управление свидетельствами — Админ панель</title>
-  <!-- favicons (аналогично другим страницам) -->
-  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
-  <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
-  <meta name="application-name" content="&nbsp;"/>
-  <meta name="msapplication-TileColor" content="#FFFFFF" />
-  <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
-  <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
-  <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
-  <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
-  <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-
-  <!-- Общие стили сайта -->
-  <link rel="stylesheet" href="../../css/style.css">
-  <!-- Стили для админки -->
-  <link rel="stylesheet" href="../css/admin.css">
-  <!-- Иконки -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление свидетельствами — Админ панель СФСРЮ</title>
+    <!-- favicons (сокращено для читаемости) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <!-- ... остальные favicons ... -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script type="importmap">
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+    </script>
 </head>
 <body>
-  <!-- ШАПКА -->
-  <header class="header">
-    <div class="header-container">
-      <div class="logo">
-        <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-        <h1>СФСРЮ</h1>
-      </div>
-      <button id="menuToggle" class="menu-toggle" type="button" aria-label="Открыть меню">
-        <span class="menu-toggle-line"></span>
-        <span class="menu-toggle-line"></span>
-        <span class="menu-toggle-line"></span>
-      </button>
-      <nav class="nav-menu" id="mainNav">
-        <ul>
-          <li><a href="../../index.html">Главная</a></li>
-          <li><a href="../../news.html">Новости</a></li>
-          <li><a href="../../wiki/">Википедия</a></li>
-          <li><a href="../../healthcare.html">Здравоохранение</a></li>
-          <li><a href="../../services.html">Услуги</a></li>
-          <li><a href="../../personal-profile/index.html" class="active">Личный кабинет</a></li>
-          <li><a href="../index.html" class="active">Админ панель</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-  <main class="main-content">
-    <div class="container">
-      <h1 class="page-title">Управление свидетельствами</h1>
-      <p class="page-description">Выберите раздел для работы с документами.</p>
-
-      <div class="admin-cards">
-        <!-- Список всех свидетельств -->
-        <div class="admin-card">
-          <div class="card-icon"><i class="fas fa-list"></i></div>
-          <h3>Все свидетельства</h3>
-          <p>Просмотр, фильтрация и редактирование всех записей.</p>
-          <a href="list.html" class="btn-primary">Перейти</a>
+    <!-- Хедер админки -->
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ" height="40">
+                <span>СФСРЮ / Управление свидетельствами</span>
+            </div>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
         </div>
+    </header>
 
-        <!-- Добавление нового свидетельства -->
-        <div class="admin-card">
-          <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
-          <h3>Добавить свидетельство</h3>
-          <p>Создание новой записи (для любого гражданина).</p>
-          <a href="add.html" class="btn-primary">Перейти</a>
+    <main class="admin-main">
+        <div class="container">
+            <h1 class="page-title">Свидетельства</h1>
+            <p class="page-description">Управление всеми типами свидетельств (рождение, брак, развод, усыновление и др.)</p>
+
+            <div class="admin-cards">
+                <!-- Все свидетельства (список) -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-list"></i></div>
+                    <h3>Все свидетельства</h3>
+                    <p>Просмотр, фильтрация и редактирование всех записей по всем типам.</p>
+                    <a href="list.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- На проверке (verify) -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+                    <h3>На проверке</h3>
+                    <p>Записи со статусом "oncheck" – требуется модерация.</p>
+                    <a href="verify.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- Поиск по номеру -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-search"></i></div>
+                    <h3>Поиск по номеру</h3>
+                    <p>Быстрый поиск свидетельства по серии и номеру.</p>
+                    <a href="search.html" class="btn-primary">Перейти</a>
+                </div>
+            </div>
         </div>
+    </main>
 
-        <!-- Подтверждение свидетельств (модерация) -->
-        <div class="admin-card">
-          <div class="card-icon"><i class="fas fa-check-circle"></i></div>
-          <h3>Подтверждение</h3>
-          <p>Просмотр записей со статусом «на проверке» и изменение статуса.</p>
-          <a href="verify.html" class="btn-primary">Перейти</a>
-        </div>
+    <footer class="admin-footer">
+        <p>&copy; 2026 СФСРЮ. Все действия протоколируются.</p>
+    </footer>
 
-        <!-- Актовые книги -->
-        <div class="admin-card">
-          <div class="card-icon"><i class="fas fa-book"></i></div>
-          <h3>Актовые книги</h3>
-          <p>Просмотр и ведение актовых записей.</p>
-          <a href="registry-books.html" class="btn-primary">Перейти</a>
-        </div>
+    <script type="module">
+        import { supabase } from '../../js/supabase-config.js';
 
-        <!-- Поиск по номеру/серии -->
-        <div class="admin-card">
-          <div class="card-icon"><i class="fas fa-search"></i></div>
-          <h3>Поиск по номеру</h3>
-          <p>Быстрый поиск свидетельства по серии и номеру.</p>
-          <a href="search.html" class="btn-primary">Перейти</a>
-        </div>
-      </div>
-    </div>
-  </main>
+        async function checkAdmin() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '../login.html';
+                return;
+            }
+            const { data: profile, error } = await supabase
+                .from('users')
+                .select('role, email')
+                .eq('id', session.user.id)
+                .single();
+            if (error || profile?.role !== 'admin') {
+                await supabase.auth.signOut();
+                window.location.href = '../login.html';
+                return;
+            }
+            document.getElementById('adminEmail').textContent = profile.email || session.user.email;
+        }
+        checkAdmin();
 
-  <!-- ПОДВАЛ -->
-  <footer class="footer">
-    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-  </footer>
-
-  <!-- Скрипты -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script type="importmap">
-    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
-  </script>
-  <script type="module" src="../../js/supabase-config.js"></script>
-  <script src="../../js/mob-menu.js"></script>
-  <script type="module" src="js/admin-certificates.js"></script>
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '../login.html';
+        });
+    </script>
 </body>
 </html>
