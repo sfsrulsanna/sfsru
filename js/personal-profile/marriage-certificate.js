@@ -332,9 +332,6 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Заголовок присвоенных фамилий -->
-      <div class="assigned-header">После заключения брака присвоены фамилии:</div>
-
       <!-- Присвоенные фамилии (новый дизайн) -->
       <div class="assigned-section">
         <div class="assigned-row">
