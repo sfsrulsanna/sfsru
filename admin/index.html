@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Панель управления — Администратор СФСРЮ</title>
-    <!-- favicons (как в других страницах) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
@@ -26,7 +26,7 @@
     <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
 
-    <!-- Общие стили сайта (минимум) -->
+    <!-- Общие стили -->
     <link rel="stylesheet" href="../css/style.css">
     <!-- Стили админки -->
     <link rel="stylesheet" href="css/admin.css">
@@ -41,7 +41,7 @@
     </script>
 </head>
 <body>
-    <!-- Упрощённый хедер админки (без мобильного меню) -->
+    <!-- Упрощённый хедер админки -->
     <header class="admin-header">
         <div class="admin-header-container">
             <div class="admin-logo">
@@ -59,48 +59,48 @@
 
     <main class="admin-main">
         <div class="container">
-            <h1 class="page-title">Управление свидетельствами</h1>
-            <p class="page-description">Выберите раздел для работы с документами.</p>
+            <h1 class="page-title">Панель управления</h1>
+            <p class="page-description">Выберите раздел для управления данными.</p>
 
             <div class="admin-cards">
-                <!-- Список всех свидетельств -->
+                <!-- Граждане -->
                 <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-list"></i></div>
-                    <h3>Все свидетельства</h3>
-                    <p>Просмотр, фильтрация и редактирование всех записей.</p>
-                    <a href="certificates/list.html" class="btn-primary">Перейти</a>
+                    <div class="card-icon"><i class="fas fa-users"></i></div>
+                    <h3>Граждане</h3>
+                    <p>Просмотр, редактирование и добавление записей граждан (таблица users).</p>
+                    <a href="users/" class="btn-primary">Перейти</a>
                 </div>
 
-                <!-- Добавление нового свидетельства -->
+                <!-- Подданные -->
                 <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
-                    <h3>Добавить свидетельство</h3>
-                    <p>Создание новой записи (для любого гражданина).</p>
-                    <a href="certificates/add.html" class="btn-primary">Перейти</a>
+                    <div class="card-icon"><i class="fas fa-globe"></i></div>
+                    <h3>Подданные</h3>
+                    <p>Управление подданными (иностранцами) – таблица subjects.</p>
+                    <a href="subjects/" class="btn-primary">Перейти</a>
                 </div>
 
-                <!-- Подтверждение свидетельств (модерация) -->
+                <!-- Юридические лица -->
                 <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
-                    <h3>Подтверждение</h3>
-                    <p>Просмотр записей со статусом «на проверке» и изменение статуса.</p>
-                    <a href="certificates/verify.html" class="btn-primary">Перейти</a>
+                    <div class="card-icon"><i class="fas fa-building"></i></div>
+                    <h3>Юрлица</h3>
+                    <p>Управление организациями и предприятиями – таблица legal_entities.</p>
+                    <a href="legal-entities/" class="btn-primary">Перейти</a>
                 </div>
 
-                <!-- Актовые книги -->
+                <!-- Документы -->
                 <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-book"></i></div>
-                    <h3>Актовые книги</h3>
-                    <p>Просмотр и ведение актовых записей.</p>
-                    <a href="certificates/registry-books.html" class="btn-primary">Перейти</a>
+                    <div class="card-icon"><i class="fas fa-file-alt"></i></div>
+                    <h3>Документы</h3>
+                    <p>Просмотр и модерация всех типов документов (паспорта, свидетельства, права и т.д.).</p>
+                    <a href="documents/" class="btn-primary">Перейти</a>
                 </div>
 
-                <!-- Поиск по номеру/серии -->
+                <!-- Адреса -->
                 <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-search"></i></div>
-                    <h3>Поиск по номеру</h3>
-                    <p>Быстрый поиск свидетельства по серии и номеру.</p>
-                    <a href="certificates/search.html" class="btn-primary">Перейти</a>
+                    <div class="card-icon"><i class="fas fa-map-marker-alt"></i></div>
+                    <h3>Адреса</h3>
+                    <p>Управление адресами регистрации и проживания.</p>
+                    <a href="addresses/" class="btn-primary">Перейти</a>
                 </div>
             </div>
         </div>
@@ -121,6 +121,7 @@
                 return;
             }
 
+            // Проверяем роль через таблицу users (граждане) — администратор хранится там
             const { data: profile, error } = await supabase
                 .from('users')
                 .select('role, email')
