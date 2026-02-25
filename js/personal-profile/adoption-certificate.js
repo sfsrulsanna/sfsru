@@ -325,30 +325,31 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- ========== НОВЫЕ ДАННЫЕ РЕБЁНКА ========== -->
-      <div class="new-data-row">
-        <div class="marriage-row has-wide-label">
-          <span class="marriage-label wide-label">с присвоением ребенку</span>
-          <div class="field-block marriage-field">
-            <div class="field-value">${escapeHTML(data.new_full_name || '—')}</div>
-            <div class="field-line"></div>
-          </div>
-        </div>
-        <div class="marriage-row has-wide-label">
-          <span class="marriage-label wide-label">и указанием даты рождения</span>
-          <div class="field-block marriage-field">
-            <div class="field-value">${newBirthDate}</div>
-            <div class="field-line"></div>
-          </div>
-        </div>
-        <div class="marriage-row has-wide-label">
-          <span class="marriage-label wide-label">места рождения</span>
-          <div class="field-block marriage-field">
-            <div class="field-value">${escapeHTML(data.new_birth_place || '—')}</div>
-            <div class="field-line"></div>
-          </div>
-        </div>
-      </div>
+<!-- ========== НОВЫЕ ДАННЫЕ РЕБЁНКА ========== -->
+<div class="marriage-row">
+  <span class="marriage-label">с присвоением ребенку</span>
+  <div class="field-block marriage-field">
+    <div class="field-value">${escapeHTML(data.new_full_name || '—')}</div>
+    <div class="field-line"></div>
+        <div class="field-label">фамилия, имя, отчество</div>
+  </div>
+</div>
+<div class="marriage-row">
+  <span class="marriage-label">и указанием даты рождения</span>
+  <div class="field-block marriage-field">
+    <div class="field-value">${newBirthDate}</div>
+    <div class="field-line"></div>
+        <div class="field-label">число, месяц, год</div>
+  </div>
+</div>
+<div class="marriage-row">
+  <span class="marriage-label">места рождения</span>
+  <div class="field-block marriage-field">
+    <div class="field-value">${escapeHTML(data.new_birth_place || '—')}</div>
+    <div class="field-line"></div>
+        <div class="field-label">место рождения</div>
+  </div>
+</div>
 
       <!-- ========== АКТОВАЯ ЗАПИСЬ ========== -->
       <div class="act-record">
