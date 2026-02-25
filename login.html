@@ -190,133 +190,136 @@
 
       <div id="alertMessage" class="alert"></div>
 
-      <!-- Выбор роли (необязательно, можно определять автоматически) -->
+      <!-- Выбор роли (только для визуального удобства, не влияет на логику) -->
       <div class="role-selection">
-        <div class="role-option selected" data-role="citizen">
-          <div class="role-icon">👤</div>
-          <div class="role-name">Гражданин</div>
-          <div class="role-desc">Физическое лицо</div>
-        </div>
-        <div class="role-option" data-role="subject">
-          <div class="role-icon">🌍</div>
-          <div class="role-name">Подданный</div>
-          <div class="role-desc">Иностранец</div>
-        </div>
-        <div class="role-option" data-role="organization">
-          <div class="role-icon">🏢</div>
-          <div class="role-name">Организация</div>
-          <div class="role-desc">Юридическое лицо</div>
-        </div>
+        <div class="role-option selected" data-role="citizen">👤 Гражданин</div>
+        <div class="role-option" data-role="subject">🌍 Подданный</div>
+        <div class="role-option" data-role="organization">🏢 Организация</div>
       </div>
 
       <form id="loginForm">
         <div class="form-group">
-          <label for="email" class="form-label">Электронная почта</label>
-          <input type="email" id="email" class="form-input" placeholder="your.email@example.com" required />
+          <label for="email">Электронная почта</label>
+          <input type="email" id="email" class="form-input" required />
         </div>
         <div class="form-group">
-          <label for="password" class="form-label">Пароль</label>
-          <input type="password" id="password" class="form-input" placeholder="Введите пароль" required />
+          <label for="password">Пароль</label>
+          <input type="password" id="password" class="form-input" required />
         </div>
         <button type="submit" class="login-btn">Войти</button>
       </form>
 
       <div class="divider"><span>или</span></div>
-
-      <button class="google-btn" id="googleSignIn">
-        <span>Войти через Google</span>
-      </button>
+      <button class="google-btn" id="googleSignIn">Войти через Google</button>
 
       <div class="login-links">
-        <a href="forgot-password.html">Забыли пароль?</a> |
-        <a href="register.html">Регистрация</a>
+        <a href="forgot-password.html">Забыли пароль?</a> | <a href="register.html">Регистрация</a>
       </div>
     </div>
   </main>
 
-  <!-- Подвал -->
-  <footer class="footer">
-    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-    <p>
-      Телефон: +7 (993) 609-81-26 | Почта:
-      <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
-    </p>
-  </footer>
+  <footer class="footer">...</footer>
 
   <script src="js/mob-menu.js"></script>
   <script type="importmap">
-    {
-      "imports": {
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-      }
-    }
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
   </script>
   <script type="module">
     import { supabase } from './js/supabase-config.js'
 
-    // Переключение выбора роли (визуально)
+    // Переключение визуального выбора роли
     document.querySelectorAll('.role-option').forEach(el => {
       el.addEventListener('click', function() {
-        document.querySelectorAll('.role-option').forEach(x => x.classList.remove('selected'))
-        this.classList.add('selected')
-      })
-    })
+        document.querySelectorAll('.role-option').forEach(x => x.classList.remove('selected'));
+        this.classList.add('selected');
+      });
+    });
 
-    const alertDiv = document.getElementById('alertMessage')
+    const alertDiv = document.getElementById('alertMessage');
     function showAlert(message, type = 'error') {
-      alertDiv.className = `alert alert-${type}`
-      alertDiv.textContent = message
-      alertDiv.style.display = 'block'
-      setTimeout(() => alertDiv.style.display = 'none', 5000)
+      alertDiv.className = `alert alert-${type}`;
+      alertDiv.textContent = message;
+      alertDiv.style.display = 'block';
+      setTimeout(() => alertDiv.style.display = 'none', 5000);
+    }
+
+    // Определение категории пользователя по таблицам
+    async function getUserCategory(userId) {
+      // Проверяем citizens (users)
+      const { data: citizen } = await supabase
+        .from('users')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      if (citizen) return 'citizen';
+
+      // Проверяем subjects
+      const { data: subject } = await supabase
+        .from('subjects')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      if (subject) return 'subject';
+
+      // Проверяем legal_entities
+      const { data: org } = await supabase
+        .from('legal_entities')
+        .select('id')
+        .eq('id', userId)
+        .maybeSingle();
+      if (org) return 'organization';
+
+      return null;
     }
 
     // Обработка входа по email/паролю
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
-      e.preventDefault()
-      const email = document.getElementById('email').value.trim()
-      const password = document.getElementById('password').value
+      e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
 
       try {
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-        if (error) throw error
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
 
-        // Получаем пользователя и его метаданные
-        const { data: { user } } = await supabase.auth.getUser()
-        const category = user?.user_metadata?.category || 'citizen' // по умолчанию гражданин
+        const userId = data.user.id;
+        const category = await getUserCategory(userId);
 
-        // Перенаправляем в соответствующий профиль
-        let redirectPath = '/profile.html' // гражданин
-        if (category === 'subject') redirectPath = '/subject-profile.html'
-        else if (category === 'organization') redirectPath = '/organization-profile.html'
-
-        window.location.href = redirectPath
-      } catch (error) {
-        console.error(error)
-        let message = 'Ошибка авторизации'
-        if (error.message.includes('Invalid login credentials')) {
-          message = 'Неверный email или пароль'
-        } else if (error.message.includes('Email not confirmed')) {
-          message = 'Подтвердите email, перейдя по ссылке в письме'
+        if (!category) {
+          showAlert('Профиль не найден. Возможно, вы не завершили регистрацию.', 'error');
+          await supabase.auth.signOut();
+          return;
         }
-        showAlert(message, 'error')
+
+        // Редирект на соответствующий профиль
+        const redirectMap = {
+          citizen: '/profile.html',
+          subject: '/subject-profile.html',
+          organization: '/organization-profile.html'
+        };
+        window.location.href = redirectMap[category];
+      } catch (error) {
+        let message = 'Ошибка входа';
+        if (error.message.includes('Invalid login credentials')) {
+          message = 'Неверный email или пароль';
+        } else if (error.message.includes('Email not confirmed')) {
+          message = 'Подтвердите email по ссылке в письме';
+        }
+        showAlert(message, 'error');
       }
-    })
+    });
 
     // Вход через Google
     document.getElementById('googleSignIn').addEventListener('click', async () => {
       try {
-        // При входе через Google категория не известна, поэтому после редиректа нужно будет определить её по базе
-        const { error } = await supabase.auth.signInWithOAuth({
+        await supabase.auth.signInWithOAuth({
           provider: 'google',
-          options: {
-            redirectTo: window.location.origin + '/auth-callback.html' // страница-обработчик
-          }
-        })
-        if (error) throw error
+          options: { redirectTo: window.location.origin + '/auth-callback.html' }
+        });
       } catch (error) {
-        showAlert('Ошибка авторизации через Google', 'error')
+        showAlert('Ошибка авторизации через Google', 'error');
       }
-    })
+    });
   </script>
 </body>
 </html>
