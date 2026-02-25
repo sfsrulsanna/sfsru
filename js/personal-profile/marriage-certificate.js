@@ -197,7 +197,7 @@ function renderCertificate(data) {
     </div>
     
     <div class="certificate-content">
-      <!-- ОТЕЦ (без заголовка) -->
+      <!-- МУЖ -->
       <div class="spouse-section">
         <div class="spouse-block">
           <div class="field-block">
@@ -205,25 +205,24 @@ function renderCertificate(data) {
             <div class="field-line"></div>
             <div class="field-label">фамилия</div>
           </div>
-          </div>
           <div class="field-block">
             <div class="field-value">${escapeHTML(husbandFirstPatronymic)}</div>
             <div class="field-line"></div>
             <div class="field-label">имя отчество</div>
           </div>
-      <!-- Дата рождения + личный код -->
-      <div class="birth-details-row">
-        <div class="field-block">
-            <div class="field-value">${formatDateForRussian(data.husband_birth_date)}</div>
-          <div class="field-line"></div>
-          <div class="field-label">число, месяц, год рождения</div>
-        </div>
-        <div class="field-block">
-            <div class="field-value">${escapeHTML(data.husband_personal_code || '—')}</div>
-          <div class="field-line"></div>
-          <div class="field-label">личный код</div>
-        </div>
-      </div>
+          <!-- Дата рождения + личный код -->
+          <div class="birth-details-row">
+            <div class="field-block">
+              <div class="field-value">${formatDateForRussian(data.husband_birth_date)}</div>
+              <div class="field-line"></div>
+              <div class="field-label">число, месяц, год рождения</div>
+            </div>
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(data.husband_personal_code || '—')}</div>
+              <div class="field-line"></div>
+              <div class="field-label">личный код</div>
+            </div>
+          </div>
           <!-- Место рождения отдельно -->
           <div class="field-block">
             <div class="field-value">${escapeHTML(data.husband_birth_place || '—')}</div>
@@ -243,9 +242,11 @@ function renderCertificate(data) {
               <div class="field-label">национальность</div>
             </div>
           </div>
-        </div>
+        </div> <!-- закрываем spouse-block мужа -->
+      </div> <!-- закрываем spouse-section мужа -->
 
-        <!-- ЖЕНА -->
+      <!-- ЖЕНА -->
+      <div class="spouse-section">
         <div class="spouse-block">
           <div class="spouse-row">
             <span class="spouse-title">и</span>
@@ -260,19 +261,19 @@ function renderCertificate(data) {
             <div class="field-line"></div>
             <div class="field-label">имя отчество</div>
           </div>
-      <!-- Дата рождения + личный код -->
-      <div class="birth-details-row">
-        <div class="field-block">
-            <div class="field-value">${formatDateForRussian(data.wife_birth_date)}</div>
-          <div class="field-line"></div>
-          <div class="field-label">число, месяц, год рождения</div>
-        </div>
-        <div class="field-block">
-            <div class="field-value">${escapeHTML(data.wife_personal_code || '—')}</div>
-          <div class="field-line"></div>
-          <div class="field-label">личный код</div>
-        </div>
-      </div>
+          <!-- Дата рождения + личный код -->
+          <div class="birth-details-row">
+            <div class="field-block">
+              <div class="field-value">${formatDateForRussian(data.wife_birth_date)}</div>
+              <div class="field-line"></div>
+              <div class="field-label">число, месяц, год рождения</div>
+            </div>
+            <div class="field-block">
+              <div class="field-value">${escapeHTML(data.wife_personal_code || '—')}</div>
+              <div class="field-line"></div>
+              <div class="field-label">личный код</div>
+            </div>
+          </div>
           <!-- Место рождения отдельно -->
           <div class="field-block">
             <div class="field-value">${escapeHTML(data.wife_birth_place || '—')}</div>
@@ -291,8 +292,8 @@ function renderCertificate(data) {
               <div class="field-label">национальность</div>
             </div>
           </div>
-        </div>
-      </div>
+        </div> <!-- закрываем spouse-block жены -->
+      </div> <!-- закрываем spouse-section жены -->
 
       <!-- Дата заключения брака (как у "Муж") -->
       <div class="marriage-row">
@@ -331,6 +332,9 @@ function renderCertificate(data) {
           </div>
         </div>
       </div>
+
+      <!-- Заголовок присвоенных фамилий -->
+      <div class="assigned-header">После заключения брака присвоены фамилии:</div>
 
       <!-- Присвоенные фамилии (новый дизайн) -->
       <div class="assigned-section">
@@ -395,7 +399,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок
+  // Блок статуса и кнопок (без изменений)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
