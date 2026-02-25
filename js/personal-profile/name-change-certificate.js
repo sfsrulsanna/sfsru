@@ -231,11 +231,11 @@ function renderCertificate(data) {
         </div>
       </div>
       
-      <!-- Новое ФИО (как поле с надписью сверху) -->
-      <div class="marriage-row has-wide-label">
-        <span class="marriage-label wide-label">переменил(а) фамилию, имя, отчество на</span>
-        <div class="field-block marriage-field">
-          <div class="field-value">${escapeHTML(data.new_full_name || '—')}</div>
+      <!-- Новое ФИО (гарантированное центрирование через инлайн-стиль) -->
+      <div class="new-name-row">
+        <span class="new-name-label">переменил(а) фамилию, имя, отчество на</span>
+        <div class="field-block new-name-field">
+          <div class="field-value" style="text-align: center !important; display: block; width: 100%;">${escapeHTML(data.new_full_name || '—')}</div>
           <div class="field-line"></div>
         </div>
       </div>
@@ -314,7 +314,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок
+  // Блок статуса и кнопок (без изменений)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
@@ -392,14 +392,11 @@ function renderModalForm() {
       <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
     </div>
 
-      <!-- Новое ФИО (отдельный контейнер с собственным классом для значения) -->
-      <div class="new-name-row">
-        <span class="new-name-label">переменил(а) фамилию, имя, отчество на</span>
-        <div class="field-block new-name-field">
-          <div class="new-name-value">${escapeHTML(data.new_full_name || '—')}</div>
-          <div class="field-line"></div>
-        </div>
-      </div>
+    <h4>Новые данные</h4>
+    <div class="form-group">
+      <label>Новое ФИО (полностью)</label>
+      <input type="text" id="edit_new_full_name" class="form-input" value="${escapeHTML(formData.new_full_name || '')}">
+    </div>
 
     <h4>Актовая запись</h4>
     <div class="form-group">
