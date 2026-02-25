@@ -392,11 +392,11 @@ function renderModalForm() {
       <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
     </div>
 
-      <!-- Новое ФИО (отдельный контейнер, как место регистрации, но с центрированием) -->
+      <!-- Новое ФИО (отдельный контейнер с собственным классом для значения) -->
       <div class="new-name-row">
         <span class="new-name-label">переменил(а) фамилию, имя, отчество на</span>
         <div class="field-block new-name-field">
-          <div class="field-value">${escapeHTML(data.new_full_name || '—')}</div>
+          <div class="new-name-value">${escapeHTML(data.new_full_name || '—')}</div>
           <div class="field-line"></div>
         </div>
       </div>
