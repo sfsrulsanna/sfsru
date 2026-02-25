@@ -163,7 +163,7 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 function renderCertificate(data) {
-  // Разбиваем ФИО супругов на части
+  // Разбиваем ФИО супругов
   const husbandNameParts = (data.husband_full_name || '').split(' ')
   const husbandSurname = husbandNameParts[0] || '—'
   const husbandFirstPatronymic = husbandNameParts.slice(1).join(' ') || '—'
@@ -172,13 +172,13 @@ function renderCertificate(data) {
   const wifeSurname = wifeNameParts[0] || '—'
   const wifeFirstPatronymic = wifeNameParts.slice(1).join(' ') || '—'
 
-  // Дата брака
-  const marriageDate = data.marriage_date ? formatDateForRussian(data.marriage_date) : '—'
+  // Форматируем даты
+  const divorceDate = data.divorce_date ? formatDateForRussian(data.divorce_date) : '—'
+  const basisDate = data.basis_date ? formatDateForRussian(data.basis_date) : '—'
+  const issueDate = data.issue_date ? formatDateForRussian(data.issue_date) : '—'
 
-  // Дата актовой записи
-  let actYear = ''
-  let actMonth = '____'
-  let actDay = ''
+  // Для актовой записи разбираем дату
+  let actYear = '', actMonth = '', actDay = ''
   if (data.registry_act_date) {
     const actDate = new Date(data.registry_act_date)
     const months = [
@@ -190,32 +190,40 @@ function renderCertificate(data) {
     actDay = String(actDate.getDate()).padStart(2, '0')
   }
 
+  // Объединяем основание и дату основания в одну строку
+  const basisFull = data.divorce_basis
+    ? (basisDate !== '—' ? `${data.divorce_basis} от ${basisDate}` : data.divorce_basis)
+    : (basisDate !== '—' ? `от ${basisDate}` : '—')
+
+  // Формируем HTML
   const html = `
     <div class="certificate-header">
       <div class="title">СВИДЕТЕЛЬСТВО</div>
-      <div class="subtitle">О ЗАКЛЮЧЕНИИ БРАКА</div>
+      <div class="subtitle">О РАСТОРЖЕНИИ БРАКА</div>
     </div>
     
     <div class="certificate-content">
       <!-- МУЖ -->
       <div class="spouse-section">
         <div class="spouse-block">
+          <!-- Фамилия мужа -->
           <div class="field-block">
             <div class="field-value">${escapeHTML(husbandSurname)}</div>
             <div class="field-line"></div>
             <div class="field-label">фамилия</div>
           </div>
+          <!-- Имя отчество мужа -->
           <div class="field-block">
             <div class="field-value">${escapeHTML(husbandFirstPatronymic)}</div>
             <div class="field-line"></div>
             <div class="field-label">имя отчество</div>
           </div>
-          <!-- Дата рождения + личный код -->
+          <!-- Дата рождения и личный код -->
           <div class="birth-details-row">
             <div class="field-block">
               <div class="field-value">${formatDateForRussian(data.husband_birth_date)}</div>
               <div class="field-line"></div>
-              <div class="field-label">число, месяц, год рождения</div>
+              <div class="field-label">дата рождения</div>
             </div>
             <div class="field-block">
               <div class="field-value">${escapeHTML(data.husband_personal_code || '—')}</div>
@@ -223,13 +231,13 @@ function renderCertificate(data) {
               <div class="field-label">личный код</div>
             </div>
           </div>
-          <!-- Место рождения отдельно -->
+          <!-- Место рождения -->
           <div class="field-block">
             <div class="field-value">${escapeHTML(data.husband_birth_place || '—')}</div>
             <div class="field-line"></div>
             <div class="field-label">место рождения</div>
           </div>
-          <!-- Гражданство и национальность в одной строке -->
+          <!-- Гражданство и национальность -->
           <div class="citizenship-row">
             <div class="field-block">
               <div class="field-value">${escapeHTML(data.husband_citizenship || '—')}</div>
@@ -242,11 +250,9 @@ function renderCertificate(data) {
               <div class="field-label">национальность</div>
             </div>
           </div>
-        </div> <!-- закрываем spouse-block мужа -->
-      </div> <!-- закрываем spouse-section мужа -->
+        </div>
 
-      <!-- ЖЕНА -->
-      <div class="spouse-section">
+        <!-- ЖЕНА с префиксом "и" -->
         <div class="spouse-block">
           <div class="spouse-row">
             <span class="spouse-title">и</span>
@@ -261,12 +267,11 @@ function renderCertificate(data) {
             <div class="field-line"></div>
             <div class="field-label">имя отчество</div>
           </div>
-          <!-- Дата рождения + личный код -->
           <div class="birth-details-row">
             <div class="field-block">
               <div class="field-value">${formatDateForRussian(data.wife_birth_date)}</div>
               <div class="field-line"></div>
-              <div class="field-label">число, месяц, год рождения</div>
+              <div class="field-label">дата рождения</div>
             </div>
             <div class="field-block">
               <div class="field-value">${escapeHTML(data.wife_personal_code || '—')}</div>
@@ -274,7 +279,6 @@ function renderCertificate(data) {
               <div class="field-label">личный код</div>
             </div>
           </div>
-          <!-- Место рождения отдельно -->
           <div class="field-block">
             <div class="field-value">${escapeHTML(data.wife_birth_place || '—')}</div>
             <div class="field-line"></div>
@@ -292,22 +296,13 @@ function renderCertificate(data) {
               <div class="field-label">национальность</div>
             </div>
           </div>
-        </div> <!-- закрываем spouse-block жены -->
-      </div> <!-- закрываем spouse-section жены -->
-
-      <!-- Дата заключения брака (как у "Муж") -->
-      <div class="marriage-row">
-        <span class="marriage-label">заключили брак</span>
-        <div class="field-block marriage-field">
-          <div class="field-value">${escapeHTML(marriageDate)}</div>
-          <div class="field-line"></div>
         </div>
       </div>
 
-      <!-- Актовая запись (новая структура с линиями) -->
+      <!-- Актовая запись (расторгли брак, о чем...) -->
       <div class="act-record">
         <div class="act-row">
-          <span class="act-label">о чем</span>
+          <span class="act-label">расторгли брак, о чем</span>
           <div class="field-block act-field">
             <div class="field-value">${actYear}</div>
             <div class="field-line"></div>
@@ -322,10 +317,9 @@ function renderCertificate(data) {
             <div class="field-value">${actDay}</div>
             <div class="field-line"></div>
           </div>
-          <span class="act-label">числа</span>
+          <span class="act-label">числа составлена актовая запись о расторжении брака №</span>
         </div>
         <div class="act-row">
-          <span class="act-label">составлена запись акта о заключении брака №</span>
           <div class="field-block act-field">
             <div class="field-value">${escapeHTML(data.registry_act_number || '—')}</div>
             <div class="field-line"></div>
@@ -333,28 +327,34 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Заголовок присвоенных фамилий -->
-      <div class="assigned-header">После заключения брака присвоены фамилии:</div>
-
-      <!-- Присвоенные фамилии (новый дизайн) -->
-      <div class="assigned-section">
-        <div class="assigned-row">
-          <span class="assigned-label">мужу</span>
-          <div class="field-block assigned-field">
-            <div class="field-value">${escapeHTML(data.assigned_surname_husband || '—')}</div>
-            <div class="field-line"></div>
-          </div>
-        </div>
-        <div class="assigned-row">
-          <span class="assigned-label">жене</span>
-          <div class="field-block assigned-field">
-            <div class="field-value">${escapeHTML(data.assigned_surname_wife || '—')}</div>
-            <div class="field-line"></div>
-          </div>
+      <!-- Дата прекращения брака -->
+      <div class="marriage-row">
+        <span class="marriage-label">Брак прекращен</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(divorceDate)}</div>
+          <div class="field-line"></div>
         </div>
       </div>
 
-      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (исключение – не центрируется) -->
+      <!-- Основание (объединённое поле) -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">на основании</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(basisFull)}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+
+      <!-- Присвоенная фамилия -->
+      <div class="assigned-row">
+        <span class="assigned-label">После расторжения брака присвоена фамилия: ему(ей)</span>
+        <div class="field-block assigned-field">
+          <div class="field-value">${escapeHTML(data.assigned_surname_owner || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+
+      <!-- Место государственной регистрации -->
       <div class="marriage-row has-wide-label">
         <span class="marriage-label wide-label">Место государственной регистрации</span>
         <div class="field-block marriage-field">
@@ -363,7 +363,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (исключение – не центрируется) -->
+      <!-- Место выдачи свидетельства -->
       <div class="marriage-row has-wide-label">
         <span class="marriage-label wide-label">Место выдачи свидетельства</span>
         <div class="field-block marriage-field">
@@ -372,12 +372,23 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ -->
+      <!-- Свидетельство выдано (ФИО + личный код) -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">Свидетельство выдано</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">
+            ${escapeHTML(data.owner_full_name || '—')}${data.personal_code ? `, ${escapeHTML(data.personal_code)}` : ''}
+          </div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+
+      <!-- Правая информация -->
       <div class="right-info-container">
         <div class="right-row">
-          <span class="right-label">Дата выдачи</span>
+          <span class="right-label">Дата выдачи:</span>
           <div class="field-block right-field">
-            <div class="field-value">${formatDateForRussian(data.issue_date)}</div>
+            <div class="field-value">${issueDate}</div>
             <div class="field-line"></div>
           </div>
         </div>
@@ -399,37 +410,6 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок (без изменений)
-  const statusText = getStatusLabel(data.status)
-  const statusClass = getStatusClass(data.status)
-  
-  const statusAndEdit = document.createElement('div')
-  statusAndEdit.className = 'status-and-edit'
-  
-  const statusSpan = document.createElement('span')
-  statusSpan.className = statusClass
-  statusSpan.textContent = statusText
-  statusAndEdit.appendChild(statusSpan)
-  
-  const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/marriage-certificate/'
-  replaceLink.className = 'edit-btn'
-  replaceLink.textContent = 'Заменить свидетельство'
-  statusAndEdit.appendChild(replaceLink)
-  
-  if (data.status !== 'verified') {
-    const editBtn = document.createElement('button')
-    editBtn.className = 'edit-btn'
-    editBtn.id = 'editBtn'
-    editBtn.textContent = 'Изменить данные'
-    editBtn.addEventListener('click', () => {
-      formData = { ...data }
-      openEditModal()
-    })
-    statusAndEdit.appendChild(editBtn)
-  }
-  
-  document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
 }
 
 // ==================== МОДАЛЬНОЕ ОКНО ====================
