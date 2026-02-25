@@ -6,12 +6,37 @@
     <title>Управление свидетельствами — Админ панель СФСРЮ</title>
     <!-- favicons (сокращено для читаемости) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
-    <!-- ... остальные favicons ... -->
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <!-- Общие стили -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Supabase import map -->
     <script type="importmap">
-        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
     </script>
 </head>
 <body>
@@ -53,7 +78,23 @@
                     <a href="verify.html" class="btn-primary">Перейти</a>
                 </div>
 
-                <!-- Поиск по номеру -->
+                <!-- Добавить свидетельство -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
+                    <h3>Добавить свидетельство</h3>
+                    <p>Создание новой записи (для любого гражданина).</p>
+                    <a href="add.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- Актовые книги -->
+                <div class="admin-card">
+                    <div class="card-icon"><i class="fas fa-book"></i></div>
+                    <h3>Актовые книги</h3>
+                    <p>Просмотр и ведение актовых записей.</p>
+                    <a href="registry-books.html" class="btn-primary">Перейти</a>
+                </div>
+
+                <!-- Поиск по номеру (можно добавить позже, если страница существует) -->
                 <div class="admin-card">
                     <div class="card-icon"><i class="fas fa-search"></i></div>
                     <h3>Поиск по номеру</h3>
@@ -69,7 +110,7 @@
     </footer>
 
     <script type="module">
-        import { supabase } from '../../js/supabase-config.js';
+        import { supabase } from '../../../js/supabase-config.js';
 
         async function checkAdmin() {
             const { data: { session } } = await supabase.auth.getSession();
@@ -77,16 +118,19 @@
                 window.location.href = '../login.html';
                 return;
             }
+
             const { data: profile, error } = await supabase
                 .from('users')
                 .select('role, email')
                 .eq('id', session.user.id)
                 .single();
+
             if (error || profile?.role !== 'admin') {
                 await supabase.auth.signOut();
                 window.location.href = '../login.html';
                 return;
             }
+
             document.getElementById('adminEmail').textContent = profile.email || session.user.email;
         }
         checkAdmin();
