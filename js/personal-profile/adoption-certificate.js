@@ -593,11 +593,18 @@ function renderModalForm() {
 
 function collectFormData() {
   const getVal = (id) => (document.getElementById(id)?.value || '').trim()
+  
+  // Для полей даты: пустая строка -> null
+  const getDateOrNull = (id) => {
+    const val = getVal(id);
+    return val === '' ? null : val;
+  };
+
   return {
     child_surname: getVal('edit_child_surname'),
     child_name: getVal('edit_child_name'),
     child_patronymic: getVal('edit_child_patronymic'),
-    child_birth_date: getVal('edit_child_birth_date'),
+    child_birth_date: getDateOrNull('edit_child_birth_date'),
     child_personal_code: getVal('edit_child_personal_code'),
     child_birth_place: getVal('edit_child_birth_place'),
     
@@ -612,16 +619,16 @@ function collectFormData() {
     guardian2_personal_code: getVal('edit_guardian2_personal_code'),
     
     new_full_name: getVal('edit_new_full_name'),
-    new_birth_date: getVal('edit_new_birth_date'),
+    new_birth_date: getDateOrNull('edit_new_birth_date'),
     new_birth_place: getVal('edit_new_birth_place'),
     
-    registry_act_date: getVal('edit_registry_act_date'),
+    registry_act_date: getDateOrNull('edit_registry_act_date'),
     registry_act_number: getVal('edit_registry_act_number'),
     registry_place: getVal('edit_registry_place'),
     issue_place: getVal('edit_issue_place'),
     registry_official: getVal('edit_registry_official'),
     certificate_series_number: getVal('edit_certificate_series_number'),
-    issue_date: getVal('edit_issue_date'),
+    issue_date: getDateOrNull('edit_issue_date'),
     owner_full_name: getVal('edit_owner_full_name'),
     personal_code: getVal('edit_personal_code')
   }
