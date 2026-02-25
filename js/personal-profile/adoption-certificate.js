@@ -248,41 +248,44 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- ========== ПЕРВЫЙ ОПЕКУН (ОТЕЦ) ========== -->
-      <div class="guardian-section">
-        <div class="guardian-block">
-          <!-- Фамилия отца -->
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(g1Surname)}</div>
-            <div class="field-line"></div>
-            <div class="field-label">отец</div>
-          </div>
-          <!-- Имя отчество отца -->
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(g1FirstPatronymic)}</div>
-            <div class="field-line"></div>
-            <div class="field-label">имя отчество</div>
-          </div>
-          <!-- Гражданство и национальность -->
-          <div class="citizenship-row">
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(data.guardian1_citizenship || '—')}</div>
-              <div class="field-line"></div>
-              <div class="field-label">гражданство</div>
-            </div>
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(data.guardian1_nationality || '—')}</div>
-              <div class="field-line"></div>
-              <div class="field-label">национальность</div>
-            </div>
-          </div>
-          <!-- Личный код -->
-          <div class="field-block">
-            <div class="field-value">${escapeHTML(data.guardian1_personal_code || '—')}</div>
-            <div class="field-line"></div>
-            <div class="field-label">личный код</div>
-          </div>
-        </div>
+// ========== ПЕРВЫЙ ОПЕКУН (ОТЕЦ) ==========
+<div class="guardian-section">
+  <div class="guardian-block">
+    <!-- Строка с меткой "опекуны" и фамилией отца -->
+    <div class="guardian-row">
+      <span class="guardian-label">опекуны</span>
+      <div class="field-block" style="flex:1;">
+        <div class="field-value">${escapeHTML(g1Surname)}</div>
+        <div class="field-line"></div>
+        <div class="field-label">отец</div>
+      </div>
+    </div>
+    <!-- Имя отчество отца -->
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(g1FirstPatronymic)}</div>
+      <div class="field-line"></div>
+      <div class="field-label">имя отчество</div>
+    </div>
+    <!-- Гражданство и национальность -->
+    <div class="citizenship-row">
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.guardian1_citizenship || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">гражданство</div>
+      </div>
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.guardian1_nationality || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">национальность</div>
+      </div>
+    </div>
+    <!-- Личный код -->
+    <div class="field-block">
+      <div class="field-value">${escapeHTML(data.guardian1_personal_code || '—')}</div>
+      <div class="field-line"></div>
+      <div class="field-label">личный код</div>
+    </div>
+  </div>
 
         <!-- ========== ВТОРОЙ ОПЕКУН (МАТЬ) ========== -->
         <div class="guardian-block">
