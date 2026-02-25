@@ -290,7 +290,7 @@ function renderCertificate(data) {
       <!-- Правая информация -->
       <div class="right-info-container">
         <div class="right-row">
-          <span class="right-label">Дата выдачи:</span>
+          <span class="right-label">Дата выдачи</span>
           <div class="field-block right-field">
             <div class="field-value">${formatDateForRussian(data.issue_date)}</div>
             <div class="field-line"></div>

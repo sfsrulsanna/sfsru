@@ -254,7 +254,7 @@ function renderCertificate(data) {
 
       <!-- Фраза-пояснение -->
       <div class="marriage-row has-wide-label">
-        <span class="marriage-label wide-label">признан отцом ребенка, которому при государственной регистрации рождения присвоены:</span>
+        <span class="marriage-label wide-label">признан отцом ребенка, которому при государственной регистрации рождения присвоены</span>
         <div class="field-block marriage-field">
           <div class="field-value" style="opacity: 0; height: 0;">&nbsp;</div> <!-- пустое поле без линии -->
         </div>
@@ -372,7 +372,7 @@ function renderCertificate(data) {
 
 <!-- Новое ФИО ребёнка после установления отцовства -->
 <div class="marriage-row has-wide-label">
-  <span class="marriage-label wide-label">после установления отцовства ребенку присвоены:</span>
+  <span class="marriage-label wide-label">после установления отцовства ребенку присвоены</span>
   <div class="field-block marriage-field">
     <div class="field-value" style="text-align: center !important;">${escapeHTML(data.new_child_full_name || '—')}</div>
     <div class="field-line"></div>
@@ -401,7 +401,7 @@ function renderCertificate(data) {
       <!-- Правая информация -->
       <div class="right-info-container">
         <div class="right-row">
-          <span class="right-label">Дата выдачи:</span>
+          <span class="right-label">Дата выдачи</span>
           <div class="field-block right-field">
             <div class="field-value">${formatDateForRussian(data.issue_date)}</div>
             <div class="field-line"></div>

@@ -197,15 +197,14 @@ function renderCertificate(data) {
     </div>
     
     <div class="certificate-content">
-      <!-- МУЖ -->
+      <!-- ОТЕЦ (без заголовка) -->
       <div class="spouse-section">
         <div class="spouse-block">
-          <div class="spouse-row">
-            <div class="field-block">
-              <div class="field-value">${escapeHTML(husbandSurname)}</div>
-              <div class="field-line"></div>
-              <div class="field-label">фамилия</div>
-            </div>
+          <div class="field-block">
+            <div class="field-value">${escapeHTML(husbandSurname)}</div>
+            <div class="field-line"></div>
+            <div class="field-label">фамилия</div>
+          </div>
           </div>
           <div class="field-block">
             <div class="field-value">${escapeHTML(husbandFirstPatronymic)}</div>
@@ -335,6 +334,7 @@ function renderCertificate(data) {
 
       <!-- Присвоенные фамилии (новый дизайн) -->
       <div class="assigned-section">
+        <span class="marriage-label wide-label">После заключения брака присвоены фамилии:</span>
         <div class="assigned-row">
           <span class="assigned-label">мужу</span>
           <div class="field-block assigned-field">
@@ -372,7 +372,7 @@ function renderCertificate(data) {
       <!-- ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ -->
       <div class="right-info-container">
         <div class="right-row">
-          <span class="right-label">Дата выдачи:</span>
+          <span class="right-label">Дата выдачи</span>
           <div class="field-block right-field">
             <div class="field-value">${formatDateForRussian(data.issue_date)}</div>
             <div class="field-line"></div>

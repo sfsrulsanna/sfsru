@@ -26,7 +26,7 @@ let formData = {
   certificate_series_number: '',
   issue_date: '',
   owner_full_name: '',
-  owner_personal_code: '',
+  personal_code: '',
   status: 'oncheck'
 }
 
@@ -133,7 +133,7 @@ async function loadData() {
       const { data: docs, error } = await supabase
         .from('documents_death_certificate')
         .select('*')
-        .eq('owner_personal_code', userPersonalCode)
+        .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
         .limit(1)
       if (!error && docs && docs.length > 0) {
@@ -242,11 +242,13 @@ function renderCertificate(data) {
         <div class="field-block">
           <div class="field-value">${formatDateForRussian(data.death_date)}</div>
           <div class="field-line"></div>
+          <div class="field-label">число, месяц, год</div>
         </div>
         <span class="death-label">в</span>
         <div class="field-block">
           <div class="field-value">${formatTime(data.death_time) || '—'}</div>
           <div class="field-line"></div>
+          <div class="field-label">часы, минуты</div>
         </div>
       </div>
       
@@ -307,7 +309,7 @@ function renderCertificate(data) {
       <!-- Правая информация -->
       <div class="right-info-container">
         <div class="right-row">
-          <span class="right-label">Дата выдачи:</span>
+          <span class="right-label">Дата выдачи</span>
           <div class="field-block right-field">
             <div class="field-value">${formatDateForRussian(data.issue_date)}</div>
             <div class="field-line"></div>
@@ -466,7 +468,7 @@ function renderModalForm() {
     </div>
     <div class="form-group">
       <label>Личный код владельца</label>
-      <input type="text" id="edit_owner_personal_code" class="form-input" value="${escapeHTML(formData.owner_personal_code || userPersonalCode || '')}" readonly>
+      <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
     </div>
   `
 }
@@ -492,7 +494,7 @@ function collectFormData() {
     certificate_series_number: getVal('edit_certificate_series_number'),
     issue_date: getVal('edit_issue_date'),
     owner_full_name: getVal('edit_owner_full_name'),
-    owner_personal_code: getVal('edit_owner_personal_code')
+    personal_code: getVal('edit_personal_code')
   }
 }
 
@@ -509,9 +511,9 @@ async function saveDocument() {
       return
     }
 
-    // Убедимся, что owner_personal_code установлен
-    if (!newData.owner_personal_code) {
-      newData.owner_personal_code = userPersonalCode
+    // Убедимся, что personal_code установлен
+    if (!newData.personal_code) {
+      newData.personal_code = userPersonalCode
     }
 
     const cleanData = { ...newData }
@@ -573,7 +575,7 @@ function openAddModal() {
     certificate_series_number: '',
     issue_date: '',
     owner_full_name: ownerFullName,
-    owner_personal_code: userPersonalCode || '',
+    personal_code: userPersonalCode || '',
     status: 'oncheck'
   }
   openModal('Добавление свидетельства о смерти')
