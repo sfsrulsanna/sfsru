@@ -1,0 +1,597 @@
+import { supabase } from '../../js/supabase-config.js'
+
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
+let currentDocId = null
+let documentData = {}
+let userPersonalCode = null
+let userProfile = null
+let userId = null
+
+let formData = {
+  surname: '',
+  first_patronymic: '',
+  birth_date: '',
+  birth_place: '',
+  citizenship: '',
+  nationality: '',
+  personal_code: '',
+  death_date: '',
+  death_time: '',
+  death_place: '',
+  registry_act_date: '',
+  registry_act_number: '',
+  registry_place: '',
+  issue_place: '',
+  registry_official: '',
+  certificate_series_number: '',
+  issue_date: '',
+  owner_full_name: '',
+  owner_personal_code: '',
+  status: 'oncheck'
+}
+
+// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+function formatDate(dateString) {
+  if (!dateString) return '—'
+  try {
+    const date = new Date(dateString)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}.${month}.${year}`
+  } catch {
+    return dateString
+  }
+}
+
+function formatDateForRussian(dateString) {
+  if (!dateString) return '—'
+  try {
+    const date = new Date(dateString)
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ]
+    const day = date.getDate()
+    const month = months[date.getMonth()]
+    const year = date.getFullYear()
+    return `${day} ${month} ${year} года`
+  } catch {
+    return dateString
+  }
+}
+
+function formatTime(timeString) {
+  if (!timeString) return '—'
+  return timeString.substring(0, 5) // HH:MM
+}
+
+function getStatusLabel(status) {
+  if (status === 'verified') return '✅ Подтверждено'
+  if (status === 'oncheck') return '⏳ На проверке'
+  if (status === 'rejected') return '❌ Отклонено'
+  if (status === 'archived') return '📦 Архивный'
+  return '—'
+}
+
+function getStatusClass(status) {
+  if (status === 'verified') return 'document-status status-verified'
+  if (status === 'oncheck') return 'document-status status-pending'
+  if (status === 'rejected') return 'document-status status-rejected'
+  if (status === 'archived') return 'document-status status-archived'
+  return 'document-status'
+}
+
+function escapeHTML(str) {
+  if (!str) return ''
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+// ==================== ЗАГРУЗКА ДАННЫХ ====================
+async function loadData() {
+  try {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    if (sessionError || !session) {
+      window.location.href = '../../login.html'
+      return
+    }
+
+    userId = session.user.id
+
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+      .eq('id', userId)
+      .single()
+
+    if (profileError || !profile) {
+      console.error('Ошибка загрузки профиля:', profileError)
+      document.getElementById('loading').textContent = 'Ошибка загрузки профиля'
+      return
+    }
+
+    userProfile = profile
+    userPersonalCode = profile.personal_code
+
+    const urlParams = new URLSearchParams(window.location.search)
+    const idFromUrl = urlParams.get('id')
+
+    let data = null
+    if (idFromUrl) {
+      const { data: doc, error } = await supabase
+        .from('documents_death_certificate')
+        .select('*')
+        .eq('id', idFromUrl)
+        .maybeSingle()
+      if (!error && doc) data = doc
+    } else {
+      const { data: docs, error } = await supabase
+        .from('documents_death_certificate')
+        .select('*')
+        .eq('owner_personal_code', userPersonalCode)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (!error && docs && docs.length > 0) {
+        data = docs[0]
+      }
+    }
+
+    const loadingEl = document.getElementById('loading')
+    const contentEl = document.getElementById('content')
+    const noDataEl = document.getElementById('noData')
+
+    if (data) {
+      documentData = data
+      currentDocId = data.id
+      renderCertificate(data)
+      loadingEl.style.display = 'none'
+      contentEl.style.display = 'block'
+      noDataEl.style.display = 'none'
+    } else {
+      loadingEl.style.display = 'none'
+      contentEl.style.display = 'none'
+      noDataEl.style.display = 'block'
+    }
+  } catch (err) {
+    console.error('Необработанная ошибка в loadData:', err)
+    document.getElementById('loading').textContent = 'Произошла критическая ошибка'
+  }
+}
+
+// ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
+function renderCertificate(data) {
+  // Дата актовой записи
+  let actYear = ''
+  let actMonth = '____'
+  let actDay = ''
+  if (data.registry_act_date) {
+    const actDate = new Date(data.registry_act_date)
+    const months = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ]
+    actYear = actDate.getFullYear()
+    actMonth = months[actDate.getMonth()]
+    actDay = String(actDate.getDate()).padStart(2, '0')
+  }
+
+  const html = `
+    <div class="certificate-header">
+      <div class="title">СВИДЕТЕЛЬСТВО</div>
+      <div class="subtitle">О СМЕРТИ</div>
+    </div>
+    
+    <div class="certificate-content">
+      <!-- Фамилия -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.surname || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">фамилия</div>
+      </div>
+      
+      <!-- Имя отчество -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.first_patronymic || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">имя отчество</div>
+      </div>
+      
+      <!-- Дата рождения + личный код -->
+      <div class="birth-details-row">
+        <div class="field-block">
+          <div class="field-value">${formatDateForRussian(data.birth_date)}</div>
+          <div class="field-line"></div>
+          <div class="field-label">дата рождения</div>
+        </div>
+        <div class="field-block">
+          <div class="field-value">${escapeHTML(data.personal_code || '—')}</div>
+          <div class="field-line"></div>
+          <div class="field-label">личный код</div>
+        </div>
+      </div>
+      
+      <!-- Место рождения -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.birth_place || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">место рождения</div>
+      </div>
+      
+      <!-- Гражданство и национальность -->
+      <div class="citizenship-row">
+        <div class="field-block">
+          <div class="field-value">${escapeHTML(data.citizenship || '—')}</div>
+          <div class="field-line"></div>
+          <div class="field-label">гражданство</div>
+        </div>
+        <div class="field-block">
+          <div class="field-value">${escapeHTML(data.nationality || '—')}</div>
+          <div class="field-line"></div>
+          <div class="field-label">национальность</div>
+        </div>
+      </div>
+      
+      <!-- Дата и время смерти -->
+      <div class="death-details-row">
+        <span class="death-label">умер(ла)</span>
+        <div class="field-block">
+          <div class="field-value">${formatDateForRussian(data.death_date)}</div>
+          <div class="field-line"></div>
+        </div>
+        <span class="death-label">в</span>
+        <div class="field-block">
+          <div class="field-value">${formatTime(data.death_time) || '—'}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+      
+      <!-- Место смерти -->
+      <div class="field-block">
+        <div class="field-value">${escapeHTML(data.death_place || '—')}</div>
+        <div class="field-line"></div>
+        <div class="field-label">место смерти</div>
+      </div>
+      
+      <!-- Актовая запись -->
+      <div class="act-record">
+        <div class="act-row">
+          <span class="act-label">о чем</span>
+          <div class="field-block act-field">
+            <div class="field-value">${actYear}</div>
+            <div class="field-line"></div>
+          </div>
+          <span class="act-label">года</span>
+          <div class="field-block act-field">
+            <div class="field-value">${actMonth}</div>
+            <div class="field-line"></div>
+          </div>
+          <span class="act-label">месяца</span>
+          <div class="field-block act-field">
+            <div class="field-value">${actDay}</div>
+            <div class="field-line"></div>
+          </div>
+          <span class="act-label">числа</span>
+        </div>
+        <div class="act-row">
+          <span class="act-label">составлена запись акта о смерти №</span>
+          <div class="field-block act-field">
+            <div class="field-value">${escapeHTML(data.registry_act_number || '—')}</div>
+            <div class="field-line"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Место государственной регистрации -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">Место государственной регистрации</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(data.registry_place || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+      
+      <!-- Место выдачи свидетельства -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">Место выдачи свидетельства</span>
+        <div class="field-block marriage-field">
+          <div class="field-value">${escapeHTML(data.issue_place || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+      
+      <!-- Правая информация -->
+      <div class="right-info-container">
+        <div class="right-row">
+          <span class="right-label">Дата выдачи:</span>
+          <div class="field-block right-field">
+            <div class="field-value">${formatDateForRussian(data.issue_date)}</div>
+            <div class="field-line"></div>
+          </div>
+        </div>
+        <div class="right-row">
+          <span class="right-label">Руководитель органа ЗАГС</span>
+          <div class="field-block right-field">
+            <div class="field-value">${escapeHTML(data.registry_official || '—')}</div>
+            <div class="field-line"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Серия и номер -->
+      <div class="series-number">
+        ${escapeHTML(data.certificate_series_number || '—')}
+      </div>
+    </div>
+  `
+
+  document.getElementById('certificateContainer').innerHTML = html
+
+  // Блок статуса и кнопок
+  const statusText = getStatusLabel(data.status)
+  const statusClass = getStatusClass(data.status)
+  
+  const statusAndEdit = document.createElement('div')
+  statusAndEdit.className = 'status-and-edit'
+  
+  const statusSpan = document.createElement('span')
+  statusSpan.className = statusClass
+  statusSpan.textContent = statusText
+  statusAndEdit.appendChild(statusSpan)
+  
+  const replaceLink = document.createElement('a')
+  replaceLink.href = '../../services/documents/death-certificate/'
+  replaceLink.className = 'edit-btn'
+  replaceLink.textContent = 'Заменить свидетельство'
+  statusAndEdit.appendChild(replaceLink)
+  
+  if (data.status !== 'verified') {
+    const editBtn = document.createElement('button')
+    editBtn.className = 'edit-btn'
+    editBtn.id = 'editBtn'
+    editBtn.textContent = 'Изменить данные'
+    editBtn.addEventListener('click', () => {
+      formData = { ...data }
+      openEditModal()
+    })
+    statusAndEdit.appendChild(editBtn)
+  }
+  
+  document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
+}
+
+// ==================== МОДАЛЬНОЕ ОКНО ====================
+window.closeModal = function() {
+  document.getElementById('modalOverlay').classList.remove('active')
+}
+
+function openModal(title) {
+  document.getElementById('modalTitle').textContent = title
+  document.getElementById('modalOverlay').classList.add('active')
+  renderModalForm()
+}
+
+function renderModalForm() {
+  const modalBody = document.getElementById('modalBody')
+  if (!modalBody) return
+
+  // Формируем полное имя владельца из профиля
+  const ownerFullName = userProfile ? `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() : ''
+
+  modalBody.innerHTML = `
+    <h4>Умерший(ая)</h4>
+    <div class="form-group">
+      <label>Фамилия</label>
+      <input type="text" id="edit_surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
+    </div>
+    <div class="form-group">
+      <label>Имя отчество</label>
+      <input type="text" id="edit_first_patronymic" class="form-input" value="${escapeHTML(formData.first_patronymic || '')}">
+    </div>
+    <div class="form-group">
+      <label>Дата рождения</label>
+      <input type="date" id="edit_birth_date" class="form-input" value="${formData.birth_date || ''}">
+    </div>
+    <div class="form-group">
+      <label>Место рождения</label>
+      <input type="text" id="edit_birth_place" class="form-input" value="${escapeHTML(formData.birth_place || '')}">
+    </div>
+    <div class="form-group">
+      <label>Гражданство</label>
+      <input type="text" id="edit_citizenship" class="form-input" value="${escapeHTML(formData.citizenship || '')}">
+    </div>
+    <div class="form-group">
+      <label>Национальность</label>
+      <input type="text" id="edit_nationality" class="form-input" value="${escapeHTML(formData.nationality || '')}">
+    </div>
+    <div class="form-group">
+      <label>Личный код умершего</label>
+      <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || '')}">
+    </div>
+
+    <h4>Смерть</h4>
+    <div class="form-group">
+      <label>Дата смерти</label>
+      <input type="date" id="edit_death_date" class="form-input" value="${formData.death_date || ''}">
+    </div>
+    <div class="form-group">
+      <label>Время смерти</label>
+      <input type="time" id="edit_death_time" class="form-input" value="${formData.death_time || ''}">
+    </div>
+    <div class="form-group">
+      <label>Место смерти</label>
+      <input type="text" id="edit_death_place" class="form-input" value="${escapeHTML(formData.death_place || '')}">
+    </div>
+
+    <h4>Актовая запись</h4>
+    <div class="form-group">
+      <label>Дата актовой записи</label>
+      <input type="date" id="edit_registry_act_date" class="form-input" value="${formData.registry_act_date || ''}">
+    </div>
+    <div class="form-group">
+      <label>Номер актовой записи</label>
+      <input type="text" id="edit_registry_act_number" class="form-input" value="${escapeHTML(formData.registry_act_number || '')}">
+    </div>
+
+    <h4>Свидетельство</h4>
+    <div class="form-group">
+      <label>Место регистрации</label>
+      <input type="text" id="edit_registry_place" class="form-input" value="${escapeHTML(formData.registry_place || '')}">
+    </div>
+    <div class="form-group">
+      <label>Место выдачи свидетельства</label>
+      <input type="text" id="edit_issue_place" class="form-input" value="${escapeHTML(formData.issue_place || '')}">
+    </div>
+    <div class="form-group">
+      <label>Руководитель органа ЗАГС</label>
+      <input type="text" id="edit_registry_official" class="form-input" value="${escapeHTML(formData.registry_official || '')}">
+    </div>
+    <div class="form-group">
+      <label>Серия и номер свидетельства</label>
+      <input type="text" id="edit_certificate_series_number" class="form-input" value="${escapeHTML(formData.certificate_series_number || '')}">
+    </div>
+    <div class="form-group">
+      <label>Дата выдачи</label>
+      <input type="date" id="edit_issue_date" class="form-input" value="${formData.issue_date || ''}">
+    </div>
+
+    <h4>Владелец свидетельства</h4>
+    <div class="form-group">
+      <label>ФИО владельца</label>
+      <input type="text" id="edit_owner_full_name" class="form-input" value="${escapeHTML(formData.owner_full_name || ownerFullName)}">
+    </div>
+    <div class="form-group">
+      <label>Личный код владельца</label>
+      <input type="text" id="edit_owner_personal_code" class="form-input" value="${escapeHTML(formData.owner_personal_code || userPersonalCode || '')}" readonly>
+    </div>
+  `
+}
+
+function collectFormData() {
+  const getVal = (id) => (document.getElementById(id)?.value || '').trim()
+  return {
+    surname: getVal('edit_surname'),
+    first_patronymic: getVal('edit_first_patronymic'),
+    birth_date: getVal('edit_birth_date'),
+    birth_place: getVal('edit_birth_place'),
+    citizenship: getVal('edit_citizenship'),
+    nationality: getVal('edit_nationality'),
+    personal_code: getVal('edit_personal_code'),
+    death_date: getVal('edit_death_date'),
+    death_time: getVal('edit_death_time'),
+    death_place: getVal('edit_death_place'),
+    registry_act_date: getVal('edit_registry_act_date'),
+    registry_act_number: getVal('edit_registry_act_number'),
+    registry_place: getVal('edit_registry_place'),
+    issue_place: getVal('edit_issue_place'),
+    registry_official: getVal('edit_registry_official'),
+    certificate_series_number: getVal('edit_certificate_series_number'),
+    issue_date: getVal('edit_issue_date'),
+    owner_full_name: getVal('edit_owner_full_name'),
+    owner_personal_code: getVal('edit_owner_personal_code')
+  }
+}
+
+async function saveDocument() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    if (!session) { alert('Ошибка авторизации'); return }
+    if (!userPersonalCode) { alert('Личный код не загружен'); return }
+
+    const newData = collectFormData()
+    
+    if (!newData.certificate_series_number) {
+      alert('Серия и номер свидетельства обязательны')
+      return
+    }
+
+    // Убедимся, что owner_personal_code установлен
+    if (!newData.owner_personal_code) {
+      newData.owner_personal_code = userPersonalCode
+    }
+
+    const cleanData = { ...newData }
+    Object.keys(cleanData).forEach(key => {
+      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
+    })
+
+    const dataToSend = {
+      ...cleanData,
+      status: 'oncheck',
+      updated_at: new Date().toISOString()
+    }
+
+    let result
+    if (currentDocId) {
+      result = await supabase
+        .from('documents_death_certificate')
+        .update(dataToSend)
+        .eq('id', currentDocId)
+        .select()
+    } else {
+      dataToSend.created_at = new Date().toISOString()
+      result = await supabase
+        .from('documents_death_certificate')
+        .insert([dataToSend])
+        .select()
+    }
+
+    if (result.error) throw result.error
+
+    window.closeModal()
+    const newId = currentDocId || result.data[0].id
+    window.location.href = `death-certificate.html?id=${newId}`
+  } catch (err) {
+    console.error('Ошибка сохранения:', err)
+    alert('Ошибка сохранения: ' + err.message)
+  }
+}
+
+// ==================== ОТКРЫТИЕ МОДАЛОК ====================
+function openAddModal() {
+  const ownerFullName = userProfile ? `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() : ''
+  formData = {
+    surname: '',
+    first_patronymic: '',
+    birth_date: '',
+    birth_place: '',
+    citizenship: '',
+    nationality: '',
+    personal_code: '',
+    death_date: '',
+    death_time: '',
+    death_place: '',
+    registry_act_date: '',
+    registry_act_number: '',
+    registry_place: '',
+    issue_place: '',
+    registry_official: '',
+    certificate_series_number: '',
+    issue_date: '',
+    owner_full_name: ownerFullName,
+    owner_personal_code: userPersonalCode || '',
+    status: 'oncheck'
+  }
+  openModal('Добавление свидетельства о смерти')
+}
+
+function openEditModal() {
+  formData = { ...documentData }
+  openModal('Редактирование свидетельства о смерти')
+}
+
+// ==================== ИНИЦИАЛИЗАЦИЯ ====================
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadData()
+  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
+  document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
+})
+
+// Экспорт в глобальную область
+window.openAddModal = openAddModal
+window.openEditModal = openEditModal
+window.closeModal = closeModal
