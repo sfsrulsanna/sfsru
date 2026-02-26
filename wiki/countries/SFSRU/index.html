@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>История СФСРЮ — Википедия</title>
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/president-profile.css">
+    
+    <style>
+        /* Изменяем порядок колонок: инфо слева, текст справа */
+        .profile-container {
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+        }
+
+        /* Левая колонка с информацией (инфобокс) */
+        .photo-column {
+            position: sticky;
+            top: 2rem;
+            order: 1;
+        }
+
+        /* Правая колонка с контентом */
+        .info-column {
+            order: 2;
+        }
+
+        /* Карточка истории */
+        .history-content-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            border: 1px solid #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .history-content-card h1 {
+            color: #cc0000;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 1rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .history-content-card h2 {
+            color: #cc0000;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-content-card h2:first-child {
+            margin-top: 0;
+        }
+
+        .history-content-card h3 {
+            color: #444;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+
+        .history-content-card p {
+            margin-bottom: 1rem;
+            text-align: justify;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .history-content-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+
+        .history-content-card li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .history-content-card li::before {
+            content: "•";
+            color: #cc0000;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+            line-height: 1.2rem;
+        }
+
+        /* Ссылки в тексте */
+        a.wiki-link {
+            color: #cc0000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a.wiki-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Блок с гимном */
+        .hymn-player {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .hymn-player audio {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .hymn-title {
+            font-weight: 600;
+            color: #cc0000;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Герб */
+        .coat-of-arms {
+            width: 150px;
+            height: 150px;
+            margin: 1rem auto;
+            border: 3px solid #cc0000;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .coat-of-arms img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Флаг в соотношении 3:2 */
+        .flag-display {
+            width: 100%;
+            aspect-ratio: 2/1;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .flag-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        /* Навигация в стиле Википедии */
+        .wiki-navigation {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .wiki-nav-title {
+            font-weight: 600;
+            color: #cc0000;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .wiki-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.6rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .wiki-nav-item:hover {
+            background: #f0f0f0;
+            border-color: #cc0000;
+            transform: translateX(3px);
+        }
+
+        .wiki-nav-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .wiki-nav-flag {
+            width: 50px;
+            height: 33px;
+            aspect-ratio: 3/2;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .wiki-nav-flag img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .wiki-nav-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .wiki-nav-label {
+            font-size: 0.65rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.2rem;
+        }
+
+        .wiki-nav-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #cc0000;
+            line-height: 1.2;
+        }
+
+        .wiki-nav-arrow {
+            font-size: 1rem;
+            color: #cc0000;
+            flex-shrink: 0;
+        }
+
+        .wiki-nav-arrow.prev {
+            transform: rotate(180deg);
+        }
+
+        /* Блок для старых символов в истории */
+        .historical-symbols {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .historical-symbols-title {
+            font-weight: 600;
+            color: #cc0000;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 0.5rem;
+        }
+
+        .historical-symbols-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        .historical-symbol-item {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.2s ease;
+        }
+
+        .historical-symbol-item:hover {
+            border-color: #cc0000;
+            box-shadow: 0 4px 12px rgba(204, 0, 0, 0.15);
+        }
+
+        .historical-symbol-image {
+            width: 100%;
+            margin-bottom: 0.8rem;
+        }
+
+        .historical-symbol-image.coat-of-arms {
+            width: 145px;
+            height: 145px;
+            margin: 0 auto 0.8rem auto;
+            border: 2px solid #cc0000;
+            border-radius: 6px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .historical-symbol-image.flag {
+            width: 100%;
+            aspect-ratio: 2/1;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .historical-symbol-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .historical-symbol-image.flag img {
+            object-fit: cover;
+        }
+
+        .historical-symbol-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.3rem;
+        }
+
+        .historical-symbol-period {
+            font-size: 0.7rem;
+            color: #666;
+            font-style: italic;
+        }
+
+        .historical-symbol-description {
+            font-size: 0.75rem;
+            color: #555;
+            margin-top: 0.5rem;
+            line-height: 1.4;
+        }
+
+        /* Мобильная адаптация */
+        @media (max-width: 968px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+            .photo-column {
+                order: -1;
+                position: static;
+                margin-bottom: 2rem;
+            }
+            .history-content-card {
+                padding: 1.5rem;
+            }
+            .historical-symbols-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .history-content-card {
+                padding: 1rem;
+            }
+            .historical-symbols {
+                padding: 1rem;
+            }
+            .historical-symbol-image.coat-of-arms {
+                width: 100px;
+                height: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../../index.html">Главная</a></li>
+                    <li><a href="../../../news.html">Новости</a></li>
+                    <li><a href="../../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../../services.html">Услуги</a></li>
+                    <li><a href="../../../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <!-- Основной контент -->
+    <main class="profile-main">
+        <div class="profile-container">
+            
+            <!-- ЛЕВАЯ КОЛОНКА: Инфоблок с гербом, флагом и гимном -->
+            <aside class="photo-column">
+                <div class="photo-card">
+                    <div class="photo-top-section">
+                        <div class="main-personal-info">
+                            <div class="last-name">СФСРЮ</div>
+                            <div class="first-name">Советская Федеративная<br>Социалистическая Республика<br>Юльсанна</div>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Герб -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Государственный герб</div>
+                        </div>
+                        <div class="coat-of-arms">
+                            <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Флаг -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Государственный флаг</div>
+                        </div>
+                        <div class="flag-display">
+                            <img src="../../../images/flag.jpg" alt="Флаг СФСРЮ">
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Проигрыватель гимна -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Государственный гимн</div>
+                        </div>
+                        <div class="hymn-player">
+                            <div class="hymn-title">Гимн СФСРЮ</div>
+                            <audio controls>
+                                <source src="../../../audio/anthem_full.mp3" type="audio/mpeg">
+                                Ваш браузер не поддерживает аудиоэлемент.
+                            </audio>
+                            <p style="font-size: 0.7rem; color: #666; margin-top: 0.5rem;">
+                                Музыка: Народный мотив<br>
+                                Слова: Коллективное творчество
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Навигация в стиле Википедии (предыдущее/следующее государство) -->
+                    <div class="position-block">
+                        <div class="wiki-navigation">
+                            <div class="wiki-nav-title">Государства-предшественники</div>
+                            
+                            <!-- Предыдущее государство: Республика Юльсанна -->
+                            <a href="../RU/index.html" class="wiki-nav-item">
+                                <div class="wiki-nav-arrow prev">➤</div>
+                                <div class="wiki-nav-flag">
+                                    <img src="../../../images/RU/flagRU.jpg" alt="Флаг Республики Юльсанна">
+                                </div>
+                                <div class="wiki-nav-content">
+                                    <div class="wiki-nav-label">Предшественник</div>
+                                    <div class="wiki-nav-name">Республика Юльсанна</div>
+                                    <div style="font-size: 0.65rem; color: #888;">2 ноября 2024 года — 2 января 2025 года</div>
+                                </div>
+                            </a>
+
+                            <!-- Ещё предыдущее: СНГ -->
+                            <a href="../RU-SNG/index.html" class="wiki-nav-item">
+                                <div class="wiki-nav-arrow prev">➤</div>
+                                <div class="wiki-nav-flag">
+                                    <img src="../../../images/RU/flagSNG.svg" alt="Флаг СНГ">
+                                </div>
+                                <div class="wiki-nav-content">
+                                    <div class="wiki-nav-label">Республика Юльсанна в составе</div>
+                                    <div class="wiki-nav-name">Союза Независимых Государств</div>
+                                    <div style="font-size: 0.65rem; color: #888;">до 2 ноября 2024 года</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+					
+                    <hr class="section-divider">
+
+                    <!-- Основная информация -->
+                    <div class="position-block">
+                        <div class="position-details">
+                            <div class="position-detail">
+                                <div class="detail-label">Президент</div>
+                                <div class="detail-value-wrapper">
+                                    <a href="../../people/GordeihinDA/index.html" class="position-link">Гордеихин Дмитрий Алексеевич</a>
+                                    <span class="command-dates">с 03 февраля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Вице-президент</div>
+                                <div class="detail-value-wrapper">
+                                    <a href="../../people/KychinDG/index.html" class="position-link">Кучин Даниил Геннадьевич</a>
+                                    <span class="command-dates">с 29 января 2026 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Председатель Совета Федерации</div>
+                                <div class="detail-value-wrapper">
+                                    <a href="../../people/FilinaAU/index.html" class="position-link">Филина Алёна Юрьевна</a>
+                                    <span class="command-dates">с 19 июля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label label-government">
+                                <div class="detail-label">Председатель Правтельства</div>
+                                </div>
+                                <div class="detail-value-wrapper">
+                                    <a href="../../people/MelihovGA/index.html" class="position-link">Мелихов Глеб Артёмович</a>
+                                    <span class="command-dates">с 06 августа 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label label-government">
+                                <div class="detail-label">Председатель Верховного суда</div>
+                                </div>
+                                <div class="detail-value-wrapper">
+                                    <a href="../../people/BystrovaDI/index.html" class="position-link">Быстрова Дарья Ильинична</a>
+                                    <span class="command-dates">с 02 января 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Форма правления</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Смешанная республика</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Государственный строй</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Федерация</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Язык</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Русский, юльсанниский</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Столица</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Поповск</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Валюта</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Юльсанниский рубль</span>
+                                </div>
+                            </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                        <div class="position-header">
+                            <div class="position-title">История</div>
+                        </div>
+                        <div class="position-details">
+                            <div class="position-detail">
+                                <div class="detail-label">Образование</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">02 января 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">I Президентские выборы</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">03 февраля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Инагурация Президента</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">06 февраля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Референдум о смене государственных символов</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">14 февраля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Фактическое использование новых государственных символов</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">14 февраля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Принятие Первой Конституции</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">15 апреля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">II Президентские выборы</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">19 мая 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Назначение Вице-президента</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">19 июля 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Назначение Председателя Совета Федерации</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">19 июля 2025 года</span>
+                                </div>
+                            </div>
+							<div class="position-detail">
+                                <div class="detail-label">Назначение Председателя Правительства</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">05 августа 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Принятие Второй Конституции</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">14 августа 2025 года</span>
+                                </div>
+                            </div>
+							<div class="position-detail">
+                                <div class="detail-label">III Президентские выборы</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">05 октября 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Инагурация Президента</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">19 октября 2025 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Назначение Вице-президента</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">29 января 2026 года</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ПРАВАЯ КОЛОНКА: История и устройство -->
+            <div class="info-column">
+                <div class="history-content-card">
+                    <h1>Советская Федеративная Социалистическая Республика Юльсанна</h1>
+                    <p style="font-style: italic; color: #666; text-align: center;">Материал из Википедии СФСРЮ — свободной энциклопедии</p>
+
+                    <h2>1. История образования</h2>
+                    
+                    <h3>1.1 Предпосылки и провозглашение суверенитета (2024 год)</h3>
+                    <p>История современного государства берет свое начало в период трансформации постсоветского пространства. Изначально территория функционировала как унитарная Республика Юльсанна в рамках правового поля Союза Независимых Государств (СНГ).</p>
+                    <p>Ключевой точкой отсчета стало принятие <strong>2 ноября 2024 года</strong> «Декларации о государственном суверенитете Республики Юльсанна». Документ, подписанный и. о. Председателя Совета Республики Федерального Собрания <a href="../KychinDG/index.html" class="wiki-link">Д. А. Гордеихиным</a> в городе Поповск, провозгласил:</p>
+                    <ul>
+                        <li>Верховенство Конституции и законов Республики Юльсанна на всей её территории.</li>
+                        <li>Неделимость и неприкосновенность территории.</li>
+                        <li>Исключительное право народа Юльсанны на владение национальными ресурсами.</li>
+                        <li>Необходимость разработки новой Конституции и создания независимой правовой системы.</li>
+                    </ul>
+
+                    <h3>1.2 Федерализация и смена наименования (Январь 2025 года)</h3>
+                    <p>Вслед за Декларацией, <strong>2 января 2025 года</strong> был принят Закон Республики Юльсанна «Об изменении наименования государства, установлении федеративного устройства и внесении изменений в Конституцию (Основной Закон)».</p>
+                    <p>Согласно этому акту:</p>
+                    <ul>
+                        <li>Унитарная Республика была преобразована в федеративное социалистическое государство.</li>
+                        <li>Официальное наименование изменено на <strong>Советская Федеративная Социалистическая Республика Юльсанна (СФСРЮ)</strong>.</li>
+                        <li>Были заложены основы федеративного устройства, включающего республики, автономные республики, края и области.</li>
+                        <li>Законодательно закреплено право субъектов федерации на свободный выход из состава СФСРЮ (в порядке, устанавливаемом Федеративным Договором).</li>
+                    </ul>
+                    <p>В этот переходный период использовался старый государственный герб СФСРЮ, который символизировал преемственность от предыдущей государственности до утверждения новой символики.</p>
+
+                    <h3>1.3 Конституционное строительство (Апрель — Август 2025 года)</h3>
+                    <p>Во исполнение Закона от 2 января 2025 года, Конституционной комиссией был разработан проект Основного Закона.</p>
+                    <ul>
+                        <li><strong>15 апреля 2025 года</strong> была принята первая Конституция СФСРЮ, которая закрепила переходный период.</li>
+                        <li><strong>14 августа 2025 года</strong> состоялось всенародное голосование, по итогам которого была принята действующая Конституция СФСРЮ. Она заменила собой редакцию от апреля 2025 года и окончательно оформила государственный строй.</li>
+                    </ul>
+					
+                    <!-- БЛОК СО СТАРЫМИ СИМВОЛАМИ СФСРЮ -->
+                    <div class="historical-symbols">
+                        <div class="historical-symbols-title">
+                            🏛️ Старые государственные символы СФСРЮ (переходный период)
+                        </div>
+                        <p style="font-size: 0.85rem; color: #555; margin-bottom: 1rem; text-align: center;">
+                            В период с 2 января 2025 года до утверждения новой символики использовались следующие государственные символы:
+                        </p>
+                        <div class="historical-symbols-grid">
+                            <!-- Старый герб -->
+                            <div class="historical-symbol-item">
+                                <div class="historical-symbol-image coat-of-arms">
+                                    <img src="../../../images/RU/old_SFSRUgerb.jpg" alt="Старый герб СФСРЮ">
+                                </div>
+                                <div class="historical-symbol-name">Старый государственный герб</div>
+                                <div class="historical-symbol-period">2 января — 14 февраля 2025 года</div>
+                                <div class="historical-symbol-description">
+                                    Символизировал новый строй государства. Использовался в официальных документах и законодательных актах СФСРЮ.
+                                </div>
+                            </div>
+
+                            <!-- Старый флаг -->
+                            <div class="historical-symbol-item">
+                                <div class="historical-symbol-image flag">
+                                    <img src="../../../images/RU/old_SFSRUflag.jpg" alt="Старый флаг СФСРЮ">
+                                </div>
+                                <div class="historical-symbol-name">Старый государственный флаг</div>
+                                <div class="historical-symbol-period">2 января — 14 февраля 2025 года</div>
+                                <div class="historical-symbol-description">
+                                    Использовался в переходный период федерализации до принятия федерального конституционного закона о новых государственных символах
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- КОНЕЦ БЛОКА СО СТАРЫМИ СИМВОЛАМИ -->
+                    <h2>2. Федеративное устройство</h2>
+                    <p>СФСРЮ является сложносоставным государством. Согласно действующей Конституции, в состав Федерации входят следующие субъекты:</p>
+
+                    <h3>2.1 Республики в составе СФСРЮ</h3>
+                    <ul>
+                        <li><strong>Республика Кам</strong></li>
+                        <li><strong>Республика Маргаритка</strong></li>
+                        <li><strong>Республика Марго</strong></li>
+                        <li><strong>Зоринская Республика</strong></li>
+                        <li><strong>Республика Ситникова</strong></li>
+                    </ul>
+
+                    <h3>2.2 Федеративные республики</h3>
+                    <ul>
+                        <li><strong>Федеративная республика Боброва</strong></li>
+                    </ul>
+					
+                    <h3>2.3 Автономные республики</h3>
+                    <ul>
+                        <li><strong>Автономная Республика Эйтингон</strong></li>
+                        <li><strong>Автономная Республика Натуральнова</strong></li>
+                    </ul>
+
+                    <h3>2.4 Области и края</h3>
+                    <ul>
+                        <li><strong>Поповская область</strong></li>
+                        <li><strong>Алёнкинская область</strong></li>
+                        <li><strong>Автономная Наташинская область</strong></li>
+                        <li><strong>Черноморский край</strong></li>
+                    </ul>
+
+                    <h3>2.5 Города федерального значения</h3>
+                    <ul>
+                        <li><strong>Поповск</strong></li>
+                        <li><strong>Алёнкин</strong></li>
+                    </ul>
+					
+                    <h3>2.5 Особые субъекты</h3>
+                    <ul>
+                        <li><strong>Бештинская империя</strong></li>
+                    </ul>
+
+                    <h2>3. Государственное устройство</h2>
+                    <p>Согласно Разделу I, Главе I Конституции СФСРЮ:</p>
+
+                    <h3>3.1 Форма правления</h3>
+                    <p>СФСРЮ — <strong>демократическо-коммунистическое федеративное правовое государство</strong> с республиканской формой правления. Идеологической основой является Юльсаннизм при гарантии свободы вероисповедания.</p>
+
+                    <h3>3.2 Система разделения властей</h3>
+                    <p>Государственная власть осуществляется на основе разделения на законодательную, исполнительную и судебную:</p>
+                    <ul>
+                        <li><strong>Законодательная власть:</strong> Осуществляется <strong>Советом Федерации</strong>. Высший представительный орган, принимающий федеральные законы и утверждающий бюджет. Председатель Совета Федерации — <a href="../../people/FilinaAU/index.html" class="wiki-link">Алёна Юрьевна Филина</a>.</li>
+                        <li><strong>Исполнительная власть:</strong> Осуществляется <strong>Правительством СФСРЮ</strong> под руководством Президента. Глава Правительства — <a href="../MelihovGA/index.html" class="wiki-link">Глеб Мелихов</a>.</li>
+                        <li><strong>Судебная власть:</strong> Осуществляется независимыми судами на основе Конституции и федеральных законов.</li>
+                    </ul>
+
+                    <h3>3.3 Президент СФСРЮ</h3>
+                    <p>Глава государства, гарант Конституции, прав и свобод человека и гражданина. Избирается сроком на 1 год.</p>
+                    <p>Действующий Президент (с 3 февраля 2025 года, и.о. с 2 января) — <a href="../GordeikhinDA/index.html" class="wiki-link">Дмитрий Алексеевич Гордеихин</a>.</p>
+
+                    <h3>3.4 Вице-президент СФСРЮ</h3>
+                    <p>Второе лицо государства, гарант Конституции, прав и свобод человека и гражданина. Избирается вместе с Президентом СФСРЮ сроком на 1 год.</p>
+                    <p>Вице-президент (с 29 января 2026 года) — <a href="../../people/KychinDG/index.html" class="wiki-link">Даниил Геннадьевич Кучин</a>.</p>
+					
+                    <h3>3.5 Правовая преемственность</h3>
+                    <p>СФСРЮ признается правопреемником Союза Независимых Государств на своей территории (Статья 51 Конституции). Государственные языки: русский и юльсанниский.</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <!-- Скрипт для мобильного меню -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            const overlay = document.querySelector('.menu-overlay');
+
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    menuToggle.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                    if (overlay) {
+                        overlay.classList.toggle('active');
+                    }
+                    document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    menuToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
