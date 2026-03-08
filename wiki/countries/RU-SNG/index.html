@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Республика Юльсанна в составе СНГ — Википедия</title>
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/president-profile.css">
+    
+    <style>
+        /* Изменяем порядок колонок: инфо слева, текст справа */
+        .profile-container {
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+        }
+
+        .photo-column {
+            position: sticky;
+            top: 2rem;
+            order: 1;
+        }
+
+        .info-column {
+            order: 2;
+        }
+
+        .history-content-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            border: 1px solid #e0e0e0;
+            line-height: 1.6;
+        }
+
+        .history-content-card h1 {
+            color: #cc0000;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 1rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+
+        .history-content-card h2 {
+            color: #cc0000;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .history-content-card h3 {
+            color: #444;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+
+        .history-content-card p {
+            margin-bottom: 1rem;
+            text-align: justify;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .history-content-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+
+        .history-content-card li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+
+        .history-content-card li::before {
+            content: "•";
+            color: #cc0000;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+            line-height: 1.2rem;
+        }
+
+        a.wiki-link {
+            color: #cc0000;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        a.wiki-link:hover {
+            text-decoration: underline;
+        }
+
+        .hymn-player {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .hymn-player audio {
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .hymn-title {
+            font-weight: 600;
+            color: #cc0000;
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .coat-of-arms {
+            width: 150px;
+            height: 150px;
+            margin: 1rem auto;
+            border: 3px solid #cc0000;
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+        }
+
+        .coat-of-arms img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .flag-display {
+            width: 100%;
+            aspect-ratio: 2/1;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+        }
+
+        .flag-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .wiki-navigation {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .wiki-nav-title {
+            font-weight: 600;
+            color: #cc0000;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .wiki-nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 0.6rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+        }
+
+        .wiki-nav-item:hover {
+            background: #f0f0f0;
+            border-color: #cc0000;
+            transform: translateX(3px);
+        }
+
+        .wiki-nav-flag {
+            width: 50px;
+            height: 33px;
+            aspect-ratio: 3/2;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .wiki-nav-flag img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .wiki-nav-content {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .wiki-nav-label {
+            font-size: 0.65rem;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            margin-bottom: 0.2rem;
+        }
+
+        .wiki-nav-name {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #cc0000;
+            line-height: 1.2;
+        }
+
+        .wiki-nav-arrow {
+            font-size: 1rem;
+            color: #cc0000;
+            flex-shrink: 0;
+        }
+
+        .wiki-nav-arrow.prev {
+            transform: rotate(180deg);
+        }
+
+        @media (max-width: 968px) {
+            .profile-container {
+                grid-template-columns: 1fr;
+            }
+            .photo-column {
+                order: -1;
+                position: static;
+                margin-bottom: 2rem;
+            }
+            .history-content-card {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../../index.html">Главная</a></li>
+                    <li><a href="../../../news.html">Новости</a></li>
+                    <li><a href="../../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../../services.html">Услуги</a></li>
+                    <li><a href="../../../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="profile-main">
+        <div class="profile-container">
+            
+            <!-- ЛЕВАЯ КОЛОНКА: Инфобокс -->
+            <aside class="photo-column">
+                <div class="photo-card">
+                    <div class="photo-top-section">
+                        <div class="main-personal-info">
+                            <div class="last-name">РЮ</div>
+                            <div class="first-name">Республика Юльсанна<br>в составе СНГ</div>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Герб -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Государственный герб</div>
+                        </div>
+                        <div class="coat-of-arms">
+                            <img src="../../../images/RU/gerbRU.png" alt="Герб Республики Юльсанна">
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Флаг -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Государственный флаг</div>
+                        </div>
+                        <div class="flag-display">
+                            <img src="../../../images/RU/flagRU.jpg" alt="Флаг Республики Юльсанна">
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Гимн (мог быть, но оставим как в оригинале) -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Государственный гимн</div>
+                        </div>
+                        <div class="hymn-player">
+                            <div class="hymn-title">Гимн Республики Юльсанна</div>
+                            <audio controls>
+                                <source src="../../../audio/anthem_RU-SNG.mp3" type="audio/mpeg">
+                                Ваш браузер не поддерживает аудиоэлемент.
+                            </audio>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Навигация по государствам -->
+                    <div class="position-block">
+                        <div class="wiki-navigation">
+                            <div class="wiki-nav-title">Преемник</div>
+                            <a href="../RU/index.html" class="wiki-nav-item">
+                                <div class="wiki-nav-arrow">➤</div>
+                                <div class="wiki-nav-flag">
+                                    <img src="../../../images/RU/flagRU.jpg" alt="Флаг Республики Юльсанна">
+                                </div>
+                                <div class="wiki-nav-content">
+                                    <div class="wiki-nav-label">Независимая республика</div>
+                                    <div class="wiki-nav-name">Республика Юльсанна</div>
+                                    <div style="font-size: 0.65rem; color: #888;">2 ноября 2024 – 2 января 2025</div>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <!-- Основная информация -->
+                    <div class="position-block">
+                        <div class="position-details">
+                            <div class="position-detail">
+                                <div class="detail-label">Президент</div>
+                                <div class="detail-value-wrapper">
+                                    <a href="../../people/GordeihinDA/index.html" class="wiki-link">Гордеихин Дмитрий Алексеевич</a>
+                                    <span class="command-dates">с 01 сентября 2024 года (последний)</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Председатель Совета Республики</div>
+                                <div class="detail-value-wrapper">
+                                    <a href="../../people/GordeihinDA/index.html" class="wiki-link">Гордеихин Дмитрий Алексеевич</a>
+                                    <span class="command-dates">с 01 сентября 2024 года (последний) (и.о.)</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Форма правления</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Смешанная республика</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Государственный строй</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Унитарное государство</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Язык</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Русский, юльсанниский</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Столица</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Поповск</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Валюта</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">Рубий</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="section-divider">
+
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">История</div>
+                        </div>
+                        <div class="position-details">
+                            <div class="position-detail">
+                                <div class="detail-label">Вступление в СНГ</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">27 декабря 2021 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">1-й созыв Нацсобрания</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">27 декабря 2021 года – 01 марта 2022 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">2-й созыв Нацсобрания</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">01 марта 2022 года – 01 сентября 2022 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">I президентские выборы</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">03 августа 2022 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">3-й созыв Нацсобрания</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">01 сентября 2022 года – 01 сентября 2023 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">II президентские выборы</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">03 августа 2023 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">4-й созыв Нацсобрания</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">01 сентября 2023 года – 01 сентября 2024 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">III президентские выборы</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">17 августа 2024 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">5-й созыв Нацсобрания</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">01 сентября 2024 года – 02 ноября 2024 года</span>
+                                </div>
+                            </div>
+                            <div class="position-detail">
+                                <div class="detail-label">Декларация о суверенитете</div>
+                                <div class="detail-value-wrapper">
+                                    <span class="detail-value">02 ноября 2024 года</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ПРАВАЯ КОЛОНКА: История -->
+            <div class="info-column">
+                <div class="history-content-card">
+                    <h1>Республика Юльсанна в составе Союза Независимых Государств</h1>
+                    <p style="font-style: italic; color: #666; text-align: center;">Материал из Википедии СФСРЮ — свободной энциклопедии</p>
+
+                    <h2>1. Вхождение в СНГ и Учредительный период</h2>
+                    <p><strong>27 декабря 2021 года</strong> Республика Юльсанна официально вошла в состав Союза Независимых Государств (СНГ). Этот шаг был вызван экономической блокадой со стороны соседнего региона и необходимостью военных гарантий. В этот же день начал работу <strong>1-й созыв Национального собрания</strong> (27.12.2021 – 01.03.2022), который за три месяца гармонизировал законодательство республики с нормами СНГ и принял новую редакцию конституции, закрепившую двухпалатный парламент — <strong>Совет Республики</strong> (Национальное собрание и Палата представителей).</p>
+
+                    <h2>2. Период кризиса и первые выборы</h2>
+                    <p><strong>2-й созыв</strong> (01.03.2022 – 01.09.2022) работал в условиях экономического кризиса, вызванного конкуренцией с товарами из метрополии СНГ. Весной 2022 года прокатились забастовки шахтёров и сталеваров. <strong>3 августа 2022 года</strong> состоялись первые президентские выборы, на которых победил умеренный оппозиционер <strong>Леонид Серпов</strong> с лозунгом «Союз — с уважением!».</p>
+
+                    <h2>3. «Золотая осень» (сентябрь 2022 – сентябрь 2023)</h2>
+                    <p><strong>3-й созыв</strong> (01.09.2022 – 01.09.2023) стал самым стабильным. Президент Серпов и пропрезидентское большинство добились закона об особом экономическом статусе приграничных регионов, что вызвало инвестиционный бум: к концу 2022 года ВВП вырос на 7%. <strong>3 августа 2023 года</strong> Серпов был переизбран на второй срок, хотя явка оказалась низкой.</p>
+
+                    <h2>4. Раскол и подготовка к выходу (сентябрь 2023 – ноябрь 2024)</h2>
+                    <p><strong>4-й созыв</strong> (01.09.2023 – 01.09.2024) ознаменовался конфликтом между президентом и парламентом. Попытка конституционной реформы провалилась. Зимой 2024 года разразился энергетический кризис, и СНГ обвинило Юльсанну в нецелевом использовании транзитных мощностей, началась торговая война. Весной 2024 года в Национальном собрании сформировалась коалиция «За суверенитет».</p>
+                    <p><strong>17 августа 2024 года</strong> прошли третьи президентские выборы, на которых победил радикальный кандидат <strong>Виктор Горелов</strong> с программой немедленного выхода из СНГ. <strong>5-й созыв</strong> (01.09.2024 – 02.11.2024) стал самым коротким и радикальным. Под давлением депутатов и на фоне ввода войск СНГ «для защиты трубопроводов», <strong>2 ноября 2024 года</strong> Совет Республики принял <a href="../../../docs/deklaration_20241102.pdf" class="wiki-link">Декларацию о государственном суверенитете</a>, провозгласив независимость и положив конец периоду пребывания в составе СНГ.</p>
+
+                    <h2>5. Государственное устройство в период членства в СНГ</h2>
+                    <p>Республика Юльсанна оставалась унитарным государством. Высшим органом власти являлся двухпалатный Совет Республики. Главой государства — президент, избиравшийся сроком на один год (выборы проходили в августе). За время членства в СНГ сменилось три президента (Серпов два срока, затем Горелов).</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Подвал -->
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <!-- Скрипт для мобильного меню -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            const overlay = document.querySelector('.menu-overlay');
+
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    menuToggle.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                    if (overlay) {
+                        overlay.classList.toggle('active');
+                    }
+                    document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+                });
+            }
+
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    menuToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
