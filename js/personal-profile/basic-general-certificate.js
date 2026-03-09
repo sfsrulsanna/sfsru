@@ -344,54 +344,53 @@ function collectFormData() {
 
 async function saveDocument() {
   try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { alert('Ошибка авторизации'); return }
-    if (!userPersonalCode) { alert('Личный код не загружен'); return }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { alert('Ошибка авторизации'); return; }
+    if (!userPersonalCode) { alert('Личный код не загружен'); return; }
 
-    const newData = collectFormData()
+    const newData = collectFormData();
     
-    if (!newData.document_number) {
-      alert('Номер документа обязателен')
-      return
+    if (!newData.document_number) {   // например, обязательное поле
+      alert('Номер документа обязателен');
+      return;
     }
 
-    const cleanData = { ...newData }
+    const cleanData = { ...newData };
     Object.keys(cleanData).forEach(key => {
-      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
-    })
+      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key];
+    });
 
     const dataToSend = {
       ...cleanData,
       personal_code: userPersonalCode,
-      type: 'basic_general', // фиксированный тип для этой страницы
+      user_id: userId,          // <-- добавляем user_id
       status: 'oncheck',
       updated_at: new Date().toISOString()
-    }
+    };
 
-    let result
+    let result;
     if (currentDocId) {
       result = await supabase
         .from('documents_education')
         .update(dataToSend)
         .eq('id', currentDocId)
-        .select()
+        .select();
     } else {
-      dataToSend.created_at = new Date().toISOString()
-      dataToSend.user_id = userId
+      dataToSend.created_at = new Date().toISOString();
       result = await supabase
         .from('documents_education')
         .insert([dataToSend])
-        .select()
+        .select();
     }
 
-    if (result.error) throw result.error
+    if (result.error) throw result.error;
 
-    window.closeModal()
-    const newId = currentDocId || result.data[0].id
-    window.location.href = `basic-general-certificate.html?id=${newId}`
+    window.closeModal();
+    const newId = currentDocId || result.data[0].id;
+    window.location.href = `basic-general-certificate.html?id=${newId}`;
   } catch (err) {
-    console.error('Ошибка сохранения:', err)
-    alert('Ошибка сохранения: ' + err.message)
+    console.error('Ошибка сохранения:', err);
+    alert('Ошибка сохранения: ' + err.message);
   }
 }
 
