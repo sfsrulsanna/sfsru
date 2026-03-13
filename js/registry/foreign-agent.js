@@ -9,8 +9,9 @@
     // -------------------- КОНФИГУРАЦИЯ --------------------
     const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-    // Для таблиц в не-public схеме используем синтаксис с двойными кавычками
-    const AGENTS_TABLE = '"registry"."foreign_agents"';
+    // Используем схему registry для таблицы foreign_agents
+    const AGENTS_TABLE_SCHEMA = 'registry';
+    const AGENTS_TABLE_NAME = 'foreign_agents';
     const LOGIN_PAGE = '../../login.html';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -146,9 +147,10 @@
         }
 
         console.log('Ищем паспорт с personal_code:', personalCode);
-        // Используем кавычки для указания схемы documents
+        // Используем схему documents
         const { data: passport, error } = await supabaseClient
-            .from('"documents"."passport"')
+            .schema('documents')
+            .from('passport')
             .select('status')
             .eq('personal_code', personalCode)
             .eq('status', 'verified')
@@ -169,7 +171,8 @@
     // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
     async function loadAgents() {
         const { data, error } = await supabaseClient
-            .from(AGENTS_TABLE)
+            .schema(AGENTS_TABLE_SCHEMA)
+            .from(AGENTS_TABLE_NAME)
             .select('*')
             .order('id', { ascending: true });
         if (error) {
