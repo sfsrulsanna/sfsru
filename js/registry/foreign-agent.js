@@ -7,9 +7,10 @@
     }
 
     // -------------------- КОНФИГУРАЦИЯ --------------------
-	const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-	const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-	const AGENTS_TABLE = 'registry.foreign_agents';
+    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+    // Для таблиц в не-public схеме используем синтаксис с двойными кавычками
+    const AGENTS_TABLE = '"registry"."foreign_agents"';
     const LOGIN_PAGE = '../../login.html';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -122,13 +123,10 @@
         const user = session.user;
         console.log('Проверка паспорта для пользователя:', user.id);
 
-        // Получаем personal_code: сначала из метаданных, затем из localStorage (если есть)
         let personalCode = user.user_metadata?.personal_code || user.app_metadata?.personal_code;
         if (!personalCode) {
-            // На некоторых мобильных устройствах метаданные могут быть недоступны, пробуем localStorage
             personalCode = localStorage.getItem('personalCode');
         }
-        // Если всё ещё нет, пробуем получить из таблицы users (если там хранится связь)
         if (!personalCode) {
             const { data: userData, error } = await supabaseClient
                 .from('users')
@@ -137,7 +135,6 @@
                 .maybeSingle();
             if (!error && userData?.personal_code) {
                 personalCode = userData.personal_code;
-                // Сохраним в localStorage для будущих запросов
                 localStorage.setItem('personalCode', personalCode);
             }
         }
@@ -149,17 +146,21 @@
         }
 
         console.log('Ищем паспорт с personal_code:', personalCode);
-
-const { data: passport, error } = await supabaseClient
-    .from('documents.passport')
-    .select('status')
-    .eq('personal_code', personalCode)
-    .eq('status', 'verified')
-    .maybeSingle();
+        // Используем кавычки для указания схемы documents
+        const { data: passport, error } = await supabaseClient
+            .from('"documents"."passport"')
+            .select('status')
+            .eq('personal_code', personalCode)
+            .eq('status', 'verified')
+            .maybeSingle();
 
         if (error) {
             console.error('Ошибка при проверке паспорта:', error);
-            showMessage('Ошибка при проверке паспорта. Попробуйте позже.', 'error');
+            if (error.code === 'PGRST205') {
+                showMessage('Ошибка доступа к таблице паспортов. Возможно, требуется настройка поискового пути.', 'error');
+            } else {
+                showMessage('Ошибка при проверке паспорта. Попробуйте позже.', 'error');
+            }
             return false;
         }
         return !!passport;
@@ -235,7 +236,6 @@ const { data: passport, error } = await supabaseClient
 
     // -------------------- ОСНОВНАЯ ЛОГИКА --------------------
     async function init() {
-        // Получаем сессию
         const { data: { session } } = await supabaseClient.auth.getSession();
         renderAuthSection(session);
 
@@ -257,7 +257,6 @@ const { data: passport, error } = await supabaseClient
         }
         renderTable(agents);
 
-        // Подписка на изменения авторизации
         supabaseClient.auth.onAuthStateChange((event, session) => {
             renderAuthSection(session);
             if (event === 'SIGNED_OUT') {
@@ -265,7 +264,7 @@ const { data: passport, error } = await supabaseClient
                 tableWrapper.style.display = 'none';
                 agentsTbody.innerHTML = '';
             } else if (event === 'SIGNED_IN') {
-                window.location.reload(); // проще всего перезагрузить, чтобы проверить паспорт
+                window.location.reload();
             }
         });
     }
@@ -279,7 +278,7 @@ const { data: passport, error } = await supabaseClient
         if (e.key === 'Escape' && modalOverlay.classList.contains('active')) closeModal();
     });
 
-    // Мобильное меню (копируем из исходного)
+    // Мобильное меню
     const menuToggle = document.getElementById('menuToggle');
     const navMenu = document.getElementById('navMenu');
     const menuOverlay = document.getElementById('menuOverlay');

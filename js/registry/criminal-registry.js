@@ -1,4 +1,3 @@
-// criminal-registry.js
 (function() {
     "use strict";
 
@@ -8,9 +7,9 @@
     }
 
     // -------------------- КОНФИГУРАЦИЯ --------------------
-	const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-	const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-	const CRIMINAL_TABLE = 'registry.criminal';
+    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+    const CRIMINAL_TABLE = '"registry"."criminal"';
     const LOGIN_PAGE = '../../login.html';
 
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -116,16 +115,20 @@
             return false;
         }
 
-const { data: passport, error } = await supabaseClient
-    .from('documents.passport')
-    .select('status')
-    .eq('personal_code', personalCode)
-    .eq('status', 'verified')
-    .maybeSingle();
+        const { data: passport, error } = await supabaseClient
+            .from('"documents"."passport"')
+            .select('status')
+            .eq('personal_code', personalCode)
+            .eq('status', 'verified')
+            .maybeSingle();
 
         if (error) {
             console.error('Ошибка при проверке паспорта:', error);
-            showMessage('Ошибка при проверке паспорта. Попробуйте позже.', 'error');
+            if (error.code === 'PGRST205') {
+                showMessage('Ошибка доступа к таблице паспортов. Возможно, требуется настройка поискового пути.', 'error');
+            } else {
+                showMessage('Ошибка при проверке паспорта. Попробуйте позже.', 'error');
+            }
             return false;
         }
         return !!passport;
