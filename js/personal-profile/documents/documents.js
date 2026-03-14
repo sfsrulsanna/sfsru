@@ -173,8 +173,8 @@ function renderDocumentsGrid(documents) {
   })
 
   const docTypes = [
-    { type: 'passport', title: 'Паспорт гражданина СФСРЮ', url: 'passport.html' },
-    { type: 'foreignPassport', title: 'Заграничный паспорт гражданина СФСРЮ', url: 'foreign-passport.html' },
+    { type: 'passport', title: 'Паспорт', url: 'passport.html' },
+    { type: 'foreignPassport', title: 'Заграничный паспорт', url: 'foreign-passport.html' },
     { type: 'inn', title: 'ИНН', url: 'inn.html' },
     { type: 'nss', title: 'Номер социального счёта (НСС)', url: 'nss.html' },
     { type: 'driverLicense', title: 'Водительское удостоверение', url: 'driver-license.html' },

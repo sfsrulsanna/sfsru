@@ -56,17 +56,29 @@
     }
 
     // -------------------- ФУНКЦИЯ ДЛЯ ПУБЛИЧНОГО URL --------------------
-    function getPublicUrl(filePath) {
+async function getSignedUrls(filePaths, expiresIn = 3600) { // срок действия по умолчанию 1 час
+    if (!filePaths || filePaths.length === 0) return [];
+    
+    const promises = filePaths.map(async (path) => {
         try {
-            const { data } = supabaseClient.storage
+            const { data, error } = await supabaseClient.storage
                 .from('criminal-files')
-                .getPublicUrl(filePath);
-            return data.publicUrl;
-        } catch (error) {
-            console.error('Ошибка получения публичного URL:', error);
+                .createSignedUrl(path, expiresIn);
+            
+            if (error) {
+                console.error('Ошибка создания signed URL для', path, error);
+                return null;
+            }
+            return data.signedUrl;
+        } catch (err) {
+            console.error('Исключение при создании signed URL:', err);
             return null;
         }
-    }
+    });
+
+    const results = await Promise.all(promises);
+    return results.filter(url => url !== null);
+}
 
     // -------------------- БЛОК АВТОРИЗАЦИИ --------------------
     function renderAuthSection(session) {
@@ -137,38 +149,40 @@
     }
 
     // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
-    async function loadCriminals() {
-        const { data, error } = await supabaseClient
-            .schema(CRIMINAL_TABLE_SCHEMA)
-            .from(CRIMINAL_TABLE_NAME)
-            .select('*')
-            .order('id', { ascending: true });
-        
-        if (error) {
-            console.error('Ошибка загрузки данных:', error);
-            return null;
-        }
-
-        for (const criminal of data || []) {
-            if (criminal.photo_paths && criminal.photo_paths.length > 0) {
-                criminal.photoUrls = criminal.photo_paths
-                    .map(path => getPublicUrl(path))
-                    .filter(url => url !== null);
-            } else {
-                criminal.photoUrls = [];
-            }
-
-            if (criminal.document_paths && criminal.document_paths.length > 0) {
-                criminal.documentUrls = criminal.document_paths
-                    .map(path => getPublicUrl(path))
-                    .filter(url => url !== null);
-            } else {
-                criminal.documentUrls = [];
-            }
-        }
-        
-        return data || [];
+async function loadCriminals() {
+    // Получаем данные из таблицы
+    const { data, error } = await supabaseClient
+        .schema(CRIMINAL_TABLE_SCHEMA)
+        .from(CRIMINAL_TABLE_NAME)
+        .select('*')
+        .order('id', { ascending: true });
+    
+    if (error) {
+        console.error('Ошибка загрузки данных:', error);
+        return null;
     }
+
+    if (!data || data.length === 0) return [];
+
+    // Для каждого преступника получаем signed URLs для фото и документов
+    const criminalsWithUrls = await Promise.all(data.map(async (criminal) => {
+        const photoUrls = criminal.photo_paths?.length 
+            ? await getSignedUrls(criminal.photo_paths, 7200) // 2 часа
+            : [];
+        
+        const documentUrls = criminal.document_paths?.length 
+            ? await getSignedUrls(criminal.document_paths, 7200)
+            : [];
+
+        return {
+            ...criminal,
+            photoUrls,
+            documentUrls
+        };
+    }));
+
+    return criminalsWithUrls;
+}
 
     // -------------------- SVG-ЗАГЛУШКИ --------------------
     const noPhotoSVG = 'data:image/svg+xml,%3Csvg xmlns=&quot;http://www.w3.org/2000/svg&quot; width=&quot;300&quot; height=&quot;200&quot; viewBox=&quot;0 0 300 200&quot;%3E%3Crect width=&quot;300&quot; height=&quot;200&quot; fill=&quot;%23f0f0f0&quot;/%3E%3Ctext x=&quot;50%25&quot; y=&quot;50%25&quot; dominant-baseline=&quot;middle&quot; text-anchor=&quot;middle&quot; font-family=&quot;Arial&quot; font-size=&quot;14&quot; fill=&quot;%23999&quot;%3EНет фото%3C/text%3E%3C/svg%3E';
