@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Актовые книги — Админ панель СФСРЮ</title>
+    <title>Записи актовой книги — Админ панель СФСРЮ</title>
     <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
@@ -25,11 +25,41 @@
     <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-	
+
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .records-table th {
+            background: #f8f9fa;
+            padding: 10px;
+            text-align: left;
+        }
+        .records-table td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .records-table tr:hover {
+            background: #f5f5f5;
+        }
+        .badge-status {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .badge-verified { background: #d4edda; color: #155724; }
+        .badge-oncheck { background: #fff3cd; color: #856404; }
+        .badge-rejected { background: #f8d7da; color: #721c24; }
+        .badge-archived { background: #e2e3e5; color: #383d41; }
+    </style>
     <script type="importmap">
         {
             "imports": {
@@ -71,11 +101,12 @@
 
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Актовые книги</h1>
-            <p class="page-description">Выберите тип актовой книги для просмотра записей.</p>
+            <h1 id="bookTitle" class="page-title">Записи актовой книги</h1>
+            <p id="bookDescription" class="page-description"></p>
 
             <div id="loading" class="loading">Загрузка...</div>
-            <div id="booksGrid" class="admin-cards"></div>
+            <div id="recordsContainer"></div>
+            <a href="registry-books.html" class="btn-secondary">← К списку книг</a>
         </div>
     </main>
 
@@ -86,6 +117,6 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module" src="js/certificates-common.js"></script>
-    <script type="module" src="js/registry-books.js"></script>
+    <script type="module" src="js/book.js"></script>
 </body>
 </html>
