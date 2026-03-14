@@ -1,4 +1,4 @@
-import { supabase } from '../../js/supabase-config.js'
+import { supabase } from '../../../../js/supabase-config.js'
 
 let userProfile = null
 let personalCode = null
