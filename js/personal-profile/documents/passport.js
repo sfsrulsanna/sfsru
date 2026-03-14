@@ -36,25 +36,33 @@ function getStatusClass(status) {
   return 'document-status'
 }
 
-// Функция для получения подписанной ссылки на фото паспорта
-async function getPassportPhotoSignedUrl(personalCode) {
-    if (!personalCode) return null;
-    try {
-        // Кодируем личный код для безопасного использования в пути
-        const encodedCode = encodeURIComponent(personalCode);
-        const filePath = `passport/${encodedCode}/photo.jpg`;
-
-        const { data, error } = await supabase.storage
-            .from('documents-files')
-            .createSignedUrl(filePath, 3600); // срок действия 1 час (3600 сек)
-
-        if (error) throw error;
-        return data.signedUrl;
-    } catch (err) {
-        console.error('Ошибка получения signed URL для фото паспорта:', err.message);
-        return null;
-    }
+// Экранирование HTML
+function escapeHTML(str) {
+  if (!str) return '—'
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
 }
+
+// -------------------- ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ПОДПИСАННОЙ ССЫЛКИ НА ФОТО --------------------
+async function getPassportPhotoSignedUrl(personalCode) {
+  if (!personalCode) return null
+  try {
+    const filePath = `passport/${encodeURIComponent(personalCode)}/photo.jpg`
+    const { data, error } = await supabase.storage
+      .from('documents-files')
+      .createSignedUrl(filePath, 3600) // 1 час
+    if (error) throw error
+    return data.signedUrl
+  } catch (err) {
+    console.error('Ошибка получения signed URL для фото паспорта:', err.message)
+    return null
+  }
+}
+
 // -------------------- ЗАГРУЗКА ПРОФИЛЯ --------------------
 async function loadUserProfile() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -380,38 +388,11 @@ function renderPassport(data) {
     document.getElementById('extraSections').style.display = 'block'
   }
 
-  // --- Фото, QR, штрихкод ---
-// Загрузка фото из приватного bucket documents-files
-async function loadPassportPhoto(personalCode) {
-    const avatarImg = document.getElementById('passportAvatar');
-    if (!avatarImg) return;
+  // --- Генерация QR-кода и штрихкода (оставляем как есть) ---
+  const personalCode = data.personal_code || ''
+  const avatarImg = document.getElementById('passportAvatar')
 
-    // Показываем заглушку, пока грузится ссылка (опционально)
-    avatarImg.src = '../../images/default-avatar.png';
-
-    const signedUrl = await getPassportPhotoSignedUrl(personalCode);
-    if (signedUrl) {
-        // Пробуем загрузить изображение по подписанной ссылке
-        const img = new Image();
-        img.onload = () => { avatarImg.src = signedUrl; };
-        img.onerror = () => {
-            console.warn('Не удалось загрузить фото по signed URL, используется заглушка');
-            avatarImg.src = '../../images/default-avatar.png';
-        };
-        img.src = signedUrl;
-    } else {
-        // Если не удалось получить signed URL, остаётся заглушка
-        avatarImg.src = '../../images/default-avatar.png';
-    }
-}
-
-// Запускаем загрузку, если есть personalCode
-if (personalCode) {
-    loadPassportPhoto(personalCode);
-} else {
-    document.getElementById('passportAvatar').src = '../../images/default-avatar.png';
-}
-
+  // QR-код
   const qrContainer = document.getElementById('passportQrCode')
   if (qrContainer && personalCode) {
     qrContainer.innerHTML = ''
@@ -429,6 +410,7 @@ if (personalCode) {
     }
   }
 
+  // Штрихкод
   const seriesNumber = (data.series_number || '').replace(/\s/g, '')
   if (seriesNumber && seriesNumber.length >= 6) {
     try {
@@ -441,6 +423,30 @@ if (personalCode) {
     } catch (e) {
       console.warn('Barcode generation failed', e)
     }
+  }
+
+  // --- Загрузка фото из приватного bucket ---
+  async function loadPassportPhoto(code) {
+    if (!avatarImg) return
+    avatarImg.src = '../../images/default-avatar.png' // заглушка на время загрузки
+    const signedUrl = await getPassportPhotoSignedUrl(code)
+    if (signedUrl) {
+      const img = new Image()
+      img.onload = () => { avatarImg.src = signedUrl }
+      img.onerror = () => {
+        console.warn('Не удалось загрузить фото по signed URL, используется заглушка')
+        avatarImg.src = '../../images/default-avatar.png'
+      }
+      img.src = signedUrl
+    } else {
+      avatarImg.src = '../../images/default-avatar.png'
+    }
+  }
+
+  if (personalCode) {
+    loadPassportPhoto(personalCode)
+  } else {
+    avatarImg.src = '../../images/default-avatar.png'
   }
 
   // --- Кнопка редактирования и статус ---
@@ -476,17 +482,6 @@ if (personalCode) {
 
   const loadingEl = document.getElementById('loading')
   if (loadingEl) loadingEl.style.display = 'none'
-}
-
-// -------------------- ВСПОМОГАТЕЛЬНАЯ ФУНКЦИЯ ДЛЯ ЭСКЕЙПИНГА HTML --------------------
-function escapeHTML(str) {
-  if (!str) return '—'
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
 }
 
 // -------------------- МОДАЛЬНОЕ ОКНО --------------------
