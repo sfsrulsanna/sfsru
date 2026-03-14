@@ -124,16 +124,18 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_divorce_certificate')
+        .schema('documents_certificates')
+        .from('divorce')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_divorce_certificate')
+        .schema('documents_certificates')
+        .from('divorce')
         .select('*')
-        .eq('personal_code', userPersonalCode)
+        .or(`husband_personal_code.eq.${userPersonalCode},wife_personal_code.eq.${userPersonalCode}`)
         .order('created_at', { ascending: false })
         .limit(1)
       if (!error && docs && docs.length > 0) {
@@ -163,7 +165,6 @@ async function loadData() {
   }
 }
 
-// ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 // ==================== ОТРИСОВКА СВИДЕТЕЛЬСТВА ====================
 function renderCertificate(data) {
   // Разбиваем ФИО супругов
@@ -422,7 +423,7 @@ function renderCertificate(data) {
   // Вставляем сгенерированный HTML в контейнер
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок (без изменений, как в оригинале)
+  // Блок статуса и кнопок
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
@@ -452,7 +453,7 @@ function renderCertificate(data) {
     statusAndEdit.appendChild(editBtn)
   }
   
-  // Очищаем контейнер и добавляем новый блок (если там уже что-то было)
+  // Очищаем контейнер и добавляем новый блок
   const container = document.getElementById('statusAndEditContainer')
   container.innerHTML = ''
   container.appendChild(statusAndEdit)
@@ -656,14 +657,16 @@ async function saveDocument() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_divorce_certificate')
+        .schema('documents_certificates')
+        .from('divorce')
         .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
       dataToSend.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_divorce_certificate')
+        .schema('documents_certificates')
+        .from('divorce')
         .insert([dataToSend])
         .select()
     }

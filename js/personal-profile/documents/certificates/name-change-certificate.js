@@ -114,14 +114,16 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_name_change_certificate')
+        .schema('documents_certificates')
+        .from('name_change')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_name_change_certificate')
+        .schema('documents_certificates')
+        .from('name_change')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
@@ -479,14 +481,16 @@ async function saveDocument() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_name_change_certificate')
+        .schema('documents_certificates')
+        .from('name_change')
         .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
       dataToSend.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_name_change_certificate')
+        .schema('documents_certificates')
+        .from('name_change')
         .insert([dataToSend])
         .select()
     }

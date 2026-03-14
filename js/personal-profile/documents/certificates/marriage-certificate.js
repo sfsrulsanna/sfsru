@@ -122,14 +122,16 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_marriage_certificate')
+        .schema('documents_certificates')
+        .from('marriage')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_marriage_certificate')
+        .schema('documents_certificates')
+        .from('marriage')
         .select('*')
         .or(`husband_personal_code.eq.${userPersonalCode},wife_personal_code.eq.${userPersonalCode}`)
         .order('created_at', { ascending: false })
@@ -399,7 +401,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок (без изменений)
+  // Блок статуса и кнопок
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
@@ -605,14 +607,16 @@ async function saveDocument() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_marriage_certificate')
+        .schema('documents_certificates')
+        .from('marriage')
         .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
       dataToSend.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_marriage_certificate')
+        .schema('documents_certificates')
+        .from('marriage')
         .insert([dataToSend])
         .select()
     }

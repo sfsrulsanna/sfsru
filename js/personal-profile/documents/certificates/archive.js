@@ -50,13 +50,13 @@ async function loadUserProfile() {
 
 // ==================== ЗАГРУЗКА АРХИВНЫХ СВИДЕТЕЛЬСТВ ====================
 const certificateTypes = [
-  { table: 'documents_birth_certificate', title: 'Свидетельство о рождении', url: 'birth-certificate.html' },
-  { table: 'documents_marriage_certificate', title: 'Свидетельство о заключении брака', url: 'marriage-certificate.html' },
-  { table: 'documents_divorce_certificate', title: 'Свидетельство о расторжении брака', url: 'divorce-certificate.html' },
-  { table: 'documents_death_certificate', title: 'Свидетельство о смерти', url: 'death-certificate.html' },
-  { table: 'documents_adoption_certificate', title: 'Свидетельство об усыновлении (удочерении)', url: 'adoption-certificate.html' },
-  { table: 'documents_name_change_certificate', title: 'Свидетельство о перемене имени', url: 'name-change-certificate.html' },
-  { table: 'documents_fatherhood_certificate', title: 'Свидетельство об установлении отцовства', url: 'fatherhood-certificate.html' }
+  { table: 'birth', title: 'Свидетельство о рождении', url: 'birth-certificate.html' },
+  { table: 'marriage', title: 'Свидетельство о заключении брака', url: 'marriage-certificate.html' },
+  { table: 'divorce', title: 'Свидетельство о расторжении брака', url: 'divorce-certificate.html' },
+  { table: 'death', title: 'Свидетельство о смерти', url: 'death-certificate.html' },
+  { table: 'adoption', title: 'Свидетельство об усыновлении (удочерении)', url: 'adoption-certificate.html' },
+  { table: 'name_change', title: 'Свидетельство о перемене имени', url: 'name-change-certificate.html' },
+  { table: 'fatherhood', title: 'Свидетельство об установлении отцовства', url: 'fatherhood-certificate.html' }
 ]
 
 async function loadArchivedCertificates() {
@@ -66,6 +66,7 @@ async function loadArchivedCertificates() {
 
   for (const cert of certificateTypes) {
     const { data, error } = await supabase
+      .schema('documents_certificates')
       .from(cert.table)
       .select('*')
       .eq('personal_code', personalCode)
@@ -83,6 +84,47 @@ async function loadArchivedCertificates() {
         })
       })
     }
+  }
+
+  // Для marriage также ищем записи, где personal_code может быть в husband_personal_code или wife_personal_code
+  // (если статус archived и код соответствует)
+  const { data: marriageArchived, error: marriageError } = await supabase
+    .schema('documents_certificates')
+    .from('marriage')
+    .select('*')
+    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
+    .eq('status', 'archived')
+    .order('created_at', { ascending: false })
+
+  if (!marriageError && marriageArchived) {
+    marriageArchived.forEach(item => {
+      allArchived.push({
+        ...item,
+        type: 'Свидетельство о заключении брака',
+        url: 'marriage-certificate.html',
+        id: item.id
+      })
+    })
+  }
+
+  // Аналогично для divorce
+  const { data: divorceArchived, error: divorceError } = await supabase
+    .schema('documents_certificates')
+    .from('divorce')
+    .select('*')
+    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
+    .eq('status', 'archived')
+    .order('created_at', { ascending: false })
+
+  if (!divorceError && divorceArchived) {
+    divorceArchived.forEach(item => {
+      allArchived.push({
+        ...item,
+        type: 'Свидетельство о расторжении брака',
+        url: 'divorce-certificate.html',
+        id: item.id
+      })
+    })
   }
 
   // Сортируем все записи по дате создания (самые новые сверху)

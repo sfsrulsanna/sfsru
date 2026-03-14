@@ -130,14 +130,16 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_adoption_certificate')
+        .schema('documents_certificates')
+        .from('adoption')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_adoption_certificate')
+        .schema('documents_certificates')
+        .from('adoption')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
@@ -668,14 +670,16 @@ async function saveDocument() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_adoption_certificate')
+        .schema('documents_certificates')
+        .from('adoption')
         .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
       dataToSend.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_adoption_certificate')
+        .schema('documents_certificates')
+        .from('adoption')
         .insert([dataToSend])
         .select()
     }

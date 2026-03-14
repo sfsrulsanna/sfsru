@@ -86,13 +86,13 @@ function renderUserInfo() {
 
 // ==================== ЗАГРУЗКА СВИДЕТЕЛЬСТВ ====================
 const certificateTypes = [
-  { table: 'documents_birth_certificate', title: 'Свидетельство о рождении', url: 'birth-certificate.html' },
-  { table: 'documents_marriage_certificate', title: 'Свидетельство о заключении брака', url: 'marriage-certificate.html' },
-  { table: 'documents_divorce_certificate', title: 'Свидетельство о расторжении брака', url: 'divorce-certificate.html' },
-  { table: 'documents_death_certificate', title: 'Свидетельство о смерти', url: 'death-certificate.html' },
-  { table: 'documents_adoption_certificate', title: 'Свидетельство об усыновлении (удочерении)', url: 'adoption-certificate.html' },
-  { table: 'documents_name_change_certificate', title: 'Свидетельство о перемене имени', url: 'name-change-certificate.html' },
-  { table: 'documents_fatherhood_certificate', title: 'Свидетельство об установлении отцовства', url: 'fatherhood-certificate.html' }
+  { table: 'birth', title: 'Свидетельство о рождении', url: 'birth-certificate.html' },
+  { table: 'marriage', title: 'Свидетельство о заключении брака', url: 'marriage-certificate.html' },
+  { table: 'divorce', title: 'Свидетельство о расторжении брака', url: 'divorce-certificate.html' },
+  { table: 'death', title: 'Свидетельство о смерти', url: 'death-certificate.html' },
+  { table: 'adoption', title: 'Свидетельство об усыновлении (удочерении)', url: 'adoption-certificate.html' },
+  { table: 'name_change', title: 'Свидетельство о перемене имени', url: 'name-change-certificate.html' },
+  { table: 'fatherhood', title: 'Свидетельство об установлении отцовства', url: 'fatherhood-certificate.html' }
 ]
 
 async function loadAllCertificates() {
@@ -102,10 +102,11 @@ async function loadAllCertificates() {
 
   for (const cert of certificateTypes) {
     const { data, error } = await supabase
+      .schema('documents_certificates')
       .from(cert.table)
       .select('*')
       .eq('personal_code', personalCode)
-      .neq('status', 'archived') // исключаем архивные
+      .neq('status', 'archived')
       .order('created_at', { ascending: false })
       .limit(1)
 
@@ -115,6 +116,51 @@ async function loadAllCertificates() {
         type: cert.title,
         url: cert.url,
         id: data[0].id
+      })
+    }
+  }
+
+  // Для marriage также ищем записи, где personal_code может быть в husband_personal_code или wife_personal_code
+  const { data: marriageData, error: marriageError } = await supabase
+    .schema('documents_certificates')
+    .from('marriage')
+    .select('*')
+    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
+    .neq('status', 'archived')
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (!marriageError && marriageData && marriageData.length > 0) {
+    // Проверяем, не добавили ли мы уже marriage из предыдущего цикла (если personal_code совпадает с husband или wife, то оно могло быть уже добавлено)
+    const alreadyExists = allCerts.some(c => c.url === 'marriage-certificate.html' && c.id === marriageData[0].id)
+    if (!alreadyExists) {
+      allCerts.push({
+        ...marriageData[0],
+        type: 'Свидетельство о заключении брака',
+        url: 'marriage-certificate.html',
+        id: marriageData[0].id
+      })
+    }
+  }
+
+  // Для divorce аналогично
+  const { data: divorceData, error: divorceError } = await supabase
+    .schema('documents_certificates')
+    .from('divorce')
+    .select('*')
+    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
+    .neq('status', 'archived')
+    .order('created_at', { ascending: false })
+    .limit(1)
+
+  if (!divorceError && divorceData && divorceData.length > 0) {
+    const alreadyExists = allCerts.some(c => c.url === 'divorce-certificate.html' && c.id === divorceData[0].id)
+    if (!alreadyExists) {
+      allCerts.push({
+        ...divorceData[0],
+        type: 'Свидетельство о расторжении брака',
+        url: 'divorce-certificate.html',
+        id: divorceData[0].id
       })
     }
   }
