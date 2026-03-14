@@ -4,12 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Подтверждение свидетельств — Админ панель СФСРЮ</title>
-    <!-- favicons (сокращено) -->
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
-    <!-- ... остальные favicons ... -->
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <!-- Общие стили -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Дополнительные стили для страницы -->
     <style>
         .certificates-table {
             width: 100%;
@@ -66,11 +87,17 @@
         .notification.success { background: #28a745; }
         .notification.error { background: #dc3545; }
     </style>
+    <!-- Supabase import map -->
     <script type="importmap">
-        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
     </script>
 </head>
 <body>
+    <!-- Хедер админки -->
     <header class="admin-header">
         <div class="admin-header-container">
             <div class="admin-logo">
@@ -79,7 +106,9 @@
             </div>
             <div class="admin-user">
                 <span id="adminEmail"></span>
-                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+                <button id="logoutBtn" class="btn-logout" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
             </div>
         </div>
     </header>
@@ -89,15 +118,17 @@
             <h1 class="page-title">Свидетельства на проверке</h1>
             <p class="page-description">Записи со статусом "oncheck". Подтвердите или отклоните каждую.</p>
 
+            <!-- Уведомление -->
             <div id="notification" class="notification"></div>
 
+            <!-- Таблица -->
             <table class="certificates-table">
                 <thead>
                     <tr>
                         <th>Тип</th>
-                        <th>ID записи</th>
-                        <th>Владелец</th>
-                        <th>Личный код</th>
+                        <th>ID</th>
+                        <th>Владелец (личный код)</th>
+                        <th>Серия/номер</th>
                         <th>Дата создания</th>
                         <th>Действия</th>
                         <th>Просмотр</th>
@@ -114,34 +145,8 @@
         <p>&copy; 2026 СФСРЮ. Все действия протоколируются.</p>
     </footer>
 
+    <!-- Подключаем модули -->
+    <script type="module" src="js/certificates-common.js"></script>
     <script type="module" src="js/verify.js"></script>
-    <script type="module">
-        import { supabase } from '../../../js/supabase-config.js';
-
-        async function checkAdmin() {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                window.location.href = '../login.html';
-                return;
-            }
-            const { data: profile, error } = await supabase
-                .from('users')
-                .select('role, email')
-                .eq('id', session.user.id)
-                .single();
-            if (error || profile?.role !== 'admin') {
-                await supabase.auth.signOut();
-                window.location.href = '../login.html';
-                return;
-            }
-            document.getElementById('adminEmail').textContent = profile.email || session.user.email;
-        }
-        checkAdmin();
-
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await supabase.auth.signOut();
-            window.location.href = '../login.html';
-        });
-    </script>
 </body>
 </html>

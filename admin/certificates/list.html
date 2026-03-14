@@ -1,50 +1,100 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Все свидетельства — Админ панель</title>
-  <link rel="stylesheet" href="../../css/style.css">
-  <link rel="stylesheet" href="../css/admin.css">
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <script type="importmap">
-    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
-  </script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Все свидетельства — Админ панель СФСРЮ</title>
+    <!-- favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <!-- Общие стили -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Supabase import map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
 </head>
 <body>
-  <header class="admin-header">...</header> <!-- аналогично главной -->
+    <!-- Хедер админки -->
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ" height="40">
+                <span>СФСРЮ / Все свидетельства</span>
+            </div>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-  <main class="admin-main">
-    <div class="container">
-      <h1 class="page-title">Все свидетельства</h1>
+    <main class="admin-main">
+        <div class="container">
+            <h1 class="page-title">Все свидетельства</h1>
+            <p class="page-description">Просмотр, фильтрация и управление всеми записями.</p>
 
-      <div class="filters">
-        <select id="typeSelect">
-          <option value="birth">Свидетельства о рождении</option>
-          <option value="marriage">Свидетельства о браке</option>
-          <option value="divorce">Свидетельства о разводе</option>
-          <option value="adoption">Свидетельства об усыновлении</option>
-        </select>
+            <!-- Фильтры -->
+            <div class="filters">
+                <select id="typeSelect">
+                    <!-- заполняется динамически из certificates-common.js -->
+                </select>
 
-        <select id="statusFilter">
-          <option value="">Все статусы</option>
-          <option value="verified">Подтверждено</option>
-          <option value="oncheck">На проверке</option>
-          <option value="rejected">Отклонено</option>
-          <option value="archived">Архивные</option>
-        </select>
+                <select id="statusFilter">
+                    <option value="">Все статусы</option>
+                    <option value="verified">Подтверждено</option>
+                    <option value="oncheck">На проверке</option>
+                    <option value="rejected">Отклонено</option>
+                    <option value="archived">Архивные</option>
+                </select>
 
-        <input type="text" id="searchInput" placeholder="Поиск по серии/номеру или ФИО">
-        <button id="applyFilters" class="btn-primary">Применить</button>
-      </div>
+                <input type="text" id="searchInput" placeholder="Поиск по серии/номеру или ФИО">
+                <button id="applyFilters" class="btn-primary">Применить</button>
+            </div>
 
-      <div id="loading" class="loading">Загрузка...</div>
-      <div id="tableContainer"></div>
-    </div>
-  </main>
+            <!-- Индикатор загрузки -->
+            <div id="loading" class="loading">Загрузка...</div>
 
-  <footer class="admin-footer">...</footer>
+            <!-- Контейнер для таблицы -->
+            <div id="tableContainer">
+                <!-- таблица будет вставлена скриптом -->
+            </div>
+        </div>
+    </main>
 
-  <script type="module" src="js/certificates-common.js"></script>
-  <script type="module" src="js/list.js"></script>
+    <footer class="admin-footer">
+        <p>&copy; 2026 СФСРЮ. Все действия протоколируются.</p>
+    </footer>
+
+    <!-- Подключаем модули -->
+    <script type="module" src="js/certificates-common.js"></script>
+    <script type="module" src="js/list.js"></script>
 </body>
 </html>

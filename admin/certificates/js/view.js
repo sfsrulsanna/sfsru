@@ -1,6 +1,6 @@
 // admin/certificates/js/view.js
 import { supabase } from '../../../js/supabase-config.js'
-import { requireAdmin, CERTIFICATE_TABLES } from './certificates-common.js'
+import { requireAdmin, getTypeInfo, fetchCertificateById, updateCertificateStatus, formatDate, getStatusLabel, escapeHTML } from './certificates-common.js'
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!await requireAdmin()) return
@@ -9,50 +9,77 @@ document.addEventListener('DOMContentLoaded', async () => {
   const type = urlParams.get('type')
   const id = urlParams.get('id')
 
-  if (!type || !id || !CERTIFICATE_TABLES[type]) {
+  const typeInfo = getTypeInfo(type)
+  if (!type || !id || !typeInfo) {
     document.getElementById('error').style.display = 'block'
     document.getElementById('error').textContent = 'Неверные параметры'
     document.getElementById('loading').style.display = 'none'
     return
   }
 
-  const table = CERTIFICATE_TABLES[type]
-  document.getElementById('certTitle').textContent = `Просмотр: ${type}`
+  document.getElementById('certTitle').textContent = `Просмотр: ${typeInfo.title}`
 
   try {
-    const { data, error } = await supabase
-      .from(table)
-      .select('*')
-      .eq('id', id)
-      .single()
-
-    if (error || !data) throw error || new Error('Запись не найдена')
+    const data = await fetchCertificateById(type, id)
 
     document.getElementById('loading').style.display = 'none'
     const display = document.getElementById('certificateDisplay')
     display.style.display = 'block'
 
     // Отображаем все поля в виде таблицы
-    let html = '<table class="details-table"><tbody>'
+    let html = `<p><strong>Статус:</strong> ${getStatusLabel(data.status)}</p>`
+    html += '<table class="details-table"><tbody>'
+
     for (let [key, value] of Object.entries(data)) {
-      // Пропускаем служебные поля, если нужно
-      if (key === 'id' || key === 'created_at' || key === 'updated_at') continue
+      // Пропускаем служебные поля, если нужно (можно показать все)
+      // if (key === 'id' || key === 'created_at' || key === 'updated_at') continue
       let displayValue = value
-      if (value instanceof Date) displayValue = value.toLocaleDateString()
-      else if (value === null || value === undefined) displayValue = '—'
-      html += `<tr><th>${key}</th><td>${displayValue}</td></tr>`
+      if (value === null || value === undefined) displayValue = '—'
+      else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) displayValue = formatDate(value)
+      else if (typeof value === 'object') displayValue = JSON.stringify(value)
+      else displayValue = String(value)
+
+      html += `<tr><th>${escapeHTML(key)}</th><td>${escapeHTML(displayValue)}</td></tr>`
     }
     html += '</tbody></table>'
     display.innerHTML = html
 
-    // Кнопка для редактирования (можно потом добавить модальное окно)
-    const editBtn = document.createElement('button')
-    editBtn.textContent = 'Редактировать'
-    editBtn.className = 'btn-primary'
-    editBtn.addEventListener('click', () => {
-      alert('Редактирование пока не реализовано')
+    // Кнопки управления статусом
+    const actionsDiv = document.createElement('div')
+    actionsDiv.className = 'actions'
+    actionsDiv.style.marginTop = '20px'
+
+    const statuses = [
+      { status: 'verified', label: 'Подтвердить', class: 'btn-verify', disabled: data.status === 'verified' },
+      { status: 'rejected', label: 'Отклонить', class: 'btn-reject', disabled: data.status === 'rejected' },
+      { status: 'archived', label: 'Архивировать', class: 'btn-archive', disabled: data.status === 'archived' }
+    ]
+
+    statuses.forEach(s => {
+      const btn = document.createElement('button')
+      btn.textContent = s.label
+      btn.className = s.class
+      btn.disabled = s.disabled
+      btn.addEventListener('click', async () => {
+        try {
+          await updateCertificateStatus(type, id, s.status)
+          alert('Статус обновлён')
+          window.location.reload()
+        } catch (err) {
+          alert('Ошибка: ' + err.message)
+        }
+      })
+      actionsDiv.appendChild(btn)
     })
-    display.appendChild(editBtn)
+
+    // Кнопка "Назад"
+    const backBtn = document.createElement('button')
+    backBtn.textContent = 'Назад'
+    backBtn.className = 'btn-secondary'
+    backBtn.addEventListener('click', () => history.back())
+    actionsDiv.appendChild(backBtn)
+
+    display.appendChild(actionsDiv)
 
   } catch (err) {
     document.getElementById('loading').style.display = 'none'

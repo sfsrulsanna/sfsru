@@ -1,25 +1,128 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <title>Просмотр свидетельства</title>
-  <link rel="stylesheet" href="../../css/style.css">
-  <link rel="stylesheet" href="../css/admin.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр свидетельства — Админ панель СФСРЮ</title>
+    <!-- favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <!-- Общие стили -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <!-- Дополнительные стили -->
+    <style>
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            margin: 1rem 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .details-table th {
+            width: 30%;
+            background: #f8f9fa;
+            padding: 10px;
+            text-align: right;
+            font-weight: 600;
+            border: 1px solid #dee2e6;
+        }
+        .details-table td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        .btn-verify, .btn-reject, .btn-archive, .btn-edit {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-verify { background: #28a745; color: white; }
+        .btn-reject { background: #dc3545; color: white; }
+        .btn-archive { background: #ffc107; color: #212529; }
+        .btn-edit { background: #007bff; color: white; }
+        .btn-verify:disabled, .btn-reject:disabled, .btn-archive:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+    <!-- Supabase import map -->
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
 </head>
 <body>
-  <header class="admin-header">...</header>
-  <main class="admin-main">
-    <div class="container">
-      <h1 id="certTitle">Просмотр свидетельства</h1>
-      <div id="loading">Загрузка...</div>
-      <div id="certificateDisplay" style="display:none;"></div>
-      <div id="error" style="display:none; color:red;"></div>
-      <a href="list.html" class="btn-secondary">← Назад к списку</a>
-    </div>
-  </main>
-  <footer class="admin-footer">...</footer>
+    <!-- Хедер админки -->
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ" height="40">
+                <span>СФСРЮ / Просмотр свидетельства</span>
+            </div>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
+                </button>
+            </div>
+        </div>
+    </header>
 
-  <script type="module" src="js/certificates-common.js"></script>
-  <script type="module" src="js/view.js"></script>
+    <main class="admin-main">
+        <div class="container">
+            <h1 id="certTitle" class="page-title">Просмотр свидетельства</h1>
+
+            <!-- Индикатор загрузки -->
+            <div id="loading" class="loading">Загрузка...</div>
+
+            <!-- Блок ошибки -->
+            <div id="error" style="display: none; color: red; text-align: center; padding: 2rem;"></div>
+
+            <!-- Блок отображения данных -->
+            <div id="certificateDisplay" style="display: none;"></div>
+
+            <!-- Кнопка назад -->
+            <a href="list.html" class="btn-secondary" style="margin-top: 20px; display: inline-block;">← Назад к списку</a>
+        </div>
+    </main>
+
+    <footer class="admin-footer">
+        <p>&copy; 2026 СФСРЮ. Все действия протоколируются.</p>
+    </footer>
+
+    <!-- Подключаем модули -->
+    <script type="module" src="js/certificates-common.js"></script>
+    <script type="module" src="js/view.js"></script>
 </body>
 </html>
