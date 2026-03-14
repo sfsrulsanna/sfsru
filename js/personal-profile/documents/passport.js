@@ -72,25 +72,27 @@ async function loadPassport() {
     currentDocId = urlParams.get('id')
 
     let data = null
-if (currentDocId) {
-  const { data: doc, error } = await supabase
-    .from('document_passport')
-    .select('*')
-    .eq('id', currentDocId)
-    .maybeSingle()  // изменено с .single()
-  if (error) throw error
-  data = doc
-} else {
-  const { data: docs, error } = await supabase
-    .from('document_passport')
-    .select('*')
-    .eq('personal_code', userPersonalCode)
-    .order('created_at', { ascending: false })
-    .limit(1)
-  if (error) throw error
-  data = docs?.[0]
-  if (data) currentDocId = data.id
-}
+    if (currentDocId) {
+      const { data: doc, error } = await supabase
+        .schema('documents')
+        .from('passport')
+        .select('*')
+        .eq('id', currentDocId)
+        .maybeSingle()
+      if (error) throw error
+      data = doc
+    } else {
+      const { data: docs, error } = await supabase
+        .schema('documents')
+        .from('passport')
+        .select('*')
+        .eq('personal_code', userPersonalCode)
+        .order('created_at', { ascending: false })
+        .limit(1)
+      if (error) throw error
+      data = docs?.[0]
+      if (data) currentDocId = data.id
+    }
 
     if (data) {
       renderPassport(data)
@@ -402,7 +404,7 @@ function renderPassport(data) {
     }
   }
 
-  // --- Кнопка редактирования и статус (НОВАЯ ЛОГИКА) ---
+  // --- Кнопка редактирования и статус ---
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
 
@@ -917,13 +919,15 @@ async function savePassport() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('document_passport')
+        .schema('documents')
+        .from('passport')
         .update(cleanData)
         .eq('id', currentDocId)
     } else {
       cleanData.created_at = new Date().toISOString()
       result = await supabase
-        .from('document_passport')
+        .schema('documents')
+        .from('passport')
         .insert([cleanData])
         .select()
     }

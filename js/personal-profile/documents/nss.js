@@ -60,8 +60,8 @@ async function loadUserProfile() {
   return data
 }
 
-// -------------------- ЗАГРУЗКА ДОКУМЕНТА ИНН --------------------
-async function loadInnDocument() {
+// -------------------- ЗАГРУЗКА ДОКУМЕНТА НСС --------------------
+async function loadNssDocument() {
   try {
     const profile = await loadUserProfile()
     if (!profile) return
@@ -72,15 +72,17 @@ async function loadInnDocument() {
     let data = null
     if (currentDocId) {
       const { data: doc, error } = await supabase
-        .from('documents_inn')
+        .schema('documents')
+        .from('nss')
         .select('*')
         .eq('id', currentDocId)
-        .maybeSingle() // используем maybeSingle вместо single
+        .maybeSingle()
       if (error) throw error
       data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_inn')
+        .schema('documents')
+        .from('nss')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
@@ -92,7 +94,7 @@ async function loadInnDocument() {
 
     if (data) {
       documentData = data
-      renderInn(data)
+      renderNss(data)
       document.getElementById('loading').style.display = 'none'
       document.getElementById('content').style.display = 'block'
       document.getElementById('noData').style.display = 'none'
@@ -101,65 +103,71 @@ async function loadInnDocument() {
       document.getElementById('noData').style.display = 'block'
     }
   } catch (err) {
-    console.error('Ошибка загрузки ИНН:', err)
+    console.error('Ошибка загрузки НСС:', err)
     document.getElementById('loading').textContent = 'Ошибка загрузки данных'
   }
 }
 
 // -------------------- ОТРИСОВКА ДОКУМЕНТА --------------------
-function renderInn(data) {
-  const fullName = `${data.surname || ''} ${data.name || ''} ${data.patronymic || ''}`.trim() || '—'
-
-  const innHtml = `
+function renderNss(data) {
+  const html = `
     <div class="document-container">
       <div class="document-header">
-        <div class="document-title">СВИДЕТЕЛЬСТВО</div>
-        <div class="document-subtitle">О ПОСТАНОВКЕ НА УЧЕТ В НАЛОГОВОМ ОРГАНЕ</div>
+        <div class="document-title">НОМЕР СОЦИАЛЬНОГО СЧЁТА</div>
+        <div class="document-subtitle">(НСС)</div>
       </div>
       <div class="document-content">
         <div class="qr-section">
-          <div id="qrCodeContainer" style="width: 180px; height: 180px; margin-bottom: 15px;"></div>
+          <div id="qrCode" class="qr-code"></div>
           <div class="qr-label">Отсканируйте QR-код для проверки подлинности</div>
         </div>
         <div class="data-section">
-          <div class="inn-number">${escapeHTML(data.inn_number || '—')}</div>
+          <div class="inn-number" id="nssNumber">${escapeHTML(data.nss_number || '—')}</div>
           <div class="info-line">
-            <span class="info-label">ФИО</span>
-            <span class="info-value">${escapeHTML(fullName)}</span>
+            <span class="info-label">Фамилия</span>
+            <span class="info-value" id="surname">${escapeHTML(data.surname || '—')}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Имя</span>
+            <span class="info-value" id="name">${escapeHTML(data.name || '—')}</span>
+          </div>
+          <div class="info-line">
+            <span class="info-label">Отчество</span>
+            <span class="info-value" id="patronymic">${escapeHTML(data.patronymic || '—')}</span>
           </div>
           <div class="info-line">
             <span class="info-label">Пол</span>
-            <span class="info-value">${escapeHTML(data.gender || '—')}</span>
+            <span class="info-value" id="gender">${escapeHTML(data.gender || '—')}</span>
           </div>
           <div class="info-line">
             <span class="info-label">Дата рождения</span>
-            <span class="info-value">${formatDate(data.birth_date)}</span>
+            <span class="info-value" id="birthDate">${formatDate(data.birth_date)}</span>
           </div>
           <div class="info-line">
             <span class="info-label">Место рождения</span>
-            <span class="info-value">${escapeHTML(data.birth_place || '—')}</span>
+            <span class="info-value" id="birthPlace">${escapeHTML(data.birth_place || '—')}</span>
           </div>
           <div class="info-line">
             <span class="info-label">Дата выдачи</span>
-            <span class="info-value">${formatDate(data.issue_date)}</span>
+            <span class="info-value" id="issueDate">${formatDate(data.issue_date)}</span>
           </div>
           <div class="info-line">
             <span class="info-label">Кем выдан</span>
-            <span class="info-value">${escapeHTML(data.issued_by || '—')}</span>
+            <span class="info-value" id="issuedBy">${escapeHTML(data.issued_by || '—')}</span>
           </div>
         </div>
       </div>
     </div>
   `
 
-  document.getElementById('innContainer').innerHTML = innHtml
+  document.getElementById('content').innerHTML = html + '<div id="statusAndEditContainer"></div>'
 
-  const qrContainer = document.getElementById('qrCodeContainer')
-  if (qrContainer && data.inn_number) {
+  const qrContainer = document.getElementById('qrCode')
+  if (qrContainer && data.nss_number) {
     qrContainer.innerHTML = ''
     try {
       new QRCode(qrContainer, {
-        text: data.inn_number,
+        text: data.nss_number,
         width: 180,
         height: 180,
         colorDark: '#000',
@@ -172,7 +180,6 @@ function renderInn(data) {
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
-  // Создаём блок статуса и кнопок (аналогично паспорту)
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
 
@@ -181,18 +188,18 @@ function renderInn(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  // Кнопка замены (ссылка на получение нового ИНН) — всегда видна
+  // Кнопка замены (ссылка на получение нового НСС) — всегда видна
   const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/inn/'
+  replaceLink.href = '../../services/documents/nss/'
   replaceLink.className = 'edit-btn'
-  replaceLink.textContent = 'Заменить ИНН'
+  replaceLink.textContent = 'Заменить НСС'
   statusAndEdit.appendChild(replaceLink)
 
   // Кнопка изменения данных (только если статус не verified)
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
-    editBtn.id = 'editInnBtn'
+    editBtn.id = 'editNssBtn'
     editBtn.textContent = 'Изменить данные'
     editBtn.addEventListener('click', () => {
       formData = { ...data }
@@ -201,7 +208,6 @@ function renderInn(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
-  document.getElementById('statusAndEditContainer').innerHTML = ''
   document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
 }
 
@@ -209,7 +215,7 @@ function renderInn(data) {
 async function openAddModal() {
   if (!userProfile) await loadUserProfile()
   formData = {
-    inn_number: '',
+    nss_number: '',
     surname: userProfile?.surname || '',
     name: userProfile?.name || '',
     patronymic: userProfile?.patronymic || '',
@@ -220,11 +226,11 @@ async function openAddModal() {
     issued_by: '',
     personal_code: userPersonalCode || ''
   }
-  openModal('Добавление ИНН')
+  openModal('Добавление НСС')
 }
 
 function openEditModal() {
-  openModal('Редактирование ИНН')
+  openModal('Редактирование НСС')
 }
 
 function openModal(title) {
@@ -242,76 +248,71 @@ window.closeModal = function() {
 
 function renderModalForm() {
   const modalBody = document.getElementById('modalBody')
-  modalBody.innerHTML = `
-    <div class="form-group">
-      <label>Номер ИНН</label>
-      <input type="text" id="inn_number" class="form-input" value="${escapeHTML(formData.inn_number || '')}" placeholder="12 цифр">
-    </div>
-    <div class="form-group">
-      <label>Фамилия</label>
-      <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname || '')}">
-    </div>
-    <div class="form-group">
-      <label>Имя</label>
-      <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name || '')}">
-    </div>
-    <div class="form-group">
-      <label>Отчество</label>
-      <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic || '')}">
-    </div>
-    <div class="form-group">
-      <label>Пол</label>
-      <select id="gender" class="form-input">
-        <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
-        <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Дата рождения</label>
-      <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения</label>
-      <input type="text" id="birth_place" class="form-input" value="${escapeHTML(formData.birth_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата выдачи</label>
-      <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Кем выдан</label>
-      <input type="text" id="issued_by" class="form-input" value="${escapeHTML(formData.issued_by || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код</label>
-      <input type="text" id="personal_code" class="form-input" value="${userPersonalCode || ''}" readonly>
-    </div>
-  `
+  if (!modalBody) {
+    console.error('Ошибка: элемент modalBody не найден!')
+    return
+  }
+
+  modalBody.innerHTML = ''
+
+  const fields = [
+    { id: 'edit_nss_number', label: 'Номер НСС', type: 'text', value: formData.nss_number || '' },
+    { id: 'edit_surname', label: 'Фамилия', type: 'text', value: formData.surname || '' },
+    { id: 'edit_name', label: 'Имя', type: 'text', value: formData.name || '' },
+    { id: 'edit_patronymic', label: 'Отчество', type: 'text', value: formData.patronymic || '' },
+    { id: 'edit_gender', label: 'Пол', type: 'text', value: formData.gender || '', placeholder: 'Мужской / Женский' },
+    { id: 'edit_birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date || '' },
+    { id: 'edit_birth_place', label: 'Место рождения', type: 'text', value: formData.birth_place || '' },
+    { id: 'edit_issue_date', label: 'Дата выдачи', type: 'date', value: formData.issue_date || '' },
+    { id: 'edit_issued_by', label: 'Кем выдан', type: 'text', value: formData.issued_by || '' },
+    { id: 'edit_personal_code', label: 'Личный код', type: 'text', value: userPersonalCode || '', readonly: true }
+  ]
+
+  fields.forEach(field => {
+    const group = document.createElement('div')
+    group.className = 'form-group'
+
+    const label = document.createElement('label')
+    label.htmlFor = field.id
+    label.textContent = field.label
+    group.appendChild(label)
+
+    const input = document.createElement('input')
+    input.type = field.type
+    input.id = field.id
+    input.className = 'form-input'
+    input.value = field.value
+    if (field.placeholder) input.placeholder = field.placeholder
+    if (field.readonly) input.readOnly = true
+
+    group.appendChild(input)
+    modalBody.appendChild(group)
+  })
 }
 
 function collectFormData() {
   return {
-    inn_number: document.getElementById('inn_number')?.value.trim() || '',
-    surname: document.getElementById('surname')?.value.trim() || '',
-    name: document.getElementById('name')?.value.trim() || '',
-    patronymic: document.getElementById('patronymic')?.value.trim() || '',
-    gender: document.getElementById('gender')?.value || '',
-    birth_date: document.getElementById('birth_date')?.value || '',
-    birth_place: document.getElementById('birth_place')?.value.trim() || '',
-    issue_date: document.getElementById('issue_date')?.value || '',
-    issued_by: document.getElementById('issued_by')?.value.trim() || '',
-    personal_code: document.getElementById('personal_code')?.value.trim() || userPersonalCode
+    nss_number: document.getElementById('edit_nss_number')?.value.trim() || '',
+    surname: document.getElementById('edit_surname')?.value.trim() || '',
+    name: document.getElementById('edit_name')?.value.trim() || '',
+    patronymic: document.getElementById('edit_patronymic')?.value.trim() || '',
+    gender: document.getElementById('edit_gender')?.value || '',
+    birth_date: document.getElementById('edit_birth_date')?.value || '',
+    birth_place: document.getElementById('edit_birth_place')?.value.trim() || '',
+    issue_date: document.getElementById('edit_issue_date')?.value || '',
+    issued_by: document.getElementById('edit_issued_by')?.value.trim() || '',
+    personal_code: document.getElementById('edit_personal_code')?.value.trim() || userPersonalCode
   }
 }
 
-async function saveInn() {
+async function saveDocument() {
   try {
     const { data: { session } } = await supabase.auth.getSession()
     if (!session) { alert('Ошибка авторизации'); return }
     if (!userPersonalCode) { alert('Личный код не загружен'); return }
 
     const newData = collectFormData()
-    if (!newData.inn_number) { alert('Номер ИНН обязателен'); return }
+    if (!newData.nss_number) { alert('Номер НСС обязателен'); return }
 
     const cleanData = { ...newData }
     Object.keys(cleanData).forEach(key => {
@@ -325,13 +326,16 @@ async function saveInn() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_inn')
+        .schema('documents')
+        .from('nss')
         .update(cleanData)
         .eq('id', currentDocId)
+        .select()
     } else {
       cleanData.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_inn')
+        .schema('documents')
+        .from('nss')
         .insert([cleanData])
         .select()
     }
@@ -340,7 +344,7 @@ async function saveInn() {
 
     window.closeModal()
     const newId = currentDocId || result.data[0].id
-    window.location.href = `inn.html?id=${newId}`
+    window.location.href = `nss.html?id=${newId}`
   } catch (err) {
     console.error('Ошибка сохранения:', err)
     alert('Ошибка сохранения: ' + err.message)
@@ -360,10 +364,10 @@ function escapeHTML(str) {
 
 // -------------------- ИНИЦИАЛИЗАЦИЯ --------------------
 document.addEventListener('DOMContentLoaded', async () => {
-  await loadInnDocument()
+  await loadNssDocument()
 
-  document.getElementById('addInnBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('saveInnBtn')?.addEventListener('click', saveInn)
+  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
+  document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
 })
 
 // Экспорт в глобальную область для inline-обработчиков

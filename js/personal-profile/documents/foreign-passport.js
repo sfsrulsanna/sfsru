@@ -74,7 +74,8 @@ async function loadForeignPassport() {
     let data = null
     if (currentDocId) {
       const { data: doc, error } = await supabase
-        .from('document_foreign_passport')
+        .schema('documents')
+        .from('foreign_passport')
         .select('*')
         .eq('id', currentDocId)
         .maybeSingle()
@@ -82,7 +83,8 @@ async function loadForeignPassport() {
       data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('document_foreign_passport')
+        .schema('documents')
+        .from('foreign_passport')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
@@ -682,13 +684,15 @@ async function saveForeignPassport() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('document_foreign_passport')
+        .schema('documents')
+        .from('foreign_passport')
         .update(cleanData)
         .eq('id', currentDocId)
     } else {
       cleanData.created_at = new Date().toISOString()
       result = await supabase
-        .from('document_foreign_passport')
+        .schema('documents')
+        .from('foreign_passport')
         .insert([cleanData])
         .select()
     }

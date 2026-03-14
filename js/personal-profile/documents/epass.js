@@ -13,7 +13,7 @@ let formData = {
   birth_date: '',
   gender: '',
   epass_number: '',
-  personal_code_ref: ''
+  personal_code: ''
 }
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
@@ -97,14 +97,16 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_epass')
+        .schema('documents')
+        .from('epass')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_epass')
+        .schema('documents')
+        .from('epass')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
@@ -156,7 +158,7 @@ function renderCard(data) {
   if (ageEl) ageEl.textContent = calculateAge(data.birth_date)
 
   setText('gender', data.gender || '—')
-  setText('personalCode', data.personal_code_ref || userPersonalCode || '—')
+  setText('personalCode', data.personal_code || userPersonalCode || '—')
   setText('epassNumber', data.epass_number || '—')
 
   // Фото
@@ -249,7 +251,7 @@ function renderModalForm() {
     { id: 'edit_birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date },
     { id: 'edit_gender', label: 'Пол', type: 'select', options: ['Мужской', 'Женский'], value: formData.gender },
     { id: 'edit_epass_number', label: 'Номер E-Pass', type: 'text', value: formData.epass_number },
-    { id: 'edit_personal_code_ref', label: 'Личный код', type: 'text', value: userPersonalCode, readonly: true }
+    { id: 'edit_personal_code', label: 'Личный код', type: 'text', value: userPersonalCode, readonly: true }
   ]
 
   fields.forEach(field => {
@@ -296,7 +298,7 @@ function collectFormData() {
     birth_date: getVal('edit_birth_date'),
     gender: getVal('edit_gender'),
     epass_number: getVal('edit_epass_number'),
-    personal_code_ref: getVal('edit_personal_code_ref') || userPersonalCode
+    personal_code: getVal('edit_personal_code') || userPersonalCode
   }
 }
 
@@ -328,14 +330,16 @@ async function saveDocument() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_epass')
+        .schema('documents')
+        .from('epass')
         .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
       dataToSend.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_epass')
+        .schema('documents')
+        .from('epass')
         .insert([dataToSend])
         .select()
     }
@@ -360,7 +364,7 @@ function openAddModal() {
     birth_date: userProfile?.date_of_birth || '',
     gender: userProfile?.gender || 'Мужской',
     epass_number: '',
-    personal_code_ref: userPersonalCode || ''
+    personal_code: userPersonalCode || ''
   }
   openModal('Добавление E-Pass')
 }
@@ -373,7 +377,7 @@ function openEditModal() {
     birth_date: documentData.birth_date || '',
     gender: documentData.gender || '',
     epass_number: documentData.epass_number || '',
-    personal_code_ref: documentData.personal_code_ref || userPersonalCode || ''
+    personal_code: documentData.personal_code || userPersonalCode || ''
   }
   openModal('Редактирование E-Pass')
 }

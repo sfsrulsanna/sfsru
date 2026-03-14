@@ -87,23 +87,24 @@ async function loadAllDocuments() {
   if (!personalCode) return []
 
   const tables = [
-    { type: 'passport', table: 'document_passport' },
-    { type: 'foreignPassport', table: 'document_foreign_passport' },
-    { type: 'inn', table: 'documents_inn' },
-    { type: 'nss', table: 'documents_nss' },
-    { type: 'driverLicense', table: 'documents_driver_license' },
-    { type: 'idCard', table: 'documents_idcard' },
-    { type: 'militaryId', table: 'documents_military_id' },
-    { type: 'oms', table: 'documents_oms' },
-    { type: 'pension', table: 'documents_pension' },
-    { type: 'disability', table: 'documents_disability' },
-    { type: 'internationalDriving', table: 'documents_international_driving' }
+    { type: 'passport', table: 'passport' },
+    { type: 'foreignPassport', table: 'foreign_passport' },
+    { type: 'inn', table: 'inn' },
+    { type: 'nss', table: 'nss' },
+    { type: 'driverLicense', table: 'driver_license' },
+    { type: 'idCard', table: 'idcard' },
+    { type: 'militaryId', table: 'military_id' },
+    { type: 'oms', table: 'oms' },
+    { type: 'pension', table: 'pension' },
+    { type: 'disability', table: 'disability' },
+    { type: 'internationalDriving', table: 'international_driving' }
   ]
 
   let allDocs = []
 
   for (const t of tables) {
     const { data, error } = await supabase
+      .schema('documents')
       .from(t.table)
       .select('*')
       .eq('personal_code', personalCode)
@@ -214,13 +215,13 @@ function renderDocumentsGrid(documents) {
 
 // ==================== СПЕЦИАЛЬНЫЕ ДОКУМЕНТЫ ====================
 const specialDocTypes = [
-  { table: 'documents_president', title: 'Удостоверение Президента СФСРЮ', url: 'president.html' },
-  { table: 'documents_vice_president', title: 'Удостоверение Вице-президента СФСРЮ', url: 'vice-president.html' },
-  { table: 'documents_council_chair', title: 'Удостоверение Председателя Совета Федерации СФСРЮ', url: 'council-chair.html' },
-  { table: 'documents_gov_chair', title: 'Удостоверение Председателя Правительства СФСРЮ', url: 'gov-chair.html' },
-  { table: 'documents_deputy', title: 'Удостоверение депутата Совета Федерации СФСРЮ', url: 'deputy.html' },
-  { table: 'documents_judge', title: 'Удостоверение судьи', url: 'judge.html' },
-  { table: 'documents_lawyer', title: 'Удостоверение адвоката', url: 'lawyer.html' }
+  { table: 'president', title: 'Удостоверение Президента СФСРЮ', url: 'president.html' },
+  { table: 'vice_president', title: 'Удостоверение Вице-президента СФСРЮ', url: 'vice-president.html' },
+  { table: 'council_chair', title: 'Удостоверение Председателя Совета Федерации СФСРЮ', url: 'council-chair.html' },
+  { table: 'gov_chair', title: 'Удостоверение Председателя Правительства СФСРЮ', url: 'gov-chair.html' },
+  { table: 'deputy', title: 'Удостоверение депутата Совета Федерации СФСРЮ', url: 'deputy.html' },
+  { table: 'judge', title: 'Удостоверение судьи', url: 'judge.html' },
+  { table: 'lawyer', title: 'Удостоверение адвоката', url: 'lawyer.html' }
 ]
 
 async function loadSpecialDocuments() {
@@ -228,6 +229,7 @@ async function loadSpecialDocuments() {
   const found = []
   for (const spec of specialDocTypes) {
     const { data, error } = await supabase
+      .schema('documents')
       .from(spec.table)
       .select('id')
       .eq('personal_code', personalCode)

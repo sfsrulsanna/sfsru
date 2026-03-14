@@ -88,14 +88,16 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_oms')
+        .schema('documents')
+        .from('oms')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_oms')
+        .schema('documents')
+        .from('oms')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
@@ -298,7 +300,7 @@ function renderStep1() {
     </div>
     <div class="form-group">
       <label>Личный код</label>
-      <input type="text" id="edit_personal_code_ref" class="form-input" value="${userPersonalCode || ''}" readonly>
+      <input type="text" id="edit_personal_code" class="form-input" value="${userPersonalCode || ''}" readonly>
     </div>
   `
 }
@@ -413,7 +415,7 @@ function collectStep1Data() {
   formData.gender = document.getElementById('edit_gender')?.value || ''
   formData.oms_number = document.getElementById('edit_oms_number')?.value.trim() || ''
   formData.issue_date = document.getElementById('edit_issue_date')?.value || ''
-  formData.personal_code_ref = document.getElementById('edit_personal_code_ref')?.value.trim() || userPersonalCode
+  formData.personal_code = document.getElementById('edit_personal_code')?.value.trim() || userPersonalCode
 }
 
 // --- Навигация ---
@@ -463,14 +465,16 @@ async function saveDocument() {
     let result
     if (currentDocId) {
       result = await supabase
-        .from('documents_oms')
+        .schema('documents')
+        .from('oms')
         .update(dataToSend)
         .eq('id', currentDocId)
         .select()
     } else {
       dataToSend.created_at = new Date().toISOString()
       result = await supabase
-        .from('documents_oms')
+        .schema('documents')
+        .from('oms')
         .insert([dataToSend])
         .select()
     }

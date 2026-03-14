@@ -17,7 +17,7 @@ let formData = {
   card_number: '',
   issued_by: '',
   department_code: '',
-  personal_code_ref: '',
+  personal_code: '',
   oms_policy_number: '',
   blood_group: '',
   rh_factor: '',
@@ -98,14 +98,16 @@ async function loadData() {
     let data = null
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_idcard')
+        .schema('documents')
+        .from('idcard')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_idcard')
+        .schema('documents')
+        .from('idcard')
         .select('*')
         .eq('personal_code', userPersonalCode)
         .order('created_at', { ascending: false })
@@ -166,7 +168,7 @@ function renderCard(data) {
   document.getElementById('backCardNumber').textContent = data.card_number || '—'
   document.getElementById('departmentCode').textContent = data.department_code || '—'
   document.getElementById('issuedBy').textContent = data.issued_by || '—'
-  document.getElementById('personalCode').textContent = data.personal_code_ref || userPersonalCode || '—'
+  document.getElementById('personalCode').textContent = data.personal_code || userPersonalCode || '—'
   document.getElementById('oms').textContent = data.oms_policy_number || '—'
   const blood = data.blood_group ? (data.rh_factor ? `${data.blood_group} ${data.rh_factor}` : data.blood_group) : '—'
   document.getElementById('blood').textContent = blood
@@ -378,7 +380,7 @@ function createMainDataForm() {
     { id: 'edit_card_number', label: 'Номер карты', type: 'text', value: formData.card_number },
     { id: 'edit_issued_by', label: 'Кем выдан', type: 'text', value: formData.issued_by },
     { id: 'edit_department_code', label: 'Код подразделения', type: 'text', value: formData.department_code },
-    { id: 'edit_personal_code_ref', label: 'Личный код', type: 'text', value: userPersonalCode, readonly: true },
+    { id: 'edit_personal_code', label: 'Личный код', type: 'text', value: userPersonalCode, readonly: true },
     { id: 'edit_oms_policy_number', label: 'Номер полиса ОМС', type: 'text', value: formData.oms_policy_number },
     { id: 'edit_blood_group', label: 'Группа крови', type: 'text', value: formData.blood_group },
     { id: 'edit_rh_factor', label: 'Резус-фактор', type: 'text', value: formData.rh_factor },
@@ -574,7 +576,7 @@ function collectMainDataFromForm() {
   formData.card_number = document.getElementById('edit_card_number')?.value || ''
   formData.issued_by = document.getElementById('edit_issued_by')?.value || ''
   formData.department_code = document.getElementById('edit_department_code')?.value || ''
-  formData.personal_code_ref = document.getElementById('edit_personal_code_ref')?.value || userPersonalCode
+  formData.personal_code = document.getElementById('edit_personal_code')?.value || userPersonalCode
   formData.oms_policy_number = document.getElementById('edit_oms_policy_number')?.value || ''
   formData.blood_group = document.getElementById('edit_blood_group')?.value || ''
   formData.rh_factor = document.getElementById('edit_rh_factor')?.value || ''
@@ -597,7 +599,7 @@ function openAddModal() {
     card_number: '',
     issued_by: '',
     department_code: '',
-    personal_code_ref: userPersonalCode || '',
+    personal_code: userPersonalCode || '',
     oms_policy_number: '',
     blood_group: '',
     rh_factor: '',
@@ -623,7 +625,7 @@ function openEditModal() {
     card_number: documentData.card_number || '',
     issued_by: documentData.issued_by || '',
     department_code: documentData.department_code || '',
-    personal_code_ref: documentData.personal_code_ref || userPersonalCode || '',
+    personal_code: documentData.personal_code || userPersonalCode || '',
     oms_policy_number: documentData.oms_policy_number || '',
     blood_group: documentData.blood_group || '',
     rh_factor: documentData.rh_factor || '',
@@ -661,14 +663,16 @@ async function saveDocument() {
   let result
   if (currentDocId) {
     result = await supabase
-      .from('documents_idcard')
+      .schema('documents')
+      .from('idcard')
       .update(dataToSend)
       .eq('id', currentDocId)
       .select()
   } else {
     dataToSend.created_at = new Date().toISOString()
     result = await supabase
-      .from('documents_idcard')
+      .schema('documents')
+      .from('idcard')
       .insert([dataToSend])
       .select()
   }
