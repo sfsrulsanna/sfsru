@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Мои заявления — СФСРЮ</title>
+    <!-- favicons (как в образце) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <!-- Общие стили сайта -->
+    <link rel="stylesheet" href="../../css/style.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+
+    <!-- Специфические стили -->
+    <style>
+        .applications-list {
+            margin-top: 2rem;
+        }
+        .application-item {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            transition: transform 0.2s;
+        }
+        .application-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+        .application-item p {
+            margin: 0.6rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: baseline;
+        }
+        .application-item p strong {
+            width: 160px;
+            color: #555;
+            font-weight: 600;
+        }
+        .application-item p span {
+            flex: 1;
+            color: #333;
+        }
+        .status-submitted {
+            color: #fd7e14;
+            font-weight: 600;
+            background: #fff3e0;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+        }
+        .status-in_progress {
+            color: #007bff;
+            font-weight: 600;
+            background: #e7f1ff;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+        }
+        .status-completed {
+            color: #28a745;
+            font-weight: 600;
+            background: #e2f0e2;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+        }
+        .status-rejected {
+            color: #dc3545;
+            font-weight: 600;
+            background: #fbe9eb;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+        }
+        .application-item a {
+            color: #7b091a;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .application-item a:hover {
+            text-decoration: underline;
+        }
+        .loading, .no-applications {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-size: 1.2rem;
+        }
+        @media (max-width: 600px) {
+            .application-item p {
+                flex-direction: column;
+            }
+            .application-item p strong {
+                width: auto;
+                margin-bottom: 0.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ШАПКА (из образца) -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная</a></li>
+                    <li><a href="../../news.html">Новости</a></li>
+                    <li><a href="../../wiki/">Википедия</a></li>
+                    <li><a href="../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../services.html">Услуги</a></li>
+                    <li><a href="../../profile.html" class="active">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <h1>Мои заявления</h1>
+            <div id="loading" class="loading">Загрузка...</div>
+            <div id="applicationsList" class="applications-list" style="display: none;"></div>
+            <div id="noApplications" class="no-applications" style="display: none;">У вас пока нет заявлений.</div>
+        </div>
+    </main>
+
+    <!-- ПОДВАЛ (из образца) -->
+    <footer class="footer">
+        <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <!-- Скрипты -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script type="importmap">
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+    </script>
+    <script type="module" src="../../js/supabase-config.js"></script>
+    <script src="../../js/mob-menu.js"></script>
+
+    <!-- Логика страницы -->
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js'
+
+        async function loadApplications() {
+            const { data: { session } } = await supabase.auth.getSession()
+            if (!session) {
+                window.location.href = '/login.html'
+                return
+            }
+
+            const { data: profile, error: profileError } = await supabase
+                .from('users')
+                .select('personal_code')
+                .eq('id', session.user.id)
+                .single()
+            if (profileError || !profile) {
+                console.error('Ошибка загрузки профиля:', profileError)
+                document.getElementById('loading').textContent = 'Ошибка загрузки профиля'
+                return
+            }
+
+            const { data: applications, error } = await supabase
+                .schema('services')
+                .from('applications')
+                .select('*')
+                .eq('personal_code', profile.personal_code)
+                .order('submitted_at', { ascending: false })
+
+            const loading = document.getElementById('loading')
+            const listEl = document.getElementById('applicationsList')
+            const noEl = document.getElementById('noApplications')
+
+            if (error) {
+                console.error(error)
+                loading.textContent = 'Ошибка загрузки'
+                return
+            }
+
+            loading.style.display = 'none'
+
+            if (!applications || applications.length === 0) {
+                noEl.style.display = 'block'
+                return
+            }
+
+            listEl.style.display = 'block'
+            listEl.innerHTML = applications.map(app => {
+                const statusMap = {
+                    submitted: 'Отправлено',
+                    in_progress: 'В работе',
+                    completed: 'Выполнено',
+                    rejected: 'Отказано'
+                }
+                const statusText = statusMap[app.status] || app.status
+                const serviceNames = {
+                    epass_issue: 'Получение E-Pass'
+                }
+                const serviceName = serviceNames[app.service_type] || app.service_type
+                let resultLink = ''
+                if (app.result_document_url) {
+                    resultLink = `<p><a href="${app.result_document_url}" target="_blank">Документ результата</a></p>`
+                }
+                return `
+                    <div class="application-item">
+                        <p><strong>Услуга:</strong> <span>${serviceName}</span></p>
+                        <p><strong>Номер заявления:</strong> <span>${app.id}</span></p>
+                        <p><strong>Дата подачи:</strong> <span>${new Date(app.submitted_at).toLocaleString()}</span></p>
+                        <p><strong>Статус:</strong> <span class="status-${app.status}">${statusText}</span></p>
+                        ${app.comment ? `<p><strong>Комментарий:</strong> <span>${app.comment}</span></p>` : ''}
+                        ${resultLink}
+                    </div>
+                `
+            }).join('')
+        }
+
+        document.addEventListener('DOMContentLoaded', loadApplications)
+    </script>
+</body>
+</html>

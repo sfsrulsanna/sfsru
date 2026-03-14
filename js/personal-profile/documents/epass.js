@@ -6,15 +6,6 @@ let documentData = {}
 let userPersonalCode = null
 let userProfile = null
 let userId = null
-let formData = {
-  surname: '',
-  name: '',
-  patronymic: '',
-  birth_date: '',
-  gender: '',
-  epass_number: '',
-  personal_code: ''
-}
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function formatDate(dateString) {
@@ -36,9 +27,7 @@ function calculateAge(birthDate) {
   const birth = new Date(birthDate)
   let age = today.getFullYear() - birth.getFullYear()
   const m = today.getMonth() - birth.getMonth()
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
-    age--
-  }
+  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--
   return `(${age} лет)`
 }
 
@@ -56,14 +45,20 @@ function getStatusClass(status) {
   return 'document-status'
 }
 
-function escapeHTML(str) {
-  if (!str) return ''
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
+// ==================== ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ПОДПИСАННОЙ ССЫЛКИ НА ФОТО ====================
+async function getSignedPhotoUrl(personalCode) {
+  if (!personalCode) return null
+  try {
+    const filePath = `epass/${encodeURIComponent(personalCode)}/photo.jpg`
+    const { data, error } = await supabase.storage
+      .from('documents-files')
+      .createSignedUrl(filePath, 3600) // 1 час
+    if (error) throw error
+    return data.signedUrl
+  } catch (err) {
+    console.error('Ошибка получения signed URL для фото:', err.message)
+    return null
+  }
 }
 
 // ==================== ЗАГРУЗКА ДАННЫХ ====================
@@ -119,18 +114,21 @@ async function loadData() {
     const loadingEl = document.getElementById('loading')
     const contentEl = document.getElementById('content')
     const noDataEl = document.getElementById('noData')
+    const actionBtn = document.getElementById('actionBtn')
 
     if (data) {
       documentData = data
       currentDocId = data.id
-      renderCard(documentData)
+      await renderCard(documentData)
       loadingEl.style.display = 'none'
       contentEl.style.display = 'block'
       noDataEl.style.display = 'none'
+      if (actionBtn) actionBtn.style.display = 'none' // скрываем кнопку получения, если документ уже есть
     } else {
       loadingEl.style.display = 'none'
       contentEl.style.display = 'none'
       noDataEl.style.display = 'block'
+      if (actionBtn) actionBtn.style.display = 'inline-block' // показываем кнопку для получения
     }
   } catch (err) {
     console.error('Необработанная ошибка в loadData:', err)
@@ -139,19 +137,16 @@ async function loadData() {
 }
 
 // ==================== ОТРИСОВКА КАРТОЧКИ ====================
-function renderCard(data) {
-  // Устанавливаем значения полей
+async function renderCard(data) {
   const setText = (id, text) => {
     const el = document.getElementById(id)
     if (el) el.textContent = text
-    else console.warn(`Element #${id} not found`)
   }
 
   setText('surname', data.surname || '—')
   setText('name', data.name || '—')
   setText('patronymic', data.patronymic || '—')
   
-  // Дата рождения и возраст отдельно
   const birthEl = document.getElementById('birthDate')
   if (birthEl) birthEl.textContent = formatDate(data.birth_date)
   const ageEl = document.getElementById('age')
@@ -162,14 +157,17 @@ function renderCard(data) {
   setText('epassNumber', data.epass_number || '—')
 
   // Фото
-  const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
   const photoImg = document.getElementById('userPhoto')
   if (photoImg) {
-    if (safeCode) {
-      photoImg.src = `../../images/avatars/${safeCode}.jpg`
-      photoImg.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
-    } else {
-      photoImg.src = '../../images/default-avatar.png'
+    photoImg.src = '../../images/default-avatar.png'
+    if (userPersonalCode) {
+      const signedUrl = await getSignedPhotoUrl(userPersonalCode)
+      if (signedUrl) {
+        const img = new Image()
+        img.onload = () => { photoImg.src = signedUrl }
+        img.onerror = () => { photoImg.src = '../../images/default-avatar.png' }
+        img.src = signedUrl
+      }
     }
   }
 
@@ -189,207 +187,30 @@ function renderCard(data) {
     }
   }
 
-  // --- Блок статуса и кнопок ---
+  // Блок статуса (без кнопок редактирования)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
-  const statusAndEdit = document.createElement('div')
-  statusAndEdit.className = 'status-and-edit'
-
+  const statusContainer = document.createElement('div')
+  statusContainer.className = 'status-container'
   const statusSpan = document.createElement('span')
   statusSpan.className = statusClass
   statusSpan.textContent = statusText
-  statusAndEdit.appendChild(statusSpan)
-
-  const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/epass/'
-  replaceLink.className = 'edit-btn'
-  replaceLink.textContent = 'Заменить E-Pass'
-  statusAndEdit.appendChild(replaceLink)
-
-  if (data.status !== 'verified') {
-    const editBtn = document.createElement('button')
-    editBtn.className = 'edit-btn'
-    editBtn.id = 'editBtn'
-    editBtn.textContent = 'Изменить данные'
-    editBtn.addEventListener('click', () => {
-      formData = { ...data }
-      openEditModal()
-    })
-    statusAndEdit.appendChild(editBtn)
-  }
+  statusContainer.appendChild(statusSpan)
 
   const card = document.querySelector('.epass-card')
   if (card && card.parentNode) {
-    card.parentNode.insertBefore(statusAndEdit, card.nextSibling)
+    card.parentNode.insertBefore(statusContainer, card.nextSibling)
   }
-}
-
-// ==================== МОДАЛЬНОЕ ОКНО ====================
-window.closeModal = function() {
-  const overlay = document.getElementById('modalOverlay')
-  if (overlay) overlay.classList.remove('active')
-}
-
-function openModal(title) {
-  const titleEl = document.getElementById('modalTitle')
-  if (titleEl) titleEl.textContent = title
-  const overlay = document.getElementById('modalOverlay')
-  if (overlay) overlay.classList.add('active')
-  renderModalForm()
-}
-
-function renderModalForm() {
-  const modalBody = document.getElementById('modalBody')
-  if (!modalBody) return
-
-  modalBody.innerHTML = ''
-  const fields = [
-    { id: 'edit_surname', label: 'Фамилия', type: 'text', value: formData.surname },
-    { id: 'edit_name', label: 'Имя', type: 'text', value: formData.name },
-    { id: 'edit_patronymic', label: 'Отчество', type: 'text', value: formData.patronymic },
-    { id: 'edit_birth_date', label: 'Дата рождения', type: 'date', value: formData.birth_date },
-    { id: 'edit_gender', label: 'Пол', type: 'select', options: ['Мужской', 'Женский'], value: formData.gender },
-    { id: 'edit_epass_number', label: 'Номер E-Pass', type: 'text', value: formData.epass_number },
-    { id: 'edit_personal_code', label: 'Личный код', type: 'text', value: userPersonalCode, readonly: true }
-  ]
-
-  fields.forEach(field => {
-    const group = document.createElement('div')
-    group.className = 'form-group'
-
-    const label = document.createElement('label')
-    label.htmlFor = field.id
-    label.textContent = field.label
-    group.appendChild(label)
-
-    if (field.type === 'select') {
-      const select = document.createElement('select')
-      select.id = field.id
-      select.className = 'form-input'
-      field.options.forEach(opt => {
-        const option = document.createElement('option')
-        option.value = opt
-        option.textContent = opt
-        if (opt === field.value) option.selected = true
-        select.appendChild(option)
-      })
-      group.appendChild(select)
-    } else {
-      const input = document.createElement('input')
-      input.type = field.type
-      input.id = field.id
-      input.className = 'form-input'
-      input.value = field.value || ''
-      if (field.readonly) input.readOnly = true
-      group.appendChild(input)
-    }
-
-    modalBody.appendChild(group)
-  })
-}
-
-function collectFormData() {
-  const getVal = (id) => (document.getElementById(id)?.value || '').trim()
-  return {
-    surname: getVal('edit_surname'),
-    name: getVal('edit_name'),
-    patronymic: getVal('edit_patronymic'),
-    birth_date: getVal('edit_birth_date'),
-    gender: getVal('edit_gender'),
-    epass_number: getVal('edit_epass_number'),
-    personal_code: getVal('edit_personal_code') || userPersonalCode
-  }
-}
-
-async function saveDocument() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { alert('Ошибка авторизации'); return }
-    if (!userPersonalCode) { alert('Личный код не загружен'); return }
-
-    const newData = collectFormData()
-    if (!newData.epass_number) {
-      alert('Номер E-Pass обязателен')
-      return
-    }
-
-    const cleanData = { ...newData }
-    Object.keys(cleanData).forEach(key => {
-      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
-    })
-
-    const dataToSend = {
-      ...cleanData,
-      user_id: session.user.id,
-      personal_code: userPersonalCode,
-      status: 'oncheck',
-      updated_at: new Date().toISOString()
-    }
-
-    let result
-    if (currentDocId) {
-      result = await supabase
-        .schema('documents')
-        .from('epass')
-        .update(dataToSend)
-        .eq('id', currentDocId)
-        .select()
-    } else {
-      dataToSend.created_at = new Date().toISOString()
-      result = await supabase
-        .schema('documents')
-        .from('epass')
-        .insert([dataToSend])
-        .select()
-    }
-
-    if (result.error) throw result.error
-
-    window.closeModal()
-    const newId = currentDocId || result.data[0].id
-    window.location.href = `epass.html?id=${newId}`
-  } catch (err) {
-    console.error('Ошибка сохранения:', err)
-    alert('Ошибка сохранения: ' + err.message)
-  }
-}
-
-// ==================== ОТКРЫТИЕ МОДАЛОК ====================
-function openAddModal() {
-  formData = {
-    surname: userProfile?.surname || '',
-    name: userProfile?.name || '',
-    patronymic: userProfile?.patronymic || '',
-    birth_date: userProfile?.date_of_birth || '',
-    gender: userProfile?.gender || 'Мужской',
-    epass_number: '',
-    personal_code: userPersonalCode || ''
-  }
-  openModal('Добавление E-Pass')
-}
-
-function openEditModal() {
-  formData = {
-    surname: documentData.surname || '',
-    name: documentData.name || '',
-    patronymic: documentData.patronymic || '',
-    birth_date: documentData.birth_date || '',
-    gender: documentData.gender || '',
-    epass_number: documentData.epass_number || '',
-    personal_code: documentData.personal_code || userPersonalCode || ''
-  }
-  openModal('Редактирование E-Pass')
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
-  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
+  const actionBtn = document.getElementById('actionBtn')
+  if (actionBtn) {
+    actionBtn.addEventListener('click', () => {
+      window.location.href = 'apply.html' // страница подачи заявления
+    })
+  }
 })
-
-// Экспорт в глобальную область
-window.openAddModal = openAddModal
-window.openEditModal = openEditModal
-window.closeModal = closeModal

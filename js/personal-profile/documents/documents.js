@@ -23,6 +23,22 @@ function safeSetText(id, text) {
   if (el) el.textContent = text
 }
 
+// ==================== ФУНКЦИЯ ДЛЯ ПОЛУЧЕНИЯ ПОДПИСАННОЙ ССЫЛКИ НА ФОТО ====================
+async function getSignedPhotoUrl(personalCode) {
+  if (!personalCode) return null
+  try {
+    const filePath = `epass/${encodeURIComponent(personalCode)}/photo.jpg`
+    const { data, error } = await supabase.storage
+      .from('documents-files')
+      .createSignedUrl(filePath, 3600) // 1 час
+    if (error) throw error
+    return data.signedUrl
+  } catch (err) {
+    console.error('Ошибка получения signed URL для фото:', err.message)
+    return null
+  }
+}
+
 // ==================== ЗАГРУЗКА ПРОФИЛЯ ====================
 async function loadUserProfile() {
   const { data: { session } } = await supabase.auth.getSession()
@@ -44,10 +60,10 @@ async function loadUserProfile() {
 
   userProfile = data
   personalCode = data.personal_code
-  renderUserInfo()
+  await renderUserInfo() // ждём загрузки фото
 }
 
-function renderUserInfo() {
+async function renderUserInfo() {
   if (!userProfile) return
   const fullName = `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() || '—'
   safeSetText('fullName', fullName)
@@ -56,18 +72,26 @@ function renderUserInfo() {
   safeSetText('gender', userProfile.gender || '—')
   safeSetText('personalCode', userProfile.personal_code || '—')
 
-  // Аватар
+  // Аватар из приватного bucket
   const avatarImg = document.getElementById('userAvatar')
-  if (avatarImg && personalCode) {
-    const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '')
-    const imgUrl = `../../images/avatars/${safeCode}.jpg`
-    const img = new Image()
-    img.onload = () => { avatarImg.src = imgUrl }
-    img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
-    img.src = imgUrl
+  if (avatarImg) {
+    avatarImg.src = '../../images/default-avatar.png' // заглушка на время загрузки
+    if (personalCode) {
+      const signedUrl = await getSignedPhotoUrl(personalCode)
+      if (signedUrl) {
+        const img = new Image()
+        img.onload = () => { avatarImg.src = signedUrl }
+        img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
+        img.src = signedUrl
+      } else {
+        avatarImg.src = '../../images/default-avatar.png'
+      }
+    } else {
+      avatarImg.src = '../../images/default-avatar.png'
+    }
   }
 
-  // QR-код
+  // QR-код (остаётся без изменений)
   const qrContainer = document.getElementById('userQrCode')
   if (qrContainer && personalCode) {
     qrContainer.innerHTML = ''
