@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление услугами — Админ панель СФСРЮ</title>
+    <!-- favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: #7b091a;
+        }
+        .stat-label {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .btn-large {
+            padding: 1rem 2rem;
+            font-size: 1.1rem;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ / Услуги (админ)</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../index.html">Главная админки</a></li>
+                    <li><a href="index.html" class="active">Услуги</a></li>
+                    <li><a href="../certificates/index.html">Свидетельства</a></li>
+                    <li><a href="#">Документы</a></li>
+                    <li><a href="#">Адреса</a></li>
+                    <li><a href="#">Регистры</a></li>
+                    <li><a href="#">Законы</a></li>
+                    <li><a href="../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Управление услугами</h1>
+            <p class="page-description">Статистика и навигация по заявлениям на получение паспорта</p>
+
+            <div class="stats-grid" id="stats">
+                <div class="stat-card"><div class="stat-number" id="totalApps">0</div><div class="stat-label">Всего заявлений</div></div>
+                <div class="stat-card"><div class="stat-number" id="submittedApps">0</div><div class="stat-label">Отправлено в ведомство</div></div>
+                <div class="stat-card"><div class="stat-number" id="processingApps">0</div><div class="stat-label">В работе</div></div>
+                <div class="stat-card"><div class="stat-number" id="completedApps">0</div><div class="stat-label">Завершено</div></div>
+                <div class="stat-card"><div class="stat-number" id="rejectedApps">0</div><div class="stat-label">Отказано</div></div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="all.html" class="btn btn-primary btn-large">Все услуги</a>
+                <a href="pending.html" class="btn btn-primary btn-large">Не завершённые</a>
+                <a href="processing.html" class="btn btn-primary btn-large">В работе</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script type="module">
+        import { supabase } from '../../../js/supabase-config.js';
+        import { requireAdmin } from '../certificates/js/certificates-common.js';
+
+        async function loadStats() {
+            const { count: total, error: e1 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true });
+            const { count: submitted, error: e2 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'submitted');
+            const { count: processing, error: e3 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'processing');
+            const { count: completed, error: e4 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'completed');
+            const { count: rejected, error: e5 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'rejected');
+
+            document.getElementById('totalApps').textContent = total ?? 0;
+            document.getElementById('submittedApps').textContent = submitted ?? 0;
+            document.getElementById('processingApps').textContent = processing ?? 0;
+            document.getElementById('completedApps').textContent = completed ?? 0;
+            document.getElementById('rejectedApps').textContent = rejected ?? 0;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+            await loadStats();
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+        });
+    </script>
+</body>
+</html>
