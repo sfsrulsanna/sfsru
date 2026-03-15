@@ -18,13 +18,13 @@ let formData = {
     email: ''
 };
 
-// Генерация номера заявления: П-XXXXXXXXX (9 случайных цифр)
+// Генерация номера заявления: P-XXXXXXXXX (латинская P + 9 цифр)
 function generateApplicationNumber() {
     const digits = Math.floor(100000000 + Math.random() * 900000000);
-    return `П-${digits}`;
+    return `P-${digits}`;
 }
 
-// Загрузка профиля пользователя
+// Загрузка профиля пользователя (с телефоном и email)
 async function loadUserProfile() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -33,7 +33,7 @@ async function loadUserProfile() {
     }
     const { data, error } = await supabase
         .from('users')
-        .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+        .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender, phone, email')
         .eq('id', session.user.id)
         .single();
     if (error) {
@@ -42,6 +42,8 @@ async function loadUserProfile() {
     }
     userProfile = data;
     userPersonalCode = data.personal_code;
+    formData.phone = data.phone || '';
+    formData.email = data.email || '';
     return true;
 }
 
@@ -89,6 +91,18 @@ function goToStep(step) {
     document.querySelector(`.step-content[data-step="${step}"]`).classList.remove('hidden');
     currentStep = step;
     updateSteps();
+
+    // Действия при показе конкретных шагов
+    if (step === 4) {
+        renderProfileData();
+    }
+    if (step === 5) {
+        document.getElementById('phone').value = formData.phone;
+        document.getElementById('email').value = formData.email;
+    }
+    if (step === 8) {
+        prepareSummary();
+    }
 }
 
 // Валидация текущего шага перед переходом
@@ -102,7 +116,6 @@ async function validateStep(step) {
             }
             formData.reason = reason.value;
             if (reason.value === 'name_changed') {
-                // Проверим заполнение полей свидетельства
                 const certNumber = document.getElementById('certificateNumber').value.trim();
                 const certDate = document.getElementById('certificateDate').value;
                 const certIssued = document.getElementById('certificateIssuedBy').value.trim();
@@ -153,7 +166,7 @@ function showError(msg) {
 
 // Загрузка фото
 async function uploadPhoto(file) {
-    if (!file) return;
+    if (!file) return false;
     if (file.size > 1024 * 1024) {
         showError('Фото должно быть не более 1 МБ');
         return false;
@@ -162,7 +175,6 @@ async function uploadPhoto(file) {
         showError('Только JPG формат');
         return false;
     }
-    // Генерируем номер заявления при первой загрузке
     if (!applicationNumber) {
         applicationNumber = generateApplicationNumber();
     }
@@ -208,7 +220,7 @@ function prepareSummary() {
     }
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code}</td></tr>`;
     html += `<tr><th>ФИО</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
-    if (document.getElementById('newDataFields').classList.contains('hidden') === false) {
+    if (!document.getElementById('newDataFields').classList.contains('hidden')) {
         const newSurname = document.getElementById('newSurname').value;
         const newName = document.getElementById('newName').value;
         const newPatr = document.getElementById('newPatronymic').value;
@@ -253,7 +265,7 @@ async function generatePDF() {
     if (formData.reasonDetails) {
         data.push(['Данные свидетельства', `${formData.reasonDetails.type}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}`]);
     }
-    if (document.getElementById('newDataFields').classList.contains('hidden') === false) {
+    if (!document.getElementById('newDataFields').classList.contains('hidden')) {
         const newSurname = document.getElementById('newSurname').value;
         const newName = document.getElementById('newName').value;
         const newPatr = document.getElementById('newPatronymic').value;
@@ -288,7 +300,6 @@ async function generatePDF() {
 
 // Отправка заявления в БД
 async function submitApplication() {
-    const reasonText = document.querySelector('input[name="reason"]:checked')?.parentElement?.textContent?.trim() || formData.reason;
     const newData = {};
     if (!document.getElementById('newDataFields').classList.contains('hidden')) {
         newData.surname = document.getElementById('newSurname').value;
@@ -335,7 +346,6 @@ async function submitApplication() {
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await loadUserProfile()) return;
 
-    // Загружаем отделения МВД для шага 7
     try {
         await loadMvd();
     } catch (e) {
@@ -346,18 +356,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('.next-step').forEach(btn => {
         btn.addEventListener('click', async () => {
             if (await validateStep(currentStep)) {
-                // Особые действия при переходе
                 if (currentStep === 3) {
-                    // Обновляем цену в зависимости от причины
                     const reason = formData.reason;
                     const price = (reason === 'lost' || reason === 'damaged') ? 2000 : 300;
                     document.getElementById('priceDisplay').textContent = price;
-                }
-                if (currentStep === 4) {
-                    renderProfileData();
-                }
-                if (currentStep === 8) {
-                    prepareSummary();
                 }
                 goToStep(currentStep + 1);
             }
@@ -372,11 +374,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('input[name="reason"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const details = document.getElementById('reasonDetails');
-            if (e.target.value === 'name_changed') {
-                details.classList.remove('hidden');
-            } else {
-                details.classList.add('hidden');
-            }
+            details.classList.toggle('hidden', e.target.value !== 'name_changed');
         });
     });
 
@@ -389,21 +387,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
         const success = await uploadPhoto(fileInput.files[0]);
         if (success) {
-            // Показываем превью
             const reader = new FileReader();
             reader.onload = (e) => {
                 document.getElementById('previewImg').src = e.target.result;
                 document.getElementById('photoPreview').classList.remove('hidden');
             };
             reader.readAsDataURL(fileInput.files[0]);
-            // Переходим на следующий шаг
             goToStep(currentStep + 1);
         }
     });
 
     // Отправка заявления
     document.getElementById('submitApplication').addEventListener('click', async () => {
-        // Сначала сгенерируем PDF
         await generatePDF();
         const success = await submitApplication();
         if (success) {
@@ -411,4 +406,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             goToStep(9);
         }
     });
+
+    // Начальный шаг
+    goToStep(1);
 });
