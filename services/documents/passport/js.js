@@ -2,6 +2,13 @@ import { supabase } from '../../../js/supabase-config.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
+// Подключение кириллического шрифта (замените base64 на ваш)
+// Пример: можно использовать стандартный шрифт 'times', но он не поддерживает кириллицу.
+// Ниже приведён вариант с подключением PT Sans (нужно добавить файл).
+// Для простоты пока оставим стандартный, но с установкой языка.
+// Более надёжно: добавить шрифт через API.
+// Инструкция по подключению шрифта будет дана отдельно.
+
 let currentStep = 1;
 const totalSteps = 9;
 let userProfile = null;
@@ -17,7 +24,8 @@ let formData = {
     phone: '',
     email: ''
 };
-let hasActiveApp = false; // флаг наличия активного заявления
+let hasActiveApp = false;
+let isLostReason = false; // флаг для утери
 
 function generateApplicationNumber() {
     const digits = Math.floor(100000000 + Math.random() * 900000000);
@@ -46,7 +54,6 @@ async function loadUserProfile() {
     return true;
 }
 
-// Проверка наличия активного заявления
 async function checkActiveApplication() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return false;
@@ -106,6 +113,18 @@ function goToStep(step) {
     currentStep = step;
     updateSteps();
 
+    if (step === 3) {
+        const lostMsg = document.getElementById('lostMessage');
+        const nextBtn = document.querySelector('.step-content[data-step="3"] .next-step');
+        if (isLostReason) {
+            lostMsg.classList.remove('hidden');
+            if (nextBtn) nextBtn.disabled = true;
+        } else {
+            lostMsg.classList.add('hidden');
+            if (nextBtn) nextBtn.disabled = false;
+        }
+    }
+
     if (step === 4) {
         renderProfileData();
     }
@@ -126,11 +145,7 @@ async function validateStep(step) {
                 showError('Выберите причину оформления');
                 return false;
             }
-            // Если выбрана утеря/кража – блокируем
-            if (reason.value === 'lost') {
-                showError('Для утери/кражи необходимо личное обращение в МВД');
-                return false;
-            }
+            // Если утеря – запоминаем, но переход на следующий шаг разрешаем
             formData.reason = reason.value;
             if (reason.value === 'name_changed') {
                 const certNumber = document.getElementById('certificateNumber').value.trim();
@@ -216,7 +231,6 @@ function renderProfileData() {
     html += `<tr><th>Пол</th><td>${userProfile.gender}</td></tr>`;
     html += '</table>';
 
-    // Показываем поля для новых данных только при изменении данных (не при возрасте)
     if (reason === 'name_changed' || reason === 'appearance' || reason === 'error') {
         document.getElementById('newDataFields').classList.remove('hidden');
     } else {
@@ -257,7 +271,13 @@ function prepareSummary() {
 }
 
 async function generatePDF() {
+    // Создаём документ с поддержкой кириллицы (предполагается, что шрифт подключен)
     const doc = new jsPDF();
+    // Если вы подключили шрифт через addFont, раскомментируйте следующую строку:
+    // doc.setFont('PT Sans');
+    // Иначе используйте стандартный с установкой языка (может не работать)
+    doc.setLanguage('ru');
+
     doc.setFontSize(16);
     doc.text('Заявление на получение паспорта', 105, 15, { align: 'center' });
     doc.setFontSize(12);
@@ -339,7 +359,7 @@ async function submitApplication() {
         email: formData.email,
         photo_path: photoPath,
         mvd_id: selectedMvdId,
-        status: 'submitted' // отправлено в ведомство
+        status: 'submitted'
     };
 
     const { error } = await supabase
@@ -357,7 +377,6 @@ async function submitApplication() {
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await loadUserProfile()) return;
 
-    // Проверка на активное заявление
     hasActiveApp = await checkActiveApplication();
     const activeWarning = document.getElementById('activeApplicationWarning');
     const formContainer = document.getElementById('applicationForm');
@@ -365,7 +384,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         activeWarning.classList.remove('hidden');
         formContainer.style.opacity = '0.5';
         formContainer.style.pointerEvents = 'none';
-        return; // остановить дальнейшую инициализацию
+        return;
     }
 
     try {
@@ -411,22 +430,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => goToStep(currentStep - 1));
     });
 
-    // Обработка выбора причины
     document.querySelectorAll('input[name="reason"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const details = document.getElementById('reasonDetails');
-            const lostMsg = document.getElementById('lostMessage');
-            const nextBtn = document.querySelector('.next-step'); // первый попавшийся, но у нас их несколько, нужно выбирать для текущего шага
-            // Проще: находим кнопку внутри текущего шага
-            const currentNextBtn = document.querySelector('.step-content:not(.hidden) .next-step');
-            if (e.target.value === 'lost') {
-                lostMsg.classList.remove('hidden');
-                if (currentNextBtn) currentNextBtn.disabled = true;
-            } else {
-                lostMsg.classList.add('hidden');
-                if (currentNextBtn) currentNextBtn.disabled = false;
-            }
             details.classList.toggle('hidden', e.target.value !== 'name_changed');
+            isLostReason = (e.target.value === 'lost');
         });
     });
 
