@@ -1,4 +1,4 @@
-import { supabase } from '../supabase-config.js';
+import { supabase } from '../../../supabase-config.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -28,7 +28,7 @@ function generateApplicationNumber() {
 async function loadUserProfile() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
-        window.location.href = '../login.html?redirect=' + encodeURIComponent(window.location.pathname);
+        window.location.href = '../../../login.html?redirect=' + encodeURIComponent(window.location.pathname);
         return false;
     }
     const { data, error } = await supabase
