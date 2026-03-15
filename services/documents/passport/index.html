@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Получение паспорта гражданина СФСРЮ</title>
+    <!-- favicons -->
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+<meta name="application-name" content="&nbsp;"/>
+<meta name="msapplication-TileColor" content="#FFFFFF" />
+<meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .service-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        .steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 1rem;
+        }
+        .step-item {
+            flex: 1;
+            text-align: center;
+            color: #999;
+            font-weight: 500;
+            position: relative;
+        }
+        .step-item.active {
+            color: #7b091a;
+            font-weight: 600;
+        }
+        .step-item.completed {
+            color: #28a745;
+        }
+        .step-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 2px;
+            background: #ccc;
+        }
+        .step-content {
+            min-height: 400px;
+        }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        .radio-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        .radio-group label {
+            font-weight: normal;
+        }
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-primary {
+            background: #7b091a;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #5f0614;
+        }
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        .navigation {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        .alert {
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+        }
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .alert-danger {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .hidden {
+            display: none;
+        }
+        .photo-preview {
+            max-width: 200px;
+            margin-top: 1rem;
+        }
+        .photo-preview img {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .mvd-select {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 1rem;
+        }
+        .mvd-item {
+            padding: 0.5rem;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
+        .mvd-item:hover {
+            background: #f5f5f5;
+        }
+        .mvd-item.selected {
+            background: #7b091a;
+            color: white;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .summary-table th, .summary-table td {
+            padding: 0.5rem;
+            border: 1px solid #dee2e6;
+        }
+        .summary-table th {
+            background: #f8f9fa;
+            width: 30%;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+                "jspdf": "https://esm.sh/jspdf@2.5.1",
+                "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.0"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../index.html">Главная</a></li>
+                    <li><a href="../news.html">Новости</a></li>
+                    <li><a href="../wiki/">Википедия</a></li>
+                    <li><a href="../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../services.html">Услуги</a></li>
+                    <li><a href="../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="service-container">
+            <h1>Получение паспорта гражданина СФСРЮ</h1>
+
+            <div class="steps" id="steps">
+                <div class="step-item active" data-step="1">1. Начало</div>
+                <div class="step-item" data-step="2">2. Причина</div>
+                <div class="step-item" data-step="3">3. Данные</div>
+                <div class="step-item" data-step="4">4. Проверка</div>
+                <div class="step-item" data-step="5">5. Контакты</div>
+                <div class="step-item" data-step="6">6. Фото</div>
+                <div class="step-item" data-step="7">7. Отделение</div>
+                <div class="step-item" data-step="8">8. Просмотр</div>
+            </div>
+
+            <div id="errorMessage" class="alert alert-danger hidden"></div>
+            <div id="successMessage" class="alert alert-success hidden"></div>
+
+            <form id="applicationForm">
+                <!-- Шаг 1: Информация (как на фото 1) -->
+                <div class="step-content" data-step="1">
+                    <h2>Получение паспорта</h2>
+                    <p>Услуга поможет оформить паспорт, если:</p>
+                    <ul>
+                        <li>исполнилось 14, 20 или 45 лет</li>
+                        <li>изменились фамилия, имя или отчество</li>
+                        <li>паспорт стал непригодным</li>
+                        <li>изменилась внешность</li>
+                        <li>закончилось место для штампов</li>
+                        <li>изменились дата или место рождения</li>
+                    </ul>
+                    <p>Если паспорт потерян или украден, запишитесь на приём и подайте заявление в МВД</p>
+                    <div class="navigation">
+                        <span></span>
+                        <button type="button" class="btn btn-primary next-step">Начать</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 2: Выбор причины -->
+                <div class="step-content hidden" data-step="2">
+                    <h2>Выберите причину оформления</h2>
+                    <div class="radio-group">
+                        <label><input type="radio" name="reason" value="14_20_45"> Исполнилось 14, 20 или 45 лет</label>
+                        <label><input type="radio" name="reason" value="no_space"> Закончилось место для штампов</label>
+                        <label><input type="radio" name="reason" value="name_changed"> Изменилось ФИО, дата или место рождения</label>
+                        <label><input type="radio" name="reason" value="lost"> Паспорт утерян или украден</label>
+                        <label><input type="radio" name="reason" value="damaged"> Паспорт стал непригодным к использованию</label>
+                        <label><input type="radio" name="reason" value="citizenship"> Получение гражданства СФСРЮ</label>
+                        <label><input type="radio" name="reason" value="appearance"> Изменилась внешность</label>
+                        <label><input type="radio" name="reason" value="error"> Ошибка в паспорте</label>
+                    </div>
+                    <div id="reasonDetails" class="hidden">
+                        <h3>Укажите причину изменения ФИО</h3>
+                        <select class="form-control" id="nameChangeReason">
+                            <option value="marriage">Свидетельство о браке</option>
+                            <option value="divorce">Свидетельство о разводе</option>
+                            <option value="name_change">Свидетельство о перемене имени</option>
+                        </select>
+                        <div class="form-group">
+                            <label>Серия и номер свидетельства</label>
+                            <input type="text" class="form-control" id="certificateNumber">
+                        </div>
+                        <div class="form-group">
+                            <label>Дата выдачи</label>
+                            <input type="date" class="form-control" id="certificateDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Кем выдано</label>
+                            <input type="text" class="form-control" id="certificateIssuedBy">
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 3: Информация о стоимости и необходимых документах (фото 2) -->
+                <div class="step-content hidden" data-step="3">
+                    <h2>Что нужно для подачи заявления</h2>
+                    <ul>
+                        <li>Ваше фото</li>
+                        <li>Данные свидетельства о заключении или расторжении брака — если вы в браке или в разводе</li>
+                        <li>ФИО родителей, как они указаны в вашем свидетельстве о рождении</li>
+                    </ul>
+                    <p><strong>Когда паспорт непригоден к использованию</strong></p>
+                    <p><strong>Срок оказания услуги:</strong> 5 рабочих дней</p>
+                    <p><strong>Стоимость:</strong> <span id="priceDisplay">300</span> ₽</p>
+                    <p><small>Пошлину можно будет оплатить после проверки заявления в МВД</small></p>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 4: Проверка данных из профиля и текущего паспорта/свидетельства -->
+                <div class="step-content hidden" data-step="4">
+                    <h2>Проверьте ваши данные</h2>
+                    <div id="profileData"></div>
+                    <div id="newDataFields" class="hidden">
+                        <h3>Введите новые данные</h3>
+                        <div class="form-group">
+                            <label>Новая фамилия</label>
+                            <input type="text" class="form-control" id="newSurname">
+                        </div>
+                        <div class="form-group">
+                            <label>Новое имя</label>
+                            <input type="text" class="form-control" id="newName">
+                        </div>
+                        <div class="form-group">
+                            <label>Новое отчество</label>
+                            <input type="text" class="form-control" id="newPatronymic">
+                        </div>
+                        <div class="form-group">
+                            <label>Новая дата рождения</label>
+                            <input type="date" class="form-control" id="newBirthDate">
+                        </div>
+                        <div class="form-group">
+                            <label>Новое место рождения</label>
+                            <input type="text" class="form-control" id="newBirthPlace">
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 5: Контактные данные (телефон, email) -->
+                <div class="step-content hidden" data-step="5">
+                    <h2>Контактные данные</h2>
+                    <div class="form-group">
+                        <label>Номер телефона</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="+7 (999) 123-45-67">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="email" placeholder="mail@example.com">
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 6: Загрузка фото (генерация номера заявления) -->
+                <div class="step-content hidden" data-step="6">
+                    <h2>Загрузите фото</h2>
+                    <p>Формат JPG, не более 1 МБ</p>
+                    <input type="file" id="photoUpload" accept=".jpg,.jpeg" class="form-control">
+                    <div id="photoPreview" class="photo-preview hidden">
+                        <img id="previewImg" src="#" alt="Предпросмотр">
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary" id="uploadPhotoBtn">Загрузить и продолжить</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 7: Выбор отделения МВД -->
+                <div class="step-content hidden" data-step="7">
+                    <h2>Выберите отделение МВД</h2>
+                    <div id="mvdList" class="mvd-select"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 8: Просмотр заявления и отправка -->
+                <div class="step-content hidden" data-step="8">
+                    <h2>Проверьте заявление</h2>
+                    <div id="summary"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary" id="submitApplication">Отправить заявление</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 9: Завершение (после отправки) -->
+                <div class="step-content hidden" data-step="9">
+                    <h2>Заявление отправлено!</h2>
+                    <p>Номер вашего заявления: <strong id="applicationNumber"></strong></p>
+                    <p>Вы можете отслеживать статус в личном кабинете.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <a href="../services.html" class="btn btn-secondary">На главную услуг</a>
+                        <a href="../profile.html" class="btn btn-primary">В личный кабинет</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../../js/mob-menu.js"></script>
+    <script type="module" src="js.js"></script>
+</body>
+</html>
