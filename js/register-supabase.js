@@ -111,12 +111,28 @@ function validateStep(step) {
       }
     }
   } else if (step === 3) {
+    // Проверка email
     let email = document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase();
     document.getElementById('email').value = email;
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       showAlert('Введите корректный email', 'error');
       return false;
     }
+
+    // Проверка телефона (обязательное поле)
+    const phoneInput = document.getElementById('phone').value.trim();
+    if (!phoneInput) {
+      showAlert('Введите номер телефона', 'error');
+      return false;
+    }
+    const phoneDigits = phoneInput.replace(/\D/g, '');
+    // Российский номер: 10 цифр после кода страны или 11 с 7/8
+    if (!/^(7|8)?\d{10}$/.test(phoneDigits)) {
+      showAlert('Введите корректный российский номер телефона (10 цифр после кода)', 'error');
+      return false;
+    }
+
+    // Проверка пароля
     const p = document.getElementById('password').value;
     const cp = document.getElementById('confirmPassword').value;
     if (p.length < 8 || !/(?=.*[a-zA-Z])(?=.*\d)/.test(p)) {
@@ -131,10 +147,29 @@ function validateStep(step) {
   return true;
 }
 
+// Нормализация номера телефона к формату +7XXXXXXXXXX
+function normalizePhone(phone) {
+  if (!phone) return null;
+  const digits = phone.replace(/\D/g, '');
+  if (digits.length === 0) return null;
+  // Если номер начинается с 8, заменяем на 7
+  let normalized = digits;
+  if (digits[0] === '8') {
+    normalized = '7' + digits.substring(1);
+  } else if (digits[0] !== '7') {
+    // Если нет кода страны и 10 цифр — добавляем 7
+    if (digits.length === 10) {
+      normalized = '7' + digits;
+    }
+  }
+  // Возвращаем в международном формате
+  return '+' + normalized;
+}
+
 function getFormData() {
   const base = {
     email: document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase(),
-    phone: document.getElementById('phone').value.trim()
+    phone: normalizePhone(document.getElementById('phone').value.trim())
   };
 
   if (accountType === 'citizen') {
@@ -304,7 +339,16 @@ async function handleRegistration(e) {
     }
 
     const { error: insertError } = await supabase.from(tableName).insert([record]);
-    if (insertError) throw insertError;
+    if (insertError) {
+      // Если не удалось создать запись в таблице профиля, пробуем удалить пользователя из auth
+      // (требует сервисной роли, но попытка не помешает)
+      try {
+        await supabase.auth.admin.deleteUser(userId);
+      } catch (adminError) {
+        console.error('Не удалось откатить создание пользователя:', adminError);
+      }
+      throw insertError;
+    }
 
     showAlert('Регистрация завершена! Письмо для подтверждения отправлено на email.', 'success');
     setTimeout(() => window.location.href = 'login.html', 4000);
@@ -316,9 +360,12 @@ async function handleRegistration(e) {
       else if (error.message.includes('passport_number')) message = 'Паспорт уже зарегистрирован';
       else if (error.message.includes('inn')) message = 'ИНН уже используется';
       else if (error.message.includes('ogrn')) message = 'ОГРН уже используется';
+      else if (error.message.includes('email')) message = 'Этот email уже зарегистрирован';
       else message = 'Данные уже существуют';
     } else if (error.message.includes('already registered')) {
       message = 'Этот email уже зарегистрирован';
+    } else if (error.message.includes('Слишком много попыток')) {
+      message = error.message;
     }
     showAlert(message, 'error');
   }
