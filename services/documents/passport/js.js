@@ -17,6 +17,7 @@ let formData = {
     phone: '',
     email: ''
 };
+let hasActiveApp = false; // флаг наличия активного заявления
 
 function generateApplicationNumber() {
     const digits = Math.floor(100000000 + Math.random() * 900000000);
@@ -43,6 +44,24 @@ async function loadUserProfile() {
     formData.phone = data.phone || '';
     formData.email = data.email || '';
     return true;
+}
+
+// Проверка наличия активного заявления
+async function checkActiveApplication() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return false;
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport')
+        .select('id')
+        .eq('user_id', session.user.id)
+        .in('status', ['submitted', 'processing'])
+        .maybeSingle();
+    if (error) {
+        console.error('Ошибка проверки заявлений:', error);
+        return false;
+    }
+    return !!data;
 }
 
 async function loadMvd() {
@@ -105,6 +124,11 @@ async function validateStep(step) {
             const reason = document.querySelector('input[name="reason"]:checked');
             if (!reason) {
                 showError('Выберите причину оформления');
+                return false;
+            }
+            // Если выбрана утеря/кража – блокируем
+            if (reason.value === 'lost') {
+                showError('Для утери/кражи необходимо личное обращение в МВД');
                 return false;
             }
             formData.reason = reason.value;
@@ -192,7 +216,7 @@ function renderProfileData() {
     html += `<tr><th>Пол</th><td>${userProfile.gender}</td></tr>`;
     html += '</table>';
 
-    // ИСПРАВЛЕНО: показываем поля только если причина связана с изменением данных
+    // Показываем поля для новых данных только при изменении данных (не при возрасте)
     if (reason === 'name_changed' || reason === 'appearance' || reason === 'error') {
         document.getElementById('newDataFields').classList.remove('hidden');
     } else {
@@ -315,7 +339,7 @@ async function submitApplication() {
         email: formData.email,
         photo_path: photoPath,
         mvd_id: selectedMvdId,
-        status: 'pending'
+        status: 'submitted' // отправлено в ведомство
     };
 
     const { error } = await supabase
@@ -332,6 +356,17 @@ async function submitApplication() {
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await loadUserProfile()) return;
+
+    // Проверка на активное заявление
+    hasActiveApp = await checkActiveApplication();
+    const activeWarning = document.getElementById('activeApplicationWarning');
+    const formContainer = document.getElementById('applicationForm');
+    if (hasActiveApp) {
+        activeWarning.classList.remove('hidden');
+        formContainer.style.opacity = '0.5';
+        formContainer.style.pointerEvents = 'none';
+        return; // остановить дальнейшую инициализацию
+    }
 
     try {
         await loadMvd();
@@ -376,9 +411,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => goToStep(currentStep - 1));
     });
 
+    // Обработка выбора причины
     document.querySelectorAll('input[name="reason"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const details = document.getElementById('reasonDetails');
+            const lostMsg = document.getElementById('lostMessage');
+            const nextBtn = document.querySelector('.next-step'); // первый попавшийся, но у нас их несколько, нужно выбирать для текущего шага
+            // Проще: находим кнопку внутри текущего шага
+            const currentNextBtn = document.querySelector('.step-content:not(.hidden) .next-step');
+            if (e.target.value === 'lost') {
+                lostMsg.classList.remove('hidden');
+                if (currentNextBtn) currentNextBtn.disabled = true;
+            } else {
+                lostMsg.classList.add('hidden');
+                if (currentNextBtn) currentNextBtn.disabled = false;
+            }
             details.classList.toggle('hidden', e.target.value !== 'name_changed');
         });
     });
