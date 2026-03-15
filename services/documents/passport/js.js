@@ -3,7 +3,7 @@ import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
 let currentStep = 1;
-const totalSteps = 9; // 1..9 (шаг 9 – финальный)
+const totalSteps = 9;
 let userProfile = null;
 let userPersonalCode = null;
 let applicationNumber = null;
@@ -18,13 +18,11 @@ let formData = {
     email: ''
 };
 
-// Генерация номера заявления: P-XXXXXXXXX (латинская P + 9 цифр)
 function generateApplicationNumber() {
     const digits = Math.floor(100000000 + Math.random() * 900000000);
     return `P-${digits}`;
 }
 
-// Загрузка профиля пользователя (с телефоном и email)
 async function loadUserProfile() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) {
@@ -47,7 +45,6 @@ async function loadUserProfile() {
     return true;
 }
 
-// Загрузка списка отделений МВД
 async function loadMvd() {
     const { data, error } = await supabase
         .from('mvd')
@@ -75,7 +72,6 @@ function renderMvdList() {
     });
 }
 
-// Обновление индикатора шагов
 function updateSteps() {
     document.querySelectorAll('.step-item').forEach((el, index) => {
         const step = index + 1;
@@ -84,7 +80,6 @@ function updateSteps() {
     });
 }
 
-// Переключение шага
 function goToStep(step) {
     if (step < 1 || step > totalSteps) return;
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
@@ -92,7 +87,6 @@ function goToStep(step) {
     currentStep = step;
     updateSteps();
 
-    // Действия при показе конкретных шагов
     if (step === 4) {
         renderProfileData();
     }
@@ -105,7 +99,6 @@ function goToStep(step) {
     }
 }
 
-// Валидация текущего шага перед переходом
 async function validateStep(step) {
     switch (step) {
         case 2:
@@ -164,7 +157,6 @@ function showError(msg) {
     setTimeout(() => errDiv.classList.add('hidden'), 5000);
 }
 
-// Загрузка фото
 async function uploadPhoto(file) {
     if (!file) return false;
     if (file.size > 1024 * 1024) {
@@ -190,7 +182,6 @@ async function uploadPhoto(file) {
     return true;
 }
 
-// Отображение данных профиля на шаге 4
 function renderProfileData() {
     const container = document.getElementById('profileData');
     const reason = formData.reason;
@@ -201,8 +192,8 @@ function renderProfileData() {
     html += `<tr><th>Пол</th><td>${userProfile.gender}</td></tr>`;
     html += '</table>';
 
-    // Если причина связана с изменением данных, покажем поля для ввода новых
-    if (reason === 'name_changed' || reason === '14_20_45' || reason === 'appearance' || reason === 'error') {
+    // ИСПРАВЛЕНО: показываем поля только если причина связана с изменением данных
+    if (reason === 'name_changed' || reason === 'appearance' || reason === 'error') {
         document.getElementById('newDataFields').classList.remove('hidden');
     } else {
         document.getElementById('newDataFields').classList.add('hidden');
@@ -210,7 +201,6 @@ function renderProfileData() {
     container.innerHTML = html;
 }
 
-// Сбор данных для отображения на шаге 8
 function prepareSummary() {
     let html = '<table class="summary-table">';
     html += `<tr><th>Номер заявления</th><td>${applicationNumber}</td></tr>`;
@@ -242,7 +232,6 @@ function prepareSummary() {
     document.getElementById('summary').innerHTML = html;
 }
 
-// Генерация PDF
 async function generatePDF() {
     const doc = new jsPDF();
     doc.setFontSize(16);
@@ -298,7 +287,6 @@ async function generatePDF() {
     }
 }
 
-// Отправка заявления в БД
 async function submitApplication() {
     const newData = {};
     if (!document.getElementById('newDataFields').classList.contains('hidden')) {
@@ -342,7 +330,6 @@ async function submitApplication() {
     return true;
 }
 
-// Инициализация
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await loadUserProfile()) return;
 
@@ -352,7 +339,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.error('Ошибка загрузки отделений', e);
     }
 
-    // Навигация
+    // Drag & drop для фото
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('photoUpload');
+    if (dropZone) {
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.style.background = '#e9ecef';
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.style.background = '#fafafa';
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.style.background = '#fafafa';
+            const files = e.dataTransfer.files;
+            if (files.length) fileInput.files = files;
+        });
+    }
+
     document.querySelectorAll('.next-step').forEach(btn => {
         btn.addEventListener('click', async () => {
             if (await validateStep(currentStep)) {
@@ -370,7 +376,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         btn.addEventListener('click', () => goToStep(currentStep - 1));
     });
 
-    // Показ дополнительных полей при выборе "Изменилось ФИО"
     document.querySelectorAll('input[name="reason"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const details = document.getElementById('reasonDetails');
@@ -378,7 +383,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Загрузка фото
     document.getElementById('uploadPhotoBtn').addEventListener('click', async () => {
         const fileInput = document.getElementById('photoUpload');
         if (!fileInput.files.length) {
@@ -397,7 +401,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Отправка заявления
     document.getElementById('submitApplication').addEventListener('click', async () => {
         await generatePDF();
         const success = await submitApplication();
@@ -407,6 +410,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Начальный шаг
     goToStep(1);
 });

@@ -209,6 +209,63 @@
     background: #f9f9f9;
     border-radius: 4px;
 }
+/* Кнопки с анимацией */
+.btn {
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Область загрузки фото */
+.upload-area {
+    border: 2px dashed #7b091a;
+    padding: 2rem;
+    text-align: center;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.3s;
+    background: #fafafa;
+}
+.upload-area:hover {
+    background: #f0f0f0;
+}
+.upload-area i {
+    font-size: 3rem;
+    color: #7b091a;
+    margin-bottom: 1rem;
+}
+.upload-area p {
+    margin: 0;
+    color: #666;
+}
+
+/* Превью фото */
+.photo-preview {
+    margin-top: 1rem;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    max-width: 300px;
+}
+.photo-preview img {
+    width: 100%;
+    height: auto;
+}
+
+/* Маркированные списки */
+ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+}
+li {
+    margin-bottom: 0.5rem;
+}
     </style>
     <script type="importmap">
         {
@@ -381,18 +438,22 @@
                 </div>
 
                 <!-- Шаг 6: Загрузка фото (генерация номера заявления) -->
-                <div class="step-content hidden" data-step="6">
-                    <h2>Загрузите фото</h2>
-                    <p>Формат JPG, не более 1 МБ</p>
-                    <input type="file" id="photoUpload" accept=".jpg,.jpeg" class="form-control">
-                    <div id="photoPreview" class="photo-preview hidden">
-                        <img id="previewImg" src="#" alt="Предпросмотр">
-                    </div>
-                    <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary" id="uploadPhotoBtn">Загрузить и продолжить</button>
-                    </div>
-                </div>
+<div class="step-content hidden" data-step="6">
+    <h2>Загрузите фото</h2>
+    <p>Формат JPG, не более 1 МБ</p>
+    <div class="upload-area" id="dropZone">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Перетащите файл сюда или нажмите для выбора</p>
+        <input type="file" id="photoUpload" accept=".jpg,.jpeg" style="display: none;">
+    </div>
+    <div id="photoPreview" class="photo-preview hidden">
+        <img id="previewImg" src="#" alt="Предпросмотр">
+    </div>
+    <div class="navigation">
+        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+        <button type="button" class="btn btn-primary" id="uploadPhotoBtn">Загрузить и продолжить</button>
+    </div>
+</div>
 
                 <!-- Шаг 7: Выбор отделения МВД -->
                 <div class="step-content hidden" data-step="7">
