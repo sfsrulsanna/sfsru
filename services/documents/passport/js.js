@@ -1,4 +1,4 @@
-import { supabase } from '../../../supabase-config.js';
+import { supabase } from '../../../js/supabase-config.js';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
