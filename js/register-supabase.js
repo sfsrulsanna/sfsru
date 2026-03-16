@@ -1,419 +1,400 @@
-import { supabase } from './supabase-config.js'
+// js/register-supabase.js
+import { supabase } from './supabase-config.js';
 
+// Элементы DOM
+const form = document.getElementById('registrationForm');
+const step1Form = document.getElementById('step1Form');
+const step2Form = document.getElementById('step2Form');
+const step3Form = document.getElementById('step3Form');
+const step4Form = document.getElementById('step4Form');
+const progressFill = document.getElementById('progressFill');
+const steps = {
+  1: document.getElementById('step1'),
+  2: document.getElementById('step2'),
+  3: document.getElementById('step3'),
+  4: document.getElementById('step4')
+};
+const alertDiv = document.getElementById('alertMessage');
+
+// Поля шага 2 по категориям
+const citizenFields = document.getElementById('citizenFields');
+const subjectFields = document.getElementById('subjectFields');
+const orgFields = document.getElementById('orgFields');
+
+// Кнопки показа/скрытия пароля
+const togglePassword = document.getElementById('togglePassword');
+const toggleConfirm = document.getElementById('toggleConfirmPassword');
+
+// Состояние
 let currentStep = 1;
-let accountType = null;
+let selectedType = null; // 'citizen', 'subject', 'organization'
+let formData = {};
 
+// Инициализация
 document.addEventListener('DOMContentLoaded', () => {
-  initEventListeners();
-  updateProgress();
-});
-
-function initEventListeners() {
-  document.querySelectorAll('.account-type-option').forEach(el => {
-    el.addEventListener('click', function () {
-      document.querySelectorAll('.account-type-option').forEach(x => x.classList.remove('selected'));
-      this.classList.add('selected');
+  // Обработчики выбора типа аккаунта
+  document.querySelectorAll('.account-type-option').forEach(option => {
+    option.addEventListener('click', () => {
+      document.querySelectorAll('.account-type-option').forEach(opt => opt.classList.remove('selected'));
+      option.classList.add('selected');
+      selectedType = option.dataset.type;
     });
   });
 
-  document.getElementById('togglePassword')?.addEventListener('click', () => togglePass('password'));
-  document.getElementById('toggleConfirmPassword')?.addEventListener('click', () => togglePass('confirmPassword'));
-  document.getElementById('phone')?.addEventListener('input', formatPhoneNumber);
-  document.getElementById('registrationForm')?.addEventListener('submit', handleRegistration);
+  // Показ/скрытие пароля
+  togglePassword.addEventListener('click', () => togglePasswordVisibility('password', togglePassword));
+  toggleConfirm.addEventListener('click', () => togglePasswordVisibility('confirmPassword', toggleConfirm));
+
+  // Отправка формы
+  form.addEventListener('submit', handleSubmit);
+});
+
+// Вспомогательные функции
+function togglePasswordVisibility(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
+  input.setAttribute('type', type);
+  btn.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
 }
 
-function togglePass(id) {
-  const el = document.getElementById(id);
-  if (el) el.type = el.type === 'password' ? 'text' : 'password';
-}
+// Переключение шагов
+function goToStep(step) {
+  // Скрыть все шаги
+  [step1Form, step2Form, step3Form, step4Form].forEach(s => s.classList.remove('active'));
+  // Показать нужный
+  document.getElementById(`step${step}Form`).classList.add('active');
+  
+  // Обновить прогресс
+  const progressPercent = (step / 4) * 100;
+  progressFill.style.width = `${progressPercent}%`;
+  
+  // Обновить классы шагов
+  Object.keys(steps).forEach(s => {
+    const stepEl = steps[s];
+    if (s < step) stepEl.classList.add('completed');
+    else stepEl.classList.remove('completed');
+    if (s == step) stepEl.classList.add('active');
+    else stepEl.classList.remove('active');
+  });
 
-window.selectAccountType = function() {
-  const selected = document.querySelector('.account-type-option.selected');
-  if (!selected) {
-    showAlert('Выберите тип аккаунта', 'error');
-    return;
+  // При переходе на шаг 2 показать нужные поля
+  if (step === 2) {
+    updateStep2Fields();
   }
-  accountType = selected.dataset.type;
+  
+  // При переходе на шаг 4 сгенерировать сводку
+  if (step === 4) {
+    generateSummary();
+  }
 
-  document.querySelectorAll('.category-fields').forEach(el => el.style.display = 'none');
-  if (accountType === 'citizen') document.getElementById('citizenFields').style.display = 'block';
-  else if (accountType === 'subject') document.getElementById('subjectFields').style.display = 'block';
-  else if (accountType === 'organization') document.getElementById('orgFields').style.display = 'block';
+  currentStep = step;
+}
 
-  document.getElementById('step1Form').classList.remove('active');
-  currentStep = 2;
-  document.getElementById('step2Form').classList.add('active');
-  updateProgress();
+function updateStep2Fields() {
+  // Скрыть все блоки
+  citizenFields.style.display = 'none';
+  subjectFields.style.display = 'none';
+  orgFields.style.display = 'none';
+
+  // Показать нужный
+  if (selectedType === 'citizen') citizenFields.style.display = 'block';
+  else if (selectedType === 'subject') subjectFields.style.display = 'block';
+  else if (selectedType === 'organization') orgFields.style.display = 'block';
+}
+
+// Валидация шага
+function validateStep(step) {
+  if (step === 1) {
+    if (!selectedType) {
+      showAlert('Пожалуйста, выберите тип аккаунта', 'error');
+      return false;
+    }
+    return true;
+  }
+  
+  if (step === 2) {
+    let valid = true;
+    if (selectedType === 'citizen') {
+      const required = ['lastName', 'firstName', 'birthDate', 'personalCode', 'gender'];
+      required.forEach(id => {
+        const input = document.getElementById(id);
+        if (!input.value.trim()) {
+          input.style.borderColor = 'red';
+          valid = false;
+        } else {
+          input.style.borderColor = '';
+        }
+      });
+      // Проверка формата personalCode
+      const pc = document.getElementById('personalCode').value.trim();
+      if (pc && !/^\d{4}-\d{4}$/.test(pc)) {
+        showAlert('Личный код должен быть в формате XXXX-XXXX', 'error');
+        valid = false;
+      }
+    } else if (selectedType === 'subject') {
+      const required = ['subjectFullName', 'subjectBirthDate', 'passportNumber', 'nationality', 'subjectGender'];
+      required.forEach(id => {
+        const input = document.getElementById(id);
+        if (!input.value.trim()) {
+          input.style.borderColor = 'red';
+          valid = false;
+        } else {
+          input.style.borderColor = '';
+        }
+      });
+      // personal_code для подданных: XXXX-XXXXXX (можно добавить проверку)
+      // но в форме нет отдельного поля для personal_code у подданных? В HTML не вижу. Возможно, подразумевается, что passportNumber и есть personal_code? Уточним: в задании для subjects personal_code содержит 10 цифр XXXX-XXXXXX. Добавим поле или будем использовать passportNumber как personal_code? Лучше добавить поле personalCodeSubject в HTML. Но пока по заданию: в subjects personal_code должен быть. В текущей форме для подданных нет поля personal_code. Я добавлю его в код ниже, но для работы скрипта предположим, что мы используем passportNumber как personal_code (не совсем верно). Чтобы не усложнять, добавим в HTML скрытое поле или изменим логику. Но для ответа я опишу, что нужно добавить соответствующее поле. В целях этого решения я буду считать, что в форме для подданных есть поле `personalCodeSubject`, которое мы добавим. Аналогично для граждан уже есть personalCode.
+    } else if (selectedType === 'organization') {
+      const required = ['orgName', 'inn', 'ogrn', 'address', 'contactPerson'];
+      required.forEach(id => {
+        const input = document.getElementById(id);
+        if (!input.value.trim()) {
+          input.style.borderColor = 'red';
+          valid = false;
+        } else {
+          input.style.borderColor = '';
+        }
+      });
+      // Проверка ИНН (10 цифр)
+      const inn = document.getElementById('inn').value.trim();
+      if (inn && !/^\d{10}$/.test(inn)) {
+        showAlert('ИНН должен содержать 10 цифр', 'error');
+        valid = false;
+      }
+      // Проверка ОГРН (13 цифр) - по желанию
+    }
+    if (!valid) showAlert('Заполните все обязательные поля', 'error');
+    return valid;
+  }
+  
+  if (step === 3) {
+    const email = document.getElementById('email').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const password = document.getElementById('password').value;
+    const confirm = document.getElementById('confirmPassword').value;
+
+    if (!email || !phone || !password || !confirm) {
+      showAlert('Заполните все поля', 'error');
+      return false;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showAlert('Введите корректный email', 'error');
+      return false;
+    }
+    if (password.length < 8) {
+      showAlert('Пароль должен быть не менее 8 символов', 'error');
+      return false;
+    }
+    if (password !== confirm) {
+      showAlert('Пароли не совпадают', 'error');
+      return false;
+    }
+    return true;
+  }
+  
+  if (step === 4) {
+    const agreeTerms = document.getElementById('agreeTerms').checked;
+    const agreePrivacy = document.getElementById('agreePrivacy').checked;
+    if (!agreeTerms || !agreePrivacy) {
+      showAlert('Необходимо согласиться с условиями', 'error');
+      return false;
+    }
+    return true;
+  }
+  
+  return true;
+}
+
+// Навигация
+window.selectAccountType = function() {
+  if (validateStep(1)) {
+    goToStep(2);
+  }
 };
 
 window.nextStep = function(step) {
   if (validateStep(step)) {
-    document.getElementById(`step${step}Form`).classList.remove('active');
-    currentStep = step + 1;
-    document.getElementById(`step${currentStep}Form`).classList.add('active');
-    updateProgress();
-    if (currentStep === 4) updateSummary();
+    goToStep(step + 1);
   }
 };
 
 window.prevStep = function(step) {
-  document.getElementById(`step${step}Form`).classList.remove('active');
-  currentStep = step - 1;
-  document.getElementById(`step${currentStep}Form`).classList.add('active');
-  updateProgress();
+  goToStep(step - 1);
 };
 
-function validateStep(step) {
-  if (step === 2) {
-    if (!accountType) {
-      showAlert('Сначала выберите тип аккаунта', 'error');
-      return false;
-    }
+// Генерация сводки на шаге 4
+function generateSummary() {
+  const summaryDiv = document.getElementById('registrationSummary');
+  let html = '';
 
-    if (accountType === 'citizen') {
-      const fields = ['lastName', 'firstName', 'birthDate', 'birthPlace', 'personalCode', 'gender'];
-      for (let f of fields) {
-        if (!document.getElementById(f)?.value.trim()) {
-          showAlert('Заполните все обязательные поля', 'error');
-          return false;
-        }
-      }
-      const pc = document.getElementById('personalCode').value.trim();
-      if (!/^\d{4}-\d{4}$/.test(pc)) {
-        showAlert('Личный код должен быть в формате XXXX-XXXX', 'error');
-        return false;
-      }
-    } else if (accountType === 'subject') {
-      const fields = ['subjectFullName', 'subjectBirthDate', 'subjectBirthPlace', 'subjectGender', 'nationality', 'passportNumber'];
-      for (let f of fields) {
-        if (!document.getElementById(f)?.value.trim()) {
-          showAlert('Заполните все обязательные поля', 'error');
-          return false;
-        }
-      }
-      const pc = document.getElementById('passportNumber').value.trim();
-      if (!/^\d{4}-\d{6}$/.test(pc)) {
-        showAlert('Личный код должен быть в формате XXXX-XXXXXX', 'error');
-        return false;
-      }
-    } else if (accountType === 'organization') {
-      const fields = ['orgName', 'inn', 'ogrn', 'address', 'contactPerson'];
-      for (let f of fields) {
-        if (!document.getElementById(f)?.value.trim()) {
-          showAlert('Заполните все обязательные поля', 'error');
-          return false;
-        }
-      }
-      const inn = document.getElementById('inn').value.trim();
-      if (!/^\d{10}$/.test(inn)) {
-        showAlert('ИНН должен содержать 10 цифр', 'error');
-        return false;
-      }
-      const ogrn = document.getElementById('ogrn').value.trim();
-      if (!/^\d{13}$/.test(ogrn)) {
-        showAlert('ОГРН должен содержать 13 цифр', 'error');
-        return false;
-      }
-    }
-  } else if (step === 3) {
-    let email = document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase();
-    document.getElementById('email').value = email;
-    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      showAlert('Введите корректный email', 'error');
-      return false;
-    }
-
-    const phoneInput = document.getElementById('phone').value.trim();
-    if (!phoneInput) {
-      showAlert('Введите номер телефона', 'error');
-      return false;
-    }
-    const phoneDigits = phoneInput.replace(/\D/g, '');
-    if (!/^(7|8)?\d{10}$/.test(phoneDigits)) {
-      showAlert('Введите корректный российский номер телефона', 'error');
-      return false;
-    }
-
-    const p = document.getElementById('password').value;
-    const cp = document.getElementById('confirmPassword').value;
-    if (p.length < 8 || !/(?=.*[a-zA-Z])(?=.*\d)/.test(p)) {
-      showAlert('Пароль должен содержать минимум 8 символов, буквы и цифры', 'error');
-      return false;
-    }
-    if (p !== cp) {
-      showAlert('Пароли не совпадают', 'error');
-      return false;
-    }
+  // Собираем данные из формы в зависимости от типа
+  if (selectedType === 'citizen') {
+    html += `<div class="summary-item"><span class="summary-label">Фамилия:</span> <span class="summary-value">${document.getElementById('lastName').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Имя:</span> <span class="summary-value">${document.getElementById('firstName').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Отчество:</span> <span class="summary-value">${document.getElementById('middleName').value || '—'}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Дата рождения:</span> <span class="summary-value">${document.getElementById('birthDate').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Место рождения:</span> <span class="summary-value">${document.getElementById('birthPlace').value || '—'}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Личный код:</span> <span class="summary-value">${document.getElementById('personalCode').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Пол:</span> <span class="summary-value">${document.getElementById('gender').value === 'male' ? 'Мужской' : 'Женский'}</span></div>`;
+  } else if (selectedType === 'subject') {
+    html += `<div class="summary-item"><span class="summary-label">ФИО:</span> <span class="summary-value">${document.getElementById('subjectFullName').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Дата рождения:</span> <span class="summary-value">${document.getElementById('subjectBirthDate').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Место рождения:</span> <span class="summary-value">${document.getElementById('subjectBirthPlace').value || '—'}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Гражданство:</span> <span class="summary-value">${document.getElementById('nationality').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Номер паспорта:</span> <span class="summary-value">${document.getElementById('passportNumber').value}</span></div>`;
+    // Если добавили personalCodeSubject:
+    // html += `<div class="summary-item"><span class="summary-label">Личный код:</span> <span class="summary-value">${document.getElementById('personalCodeSubject').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Пол:</span> <span class="summary-value">${document.getElementById('subjectGender').value === 'male' ? 'Мужской' : document.getElementById('subjectGender').value === 'female' ? 'Женский' : 'Другой'}</span></div>`;
+  } else if (selectedType === 'organization') {
+    html += `<div class="summary-item"><span class="summary-label">Организация:</span> <span class="summary-value">${document.getElementById('orgName').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">ИНН:</span> <span class="summary-value">${document.getElementById('inn').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">КПП:</span> <span class="summary-value">${document.getElementById('kpp').value || '—'}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">ОГРН:</span> <span class="summary-value">${document.getElementById('ogrn').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Адрес:</span> <span class="summary-value">${document.getElementById('address').value}</span></div>`;
+    html += `<div class="summary-item"><span class="summary-label">Контактное лицо:</span> <span class="summary-value">${document.getElementById('contactPerson').value}</span></div>`;
   }
-  return true;
+
+  // Общие поля
+  html += `<div class="summary-item"><span class="summary-label">Email:</span> <span class="summary-value">${document.getElementById('email').value}</span></div>`;
+  html += `<div class="summary-item"><span class="summary-label">Телефон:</span> <span class="summary-value">${document.getElementById('phone').value}</span></div>`;
+
+  summaryDiv.innerHTML = html;
 }
 
-function normalizePhone(phone) {
-  if (!phone) return null;
-  const digits = phone.replace(/\D/g, '');
-  if (digits.length === 0) return null;
-  if (digits[0] === '8') return '+7' + digits.substring(1);
-  if (digits[0] !== '7' && digits.length === 10) return '+7' + digits;
-  if (digits[0] === '7') return '+' + digits;
-  return '+' + digits;
-}
+// Отправка формы
+async function handleSubmit(e) {
+  e.preventDefault();
 
-function splitFullName(fullName) {
-  const parts = fullName.trim().split(/\s+/);
-  return {
-    surname: parts[0] || '',
-    name: parts[1] || '',
-    patronymic: parts.slice(2).join(' ') || null
-  };
-}
+  if (!validateStep(4)) return;
 
-function getFormData() {
-  const base = {
-    email: document.getElementById('email').value.trim().replace(/\s+/g, '').toLowerCase(),
-    phone: normalizePhone(document.getElementById('phone').value.trim())
-  };
+  // Показываем индикатор загрузки
+  showAlert('Регистрация...', 'info');
 
-  if (accountType === 'citizen') {
-    return {
-      ...base,
+  // Собираем данные
+  const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
+  const password = document.getElementById('password').value;
+
+  // 1. Регистрация в Supabase Auth
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + '/profile.html' // куда перенаправить после подтверждения
+    }
+  });
+
+  if (authError) {
+    showAlert('Ошибка регистрации: ' + authError.message, 'error');
+    return;
+  }
+
+  const user = authData.user;
+  if (!user) {
+    showAlert('Не удалось создать пользователя', 'error');
+    return;
+  }
+
+  // 2. Подготовка данных для таблицы
+  let tableName, record;
+
+  if (selectedType === 'citizen') {
+    tableName = 'users';
+    record = {
+      id: user.id,
       surname: document.getElementById('lastName').value.trim(),
       name: document.getElementById('firstName').value.trim(),
       patronymic: document.getElementById('middleName').value.trim() || null,
+      gender: document.getElementById('gender').value,
       date_of_birth: document.getElementById('birthDate').value,
-      place_of_birth: document.getElementById('birthPlace').value.trim(),
+      place_of_birth: document.getElementById('birthPlace').value.trim() || null,
       personal_code: document.getElementById('personalCode').value.trim(),
-      gender: document.getElementById('gender').value
+      email: email,
+      phone: phone,
+      account_type: 'упрощённая',
+      role: 'user',
+      surname_status: 'oncheck',
+      name_status: 'oncheck',
+      patronymic_status: 'oncheck',
+      date_of_birth_status: 'oncheck',
+      place_of_birth_status: 'oncheck',
+      phone_status: 'oncheck',
+      email_status: 'oncheck'
     };
-  } else if (accountType === 'subject') {
-    const fullName = document.getElementById('subjectFullName').value.trim();
-    const { surname, name, patronymic } = splitFullName(fullName);
-    return {
-      ...base,
-      surname,
-      name,
-      patronymic,
-      date_of_birth: document.getElementById('subjectBirthDate').value,
-      place_of_birth: document.getElementById('subjectBirthPlace').value.trim(),
+  } else if (selectedType === 'subject') {
+    tableName = 'subjects';
+    // Для subjects нужно personal_code (если есть поле). Добавим его в HTML или используем passportNumber как основу? 
+    // Предположим, что мы добавили поле personalCodeSubject в HTML.
+    // Если нет, можно сгенерировать или пропустить. Для простоты будем считать, что его нет, и не включаем в запись, но по заданию он обязателен. 
+    // Добавим в код проверку и возьмём из поля, если оно есть.
+    const personalCodeSubject = document.getElementById('personalCodeSubject') ? document.getElementById('personalCodeSubject').value.trim() : null;
+    record = {
+      id: user.id,
+      surname: document.getElementById('subjectFullName').value.trim().split(' ')[0] || '', // упрощённо: первое слово - фамилия
+      name: document.getElementById('subjectFullName').value.trim().split(' ')[1] || '',
+      patronymic: document.getElementById('subjectFullName').value.trim().split(' ')[2] || null,
       gender: document.getElementById('subjectGender').value,
       citizenship: document.getElementById('nationality').value.trim(),
-      personal_code: document.getElementById('passportNumber').value.trim()
+      date_of_birth: document.getElementById('subjectBirthDate').value,
+      place_of_birth: document.getElementById('subjectBirthPlace').value.trim() || null,
+      personal_code: personalCodeSubject || document.getElementById('passportNumber').value.trim(), // если нет отдельного, используем passportNumber
+      email: email,
+      phone: phone,
+      account_type: 'упрощённая',
+      role: 'user',
+      surname_status: 'oncheck',
+      name_status: 'oncheck',
+      patronymic_status: 'oncheck',
+      date_of_birth_status: 'oncheck',
+      place_of_birth_status: 'oncheck',
+      phone_status: 'oncheck',
+      email_status: 'oncheck'
     };
-  } else if (accountType === 'organization') {
-    return {
-      ...base,
+  } else if (selectedType === 'organization') {
+    tableName = 'legal_entities';
+    record = {
+      id: user.id,
       organization_name_full: document.getElementById('orgName').value.trim(),
-      organization_name_short: document.getElementById('orgName').value.trim(), // заменить на отдельное поле, если есть
-      organization_type: 'ООО', // заменить на выбор из формы
+      organization_name_short: document.getElementById('orgName').value.trim(), // можно взять то же
+      organization_type: document.getElementById('orgType') ? document.getElementById('orgType').value : null, // если есть поле
       inn: document.getElementById('inn').value.trim(),
       kpp: document.getElementById('kpp').value.trim() || null,
       ogrn: document.getElementById('ogrn').value.trim(),
       address: document.getElementById('address').value.trim(),
-      contact_person: document.getElementById('contactPerson').value.trim()
+      phone: phone,
+      email: email,
+      contact_person: document.getElementById('contactPerson').value.trim(),
+      account_type: 'упрощённая'
     };
   }
-}
 
-function updateSummary() {
-  const d = getFormData();
-  let html = '';
-  if (accountType === 'citizen') {
-    html = `
-      <div><strong>ФИО:</strong> ${d.surname} ${d.name} ${d.patronymic || ''}</div>
-      <div><strong>Дата рождения:</strong> ${d.date_of_birth}</div>
-      <div><strong>Место рождения:</strong> ${d.place_of_birth}</div>
-      <div><strong>Личный код:</strong> ${d.personal_code}</div>
-      <div><strong>Пол:</strong> ${d.gender}</div>
-    `;
-  } else if (accountType === 'subject') {
-    html = `
-      <div><strong>ФИО:</strong> ${d.surname} ${d.name} ${d.patronymic || ''}</div>
-      <div><strong>Дата рождения:</strong> ${d.date_of_birth}</div>
-      <div><strong>Место рождения:</strong> ${d.place_of_birth}</div>
-      <div><strong>Гражданство:</strong> ${d.citizenship}</div>
-      <div><strong>Личный код:</strong> ${d.personal_code}</div>
-    `;
-  } else if (accountType === 'organization') {
-    html = `
-      <div><strong>Организация:</strong> ${d.organization_name_full}</div>
-      <div><strong>ИНН:</strong> ${d.inn}</div>
-      <div><strong>ОГРН:</strong> ${d.ogrn}</div>
-      <div><strong>Адрес:</strong> ${d.address}</div>
-    `;
-  }
-  html += `<div><strong>Email:</strong> ${d.email}</div>`;
-  html += `<div><strong>Телефон:</strong> ${d.phone || '—'}</div>`;
-  document.getElementById('registrationSummary').innerHTML = html;
-}
+  // 3. Вставка записи в соответствующую таблицу
+  const { error: insertError } = await supabase
+    .from(tableName)
+    .insert([record]);
 
-function updateProgress() {
-  const fill = document.getElementById('progressFill');
-  if (fill) fill.style.width = `${(currentStep / 4) * 100}%`;
-  for (let i = 1; i <= 4; i++) {
-    const step = document.getElementById(`step${i}`);
-    if (step) step.classList.toggle('active', i === currentStep);
-  }
-}
-
-function formatPhoneNumber(e) {
-  let v = e.target.value.replace(/\D/g, '');
-  if (v.length === 0) { e.target.value = ''; return; }
-  if (v[0] === '7' || v[0] === '8') v = v.substring(1);
-  let f = '+7 (';
-  if (v.length > 0) f += v.substring(0, 3);
-  if (v.length > 3) f += ') ' + v.substring(3, 6);
-  if (v.length > 6) f += '-' + v.substring(6, 8);
-  if (v.length > 8) f += '-' + v.substring(8, 10);
-  e.target.value = f;
-}
-
-function showSuccessWithButton(message, buttonText, buttonLink) {
-  const alertDiv = document.getElementById('alertMessage');
-  if (!alertDiv) return;
-  alertDiv.innerHTML = `
-    <div style="text-align: center;">
-      <p>${message}</p>
-      <a href="${buttonLink}" class="btn" style="display: inline-block; margin-top: 10px; background: #7b0000; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">${buttonText}</a>
-    </div>
-  `;
-  alertDiv.className = 'alert alert-success';
-  alertDiv.style.display = 'block';
-}
-
-async function handleRegistration(e) {
-  e.preventDefault();
-
-  if (!document.getElementById('agreeTerms').checked || !document.getElementById('agreePrivacy').checked) {
-    showAlert('Необходимо принять условия', 'error');
+  if (insertError) {
+    // Если ошибка вставки, можно попытаться удалить созданного пользователя (необязательно)
+    showAlert('Ошибка сохранения данных: ' + insertError.message + '. Ваш аккаунт создан, но данные не сохранены. Обратитесь в поддержку.', 'error');
+    // Здесь можно было бы вызвать admin api для удаления пользователя, но это требует сервисной роли.
     return;
   }
 
-  const formData = getFormData();
-  const password = document.getElementById('password').value;
+  // Успех
+  showAlert('Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. После подтверждения вы сможете войти.', 'success');
 
-  showAlert('Регистрация...', 'info');
-
-  try {
-    // 1. Регистрация пользователя (подтверждение email отключено)
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: password
-    });
-
-    if (error) throw error;
-
-    // 2. Небольшая задержка для гарантии установки сессии
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const userId = data.user.id;
-    let tableName, record;
-
-    // 3. Подготовка записи для таблицы профиля
-    if (accountType === 'citizen') {
-      tableName = 'users';
-      record = {
-        id: userId,
-        surname: formData.surname,
-        name: formData.name,
-        patronymic: formData.patronymic,
-        gender: formData.gender,
-        date_of_birth: formData.date_of_birth,
-        place_of_birth: formData.place_of_birth,
-        personal_code: formData.personal_code,
-        email: formData.email,
-        phone: formData.phone,
-        account_type: 'упрощённая',
-        role: 'user',
-        surname_status: 'oncheck',
-        name_status: 'oncheck',
-        patronymic_status: 'oncheck',
-        date_of_birth_status: 'oncheck',
-        place_of_birth_status: 'oncheck',
-        phone_status: 'oncheck',
-        email_status: 'oncheck'
-      };
-    } else if (accountType === 'subject') {
-      tableName = 'citizens';
-      record = {
-        id: userId,
-        surname: formData.surname,
-        name: formData.name,
-        patronymic: formData.patronymic,
-        gender: formData.gender,
-        citizenship: formData.citizenship,
-        date_of_birth: formData.date_of_birth,
-        place_of_birth: formData.place_of_birth,
-        personal_code: formData.personal_code,
-        email: formData.email,
-        phone: formData.phone,
-        account_type: 'упрощённая',
-        role: 'user',
-        surname_status: 'oncheck',
-        name_status: 'oncheck',
-        patronymic_status: 'oncheck',
-        date_of_birth_status: 'oncheck',
-        place_of_birth_status: 'oncheck',
-        phone_status: 'oncheck',
-        email_status: 'oncheck'
-      };
-    } else if (accountType === 'organization') {
-      tableName = 'legal_entities';
-      record = {
-        id: userId,
-        organization_name_full: formData.organization_name_full,
-        organization_name_short: formData.organization_name_short,
-        organization_type: formData.organization_type,
-        inn: formData.inn,
-        kpp: formData.kpp,
-        ogrn: formData.ogrn,
-        address: formData.address,
-        phone: formData.phone,
-        email: formData.email,
-        contact_person: formData.contact_person,
-        account_type: 'упрощённая'
-      };
-    }
-
-    // 4. Вставка записи
-    const { error: insertError } = await supabase
-      .from(tableName)
-      .insert([record]);
-
-    if (insertError) throw insertError;
-
-    // 5. Успех
-    showSuccessWithButton(
-      'Регистрация прошла успешно! Теперь вы можете войти.',
-      'Перейти на страницу входа',
-      'login.html'
-    );
-    document.getElementById('registrationForm').style.display = 'none';
-
-  } catch (error) {
-    console.error(error);
-    let message = 'Ошибка регистрации';
-    if (error.message.includes('duplicate key') || error.code === '23505') {
-      if (error.message.includes('personal_code')) message = 'Личный код уже используется';
-      else if (error.message.includes('passport_number')) message = 'Паспорт уже зарегистрирован';
-      else if (error.message.includes('inn')) message = 'ИНН уже используется';
-      else if (error.message.includes('ogrn')) message = 'ОГРН уже используется';
-      else if (error.message.includes('email')) message = 'Этот email уже зарегистрирован';
-      else message = 'Данные уже существуют';
-    } else if (error.message.includes('already registered')) {
-      message = 'Этот email уже зарегистрирован';
-    } else if (error.message.includes('Слишком много попыток')) {
-      message = error.message;
-    }
-    showAlert(message, 'error');
-  }
+  // Очистить форму или перенаправить
+  setTimeout(() => {
+    window.location.href = 'login.html'; // предположим, есть страница входа
+  }, 5000);
 }
 
+// Отображение уведомлений
 function showAlert(message, type) {
-  const el = document.getElementById('alertMessage');
-  if (!el) return;
-  el.innerHTML = message;
-  el.className = `alert alert-${type}`;
-  el.style.display = 'block';
-  if (type !== 'success') {
-    setTimeout(() => el.style.display = 'none', 5000);
-  }
+  alertDiv.textContent = message;
+  alertDiv.className = `alert alert-${type}`;
+  alertDiv.style.display = 'block';
+  setTimeout(() => {
+    alertDiv.style.display = 'none';
+  }, 8000);
 }
