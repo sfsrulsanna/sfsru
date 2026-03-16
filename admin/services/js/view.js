@@ -1,5 +1,5 @@
 import { supabase } from '../../../js/supabase-config.js';
-import { requireAdmin } from '../certificates/js/certificates-common.js';
+import { requireAdmin } from '../../certificates/js/certificates-common.js';
 
 let currentAppId = null;
 let currentAction = null; // 'complete', 'reject', 'cancel', 'interim'
