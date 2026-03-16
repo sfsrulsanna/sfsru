@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Подтверждение email — СФСРЮ</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .confirmation-container {
+      max-width: 600px;
+      margin: 100px auto;
+      padding: 40px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .success-icon {
+      font-size: 64px;
+      color: #4CAF50;
+      margin-bottom: 20px;
+    }
+    .confirmation-title {
+      color: #7b0000;
+      margin-bottom: 15px;
+      font-size: 28px;
+    }
+    .confirmation-message {
+      color: #555;
+      margin-bottom: 30px;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+    .redirect-info {
+      color: #888;
+      font-size: 16px;
+    }
+    .countdown {
+      font-weight: bold;
+      color: #7b0000;
+      font-size: 20px;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #7b0000;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="images/favicons/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="images/favicons/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="images/favicons/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="images/favicons/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="images/favicons/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="images/favicons/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="images/favicons/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="images/favicons/apple-touch-icon-152x152.png" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="images/favicons/favicon-128.png" sizes="128x128" />
+<meta name="application-name" content="&nbsp;"/>
+<meta name="msapplication-TileColor" content="#FFFFFF" />
+<meta name="msapplication-TileImage" content="images/favicons/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="images/favicons/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="images/favicons/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="images/favicons/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="images/favicons/mstile-310x310.png" />
+</head>
+<body>
+  <!-- Шапка -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+
+      <!-- Кнопка гамбургер -->
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="index.html" class="active">Главная</a></li>
+          <li><a href="news.html">Новости</a></li>
+          <li><a href="wiki/">Википедия</a></li>
+          <li><a href="healthcare.html">Здравоохранение</a></li>
+          <li><a href="services.html">Услуги</a></li>
+          <li><a href="profile.html">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <div class="confirmation-container">
+      <div class="success-icon">✓</div>
+      <h1 class="confirmation-title">Email подтверждён!</h1>
+      <div class="confirmation-message">
+        <p>Ваш адрес электронной почты успешно подтверждён.</p>
+        <p>Теперь вы можете войти в личный кабинет.</p>
+      </div>
+      <div class="spinner"></div>
+      <div class="redirect-info">
+        Вы будете перенаправлены на страницу входа через <span id="countdown" class="countdown">5</span> секунд...
+      </div>
+    </div>
+  </main>
+
+  <!-- Подвал -->
+  <footer class="footer">
+    <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
+
+  <script src="js/mob-menu.js"></script>
+
+  <script>
+    // Обработка параметров из URL (если нужно)
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
+    const type = urlParams.get('type');
+
+    // Здесь можно отправить токены в Supabase сессию, если хотите автоматически залогинить пользователя
+    if (accessToken && type === 'signup') {
+      // Опционально: установить сессию через supabase.auth.setSession
+      // Но обычно после подтверждения пользователь должен сам войти
+      console.log('Токены получены, но мы перенаправим на логин');
+    }
+
+    // Таймер редиректа
+    let seconds = 5;
+    const countdownEl = document.getElementById('countdown');
+    const interval = setInterval(() => {
+      seconds--;
+      countdownEl.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(interval);
+        window.location.href = 'login.html'; // замените на ваш URL страницы входа
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
