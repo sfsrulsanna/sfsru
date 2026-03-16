@@ -341,26 +341,27 @@ async function submitApplication() {
         newData.birth_place = document.getElementById('newBirthPlace').value;
     }
 
-    const payload = {
-        application_number: applicationNumber,
-        user_id: (await supabase.auth.getSession()).data.session.user.id,
-        reason: formData.reason,
-        reason_details: formData.reasonDetails,
-        personal_data: {
-            surname: userProfile.surname,
-            name: userProfile.name,
-            patronymic: userProfile.patronymic,
-            birth_date: userProfile.date_of_birth,
-            birth_place: userProfile.place_of_birth,
-            gender: userProfile.gender
-        },
-        new_personal_data: newData,
-        phone: formData.phone,
-        email: formData.email,
-        photo_path: photoPath,
-        mvd_id: selectedMvdId,
-        status: 'submitted'
-    };
+const payload = {
+    application_number: applicationNumber,
+    user_id: (await supabase.auth.getSession()).data.session.user.id,
+    personal_code: userPersonalCode,        // <-- добавлено
+    reason: formData.reason,
+    reason_details: formData.reasonDetails,
+    personal_data: {
+        surname: userProfile.surname,
+        name: userProfile.name,
+        patronymic: userProfile.patronymic,
+        birth_date: userProfile.date_of_birth,
+        birth_place: userProfile.place_of_birth,
+        gender: userProfile.gender
+    },
+    new_personal_data: newData,
+    phone: formData.phone,
+    email: formData.email,
+    photo_path: photoPath,
+    mvd_id: selectedMvdId,
+    status: 'submitted'
+};
 
     const { error } = await supabase
         .schema('services')

@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заявление на паспорт — Админ панель СФСРЮ</title>
-    <!-- favicons и стили как в index.html -->
+    <title>Просмотр заявления — Админ панель СФСРЮ</title>
+    <!-- favicons и стили как ранее -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <!-- ... остальные favicons ... -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
@@ -32,41 +34,113 @@
             padding: 10px;
             border: 1px solid #dee2e6;
         }
-        .comments-section, .attachments-section {
+        .photo-section {
             margin: 2rem 0;
+            text-align: center;
         }
-        .comment-item {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
+        .photo-section img {
+            max-width: 300px;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-        .comment-meta {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 0.5rem;
-        }
-        .attachment-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 0.5rem;
-            background: #f8f9fa;
-            border-radius: 4px;
-            margin-bottom: 0.5rem;
+        .photo-section a {
+            display: inline-block;
+            margin-top: 0.5rem;
         }
         .action-buttons {
             display: flex;
             gap: 1rem;
             flex-wrap: wrap;
             justify-content: center;
-            margin-top: 2rem;
+            margin: 2rem 0;
+        }
+        .btn {
+            padding: 0.6rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.3s;
         }
         .btn-complete { background: #28a745; color: white; }
         .btn-reject { background: #dc3545; color: white; }
         .btn-cancel { background: #6c757d; color: white; }
-        .btn-invite { background: #007bff; color: white; }
-        .btn-add { background: #17a2b8; color: white; }
+        .btn-interim { background: #ffc107; color: #212529; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+
+        /* Модальное окно */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        .modal-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal {
+            background: white;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .modal-header h3 {
+            margin: 0;
+        }
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        .file-list {
+            margin-top: 1rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .file-item button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            cursor: pointer;
+        }
     </style>
     <script type="importmap">
         {
@@ -116,34 +190,61 @@
             <div id="loading" class="loading">Загрузка...</div>
             <div id="error" class="alert alert-danger hidden"></div>
 
+            <!-- Информация о заявлении -->
             <div id="appDetails" class="app-details hidden"></div>
 
-            <div class="comments-section" id="commentsSection">
-                <h3>Комментарии</h3>
-                <div id="commentsList"></div>
-                <div class="form-group">
-                    <textarea id="newComment" class="form-control" placeholder="Добавить комментарий..."></textarea>
-                    <button class="btn btn-primary" id="addCommentBtn">Добавить</button>
-                </div>
+            <!-- Фото -->
+            <div class="photo-section" id="photoSection" style="display:none;">
+                <h3>Фото заявителя</h3>
+                <img id="userPhoto" src="" alt="Фото">
+                <br>
+                <a id="downloadPhotoLink" href="#" download="photo.jpg" class="btn btn-secondary">Скачать фото</a>
             </div>
 
-            <div class="attachments-section" id="attachmentsSection">
-                <h3>Приложенные документы</h3>
-                <div id="attachmentsList"></div>
-                <div class="form-group">
-                    <input type="file" id="attachmentFile" class="form-control">
-                    <button class="btn btn-primary" id="uploadAttachmentBtn">Загрузить</button>
-                </div>
-            </div>
-
-            <div class="action-buttons" id="actionButtons">
+            <!-- Кнопки действий -->
+            <div class="action-buttons">
                 <button class="btn btn-complete" id="completeBtn">Завершить</button>
                 <button class="btn btn-reject" id="rejectBtn">Отклонить</button>
                 <button class="btn btn-cancel" id="cancelBtn">Отменить</button>
-                <button class="btn btn-invite" id="inviteBtn">Пригласить в МВД</button>
+                <button class="btn btn-interim" id="interimBtn">Промежуточные результаты</button>
+            </div>
+
+            <!-- Комментарии и вложения (можно отобразить ниже для информации) -->
+            <div class="comments-section">
+                <h3>История</h3>
+                <div id="commentsList"></div>
+            </div>
+            <div class="attachments-section">
+                <h3>Приложенные документы</h3>
+                <div id="attachmentsList"></div>
             </div>
         </div>
     </main>
+
+    <!-- Модальное окно для действий -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Заголовок</h3>
+                <button class="close-modal" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="modalComment">Комментарий</label>
+                    <textarea id="modalComment" class="form-control" rows="4"></textarea>
+                </div>
+                <div class="form-group" id="fileUploadGroup">
+                    <label>Приложить документы (PDF)</label>
+                    <input type="file" id="modalFiles" class="form-control" accept=".pdf" multiple>
+                </div>
+                <div id="modalFileList" class="file-list"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="modalCancel">Отмена</button>
+                <button class="btn btn-primary" id="modalSubmit">Подтвердить</button>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
@@ -151,183 +252,6 @@
     </footer>
 
     <script src="../../js/mob-menu.js"></script>
-    <script type="module">
-        import { supabase } from '../../../js/supabase-config.js';
-        import { requireAdmin } from '../certificates/js/certificates-common.js';
-
-        let currentAppId = null;
-
-        async function loadApplication() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (!id) {
-                showError('Не указан ID заявления');
-                return;
-            }
-            currentAppId = id;
-
-            const { data, error } = await supabase
-                .schema('services')
-                .from('passport')
-                .select('*')
-                .eq('id', id)
-                .single();
-
-            if (error || !data) {
-                showError('Заявление не найдено');
-                return;
-            }
-
-            document.getElementById('appNumber').textContent = `№ ${data.application_number}`;
-            renderDetails(data);
-            loadComments();
-            loadAttachments();
-        }
-
-        function renderDetails(data) {
-            const container = document.getElementById('appDetails');
-            let html = '<table class="details-table">';
-            for (let [key, value] of Object.entries(data)) {
-                if (key === 'id' || key === 'user_id' || key === 'personal_data' || key === 'new_personal_data' || key === 'reason_details') continue;
-                let display = value;
-                if (value && typeof value === 'object') display = JSON.stringify(value);
-                html += `<tr><th>${key}</th><td>${display}</td></tr>`;
-            }
-            if (data.personal_data) {
-                html += `<tr><th>personal_data</th><td>${JSON.stringify(data.personal_data)}</td></tr>`;
-            }
-            if (data.new_personal_data && Object.keys(data.new_personal_data).length) {
-                html += `<tr><th>new_personal_data</th><td>${JSON.stringify(data.new_personal_data)}</td></tr>`;
-            }
-            html += '</table>';
-            container.innerHTML = html;
-            container.classList.remove('hidden');
-            document.getElementById('loading').classList.add('hidden');
-        }
-
-        function showError(msg) {
-            const err = document.getElementById('error');
-            err.textContent = msg;
-            err.classList.remove('hidden');
-            document.getElementById('loading').classList.add('hidden');
-        }
-
-        async function loadComments() {
-            const { data, error } = await supabase
-                .from('services.passport_comments')
-                .select('*, users(email)')
-                .eq('passport_id', currentAppId)
-                .order('created_at', { ascending: true });
-
-            const list = document.getElementById('commentsList');
-            if (error || !data) {
-                list.innerHTML = '<p>Ошибка загрузки комментариев</p>';
-                return;
-            }
-            list.innerHTML = data.map(c => `
-                <div class="comment-item">
-                    <div class="comment-meta">${new Date(c.created_at).toLocaleString()} — ${c.users?.email || 'Админ'}</div>
-                    <div>${c.comment}</div>
-                </div>
-            `).join('');
-        }
-
-        async function loadAttachments() {
-            const { data, error } = await supabase
-                .from('services.passport_attachments')
-                .select('*')
-                .eq('passport_id', currentAppId)
-                .order('created_at', { ascending: false });
-
-            const list = document.getElementById('attachmentsList');
-            if (error || !data) {
-                list.innerHTML = '<p>Ошибка загрузки вложений</p>';
-                return;
-            }
-            list.innerHTML = data.map(a => {
-                const url = supabase.storage.from('services-files').getPublicUrl(a.file_path).data.publicUrl;
-                return `
-                    <div class="attachment-item">
-                        <a href="${url}" target="_blank">${a.file_name || a.file_path}</a>
-                        <span class="comment-meta">загружено ${new Date(a.created_at).toLocaleString()}</span>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        async function addComment() {
-            const text = document.getElementById('newComment').value.trim();
-            if (!text) return;
-            const { error } = await supabase
-                .from('services.passport_comments')
-                .insert({ passport_id: currentAppId, user_id: (await supabase.auth.getUser()).data.user.id, comment: text });
-            if (!error) {
-                document.getElementById('newComment').value = '';
-                loadComments();
-            } else {
-                alert('Ошибка: ' + error.message);
-            }
-        }
-
-        async function uploadAttachment() {
-            const fileInput = document.getElementById('attachmentFile');
-            if (!fileInput.files.length) return;
-            const file = fileInput.files[0];
-            const filePath = `passport/admin/${currentAppId}/${Date.now()}_${file.name}`;
-            const { error } = await supabase.storage
-                .from('services-files')
-                .upload(filePath, file);
-            if (error) {
-                alert('Ошибка загрузки: ' + error.message);
-                return;
-            }
-            const { error: dbError } = await supabase
-                .from('services.passport_attachments')
-                .insert({ passport_id: currentAppId, file_path: filePath, file_name: file.name, uploaded_by: (await supabase.auth.getUser()).data.user.id });
-            if (dbError) {
-                alert('Ошибка сохранения в БД: ' + dbError.message);
-            } else {
-                loadAttachments();
-            }
-        }
-
-        async function updateStatus(newStatus) {
-            const { error } = await supabase
-                .schema('services')
-                .from('passport')
-                .update({ status: newStatus, updated_at: new Date().toISOString() })
-                .eq('id', currentAppId);
-            if (error) {
-                alert('Ошибка: ' + error.message);
-            } else {
-                if (newStatus === 'processing') {
-                    window.location.href = 'processing.html';
-                } else {
-                    window.location.href = 'index.html'; // или на список
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!await requireAdmin()) return;
-
-            await loadApplication();
-
-            document.getElementById('addCommentBtn').addEventListener('click', addComment);
-            document.getElementById('uploadAttachmentBtn').addEventListener('click', uploadAttachment);
-
-            document.getElementById('completeBtn').addEventListener('click', () => updateStatus('completed'));
-            document.getElementById('rejectBtn').addEventListener('click', () => updateStatus('rejected'));
-            document.getElementById('cancelBtn').addEventListener('click', () => updateStatus('cancelled'));
-            document.getElementById('inviteBtn').addEventListener('click', () => {
-                alert('Функция приглашения будет реализована позже.');
-            });
-
-            document.getElementById('logoutBtn').addEventListener('click', async () => {
-                await supabase.auth.signOut();
-                window.location.href = '../../login.html';
-            });
-        });
-    </script>
+    <script type="module" src="js/view.js"></script>
 </body>
 </html>
