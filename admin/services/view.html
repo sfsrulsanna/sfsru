@@ -466,10 +466,16 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
 
     console.log('Отправка действия:', currentAction, 'комментарий:', comment, 'файлов:', files.length);
 
+    // Функция для безопасного имени файла
+    const safeFileName = (name) => {
+        return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ-_.]/g, '_').replace(/\s+/g, '_');
+    };
+
     // Загружаем файлы в хранилище
     const attachmentPaths = [];
     for (const file of files) {
-        const filePath = `passport/${currentAppId}/${Date.now()}_${file.name}`;
+        const safeName = safeFileName(file.name);
+        const filePath = `passport/${currentAppId}/${Date.now()}_${safeName}`;
         const { error } = await supabase.storage
             .from('services-files')
             .upload(filePath, file);
