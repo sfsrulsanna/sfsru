@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление паспортами — Админ панель СФСРЮ</title>
+    <!-- favicons (как в других страницах) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+    <!-- ... остальные favicons ... -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <!-- Стили для паспорта (скопированы из пользовательской страницы) -->
+    <link rel="stylesheet" href="../../css/personal-profile/passport.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        /* Дополнительные стили для админки */
+        .container {
+            max-width: 1400px;
+        }
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            cursor: pointer;
+            user-select: none;
+        }
+        th:hover {
+            background: #e9ecef;
+        }
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .btn-add {
+            margin-bottom: 1rem;
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-view {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+        .status-verified { background: #d4edda; color: #155724; }
+        .status-oncheck { background: #fff3cd; color: #856404; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-archived { background: #e2e3e5; color: #383d41; }
+
+        /* Модальное окно для просмотра/добавления */
+        .modal-lg {
+            max-width: 1000px;
+            width: 90%;
+        }
+        .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+        .form-section {
+            margin-bottom: 2rem;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+        }
+        .form-section h4 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            color: #7b091a;
+        }
+        .record-block {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+        .record-block .btn-remove {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            cursor: pointer;
+        }
+        .btn-add-record {
+            background: #17a2b8;
+            color: white;
+            border: none;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+                "jspdf": "https://esm.sh/jspdf@2.5.1",
+                "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.0"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ / Паспорта</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../index.html">Главная админки</a></li>
+                    <li><a href="index.html">Документы</a></li>
+                    <li><a href="../certificates/index.html">Свидетельства</a></li>
+                    <li><a href="#">Адреса</a></li>
+                    <li><a href="#">Регистры</a></li>
+                    <li><a href="#">Законы</a></li>
+                    <li><a href="../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Управление паспортами</h1>
+            <p class="page-description">Все записи паспортов граждан</p>
+
+            <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить паспорт</button>
+
+            <div id="loading" class="loading">Загрузка...</div>
+
+            <div class="table-container">
+                <table id="passportsTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="full_name">ФИО <i class="fas fa-sort"></i></th>
+                            <th data-sort="series_number">Серия и номер <i class="fas fa-sort"></i></th>
+                            <th data-sort="personal_code">Личный код <i class="fas fa-sort"></i></th>
+                            <th data-sort="status">Статус <i class="fas fa-sort"></i></th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="5" class="no-data">Нет данных</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно для просмотра паспорта -->
+    <div id="viewModal" class="modal-overlay">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h4 id="viewModalTitle">Просмотр паспорта</h4>
+                <button type="button" class="close-modal" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <div id="viewLoading" class="loading">Загрузка...</div>
+                <div id="passportContent" style="display: none;"></div>
+                <div id="extraSections" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeViewModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно для добавления/редактирования паспорта -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal modal-lg">
+            <div class="modal-header">
+                <h4 id="editModalTitle">Добавление паспорта</h4>
+                <button type="button" class="close-modal" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="editModalBody">
+                <!-- Форма будет сгенерирована динамически -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
+                <button type="button" class="btn-primary" id="savePassportBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+    <script type="module" src="js/passport-admin.js"></script>
+</body>
+</html>

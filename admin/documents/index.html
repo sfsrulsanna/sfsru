@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление документами — Админ панель СФСРЮ</title>
+    <!-- favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/index.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .document-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .doc-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .doc-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .doc-icon {
+            font-size: 3rem;
+            color: #7b091a;
+            margin-bottom: 1rem;
+        }
+        .doc-card h3 {
+            margin: 0 0 0.5rem;
+            color: #2c3e50;
+        }
+        .doc-card p {
+            color: #666;
+            margin: 0;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ / Управление документами</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../index.html">Главная админки</a></li>
+                    <li><a href="index.html" class="active">Документы</a></li>
+                    <li><a href="../certificates/index.html">Свидетельства</a></li>
+                    <li><a href="#">Адреса</a></li>
+                    <li><a href="#">Регистры</a></li>
+                    <li><a href="#">Законы</a></li>
+                    <li><a href="../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Документы граждан</h1>
+            <p class="page-description">Управление всеми типами документов</p>
+
+            <div class="document-cards">
+                <a href="passport.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-passport"></i></div>
+                    <h3>Паспорт гражданина</h3>
+                    <p>Просмотр и управление паспортами</p>
+                </a>
+                <a href="foreign-passport.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-globe"></i></div>
+                    <h3>Заграничный паспорт</h3>
+                    <p>Управление заграничными паспортами</p>
+                </a>
+                <a href="inn.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-id-card"></i></div>
+                    <h3>ИНН</h3>
+                    <p>Учёт и проверка ИНН</p>
+                </a>
+                <a href="nss.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-id-card"></i></div>
+                    <h3>НСС</h3>
+                    <p>Номер социального счёта</p>
+                </a>
+                <a href="id-card.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-id-card"></i></div>
+                    <h3>ID-карта</h3>
+                    <p>Управление ID-картами</p>
+                </a>
+                <a href="oms.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-notes-medical"></i></div>
+                    <h3>Полис ОМС</h3>
+                    <p>Управление полисами ОМС</p>
+                </a>
+                <a href="military-id.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-shield-alt"></i></div>
+                    <h3>Военный билет</h3>
+                    <p>Управление военными билетами</p>
+                </a>
+                <a href="driver-license.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-car"></i></div>
+                    <h3>Водительское удостоверение</h3>
+                    <p>Управление водительскими правами</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script type="module">
+        import { supabase } from '../../../js/supabase-config.js';
+        import { requireAdmin } from '../certificates/js/certificates-common.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+        });
+    </script>
+</body>
+</html>
