@@ -239,6 +239,13 @@ function formatReasonDetails(details) {
     return `${type}, №${details.number || '—'} от ${details.date ? new Date(details.date).toLocaleDateString('ru-RU') : '—'}, ${details.issuedBy || '—'}`;
 }
 
+// Безопасное имя файла (замена недопустимых символов)
+function safeFileName(name) {
+    // Разрешены: буквы (включая кириллицу), цифры, точка, подчёркивание, дефис.
+    // Дефис ставим в конец, чтобы не создавать диапазон.
+    return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
+}
+
 // Загрузка списка отделений МВД
 async function loadMvd() {
     const { data, error } = await supabase
@@ -465,11 +472,6 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
     const files = uploadedFiles;
 
     console.log('Отправка действия:', currentAction, 'комментарий:', comment, 'файлов:', files.length);
-
-    // Функция для безопасного имени файла
-    const safeFileName = (name) => {
-        return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ-_.]/g, '_').replace(/\s+/g, '_');
-    };
 
     // Загружаем файлы в хранилище
     const attachmentPaths = [];
