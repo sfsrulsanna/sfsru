@@ -258,6 +258,21 @@ function formatPhoneNumber(e) {
   e.target.value = f;
 }
 
+// Функция для показа кастомного уведомления с кнопкой
+function showSuccessWithButton(message, buttonText, buttonLink) {
+  const alertDiv = document.getElementById('alertMessage');
+  if (!alertDiv) return;
+  alertDiv.innerHTML = `
+    <div style="text-align: center;">
+      <p>${message}</p>
+      <a href="${buttonLink}" class="btn" style="display: inline-block; margin-top: 10px; background: #7b0000; color: white; padding: 8px 16px; text-decoration: none; border-radius: 4px;">${buttonText}</a>
+    </div>
+  `;
+  alertDiv.className = 'alert alert-success';
+  alertDiv.style.display = 'block';
+  // Не скрываем автоматически
+}
+
 async function handleRegistration(e) {
   e.preventDefault();
 
@@ -272,10 +287,44 @@ async function handleRegistration(e) {
   showAlert('Регистрация...', 'info');
 
   try {
+    // Формируем metadata, включая все поля
+    const metadata = {
+      category: accountType,
+      phone: formData.phone,
+      // Общие поля для всех типов (перекрываются ниже при необходимости)
+    };
+
+    // Добавляем специфичные поля в зависимости от типа
+    if (accountType === 'citizen') {
+      metadata.last_name = formData.last_name;
+      metadata.first_name = formData.first_name;
+      metadata.middle_name = formData.middle_name;
+      metadata.birth_date = formData.birth_date;
+      metadata.birth_place = formData.birth_place;
+      metadata.personal_code = formData.personal_code;
+      metadata.gender = formData.gender;
+    } else if (accountType === 'subject') {
+      metadata.full_name = formData.full_name;
+      metadata.birth_date = formData.birth_date;
+      metadata.birth_place = formData.birth_place;
+      metadata.gender = formData.gender;
+      metadata.nationality = formData.nationality;
+      metadata.passport_number = formData.passport_number;
+    } else if (accountType === 'organization') {
+      metadata.organization_name = formData.organization_name;
+      metadata.inn = formData.inn;
+      metadata.kpp = formData.kpp;
+      metadata.ogrn = formData.ogrn;
+      metadata.address = formData.address;
+      metadata.contact_person = formData.contact_person;
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: password,
-      options: { data: { category: accountType } }
+      options: {
+        data: metadata
+      }
     });
 
     if (error) {
@@ -283,67 +332,16 @@ async function handleRegistration(e) {
       throw error;
     }
 
-    const userId = data.user.id;
-    let tableName, record;
+    // Успешная регистрация — показываем сообщение с кнопкой перехода на логин
+    showSuccessWithButton(
+      'Регистрация прошла успешно! Письмо для подтверждения отправлено на вашу электронную почту. После подтверждения вы сможете войти.',
+      'Перейти на страницу входа',
+      'login.html'
+    );
 
-    if (accountType === 'citizen') {
-      tableName = 'users';
-      record = {
-        id: userId,
-        personal_code: formData.personal_code,
-        last_name: formData.last_name,
-        first_name: formData.first_name,
-        middle_name: formData.middle_name,
-        birth_date: formData.birth_date,
-        birth_place: formData.birth_place,
-        gender: formData.gender,
-        phone: formData.phone,
-        email: formData.email,
-        account_type: 'simplified',
-        role: 'user'
-      };
-    } else if (accountType === 'subject') {
-      tableName = 'subjects';
-      record = {
-        id: userId,
-        full_name: formData.full_name,
-        birth_date: formData.birth_date,
-        birth_place: formData.birth_place,
-        gender: formData.gender,
-        nationality: formData.nationality,
-        passport_number: formData.passport_number,
-        phone: formData.phone,
-        email: formData.email,
-        account_type: 'simplified',
-        role: 'user'
-      };
-    } else if (accountType === 'organization') {
-      tableName = 'legal_entities';
-      record = {
-        id: userId,
-        organization_name: formData.organization_name,
-        inn: formData.inn,
-        kpp: formData.kpp,
-        ogrn: formData.ogrn,
-        address: formData.address,
-        phone: formData.phone,
-        email: formData.email,
-        contact_person: formData.contact_person,
-        account_type: 'simplified',
-        role: 'user'
-      };
-    }
+    // Дополнительно можно скрыть форму или оставить её
+    document.getElementById('registrationForm').style.display = 'none';
 
-    const { error: insertError } = await supabase.from(tableName).insert([record]);
-    if (insertError) {
-      // Если не удалось создать запись профиля, просто логируем и показываем ошибку.
-      // Удалить пользователя из auth через клиентский ключ невозможно (403).
-      console.error('Ошибка вставки профиля:', insertError);
-      throw insertError;
-    }
-
-    showAlert('Регистрация завершена! Письмо для подтверждения отправлено на email.', 'success');
-    setTimeout(() => window.location.href = 'login.html', 4000);
   } catch (error) {
     console.error(error);
     let message = 'Ошибка регистрации';
@@ -358,8 +356,6 @@ async function handleRegistration(e) {
       message = 'Этот email уже зарегистрирован';
     } else if (error.message.includes('Слишком много попыток')) {
       message = error.message;
-    } else if (error.message.includes('Could not find the')) {
-      message = 'Ошибка структуры базы данных. Обратитесь к администратору.';
     }
     showAlert(message, 'error');
   }
@@ -371,5 +367,9 @@ function showAlert(message, type) {
   el.innerHTML = message;
   el.className = `alert alert-${type}`;
   el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', type === 'success' ? 7000 : 5000);
+  // Для ошибок и информации скрываем через несколько секунд
+  if (type !== 'success') {
+    setTimeout(() => el.style.display = 'none', 5000);
+  }
+  // Для успеха мы не скрываем автоматически, т.к. показываем кнопку
 }
