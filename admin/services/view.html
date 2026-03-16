@@ -158,6 +158,7 @@ import { requireAdmin } from '../certificates/js/certificates-common.js';
 let currentAppId = null;
 let currentAction = null;
 let uploadedFiles = [];
+let mvdMap = {}; // { id: name }
 
 // Маппинг статусов на русский язык
 const statusMap = {
@@ -168,6 +169,18 @@ const statusMap = {
     'completed': 'Результат выдан',
     'rejected': 'Отказано',
     'cancelled': 'Отменено'
+};
+
+// Маппинг причин на русский язык
+const reasonMap = {
+    '14_20_45': 'Исполнилось 14, 20 или 45 лет',
+    'no_space': 'Закончилось место для штампов',
+    'name_changed': 'Изменилось ФИО, дата или место рождения',
+    'lost': 'Паспорт утерян или украден',
+    'damaged': 'Паспорт стал непригодным к использованию',
+    'citizenship': 'Получение гражданства СФСРЮ',
+    'appearance': 'Изменилась внешность',
+    'error': 'Ошибка в паспорте'
 };
 
 // Соответствие действий кнопок статусам
@@ -186,13 +199,56 @@ async function getSignedUrl(filePath) {
     try {
         const { data, error } = await supabase.storage
             .from('services-files')
-            .createSignedUrl(filePath, 3600); // ссылка действительна 1 час
+            .createSignedUrl(filePath, 3600);
         if (error) throw error;
         return data.signedUrl;
     } catch (e) {
         console.error('Ошибка получения подписанной ссылки для', filePath, e);
         return null;
     }
+}
+
+// Форматирование JSONB данных в читаемый вид
+function formatPersonalData(data) {
+    if (!data) return '—';
+    const parts = [];
+    if (data.surname || data.name || data.patronymic) {
+        parts.push(`ФИО: ${data.surname || ''} ${data.name || ''} ${data.patronymic || ''}`.trim());
+    }
+    if (data.birth_date) {
+        parts.push(`Дата рождения: ${new Date(data.birth_date).toLocaleDateString('ru-RU')}`);
+    }
+    if (data.birth_place) {
+        parts.push(`Место рождения: ${data.birth_place}`);
+    }
+    if (data.gender) {
+        parts.push(`Пол: ${data.gender}`);
+    }
+    return parts.join('<br>') || JSON.stringify(data);
+}
+
+// Форматирование reason_details в читаемый вид
+function formatReasonDetails(details) {
+    if (!details) return '—';
+    const typeMap = {
+        'marriage': 'Свидетельство о браке',
+        'divorce': 'Свидетельство о разводе',
+        'name_change': 'Свидетельство о перемене имени'
+    };
+    const type = typeMap[details.type] || details.type;
+    return `${type}, №${details.number || '—'} от ${details.date ? new Date(details.date).toLocaleDateString('ru-RU') : '—'}, ${details.issuedBy || '—'}`;
+}
+
+// Загрузка списка отделений МВД
+async function loadMvd() {
+    const { data, error } = await supabase
+        .from('mvd')
+        .select('id, name');
+    if (error) {
+        console.error('Ошибка загрузки отделений МВД:', error);
+        return;
+    }
+    data.forEach(item => { mvdMap[item.id] = item.name; });
 }
 
 // Загрузка данных заявления
@@ -207,28 +263,36 @@ async function loadApplication() {
 
     console.log('Загрузка заявления ID:', id);
 
-    const { data, error } = await supabase
-        .schema('services')
-        .from('passport')
-        .select('*')
-        .eq('id', id)
-        .single();
+    // Параллельно загружаем заявление и список МВД
+    await Promise.all([
+        loadMvd(),
+        (async () => {
+            const { data, error } = await supabase
+                .schema('services')
+                .from('passport')
+                .select('*')
+                .eq('id', id)
+                .single();
 
-    if (error) {
-        console.error('Ошибка загрузки заявления:', error);
-        showError('Заявление не найдено');
-        return;
-    }
+            if (error) {
+                console.error('Ошибка загрузки заявления:', error);
+                showError('Заявление не найдено');
+                return;
+            }
 
-    console.log('Данные заявления:', data);
+            console.log('Данные заявления:', data);
+            document.getElementById('appNumber').textContent = data.application_number;
+            renderDetails(data);
+            renderPhoto(data.photo_path);
+            loadHistory();
+        })()
+    ]);
 
-    document.getElementById('appNumber').textContent = data.application_number;
-    renderDetails(data);
-    renderPhoto(data.photo_path);
-    loadHistory();
+    // Скрываем загрузку в любом случае
+    document.getElementById('loading').classList.add('hidden');
 }
 
-// Отображение деталей заявления в таблице
+// Отображение деталей заявления в таблице (на русском)
 function renderDetails(data) {
     const container = document.getElementById('detailsTable');
     const fields = [
@@ -236,13 +300,13 @@ function renderDetails(data) {
         ['Статус', statusMap[data.status] || data.status],
         ['Дата создания', new Date(data.created_at).toLocaleString()],
         ['Личный код', data.personal_code],
-        ['Причина', data.reason],
-        ['Детали причины', data.reason_details ? JSON.stringify(data.reason_details) : '—'],
-        ['Личные данные', data.personal_data ? JSON.stringify(data.personal_data) : '—'],
-        ['Новые данные', data.new_personal_data ? JSON.stringify(data.new_personal_data) : '—'],
-        ['Телефон', data.phone],
-        ['Email', data.email],
-        ['Отделение МВД', data.mvd_id],
+        ['Причина', reasonMap[data.reason] || data.reason],
+        ['Детали причины', formatReasonDetails(data.reason_details)],
+        ['Личные данные', formatPersonalData(data.personal_data)],
+        ['Новые данные', data.new_personal_data ? formatPersonalData(data.new_personal_data) : '—'],
+        ['Телефон', data.phone || '—'],
+        ['Email', data.email || '—'],
+        ['Отделение МВД', mvdMap[data.mvd_id] || data.mvd_id || '—'],
         ['Фото', data.photo_path ? 'загружено' : 'нет'],
         ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
     ];
@@ -252,7 +316,6 @@ function renderDetails(data) {
     });
     container.innerHTML = html;
     document.getElementById('appDetails').classList.remove('hidden');
-    document.getElementById('loading').classList.add('hidden');
 }
 
 // Отображение фото с подписанной ссылкой
@@ -325,10 +388,10 @@ async function loadHistory() {
 
 // Показать ошибку
 function showError(msg) {
-    document.getElementById('loading').classList.add('hidden');
     const err = document.getElementById('error');
     err.textContent = msg;
     err.classList.remove('hidden');
+    document.getElementById('loading').classList.add('hidden');
 }
 
 // Открыть модальное окно для выбранного действия
@@ -452,14 +515,13 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
 
     console.log('Статус обновлён, история сохранена');
     closeModal();
-    window.location.reload(); // перезагружаем для отображения обновлённой информации
+    window.location.reload();
 });
 
 // Инициализация страницы
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await requireAdmin()) return;
 
-    // Загружаем заявление
     await loadApplication();
 
     // Обработчики кнопок действий
