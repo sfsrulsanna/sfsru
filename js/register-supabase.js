@@ -126,7 +126,6 @@ function validateStep(step) {
       return false;
     }
     const phoneDigits = phoneInput.replace(/\D/g, '');
-    // Российский номер: 10 цифр после кода страны или 11 с 7/8
     if (!/^(7|8)?\d{10}$/.test(phoneDigits)) {
       showAlert('Введите корректный российский номер телефона (10 цифр после кода)', 'error');
       return false;
@@ -152,17 +151,14 @@ function normalizePhone(phone) {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 0) return null;
-  // Если номер начинается с 8, заменяем на 7
   let normalized = digits;
   if (digits[0] === '8') {
     normalized = '7' + digits.substring(1);
   } else if (digits[0] !== '7') {
-    // Если нет кода страны и 10 цифр — добавляем 7
     if (digits.length === 10) {
       normalized = '7' + digits;
     }
   }
-  // Возвращаем в международном формате
   return '+' + normalized;
 }
 
@@ -340,13 +336,9 @@ async function handleRegistration(e) {
 
     const { error: insertError } = await supabase.from(tableName).insert([record]);
     if (insertError) {
-      // Если не удалось создать запись в таблице профиля, пробуем удалить пользователя из auth
-      // (требует сервисной роли, но попытка не помешает)
-      try {
-        await supabase.auth.admin.deleteUser(userId);
-      } catch (adminError) {
-        console.error('Не удалось откатить создание пользователя:', adminError);
-      }
+      // Если не удалось создать запись профиля, просто логируем и показываем ошибку.
+      // Удалить пользователя из auth через клиентский ключ невозможно (403).
+      console.error('Ошибка вставки профиля:', insertError);
       throw insertError;
     }
 
@@ -366,6 +358,8 @@ async function handleRegistration(e) {
       message = 'Этот email уже зарегистрирован';
     } else if (error.message.includes('Слишком много попыток')) {
       message = error.message;
+    } else if (error.message.includes('Could not find the')) {
+      message = 'Ошибка структуры базы данных. Обратитесь к администратору.';
     }
     showAlert(message, 'error');
   }
