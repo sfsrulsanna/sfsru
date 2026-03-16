@@ -152,282 +152,330 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-        import { supabase } from '../../../js/supabase-config.js';
-        import { requireAdmin } from '../certificates/js/certificates-common.js';
+import { supabase } from '../../../js/supabase-config.js';
+import { requireAdmin } from '../certificates/js/certificates-common.js';
 
-        let currentAppId = null;
-        let currentAction = null;
-        let uploadedFiles = [];
+let currentAppId = null;
+let currentAction = null;
+let uploadedFiles = [];
 
-        // Перевод статусов на русский
-        const statusMap = {
-            'submitted': 'Отправлено в ведомство',
-            'processing': 'В работе',
-            'interim': 'Промежуточные результаты',
-            'positive': 'Принято положительное решение',
-            'completed': 'Результат выдан',
-            'rejected': 'Отказано',
-            'cancelled': 'Отменено'
-        };
+// Маппинг статусов на русский язык
+const statusMap = {
+    'submitted': 'Отправлено в ведомство',
+    'processing': 'В работе',
+    'interim': 'Промежуточные результаты',
+    'positive': 'Принято положительное решение',
+    'completed': 'Результат выдан',
+    'rejected': 'Отказано',
+    'cancelled': 'Отменено'
+};
 
-        // Обратное сопоставление для кнопок
-        const actionToStatus = {
-            'processing': 'processing',
-            'interim': 'interim',
-            'positive': 'positive',
-            'completed': 'completed',
-            'rejected': 'rejected',
-            'cancelled': 'cancelled'
-        };
+// Соответствие действий кнопок статусам
+const actionToStatus = {
+    'processing': 'processing',
+    'interim': 'interim',
+    'positive': 'positive',
+    'completed': 'completed',
+    'rejected': 'rejected',
+    'cancelled': 'cancelled'
+};
 
-        async function loadApplication() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (!id) {
-                showError('Не указан ID заявления');
-                return;
-            }
-            currentAppId = id;
+// Вспомогательная функция для получения подписанной ссылки на файл
+async function getSignedUrl(filePath) {
+    if (!filePath) return null;
+    try {
+        const { data, error } = await supabase.storage
+            .from('services-files')
+            .createSignedUrl(filePath, 3600); // ссылка действительна 1 час
+        if (error) throw error;
+        return data.signedUrl;
+    } catch (e) {
+        console.error('Ошибка получения подписанной ссылки для', filePath, e);
+        return null;
+    }
+}
 
-            const { data, error } = await supabase
-                .schema('services')
-                .from('passport')
-                .select('*')
-                .eq('id', id)
-                .single();
+// Загрузка данных заявления
+async function loadApplication() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (!id) {
+        showError('Не указан ID заявления');
+        return;
+    }
+    currentAppId = id;
 
-            if (error || !data) {
-                showError('Заявление не найдено');
-                return;
-            }
+    console.log('Загрузка заявления ID:', id);
 
-            document.getElementById('appNumber').textContent = data.application_number;
-            renderDetails(data);
-            renderPhoto(data.photo_path);
-            loadHistory();
-        }
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-        function renderDetails(data) {
-            const container = document.getElementById('detailsTable');
-            // Выводим все поля, исключая служебные, но переводя названия
-            const fields = [
-                ['Номер заявления', data.application_number],
-                ['Статус', statusMap[data.status] || data.status],
-                ['Дата создания', new Date(data.created_at).toLocaleString()],
-                ['Личный код', data.personal_code],
-                ['Причина', data.reason],
-                ['Данные свидетельства', data.reason_details ? JSON.stringify(data.reason_details) : '—'],
-                ['Личные данные', data.personal_data ? JSON.stringify(data.personal_data) : '—'],
-                ['Новые данные', data.new_personal_data ? JSON.stringify(data.new_personal_data) : '—'],
-                ['Телефон', data.phone],
-                ['Email', data.email],
-                ['Отделение МВД', data.mvd_id],
-                ['Фото', data.photo_path ? 'загружено' : 'нет'],
-                ['Дата обновления', new Date(data.updated_at).toLocaleString()]
-            ];
-            let html = '';
-            fields.forEach(([label, value]) => {
-                html += `<tr><th>${label}</th><td>${value}</td></tr>`;
-            });
-            container.innerHTML = html;
-            document.getElementById('appDetails').classList.remove('hidden');
-            document.getElementById('loading').classList.add('hidden');
-        }
+    if (error) {
+        console.error('Ошибка загрузки заявления:', error);
+        showError('Заявление не найдено');
+        return;
+    }
 
-        async function renderPhoto(photoPath) {
-            const section = document.getElementById('photoSection');
-            if (!photoPath) {
-                section.classList.add('hidden');
-                return;
-            }
-            const { data } = supabase.storage.from('services-files').getPublicUrl(photoPath);
-            const publicUrl = data.publicUrl;
-            document.getElementById('photoImg').src = publicUrl;
-            document.getElementById('photoDownloadLink').href = publicUrl;
-            section.classList.remove('hidden');
-        }
+    console.log('Данные заявления:', data);
 
-        async function loadHistory() {
-            const { data, error } = await supabase
-                .from('services.passport_status_history')
-                .select('*')
-                .eq('passport_id', currentAppId)
-                .order('created_at', { ascending: false });
+    document.getElementById('appNumber').textContent = data.application_number;
+    renderDetails(data);
+    renderPhoto(data.photo_path);
+    loadHistory();
+}
 
-            const list = document.getElementById('historyList');
-            if (error) {
-                list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
-                return;
-            }
-            if (!data || data.length === 0) {
-                list.innerHTML = '<p class="no-data">История отсутствует</p>';
-                document.getElementById('historySection').classList.remove('hidden');
-                return;
-            }
-            let html = '';
-            for (const item of data) {
-                const statusText = statusMap[item.status] || item.status;
-                const files = item.attachments || [];
-                const fileLinks = files.map(f => {
-                    const { data: urlData } = supabase.storage.from('services-files').getPublicUrl(f);
-                    return `<a href="${urlData.publicUrl}" target="_blank">📎 файл</a>`;
-                }).join(' ');
-                html += `
-                    <div class="history-item">
-                        <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
-                        <div class="status">${statusText}</div>
-                        <div>${item.comment || ''}</div>
-                        <div class="attachments-list">${fileLinks}</div>
-                    </div>
-                `;
-            }
-            list.innerHTML = html;
-            document.getElementById('historySection').classList.remove('hidden');
-        }
+// Отображение деталей заявления в таблице
+function renderDetails(data) {
+    const container = document.getElementById('detailsTable');
+    const fields = [
+        ['Номер заявления', data.application_number],
+        ['Статус', statusMap[data.status] || data.status],
+        ['Дата создания', new Date(data.created_at).toLocaleString()],
+        ['Личный код', data.personal_code],
+        ['Причина', data.reason],
+        ['Детали причины', data.reason_details ? JSON.stringify(data.reason_details) : '—'],
+        ['Личные данные', data.personal_data ? JSON.stringify(data.personal_data) : '—'],
+        ['Новые данные', data.new_personal_data ? JSON.stringify(data.new_personal_data) : '—'],
+        ['Телефон', data.phone],
+        ['Email', data.email],
+        ['Отделение МВД', data.mvd_id],
+        ['Фото', data.photo_path ? 'загружено' : 'нет'],
+        ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
+    ];
+    let html = '';
+    fields.forEach(([label, value]) => {
+        html += `<tr><th>${label}</th><td>${value}</td></tr>`;
+    });
+    container.innerHTML = html;
+    document.getElementById('appDetails').classList.remove('hidden');
+    document.getElementById('loading').classList.add('hidden');
+}
 
-        function showError(msg) {
-            document.getElementById('loading').classList.add('hidden');
-            const err = document.getElementById('error');
-            err.textContent = msg;
-            err.classList.remove('hidden');
-        }
+// Отображение фото с подписанной ссылкой
+async function renderPhoto(photoPath) {
+    const section = document.getElementById('photoSection');
+    if (!photoPath) {
+        section.classList.add('hidden');
+        return;
+    }
+    try {
+        const signedUrl = await getSignedUrl(photoPath);
+        if (!signedUrl) throw new Error('Не удалось получить ссылку на фото');
+        document.getElementById('photoImg').src = signedUrl;
+        document.getElementById('photoDownloadLink').href = signedUrl;
+        section.classList.remove('hidden');
+    } catch (e) {
+        console.error('Ошибка загрузки фото:', e);
+        section.innerHTML = '<p class="error">Не удалось загрузить фото</p>';
+        section.classList.remove('hidden');
+    }
+}
 
-        // Модальное окно
-        window.openModal = (action) => {
-            currentAction = action;
-            document.getElementById('modalTitle').textContent = getActionTitle(action);
-            // Для отмены скрываем загрузку файлов
-            const fileSection = document.getElementById('fileUploadSection');
-            if (action === 'cancelled') {
-                fileSection.style.display = 'none';
+// Загрузка истории статусов с вложениями
+async function loadHistory() {
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport_status_history')
+        .select('*')
+        .eq('passport_id', currentAppId)
+        .order('created_at', { ascending: false });
+
+    const list = document.getElementById('historyList');
+    if (error) {
+        console.error('Ошибка загрузки истории:', error);
+        list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = '<p class="no-data">История отсутствует</p>';
+        document.getElementById('historySection').classList.remove('hidden');
+        return;
+    }
+
+    let html = '';
+    for (const item of data) {
+        const statusText = statusMap[item.status] || item.status;
+        // Получаем подписанные ссылки для всех вложений
+        const fileLinks = [];
+        for (const filePath of (item.attachments || [])) {
+            const signedUrl = await getSignedUrl(filePath);
+            if (signedUrl) {
+                fileLinks.push(`<a href="${signedUrl}" target="_blank">📎 файл</a>`);
             } else {
-                fileSection.style.display = 'block';
+                fileLinks.push(`<span title="Недоступен">📎 (ошибка)</span>`);
             }
-            document.getElementById('actionModal').classList.add('active');
-        };
-
-        window.closeModal = () => {
-            document.getElementById('actionModal').classList.remove('active');
-            document.getElementById('modalComment').value = '';
-            document.getElementById('modalFiles').value = '';
-            document.getElementById('fileList').innerHTML = '';
-            uploadedFiles = [];
-        };
-
-        function getActionTitle(action) {
-            const titles = {
-                'processing': 'Взять в работу',
-                'interim': 'Промежуточные результаты',
-                'positive': 'Принято положительное решение',
-                'completed': 'Результат выдан',
-                'rejected': 'Отказано',
-                'cancelled': 'Отменить'
-            };
-            return titles[action] || 'Действие';
         }
+        html += `
+            <div class="history-item">
+                <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
+                <div class="status">${statusText}</div>
+                <div>${item.comment || ''}</div>
+                <div class="attachments-list">${fileLinks.join(' ')}</div>
+            </div>
+        `;
+    }
+    list.innerHTML = html;
+    document.getElementById('historySection').classList.remove('hidden');
+}
 
-        // Загрузка файлов
-        document.getElementById('modalFiles').addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            const list = document.getElementById('fileList');
-            list.innerHTML = '';
-            uploadedFiles = files;
-            files.forEach((file, index) => {
-                const div = document.createElement('div');
-                div.className = 'file-item';
-                div.innerHTML = `
-                    <span>${file.name}</span>
-                    <button type="button" class="btn-small" data-index="${index}">Удалить</button>
-                `;
-                list.appendChild(div);
-            });
-            // Обработчик удаления
-            document.querySelectorAll('.file-item .btn-small').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const idx = e.target.dataset.index;
-                    uploadedFiles.splice(idx, 1);
-                    // Обновить отображение
-                    const dt = new DataTransfer();
-                    uploadedFiles.forEach(f => dt.items.add(f));
-                    document.getElementById('modalFiles').files = dt.files;
-                    e.target.closest('.file-item').remove();
-                });
-            });
+// Показать ошибку
+function showError(msg) {
+    document.getElementById('loading').classList.add('hidden');
+    const err = document.getElementById('error');
+    err.textContent = msg;
+    err.classList.remove('hidden');
+}
+
+// Открыть модальное окно для выбранного действия
+window.openModal = (action) => {
+    currentAction = action;
+    document.getElementById('modalTitle').textContent = getActionTitle(action);
+    const fileSection = document.getElementById('fileUploadSection');
+    if (action === 'cancelled') {
+        fileSection.style.display = 'none';
+    } else {
+        fileSection.style.display = 'block';
+    }
+    document.getElementById('actionModal').classList.add('active');
+};
+
+// Закрыть модальное окно
+window.closeModal = () => {
+    document.getElementById('actionModal').classList.remove('active');
+    document.getElementById('modalComment').value = '';
+    document.getElementById('modalFiles').value = '';
+    document.getElementById('fileList').innerHTML = '';
+    uploadedFiles = [];
+};
+
+// Заголовок для модалки
+function getActionTitle(action) {
+    const titles = {
+        'processing': 'Взять в работу',
+        'interim': 'Промежуточные результаты',
+        'positive': 'Принято положительное решение',
+        'completed': 'Результат выдан',
+        'rejected': 'Отказано',
+        'cancelled': 'Отменить'
+    };
+    return titles[action] || 'Действие';
+}
+
+// Обработка выбора файлов для загрузки
+document.getElementById('modalFiles').addEventListener('change', (e) => {
+    const files = Array.from(e.target.files);
+    const list = document.getElementById('fileList');
+    list.innerHTML = '';
+    uploadedFiles = files;
+    files.forEach((file, index) => {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.innerHTML = `
+            <span>${file.name}</span>
+            <button type="button" class="btn-small" data-index="${index}">Удалить</button>
+        `;
+        list.appendChild(div);
+    });
+    // Удаление файла из списка
+    document.querySelectorAll('.file-item .btn-small').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = e.target.dataset.index;
+            uploadedFiles.splice(idx, 1);
+            // Обновить FileList (не тривиально, поэтому пересоздаём список)
+            const dt = new DataTransfer();
+            uploadedFiles.forEach(f => dt.items.add(f));
+            document.getElementById('modalFiles').files = dt.files;
+            e.target.closest('.file-item').remove();
+        });
+    });
+});
+
+// Отправка формы (сохранение статуса, комментария и файлов)
+document.getElementById('actionForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const comment = document.getElementById('modalComment').value.trim();
+    const files = uploadedFiles;
+
+    console.log('Отправка действия:', currentAction, 'комментарий:', comment, 'файлов:', files.length);
+
+    // Загружаем файлы в хранилище
+    const attachmentPaths = [];
+    for (const file of files) {
+        const filePath = `passport/${currentAppId}/${Date.now()}_${file.name}`;
+        const { error } = await supabase.storage
+            .from('services-files')
+            .upload(filePath, file);
+        if (error) {
+            alert('Ошибка загрузки файла: ' + error.message);
+            console.error('Ошибка загрузки файла:', error);
+            return;
+        }
+        attachmentPaths.push(filePath);
+        console.log('Файл загружен:', filePath);
+    }
+
+    // Запись в историю
+    const { error: historyError } = await supabase
+        .schema('services')
+        .from('passport_status_history')
+        .insert({
+            passport_id: currentAppId,
+            status: actionToStatus[currentAction],
+            comment: comment,
+            attachments: attachmentPaths,
+            created_by: (await supabase.auth.getUser()).data.user.id
         });
 
-        // Отправка формы
-        document.getElementById('actionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const comment = document.getElementById('modalComment').value.trim();
-            const files = uploadedFiles;
+    if (historyError) {
+        alert('Ошибка сохранения истории: ' + historyError.message);
+        console.error('Ошибка истории:', historyError);
+        return;
+    }
 
-            // Загружаем файлы в хранилище
-            const attachmentPaths = [];
-            for (const file of files) {
-                const filePath = `passport/${currentAppId}/${Date.now()}_${file.name}`;
-                const { error } = await supabase.storage
-                    .from('services-files')
-                    .upload(filePath, file);
-                if (error) {
-                    alert('Ошибка загрузки файла: ' + error.message);
-                    return;
-                }
-                attachmentPaths.push(filePath);
-            }
+    // Обновляем текущий статус в основной таблице
+    const { error: updateError } = await supabase
+        .schema('services')
+        .from('passport')
+        .update({ status: actionToStatus[currentAction], updated_at: new Date().toISOString() })
+        .eq('id', currentAppId);
 
-            // Запись в историю
-            const { error: historyError } = await supabase
-                .from('services.passport_status_history')
-                .insert({
-                    passport_id: currentAppId,
-                    status: actionToStatus[currentAction],
-                    comment: comment,
-                    attachments: attachmentPaths,
-                    created_by: (await supabase.auth.getUser()).data.user.id
-                });
+    if (updateError) {
+        alert('Ошибка обновления статуса: ' + updateError.message);
+        console.error('Ошибка обновления статуса:', updateError);
+        return;
+    }
 
-            if (historyError) {
-                alert('Ошибка сохранения истории: ' + historyError.message);
-                return;
-            }
+    console.log('Статус обновлён, история сохранена');
+    closeModal();
+    window.location.reload(); // перезагружаем для отображения обновлённой информации
+});
 
-            // Обновляем текущий статус в основной таблице (кроме случая, если это взятие в работу – уже обновлено ранее)
-            // Для взятия в работу статус уже мог быть изменён кнопкой, но мы всё равно обновим
-            const { error: updateError } = await supabase
-                .schema('services')
-                .from('passport')
-                .update({ status: actionToStatus[currentAction], updated_at: new Date().toISOString() })
-                .eq('id', currentAppId);
+// Инициализация страницы
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!await requireAdmin()) return;
 
-            if (updateError) {
-                alert('Ошибка обновления статуса: ' + updateError.message);
-                return;
-            }
+    // Загружаем заявление
+    await loadApplication();
 
-            closeModal();
-            // Перезагрузить страницу для обновления
-            window.location.reload();
+    // Обработчики кнопок действий
+    document.querySelectorAll('.action-buttons .btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const action = btn.dataset.action;
+            openModal(action);
         });
+    });
 
-        // Обработчики кнопок
-        document.querySelectorAll('.action-buttons .btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const action = btn.dataset.action;
-                openModal(action);
-            });
-        });
-
-        // Выход
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await supabase.auth.signOut();
-            window.location.href = '../../login.html';
-        });
-
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!await requireAdmin()) return;
-            await loadApplication();
-        });
+    // Выход
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '../../login.html';
+    });
+});
     </script>
 </body>
 </html>
