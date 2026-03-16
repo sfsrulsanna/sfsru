@@ -1,7 +1,7 @@
 import { supabase } from './supabase-config.js'
 
 let currentStep = 1;
-let accountType = null; // 'citizen', 'subject', 'organization'
+let accountType = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
@@ -91,7 +91,6 @@ function validateStep(step) {
           return false;
         }
       }
-      // Дополнительная проверка формата personal_code для подданного (XXXX-XXXXXX)
       const pc = document.getElementById('passportNumber').value.trim();
       if (!/^\d{4}-\d{6}$/.test(pc)) {
         showAlert('Личный код должен быть в формате XXXX-XXXXXX', 'error');
@@ -159,13 +158,13 @@ function normalizePhone(phone) {
   return '+' + digits;
 }
 
-// Разделение полного имени на фамилию, имя, отчество
 function splitFullName(fullName) {
   const parts = fullName.trim().split(/\s+/);
-  const surname = parts[0] || '';
-  const name = parts[1] || '';
-  const patronymic = parts.slice(2).join(' ') || null;
-  return { surname, name, patronymic };
+  return {
+    surname: parts[0] || '',
+    name: parts[1] || '',
+    patronymic: parts.slice(2).join(' ') || null
+  };
 }
 
 function getFormData() {
@@ -177,7 +176,6 @@ function getFormData() {
   if (accountType === 'citizen') {
     return {
       ...base,
-      category: 'citizen',
       surname: document.getElementById('lastName').value.trim(),
       name: document.getElementById('firstName').value.trim(),
       patronymic: document.getElementById('middleName').value.trim() || null,
@@ -191,7 +189,6 @@ function getFormData() {
     const { surname, name, patronymic } = splitFullName(fullName);
     return {
       ...base,
-      category: 'subject',
       surname,
       name,
       patronymic,
@@ -199,15 +196,14 @@ function getFormData() {
       place_of_birth: document.getElementById('subjectBirthPlace').value.trim(),
       gender: document.getElementById('subjectGender').value,
       citizenship: document.getElementById('nationality').value.trim(),
-      personal_code: document.getElementById('passportNumber').value.trim() // поле passportNumber используется как personal_code
+      personal_code: document.getElementById('passportNumber').value.trim()
     };
   } else if (accountType === 'organization') {
     return {
       ...base,
-      category: 'organization',
       organization_name_full: document.getElementById('orgName').value.trim(),
-      organization_name_short: document.getElementById('orgName').value.trim(), // временно дублируем
-      organization_type: 'ООО', // ЗДЕСЬ НУЖНО ВЗЯТЬ ИЗ ФОРМЫ, если добавите поле
+      organization_name_short: document.getElementById('orgName').value.trim(), // заменить на отдельное поле, если есть
+      organization_type: 'ООО', // заменить на выбор из формы
       inn: document.getElementById('inn').value.trim(),
       kpp: document.getElementById('kpp').value.trim() || null,
       ogrn: document.getElementById('ogrn').value.trim(),
@@ -297,21 +293,21 @@ async function handleRegistration(e) {
   showAlert('Регистрация...', 'info');
 
   try {
-    // 1. Создание пользователя в Auth (подтверждение email отключено)
+    // 1. Регистрация пользователя (подтверждение email отключено)
     const { data, error } = await supabase.auth.signUp({
       email: formData.email,
       password: password
     });
 
-    if (error) {
-      if (error.status === 429) throw new Error('Слишком много попыток. Подождите.');
-      throw error;
-    }
+    if (error) throw error;
+
+    // 2. Небольшая задержка для гарантии установки сессии
+    await new Promise(resolve => setTimeout(resolve, 500));
 
     const userId = data.user.id;
     let tableName, record;
 
-    // 2. Формирование записи для таблицы профиля
+    // 3. Подготовка записи для таблицы профиля
     if (accountType === 'citizen') {
       tableName = 'users';
       record = {
@@ -327,7 +323,6 @@ async function handleRegistration(e) {
         phone: formData.phone,
         account_type: 'упрощённая',
         role: 'user',
-        // статусы по умолчанию
         surname_status: 'oncheck',
         name_status: 'oncheck',
         patronymic_status: 'oncheck',
@@ -366,7 +361,7 @@ async function handleRegistration(e) {
         id: userId,
         organization_name_full: formData.organization_name_full,
         organization_name_short: formData.organization_name_short,
-        organization_type: formData.organization_type, // требуется доработка формы
+        organization_type: formData.organization_type,
         inn: formData.inn,
         kpp: formData.kpp,
         ogrn: formData.ogrn,
@@ -378,14 +373,14 @@ async function handleRegistration(e) {
       };
     }
 
-    // 3. Вставка записи в таблицу
+    // 4. Вставка записи
     const { error: insertError } = await supabase
       .from(tableName)
       .insert([record]);
 
     if (insertError) throw insertError;
 
-    // 4. Успех
+    // 5. Успех
     showSuccessWithButton(
       'Регистрация прошла успешно! Теперь вы можете войти.',
       'Перейти на страницу входа',
