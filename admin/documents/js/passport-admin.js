@@ -1,7 +1,7 @@
 import { supabase } from '../../../js/supabase-config.js';
 import { requireAdmin } from '../../certificates/js/certificates-common.js';
 
-let currentPassportId = null; // для редактирования
+let currentPassportId = null;
 let sortField = 'created_at';
 let sortDirection = 'desc';
 let allData = [];
@@ -57,14 +57,18 @@ function renderTable() {
                 <td><span class="status-badge ${statusClass}">${escapeHTML(statusText)}</span></td>
                 <td>
                     <button class="btn-view" data-id="${item.id}">Подробнее</button>
+                    <button class="btn-edit" data-id="${item.id}">Редактировать</button>
                 </td>
             </tr>
         `;
     }).join('');
 
-    // Добавляем обработчики на кнопки "Подробнее"
+    // Обработчики
     document.querySelectorAll('.btn-view').forEach(btn => {
         btn.addEventListener('click', () => viewPassport(btn.dataset.id));
+    });
+    document.querySelectorAll('.btn-edit').forEach(btn => {
+        btn.addEventListener('click', () => editPassport(btn.dataset.id));
     });
 }
 
@@ -78,7 +82,6 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
             sortField = field;
             sortDirection = 'asc';
         }
-        // Обновляем иконки
         document.querySelectorAll('th i').forEach(i => i.className = 'fas fa-sort');
         th.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
         loadPassports();
@@ -106,13 +109,11 @@ async function viewPassport(id) {
         return;
     }
 
-    // Используем функцию рендера из пользовательского скрипта (адаптированную)
     renderPassportInModal(data);
 }
 
+// Рендер паспорта в модалке просмотра
 function renderPassportInModal(data) {
-    // Копируем логику из renderPassport, но убираем кнопки редактирования/замены
-    // и добавляем в модальное окно
     const statusText = getStatusLabel(data.status);
     const statusClass = getStatusClass(data.status);
 
@@ -199,7 +200,7 @@ function renderPassportInModal(data) {
     document.getElementById('passportContent').innerHTML = html;
     document.getElementById('passportContent').style.display = 'block';
 
-    // Генерация дополнительных секций
+    // Дополнительные секции
     let extraHtml = '';
     if (data.residences && data.residences.length) {
         extraHtml += `
@@ -227,7 +228,19 @@ function renderPassportInModal(data) {
             </div>
         `;
     }
-    // ... аналогично для других массивов
+    if (data.is_military_obligated !== undefined) {
+        extraHtml += `
+            <h3 class="section-title"><i class="fas fa-shield-alt"></i> Военная обязанность</h3>
+            <div class="info-table">
+                <table>
+                    <thead><tr><th>Военнообязанный</th><th>Военный билет</th></tr></thead>
+                    <tbody>
+                        <tr><td>${data.is_military_obligated ? 'Да' : 'Нет'}</td><td>${escapeHTML(data.military_idn || '—')}</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        `;
+    }
     if (data.previous_passports && data.previous_passports.length) {
         extraHtml += `
             <h3 class="section-title"><i class="fas fa-history"></i> Ранее выданные паспорта</h3>
@@ -270,7 +283,7 @@ function renderPassportInModal(data) {
     document.getElementById('extraSections').innerHTML = extraHtml;
     document.getElementById('extraSections').style.display = extraHtml ? 'block' : 'none';
 
-    // Генерация QR и штрихкода
+    // QR и штрихкод
     const personalCode = data.personal_code || '';
     const qrContainer = document.getElementById('passportQrCode');
     if (qrContainer && personalCode) {
@@ -340,71 +353,473 @@ document.getElementById('addBtn').addEventListener('click', () => {
     document.getElementById('editModal').classList.add('active');
 });
 
-// Рендер формы редактирования/добавления (упрощённая версия)
+// Редактирование паспорта
+async function editPassport(id) {
+    currentPassportId = id;
+    document.getElementById('editModalTitle').textContent = 'Редактирование паспорта';
+    document.getElementById('editModalBody').innerHTML = '<div class="loading">Загрузка...</div>';
+    document.getElementById('editModal').classList.add('active');
+
+    const { data, error } = await supabase
+        .schema('documents')
+        .from('passport')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+    if (error || !data) {
+        alert('Ошибка загрузки данных');
+        closeEditModal();
+        return;
+    }
+
+    renderEditForm(data);
+}
+
+// Рендер формы редактирования с полными данными
 function renderEditForm(data) {
-    const formHtml = `
+    const formData = {
+        id: data.id || null,
+        surname: data.surname || '',
+        name: data.name || '',
+        patronymic: data.patronymic || '',
+        birth_date: data.birth_date || '',
+        birth_place: data.birth_place || '',
+        gender: data.gender || 'Мужской',
+        issued_by: data.issued_by || '',
+        issue_date: data.issue_date || '',
+        expiry_date: data.expiry_date || '',
+        department_code: data.department_code || '',
+        series_number: data.series_number || '',
+        personal_code: data.personal_code || '',
+        status: data.status || 'oncheck',
+        is_military_obligated: data.is_military_obligated || false,
+        military_idn: data.military_idn || '',
+        residences: data.residences || [],
+        marital_statuses: data.marital_statuses || [],
+        previous_passports: data.previous_passports || [],
+        previous_foreign_passports: data.previous_foreign_passports || [],
+        previous_id_cards: data.previous_id_cards || []
+    };
+
+    const html = `
         <div class="form-section">
             <h4>Основные данные</h4>
             <div class="form-group">
                 <label>Фамилия</label>
-                <input type="text" id="surname" class="form-input" value="${escapeHTML(data.surname || '')}">
+                <input type="text" id="surname" class="form-input" value="${escapeHTML(formData.surname)}">
             </div>
             <div class="form-group">
                 <label>Имя</label>
-                <input type="text" id="name" class="form-input" value="${escapeHTML(data.name || '')}">
+                <input type="text" id="name" class="form-input" value="${escapeHTML(formData.name)}">
             </div>
             <div class="form-group">
                 <label>Отчество</label>
-                <input type="text" id="patronymic" class="form-input" value="${escapeHTML(data.patronymic || '')}">
+                <input type="text" id="patronymic" class="form-input" value="${escapeHTML(formData.patronymic)}">
             </div>
             <div class="form-group">
                 <label>Дата рождения</label>
-                <input type="date" id="birth_date" class="form-input" value="${data.birth_date || ''}">
+                <input type="date" id="birth_date" class="form-input" value="${formData.birth_date}">
             </div>
             <div class="form-group">
                 <label>Место рождения</label>
-                <input type="text" id="birth_place" class="form-input" value="${escapeHTML(data.birth_place || '')}">
+                <input type="text" id="birth_place" class="form-input" value="${escapeHTML(formData.birth_place)}">
             </div>
             <div class="form-group">
                 <label>Пол</label>
                 <select id="gender" class="form-input">
-                    <option value="Мужской" ${data.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
-                    <option value="Женский" ${data.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+                    <option value="Мужской" ${formData.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+                    <option value="Женский" ${formData.gender === 'Женский' ? 'selected' : ''}>Женский</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>Кем выдан</label>
-                <input type="text" id="issued_by" class="form-input" value="${escapeHTML(data.issued_by || '')}">
+                <input type="text" id="issued_by" class="form-input" value="${escapeHTML(formData.issued_by)}">
             </div>
             <div class="form-group">
                 <label>Дата выдачи</label>
-                <input type="date" id="issue_date" class="form-input" value="${data.issue_date || ''}">
+                <input type="date" id="issue_date" class="form-input" value="${formData.issue_date}">
             </div>
             <div class="form-group">
                 <label>Дата окончания действия</label>
-                <input type="date" id="expiry_date" class="form-input" value="${data.expiry_date || ''}">
+                <input type="date" id="expiry_date" class="form-input" value="${formData.expiry_date}">
             </div>
             <div class="form-group">
                 <label>Код подразделения</label>
-                <input type="text" id="department_code" class="form-input" value="${escapeHTML(data.department_code || '')}">
+                <input type="text" id="department_code" class="form-input" value="${escapeHTML(formData.department_code)}">
             </div>
             <div class="form-group">
                 <label>Серия и номер</label>
-                <input type="text" id="series_number" class="form-input" value="${escapeHTML(data.series_number || '')}">
+                <input type="text" id="series_number" class="form-input" value="${escapeHTML(formData.series_number)}">
             </div>
             <div class="form-group">
                 <label>Личный код</label>
-                <input type="text" id="personal_code" class="form-input" value="${escapeHTML(data.personal_code || '')}">
+                <input type="text" id="personal_code" class="form-input" value="${escapeHTML(formData.personal_code)}">
+            </div>
+            <div class="form-group">
+                <label>Статус</label>
+                <select id="status" class="form-input">
+                    <option value="verified" ${formData.status === 'verified' ? 'selected' : ''}>Подтверждено</option>
+                    <option value="oncheck" ${formData.status === 'oncheck' ? 'selected' : ''}>На проверке</option>
+                    <option value="rejected" ${formData.status === 'rejected' ? 'selected' : ''}>Отклонено</option>
+                    <option value="archived" ${formData.status === 'archived' ? 'selected' : ''}>Архивный</option>
+                </select>
             </div>
         </div>
-        <!-- Здесь можно добавить секции для массивов (residences, marital_statuses и т.д.), но для простоты пока опустим -->
+
+        <div class="form-section">
+            <h4>Военная обязанность</h4>
+            <div class="form-group">
+                <label><input type="checkbox" id="is_military_obligated" ${formData.is_military_obligated ? 'checked' : ''}> Военнообязанный</label>
+            </div>
+            <div class="form-group">
+                <label>Военный билет</label>
+                <input type="text" id="military_idn" class="form-input" value="${escapeHTML(formData.military_idn)}">
+            </div>
+        </div>
+
+        <div class="form-section">
+            <h4>Места регистрации</h4>
+            <div id="residencesContainer"></div>
+            <button type="button" class="btn-add-record" id="addResidenceBtn">+ Добавить адрес</button>
+        </div>
+
+        <div class="form-section">
+            <h4>Семейное положение</h4>
+            <div id="maritalContainer"></div>
+            <button type="button" class="btn-add-record" id="addMaritalBtn">+ Добавить запись</button>
+        </div>
+
+        <div class="form-section">
+            <h4>Ранее выданные паспорта</h4>
+            <div id="prevPassportsContainer"></div>
+            <button type="button" class="btn-add-record" id="addPrevPassportBtn">+ Добавить паспорт</button>
+        </div>
+
+        <div class="form-section">
+            <h4>Ранее выданные заграничные паспорта</h4>
+            <div id="prevForeignContainer"></div>
+            <button type="button" class="btn-add-record" id="addPrevForeignBtn">+ Добавить</button>
+        </div>
+
+        <div class="form-section">
+            <h4>Ранее выданные ID-карты</h4>
+            <div id="prevIdCardsContainer"></div>
+            <button type="button" class="btn-add-record" id="addPrevIdCardBtn">+ Добавить</button>
+        </div>
     `;
-    document.getElementById('editModalBody').innerHTML = formHtml;
+
+    document.getElementById('editModalBody').innerHTML = html;
+
+    // Заполняем динамические секции
+    renderResidencesSection(formData.residences);
+    renderMaritalSection(formData.marital_statuses);
+    renderPrevPassportsSection(formData.previous_passports);
+    renderPrevForeignSection(formData.previous_foreign_passports);
+    renderPrevIdCardsSection(formData.previous_id_cards);
+
+    // Добавляем обработчики для кнопок добавления
+    document.getElementById('addResidenceBtn').addEventListener('click', () => addResidenceBlock());
+    document.getElementById('addMaritalBtn').addEventListener('click', () => addMaritalBlock());
+    document.getElementById('addPrevPassportBtn').addEventListener('click', () => addPrevPassportBlock());
+    document.getElementById('addPrevForeignBtn').addEventListener('click', () => addPrevForeignBlock());
+    document.getElementById('addPrevIdCardBtn').addEventListener('click', () => addPrevIdCardBlock());
 }
 
-// Сохранение паспорта
-document.getElementById('savePassportBtn').addEventListener('click', async () => {
-    const formData = {
+// --- Функции рендера секций ---
+function renderResidencesSection(items) {
+    const container = document.getElementById('residencesContainer');
+    container.innerHTML = '';
+    items.forEach((item, index) => {
+        const block = document.createElement('div');
+        block.className = 'record-block';
+        block.innerHTML = `
+            <button type="button" class="btn-remove" data-index="${index}" data-section="residences">×</button>
+            <div class="form-group">
+                <label>Адрес</label>
+                <input type="text" class="form-input residence-address" value="${escapeHTML(item.address || '')}">
+            </div>
+            <div class="form-group">
+                <label>Дата регистрации</label>
+                <input type="date" class="form-input residence-reg" value="${item.registrationDate || ''}">
+            </div>
+            <div class="form-group">
+                <label>Дата снятия</label>
+                <input type="date" class="form-input residence-dereg" value="${item.deregistrationDate || ''}">
+            </div>
+            <div class="form-group">
+                <label>Тип жилья</label>
+                <input type="text" class="form-input residence-type" value="${escapeHTML(item.housingType || '')}">
+            </div>
+        `;
+        container.appendChild(block);
+    });
+    attachRemoveHandlers('residences');
+}
+
+function renderMaritalSection(items) {
+    const container = document.getElementById('maritalContainer');
+    container.innerHTML = '';
+    items.forEach((item, index) => {
+        const block = document.createElement('div');
+        block.className = 'record-block';
+        block.innerHTML = `
+            <button type="button" class="btn-remove" data-index="${index}" data-section="marital">×</button>
+            <div class="form-group">
+                <label>Статус</label>
+                <select class="form-input marital-status">
+                    <option value="Не состоит в зарегистрированном браке" ${item.status === 'Не состоит в зарегистрированном браке' ? 'selected' : ''}>Не состоит в зарегистрированном браке</option>
+                    <option value="В браке" ${item.status === 'В браке' ? 'selected' : ''}>В браке</option>
+                    <option value="В разводе" ${item.status === 'В разводе' ? 'selected' : ''}>В разводе</option>
+                    <option value="Вдовец/Вдова" ${item.status === 'Вдовец/Вдова' ? 'selected' : ''}>Вдовец/Вдова</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Дата изменения</label>
+                <input type="date" class="form-input marital-date" value="${item.changeDate || ''}">
+            </div>
+            <div class="form-group">
+                <label>ФИО супруга</label>
+                <input type="text" class="form-input marital-spouse" value="${escapeHTML(item.spouseName || '')}">
+            </div>
+            <div class="form-group">
+                <label>Номер акта</label>
+                <input type="text" class="form-input marital-act" value="${escapeHTML(item.actNumber || '')}">
+            </div>
+        `;
+        container.appendChild(block);
+    });
+    attachRemoveHandlers('marital');
+}
+
+function renderPrevPassportsSection(items) {
+    const container = document.getElementById('prevPassportsContainer');
+    container.innerHTML = '';
+    items.forEach((item, index) => {
+        const block = document.createElement('div');
+        block.className = 'record-block';
+        block.innerHTML = `
+            <button type="button" class="btn-remove" data-index="${index}" data-section="prevPassports">×</button>
+            <div class="form-group">
+                <label>Серия и номер</label>
+                <input type="text" class="form-input passport-series" value="${escapeHTML(item.seriesNumber || '')}">
+            </div>
+            <div class="form-group">
+                <label>Дата выдачи</label>
+                <input type="date" class="form-input passport-date" value="${item.issueDate || ''}">
+            </div>
+            <div class="form-group">
+                <label>Кем выдан</label>
+                <input type="text" class="form-input passport-issued" value="${escapeHTML(item.issuedBy || '')}">
+            </div>
+            <div class="form-group">
+                <label>Причина замены</label>
+                <input type="text" class="form-input passport-reason" value="${escapeHTML(item.reason || '')}">
+            </div>
+        `;
+        container.appendChild(block);
+    });
+    attachRemoveHandlers('prevPassports');
+}
+
+function renderPrevForeignSection(items) {
+    const container = document.getElementById('prevForeignContainer');
+    container.innerHTML = '';
+    items.forEach((item, index) => {
+        const block = document.createElement('div');
+        block.className = 'record-block';
+        block.innerHTML = `
+            <button type="button" class="btn-remove" data-index="${index}" data-section="prevForeign">×</button>
+            <div class="form-group">
+                <label>Серия и номер</label>
+                <input type="text" class="form-input foreign-series" value="${escapeHTML(item.seriesNumber || '')}">
+            </div>
+            <div class="form-group">
+                <label>Дата выдачи</label>
+                <input type="date" class="form-input foreign-date" value="${item.issueDate || ''}">
+            </div>
+            <div class="form-group">
+                <label>Кем выдан</label>
+                <input type="text" class="form-input foreign-issued" value="${escapeHTML(item.issuedBy || '')}">
+            </div>
+        `;
+        container.appendChild(block);
+    });
+    attachRemoveHandlers('prevForeign');
+}
+
+function renderPrevIdCardsSection(items) {
+    const container = document.getElementById('prevIdCardsContainer');
+    container.innerHTML = '';
+    items.forEach((item, index) => {
+        const block = document.createElement('div');
+        block.className = 'record-block';
+        block.innerHTML = `
+            <button type="button" class="btn-remove" data-index="${index}" data-section="prevIdCards">×</button>
+            <div class="form-group">
+                <label>Серия и номер</label>
+                <input type="text" class="form-input idcard-series" value="${escapeHTML(item.seriesNumber || '')}">
+            </div>
+            <div class="form-group">
+                <label>Дата выдачи</label>
+                <input type="date" class="form-input idcard-date" value="${item.issueDate || ''}">
+            </div>
+            <div class="form-group">
+                <label>Кем выдан</label>
+                <input type="text" class="form-input idcard-issued" value="${escapeHTML(item.issuedBy || '')}">
+            </div>
+        `;
+        container.appendChild(block);
+    });
+    attachRemoveHandlers('prevIdCards');
+}
+
+// Прикрепление обработчиков удаления
+function attachRemoveHandlers(section) {
+    document.querySelectorAll(`.btn-remove[data-section="${section}"]`).forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const block = e.target.closest('.record-block');
+            block.remove();
+        });
+    });
+}
+
+// --- Функции добавления новых блоков ---
+function addResidenceBlock() {
+    const container = document.getElementById('residencesContainer');
+    const block = document.createElement('div');
+    block.className = 'record-block';
+    block.innerHTML = `
+        <button type="button" class="btn-remove" data-section="residences">×</button>
+        <div class="form-group">
+            <label>Адрес</label>
+            <input type="text" class="form-input residence-address">
+        </div>
+        <div class="form-group">
+            <label>Дата регистрации</label>
+            <input type="date" class="form-input residence-reg">
+        </div>
+        <div class="form-group">
+            <label>Дата снятия</label>
+            <input type="date" class="form-input residence-dereg">
+        </div>
+        <div class="form-group">
+            <label>Тип жилья</label>
+            <input type="text" class="form-input residence-type">
+        </div>
+    `;
+    container.appendChild(block);
+    attachRemoveHandlers('residences');
+}
+
+function addMaritalBlock() {
+    const container = document.getElementById('maritalContainer');
+    const block = document.createElement('div');
+    block.className = 'record-block';
+    block.innerHTML = `
+        <button type="button" class="btn-remove" data-section="marital">×</button>
+        <div class="form-group">
+            <label>Статус</label>
+            <select class="form-input marital-status">
+                <option value="Не состоит в зарегистрированном браке">Не состоит в зарегистрированном браке</option>
+                <option value="В браке">В браке</option>
+                <option value="В разводе">В разводе</option>
+                <option value="Вдовец/Вдова">Вдовец/Вдова</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Дата изменения</label>
+            <input type="date" class="form-input marital-date">
+        </div>
+        <div class="form-group">
+            <label>ФИО супруга</label>
+            <input type="text" class="form-input marital-spouse">
+        </div>
+        <div class="form-group">
+            <label>Номер акта</label>
+            <input type="text" class="form-input marital-act">
+        </div>
+    `;
+    container.appendChild(block);
+    attachRemoveHandlers('marital');
+}
+
+function addPrevPassportBlock() {
+    const container = document.getElementById('prevPassportsContainer');
+    const block = document.createElement('div');
+    block.className = 'record-block';
+    block.innerHTML = `
+        <button type="button" class="btn-remove" data-section="prevPassports">×</button>
+        <div class="form-group">
+            <label>Серия и номер</label>
+            <input type="text" class="form-input passport-series">
+        </div>
+        <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input passport-date">
+        </div>
+        <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input passport-issued">
+        </div>
+        <div class="form-group">
+            <label>Причина замены</label>
+            <input type="text" class="form-input passport-reason">
+        </div>
+    `;
+    container.appendChild(block);
+    attachRemoveHandlers('prevPassports');
+}
+
+function addPrevForeignBlock() {
+    const container = document.getElementById('prevForeignContainer');
+    const block = document.createElement('div');
+    block.className = 'record-block';
+    block.innerHTML = `
+        <button type="button" class="btn-remove" data-section="prevForeign">×</button>
+        <div class="form-group">
+            <label>Серия и номер</label>
+            <input type="text" class="form-input foreign-series">
+        </div>
+        <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input foreign-date">
+        </div>
+        <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input foreign-issued">
+        </div>
+    `;
+    container.appendChild(block);
+    attachRemoveHandlers('prevForeign');
+}
+
+function addPrevIdCardBlock() {
+    const container = document.getElementById('prevIdCardsContainer');
+    const block = document.createElement('div');
+    block.className = 'record-block';
+    block.innerHTML = `
+        <button type="button" class="btn-remove" data-section="prevIdCards">×</button>
+        <div class="form-group">
+            <label>Серия и номер</label>
+            <input type="text" class="form-input idcard-series">
+        </div>
+        <div class="form-group">
+            <label>Дата выдачи</label>
+            <input type="date" class="form-input idcard-date">
+        </div>
+        <div class="form-group">
+            <label>Кем выдан</label>
+            <input type="text" class="form-input idcard-issued">
+        </div>
+    `;
+    container.appendChild(block);
+    attachRemoveHandlers('prevIdCards');
+}
+
+// Сбор данных из формы
+function collectEditFormData() {
+    const data = {
         surname: document.getElementById('surname')?.value.trim() || '',
         name: document.getElementById('name')?.value.trim() || '',
         patronymic: document.getElementById('patronymic')?.value.trim() || '',
@@ -417,28 +832,94 @@ document.getElementById('savePassportBtn').addEventListener('click', async () =>
         department_code: document.getElementById('department_code')?.value.trim() || '',
         series_number: document.getElementById('series_number')?.value.trim() || '',
         personal_code: document.getElementById('personal_code')?.value.trim() || '',
-        status: 'oncheck',
-        updated_at: new Date().toISOString()
+        status: document.getElementById('status')?.value || 'oncheck',
+        is_military_obligated: document.getElementById('is_military_obligated')?.checked || false,
+        military_idn: document.getElementById('military_idn')?.value.trim() || '',
+        residences: [],
+        marital_statuses: [],
+        previous_passports: [],
+        previous_foreign_passports: [],
+        previous_id_cards: []
     };
+
+    // Сбор мест регистрации
+    document.querySelectorAll('#residencesContainer .record-block').forEach(block => {
+        data.residences.push({
+            address: block.querySelector('.residence-address')?.value.trim() || '',
+            registrationDate: block.querySelector('.residence-reg')?.value || null,
+            deregistrationDate: block.querySelector('.residence-dereg')?.value || null,
+            housingType: block.querySelector('.residence-type')?.value.trim() || ''
+        });
+    });
+
+    // Сбор семейного положения
+    document.querySelectorAll('#maritalContainer .record-block').forEach(block => {
+        data.marital_statuses.push({
+            status: block.querySelector('.marital-status')?.value || '',
+            changeDate: block.querySelector('.marital-date')?.value || null,
+            spouseName: block.querySelector('.marital-spouse')?.value.trim() || '',
+            actNumber: block.querySelector('.marital-act')?.value.trim() || ''
+        });
+    });
+
+    // Сбор ранее выданных паспортов
+    document.querySelectorAll('#prevPassportsContainer .record-block').forEach(block => {
+        data.previous_passports.push({
+            seriesNumber: block.querySelector('.passport-series')?.value.trim() || '',
+            issueDate: block.querySelector('.passport-date')?.value || null,
+            issuedBy: block.querySelector('.passport-issued')?.value.trim() || '',
+            reason: block.querySelector('.passport-reason')?.value.trim() || ''
+        });
+    });
+
+    // Сбор ранее выданных загранпаспортов
+    document.querySelectorAll('#prevForeignContainer .record-block').forEach(block => {
+        data.previous_foreign_passports.push({
+            seriesNumber: block.querySelector('.foreign-series')?.value.trim() || '',
+            issueDate: block.querySelector('.foreign-date')?.value || null,
+            issuedBy: block.querySelector('.foreign-issued')?.value.trim() || ''
+        });
+    });
+
+    // Сбор ранее выданных ID-карт
+    document.querySelectorAll('#prevIdCardsContainer .record-block').forEach(block => {
+        data.previous_id_cards.push({
+            seriesNumber: block.querySelector('.idcard-series')?.value.trim() || '',
+            issueDate: block.querySelector('.idcard-date')?.value || null,
+            issuedBy: block.querySelector('.idcard-issued')?.value.trim() || ''
+        });
+    });
+
+    return data;
+}
+
+// Сохранение паспорта
+document.getElementById('savePassportBtn').addEventListener('click', async () => {
+    const formData = collectEditFormData();
 
     if (!formData.series_number) {
         alert('Серия и номер обязательны');
         return;
     }
 
+    const record = {
+        ...formData,
+        updated_at: new Date().toISOString()
+    };
+
     let result;
     if (currentPassportId) {
         result = await supabase
             .schema('documents')
             .from('passport')
-            .update(formData)
+            .update(record)
             .eq('id', currentPassportId);
     } else {
-        formData.created_at = new Date().toISOString();
+        record.created_at = new Date().toISOString();
         result = await supabase
             .schema('documents')
             .from('passport')
-            .insert([formData])
+            .insert([record])
             .select();
     }
 
