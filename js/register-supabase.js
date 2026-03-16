@@ -1,7 +1,7 @@
 import { supabase } from './supabase-config.js'
 
 let currentStep = 1;
-let accountType = null; // 'citizen', 'subject', 'organization'
+let accountType = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initEventListeners();
@@ -119,7 +119,7 @@ function validateStep(step) {
       return false;
     }
 
-    // Проверка телефона (обязательное поле)
+    // Проверка телефона
     const phoneInput = document.getElementById('phone').value.trim();
     if (!phoneInput) {
       showAlert('Введите номер телефона', 'error');
@@ -127,7 +127,7 @@ function validateStep(step) {
     }
     const phoneDigits = phoneInput.replace(/\D/g, '');
     if (!/^(7|8)?\d{10}$/.test(phoneDigits)) {
-      showAlert('Введите корректный российский номер телефона (10 цифр после кода)', 'error');
+      showAlert('Введите корректный российский номер телефона', 'error');
       return false;
     }
 
@@ -146,20 +146,14 @@ function validateStep(step) {
   return true;
 }
 
-// Нормализация номера телефона к формату +7XXXXXXXXXX
 function normalizePhone(phone) {
   if (!phone) return null;
   const digits = phone.replace(/\D/g, '');
   if (digits.length === 0) return null;
-  let normalized = digits;
-  if (digits[0] === '8') {
-    normalized = '7' + digits.substring(1);
-  } else if (digits[0] !== '7') {
-    if (digits.length === 10) {
-      normalized = '7' + digits;
-    }
-  }
-  return '+' + normalized;
+  if (digits[0] === '8') return '+7' + digits.substring(1);
+  if (digits[0] !== '7' && digits.length === 10) return '+7' + digits;
+  if (digits[0] === '7') return '+' + digits;
+  return '+' + digits;
 }
 
 function getFormData() {
@@ -290,7 +284,7 @@ async function handleRegistration(e) {
       email: formData.email,
       password: password,
       options: {
-        data: { category: accountType } // можно передать минимум
+        data: { category: accountType } // минимум для метаданных
       }
     });
 
@@ -299,7 +293,7 @@ async function handleRegistration(e) {
       throw error;
     }
 
-    // 2. Отправляем данные профиля в Edge Function
+    // 2. Отправляем данные профиля в Edge Function (без авторизации)
     const functionUrl = 'https://qeewwoklmjysactfhrum.supabase.co/functions/v1/register-profile';
     const response = await fetch(functionUrl, {
       method: 'POST',
@@ -316,7 +310,7 @@ async function handleRegistration(e) {
       throw new Error(errData.error || 'Ошибка при создании профиля');
     }
 
-    // 3. Успех – показываем сообщение с кнопкой входа
+    // 3. Успех
     showSuccessWithButton(
       'Регистрация прошла успешно! Письмо для подтверждения отправлено на ваш email. После подтверждения вы сможете войти.',
       'Перейти на страницу входа',
