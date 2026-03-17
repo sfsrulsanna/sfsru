@@ -139,59 +139,6 @@
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    margin-top: 0.5rem; /* небольшой отступ от последней карточки */
-}
-.toggle-history, .back-link {
-    display: inline-block;
-    width: 100%;
-    text-align: center;
-    padding: 0.75rem 1rem;
-    font-size: 1rem;
-    border-radius: 8px;
-    box-sizing: border-box;
-    transition: background-color 0.2s;
-    border: none;
-    cursor: pointer;
-}
-.toggle-history {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    color: #495057;
-}
-.toggle-history:hover {
-    background-color: #dee2e6;
-}
-.back-link {
-    background-color: #6c757d;
-    color: white;
-    text-decoration: none;
-}
-.back-link:hover {
-    background-color: #5a6268;
-}
-.back-link i {
-    margin-right: 0.5rem;
-}
-/* скрываем кнопку истории, пока не появятся доп. статусы */
-.toggle-history {
-    display: none;
-}
-/* По умолчанию показываем только первый статус */
-#historyList .status-card:not(:first-child) {
-    display: none;
-}
-#historyList.show-all .status-card {
-    display: block;
-}
-.loading, .no-data, .error {
-    text-align: center;
-    padding: 2rem;
-    color: #666;
-}
-.action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
     margin-top: 0.5rem; /* отступ от последней карточки */
 }
 
@@ -236,6 +183,18 @@
 .toggle-history {
     display: none;
 }
+/* По умолчанию показываем только первый статус */
+#historyList .status-card:not(:first-child) {
+    display: none;
+}
+#historyList.show-all .status-card {
+    display: block;
+}
+.loading, .no-data, .error {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
     </style>
     <script type="importmap">
         {
@@ -279,16 +238,17 @@
             <div id="loading" class="loading">Загрузка...</div>
             <div id="error" class="error" style="display: none;"></div>
 
-            <div id="content" style="display: none;">
-                <!-- История статусов -->
-                <div id="historyList"></div>
+<div id="content" style="display: none;">
+    <!-- История статусов -->
+    <div class="section-title">История статусов</div>
+    <div id="historyList"></div>
 
-                <!-- Кнопка показа/скрытия истории -->
-                <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
-
-                <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
-            </div>
-        </div>
+    <!-- Контейнер для кнопок -->
+    <div class="action-buttons">
+        <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
+    </div>
+</div>
     </main>
 
     <footer class="footer">
