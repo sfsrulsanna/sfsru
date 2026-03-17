@@ -451,15 +451,36 @@ async function submitApplication() {
         status: 'submitted'
     };
 
-    const { error } = await supabase
+    // Вставляем заявление и получаем его id
+    const { data: inserted, error } = await supabase
         .schema('services')
         .from('passport')
-        .insert(payload);
+        .insert(payload)
+        .select('id')
+        .single();
 
     if (error) {
         showError('Ошибка отправки заявления: ' + error.message);
         return false;
     }
+
+    // Добавляем запись в историю статусов
+    const historyPayload = {
+        passport_id: inserted.id,
+        status: 'submitted',
+        created_at: new Date().toISOString()
+    };
+
+    const { error: historyError } = await supabase
+        .schema('services')
+        .from('passport_status_history')
+        .insert(historyPayload);
+
+    if (historyError) {
+        console.error('Ошибка записи в историю статусов:', historyError);
+        // Не прерываем выполнение, только логируем
+    }
+
     return true;
 }
 
