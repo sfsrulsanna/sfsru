@@ -460,7 +460,7 @@ async function submitApplication() {
     // Вставляем заявление и получаем его id
     const { data: inserted, error } = await supabase
         .schema('services')
-        .from('passport_status_history')
+        .from('passport')
         .insert(payload)
         .select('id')
         .single();
