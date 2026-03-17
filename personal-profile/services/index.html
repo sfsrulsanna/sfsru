@@ -30,61 +30,137 @@
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .services-container {
-            max-width: 1000px;
-            margin: 2rem auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            padding: 2rem;
-        }
-        .service-card {
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: background 0.2s;
-            text-decoration: none;
-            color: inherit;
-        }
-        .service-card:hover {
-            background: #f8f9fa;
-        }
-        .service-info {
-            flex: 1;
-        }
-        .service-number {
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: #7b091a;
-        }
-        .service-meta {
-            color: #666;
-            font-size: 0.9rem;
-            margin-top: 0.3rem;
-        }
-        .service-status {
-            display: inline-block;
-            padding: 0.3rem 0.8rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
-            margin-left: 1rem;
-        }
-        .status-submitted { background: #cfe2ff; color: #084298; }
-        .status-processing { background: #fff3cd; color: #856404; }
-        .status-interim { background: #d1e7dd; color: #0f5132; }
-        .status-positive { background: #d4edda; color: #155724; }
-        .status-completed { background: #d4edda; color: #155724; }
-        .status-rejected { background: #f8d7da; color: #721c24; }
-        .status-cancelled { background: #e2e3e5; color: #383d41; }
-        .loading, .no-data, .error {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-        }
+.services-container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    padding: 2.5rem;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #7b091a;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.5px;
+}
+
+.page-description {
+    font-size: 1.1rem;
+    color: #6c757d;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 1rem;
+}
+
+.service-card {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    border: 1px solid #e9ecef;
+    border-radius: 14px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s ease;
+    background: #ffffff;
+}
+
+.service-card:hover {
+    background: #fafbfc;
+    border-color: #ced4da;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    transform: translateY(-2px);
+}
+
+.service-icon {
+    width: 2.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+    line-height: 1;
+}
+
+.service-info {
+    flex: 1;
+    min-width: 0; /* для корректного усечения текста */
+}
+
+.service-name {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #7b091a;
+    margin-bottom: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.service-number-date {
+    font-size: 0.95rem;
+    color: #6c757d;
+}
+
+.service-status {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    white-space: nowrap;
+    margin-left: auto; /* прижимаем к правому краю, если есть место */
+    margin-right: 0.5rem;
+}
+
+/* цвета статусов */
+.status-submitted { background: #fff3cd; color: #856404; }
+.status-processing { background: #fff3cd; color: #856404; }
+.status-interim { background: #d4edda; color: #155724; }
+.status-positive { background: #d4edda; color: #155724; }
+.status-completed { background: #d4edda; color: #155724; }
+.status-rejected { background: #f8d7da; color: #721c24; }
+.status-cancelled { background: #e2e3e5; color: #383d41; }
+
+/* иконки для статусов */
+.service-card .fa-hourglass-half { color: #f0ad4e; }      /* жёлтый */
+.service-card .fa-check-circle { color: #28a745; }       /* зелёный */
+.service-card .fa-times-circle { color: #dc3545; }       /* красный */
+.service-card .fa-ban { color: #6c757d; }                /* серый */
+
+.loading, .no-data, .error {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+    font-size: 1.1rem;
+}
+
+/* мобильная адаптация */
+@media (max-width: 600px) {
+    .services-container {
+        padding: 1.5rem;
+        margin: 1rem;
+    }
+    .service-card {
+        flex-wrap: wrap;
+        padding: 1rem;
+    }
+    .service-icon {
+        width: 2rem;
+        font-size: 1.5rem;
+    }
+    .service-name {
+        font-size: 1.1rem;
+        white-space: normal;
+    }
+    .service-status {
+        margin-left: 0;
+        width: 100%;
+        text-align: center;
+        margin-top: 0.5rem;
+    }
+}
     </style>
     <script type="importmap">
         {
@@ -138,79 +214,104 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-        import { supabase } from '../../js/supabase-config.js';
+import { supabase } from '../../js/supabase-config.js';
 
-        let currentUserId = null;
+let currentUserId = null;
 
-        const statusMap = {
-            'submitted': 'Отправлено в ведомство',
-            'processing': 'В работе',
-            'interim': 'Промежуточные результаты',
-            'positive': 'Принято положительное решение',
-            'completed': 'Результат выдан',
-            'rejected': 'Отказано',
-            'cancelled': 'Отменено'
-        };
+const statusMap = {
+    'submitted': 'Отправлено в ведомство',
+    'processing': 'В работе',
+    'interim': 'Промежуточные результаты',
+    'positive': 'Принято положительное решение',
+    'completed': 'Результат выдан',
+    'rejected': 'Отказано',
+    'cancelled': 'Отменено'
+};
 
-        async function loadUserProfile() {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            if (sessionError || !session) {
-                window.location.href = '../../login.html';
-                return false;
-            }
-            // Получаем только userId, email не нужен на странице
-            currentUserId = session.user.id;
-            return true;
-        }
+const serviceTypeNames = {
+    'passport': 'Получение паспорта гражданина СФСРЮ',
+    'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ'
+};
 
-        async function loadServices() {
-            const loading = document.getElementById('loading');
-            const list = document.getElementById('servicesList');
-            loading.style.display = 'block';
+function getStatusIcon(status) {
+    switch (status) {
+        case 'rejected':
+            return '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
+        case 'cancelled':
+            return '<i class="fas fa-ban" style="color:#6c757d;"></i>';
+        case 'interim':
+        case 'positive':
+        case 'completed':
+            return '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+        case 'submitted':
+        case 'processing':
+        default:
+            return '<i class="fas fa-hourglass-half" style="color:#f0ad4e;"></i>';
+    }
+}
 
-            const { data, error } = await supabase
-                .schema('services')
-                .from('passport')
-                .select('id, application_number, created_at, status')
-                .eq('user_id', currentUserId)
-                .order('created_at', { ascending: false });
+async function loadUserProfile() {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+        window.location.href = '../../login.html';
+        return false;
+    }
+    currentUserId = session.user.id;
+    return true;
+}
 
-            if (error) {
-                console.error('Ошибка загрузки услуг:', error);
-                list.innerHTML = '<p class="error">Ошибка загрузки данных</p>';
-                loading.style.display = 'none';
-                return;
-            }
+async function loadServices() {
+    const loading = document.getElementById('loading');
+    const list = document.getElementById('servicesList');
+    loading.style.display = 'block';
 
-            if (!data || data.length === 0) {
-                list.innerHTML = '<p class="no-data">У вас пока нет заявлений</p>';
-                loading.style.display = 'none';
-                return;
-            }
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport')
+        .select('id, application_number, created_at, status, service_type')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
 
-            list.innerHTML = data.map(item => {
-                const statusClass = `status-${item.status}`;
-                const statusText = statusMap[item.status] || item.status;
-                const date = new Date(item.created_at).toLocaleDateString('ru-RU');
-                return `
-                    <a href="service-view.html?id=${item.id}" class="service-card">
-                        <div class="service-info">
-                            <span class="service-number">№ ${item.application_number}</span>
-                            <span class="service-status ${statusClass}">${statusText}</span>
-                            <div class="service-meta">от ${date}</div>
-                        </div>
-                        <i class="fas fa-chevron-right"></i>
-                    </a>
-                `;
-            }).join('');
+    if (error) {
+        console.error('Ошибка загрузки услуг:', error);
+        list.innerHTML = '<p class="error">Ошибка загрузки данных</p>';
+        loading.style.display = 'none';
+        return;
+    }
 
-            loading.style.display = 'none';
-        }
+    if (!data || data.length === 0) {
+        list.innerHTML = '<p class="no-data">У вас пока нет заявлений</p>';
+        loading.style.display = 'none';
+        return;
+    }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!await loadUserProfile()) return;
-            await loadServices();
-        });
+    list.innerHTML = data.map(item => {
+        const statusClass = `status-${item.status}`;
+        const statusText = statusMap[item.status] || item.status;
+        const date = new Date(item.created_at).toLocaleDateString('ru-RU');
+        const iconHtml = getStatusIcon(item.status);
+        const serviceName = serviceTypeNames[item.service_type] || 'Услуга';
+
+        return `
+            <a href="service-view.html?id=${item.id}" class="service-card">
+                <div class="service-icon">${iconHtml}</div>
+                <div class="service-info">
+                    <div class="service-name">${serviceName}</div>
+                    <div class="service-number-date">№ ${item.application_number} • ${date}</div>
+                </div>
+                <div class="service-status ${statusClass}">${statusText}</div>
+                <i class="fas fa-chevron-right" style="color:#adb5bd;"></i>
+            </a>
+        `;
+    }).join('');
+
+    loading.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!await loadUserProfile()) return;
+    await loadServices();
+});
     </script>
 </body>
 </html>
