@@ -895,38 +895,24 @@ function addStatusButtons() {
         <button type="button" class="btn-primary" id="savePassportBtn">Сохранить</button>
     `;
 
-    // Добавляем контейнер для кнопок статусов перед кнопками сохранения/отмены
+    // Добавляем контейнер для кнопки изменения статуса
     const statusContainer = document.createElement('div');
-    statusContainer.className = 'status-buttons';
     statusContainer.style.marginBottom = '1rem';
     statusContainer.style.display = 'flex';
-    statusContainer.style.gap = '0.5rem';
-    statusContainer.style.flexWrap = 'wrap';
+    statusContainer.style.justifyContent = 'center';
 
-    const statuses = [
-        { value: 'verified', label: 'Подтверждено', class: 'btn-success' },
-        { value: 'oncheck', label: 'На проверке', class: 'btn-warning' },
-        { value: 'rejected', label: 'Отклонено', class: 'btn-danger' },
-        { value: 'archived', label: 'Архивный', class: 'btn-secondary' }
-    ];
+    const changeStatusBtn = document.createElement('button');
+    changeStatusBtn.type = 'button';
+    changeStatusBtn.className = 'btn btn-warning';
+    changeStatusBtn.textContent = 'Изменить статус';
+    changeStatusBtn.addEventListener('click', () => openStatusModal());
 
-    statuses.forEach(s => {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `btn ${s.class}`;
-        btn.textContent = s.label;
-        btn.dataset.status = s.value;
-        btn.addEventListener('click', () => openStatusModal(s.value));
-        statusContainer.appendChild(btn);
-    });
-
-    // Вставляем в футер перед существующими кнопками
+    statusContainer.appendChild(changeStatusBtn);
     modalFooter.insertBefore(statusContainer, modalFooter.firstChild);
 }
 
 // Функция для открытия модального окна изменения статуса
-function openStatusModal(newStatus) {
-    // Создаём затемнение и модалку (если её нет)
+function openStatusModal() {
     let statusModal = document.getElementById('statusModal');
     if (!statusModal) {
         statusModal = document.createElement('div');
@@ -935,13 +921,22 @@ function openStatusModal(newStatus) {
         statusModal.innerHTML = `
             <div class="modal" style="max-width: 500px;">
                 <div class="modal-header">
-                    <h4 id="statusModalTitle">Изменение статуса</h4>
+                    <h4>Изменение статуса документа</h4>
                     <button type="button" class="close-modal" onclick="closeStatusModal()">&times;</button>
                 </div>
                 <div class="modal-body">
                     <div class="form-group">
+                        <label for="statusSelect">Новый статус</label>
+                        <select id="statusSelect" class="form-input">
+                            <option value="verified">Подтверждено</option>
+                            <option value="oncheck">На проверке</option>
+                            <option value="rejected">Отклонено</option>
+                            <option value="archived">Архивный</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="statusComment">Комментарий</label>
-                        <textarea id="statusComment" class="form-input" rows="4" placeholder="Введите причину изменения..."></textarea>
+                        <textarea id="statusComment" class="form-input" rows="4" placeholder="Введите комментарий для пользователя..."></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -953,25 +948,11 @@ function openStatusModal(newStatus) {
         document.body.appendChild(statusModal);
     }
 
-    // Сохраняем выбранный статус в атрибуте модалки
-    statusModal.dataset.targetStatus = newStatus;
-
-    // Меняем заголовок
-    const statusLabels = {
-        'submitted': 'Отправлено в ведомство',
-        'processing': 'В работе',
-        'interim': 'Промежуточные результаты',
-        'positive': 'Принято положительное решение',
-        'completed': 'Результат выдан',
-        'rejected': 'Отказано',
-        'cancelled': 'Отменено'
-    };
-    document.getElementById('statusModalTitle').textContent = `Установить статус: ${statusLabels[newStatus]}`;
-
     // Очищаем поле комментария
     document.getElementById('statusComment').value = '';
+    // Сбрасываем выбор на первый вариант
+    document.getElementById('statusSelect').selectedIndex = 0;
 
-    // Показываем модалку
     statusModal.classList.add('active');
 }
 
@@ -983,8 +964,7 @@ window.closeStatusModal = function() {
 
 // Функция подтверждения изменения статуса
 async function confirmStatusChange() {
-    const modal = document.getElementById('statusModal');
-    const newStatus = modal.dataset.targetStatus;
+    const newStatus = document.getElementById('statusSelect').value;
     const comment = document.getElementById('statusComment').value.trim();
 
     if (!currentPassportId) {
@@ -994,11 +974,10 @@ async function confirmStatusChange() {
     }
 
     try {
-        // Получаем информацию о документе, чтобы узнать user_id
         const { data: passport, error: fetchError } = await supabase
             .schema('documents')
             .from('passport')
-            .select('personal_code, user_id')
+            .select('personal_code, user_id, series_number')
             .eq('id', currentPassportId)
             .single();
 
@@ -1007,10 +986,7 @@ async function confirmStatusChange() {
             return;
         }
 
-        // Получаем текущего пользователя (админа)
-        const { data: { user } } = await supabase.auth.getUser();
-
-        // 1. Обновляем статус в documents.passport
+        // Обновляем статус
         const { error: updateError } = await supabase
             .schema('documents')
             .from('passport')
@@ -1019,11 +995,9 @@ async function confirmStatusChange() {
 
         if (updateError) throw updateError;
 
-        // 2. Создаём уведомление в messages.notifications
-        // Определяем user_id владельца документа: если есть поле user_id, используем его, иначе ищем по personal_code
+        // Определяем пользователя
         let targetUserId = passport.user_id;
         if (!targetUserId && passport.personal_code) {
-            // Ищем пользователя по личному коду
             const { data: userData } = await supabase
                 .from('users')
                 .select('id')
@@ -1033,25 +1007,35 @@ async function confirmStatusChange() {
         }
 
         if (targetUserId) {
-            const message = `Статус вашего паспорта (№ ${passport.series_number || ''}) изменён на "${getStatusLabel(newStatus)}". Комментарий: ${comment || 'не указан'}`;
-            const { error: notifError } = await supabase
+            const statusLabels = {
+                'verified': 'Подтверждено',
+                'oncheck': 'На проверке',
+                'rejected': 'Отклонено',
+                'archived': 'Архивный'
+            };
+            const title = `Изменение статуса паспорта №${passport.series_number || ''}`;
+            const content = `Статус вашего паспорта изменён на "${statusLabels[newStatus]}". Комментарий: ${comment || 'не указан'}`;
+
+            const { error: msgError } = await supabase
                 .schema('messages')
-                .from('notifications')
+                .from('user_messages')
                 .insert({
                     user_id: targetUserId,
+                    title: title,
+                    content: content,
+                    type: 'status_change',
                     document_type: 'passport',
                     document_id: currentPassportId,
-                    message: message,
                     is_read: false
                 });
 
-            if (notifError) console.error('Ошибка создания уведомления:', notifError);
+            if (msgError) console.error('Ошибка создания уведомления:', msgError);
         }
 
         closeStatusModal();
         alert('Статус успешно изменён');
-        // Можно перезагрузить данные или обновить интерфейс
-        // Для простоты перезагрузим страницу
+        // Закрываем модалку редактирования или обновляем данные
+        // Можно просто перезагрузить страницу
         window.location.reload();
     } catch (err) {
         console.error(err);
