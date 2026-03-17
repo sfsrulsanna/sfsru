@@ -175,9 +175,10 @@ import { supabase } from '../../../js/supabase-config.js';
 import { requireAdmin } from '../certificates/js/certificates-common.js';
 
 let currentAppId = null;
+let applicationNumber = null; // <-- добавили
 let currentAction = null;
 let uploadedFiles = [];
-let mvdMap = {}; // { id: name }
+let mvdMap = {};
 
 // Маппинг статусов на русский язык
 const statusMap = {
@@ -260,8 +261,6 @@ function formatReasonDetails(details) {
 
 // Безопасное имя файла (замена недопустимых символов)
 function safeFileName(name) {
-    // Разрешены: буквы (включая кириллицу), цифры, точка, подчёркивание, дефис.
-    // Дефис ставим в конец, чтобы не создавать диапазон.
     return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
 }
 
@@ -289,7 +288,6 @@ async function loadApplication() {
 
     console.log('Загрузка заявления ID:', id);
 
-    // Параллельно загружаем заявление и список МВД
     await Promise.all([
         loadMvd(),
         (async () => {
@@ -307,6 +305,7 @@ async function loadApplication() {
             }
 
             console.log('Данные заявления:', data);
+            applicationNumber = data.application_number; // <-- сохраняем номер заявления
             document.getElementById('appNumber').textContent = data.application_number;
             renderDetails(data);
             renderPhoto(data.photo_path);
@@ -314,7 +313,6 @@ async function loadApplication() {
         })()
     ]);
 
-    // Скрываем загрузку в любом случае
     document.getElementById('loading').classList.add('hidden');
 }
 
@@ -389,7 +387,6 @@ async function loadHistory() {
     let html = '';
     for (const item of data) {
         const statusText = statusMap[item.status] || item.status;
-        // Получаем подписанные ссылки для всех вложений
         const fileLinks = [];
         for (const filePath of (item.attachments || [])) {
             const signedUrl = await getSignedUrl(filePath);
@@ -470,12 +467,10 @@ document.getElementById('modalFiles').addEventListener('change', (e) => {
         `;
         list.appendChild(div);
     });
-    // Удаление файла из списка
     document.querySelectorAll('.file-item .btn-small').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const idx = e.target.dataset.index;
             uploadedFiles.splice(idx, 1);
-            // Обновить FileList (не тривиально, поэтому пересоздаём список)
             const dt = new DataTransfer();
             uploadedFiles.forEach(f => dt.items.add(f));
             document.getElementById('modalFiles').files = dt.files;
@@ -492,11 +487,11 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
 
     console.log('Отправка действия:', currentAction, 'комментарий:', comment, 'файлов:', files.length);
 
-    // Загружаем файлы в хранилище
+    // Загружаем файлы в хранилище, используя номер заявления
     const attachmentPaths = [];
     for (const file of files) {
         const safeName = safeFileName(file.name);
-        const filePath = `passport/${currentAppId}/${Date.now()}_${safeName}`;
+        const filePath = `passport/${applicationNumber}/${Date.now()}_${safeName}`; // <-- изменено
         const { error } = await supabase.storage
             .from('services-files')
             .upload(filePath, file);
@@ -551,7 +546,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadApplication();
 
-    // Обработчики кнопок действий
     document.querySelectorAll('.action-buttons .btn').forEach(btn => {
         btn.addEventListener('click', () => {
             const action = btn.dataset.action;
@@ -559,7 +553,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Выход
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = '../../login.html';
