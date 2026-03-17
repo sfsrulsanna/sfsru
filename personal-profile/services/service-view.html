@@ -307,54 +307,15 @@
 
                 document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
 
-                await renderFiles(app.photo_path, app.application_number);
-                await loadHistory(id);
+                // Загружаем историю, передавая photo_path и application_number
+                await loadHistory(id, app.photo_path, app.application_number);
             } catch (err) {
                 console.error(err);
                 showError('Ошибка загрузки данных');
             }
         }
 
-        async function renderFiles(photoPath, appNumber) {
-            const section = document.getElementById('filesSection');
-            if (!section) return;
-
-            const fileList = [];
-
-            if (photoPath) {
-                const photoUrl = await getSignedUrl(photoPath);
-                if (photoUrl) {
-                    const fileName = photoPath.split('/').pop() || 'photo.jpg';
-                    fileList.push({ name: fileName, url: photoUrl });
-                }
-            }
-
-            const statementPath = `passport/${appNumber}/statement.pdf`;
-            const statementUrl = await getSignedUrl(statementPath);
-            if (statementUrl) {
-                fileList.push({ name: 'statement.pdf', url: statementUrl });
-            }
-
-            if (fileList.length === 0) {
-                section.innerHTML = '<p class="no-data">Нет доступных файлов</p>';
-                return;
-            }
-
-            let html = '';
-            fileList.forEach(file => {
-                html += `
-                    <div class="document-row">
-                        <div class="doc-name">
-                            <span>📄 ${file.name}</span>
-                        </div>
-                        <a href="${file.url}" target="_blank" class="doc-download">Скачать</a>
-                    </div>
-                `;
-            });
-            section.innerHTML = html;
-        }
-
-        async function loadHistory(passportId) {
+        async function loadHistory(passportId, photoPath, appNumber) {
             const list = document.getElementById('historyList');
             const toggleBtn = document.getElementById('toggleHistoryBtn');
             if (!list) return;
@@ -383,6 +344,36 @@
                 const statusText = statusMap[item.status] || item.status;
                 const files = item.attachments || [];
                 const fileLinks = [];
+
+                // Для статуса "Отправлено в ведомство" добавляем statement.pdf и фото
+                if (item.status === 'submitted') {
+                    // Фото
+                    if (photoPath) {
+                        const photoUrl = await getSignedUrl(photoPath);
+                        if (photoUrl) {
+                            const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                            fileLinks.push(`
+                                <div class="file-item">
+                                    <span>📷</span>
+                                    <a href="${photoUrl}" target="_blank">${fileName}</a>
+                                </div>
+                            `);
+                        }
+                    }
+                    // PDF заявления
+                    const statementPath = `passport/${appNumber}/statement.pdf`;
+                    const statementUrl = await getSignedUrl(statementPath);
+                    if (statementUrl) {
+                        fileLinks.push(`
+                            <div class="file-item">
+                                <span>📄</span>
+                                <a href="${statementUrl}" target="_blank">statement.pdf</a>
+                            </div>
+                        `);
+                    }
+                }
+
+                // Добавляем файлы, прикреплённые к этому статусу в истории (дополнительные документы)
                 for (const f of files) {
                     const url = await getSignedUrl(f);
                     if (url) {
@@ -395,6 +386,7 @@
                         `);
                     }
                 }
+
                 html += `
                     <div class="status-card">
                         <div class="status-header">
