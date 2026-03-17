@@ -137,7 +137,7 @@ async function loadMessages() {
 
     const { data, error } = await supabase
         .schema('messages')
-        .from('user_notifications')
+        .from('user_messages')
         .select('*')
         .eq('user_id', currentUserId)
         .order('created_at', { ascending: false });
@@ -178,7 +178,7 @@ async function loadMessages() {
             const id = e.target.dataset.id;
             const { error } = await supabase
                 .schema('messages')
-                .from('user_notifications')
+                .from('user_messages')
                 .update({ is_read: true })
                 .eq('id', id)
                 .eq('user_id', currentUserId); // дополнительная проверка
