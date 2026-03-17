@@ -1,7 +1,7 @@
 /* ====== PROFILE STYLES ====== */
 .profile-main {
   padding: 2rem 0;
-  background: #ffffff; /* ← Чисто белый фон, без градиента */
+  background: #ffffff;
   min-height: 100vh;
 }
 .profile-container {
@@ -31,15 +31,21 @@
   margin-top: 0.5rem;
 }
 
-/* Быстрые ссылки */
+/* Быстрые ссылки (включая кнопку выхода) */
 .quick-links {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1.5rem;
   margin-bottom: 3rem;
 }
-.quick-link {
-  display: block;
+
+/* Общий стиль для всех элементов в .quick-links (и ссылки, и кнопка) */
+.quick-links .quick-link,
+.quick-links .btn-danger {
+  display: flex;
+  flex-direction: column;      /* Иконка сверху, текст снизу */
+  align-items: center;
+  justify-content: center;
   text-align: center;
   padding: 1.5rem;
   background: white;
@@ -48,43 +54,70 @@
   transition: all 0.2s ease;
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
   border: 1px solid #eee;
-}
-.quick-link:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 24px rgba(123, 0, 0, 0.15);
-  border-color: #7b0000;
-}
-.quick-link-icon {
-  font-size: 2.2rem;
-  margin-bottom: 1rem;
-}
-.quick-link-title {
+  width: 100%;
+  box-sizing: border-box;
+  cursor: pointer;
+  font-family: inherit;
   font-weight: 600;
   font-size: 1.1rem;
   color: #333;
+  line-height: 1.2;
 }
 
-/* Информационные карточки */
+/* Эффект при наведении для кликабельных элементов */
+.quick-links .quick-link:hover,
+.quick-links .btn-danger:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(123, 0, 0, 0.15);
+  border-color: #7b0000;
+  background-color: white;
+  color: #333;
+}
+
+/* Иконка внутри карточек быстрых ссылок и кнопки */
+.quick-links .quick-link-icon,
+.quick-links .btn-danger .logout-icon,
+.quick-links .btn-danger i {
+  font-size: 2.2rem;
+  margin-bottom: 0.75rem;
+  display: inline-block;
+  line-height: 1;
+}
+
+/* Убираем стандартные стили кнопки (фон, границы) */
+.quick-links .btn-danger {
+  background: white;
+  border: 1px solid #eee;
+}
+
+/* Информационные карточки (некликабельные, но визуально такие же) */
 .info-sections {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
 }
+
 .info-card {
   background: white;
-  padding: 1.5rem;
+  border: 1px solid #eee;
   border-radius: 16px;
+  padding: 1.5rem;
   box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-  border-left: 4px solid #7b0000;
+  cursor: default;
+  transition: none;
 }
+
 .info-card h3 {
   margin-top: 0;
   color: #7b0000;
   font-size: 1.2rem;
+  margin-bottom: 0.75rem;
 }
+
 .info-card p {
   color: #555;
   line-height: 1.5;
+  margin: 0;
 }
 
 /* Адаптивность */
@@ -95,5 +128,10 @@
   .quick-links,
   .info-sections {
     grid-template-columns: 1fr;
+  }
+  .quick-links .quick-link-icon,
+  .quick-links .btn-danger .logout-icon,
+  .quick-links .btn-danger i {
+    font-size: 2rem;
   }
 }

@@ -78,15 +78,15 @@
           <div class="quick-link-icon">✉️</div>
           <div class="quick-link-title">Мои сообщения</div>
         </a>
-        <a href="services.html" class="quick-link">
+        <a href="services/" class="quick-link">
           <div class="quick-link-icon">🛠️</div>
           <div class="quick-link-title">Мои услуги</div>
         </a>
-        <a href="documents/index.html" class="quick-link">
+        <a href="documents/" class="quick-link">
           <div class="quick-link-icon">📄</div>
           <div class="quick-link-title">Мои документы</div>
         </a>
-        <a href="account.html" class="quick-link">
+        <a href="account/" class="quick-link">
           <div class="quick-link-icon">⚙️</div>
           <div class="quick-link-title">Учётная запись</div>
         </a>
@@ -94,24 +94,28 @@
           <div class="quick-link-icon">📋</div>
           <div class="quick-link-title">Мои данные</div>
         </a>
-        <a href="property.html" class="quick-link">
+        <a href="property/" class="quick-link">
           <div class="quick-link-icon">🏠</div>
           <div class="quick-link-title">Имущество</div>
         </a>
         <a href="addresses.html" class="quick-link">
-          <div class="quick-link-icon">🏠</div>
+          <div class="quick-link-icon">🗺️</div>
           <div class="quick-link-title">Адреса</div>
         </a>
-        <button id="logoutBtn" class="btn btn-danger">
-          <i class="fas fa-sign-out-alt"></i> Выйти из аккаунта
-        </button>
+        <a href="vote/" class="quick-link">
+          <div class="quick-link-icon">🗳️</div>
+          <div class="quick-link-title">Голосования</div>
+        </a>
+		<button id="logoutBtn" class="btn btn-danger">
+			<span class="logout-icon">🚪</span> Выйти из аккаунта
+		</button>
       </div>
 
       <!-- Дополнительная информация -->
       <div class="info-sections">
         <div class="info-card">
           <h3>🔔 Уведомления</h3>
-          <p>Нет новых уведомлений.</p>
+          <p id="notificationText">Загрузка...</p>
         </div>
         <div class="info-card">
           <h3>📅 Ближайшие события</h3>
@@ -119,7 +123,7 @@
         </div>
         <div class="info-card">
           <h3>💡 Совет</h3>
-          <p>Не забудьте обновить данные паспорта после смены места жительства.</p>
+          <p id="tipText">Загрузка...</p>
         </div>
       </div>
     </div>
@@ -151,16 +155,32 @@
   <script type="module">
     import { supabase } from '../js/supabase-config.js'
 
-    // Функция приветствия в зависимости от времени суток
+    // --- Состояние ---
+    let currentUserId = null
+
+    // --- Список советов ---
+    const tips = [
+      'Не забудьте обновить данные паспорта после смены места жительства.',
+      'Проверьте срок действия вашего паспорта.',
+      'Вы можете подать заявление на получение загранпаспорта онлайн.',
+      'Подпишитесь на уведомления о новых государственных услугах.',
+      'Посетите раздел "Мои документы", чтобы скачать электронные копии.',
+      'Участвуйте в голосованиях и опросах на портале.',
+      'Оформите льготы и субсидии в разделе "Услуги".',
+      'Проверьте свою очередь в детский сад через личный кабинет.',
+      'Оплатите штрафы и налоги без комиссии.'
+    ]
+
+    // --- Функция приветствия в зависимости от времени суток ---
     function getGreeting() {
       const hour = new Date().getHours()
       if (hour >= 5 && hour < 12) return 'Доброе утро'
       if (hour >= 12 && hour < 18) return 'Добрый день'
-      if (hour >= 18 && hour < 23) return 'Добрый вечер'
+      if (hour >= 18 && hour < 22) return 'Добрый вечер'
       return 'Доброй ночи'
     }
 
-    // Проверка авторизации и загрузка данных
+    // --- Загрузка данных пользователя и проверка авторизации ---
     async function loadUserProfile() {
       const greetingEl = document.getElementById('greetingText')
       
@@ -170,34 +190,43 @@
         if (sessionError) throw sessionError
         
         if (!session) {
-          // Не авторизован — редирект на страницу входа
           window.location.href = '../login.html'
           return
         }
+
+        // Сохраняем ID пользователя
+        currentUserId = session.user.id
 
         // 2. Загружаем данные пользователя из таблицы users
         const { data: userData, error: userError } = await supabase
           .from('users')
           .select('surname, name, patronymic')
-          .eq('id', session.user.id)
+          .eq('id', currentUserId)
           .single()
 
         if (userError) {
           console.error('Ошибка загрузки профиля:', userError)
           greetingEl.textContent = 'Добро пожаловать!'
-          return
+        } else {
+          // 3. Формируем приветствие
+          const greeting = getGreeting()
+          if (userData?.name && userData?.surname) {
+            const displayName = userData.patronymic 
+              ? `${userData.name} ${userData.patronymic}`
+              : userData.name
+            greetingEl.textContent = `${greeting}, ${displayName}!`
+          } else {
+            greetingEl.textContent = 'Добро пожаловать!'
+          }
         }
 
-        // 3. Формируем приветствие
-        const greeting = getGreeting()
-        if (userData && userData.name && userData.surname) {
-          const displayName = userData.patronymic 
-            ? `${userData.name} ${userData.patronymic}`
-            : userData.name
-          greetingEl.textContent = `${greeting}, ${displayName}!`
-        } else {
-          greetingEl.textContent = 'Добро пожаловать!'
-        }
+        // После успешной загрузки профиля запускаем динамические обновления
+        await updateNotifications(currentUserId)
+        updateTip()
+
+        // Устанавливаем интервалы
+        setInterval(() => updateNotifications(currentUserId), 30000) // каждые 30 сек
+        setInterval(updateTip, 15000) // каждые 15 сек
 
       } catch (error) {
         console.error('Критическая ошибка:', error)
@@ -205,7 +234,44 @@
       }
     }
 
-    // Выход из аккаунта
+    // --- Обновление количества непрочитанных уведомлений ---
+    async function updateNotifications(userId) {
+      try {
+        const { count, error } = await supabase
+          .from('user_messages', { schema: 'messages' })
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('is_read', false)
+
+        if (error) throw error
+
+        const notificationEl = document.getElementById('notificationText')
+        if (notificationEl) {
+          if (count > 0) {
+            notificationEl.textContent = `У вас ${count} непрочитанных сообщений.`
+          } else {
+            notificationEl.textContent = 'Нет новых уведомлений.'
+          }
+        }
+      } catch (error) {
+        console.error('Ошибка при загрузке уведомлений:', error)
+        const notificationEl = document.getElementById('notificationText')
+        if (notificationEl) {
+          notificationEl.textContent = 'Не удалось загрузить уведомления.'
+        }
+      }
+    }
+
+    // --- Смена совета ---
+    function updateTip() {
+      const tipEl = document.getElementById('tipText')
+      if (tipEl) {
+        const randomIndex = Math.floor(Math.random() * tips.length)
+        tipEl.textContent = tips[randomIndex]
+      }
+    }
+
+    // --- Выход из аккаунта ---
     async function handleLogout() {
       try {
         const { error } = await supabase.auth.signOut()
@@ -217,11 +283,10 @@
       }
     }
 
-    // Запуск при загрузке DOM
+    // --- Запуск при загрузке DOM ---
     document.addEventListener('DOMContentLoaded', () => {
       loadUserProfile()
 
-      // Назначаем обработчик на кнопку выхода
       const logoutBtn = document.getElementById('logoutBtn')
       if (logoutBtn) {
         logoutBtn.addEventListener('click', (e) => {
