@@ -456,15 +456,7 @@ function renderEditForm(data) {
                 <label>Личный код</label>
                 <input type="text" id="personal_code" class="form-input" value="${escapeHTML(formData.personal_code)}">
             </div>
-            <div class="form-group">
-                <label>Статус</label>
-                <select id="status" class="form-input">
-                    <option value="verified" ${formData.status === 'verified' ? 'selected' : ''}>Подтверждено</option>
-                    <option value="oncheck" ${formData.status === 'oncheck' ? 'selected' : ''}>На проверке</option>
-                    <option value="rejected" ${formData.status === 'rejected' ? 'selected' : ''}>Отклонено</option>
-                    <option value="archived" ${formData.status === 'archived' ? 'selected' : ''}>Архивный</option>
-                </select>
-            </div>
+            <!-- Убираем выпадающий список статуса, он будет изменяться отдельными кнопками -->
         </div>
 
         <div class="form-section">
@@ -526,7 +518,7 @@ function renderEditForm(data) {
     document.getElementById('addPrevIdCardBtn').addEventListener('click', () => addPrevIdCardBlock());
 }
 
-// --- Функции рендера секций ---
+// --- Функции рендера секций (те же) ---
 function renderResidencesSection(items) {
     const container = document.getElementById('residencesContainer');
     container.innerHTML = '';
@@ -684,7 +676,7 @@ function attachRemoveHandlers(section) {
     });
 }
 
-// --- Функции добавления новых блоков ---
+// --- Функции добавления новых блоков (те же) ---
 function addResidenceBlock() {
     const container = document.getElementById('residencesContainer');
     const block = document.createElement('div');
@@ -832,7 +824,6 @@ function collectEditFormData() {
         department_code: document.getElementById('department_code')?.value.trim() || '',
         series_number: document.getElementById('series_number')?.value.trim() || '',
         personal_code: document.getElementById('personal_code')?.value.trim() || '',
-        status: document.getElementById('status')?.value || 'oncheck',
         is_military_obligated: document.getElementById('is_military_obligated')?.checked || false,
         military_idn: document.getElementById('military_idn')?.value.trim() || '',
         residences: [],
@@ -893,7 +884,194 @@ function collectEditFormData() {
     return data;
 }
 
-// Сохранение паспорта
+// ================== НОВЫЙ КОД: КНОПКИ СТАТУСОВ И МОДАЛЬНОЕ ОКНО ==================
+
+// Функция добавления блока с кнопками статусов внизу модального окна
+function addStatusButtons() {
+    const modalFooter = document.querySelector('#editModal .modal-footer');
+    // Очищаем футер от старых кнопок (оставляем только "Отмена" и "Сохранить")
+    modalFooter.innerHTML = `
+        <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
+        <button type="button" class="btn-primary" id="savePassportBtn">Сохранить</button>
+    `;
+
+    // Добавляем контейнер для кнопок статусов перед кнопками сохранения/отмены
+    const statusContainer = document.createElement('div');
+    statusContainer.className = 'status-buttons';
+    statusContainer.style.marginBottom = '1rem';
+    statusContainer.style.display = 'flex';
+    statusContainer.style.gap = '0.5rem';
+    statusContainer.style.flexWrap = 'wrap';
+
+    const statuses = [
+        { value: 'submitted', label: 'Отправлено в ведомство', class: 'btn-info' },
+        { value: 'processing', label: 'В работе', class: 'btn-primary' },
+        { value: 'interim', label: 'Промежуточные результаты', class: 'btn-warning' },
+        { value: 'positive', label: 'Принято положительное решение', class: 'btn-success' },
+        { value: 'completed', label: 'Результат выдан', class: 'btn-success' },
+        { value: 'rejected', label: 'Отказано', class: 'btn-danger' },
+        { value: 'cancelled', label: 'Отменено', class: 'btn-secondary' }
+    ];
+
+    statuses.forEach(s => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `btn ${s.class}`;
+        btn.textContent = s.label;
+        btn.dataset.status = s.value;
+        btn.addEventListener('click', () => openStatusModal(s.value));
+        statusContainer.appendChild(btn);
+    });
+
+    // Вставляем в футер перед существующими кнопками
+    modalFooter.insertBefore(statusContainer, modalFooter.firstChild);
+}
+
+// Функция для открытия модального окна изменения статуса
+function openStatusModal(newStatus) {
+    // Создаём затемнение и модалку (если её нет)
+    let statusModal = document.getElementById('statusModal');
+    if (!statusModal) {
+        statusModal = document.createElement('div');
+        statusModal.id = 'statusModal';
+        statusModal.className = 'modal-overlay';
+        statusModal.innerHTML = `
+            <div class="modal" style="max-width: 500px;">
+                <div class="modal-header">
+                    <h4 id="statusModalTitle">Изменение статуса</h4>
+                    <button type="button" class="close-modal" onclick="closeStatusModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="statusComment">Комментарий</label>
+                        <textarea id="statusComment" class="form-input" rows="4" placeholder="Введите причину изменения..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeStatusModal()">Отмена</button>
+                    <button type="button" class="btn-primary" id="confirmStatusBtn">Подтвердить</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(statusModal);
+    }
+
+    // Сохраняем выбранный статус в атрибуте модалки
+    statusModal.dataset.targetStatus = newStatus;
+
+    // Меняем заголовок
+    const statusLabels = {
+        'submitted': 'Отправлено в ведомство',
+        'processing': 'В работе',
+        'interim': 'Промежуточные результаты',
+        'positive': 'Принято положительное решение',
+        'completed': 'Результат выдан',
+        'rejected': 'Отказано',
+        'cancelled': 'Отменено'
+    };
+    document.getElementById('statusModalTitle').textContent = `Установить статус: ${statusLabels[newStatus]}`;
+
+    // Очищаем поле комментария
+    document.getElementById('statusComment').value = '';
+
+    // Показываем модалку
+    statusModal.classList.add('active');
+}
+
+// Функция закрытия модалки статуса
+window.closeStatusModal = function() {
+    const modal = document.getElementById('statusModal');
+    if (modal) modal.classList.remove('active');
+};
+
+// Функция подтверждения изменения статуса
+async function confirmStatusChange() {
+    const modal = document.getElementById('statusModal');
+    const newStatus = modal.dataset.targetStatus;
+    const comment = document.getElementById('statusComment').value.trim();
+
+    if (!currentPassportId) {
+        alert('Ошибка: не выбран документ');
+        closeStatusModal();
+        return;
+    }
+
+    try {
+        // Получаем информацию о документе, чтобы узнать user_id
+        const { data: passport, error: fetchError } = await supabase
+            .schema('documents')
+            .from('passport')
+            .select('personal_code, user_id')
+            .eq('id', currentPassportId)
+            .single();
+
+        if (fetchError || !passport) {
+            alert('Не удалось загрузить данные документа');
+            return;
+        }
+
+        // Получаем текущего пользователя (админа)
+        const { data: { user } } = await supabase.auth.getUser();
+
+        // 1. Обновляем статус в documents.passport
+        const { error: updateError } = await supabase
+            .schema('documents')
+            .from('passport')
+            .update({ status: newStatus, updated_at: new Date().toISOString() })
+            .eq('id', currentPassportId);
+
+        if (updateError) throw updateError;
+
+        // 2. Создаём уведомление в messages.notifications
+        // Определяем user_id владельца документа: если есть поле user_id, используем его, иначе ищем по personal_code
+        let targetUserId = passport.user_id;
+        if (!targetUserId && passport.personal_code) {
+            // Ищем пользователя по личному коду
+            const { data: userData } = await supabase
+                .from('users')
+                .select('id')
+                .eq('personal_code', passport.personal_code)
+                .maybeSingle();
+            if (userData) targetUserId = userData.id;
+        }
+
+        if (targetUserId) {
+            const message = `Статус вашего паспорта (№ ${passport.series_number || ''}) изменён на "${getStatusLabel(newStatus)}". Комментарий: ${comment || 'не указан'}`;
+            const { error: notifError } = await supabase
+                .schema('messages')
+                .from('notifications')
+                .insert({
+                    user_id: targetUserId,
+                    document_type: 'passport',
+                    document_id: currentPassportId,
+                    message: message,
+                    is_read: false
+                });
+
+            if (notifError) console.error('Ошибка создания уведомления:', notifError);
+        }
+
+        closeStatusModal();
+        alert('Статус успешно изменён');
+        // Можно перезагрузить данные или обновить интерфейс
+        // Для простоты перезагрузим страницу
+        window.location.reload();
+    } catch (err) {
+        console.error(err);
+        alert('Ошибка: ' + err.message);
+    }
+}
+
+// Добавляем обработчик на кнопку подтверждения после её создания
+document.addEventListener('click', (e) => {
+    if (e.target.id === 'confirmStatusBtn') {
+        confirmStatusChange();
+    }
+});
+
+// ================== КОНЕЦ НОВОГО КОДА ==================
+
+// Обычное сохранение паспорта (без изменения статуса)
 document.getElementById('savePassportBtn').addEventListener('click', async () => {
     const formData = collectEditFormData();
 
@@ -904,6 +1082,7 @@ document.getElementById('savePassportBtn').addEventListener('click', async () =>
 
     const record = {
         ...formData,
+        status: formData.status || 'oncheck', // сохраняем текущий статус из формы, если не меняли
         updated_at: new Date().toISOString()
     };
 
@@ -957,7 +1136,13 @@ function getStatusLabel(status) {
         'verified': 'Подтверждено',
         'oncheck': 'На проверке',
         'rejected': 'Отклонено',
-        'archived': 'Архивный'
+        'archived': 'Архивный',
+        'submitted': 'Отправлено в ведомство',
+        'processing': 'В работе',
+        'interim': 'Промежуточные результаты',
+        'positive': 'Принято положительное решение',
+        'completed': 'Результат выдан',
+        'cancelled': 'Отменено'
     };
     return labels[status] || status;
 }
@@ -971,6 +1156,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!await requireAdmin()) return;
 
     await loadPassports();
+
+    // Переопределяем renderEditForm, чтобы после рендера добавить кнопки статусов
+    // Можно просто вызвать addStatusButtons после рендера
+    const originalRenderEditForm = renderEditForm;
+    renderEditForm = function(data) {
+        originalRenderEditForm(data);
+        addStatusButtons();
+    };
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();

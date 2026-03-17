@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои сообщения — СФСРЮ</title>
+    <!-- favicons -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
+    <!-- ... остальные favicons ... -->
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="../css/index.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .messages-container {
+            max-width: 800px;
+            margin: 2rem auto;
+        }
+        .message-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            border-left: 4px solid #7b091a;
+        }
+        .message-item.unread {
+            border-left-color: #28a745;
+            background: #f8f9fa;
+        }
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .message-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .message-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .message-content {
+            margin: 0.5rem 0;
+            line-height: 1.5;
+        }
+        .message-footer {
+            font-size: 0.9rem;
+            color: #888;
+        }
+        .btn-mark-read {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .loading, .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../index.html">Главная</a></li>
+                    <li><a href="../news.html">Новости</a></li>
+                    <li><a href="../wiki/">Википедия</a></li>
+                    <li><a href="../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../services.html">Услуги</a></li>
+                    <li><a href="index.html" class="active">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="messages-container">
+            <h1 class="page-title">Мои сообщения</h1>
+            <div id="loading" class="loading">Загрузка...</div>
+            <div id="messagesList"></div>
+            <div id="noMessages" class="no-data" style="display: none;">У вас пока нет сообщений.</div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../js/mob-menu.js"></script>
+    <script type="module">
+	import { supabase } from '../supabase-config.js';
+
+let currentUserId = null;
+
+async function loadUser() {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+        window.location.href = '../login.html';
+        return false;
+    }
+    currentUserId = session.user.id;
+    return true;
+}
+
+async function loadMessages() {
+    const loading = document.getElementById('loading');
+    const list = document.getElementById('messagesList');
+    const noMessages = document.getElementById('noMessages');
+
+    loading.style.display = 'block';
+    list.innerHTML = '';
+
+    const { data, error } = await supabase
+        .schema('messages')
+        .from('user_notifications')
+        .select('*')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Ошибка загрузки сообщений:', error);
+        loading.style.display = 'none';
+        list.innerHTML = '<p class="error">Ошибка загрузки</p>';
+        return;
+    }
+
+    loading.style.display = 'none';
+
+    if (!data || data.length === 0) {
+        noMessages.style.display = 'block';
+        return;
+    }
+
+    noMessages.style.display = 'none';
+
+    list.innerHTML = data.map(msg => `
+        <div class="message-item ${msg.is_read ? '' : 'unread'}" data-id="${msg.id}">
+            <div class="message-header">
+                <span class="message-title">${escapeHTML(msg.title)}</span>
+                <span class="message-date">${new Date(msg.created_at).toLocaleString()}</span>
+            </div>
+            <div class="message-content">${escapeHTML(msg.content)}</div>
+            <div class="message-footer">
+                ${msg.comment ? `<p><strong>Комментарий:</strong> ${escapeHTML(msg.comment)}</p>` : ''}
+                ${!msg.is_read ? '<button class="btn-mark-read" data-id="'+msg.id+'">Отметить прочитанным</button>' : ''}
+            </div>
+        </div>
+    `).join('');
+
+    // Обработчики для кнопок "Отметить прочитанным"
+    document.querySelectorAll('.btn-mark-read').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = e.target.dataset.id;
+            const { error } = await supabase
+                .schema('messages')
+                .from('user_notifications')
+                .update({ is_read: true })
+                .eq('id', id)
+                .eq('user_id', currentUserId); // дополнительная проверка
+
+            if (error) {
+                alert('Ошибка: ' + error.message);
+            } else {
+                // обновить вид сообщения
+                const msgDiv = document.querySelector(`.message-item[data-id="${id}"]`);
+                if (msgDiv) {
+                    msgDiv.classList.remove('unread');
+                    e.target.remove();
+                }
+            }
+        });
+    });
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!await loadUser()) return;
+    await loadMessages();
+});
+	</script>
+</body>
+</html>
