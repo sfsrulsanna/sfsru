@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои услуги — СФСРЮ</title>
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -24,7 +25,7 @@
     <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-    <!-- остальные favicons -->
+    <!-- ... остальные favicons (можно сократить для краткости) ... -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -46,6 +47,8 @@
             justify-content: space-between;
             align-items: center;
             transition: background 0.2s;
+            text-decoration: none;
+            color: inherit;
         }
         .service-card:hover {
             background: #f8f9fa;
@@ -77,23 +80,28 @@
         .status-completed { background: #d4edda; color: #155724; }
         .status-rejected { background: #f8d7da; color: #721c24; }
         .status-cancelled { background: #e2e3e5; color: #383d41; }
-        .btn-view {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 0.4rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-        .btn-view:hover {
-            background: #0056b3;
-        }
-        .loading, .no-data {
+        .loading, .no-data, .error {
             text-align: center;
             padding: 2rem;
             color: #666;
+        }
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .btn-logout {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.2);
         }
     </style>
     <script type="importmap">
@@ -126,6 +134,10 @@
                     <li><a href="../index.html" class="active">Личный кабинет</a></li>
                 </ul>
             </nav>
+            <div class="admin-user">
+                <span id="userEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
         </div>
     </header>
     <div class="menu-overlay"></div>
@@ -147,90 +159,96 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-import { supabase } from '../../js/supabase-config.js';
+        import { supabase } from '../../js/supabase-config.js';
 
-let currentUserId = null;
+        let currentUserId = null;
 
-// Маппинг статусов для отображения
-const statusMap = {
-    'submitted': 'Отправлено в ведомство',
-    'processing': 'В работе',
-    'interim': 'Промежуточные результаты',
-    'positive': 'Принято положительное решение',
-    'completed': 'Результат выдан',
-    'rejected': 'Отказано',
-    'cancelled': 'Отменено'
-};
+        const statusMap = {
+            'submitted': 'Отправлено в ведомство',
+            'processing': 'В работе',
+            'interim': 'Промежуточные результаты',
+            'positive': 'Принято положительное решение',
+            'completed': 'Результат выдан',
+            'rejected': 'Отказано',
+            'cancelled': 'Отменено'
+        };
 
-// Загрузка профиля для получения user_id
-async function loadUserProfile() {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-        window.location.href = '../../login.html';
-        return false;
-    }
+        async function loadUserProfile() {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session) {
+                window.location.href = '../../login.html';
+                return false;
+            }
 
-    const { data, error } = await supabase
-        .from('users')
-        .select('email')
-        .eq('id', session.user.id)
-        .single();
+            const { data, error } = await supabase
+                .from('users')
+                .select('email')
+                .eq('id', session.user.id)
+                .single();
 
-    if (error) {
-        console.error('Ошибка загрузки профиля:', error);
-        return false;
-    }
+            if (error) {
+                console.error('Ошибка загрузки профиля:', error);
+                return false;
+            }
 
-// Загрузка списка услуг
-async function loadServices() {
-    const loading = document.getElementById('loading');
-    const list = document.getElementById('servicesList');
-    loading.style.display = 'block';
+            document.getElementById('userEmail').textContent = data.email || session.user.email;
+            currentUserId = session.user.id;
+            return true;
+        }
 
-    const { data, error } = await supabase
-        .schema('services')
-        .from('passport')
-        .select('id, application_number, created_at, status')
-        .eq('user_id', currentUserId)
-        .order('created_at', { ascending: false });
+        async function loadServices() {
+            const loading = document.getElementById('loading');
+            const list = document.getElementById('servicesList');
+            loading.style.display = 'block';
 
-    if (error) {
-        console.error('Ошибка загрузки услуг:', error);
-        list.innerHTML = '<p class="error">Ошибка загрузки данных</p>';
-        loading.style.display = 'none';
-        return;
-    }
+            const { data, error } = await supabase
+                .schema('services')
+                .from('passport')
+                .select('id, application_number, created_at, status')
+                .eq('user_id', currentUserId)
+                .order('created_at', { ascending: false });
 
-    if (!data || data.length === 0) {
-        list.innerHTML = '<p class="no-data">У вас пока нет заявлений</p>';
-        loading.style.display = 'none';
-        return;
-    }
+            if (error) {
+                console.error('Ошибка загрузки услуг:', error);
+                list.innerHTML = '<p class="error">Ошибка загрузки данных</p>';
+                loading.style.display = 'none';
+                return;
+            }
 
-    list.innerHTML = data.map(item => {
-        const statusClass = `status-${item.status}`;
-        const statusText = statusMap[item.status] || item.status;
-        const date = new Date(item.created_at).toLocaleDateString('ru-RU');
-        return `
-            <a href="service-view.html?id=${item.id}" class="service-card">
-                <div class="service-info">
-                    <span class="service-number">№ ${item.application_number}</span>
-                    <span class="service-status ${statusClass}">${statusText}</span>
-                    <div class="service-date">от ${date}</div>
-                </div>
-                <i class="fas fa-chevron-right"></i>
-            </a>
-        `;
-    }).join('');
+            if (!data || data.length === 0) {
+                list.innerHTML = '<p class="no-data">У вас пока нет заявлений</p>';
+                loading.style.display = 'none';
+                return;
+            }
 
-    loading.style.display = 'none';
-}
+            list.innerHTML = data.map(item => {
+                const statusClass = `status-${item.status}`;
+                const statusText = statusMap[item.status] || item.status;
+                const date = new Date(item.created_at).toLocaleDateString('ru-RU');
+                return `
+                    <a href="service-view.html?id=${item.id}" class="service-card">
+                        <div class="service-info">
+                            <span class="service-number">№ ${item.application_number}</span>
+                            <span class="service-status ${statusClass}">${statusText}</span>
+                            <div class="service-meta">от ${date}</div>
+                        </div>
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                `;
+            }).join('');
 
-// Инициализация
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!await loadUserProfile()) return;
-    await loadServices();
-});
-	</script>
+            loading.style.display = 'none';
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '../../login.html';
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await loadUserProfile()) return;
+            await loadServices();
+        });
+    </script>
 </body>
 </html>

@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Просмотр услуги — СФСРЮ</title>
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -24,7 +25,7 @@
     <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-    <!-- остальные favicons -->
+    <!-- ... остальные favicons ... -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -121,11 +122,6 @@
             align-items: center;
             gap: 0.5rem;
         }
-        .doc-size {
-            color: #666;
-            font-size: 0.9rem;
-            margin-left: 1rem;
-        }
         .doc-download {
             background: #007bff;
             color: white;
@@ -134,6 +130,7 @@
             border-radius: 4px;
             cursor: pointer;
             font-size: 0.9rem;
+            text-decoration: none;
         }
         .doc-download:hover {
             background: #0056b3;
@@ -159,6 +156,24 @@
             cursor: pointer;
             font-size: 0.9rem;
             margin-top: 1rem;
+        }
+        .admin-user {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .btn-logout {
+            background: none;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.2);
         }
     </style>
     <script type="importmap">
@@ -191,6 +206,10 @@
                     <li><a href="../index.html" class="active">Личный кабинет</a></li>
                 </ul>
             </nav>
+            <div class="admin-user">
+                <span id="userEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
         </div>
     </header>
     <div class="menu-overlay"></div>
@@ -227,247 +246,227 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-import { supabase } from '../../js/supabase-config.js';
+        import { supabase } from '../../js/supabase-config.js';
 
-let currentUserId = null;
-const statusMap = {
-    'submitted': 'Отправлено в ведомство',
-    'processing': 'В работе',
-    'interim': 'Промежуточные результаты',
-    'positive': 'Принято положительное решение',
-    'completed': 'Результат выдан',
-    'rejected': 'Отказано',
-    'cancelled': 'Отменено'
-};
+        let currentUserId = null;
+        const statusMap = {
+            'submitted': 'Отправлено в ведомство',
+            'processing': 'В работе',
+            'interim': 'Промежуточные результаты',
+            'positive': 'Принято положительное решение',
+            'completed': 'Результат выдан',
+            'rejected': 'Отказано',
+            'cancelled': 'Отменено'
+        };
 
-const serviceTypeNames = {
-    'passport': 'Получение паспорта гражданина СФСРЮ'
-    // в будущем можно добавить другие: 'driver_license': 'Получение водительского удостоверения' и т.д.
-};
+        const serviceTypeNames = {
+            'passport': 'Получение паспорта гражданина СФСРЮ'
+        };
 
-// Получение подписанной ссылки
-async function getSignedUrl(filePath) {
-    if (!filePath) return null;
-    try {
-        const { data, error } = await supabase.storage
-            .from('services-files')
-            .createSignedUrl(filePath, 3600);
-        if (error) throw error;
-        return data.signedUrl;
-    } catch (e) {
-        console.error('Ошибка получения ссылки на файл:', e);
-        return null;
-    }
-}
-
-// Загрузка данных пользователя
-async function loadUserProfile() {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-        window.location.href = '../login.html';
-        return false;
-    }
-    const { data, error } = await supabase
-        .from('users')
-        .select('email')
-        .eq('id', session.user.id)
-        .single();
-    if (error) {
-        console.error('Ошибка загрузки профиля:', error);
-        return false;
-    }
-    document.getElementById('userEmail').textContent = data.email || session.user.email;
-    currentUserId = session.user.id;
-    return true;
-}
-
-// Загрузка деталей услуги
-async function loadService() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-    if (!id) {
-        showError('Не указан ID заявления');
-        return;
-    }
-
-    try {
-        const { data: app, error: appError } = await supabase
-            .schema('services')
-            .from('passport')
-            .select('*')
-            .eq('id', id)
-            .eq('user_id', currentUserId)
-            .single();
-
-        if (appError || !app) {
-            showError('Заявление не найдено');
-            return;
-        }
-
-        // Устанавливаем название услуги
-        const serviceNameEl = document.getElementById('serviceName');
-        serviceNameEl.textContent = serviceTypeNames[app.service_type] || 'Услуга';
-
-        document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
-
-        // Загружаем файлы и историю
-        await renderFiles(app.photo_path, app.application_number);
-        await loadHistory(id);
-    } catch (err) {
-        console.error(err);
-        showError('Ошибка загрузки данных');
-    }
-}
-
-// Отображение файлов (фото и statement.pdf) в верхнем блоке
-async function renderFiles(photoPath, appNumber) {
-    const section = document.getElementById('filesSection');
-    if (!section) return;
-
-    const fileList = [];
-
-    if (photoPath) {
-        const photoUrl = await getSignedUrl(photoPath);
-        if (photoUrl) {
-            // Извлекаем имя файла из пути
-            const fileName = photoPath.split('/').pop() || 'photo.jpg';
-            fileList.push({
-                name: fileName,
-                url: photoUrl,
-                size: '—' // размер не храним
-            });
-        }
-    }
-
-    const statementPath = `passport/${appNumber}/statement.pdf`;
-    const statementUrl = await getSignedUrl(statementPath);
-    if (statementUrl) {
-        fileList.push({
-            name: 'statement.pdf',
-            url: statementUrl,
-            size: '—'
-        });
-    }
-
-    if (fileList.length === 0) {
-        section.innerHTML = '<p class="no-data">Нет доступных файлов</p>';
-        return;
-    }
-
-    let html = '';
-    fileList.forEach(file => {
-        html += `
-            <div class="document-row">
-                <div class="doc-name">
-                    <span>📄 ${file.name}</span>
-                    <span class="doc-size">${file.size}</span>
-                </div>
-                <a href="${file.url}" target="_blank" class="doc-download">Скачать</a>
-            </div>
-        `;
-    });
-    section.innerHTML = html;
-}
-
-// Загрузка истории статусов
-async function loadHistory(passportId) {
-    const list = document.getElementById('historyList');
-    if (!list) return;
-
-    const { data, error } = await supabase
-        .schema('services')
-        .from('passport_status_history')
-        .select('*')
-        .eq('passport_id', passportId)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Ошибка загрузки истории:', error);
-        list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        list.innerHTML = '<p class="no-data">История отсутствует</p>';
-        return;
-    }
-
-    let html = '';
-    for (const item of data) {
-        const statusText = statusMap[item.status] || item.status;
-        const files = item.attachments || [];
-        const fileLinks = [];
-        for (const f of files) {
-            const url = await getSignedUrl(f);
-            if (url) {
-                const fileName = f.split('/').pop() || 'файл';
-                fileLinks.push(`
-                    <div class="file-item">
-                        <span>📎</span>
-                        <a href="${url}" target="_blank">${fileName}</a>
-                    </div>
-                `);
+        async function getSignedUrl(filePath) {
+            if (!filePath) return null;
+            try {
+                const { data, error } = await supabase.storage
+                    .from('services-files')
+                    .createSignedUrl(filePath, 3600);
+                if (error) throw error;
+                return data.signedUrl;
+            } catch (e) {
+                console.error('Ошибка получения ссылки на файл:', e);
+                return null;
             }
         }
-        html += `
-            <div class="status-card">
-                <div class="status-header">
-                    <span class="status-name">${statusText}</span>
-                    <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
-                </div>
-                <div class="status-comment">${item.comment || ''}</div>
-                <div class="files-list">
-                    ${fileLinks.join('')}
-                </div>
-            </div>
-        `;
-    }
-    list.innerHTML = html;
-}
 
-function showError(msg) {
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'none';
-    const err = document.getElementById('error');
-    if (err) {
-        err.textContent = msg;
-        err.style.display = 'block';
-    }
-    const content = document.getElementById('content');
-    if (content) content.style.display = 'none';
-}
+        async function loadUserProfile() {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session) {
+                window.location.href = '../../login.html';
+                return false;
+            }
+            const { data, error } = await supabase
+                .from('users')
+                .select('email')
+                .eq('id', session.user.id)
+                .single();
+            if (error) {
+                console.error('Ошибка загрузки профиля:', error);
+                return false;
+            }
+            document.getElementById('userEmail').textContent = data.email || session.user.email;
+            currentUserId = session.user.id;
+            return true;
+        }
 
-// Инициализация
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!await loadUserProfile()) return;
-    await loadService();
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'none';
-    const content = document.getElementById('content');
-    if (content) content.style.display = 'block';
+        async function loadService() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (!id) {
+                showError('Не указан ID заявления');
+                return;
+            }
 
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = '../login.html';
-    });
+            try {
+                const { data: app, error: appError } = await supabase
+                    .schema('services')
+                    .from('passport')
+                    .select('*')
+                    .eq('id', id)
+                    .eq('user_id', currentUserId)
+                    .single();
 
-    // Кнопка "Скрыть историю"
-    const toggleBtn = document.getElementById('toggleHistoryBtn');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            const history = document.getElementById('historyList');
-            if (history) {
-                if (history.style.display === 'none') {
-                    history.style.display = 'block';
-                    toggleBtn.textContent = 'Скрыть историю';
-                } else {
-                    history.style.display = 'none';
-                    toggleBtn.textContent = 'Показать историю';
+                if (appError || !app) {
+                    showError('Заявление не найдено');
+                    return;
+                }
+
+                const serviceNameEl = document.getElementById('serviceName');
+                serviceNameEl.textContent = serviceTypeNames[app.service_type] || 'Услуга';
+
+                document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
+
+                await renderFiles(app.photo_path, app.application_number);
+                await loadHistory(id);
+            } catch (err) {
+                console.error(err);
+                showError('Ошибка загрузки данных');
+            }
+        }
+
+        async function renderFiles(photoPath, appNumber) {
+            const section = document.getElementById('filesSection');
+            if (!section) return;
+
+            const fileList = [];
+
+            if (photoPath) {
+                const photoUrl = await getSignedUrl(photoPath);
+                if (photoUrl) {
+                    const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                    fileList.push({ name: fileName, url: photoUrl });
                 }
             }
+
+            const statementPath = `passport/${appNumber}/statement.pdf`;
+            const statementUrl = await getSignedUrl(statementPath);
+            if (statementUrl) {
+                fileList.push({ name: 'statement.pdf', url: statementUrl });
+            }
+
+            if (fileList.length === 0) {
+                section.innerHTML = '<p class="no-data">Нет доступных файлов</p>';
+                return;
+            }
+
+            let html = '';
+            fileList.forEach(file => {
+                html += `
+                    <div class="document-row">
+                        <div class="doc-name">
+                            <span>📄 ${file.name}</span>
+                        </div>
+                        <a href="${file.url}" target="_blank" class="doc-download">Скачать</a>
+                    </div>
+                `;
+            });
+            section.innerHTML = html;
+        }
+
+        async function loadHistory(passportId) {
+            const list = document.getElementById('historyList');
+            if (!list) return;
+
+            const { data, error } = await supabase
+                .schema('services')
+                .from('passport_status_history')
+                .select('*')
+                .eq('passport_id', passportId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Ошибка загрузки истории:', error);
+                list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
+                return;
+            }
+
+            if (!data || data.length === 0) {
+                list.innerHTML = '<p class="no-data">История отсутствует</p>';
+                return;
+            }
+
+            let html = '';
+            for (const item of data) {
+                const statusText = statusMap[item.status] || item.status;
+                const files = item.attachments || [];
+                const fileLinks = [];
+                for (const f of files) {
+                    const url = await getSignedUrl(f);
+                    if (url) {
+                        const fileName = f.split('/').pop() || 'файл';
+                        fileLinks.push(`
+                            <div class="file-item">
+                                <span>📎</span>
+                                <a href="${url}" target="_blank">${fileName}</a>
+                            </div>
+                        `);
+                    }
+                }
+                html += `
+                    <div class="status-card">
+                        <div class="status-header">
+                            <span class="status-name">${statusText}</span>
+                            <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="status-comment">${item.comment || ''}</div>
+                        <div class="files-list">
+                            ${fileLinks.join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            list.innerHTML = html;
+        }
+
+        function showError(msg) {
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'none';
+            const err = document.getElementById('error');
+            if (err) {
+                err.textContent = msg;
+                err.style.display = 'block';
+            }
+            const content = document.getElementById('content');
+            if (content) content.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await loadUserProfile()) return;
+            await loadService();
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'none';
+            const content = document.getElementById('content');
+            if (content) content.style.display = 'block';
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+
+            const toggleBtn = document.getElementById('toggleHistoryBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const history = document.getElementById('historyList');
+                    if (history) {
+                        if (history.style.display === 'none') {
+                            history.style.display = 'block';
+                            toggleBtn.textContent = 'Скрыть историю';
+                        } else {
+                            history.style.display = 'none';
+                            toggleBtn.textContent = 'Показать историю';
+                        }
+                    }
+                });
+            }
         });
-    }
-});
-	</script>
+    </script>
 </body>
 </html>
