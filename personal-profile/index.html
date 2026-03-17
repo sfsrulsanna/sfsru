@@ -75,8 +75,8 @@
       <!-- Быстрые ссылки -->
       <div class="quick-links">
         <a href="messages.html" class="quick-link">
-          <div class="quick-link-icon">✉️</div>
-          <div class="quick-link-title">Мои сообщения</div>
+          <div class="quick-link-icon">🔔</div>
+          <div class="quick-link-title">Уведомления</div>
         </a>
         <a href="services/" class="quick-link">
           <div class="quick-link-icon">🛠️</div>
@@ -237,11 +237,12 @@
     // --- Обновление количества непрочитанных уведомлений ---
     async function updateNotifications(userId) {
       try {
-        const { count, error } = await supabase
-          .from('user_messages', { schema: 'messages' })
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('is_read', false)
+const { count, error } = await supabase
+  .schema('messages')
+  .from('user_messages')
+  .select('*', { count: 'exact', head: true })
+  .eq('user_id', userId)
+  .eq('is_read', false)
 
         if (error) throw error
 
