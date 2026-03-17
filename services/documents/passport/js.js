@@ -429,9 +429,9 @@ async function submitApplication() {
         return false;
     }
 
-    // Формируем пути к загруженным файлам
+    // Пути к загруженным файлам
     const pdfPath = `passport/${applicationNumber}/statement.pdf`;
-    const attachments = [photoPath, pdfPath].filter(Boolean);
+    const attachments = [photoPath, pdfPath].filter(Boolean); // массив путей
 
     const payload = {
         application_number: applicationNumber,
@@ -450,11 +450,9 @@ async function submitApplication() {
         new_personal_data: newData,
         phone: formData.phone,
         email: formData.email,
-        photo_path: photoPath,
         mvd_id: selectedMvdId,
         status: 'submitted',
-        attachments: attachments,
-        service_type: 'passport'      // ← добавляем тип услуги
+        service_type: 'passport'        // если нужно
     };
 
     // Вставляем заявление и получаем его id
@@ -470,11 +468,12 @@ async function submitApplication() {
         return false;
     }
 
-    // Записываем начальный статус в историю
+    // Записываем начальный статус в историю, включая пути к файлам
     const historyPayload = {
         passport_id: inserted.id,
         status: 'submitted',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        attachments: attachments   // массив путей к файлам
     };
 
     const { error: historyError } = await supabase
@@ -484,6 +483,8 @@ async function submitApplication() {
 
     if (historyError) {
         console.error('Ошибка записи в историю статусов:', historyError);
+        // Заявление уже создано, но можно показать предупреждение
+        showError('Заявление создано, но не удалось записать историю статусов.');
     }
 
     return true;
