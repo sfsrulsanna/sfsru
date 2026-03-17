@@ -39,14 +39,14 @@
             padding: 2rem;
         }
         .service-title {
-            font-size: 1.2rem;
-            color: #333;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #7b091a;
             margin-bottom: 0.5rem;
         }
         .service-number {
-            font-size: 2rem;
-            font-weight: 600;
-            color: #7b091a;
+            font-size: 1rem;
+            color: #6c757d;
             margin-bottom: 2rem;
         }
         .status-card {
@@ -138,24 +138,45 @@
         .back-link {
             display: inline-block;
             margin-top: 2rem;
-            color: #7b091a;
+            padding: 0.5rem 1rem;
+            background-color: #6c757d;
+            color: white;
+            border-radius: 4px;
             text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        .back-link:hover {
+            background-color: #5a6268;
         }
         .back-link i {
-            margin-right: 0.3rem;
+            margin-right: 0.5rem;
+        }
+        .toggle-history {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            color: #495057;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin: 1rem 0;
+            transition: background-color 0.2s;
+            display: none; /* скрыта по умолчанию, показывается если есть доп. статусы */
+        }
+        .toggle-history:hover {
+            background-color: #dee2e6;
+        }
+        /* По умолчанию показываем только первый статус */
+        #historyList .status-card:not(:first-child) {
+            display: none;
+        }
+        #historyList.show-all .status-card {
+            display: block;
         }
         .loading, .no-data, .error {
             text-align: center;
             padding: 2rem;
             color: #666;
-        }
-        .toggle-history {
-            background: none;
-            border: none;
-            color: #007bff;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-top: 1rem;
         }
     </style>
     <script type="importmap">
@@ -195,24 +216,23 @@
 
     <main class="main-content">
         <div class="service-container">
-            <!-- Название услуги будет установлено через JS как "Получение паспорта гражданина СФСРЮ" -->
-            <div class="service-title" id="serviceName"></div>
+            <div class="service-title" id="serviceName">Получение паспорта гражданина СФСРЮ</div>
             <div class="service-number" id="appNumber"></div>
 
             <div id="loading" class="loading">Загрузка...</div>
             <div id="error" class="error" style="display: none;"></div>
 
             <div id="content" style="display: none;">
-                <!-- Документы заявления -->
-                <div class="section-title">Документы</div>
-                <div class="documents-grid" id="filesSection"></div>
-
                 <!-- История статусов -->
                 <div class="section-title">История статусов</div>
                 <div id="historyList"></div>
 
-                <!-- Кнопка "Скрыть историю" -->
-                <button class="toggle-history" id="toggleHistoryBtn">Скрыть историю</button>
+                <!-- Кнопка показа/скрытия истории -->
+                <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
+
+                <!-- Документы заявления -->
+                <div class="section-title">Документы</div>
+                <div class="documents-grid" id="filesSection"></div>
 
                 <a href="services.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
             </div>
@@ -238,9 +258,6 @@
             'rejected': 'Отказано',
             'cancelled': 'Отменено'
         };
-
-        // Название услуги фиксированное для всех заявлений из passport
-        const SERVICE_NAME = 'Получение паспорта гражданина СФСРЮ';
 
         async function getSignedUrl(filePath) {
             if (!filePath) return null;
@@ -288,8 +305,6 @@
                     return;
                 }
 
-                // Устанавливаем фиксированное название услуги
-                document.getElementById('serviceName').textContent = SERVICE_NAME;
                 document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
 
                 await renderFiles(app.photo_path, app.application_number);
@@ -341,6 +356,7 @@
 
         async function loadHistory(passportId) {
             const list = document.getElementById('historyList');
+            const toggleBtn = document.getElementById('toggleHistoryBtn');
             if (!list) return;
 
             const { data, error } = await supabase
@@ -358,6 +374,7 @@
 
             if (!data || data.length === 0) {
                 list.innerHTML = '<p class="no-data">История отсутствует</p>';
+                toggleBtn.style.display = 'none';
                 return;
             }
 
@@ -392,6 +409,17 @@
                 `;
             }
             list.innerHTML = html;
+
+            // Управление кнопкой показа истории
+            const statusCards = list.querySelectorAll('.status-card');
+            if (statusCards.length > 1) {
+                toggleBtn.style.display = 'inline-block';
+                // Сбрасываем класс show-all (вдруг остался от предыдущего просмотра)
+                list.classList.remove('show-all');
+                toggleBtn.textContent = 'Показать историю';
+            } else {
+                toggleBtn.style.display = 'none';
+            }
         }
 
         function showError(msg) {
@@ -414,16 +442,16 @@
             const content = document.getElementById('content');
             if (content) content.style.display = 'block';
 
+            // Обработчик кнопки "Показать/Скрыть историю"
             const toggleBtn = document.getElementById('toggleHistoryBtn');
             if (toggleBtn) {
                 toggleBtn.addEventListener('click', () => {
                     const history = document.getElementById('historyList');
                     if (history) {
-                        if (history.style.display === 'none') {
-                            history.style.display = 'block';
+                        history.classList.toggle('show-all');
+                        if (history.classList.contains('show-all')) {
                             toggleBtn.textContent = 'Скрыть историю';
                         } else {
-                            history.style.display = 'none';
                             toggleBtn.textContent = 'Показать историю';
                         }
                     }
