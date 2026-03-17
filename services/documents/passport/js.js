@@ -432,7 +432,7 @@ async function submitApplication() {
     // Формируем пути к загруженным файлам
     const pdfPath = `passport/${applicationNumber}/statement.pdf`;
     // Массив attachments: путь к фото и путь к PDF
-    const attachments = [photoPath, pdfPath].filter(Boolean); // фильтр на случай отсутствия фото (но оно должно быть)
+    const attachments = [photoPath, pdfPath].filter(Boolean); // фильтр на случай отсутствия фото
 
     const payload = {
         application_number: applicationNumber,
@@ -451,10 +451,9 @@ async function submitApplication() {
         new_personal_data: newData,
         phone: formData.phone,
         email: formData.email,
-        photo_path: photoPath,          // можно оставить для обратной совместимости
+        photo_path: photoPath,
         mvd_id: selectedMvdId,
-        status: 'submitted',
-        attachments: attachments        // новый массив с путями ко всем файлам
+        status: 'submitted'
     };
 
     // Вставляем заявление и получаем его id
@@ -470,11 +469,12 @@ async function submitApplication() {
         return false;
     }
 
-    // Записываем начальный статус в историю
+    // Записываем начальный статус в историю с путями к файлам
     const historyPayload = {
         passport_id: inserted.id,
         status: 'submitted',
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        attachments: attachments   // <- сохраняем массив путей в колонке attachments
     };
 
     const { error: historyError } = await supabase
@@ -484,7 +484,7 @@ async function submitApplication() {
 
     if (historyError) {
         console.error('Ошибка записи в историю статусов:', historyError);
-        // Не прерываем выполнение, только логируем ошибку
+        // Не прерываем выполнение, только логируем
     }
 
     return true;
