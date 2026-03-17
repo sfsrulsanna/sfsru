@@ -6,7 +6,7 @@
     <title>Получение паспорта гражданина СФСРЮ</title>
     <link rel="stylesheet" href="../../../css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- Favicons (как в исходном файле) -->
+    <!-- Favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -98,7 +98,7 @@
             height: 2px;
             background: #ccc;
         }
-        /* Контент шагов с анимацией */
+        /* Контент шагов */
         .step-content {
             min-height: 400px;
             transition: opacity 0.3s ease;
@@ -106,9 +106,6 @@
         .step-content.hidden {
             display: none;
             opacity: 0;
-        }
-        .step-content:not(.hidden) {
-            opacity: 1;
         }
         /* Формы */
         .form-group {
@@ -140,7 +137,6 @@
         .radio-group label {
             display: block;
             padding: 0.75rem 1rem;
-            margin: 0;
             background: #f9f9f9;
             border-radius: 8px;
             cursor: pointer;
@@ -150,6 +146,11 @@
         .radio-group label:hover {
             background: #e9ecef;
             transform: translateY(-1px);
+        }
+        .radio-group label.selected {
+            background: #7b091a;
+            color: white;
+            border-color: #7b091a;
         }
         .radio-group input[type="radio"] {
             margin-right: 0.75rem;
@@ -162,15 +163,19 @@
             border-radius: 8px;
             border: 1px solid #eee;
         }
-        /* Кнопки */
+        /* Единые кнопки */
         .btn {
+            display: inline-block;
             padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 8px;
-            cursor: pointer;
             font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            min-width: 120px;
+            text-align: center;
         }
         .btn-primary {
             background: #7b091a;
@@ -283,7 +288,7 @@
         .file-list i {
             font-size: 1.2rem;
         }
-        /* Выбор отделения МВД (карточки) */
+        /* Выбор отделения МВД */
         .mvd-grid {
             display: grid;
             grid-template-columns: 1fr;
@@ -314,6 +319,9 @@
         .mvd-card.selected p {
             color: rgba(255,255,255,0.9);
         }
+        .mvd-card.selected i {
+            color: white;
+        }
         .mvd-card h4 {
             margin: 0 0 0.5rem 0;
             font-size: 1.1rem;
@@ -325,7 +333,6 @@
         .mvd-card small {
             color: #777;
         }
-        /* Скрытые радио-кнопки */
         .mvd-radio {
             display: none;
         }
@@ -574,7 +581,7 @@
                     </div>
                     <div class="navigation">
                         <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary" id="uploadPhotoBtn" disabled>Загрузить и продолжить</button>
+                        <button type="button" class="btn btn-primary next-step" id="step6NextBtn" disabled>Далее</button>
                     </div>
                 </div>
 
@@ -603,9 +610,10 @@
                     <h2>Заявление отправлено!</h2>
                     <p>Номер вашего заявления: <strong id="applicationNumber"></strong></p>
                     <p>Вы можете отслеживать статус в личном кабинете.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                         <a href="../../../services.html" class="btn btn-secondary">На главную услуг</a>
-                        <a href="../../../profile.html" class="btn btn-primary">В личный кабинет</a>
+                        <a href="../../../profile.html" class="btn btn-secondary">В личный кабинет</a>
+                        <a id="gotoServiceLink" href="#" class="btn btn-primary">Перейти к заявлению</a>
                     </div>
                 </div>
             </form>

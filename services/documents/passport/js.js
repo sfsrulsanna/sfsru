@@ -9,6 +9,7 @@ let userProfile = null;
 let userPersonalCode = null;
 let applicationNumber = null;
 let photoPath = null;
+let photoDataURL = null; // для предпросмотра
 let selectedMvdId = null;
 let mvdList = [];
 let formData = {
@@ -97,7 +98,6 @@ function renderMvdList() {
     const container = document.getElementById('mvdList');
     container.innerHTML = '';
     mvdList.forEach(mvd => {
-        // Создаём скрытую радио-кнопку
         const radio = document.createElement('input');
         radio.type = 'radio';
         radio.name = 'mvd';
@@ -105,17 +105,15 @@ function renderMvdList() {
         radio.id = `mvd-${mvd.id}`;
         radio.classList.add('mvd-radio');
         
-        // Создаём карточку
         const card = document.createElement('div');
         card.className = 'mvd-card';
         card.setAttribute('data-id', mvd.id);
         card.innerHTML = `
-            <h4>${mvd.name}</h4>
+            <h4><i class="fas fa-map-marker-alt" style="margin-right:0.5rem; color:#7b091a;"></i>${mvd.name}</h4>
             <p>${mvd.address}</p>
             <small>${mvd.working_hours || ''}</small>
         `;
         
-        // При клике на карточку выбираем радио и обновляем выделение
         card.addEventListener('click', () => {
             document.querySelectorAll('.mvd-card').forEach(el => el.classList.remove('selected'));
             card.classList.add('selected');
@@ -140,20 +138,16 @@ function updateSteps() {
 function goToStep(step) {
     if (step < 1 || step > totalSteps) return;
     
-    // Скрываем все шаги
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-    // Показываем нужный
     const targetStep = document.querySelector(`.step-content[data-step="${step}"]`);
     if (targetStep) targetStep.classList.remove('hidden');
     currentStep = step;
     updateSteps();
 
-    // Специфическая логика при переходе на шаг 3
     if (step === 3) {
         const normalContent = document.getElementById('step3NormalContent');
         const lostBlock = document.getElementById('lostMessage');
         const nextBtn = document.getElementById('step3NextBtn');
-        
         if (isLostReason) {
             normalContent.classList.add('hidden');
             lostBlock.classList.remove('hidden');
@@ -165,18 +159,24 @@ function goToStep(step) {
         }
     }
 
-    // При переходе на шаг 4 отображаем данные профиля
     if (step === 4) {
         renderProfileData();
     }
 
-    // При переходе на шаг 5 заполняем контакты
     if (step === 5) {
         document.getElementById('phone').value = formData.phone;
         document.getElementById('email').value = formData.email;
     }
 
-    // При переходе на шаг 8 готовим сводку
+    if (step === 6) {
+        const step6Next = document.getElementById('step6NextBtn');
+        step6Next.disabled = !photoPath;
+        if (photoPath) {
+            document.getElementById('photoPreview').classList.remove('hidden');
+            // если есть dataURL, можно показать, иначе placeholder
+        }
+    }
+
     if (step === 8) {
         prepareSummary();
     }
@@ -212,7 +212,6 @@ async function validateStep(step) {
             break;
         }
         case 3: {
-            // Если причина утеря, переход запрещён (кнопка уже disabled)
             if (isLostReason) {
                 showError('Для утери паспорта онлайн-подача недоступна');
                 return false;
@@ -260,7 +259,6 @@ async function uploadPhoto(file) {
         return false;
     }
 
-    // Показываем прогресс
     const progressContainer = document.getElementById('uploadProgressContainer');
     const progressBar = document.getElementById('uploadProgressBar');
     const fileList = document.getElementById('fileList');
@@ -273,8 +271,6 @@ async function uploadPhoto(file) {
     }
     const filePath = `passport/${applicationNumber}/photo.jpg`;
 
-    // Имитация прогресса (Supabase Storage не даёт onUploadProgress, поэтому показываем спиннер)
-    // Можно использовать XMLHttpRequest с подписанным URL, но для простоты оставим так
     const { error } = await supabase.storage
         .from('services-files')
         .upload(filePath, file, { upsert: false });
@@ -429,14 +425,11 @@ async function submitApplication() {
         return false;
     }
 
-    // Пути к файлам
     const pdfPath = `passport/${applicationNumber}/statement.pdf`;
-    // Убедимся, что photoPath существует
     const attachments = [];
     if (photoPath) attachments.push(photoPath);
     attachments.push(pdfPath);
 
-    // Основной payload для таблицы passport (без attachments)
     const payload = {
         application_number: applicationNumber,
         user_id: session.user.id,
@@ -459,7 +452,6 @@ async function submitApplication() {
         service_type: 'passport'
     };
 
-    // Вставка в passport
     const { data: inserted, error } = await supabase
         .schema('services')
         .from('passport')
@@ -472,12 +464,11 @@ async function submitApplication() {
         return false;
     }
 
-    // Вставка в passport_status_history с attachments
     const historyPayload = {
         passport_id: inserted.id,
         status: 'submitted',
         created_at: new Date().toISOString(),
-        attachments: attachments   // массив путей
+        attachments: attachments
     };
 
     const { error: historyError } = await supabase
@@ -495,10 +486,8 @@ async function submitApplication() {
 
 // ========== Инициализация ==========
 document.addEventListener('DOMContentLoaded', async () => {
-    // Загружаем профиль
     if (!await loadUserProfile()) return;
 
-    // Проверяем активное заявление
     hasActiveApp = await checkActiveApplication();
     const activeWarning = document.getElementById('activeApplicationWarning');
     const formContainer = document.getElementById('applicationForm');
@@ -506,13 +495,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (hasActiveApp) {
         activeWarning.classList.remove('hidden');
         formContainer.classList.add('hidden');
-        return; // Выходим, не инициализируем остальное
+        return;
     } else {
         activeWarning.classList.add('hidden');
         formContainer.classList.remove('hidden');
     }
 
-    // Загружаем отделения МВД
     try {
         await loadMvd();
     } catch (e) {
@@ -520,7 +508,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showError('Не удалось загрузить список отделений МВД');
     }
 
-    // Drag & drop для фото
+    // Drag & drop
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('photoUpload');
     if (dropZone) {
@@ -538,25 +526,61 @@ document.addEventListener('DOMContentLoaded', async () => {
             const files = e.dataTransfer.files;
             if (files.length) {
                 fileInput.files = files;
-                // Активируем кнопку загрузки
-                document.getElementById('uploadPhotoBtn').disabled = false;
+                // Автоматическая загрузка
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
             }
         });
     }
 
-    // При выборе файла через input активируем кнопку
-    fileInput.addEventListener('change', () => {
-        document.getElementById('uploadPhotoBtn').disabled = !fileInput.files.length;
+    // Авто-загрузка при выборе файла
+    fileInput.addEventListener('change', async () => {
+        if (!fileInput.files.length) return;
+        
+        const step6Next = document.getElementById('step6NextBtn');
+        step6Next.disabled = true;
+        
+        const file = fileInput.files[0];
+        const success = await uploadPhoto(file);
+        
+        if (success) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('photoPreview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            
+            step6Next.disabled = false;
+        } else {
+            step6Next.disabled = true;
+        }
     });
+
+    // Выделение выбранной причины
+    document.querySelectorAll('input[name="reason"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            document.querySelectorAll('.radio-group label').forEach(label => label.classList.remove('selected'));
+            if (e.target.checked) {
+                e.target.closest('label').classList.add('selected');
+            }
+            
+            const details = document.getElementById('reasonDetails');
+            details.classList.toggle('hidden', e.target.value !== 'name_changed');
+            isLostReason = (e.target.value === 'lost');
+        });
+    });
+    const checkedRadio = document.querySelector('input[name="reason"]:checked');
+    if (checkedRadio) {
+        checkedRadio.closest('label').classList.add('selected');
+    }
 
     // Обработчики навигации
     document.querySelectorAll('.next-step').forEach(btn => {
         btn.addEventListener('click', async () => {
             if (await validateStep(currentStep)) {
-                // Если шаг 3 и причина утеря – не переходим (кнопка disabled)
                 if (currentStep === 3 && isLostReason) return;
                 
-                // Обновляем цену на шаге 3 перед переходом
                 if (currentStep === 3) {
                     const price = (formData.reason === 'lost' || formData.reason === 'damaged') ? 2000 : 300;
                     document.getElementById('priceDisplay').textContent = price;
@@ -568,40 +592,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.querySelectorAll('.prev-step').forEach(btn => {
         btn.addEventListener('click', () => goToStep(currentStep - 1));
-    });
-
-    // При изменении радио-кнопок причины
-    document.querySelectorAll('input[name="reason"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            const details = document.getElementById('reasonDetails');
-            details.classList.toggle('hidden', e.target.value !== 'name_changed');
-            isLostReason = (e.target.value === 'lost');
-        });
-    });
-
-    // Загрузка фото
-    document.getElementById('uploadPhotoBtn').addEventListener('click', async () => {
-        const fileInput = document.getElementById('photoUpload');
-        if (!fileInput.files.length) {
-            showError('Выберите файл');
-            return;
-        }
-        // Деактивируем кнопку на время загрузки
-        const btn = document.getElementById('uploadPhotoBtn');
-        btn.disabled = true;
-        const success = await uploadPhoto(fileInput.files[0]);
-        btn.disabled = false;
-        if (success) {
-            // Показываем превью
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('previewImg').src = e.target.result;
-                document.getElementById('photoPreview').classList.remove('hidden');
-            };
-            reader.readAsDataURL(fileInput.files[0]);
-            // Переходим на следующий шаг
-            goToStep(currentStep + 1);
-        }
     });
 
     // Отправка заявления
@@ -618,10 +608,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         if (success) {
             document.getElementById('applicationNumber').textContent = applicationNumber;
+            document.getElementById('gotoServiceLink').href = `../../../personal-profile/services/service-view.html?id=${applicationNumber}`;
             goToStep(9);
         }
     });
 
-    // Стартуем с шага 1
     goToStep(1);
 });
