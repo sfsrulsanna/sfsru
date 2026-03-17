@@ -24,61 +24,40 @@
     <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-    <!-- остальные favicons -->
+
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .service-container {
-            max-width: 1000px;
+            max-width: 900px;
             margin: 2rem auto;
             background: white;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             padding: 2rem;
         }
-        .back-link {
-            margin-bottom: 1.5rem;
-            display: inline-block;
+        .section-title {
             color: #7b091a;
-            text-decoration: none;
-        }
-        .back-link i {
-            margin-right: 0.5rem;
-        }
-        .back-link:hover {
-            text-decoration: underline;
+            border-bottom: 2px solid #7b091a;
+            padding-bottom: 0.5rem;
+            margin: 2rem 0 1rem;
         }
         .details-table {
             width: 100%;
             border-collapse: collapse;
-            margin: 1.5rem 0;
         }
         .details-table th {
             width: 30%;
             background: #f8f9fa;
             padding: 10px;
             text-align: right;
+            font-weight: 600;
             border: 1px solid #dee2e6;
         }
         .details-table td {
             padding: 10px;
             border: 1px solid #dee2e6;
-        }
-        .files-section {
-            margin: 2rem 0;
-        }
-        .file-link {
-            display: inline-block;
-            margin-right: 1rem;
-            padding: 0.5rem 1rem;
-            background: #e9ecef;
-            border-radius: 4px;
-            color: #007bff;
-            text-decoration: none;
-        }
-        .file-link:hover {
-            background: #dee2e6;
         }
         .history-item {
             background: #f8f9fa;
@@ -96,16 +75,37 @@
             font-weight: 600;
             color: #7b091a;
         }
-        .history-item .comment {
-            margin: 0.5rem 0;
-        }
-        .history-item .attachments a {
+        .file-link {
+            display: inline-block;
+            background: #e9ecef;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            text-decoration: none;
+            color: #007bff;
             margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
         }
-        .loading, .error {
+        .file-link:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            display: inline-block;
+            margin-top: 2rem;
+            color: #7b091a;
+            text-decoration: none;
+        }
+        .back-link i {
+            margin-right: 0.3rem;
+        }
+        .loading, .no-data, .error {
             text-align: center;
             padding: 2rem;
             color: #666;
+        }
+        #serviceName {
+            font-size: 1.2rem;
+            color: #7b091a;
+            margin-bottom: 1rem;
         }
     </style>
     <script type="importmap">
@@ -148,21 +148,21 @@
 
     <main class="main-content">
         <div class="service-container">
-            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к услугам</a>
-            <h1 class="page-title">Заявление № <span id="appNumber"></span></h1>
-
+            <h1 class="page-title">Детали услуги</h1>
+            <div id="serviceName"></div>
             <div id="loading" class="loading">Загрузка...</div>
-            <div id="error" class="error hidden">Ошибка загрузки</div>
-
-            <div id="appDetails" style="display: none;">
-                <h3>Данные заявления</h3>
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="content" style="display: none;">
+                <h2 id="appNumber"></h2>
                 <table class="details-table" id="detailsTable"></table>
 
-                <h3>Файлы</h3>
-                <div class="files-section" id="filesSection"></div>
+                <h3 class="section-title">Файлы</h3>
+                <div id="filesSection"></div>
 
-                <h3>История статусов</h3>
-                <div id="historySection"></div>
+                <h3 class="section-title">История статусов</h3>
+                <div id="historyList"></div>
+
+                <a href="services.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
             </div>
         </div>
     </main>
@@ -174,7 +174,7 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-import { supabase } from '../../js/supabase-config.js';
+	import { supabase } from '../../js/supabase-config.js';
 
 let currentUserId = null;
 const statusMap = {
@@ -185,6 +185,10 @@ const statusMap = {
     'completed': 'Результат выдан',
     'rejected': 'Отказано',
     'cancelled': 'Отменено'
+};
+
+const serviceTypeNames = {
+    'passport': 'Получение паспорта гражданина СФСРЮ'
 };
 
 // Получение подписанной ссылки
@@ -247,9 +251,12 @@ async function loadService() {
         }
 
         document.getElementById('appNumber').textContent = `Заявление № ${app.application_number}`;
+        const serviceName = serviceTypeNames[app.service_type] || 'Услуга';
+        document.getElementById('serviceName').textContent = serviceName;
+
         renderDetails(app);
-        renderFiles(app.photo_path, app.application_number);
-        loadHistory(id);
+        await renderFiles(app.photo_path, app.application_number);
+        await loadHistory(id);
     } catch (err) {
         console.error(err);
         showError('Ошибка загрузки данных');
@@ -308,6 +315,11 @@ async function renderFiles(photoPath, appNumber) {
 // Загрузка истории статусов
 async function loadHistory(passportId) {
     const list = document.getElementById('historyList');
+    if (!list) {
+        console.error('Элемент historyList не найден в DOM');
+        return;
+    }
+
     const { data, error } = await supabase
         .schema('services')
         .from('passport_status_history')
@@ -350,10 +362,15 @@ async function loadHistory(passportId) {
 }
 
 function showError(msg) {
-    document.getElementById('loading').style.display = 'none';
+    const loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'none';
     const err = document.getElementById('error');
-    err.textContent = msg;
-    err.style.display = 'block';
+    if (err) {
+        err.textContent = msg;
+        err.style.display = 'block';
+    }
+    const content = document.getElementById('content');
+    if (content) content.style.display = 'none';
 }
 
 function escapeHTML(str) {
@@ -370,8 +387,10 @@ function escapeHTML(str) {
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await loadUserProfile()) return;
     await loadService();
-    document.getElementById('loading').style.display = 'none';
-    document.getElementById('content').style.display = 'block';
+    const loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'none';
+    const content = document.getElementById('content');
+    if (content) content.style.display = 'block';
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
