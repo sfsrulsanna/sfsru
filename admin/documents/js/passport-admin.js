@@ -1000,43 +1000,44 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// ================== ОБЫЧНОЕ СОХРАНЕНИЕ ==================
+// ================== СОХРАНЕНИЕ ПАСПОРТА (через делегирование) ==================
+document.addEventListener('click', async (e) => {
+    if (e.target.id === 'savePassportBtn') {
+        const formData = collectEditFormData();
 
-document.getElementById('savePassportBtn').addEventListener('click', async () => {
-    const formData = collectEditFormData();
+        if (!formData.series_number) {
+            alert('Серия и номер обязательны');
+            return;
+        }
 
-    if (!formData.series_number) {
-        alert('Серия и номер обязательны');
-        return;
-    }
+        const record = {
+            ...formData,
+            status: formData.status || 'oncheck',
+            updated_at: new Date().toISOString()
+        };
 
-    const record = {
-        ...formData,
-        status: formData.status || 'oncheck',
-        updated_at: new Date().toISOString()
-    };
+        let result;
+        if (currentPassportId) {
+            result = await supabase
+                .schema('documents')
+                .from('passport')
+                .update(record)
+                .eq('id', currentPassportId);
+        } else {
+            record.created_at = new Date().toISOString();
+            result = await supabase
+                .schema('documents')
+                .from('passport')
+                .insert([record])
+                .select();
+        }
 
-    let result;
-    if (currentPassportId) {
-        result = await supabase
-            .schema('documents')
-            .from('passport')
-            .update(record)
-            .eq('id', currentPassportId);
-    } else {
-        record.created_at = new Date().toISOString();
-        result = await supabase
-            .schema('documents')
-            .from('passport')
-            .insert([record])
-            .select();
-    }
-
-    if (result.error) {
-        alert('Ошибка сохранения: ' + result.error.message);
-    } else {
-        closeEditModal();
-        loadPassports();
+        if (result.error) {
+            alert('Ошибка сохранения: ' + result.error.message);
+        } else {
+            closeEditModal();
+            loadPassports();
+        }
     }
 });
 
