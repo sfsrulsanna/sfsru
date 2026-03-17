@@ -166,7 +166,7 @@ const statusMap = {
 async function loadUserProfile() {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession();
     if (sessionError || !session) {
-        window.location.href = '../login.html';
+        window.location.href = '../../login.html';
         return false;
     }
 
@@ -180,11 +180,6 @@ async function loadUserProfile() {
         console.error('Ошибка загрузки профиля:', error);
         return false;
     }
-
-    document.getElementById('userEmail').textContent = data.email || session.user.email;
-    currentUserId = session.user.id;
-    return true;
-}
 
 // Загрузка списка услуг
 async function loadServices() {
