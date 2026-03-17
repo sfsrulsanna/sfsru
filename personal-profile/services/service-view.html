@@ -209,7 +209,6 @@
                     <li><a href="../index.html" class="active">Личный кабинет</a></li>
                 </ul>
             </nav>
-            <!-- Блок с пользователем удалён -->
         </div>
     </header>
     <div class="menu-overlay"></div>
@@ -230,7 +229,7 @@
                 <!-- Кнопка показа/скрытия истории -->
                 <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
 
-                <a href="services.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
+                <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
             </div>
         </div>
     </main>
@@ -242,182 +241,209 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-        import { supabase } from '../../js/supabase-config.js';
+import { supabase } from '../../js/supabase-config.js';
 
-        let currentUserId = null;
-        const statusMap = {
-            'submitted': 'Отправлено в ведомство',
-            'processing': 'В работе',
-            'interim': 'Промежуточные результаты',
-            'positive': 'Принято положительное решение',
-            'completed': 'Результат выдан',
-            'rejected': 'Отказано',
-            'cancelled': 'Отменено'
-        };
+let currentUserId = null;
+const statusMap = {
+    'submitted': 'Отправлено в ведомство',
+    'processing': 'В работе',
+    'interim': 'Промежуточные результаты',
+    'positive': 'Принято положительное решение',
+    'completed': 'Результат выдан',
+    'rejected': 'Отказано',
+    'cancelled': 'Отменено'
+};
 
-        async function getSignedUrl(filePath) {
-            if (!filePath) return null;
-            try {
-                const { data, error } = await supabase.storage
-                    .from('services-files')
-                    .createSignedUrl(filePath, 3600);
-                if (error) throw error;
-                return data.signedUrl;
-            } catch (e) {
-                console.error('Ошибка получения ссылки на файл:', e);
-                return null;
-            }
+// Маппинг service_type -> название услуги
+const serviceTypeNames = {
+    'passport': 'Получение паспорта гражданина СФСРЮ',
+    'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ'
+};
+
+async function getSignedUrl(filePath) {
+    if (!filePath) return null;
+    try {
+        const { data, error } = await supabase.storage
+            .from('services-files')
+            .createSignedUrl(filePath, 3600);
+        if (error) throw error;
+        return data.signedUrl;
+    } catch (e) {
+        console.error('Ошибка получения ссылки на файл:', e);
+        return null;
+    }
+}
+
+async function loadUserProfile() {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+        window.location.href = '../../login.html';
+        return false;
+    }
+    currentUserId = session.user.id;
+    return true;
+}
+
+async function loadService() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (!id) {
+        showError('Не указан ID заявления');
+        return;
+    }
+
+    try {
+        const { data: app, error: appError } = await supabase
+            .schema('services')
+            .from('passport')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', currentUserId)
+            .single();
+
+        if (appError || !app) {
+            showError('Заявление не найдено');
+            return;
         }
 
-        async function loadUserProfile() {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            if (sessionError || !session) {
-                window.location.href = '../../login.html';
-                return false;
-            }
-            currentUserId = session.user.id;
-            return true;
-        }
+        // Устанавливаем название услуги на основе service_type
+        const serviceName = serviceTypeNames[app.service_type] || 'Услуга';
+        document.getElementById('serviceName').textContent = serviceName;
 
-        async function loadService() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            if (!id) {
-                showError('Не указан ID заявления');
-                return;
-            }
+        document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
 
-            try {
-                const { data: app, error: appError } = await supabase
-                    .schema('services')
-                    .from('passport')
-                    .select('*')
-                    .eq('id', id)
-                    .eq('user_id', currentUserId)
-                    .single();
+        await loadHistory(id, app.photo_path, app.application_number);
+    } catch (err) {
+        console.error(err);
+        showError('Ошибка загрузки данных');
+    }
+}
 
-                if (appError || !app) {
-                    showError('Заявление не найдено');
-                    return;
-                }
+async function loadHistory(passportId, photoPath, appNumber) {
+    const list = document.getElementById('historyList');
+    const toggleBtn = document.getElementById('toggleHistoryBtn');
+    if (!list) return;
 
-                document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport_status_history')
+        .select('*')
+        .eq('passport_id', passportId)
+        .order('created_at', { ascending: false });
 
-                // Загружаем историю, передавая photo_path и application_number
-                await loadHistory(id, app.photo_path, app.application_number);
-            } catch (err) {
-                console.error(err);
-                showError('Ошибка загрузки данных');
-            }
-        }
+    if (error) {
+        console.error('Ошибка загрузки истории:', error);
+        list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
+        return;
+    }
 
-        async function loadHistory(passportId, photoPath, appNumber) {
-            const list = document.getElementById('historyList');
-            const toggleBtn = document.getElementById('toggleHistoryBtn');
-            if (!list) return;
+    if (!data || data.length === 0) {
+        list.innerHTML = '<p class="no-data">История отсутствует</p>';
+        toggleBtn.style.display = 'none';
+        return;
+    }
 
-            const { data, error } = await supabase
-                .schema('services')
-                .from('passport_status_history')
-                .select('*')
-                .eq('passport_id', passportId)
-                .order('created_at', { ascending: false });
+    let html = '';
+    for (const item of data) {
+        const statusText = statusMap[item.status] || item.status;
+        const files = item.attachments || [];
+        const fileLinks = [];
 
-            if (error) {
-                console.error('Ошибка загрузки истории:', error);
-                list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
-                return;
-            }
-
-            if (!data || data.length === 0) {
-                list.innerHTML = '<p class="no-data">История отсутствует</p>';
-                toggleBtn.style.display = 'none';
-                return;
-            }
-
-            let html = '';
-            for (const item of data) {
-                const statusText = statusMap[item.status] || item.status;
-                const files = item.attachments || [];
-                const fileLinks = [];
-
-                // Добавляем файлы, прикреплённые к этому статусу в истории (дополнительные документы)
-                for (const f of files) {
-                    const url = await getSignedUrl(f);
-                    if (url) {
-                        const fileName = f.split('/').pop() || 'файл';
-                        fileLinks.push(`
-                            <div class="file-item">
-                                <span>📎</span>
-                                <a href="${url}" target="_blank">${fileName}</a>
-                            </div>
-                        `);
-                    }
-                }
-
-                html += `
-                    <div class="status-card">
-                        <div class="status-header">
-                            <span class="status-name">${statusText}</span>
-                            <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+        // Для статуса "Отправлено в ведомство" добавляем statement.pdf и фото
+        if (item.status === 'submitted') {
+            if (photoPath) {
+                const photoUrl = await getSignedUrl(photoPath);
+                if (photoUrl) {
+                    const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                    fileLinks.push(`
+                        <div class="file-item">
+                            <span>📷</span>
+                            <a href="${photoUrl}" target="_blank">${fileName}</a>
                         </div>
-                        <div class="status-comment">${item.comment || ''}</div>
-                        <div class="files-list">
-                            ${fileLinks.join('')}
-                        </div>
+                    `);
+                }
+            }
+            const statementPath = `passport/${appNumber}/statement.pdf`;
+            const statementUrl = await getSignedUrl(statementPath);
+            if (statementUrl) {
+                fileLinks.push(`
+                    <div class="file-item">
+                        <span>📄</span>
+                        <a href="${statementUrl}" target="_blank">statement.pdf</a>
                     </div>
-                `;
-            }
-            list.innerHTML = html;
-
-            // Управление кнопкой показа истории
-            const statusCards = list.querySelectorAll('.status-card');
-            if (statusCards.length > 1) {
-                toggleBtn.style.display = 'inline-block';
-                // Сбрасываем класс show-all (вдруг остался от предыдущего просмотра)
-                list.classList.remove('show-all');
-                toggleBtn.textContent = 'Показать историю';
-            } else {
-                toggleBtn.style.display = 'none';
+                `);
             }
         }
 
-        function showError(msg) {
-            const loading = document.getElementById('loading');
-            if (loading) loading.style.display = 'none';
-            const err = document.getElementById('error');
-            if (err) {
-                err.textContent = msg;
-                err.style.display = 'block';
+        for (const f of files) {
+            const url = await getSignedUrl(f);
+            if (url) {
+                const fileName = f.split('/').pop() || 'файл';
+                fileLinks.push(`
+                    <div class="file-item">
+                        <span>📎</span>
+                        <a href="${url}" target="_blank">${fileName}</a>
+                    </div>
+                `);
             }
-            const content = document.getElementById('content');
-            if (content) content.style.display = 'none';
         }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!await loadUserProfile()) return;
-            await loadService();
-            const loading = document.getElementById('loading');
-            if (loading) loading.style.display = 'none';
-            const content = document.getElementById('content');
-            if (content) content.style.display = 'block';
+        html += `
+            <div class="status-card">
+                <div class="status-header">
+                    <span class="status-name">${statusText}</span>
+                    <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+                </div>
+                <div class="status-comment">${item.comment || ''}</div>
+                <div class="files-list">
+                    ${fileLinks.join('')}
+                </div>
+            </div>
+        `;
+    }
+    list.innerHTML = html;
 
-            // Обработчик кнопки "Показать/Скрыть историю"
-            const toggleBtn = document.getElementById('toggleHistoryBtn');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    const history = document.getElementById('historyList');
-                    if (history) {
-                        history.classList.toggle('show-all');
-                        if (history.classList.contains('show-all')) {
-                            toggleBtn.textContent = 'Скрыть историю';
-                        } else {
-                            toggleBtn.textContent = 'Показать историю';
-                        }
-                    }
-                });
+    const statusCards = list.querySelectorAll('.status-card');
+    if (statusCards.length > 1) {
+        toggleBtn.style.display = 'inline-block';
+        list.classList.remove('show-all');
+        toggleBtn.textContent = 'Показать историю';
+    } else {
+        toggleBtn.style.display = 'none';
+    }
+}
+
+function showError(msg) {
+    const loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'none';
+    const err = document.getElementById('error');
+    if (err) {
+        err.textContent = msg;
+        err.style.display = 'block';
+    }
+    const content = document.getElementById('content');
+    if (content) content.style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!await loadUserProfile()) return;
+    await loadService();
+    const loading = document.getElementById('loading');
+    if (loading) loading.style.display = 'none';
+    const content = document.getElementById('content');
+    if (content) content.style.display = 'block';
+
+    const toggleBtn = document.getElementById('toggleHistoryBtn');
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+            const history = document.getElementById('historyList');
+            if (history) {
+                history.classList.toggle('show-all');
+                toggleBtn.textContent = history.classList.contains('show-all') ? 'Скрыть историю' : 'Показать историю';
             }
         });
+    }
+});
     </script>
 </body>
 </html>
