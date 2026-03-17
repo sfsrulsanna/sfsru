@@ -24,69 +24,119 @@
     <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-
+    <!-- остальные favicons -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .service-container {
-            max-width: 900px;
+            max-width: 700px;
             margin: 2rem auto;
             background: white;
-            border-radius: 12px;
+            border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.1);
             padding: 2rem;
         }
-        .section-title {
-            color: #7b091a;
-            border-bottom: 2px solid #7b091a;
-            padding-bottom: 0.5rem;
-            margin: 2rem 0 1rem;
-        }
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .details-table th {
-            width: 30%;
-            background: #f8f9fa;
-            padding: 10px;
-            text-align: right;
-            font-weight: 600;
-            border: 1px solid #dee2e6;
-        }
-        .details-table td {
-            padding: 10px;
-            border: 1px solid #dee2e6;
-        }
-        .history-item {
-            background: #f8f9fa;
-            padding: 1rem;
-            border-left: 4px solid #7b091a;
-            margin-bottom: 1rem;
-            border-radius: 4px;
-        }
-        .history-item .meta {
-            font-size: 0.9rem;
-            color: #666;
+        .service-title {
+            font-size: 1.2rem;
+            color: #333;
             margin-bottom: 0.5rem;
         }
-        .history-item .status {
+        .service-number {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #7b091a;
+            margin-bottom: 2rem;
+        }
+        .status-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 1px solid #eee;
+        }
+        .status-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .status-name {
             font-weight: 600;
             color: #7b091a;
         }
-        .file-link {
-            display: inline-block;
+        .status-date {
+            color: #666;
+            font-size: 0.9rem;
+        }
+        .status-comment {
+            color: #555;
+            margin-bottom: 1rem;
+        }
+        .files-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .file-item {
             background: #e9ecef;
+            border-radius: 6px;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .file-item a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .file-item a:hover {
+            text-decoration: underline;
+        }
+        .section-title {
+            font-weight: 600;
+            margin: 2rem 0 1rem;
+            color: #333;
+        }
+        .documents-grid {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .document-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .document-row:last-child {
+            border-bottom: none;
+        }
+        .doc-name {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .doc-size {
+            color: #666;
+            font-size: 0.9rem;
+            margin-left: 1rem;
+        }
+        .doc-download {
+            background: #007bff;
+            color: white;
+            border: none;
             padding: 0.3rem 0.8rem;
             border-radius: 4px;
-            text-decoration: none;
-            color: #007bff;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
         }
-        .file-link:hover {
-            text-decoration: underline;
+        .doc-download:hover {
+            background: #0056b3;
         }
         .back-link {
             display: inline-block;
@@ -102,10 +152,13 @@
             padding: 2rem;
             color: #666;
         }
-        #serviceName {
-            font-size: 1.2rem;
-            color: #7b091a;
-            margin-bottom: 1rem;
+        .toggle-history {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-top: 1rem;
         }
     </style>
     <script type="importmap">
@@ -138,29 +191,29 @@
                     <li><a href="../index.html" class="active">Личный кабинет</a></li>
                 </ul>
             </nav>
-            <div class="admin-user">
-                <span id="userEmail"></span>
-                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
         </div>
     </header>
     <div class="menu-overlay"></div>
 
     <main class="main-content">
         <div class="service-container">
-            <h1 class="page-title">Детали услуги</h1>
-            <div id="serviceName"></div>
+            <div class="service-title">Выписка, подтверждающая право на получение набора социальных услуг</div>
+            <div class="service-number" id="appNumber"></div>
+
             <div id="loading" class="loading">Загрузка...</div>
             <div id="error" class="error" style="display: none;"></div>
+
             <div id="content" style="display: none;">
-                <h2 id="appNumber"></h2>
-                <table class="details-table" id="detailsTable"></table>
+                <!-- Документы заявления -->
+                <div class="section-title">Документы</div>
+                <div class="documents-grid" id="filesSection"></div>
 
-                <h3 class="section-title">Файлы</h3>
-                <div id="filesSection"></div>
-
-                <h3 class="section-title">История статусов</h3>
+                <!-- История статусов -->
+                <div class="section-title">История статусов</div>
                 <div id="historyList"></div>
+
+                <!-- Кнопка "Скрыть историю" (пока просто заглушка, можно реализовать позже) -->
+                <button class="toggle-history" id="toggleHistoryBtn">Скрыть историю</button>
 
                 <a href="services.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
             </div>
@@ -172,7 +225,7 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="../../js/mob-menu.js"></script>
+    <script src="../js/mob-menu.js"></script>
     <script type="module">
 	import { supabase } from '../../js/supabase-config.js';
 
@@ -190,6 +243,13 @@ const statusMap = {
 const serviceTypeNames = {
     'passport': 'Получение паспорта гражданина СФСРЮ'
 };
+
+// Форматирование размера файла (примерное)
+function formatFileSize(bytes) {
+    if (!bytes) return '0.1 Мб'; // заглушка, т.к. размер не храним
+    const mb = bytes / (1024 * 1024);
+    return mb.toFixed(1) + ' Мб';
+}
 
 // Получение подписанной ссылки
 async function getSignedUrl(filePath) {
@@ -250,11 +310,12 @@ async function loadService() {
             return;
         }
 
-        document.getElementById('appNumber').textContent = `Заявление № ${app.application_number}`;
-        const serviceName = serviceTypeNames[app.service_type] || 'Услуга';
-        document.getElementById('serviceName').textContent = serviceName;
+        // Устанавливаем название услуги (пока только паспорт)
+        const serviceNameEl = document.querySelector('.service-title');
+        serviceNameEl.textContent = serviceTypeNames[app.service_type] || 'Услуга';
 
-        renderDetails(app);
+        document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
+
         await renderFiles(app.photo_path, app.application_number);
         await loadHistory(id);
     } catch (err) {
@@ -263,31 +324,7 @@ async function loadService() {
     }
 }
 
-// Отображение деталей в таблице
-function renderDetails(app) {
-    const container = document.getElementById('detailsTable');
-    const fields = [
-        ['Номер заявления', app.application_number],
-        ['Статус', statusMap[app.status] || app.status],
-        ['Дата создания', new Date(app.created_at).toLocaleString()],
-        ['Личный код', app.personal_code],
-        ['Причина', app.reason],
-        ['Детали причины', app.reason_details ? JSON.stringify(app.reason_details) : '—'],
-        ['Личные данные', app.personal_data ? JSON.stringify(app.personal_data) : '—'],
-        ['Новые данные', app.new_personal_data ? JSON.stringify(app.new_personal_data) : '—'],
-        ['Телефон', app.phone || '—'],
-        ['Email', app.email || '—'],
-        ['Отделение МВД', app.mvd_id],
-        ['Последнее обновление', new Date(app.updated_at).toLocaleString()]
-    ];
-    let html = '';
-    fields.forEach(([label, value]) => {
-        html += `<tr><th>${escapeHTML(label)}</th><td>${escapeHTML(value)}</td></tr>`;
-    });
-    container.innerHTML = html;
-}
-
-// Отображение файлов (фото и statement.pdf)
+// Отображение файлов (фото и statement.pdf) в верхнем блоке
 async function renderFiles(photoPath, appNumber) {
     const section = document.getElementById('filesSection');
     const fileList = [];
@@ -295,37 +332,54 @@ async function renderFiles(photoPath, appNumber) {
     if (photoPath) {
         const photoUrl = await getSignedUrl(photoPath);
         if (photoUrl) {
-            fileList.push(`<a href="${photoUrl}" target="_blank" class="file-link">📷 Фото заявителя</a>`);
+            fileList.push({
+                name: 'Фото заявителя',
+                url: photoUrl,
+                size: '0.1 Мб' // заглушка
+            });
         }
     }
 
     const statementPath = `passport/${appNumber}/statement.pdf`;
     const statementUrl = await getSignedUrl(statementPath);
     if (statementUrl) {
-        fileList.push(`<a href="${statementUrl}" target="_blank" class="file-link">📄 Заявление (PDF)</a>`);
+        fileList.push({
+            name: 'Заявление (PDF)',
+            url: statementUrl,
+            size: '0.1 Мб'
+        });
     }
 
     if (fileList.length === 0) {
-        section.innerHTML = '<p>Нет доступных файлов</p>';
+        section.innerHTML = '<p class="no-data">Нет доступных файлов</p>';
     } else {
-        section.innerHTML = fileList.join(' ');
+        let html = '';
+        fileList.forEach(file => {
+            html += `
+                <div class="document-row">
+                    <div class="doc-name">
+                        <span>📄 ${file.name}</span>
+                        <span class="doc-size">${file.size}</span>
+                    </div>
+                    <a href="${file.url}" target="_blank" class="doc-download">Скачать</a>
+                </div>
+            `;
+        });
+        section.innerHTML = html;
     }
 }
 
 // Загрузка истории статусов
 async function loadHistory(passportId) {
     const list = document.getElementById('historyList');
-    if (!list) {
-        console.error('Элемент historyList не найден в DOM');
-        return;
-    }
+    if (!list) return;
 
     const { data, error } = await supabase
         .schema('services')
         .from('passport_status_history')
         .select('*')
         .eq('passport_id', passportId)
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false }); // новые сверху
 
     if (error) {
         console.error('Ошибка загрузки истории:', error);
@@ -346,15 +400,24 @@ async function loadHistory(passportId) {
         for (const f of files) {
             const url = await getSignedUrl(f);
             if (url) {
-                fileLinks.push(`<a href="${url}" target="_blank" class="file-link">📎 файл</a>`);
+                fileLinks.push(`
+                    <div class="file-item">
+                        <span>📎</span>
+                        <a href="${url}" target="_blank">файл</a>
+                    </div>
+                `);
             }
         }
         html += `
-            <div class="history-item">
-                <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
-                <div class="status">${statusText}</div>
-                <div>${item.comment || ''}</div>
-                <div>${fileLinks.join(' ')}</div>
+            <div class="status-card">
+                <div class="status-header">
+                    <span class="status-name">${statusText}</span>
+                    <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+                </div>
+                <div class="status-comment">${item.comment || ''}</div>
+                <div class="files-list">
+                    ${fileLinks.join('')}
+                </div>
             </div>
         `;
     }
@@ -373,16 +436,6 @@ function showError(msg) {
     if (content) content.style.display = 'none';
 }
 
-function escapeHTML(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
 // Инициализация
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await loadUserProfile()) return;
@@ -395,6 +448,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = '../login.html';
+    });
+
+    // Обработчик кнопки "Скрыть историю" (можно добавить позже)
+    document.getElementById('toggleHistoryBtn').addEventListener('click', () => {
+        const history = document.getElementById('historyList');
+        history.style.display = history.style.display === 'none' ? 'block' : 'none';
     });
 });
 	</script>
