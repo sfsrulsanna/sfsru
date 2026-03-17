@@ -254,7 +254,6 @@ const statusMap = {
     'cancelled': 'Отменено'
 };
 
-// Маппинг service_type -> название услуги
 const serviceTypeNames = {
     'passport': 'Получение паспорта гражданина СФСРЮ',
     'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ'
@@ -363,11 +362,20 @@ async function loadHistory(passportId, photoPath, appNumber) {
                     `);
                 }
             }
+            // Добавляем statement.pdf, если существует
             const statementPath = `passport/${appNumber}/statement.pdf`;
             const statementUrl = await getSignedUrl(statementPath);
+            if (statementUrl) {
+                fileLinks.push(`
+                    <div class="file-item">
+                        <span>📄</span>
+                        <a href="${statementUrl}" target="_blank">statement.pdf</a>
+                    </div>
+                `);
             }
         }
 
+        // Добавляем остальные прикрепленные файлы
         for (const f of files) {
             const url = await getSignedUrl(f);
             if (url) {
@@ -404,6 +412,7 @@ async function loadHistory(passportId, photoPath, appNumber) {
     } else {
         toggleBtn.style.display = 'none';
     }
+}
 
 function showError(msg) {
     const loading = document.getElementById('loading');
