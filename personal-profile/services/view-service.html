@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр услуги — СФСРЮ</title>
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <!-- остальные favicons -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/index.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .service-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        .back-link {
+            margin-bottom: 1.5rem;
+            display: inline-block;
+            color: #7b091a;
+            text-decoration: none;
+        }
+        .back-link i {
+            margin-right: 0.5rem;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        .details-table th {
+            width: 30%;
+            background: #f8f9fa;
+            padding: 10px;
+            text-align: right;
+            border: 1px solid #dee2e6;
+        }
+        .details-table td {
+            padding: 10px;
+            border: 1px solid #dee2e6;
+        }
+        .files-section {
+            margin: 2rem 0;
+        }
+        .file-link {
+            display: inline-block;
+            margin-right: 1rem;
+            padding: 0.5rem 1rem;
+            background: #e9ecef;
+            border-radius: 4px;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .file-link:hover {
+            background: #dee2e6;
+        }
+        .history-item {
+            background: #f8f9fa;
+            padding: 1rem;
+            border-left: 4px solid #7b091a;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+        .history-item .meta {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+        }
+        .history-item .status {
+            font-weight: 600;
+            color: #7b091a;
+        }
+        .history-item .comment {
+            margin: 0.5rem 0;
+        }
+        .history-item .attachments a {
+            margin-right: 0.5rem;
+        }
+        .loading, .error {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная</a></li>
+                    <li><a href="../../news.html">Новости</a></li>
+                    <li><a href="../../wiki/">Википедия</a></li>
+                    <li><a href="../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../services.html">Услуги</a></li>
+                    <li><a href="../index.html" class="active">Личный кабинет</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="userEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="service-container">
+            <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к услугам</a>
+            <h1 class="page-title">Заявление № <span id="appNumber"></span></h1>
+
+            <div id="loading" class="loading">Загрузка...</div>
+            <div id="error" class="error hidden">Ошибка загрузки</div>
+
+            <div id="appDetails" style="display: none;">
+                <h3>Данные заявления</h3>
+                <table class="details-table" id="detailsTable"></table>
+
+                <h3>Файлы</h3>
+                <div class="files-section" id="filesSection"></div>
+
+                <h3>История статусов</h3>
+                <div id="historySection"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script type="module">
+import { supabase } from '../../js/supabase-config.js';
+
+let currentUserId = null;
+const statusMap = {
+    'submitted': 'Отправлено в ведомство',
+    'processing': 'В работе',
+    'interim': 'Промежуточные результаты',
+    'positive': 'Принято положительное решение',
+    'completed': 'Результат выдан',
+    'rejected': 'Отказано',
+    'cancelled': 'Отменено'
+};
+
+// Получение подписанной ссылки
+async function getSignedUrl(filePath) {
+    if (!filePath) return null;
+    try {
+        const { data, error } = await supabase.storage
+            .from('services-files')
+            .createSignedUrl(filePath, 3600);
+        if (error) throw error;
+        return data.signedUrl;
+    } catch (e) {
+        console.error('Ошибка получения ссылки на файл:', e);
+        return null;
+    }
+}
+
+// Загрузка данных пользователя
+async function loadUserProfile() {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+        window.location.href = '../login.html';
+        return false;
+    }
+    const { data, error } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', session.user.id)
+        .single();
+    if (error) {
+        console.error('Ошибка загрузки профиля:', error);
+        return false;
+    }
+    document.getElementById('userEmail').textContent = data.email || session.user.email;
+    currentUserId = session.user.id;
+    return true;
+}
+
+// Загрузка деталей услуги
+async function loadService() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    if (!id) {
+        showError('Не указан ID заявления');
+        return;
+    }
+
+    try {
+        const { data: app, error: appError } = await supabase
+            .schema('services')
+            .from('passport')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', currentUserId)
+            .single();
+
+        if (appError || !app) {
+            showError('Заявление не найдено');
+            return;
+        }
+
+        document.getElementById('appNumber').textContent = `Заявление № ${app.application_number}`;
+        renderDetails(app);
+        renderFiles(app.photo_path, app.application_number);
+        loadHistory(id);
+    } catch (err) {
+        console.error(err);
+        showError('Ошибка загрузки данных');
+    }
+}
+
+// Отображение деталей в таблице
+function renderDetails(app) {
+    const container = document.getElementById('detailsTable');
+    const fields = [
+        ['Номер заявления', app.application_number],
+        ['Статус', statusMap[app.status] || app.status],
+        ['Дата создания', new Date(app.created_at).toLocaleString()],
+        ['Личный код', app.personal_code],
+        ['Причина', app.reason],
+        ['Детали причины', app.reason_details ? JSON.stringify(app.reason_details) : '—'],
+        ['Личные данные', app.personal_data ? JSON.stringify(app.personal_data) : '—'],
+        ['Новые данные', app.new_personal_data ? JSON.stringify(app.new_personal_data) : '—'],
+        ['Телефон', app.phone || '—'],
+        ['Email', app.email || '—'],
+        ['Отделение МВД', app.mvd_id],
+        ['Последнее обновление', new Date(app.updated_at).toLocaleString()]
+    ];
+    let html = '';
+    fields.forEach(([label, value]) => {
+        html += `<tr><th>${escapeHTML(label)}</th><td>${escapeHTML(value)}</td></tr>`;
+    });
+    container.innerHTML = html;
+}
+
+// Отображение файлов (фото и statement.pdf)
+async function renderFiles(photoPath, appNumber) {
+    const section = document.getElementById('filesSection');
+    const fileList = [];
+
+    if (photoPath) {
+        const photoUrl = await getSignedUrl(photoPath);
+        if (photoUrl) {
+            fileList.push(`<a href="${photoUrl}" target="_blank" class="file-link">📷 Фото заявителя</a>`);
+        }
+    }
+
+    const statementPath = `passport/${appNumber}/statement.pdf`;
+    const statementUrl = await getSignedUrl(statementPath);
+    if (statementUrl) {
+        fileList.push(`<a href="${statementUrl}" target="_blank" class="file-link">📄 Заявление (PDF)</a>`);
+    }
+
+    if (fileList.length === 0) {
+        section.innerHTML = '<p>Нет доступных файлов</p>';
+    } else {
+        section.innerHTML = fileList.join(' ');
+    }
+}
+
+// Загрузка истории статусов
+async function loadHistory(passportId) {
+    const list = document.getElementById('historyList');
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport_status_history')
+        .select('*')
+        .eq('passport_id', passportId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Ошибка загрузки истории:', error);
+        list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = '<p class="no-data">История отсутствует</p>';
+        return;
+    }
+
+    let html = '';
+    for (const item of data) {
+        const statusText = statusMap[item.status] || item.status;
+        const files = item.attachments || [];
+        const fileLinks = [];
+        for (const f of files) {
+            const url = await getSignedUrl(f);
+            if (url) {
+                fileLinks.push(`<a href="${url}" target="_blank" class="file-link">📎 файл</a>`);
+            }
+        }
+        html += `
+            <div class="history-item">
+                <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
+                <div class="status">${statusText}</div>
+                <div>${item.comment || ''}</div>
+                <div>${fileLinks.join(' ')}</div>
+            </div>
+        `;
+    }
+    list.innerHTML = html;
+}
+
+function showError(msg) {
+    document.getElementById('loading').style.display = 'none';
+    const err = document.getElementById('error');
+    err.textContent = msg;
+    err.style.display = 'block';
+}
+
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!await loadUserProfile()) return;
+    await loadService();
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '../login.html';
+    });
+});
+	</script>
+</body>
+</html>

@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои услуги — СФСРЮ</title>
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <!-- остальные favicons -->
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/index.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .services-container {
+            max-width: 1000px;
+            margin: 2rem auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+        }
+        .service-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .service-card:hover {
+            background: #f8f9fa;
+        }
+        .service-info {
+            flex: 1;
+        }
+        .service-number {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #7b091a;
+        }
+        .service-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.3rem;
+        }
+        .service-status {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            margin-left: 1rem;
+        }
+        .status-submitted { background: #cfe2ff; color: #084298; }
+        .status-processing { background: #fff3cd; color: #856404; }
+        .status-interim { background: #d1e7dd; color: #0f5132; }
+        .status-positive { background: #d4edda; color: #155724; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-cancelled { background: #e2e3e5; color: #383d41; }
+        .btn-view {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 0.4rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-view:hover {
+            background: #0056b3;
+        }
+        .loading, .no-data {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная</a></li>
+                    <li><a href="../../news.html">Новости</a></li>
+                    <li><a href="../../wiki/">Википедия</a></li>
+                    <li><a href="../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../services.html">Услуги</a></li>
+                    <li><a href="../index.html" class="active">Личный кабинет</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="userEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="services-container">
+            <h1 class="page-title">Мои услуги</h1>
+            <p class="page-description">Ваши заявления на получение услуг</p>
+
+            <div id="loading" class="loading">Загрузка...</div>
+            <div id="servicesList"></div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script type="module">
+import { supabase } from '../../js/supabase-config.js';
+
+let currentUserId = null;
+
+// Маппинг статусов для отображения
+const statusMap = {
+    'submitted': 'Отправлено в ведомство',
+    'processing': 'В работе',
+    'interim': 'Промежуточные результаты',
+    'positive': 'Принято положительное решение',
+    'completed': 'Результат выдан',
+    'rejected': 'Отказано',
+    'cancelled': 'Отменено'
+};
+
+// Загрузка профиля для получения user_id
+async function loadUserProfile() {
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+        window.location.href = '../login.html';
+        return false;
+    }
+
+    const { data, error } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', session.user.id)
+        .single();
+
+    if (error) {
+        console.error('Ошибка загрузки профиля:', error);
+        return false;
+    }
+
+    document.getElementById('userEmail').textContent = data.email || session.user.email;
+    currentUserId = session.user.id;
+    return true;
+}
+
+// Загрузка списка услуг
+async function loadServices() {
+    const loading = document.getElementById('loading');
+    const list = document.getElementById('servicesList');
+    loading.style.display = 'block';
+
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport')
+        .select('id, application_number, created_at, status')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Ошибка загрузки услуг:', error);
+        list.innerHTML = '<p class="error">Ошибка загрузки данных</p>';
+        loading.style.display = 'none';
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = '<p class="no-data">У вас пока нет заявлений</p>';
+        loading.style.display = 'none';
+        return;
+    }
+
+    list.innerHTML = data.map(item => {
+        const statusClass = `status-${item.status}`;
+        const statusText = statusMap[item.status] || item.status;
+        const date = new Date(item.created_at).toLocaleDateString('ru-RU');
+        return `
+            <a href="service-view.html?id=${item.id}" class="service-card">
+                <div class="service-info">
+                    <span class="service-number">№ ${item.application_number}</span>
+                    <span class="service-status ${statusClass}">${statusText}</span>
+                    <div class="service-date">от ${date}</div>
+                </div>
+                <i class="fas fa-chevron-right"></i>
+            </a>
+        `;
+    }).join('');
+
+    loading.style.display = 'none';
+}
+
+// Выход
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+    await supabase.auth.signOut();
+    window.location.href = '../login.html';
+});
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', async () => {
+    if (!await loadUserProfile()) return;
+    await loadServices();
+});
+	</script>
+</body>
+</html>
