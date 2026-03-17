@@ -887,7 +887,7 @@ function collectEditFormData() {
 // ================== НОВЫЙ КОД: КНОПКИ СТАТУСОВ И МОДАЛЬНОЕ ОКНО ==================
 
 // Функция добавления блока с кнопками статусов внизу модального окна
-function addStatusButtons() {
+function addStatusButton() {
     const modalFooter = document.querySelector('#editModal .modal-footer');
     // Очищаем футер от старых кнопок (оставляем только "Отмена" и "Сохранить")
     modalFooter.innerHTML = `
@@ -895,73 +895,42 @@ function addStatusButtons() {
         <button type="button" class="btn-primary" id="savePassportBtn">Сохранить</button>
     `;
 
-    // Добавляем контейнер для кнопки изменения статуса
-    const statusContainer = document.createElement('div');
-    statusContainer.style.marginBottom = '1rem';
-    statusContainer.style.display = 'flex';
-    statusContainer.style.justifyContent = 'center';
+    // Создаём контейнер для кнопки изменения статуса
+    const buttonContainer = document.createElement('div');
+    buttonContainer.style.marginBottom = '1rem';
+    buttonContainer.style.display = 'flex';
+    buttonContainer.style.justifyContent = 'center';
 
     const changeStatusBtn = document.createElement('button');
     changeStatusBtn.type = 'button';
     changeStatusBtn.className = 'btn btn-warning';
     changeStatusBtn.textContent = 'Изменить статус';
-    changeStatusBtn.addEventListener('click', () => openStatusModal());
+    changeStatusBtn.addEventListener('click', openStatusModal);
 
-    statusContainer.appendChild(changeStatusBtn);
-    modalFooter.insertBefore(statusContainer, modalFooter.firstChild);
+    buttonContainer.appendChild(changeStatusBtn);
+    modalFooter.insertBefore(buttonContainer, modalFooter.firstChild);
 }
 
-// Функция для открытия модального окна изменения статуса
+// Открытие модального окна статуса
 function openStatusModal() {
-    let statusModal = document.getElementById('statusModal');
-    if (!statusModal) {
-        statusModal = document.createElement('div');
-        statusModal.id = 'statusModal';
-        statusModal.className = 'modal-overlay';
-        statusModal.innerHTML = `
-            <div class="modal" style="max-width: 500px;">
-                <div class="modal-header">
-                    <h4>Изменение статуса документа</h4>
-                    <button type="button" class="close-modal" onclick="closeStatusModal()">&times;</button>
-                </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label for="statusSelect">Новый статус</label>
-                        <select id="statusSelect" class="form-input">
-                            <option value="verified">Подтверждено</option>
-                            <option value="oncheck">На проверке</option>
-                            <option value="rejected">Отклонено</option>
-                            <option value="archived">Архивный</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label for="statusComment">Комментарий</label>
-                        <textarea id="statusComment" class="form-input" rows="4" placeholder="Введите комментарий для пользователя..."></textarea>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-secondary" onclick="closeStatusModal()">Отмена</button>
-                    <button type="button" class="btn-primary" id="confirmStatusBtn">Подтвердить</button>
-            </div>
-        `;
-        document.body.appendChild(statusModal);
+    const modal = document.getElementById('statusModal');
+    if (modal) {
+        // Очищаем поля
+        document.getElementById('statusComment').value = '';
+        document.getElementById('statusSelect').selectedIndex = 0;
+        modal.classList.add('active');
+    } else {
+        console.error('Модальное окно статуса не найдено в DOM');
     }
-
-    // Очищаем поле комментария
-    document.getElementById('statusComment').value = '';
-    // Сбрасываем выбор на первый вариант
-    document.getElementById('statusSelect').selectedIndex = 0;
-
-    statusModal.classList.add('active');
 }
 
-// Функция закрытия модалки статуса
+// Закрытие модалки статуса
 window.closeStatusModal = function() {
     const modal = document.getElementById('statusModal');
     if (modal) modal.classList.remove('active');
 };
 
-// Функция подтверждения изменения статуса
+// Подтверждение изменения статуса
 async function confirmStatusChange() {
     const newStatus = document.getElementById('statusSelect').value;
     const comment = document.getElementById('statusComment').value.trim();
@@ -985,7 +954,7 @@ async function confirmStatusChange() {
             return;
         }
 
-        // Обновляем статус
+        // Обновляем статус в documents.passport
         const { error: updateError } = await supabase
             .schema('documents')
             .from('passport')
@@ -994,7 +963,7 @@ async function confirmStatusChange() {
 
         if (updateError) throw updateError;
 
-        // Определяем пользователя
+        // Определяем ID пользователя-владельца
         let targetUserId = passport.user_id;
         if (!targetUserId && passport.personal_code) {
             const { data: userData } = await supabase
@@ -1005,6 +974,7 @@ async function confirmStatusChange() {
             if (userData) targetUserId = userData.id;
         }
 
+        // Создаём уведомление для пользователя
         if (targetUserId) {
             const statusLabels = {
                 'verified': 'Подтверждено',
@@ -1033,8 +1003,7 @@ async function confirmStatusChange() {
 
         closeStatusModal();
         alert('Статус успешно изменён');
-        // Закрываем модалку редактирования или обновляем данные
-        // Можно просто перезагрузить страницу
+        // Обновляем страницу для отображения изменений
         window.location.reload();
     } catch (err) {
         console.error(err);
@@ -1042,7 +1011,7 @@ async function confirmStatusChange() {
     }
 }
 
-// Добавляем обработчик на кнопку подтверждения после её создания
+// Добавляем обработчик на кнопку подтверждения (она уже есть в DOM)
 document.addEventListener('click', (e) => {
     if (e.target.id === 'confirmStatusBtn') {
         confirmStatusChange();
