@@ -904,13 +904,10 @@ function addStatusButtons() {
     statusContainer.style.flexWrap = 'wrap';
 
     const statuses = [
-        { value: 'submitted', label: 'Отправлено в ведомство', class: 'btn-info' },
-        { value: 'processing', label: 'В работе', class: 'btn-primary' },
-        { value: 'interim', label: 'Промежуточные результаты', class: 'btn-warning' },
-        { value: 'positive', label: 'Принято положительное решение', class: 'btn-success' },
-        { value: 'completed', label: 'Результат выдан', class: 'btn-success' },
-        { value: 'rejected', label: 'Отказано', class: 'btn-danger' },
-        { value: 'cancelled', label: 'Отменено', class: 'btn-secondary' }
+        { value: 'verified', label: 'Подтверждено', class: 'btn-success' },
+        { value: 'oncheck', label: 'На проверке', class: 'btn-warning' },
+        { value: 'rejected', label: 'Отклонено', class: 'btn-danger' },
+        { value: 'archived', label: 'Архивный', class: 'btn-secondary' }
     ];
 
     statuses.forEach(s => {
