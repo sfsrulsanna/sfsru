@@ -34,50 +34,69 @@
     margin: 2rem auto;
     background: white;
     border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
     padding: 2rem;
 }
 .service-title {
     font-size: 1.8rem;
-    font-weight: 600;
+    font-weight: 700;
     color: #7b091a;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.5px;
 }
 .service-number {
     font-size: 1rem;
     color: #6c757d;
     margin-bottom: 2rem;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 1rem;
 }
 .status-card {
     background: #f8f9fa;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
-    border: 1px solid #eee;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease;
+}
+.status-card:hover {
+    background: #ffffff;
+    border-color: #ced4da;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
 }
 .status-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: 0.75rem;
     margin-bottom: 1rem;
+}
+.status-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    width: 2rem;
+    text-align: center;
 }
 .status-name {
     font-weight: 600;
     color: #7b091a;
+    flex: 1;
 }
 .status-date {
     color: #666;
     font-size: 0.9rem;
+    white-space: nowrap;
 }
 .status-comment {
     color: #555;
     margin-bottom: 1rem;
+    padding-left: 2.75rem; /* отступ под иконку */
 }
 .files-list {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     margin-top: 0.5rem;
+    padding-left: 2.75rem;
 }
 .file-item {
     background: #e9ecef;
@@ -99,49 +118,21 @@
     font-weight: 600;
     margin: 2rem 0 1rem;
     color: #333;
+    font-size: 1.4rem;
 }
-.documents-grid {
-    background: #f8f9fa;
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 2rem;
-}
-.document-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.5rem 0;
-    border-bottom: 1px solid #dee2e6;
-}
-.document-row:last-child {
-    border-bottom: none;
-}
-.doc-name {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-.doc-download {
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 0.3rem 0.8rem;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    text-decoration: none;
-}
-.doc-download:hover {
-    background: #0056b3;
-}
-/* ===== КНОПКИ ===== */
+/* иконки статусов (цвета как в index) */
+.status-icon .fa-hourglass-half { color: #f0ad4e; }
+.status-icon .fa-check-circle { color: #28a745; }
+.status-icon .fa-times-circle { color: #dc3545; }
+.status-icon .fa-ban { color: #6c757d; }
+
+/* кнопки */
 .action-buttons {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
-    margin-top: 0.5rem; /* отступ от последней карточки */
+    margin-top: 0.5rem;
 }
-
 .toggle-history, .back-link {
     display: inline-block;
     width: 100%;
@@ -154,36 +145,28 @@
     border: none;
     cursor: pointer;
 }
-
 .toggle-history {
     background-color: #e9ecef;
     border: 1px solid #ced4da;
     color: #495057;
 }
-
 .toggle-history:hover {
     background-color: #dee2e6;
 }
-
 .back-link {
     background-color: #6c757d;
     color: white;
     text-decoration: none;
 }
-
 .back-link:hover {
     background-color: #5a6268;
 }
-
 .back-link i {
     margin-right: 0.5rem;
 }
-
-/* скрываем кнопку истории, пока не появятся доп. статусы */
 .toggle-history {
     display: none;
 }
-/* По умолчанию показываем только первый статус */
 #historyList .status-card:not(:first-child) {
     display: none;
 }
@@ -276,6 +259,23 @@ const serviceTypeNames = {
     'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ'
 };
 
+function getStatusIcon(status) {
+    switch (status) {
+        case 'rejected':
+            return '<i class="fas fa-times-circle"></i>';
+        case 'cancelled':
+            return '<i class="fas fa-ban"></i>';
+        case 'interim':
+        case 'positive':
+        case 'completed':
+            return '<i class="fas fa-check-circle"></i>';
+        case 'submitted':
+        case 'processing':
+        default:
+            return '<i class="fas fa-hourglass-half"></i>';
+    }
+}
+
 async function getSignedUrl(filePath) {
     if (!filePath) return null;
     try {
@@ -322,10 +322,8 @@ async function loadService() {
             return;
         }
 
-        // Устанавливаем название услуги на основе service_type
         const serviceName = serviceTypeNames[app.service_type] || 'Услуга';
         document.getElementById('serviceName').textContent = serviceName;
-
         document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
 
         await loadHistory(id, app.photo_path, app.application_number);
@@ -362,10 +360,36 @@ async function loadHistory(passportId, photoPath, appNumber) {
     let html = '';
     for (const item of data) {
         const statusText = statusMap[item.status] || item.status;
+        const iconHtml = getStatusIcon(item.status);
         const files = item.attachments || [];
         const fileLinks = [];
 
-        // Добавляем остальные прикрепленные файлы
+        // Для статуса "Отправлено в ведомство" добавляем фото и заявление
+        if (item.status === 'submitted') {
+            if (photoPath) {
+                const photoUrl = await getSignedUrl(photoPath);
+                if (photoUrl) {
+                    const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                    fileLinks.push(`
+                        <div class="file-item">
+                            <span>📷</span>
+                            <a href="${photoUrl}" target="_blank">${fileName}</a>
+                        </div>
+                    `);
+                }
+            }
+            const statementPath = `passport/${appNumber}/statement.pdf`;
+            const statementUrl = await getSignedUrl(statementPath);
+            if (statementUrl) {
+                fileLinks.push(`
+                    <div class="file-item">
+                        <span>📄</span>
+                        <a href="${statementUrl}" target="_blank">statement.pdf</a>
+                    </div>
+                `);
+            }
+        }
+
         for (const f of files) {
             const url = await getSignedUrl(f);
             if (url) {
@@ -382,6 +406,7 @@ async function loadHistory(passportId, photoPath, appNumber) {
         html += `
             <div class="status-card">
                 <div class="status-header">
+                    <div class="status-icon">${iconHtml}</div>
                     <span class="status-name">${statusText}</span>
                     <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
                 </div>
