@@ -942,7 +942,6 @@ function openStatusModal() {
                 <div class="modal-footer">
                     <button type="button" class="btn-secondary" onclick="closeStatusModal()">Отмена</button>
                     <button type="button" class="btn-primary" id="confirmStatusBtn">Подтвердить</button>
-                </div>
             </div>
         `;
         document.body.appendChild(statusModal);
