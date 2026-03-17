@@ -63,7 +63,6 @@ function renderTable() {
         `;
     }).join('');
 
-    // Обработчики
     document.querySelectorAll('.btn-view').forEach(btn => {
         btn.addEventListener('click', () => viewPassport(btn.dataset.id));
     });
@@ -200,7 +199,6 @@ function renderPassportInModal(data) {
     document.getElementById('passportContent').innerHTML = html;
     document.getElementById('passportContent').style.display = 'block';
 
-    // Дополнительные секции
     let extraHtml = '';
     if (data.residences && data.residences.length) {
         extraHtml += `
@@ -283,7 +281,6 @@ function renderPassportInModal(data) {
     document.getElementById('extraSections').innerHTML = extraHtml;
     document.getElementById('extraSections').style.display = extraHtml ? 'block' : 'none';
 
-    // QR и штрихкод
     const personalCode = data.personal_code || '';
     const qrContainer = document.getElementById('passportQrCode');
     if (qrContainer && personalCode) {
@@ -310,7 +307,6 @@ function renderPassportInModal(data) {
         } catch (e) { console.warn('Barcode error', e); }
     }
 
-    // Загрузка фото
     const avatarImg = document.getElementById('passportAvatar');
     if (personalCode) {
         getSignedUrl(personalCode).then(url => {
@@ -376,7 +372,7 @@ async function editPassport(id) {
     renderEditForm(data);
 }
 
-// Рендер формы редактирования с полными данными
+// Рендер формы редактирования
 function renderEditForm(data) {
     const formData = {
         id: data.id || null,
@@ -456,7 +452,6 @@ function renderEditForm(data) {
                 <label>Личный код</label>
                 <input type="text" id="personal_code" class="form-input" value="${escapeHTML(formData.personal_code)}">
             </div>
-            <!-- Убираем выпадающий список статуса, он будет изменяться отдельными кнопками -->
         </div>
 
         <div class="form-section">
@@ -503,22 +498,22 @@ function renderEditForm(data) {
 
     document.getElementById('editModalBody').innerHTML = html;
 
-    // Заполняем динамические секции
     renderResidencesSection(formData.residences);
     renderMaritalSection(formData.marital_statuses);
     renderPrevPassportsSection(formData.previous_passports);
     renderPrevForeignSection(formData.previous_foreign_passports);
     renderPrevIdCardsSection(formData.previous_id_cards);
 
-    // Добавляем обработчики для кнопок добавления
-    document.getElementById('addResidenceBtn').addEventListener('click', () => addResidenceBlock());
-    document.getElementById('addMaritalBtn').addEventListener('click', () => addMaritalBlock());
-    document.getElementById('addPrevPassportBtn').addEventListener('click', () => addPrevPassportBlock());
-    document.getElementById('addPrevForeignBtn').addEventListener('click', () => addPrevForeignBlock());
-    document.getElementById('addPrevIdCardBtn').addEventListener('click', () => addPrevIdCardBlock());
+    document.getElementById('addResidenceBtn').addEventListener('click', addResidenceBlock);
+    document.getElementById('addMaritalBtn').addEventListener('click', addMaritalBlock);
+    document.getElementById('addPrevPassportBtn').addEventListener('click', addPrevPassportBlock);
+    document.getElementById('addPrevForeignBtn').addEventListener('click', addPrevForeignBlock);
+    document.getElementById('addPrevIdCardBtn').addEventListener('click', addPrevIdCardBlock);
+
+    addStatusButton(); // Добавляем кнопку "Изменить статус" в футер
 }
 
-// --- Функции рендера секций (те же) ---
+// --- Функции рендера секций ---
 function renderResidencesSection(items) {
     const container = document.getElementById('residencesContainer');
     container.innerHTML = '';
@@ -666,7 +661,6 @@ function renderPrevIdCardsSection(items) {
     attachRemoveHandlers('prevIdCards');
 }
 
-// Прикрепление обработчиков удаления
 function attachRemoveHandlers(section) {
     document.querySelectorAll(`.btn-remove[data-section="${section}"]`).forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -676,7 +670,7 @@ function attachRemoveHandlers(section) {
     });
 }
 
-// --- Функции добавления новых блоков (те же) ---
+// --- Функции добавления новых блоков ---
 function addResidenceBlock() {
     const container = document.getElementById('residencesContainer');
     const block = document.createElement('div');
@@ -833,7 +827,6 @@ function collectEditFormData() {
         previous_id_cards: []
     };
 
-    // Сбор мест регистрации
     document.querySelectorAll('#residencesContainer .record-block').forEach(block => {
         data.residences.push({
             address: block.querySelector('.residence-address')?.value.trim() || '',
@@ -843,7 +836,6 @@ function collectEditFormData() {
         });
     });
 
-    // Сбор семейного положения
     document.querySelectorAll('#maritalContainer .record-block').forEach(block => {
         data.marital_statuses.push({
             status: block.querySelector('.marital-status')?.value || '',
@@ -853,7 +845,6 @@ function collectEditFormData() {
         });
     });
 
-    // Сбор ранее выданных паспортов
     document.querySelectorAll('#prevPassportsContainer .record-block').forEach(block => {
         data.previous_passports.push({
             seriesNumber: block.querySelector('.passport-series')?.value.trim() || '',
@@ -863,7 +854,6 @@ function collectEditFormData() {
         });
     });
 
-    // Сбор ранее выданных загранпаспортов
     document.querySelectorAll('#prevForeignContainer .record-block').forEach(block => {
         data.previous_foreign_passports.push({
             seriesNumber: block.querySelector('.foreign-series')?.value.trim() || '',
@@ -872,7 +862,6 @@ function collectEditFormData() {
         });
     });
 
-    // Сбор ранее выданных ID-карт
     document.querySelectorAll('#prevIdCardsContainer .record-block').forEach(block => {
         data.previous_id_cards.push({
             seriesNumber: block.querySelector('.idcard-series')?.value.trim() || '',
@@ -884,18 +873,18 @@ function collectEditFormData() {
     return data;
 }
 
-// ================== НОВЫЙ КОД: КНОПКИ СТАТУСОВ И МОДАЛЬНОЕ ОКНО ==================
+// ================== КНОПКА ИЗМЕНЕНИЯ СТАТУСА ==================
 
-// Функция добавления блока с кнопками статусов внизу модального окна
+// Добавляем кнопку "Изменить статус" в футер модального окна
 function addStatusButton() {
     const modalFooter = document.querySelector('#editModal .modal-footer');
-    // Очищаем футер от старых кнопок (оставляем только "Отмена" и "Сохранить")
+    // Очищаем футер (оставляем только наши будущие кнопки)
     modalFooter.innerHTML = `
         <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
         <button type="button" class="btn-primary" id="savePassportBtn">Сохранить</button>
     `;
 
-    // Создаём контейнер для кнопки изменения статуса
+    // Добавляем контейнер для кнопки изменения статуса перед кнопками
     const buttonContainer = document.createElement('div');
     buttonContainer.style.marginBottom = '1rem';
     buttonContainer.style.display = 'flex';
@@ -915,12 +904,9 @@ function addStatusButton() {
 function openStatusModal() {
     const modal = document.getElementById('statusModal');
     if (modal) {
-        // Очищаем поля
         document.getElementById('statusComment').value = '';
         document.getElementById('statusSelect').selectedIndex = 0;
         modal.classList.add('active');
-    } else {
-        console.error('Модальное окно статуса не найдено в DOM');
     }
 }
 
@@ -954,7 +940,6 @@ async function confirmStatusChange() {
             return;
         }
 
-        // Обновляем статус в documents.passport
         const { error: updateError } = await supabase
             .schema('documents')
             .from('passport')
@@ -963,7 +948,6 @@ async function confirmStatusChange() {
 
         if (updateError) throw updateError;
 
-        // Определяем ID пользователя-владельца
         let targetUserId = passport.user_id;
         if (!targetUserId && passport.personal_code) {
             const { data: userData } = await supabase
@@ -974,7 +958,6 @@ async function confirmStatusChange() {
             if (userData) targetUserId = userData.id;
         }
 
-        // Создаём уведомление для пользователя
         if (targetUserId) {
             const statusLabels = {
                 'verified': 'Подтверждено',
@@ -1003,7 +986,6 @@ async function confirmStatusChange() {
 
         closeStatusModal();
         alert('Статус успешно изменён');
-        // Обновляем страницу для отображения изменений
         window.location.reload();
     } catch (err) {
         console.error(err);
@@ -1011,16 +993,15 @@ async function confirmStatusChange() {
     }
 }
 
-// Добавляем обработчик на кнопку подтверждения (она уже есть в DOM)
+// Обработчик кнопки подтверждения
 document.addEventListener('click', (e) => {
     if (e.target.id === 'confirmStatusBtn') {
         confirmStatusChange();
     }
 });
 
-// ================== КОНЕЦ НОВОГО КОДА ==================
+// ================== ОБЫЧНОЕ СОХРАНЕНИЕ ==================
 
-// Обычное сохранение паспорта (без изменения статуса)
 document.getElementById('savePassportBtn').addEventListener('click', async () => {
     const formData = collectEditFormData();
 
@@ -1031,7 +1012,7 @@ document.getElementById('savePassportBtn').addEventListener('click', async () =>
 
     const record = {
         ...formData,
-        status: formData.status || 'oncheck', // сохраняем текущий статус из формы, если не меняли
+        status: formData.status || 'oncheck',
         updated_at: new Date().toISOString()
     };
 
@@ -1085,13 +1066,7 @@ function getStatusLabel(status) {
         'verified': 'Подтверждено',
         'oncheck': 'На проверке',
         'rejected': 'Отклонено',
-        'archived': 'Архивный',
-        'submitted': 'Отправлено в ведомство',
-        'processing': 'В работе',
-        'interim': 'Промежуточные результаты',
-        'positive': 'Принято положительное решение',
-        'completed': 'Результат выдан',
-        'cancelled': 'Отменено'
+        'archived': 'Архивный'
     };
     return labels[status] || status;
 }
@@ -1105,14 +1080,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!await requireAdmin()) return;
 
     await loadPassports();
-
-    // Переопределяем renderEditForm, чтобы после рендера добавить кнопки статусов
-    // Можно просто вызвать addStatusButtons после рендера
-    const originalRenderEditForm = renderEditForm;
-    renderEditForm = function(data) {
-        originalRenderEditForm(data);
-        addStatusButtons();
-    };
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
