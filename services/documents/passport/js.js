@@ -120,19 +120,17 @@ function renderMvdList() {
 }
 
 function updateSteps() {
-    // Обновление индикаторов шагов (если используются)
+    // Можно реализовать индикаторы шагов
 }
 
-// Определение следующего шага в зависимости от текущего и причины
 function getNextStep(step) {
     switch (step) {
         case 1: return 2;
         case 2: return 3;
         case 3:
-            if (isLostReason) return 3; // нельзя перейти дальше
+            if (isLostReason) return 3;
             return 4;
         case 4:
-            // После профиля: если причина требует новых данных, то шаг 5, иначе если причина name_changed -> шаг 6, иначе шаг 7
             if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
                 return 5;
             } else if (formData.reason === 'name_changed') {
@@ -141,7 +139,6 @@ function getNextStep(step) {
                 return 7;
             }
         case 5:
-            // После новых данных: если причина name_changed, то шаг 6, иначе шаг 7
             if (formData.reason === 'name_changed') {
                 return 6;
             } else {
@@ -161,18 +158,14 @@ function getPrevStep(step) {
         case 2: return 1;
         case 3: return 2;
         case 4: return 3;
-        case 5:
-            // С шага 5 назад: на шаг 4, независимо от причины
-            return 4;
+        case 5: return 4;
         case 6:
-            // С шага 6: если были новые данные, то на шаг 5, иначе на шаг 4
             if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
                 return 5;
             } else {
                 return 4;
             }
         case 7:
-            // С шага 7: если был шаг 6, то на шаг 6, иначе если был шаг 5, то на шаг 5, иначе на шаг 4
             if (formData.reason === 'name_changed') {
                 return 6;
             } else if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
@@ -217,7 +210,6 @@ function goToStep(step) {
     }
 
     if (step === 5) {
-        // Заполняем поля новыми данными, если они уже были введены
         document.getElementById('newSurname').value = formData.newData.surname || '';
         document.getElementById('newName').value = formData.newData.name || '';
         document.getElementById('newPatronymic').value = formData.newData.patronymic || '';
@@ -226,7 +218,6 @@ function goToStep(step) {
     }
 
     if (step === 6) {
-        // Заполняем поля свидетельства
         if (formData.reasonDetails) {
             document.getElementById('certificateType').value = formData.reasonDetails.type || 'marriage';
             document.getElementById('certificateNumber').value = formData.reasonDetails.number || '';
@@ -241,11 +232,9 @@ function goToStep(step) {
     }
 
     if (step === 8) {
-        // При переходе на шаг фото, проверяем, загружено ли уже фото
         const step8Next = document.getElementById('step8NextBtn');
         step8Next.disabled = !photoPath;
         if (photoPath) {
-            // Можно показать сообщение, что фото загружено
             document.getElementById('fileList').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> Фото загружено';
         }
     }
@@ -275,7 +264,15 @@ async function validateStep(step) {
             break;
         }
         case 5: {
-            // Валидация новых данных не обязательна, но можно проверить, что хоть что-то введено
+            const surname = document.getElementById('newSurname').value.trim();
+            const name = document.getElementById('newName').value.trim();
+            const patronymic = document.getElementById('newPatronymic').value.trim();
+            const birthDate = document.getElementById('newBirthDate').value;
+            const birthPlace = document.getElementById('newBirthPlace').value.trim();
+            if (!surname && !name && !patronymic && !birthDate && !birthPlace) {
+                showError('Заполните хотя бы одно поле новых данных. Если данные не изменились, укажите текущие значения.');
+                return false;
+            }
             break;
         }
         case 6: {
@@ -362,7 +359,6 @@ async function uploadPhoto(file) {
     progressBar.style.width = '100%';
     fileList.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> ' + file.name;
 
-    // Показываем предпросмотр
     const reader = new FileReader();
     reader.onload = (e) => {
         document.getElementById('previewImg').src = e.target.result;
@@ -386,7 +382,6 @@ function renderProfileData() {
 }
 
 function prepareSummary() {
-    // Собираем новые данные из полей шага 5
     formData.newData = {
         surname: document.getElementById('newSurname').value,
         name: document.getElementById('newName').value,
@@ -425,7 +420,6 @@ function prepareSummary() {
     document.getElementById('summary').innerHTML = html;
 }
 
-// ========== Генерация PDF ==========
 async function generatePDF() {
     const doc = new jsPDF();
     
@@ -457,16 +451,14 @@ async function generatePDF() {
         data.push(['Данные свидетельства', `${formData.reasonDetails.type}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}`]);
     }
 
-    if (!document.getElementById('newDataFields').classList.contains('hidden')) {
-        const newSurname = document.getElementById('newSurname').value;
-        const newName = document.getElementById('newName').value;
-        const newPatr = document.getElementById('newPatronymic').value;
-        const newBD = document.getElementById('newBirthDate').value;
-        const newBP = document.getElementById('newBirthPlace').value;
+    if (Object.values(formData.newData).some(v => v)) {
         let newDataStr = '';
-        if (newSurname || newName || newPatr) newDataStr += `ФИО: ${newSurname} ${newName} ${newPatr}\n`;
-        if (newBD) newDataStr += `Дата рождения: ${new Date(newBD).toLocaleDateString('ru-RU')}\n`;
-        if (newBP) newDataStr += `Место рождения: ${newBP}`;
+        if (formData.newData.surname || formData.newData.name || formData.newData.patronymic) 
+            newDataStr += `ФИО: ${formData.newData.surname} ${formData.newData.name} ${formData.newData.patronymic}\n`;
+        if (formData.newData.birth_date) 
+            newDataStr += `Дата рождения: ${new Date(formData.newData.birth_date).toLocaleDateString('ru-RU')}\n`;
+        if (formData.newData.birth_place) 
+            newDataStr += `Место рождения: ${formData.newData.birth_place}`;
         if (newDataStr) data.push(['Новые данные', newDataStr]);
     }
 
@@ -475,7 +467,7 @@ async function generatePDF() {
         head: [data[0]],
         body: data.slice(1),
         theme: 'grid',
-        styles: { fontSize: 10, font: 'PT Sans' },
+        styles: { fontSize: 10, font: 'helvetica' }, // замените на 'PT Sans' если подключили
         headStyles: { fillColor: [123, 9, 26] }
     });
 
@@ -579,7 +571,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         showError('Не удалось загрузить список отделений МВД');
     }
 
-    // Drag & drop для фото
+    // Drag & drop и авто-загрузка
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('photoUpload');
     if (dropZone) {
@@ -597,28 +589,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             const files = e.dataTransfer.files;
             if (files.length) {
                 fileInput.files = files;
-                // Активируем кнопку загрузки
-                document.getElementById('uploadPhotoBtn').disabled = false;
+                const event = new Event('change', { bubbles: true });
+                fileInput.dispatchEvent(event);
             }
         });
     }
 
-    fileInput.addEventListener('change', () => {
-        document.getElementById('uploadPhotoBtn').disabled = !fileInput.files.length;
-    });
-
-    // Кнопка загрузки фото
-    document.getElementById('uploadPhotoBtn').addEventListener('click', async () => {
-        if (!fileInput.files.length) {
-            showError('Выберите файл');
-            return;
-        }
-        const btn = document.getElementById('uploadPhotoBtn');
-        btn.disabled = true;
+    // Автозагрузка при выборе файла
+    fileInput.addEventListener('change', async () => {
+        if (!fileInput.files.length) return;
+        const step8Next = document.getElementById('step8NextBtn');
+        step8Next.disabled = true;
         const success = await uploadPhoto(fileInput.files[0]);
-        btn.disabled = false;
         if (success) {
-            document.getElementById('step8NextBtn').disabled = false;
+            step8Next.disabled = false;
         }
     });
 
