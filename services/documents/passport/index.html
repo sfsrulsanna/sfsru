@@ -423,6 +423,22 @@
 .step-content[data-step="1"] .plain-list li {
     margin-bottom: 0.5rem; /* нормальные отступы между пунктами списка */
 }
+/* Специальные отступы для третьего шага */
+.step-content[data-step="3"] > h2 {
+    margin-bottom: 1.5rem;
+}
+.step-content[data-step="3"] > ul {
+    margin-bottom: 1.5rem;
+}
+.step-content[data-step="3"] > p {
+    margin-bottom: 1.5rem;
+}
+.step-content[data-step="3"] .plain-list li {
+    margin-bottom: 0.5rem; /* нормальный отступ между пунктами списка */
+}
+.step-content[data-step="3"] .alert {
+    margin-bottom: 1.5rem; /* для блока сообщения об утере */
+}
     </style>
     <script type="importmap">
         {
@@ -480,7 +496,8 @@
                     <h2>Получение паспорта</h2>
                     <p>Услуга поможет оформить паспорт, если:</p>
                     <ul class="plain-list">
-                        <li>исполнилось 14, 20 или 45 лет</li>
+						<li>первичное получение паспорта в 14 лет</li>
+						<li>истек срок действия паспорта (20 или 45 лет)</li>
                         <li>изменились фамилия, имя или отчество</li>
                         <li>паспорт стал непригодным</li>
                         <li>изменилась внешность</li>
@@ -498,8 +515,9 @@
                 <div class="step-content hidden" data-step="2">
                     <h2>Выберите причину оформления</h2>
                     <div class="radio-group">
-                        <label><input type="radio" name="reason" value="14_20_45"> Исполнилось 14, 20 или 45 лет</label>
-                        <label><input type="radio" name="reason" value="no_space"> Закончилось место для штампов</label>
+						<label><input type="radio" name="reason" value="first_14"> Первичное получение в 14 лет</label>
+						<label><input type="radio" name="reason" value="expired"> Срок действия паспорта истёк</label>
+						<label><input type="radio" name="reason" value="no_space"> Закончилось место для штампов</label>
                         <label><input type="radio" name="reason" value="name_changed"> Изменилось ФИО, дата или место рождения</label>
                         <label><input type="radio" name="reason" value="lost"> Паспорт утерян или украден</label>
                         <label><input type="radio" name="reason" value="damaged"> Паспорт стал непригодным к использованию</label>
@@ -526,11 +544,11 @@
                         <p><strong>Стоимость:</strong> <span id="priceDisplay">300</span> ₽</p>
                         <p><small>Пошлину можно будет оплатить после проверки заявления в МВД</small></p>
                     </div>
-                    <div id="lostMessage" class="alert alert-danger hidden">
-                        <i class="fas fa-times-circle"></i>
-                        <h3>Онлайн-подача недоступна</h3>
-                        <p>Для оформления паспорта по причине утери или кражи необходимо лично обратиться в отделение МВД.</p>
-                    </div>
+<div id="lostMessage" class="blocking-warning hidden">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h2>Онлайн-подача недоступна</h2>
+    <p>Для оформления паспорта по причине утери или кражи необходимо лично обратиться в отделение МВД.</p>
+</div>
                     <div class="navigation">
                         <button type="button" class="btn btn-secondary prev-step">Назад</button>
                         <button type="button" class="btn btn-primary next-step" id="step3NextBtn">Далее</button>

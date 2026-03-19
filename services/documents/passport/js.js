@@ -190,20 +190,34 @@ function goToStep(step) {
     currentStep = step;
     updateSteps();
 
-    if (step === 3) {
-        const normalContent = document.getElementById('step3NormalContent');
-        const lostBlock = document.getElementById('lostMessage');
-        const nextBtn = document.getElementById('step3NextBtn');
-        if (isLostReason) {
-            normalContent.classList.add('hidden');
-            lostBlock.classList.remove('hidden');
-            nextBtn.disabled = true;
-        } else {
-            normalContent.classList.remove('hidden');
-            lostBlock.classList.add('hidden');
-            nextBtn.disabled = false;
-        }
+if (step === 3) {
+    const normalContent = document.getElementById('step3NormalContent');
+    const lostBlock = document.getElementById('lostMessage');
+    const nextBtn = document.getElementById('step3NextBtn');
+    if (isLostReason) {
+        normalContent.classList.add('hidden');
+        lostBlock.classList.remove('hidden');
+        nextBtn.disabled = true;
+    } else {
+        normalContent.classList.remove('hidden');
+        lostBlock.classList.add('hidden');
+        nextBtn.disabled = false;
     }
+    
+    // Установка цены в зависимости от причины
+    let price = 300;
+    if (formData.reason === 'lost' || formData.reason === 'damaged') {
+        price = 1500;
+    } else if (formData.reason === 'citizenship') {
+        price = 0;
+    }
+    const priceSpan = document.getElementById('priceDisplay');
+    if (price === 0) {
+        priceSpan.textContent = 'Бесплатно';
+    } else {
+        priceSpan.textContent = price + ' ₽';
+    }
+}
 
     if (step === 4) {
         renderProfileData();
@@ -628,10 +642,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (await validateStep(currentStep)) {
                 if (currentStep === 3 && isLostReason) return;
                 
-                if (currentStep === 3) {
-                    const price = (formData.reason === 'lost' || formData.reason === 'damaged') ? 1500 : 300;
-                    document.getElementById('priceDisplay').textContent = price;
-                }
+if (currentStep === 3) {
+    let price = 300;
+    if (formData.reason === 'lost' || formData.reason === 'damaged') {
+        price = 1500;
+    } else if (formData.reason === 'citizenship') {
+        price = 0;
+    }
+    const priceSpan = document.getElementById('priceDisplay');
+    if (price === 0) {
+        priceSpan.textContent = 'Бесплатно';
+    } else {
+        priceSpan.textContent = price + ' ₽';
+    }
+}
                 
                 const next = getNextStep(currentStep);
                 goToStep(next);
