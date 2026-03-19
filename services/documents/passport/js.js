@@ -128,17 +128,23 @@ function getNextStep(step) {
         case 1: return 2;
         case 2: return 3;
         case 3:
-            if (isLostReason) return 3;
+            if (isLostReason) return 3; // нельзя перейти дальше
             return 4;
         case 4:
+            // После профиля: если причина требует новых данных, то шаг 5
             if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
                 return 5;
-            } else if (formData.reason === 'name_changed') {
+            }
+            // Если причина требует свидетельства (first_14), то шаг 6
+            else if (formData.reason === 'first_14') {
                 return 6;
-            } else {
+            }
+            // Иначе сразу на контакты (шаг 7)
+            else {
                 return 7;
             }
         case 5:
+            // После новых данных: если причина name_changed, то нужен шаг 6, иначе сразу на контакты
             if (formData.reason === 'name_changed') {
                 return 6;
             } else {
@@ -160,13 +166,15 @@ function getPrevStep(step) {
         case 4: return 3;
         case 5: return 4;
         case 6:
+            // С шага 6 назад: если были новые данные (name_changed, appearance, error), то на шаг 5, иначе на шаг 4
             if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
                 return 5;
             } else {
                 return 4;
             }
         case 7:
-            if (formData.reason === 'name_changed') {
+            // С шага 7: если причина требовала свидетельства, то на шаг 6, если новых данных, то на шаг 5, иначе на шаг 4
+            if (formData.reason === 'name_changed' || formData.reason === 'first_14') {
                 return 6;
             } else if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
                 return 5;
@@ -231,14 +239,40 @@ if (step === 3) {
         document.getElementById('newBirthPlace').value = formData.newData.birth_place || '';
     }
 
-    if (step === 6) {
-        if (formData.reasonDetails) {
+if (step === 6) {
+    // Управление отображением блоков в зависимости от причины
+    const birthStatic = document.getElementById('birthCertificateStatic');
+    const typeSelector = document.getElementById('certificateTypeSelector');
+    
+    if (formData.reason === 'first_14') {
+        // Для первичного получения – показываем статику, скрываем селект
+        birthStatic.classList.remove('hidden');
+        typeSelector.classList.add('hidden');
+        // Заголовок можно оставить общим или изменить
+    } else {
+        // Для name_changed – показываем селект, скрываем статику
+        birthStatic.classList.add('hidden');
+        typeSelector.classList.remove('hidden');
+    }
+
+    // Заполняем поля, если уже были введены
+    if (formData.reasonDetails) {
+        document.getElementById('certificateNumber').value = formData.reasonDetails.number || '';
+        document.getElementById('certificateDate').value = formData.reasonDetails.date || '';
+        document.getElementById('certificateIssuedBy').value = formData.reasonDetails.issuedBy || '';
+        if (formData.reason === 'name_changed') {
             document.getElementById('certificateType').value = formData.reasonDetails.type || 'marriage';
-            document.getElementById('certificateNumber').value = formData.reasonDetails.number || '';
-            document.getElementById('certificateDate').value = formData.reasonDetails.date || '';
-            document.getElementById('certificateIssuedBy').value = formData.reasonDetails.issuedBy || '';
+        }
+    } else {
+        // Очистка полей при первом входе
+        document.getElementById('certificateNumber').value = '';
+        document.getElementById('certificateDate').value = '';
+        document.getElementById('certificateIssuedBy').value = '';
+        if (formData.reason === 'name_changed') {
+            document.getElementById('certificateType').value = 'marriage';
         }
     }
+}
 
     if (step === 7) {
         document.getElementById('phone').value = formData.phone;
@@ -289,24 +323,34 @@ async function validateStep(step) {
             }
             break;
         }
-        case 6: {
-            if (formData.reason === 'name_changed') {
-                const certNumber = document.getElementById('certificateNumber').value.trim();
-                const certDate = document.getElementById('certificateDate').value;
-                const certIssued = document.getElementById('certificateIssuedBy').value.trim();
-                if (!certNumber || !certDate || !certIssued) {
-                    showError('Заполните все поля свидетельства');
-                    return false;
-                }
-                formData.reasonDetails = {
-                    type: document.getElementById('certificateType').value,
-                    number: certNumber,
-                    date: certDate,
-                    issuedBy: certIssued
-                };
-            }
-            break;
-        }
+case 6: {
+    const certNumber = document.getElementById('certificateNumber').value.trim();
+    const certDate = document.getElementById('certificateDate').value;
+    const certIssued = document.getElementById('certificateIssuedBy').value.trim();
+    
+    if (!certNumber || !certDate || !certIssued) {
+        showError('Заполните все поля свидетельства');
+        return false;
+    }
+    
+    // Сохраняем данные в зависимости от причины
+    if (formData.reason === 'first_14') {
+        formData.reasonDetails = {
+            type: 'birth_certificate',
+            number: certNumber,
+            date: certDate,
+            issuedBy: certIssued
+        };
+    } else if (formData.reason === 'name_changed') {
+        formData.reasonDetails = {
+            type: document.getElementById('certificateType').value,
+            number: certNumber,
+            date: certDate,
+            issuedBy: certIssued
+        };
+    }
+    break;
+}
         case 7: {
             const phone = document.getElementById('phone').value.trim();
             const email = document.getElementById('email').value.trim();
@@ -461,9 +505,21 @@ async function generatePDF() {
         ['Отделение МВД', mvdList.find(m => m.id === selectedMvdId)?.name || '—'],
     ];
 
-    if (formData.reasonDetails) {
-        data.push(['Данные свидетельства', `${formData.reasonDetails.type}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}`]);
+	if (formData.reasonDetails) {
+    let certTypeText = '';
+    if (formData.reasonDetails.type === 'birth_certificate') {
+        certTypeText = 'Свидетельство о рождении';
+    } else if (formData.reasonDetails.type === 'marriage') {
+        certTypeText = 'Свидетельство о браке';
+    } else if (formData.reasonDetails.type === 'divorce') {
+        certTypeText = 'Свидетельство о разводе';
+    } else if (formData.reasonDetails.type === 'name_change') {
+        certTypeText = 'Свидетельство о перемене имени';
+    } else {
+        certTypeText = formData.reasonDetails.type;
     }
+    html += `<tr><th>Данные свидетельства</th><td>${certTypeText}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}</td></tr>`;
+}
 
     if (Object.values(formData.newData).some(v => v)) {
         let newDataStr = '';

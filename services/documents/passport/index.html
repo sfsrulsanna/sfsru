@@ -249,7 +249,7 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            max-width: 300px;
+            max-width: 250px;
         }
         .photo-preview img {
             width: 100%;
@@ -497,7 +497,7 @@
                     <p>Услуга поможет оформить паспорт, если:</p>
                     <ul class="plain-list">
 						<li>первичное получение паспорта в 14 лет</li>
-						<li>истек срок действия паспорта (20 или 45 лет)</li>
+						<li>истек срок действия паспорта</li>
                         <li>изменились фамилия, имя или отчество</li>
                         <li>паспорт стал непригодным</li>
                         <li>изменилась внешность</li>
@@ -541,7 +541,7 @@
                             <li>ФИО родителей, как они указаны в вашем свидетельстве о рождении</li>
                         </ul>
                         <p><strong>Срок оказания услуги:</strong> 5 рабочих дней</p>
-                        <p><strong>Стоимость:</strong> <span id="priceDisplay">300</span> ₽</p>
+                        <p><strong>Стоимость:</strong> <span id="priceDisplay">300</span></p>
                         <p><small>Пошлину можно будет оплатить после проверки заявления в МВД</small></p>
                     </div>
 <div id="lostMessage" class="blocking-warning hidden">
@@ -597,34 +597,46 @@
     </div>
 </div>
 
-                <!-- Шаг 6: Данные свидетельства (только для name_changed) -->
-                <div class="step-content hidden" data-step="6">
-                    <h2>Данные свидетельства</h2>
-                    <div class="form-group">
-                        <label>Тип свидетельства</label>
-                        <select class="form-control" id="certificateType">
-                            <option value="marriage">Свидетельство о браке</option>
-                            <option value="divorce">Свидетельство о разводе</option>
-                            <option value="name_change">Свидетельство о перемене имени</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Серия и номер свидетельства</label>
-                        <input type="text" class="form-control" id="certificateNumber">
-                    </div>
-                    <div class="form-group">
-                        <label>Дата выдачи</label>
-                        <input type="date" class="form-control" id="certificateDate">
-                    </div>
-                    <div class="form-group">
-                        <label>Кем выдано</label>
-                        <input type="text" class="form-control" id="certificateIssuedBy">
-                    </div>
-                    <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
-                    </div>
-                </div>
+<!-- Шаг 6: Данные свидетельства -->
+<div class="step-content hidden" data-step="6">
+    <h2>Данные свидетельства</h2>
+    
+    <!-- Блок для first_14 (статичный текст) -->
+    <div id="birthCertificateStatic" class="hidden">
+        <p><strong>Тип свидетельства:</strong> Свидетельство о рождении</p>
+    </div>
+    
+    <!-- Блок для name_changed (выбор типа) -->
+    <div id="certificateTypeSelector">
+        <div class="form-group">
+            <label>Тип свидетельства</label>
+            <select class="form-control" id="certificateType">
+                <option value="marriage">Свидетельство о браке</option>
+                <option value="divorce">Свидетельство о разводе</option>
+                <option value="name_change">Свидетельство о перемене имени</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Общие поля для всех свидетельств -->
+    <div class="form-group">
+        <label>Серия и номер свидетельства</label>
+        <input type="text" class="form-control" id="certificateNumber">
+    </div>
+    <div class="form-group">
+        <label>Дата выдачи</label>
+        <input type="date" class="form-control" id="certificateDate">
+    </div>
+    <div class="form-group">
+        <label>Кем выдано</label>
+        <input type="text" class="form-control" id="certificateIssuedBy">
+    </div>
+
+    <div class="navigation">
+        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+        <button type="button" class="btn btn-primary next-step">Далее</button>
+    </div>
+</div>
 
                 <!-- Шаг 7: Контактные данные -->
                 <div class="step-content hidden" data-step="7">
@@ -660,9 +672,6 @@
                             <div class="progress-bar" id="uploadProgressBar" style="width: 0%;"></div>
                         </div>
                         <div class="file-list" id="fileList"></div>
-                    </div>
-                    <div style="margin-top: 1rem; text-align: center;">
-                        <button type="button" class="btn btn-secondary" id="uploadPhotoBtn" disabled>Загрузить фото</button>
                     </div>
                     <div class="navigation">
                         <button type="button" class="btn btn-secondary prev-step">Назад</button>
