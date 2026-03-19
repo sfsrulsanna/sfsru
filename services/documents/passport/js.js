@@ -505,22 +505,24 @@ async function generatePDF() {
         ['Отделение МВД', mvdList.find(m => m.id === selectedMvdId)?.name || '—'],
     ];
 
-	if (formData.reasonDetails) {
-    let certTypeText = '';
-    if (formData.reasonDetails.type === 'birth_certificate') {
-        certTypeText = 'Свидетельство о рождении';
-    } else if (formData.reasonDetails.type === 'marriage') {
-        certTypeText = 'Свидетельство о браке';
-    } else if (formData.reasonDetails.type === 'divorce') {
-        certTypeText = 'Свидетельство о разводе';
-    } else if (formData.reasonDetails.type === 'name_change') {
-        certTypeText = 'Свидетельство о перемене имени';
-    } else {
-        certTypeText = formData.reasonDetails.type;
+    // Данные свидетельства (если есть)
+    if (formData.reasonDetails) {
+        let certTypeText = '';
+        if (formData.reasonDetails.type === 'birth_certificate') {
+            certTypeText = 'Свидетельство о рождении';
+        } else if (formData.reasonDetails.type === 'marriage') {
+            certTypeText = 'Свидетельство о браке';
+        } else if (formData.reasonDetails.type === 'divorce') {
+            certTypeText = 'Свидетельство о разводе';
+        } else if (formData.reasonDetails.type === 'name_change') {
+            certTypeText = 'Свидетельство о перемене имени';
+        } else {
+            certTypeText = formData.reasonDetails.type;
+        }
+        data.push(['Данные свидетельства', `${certTypeText}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}`]);
     }
-    html += `<tr><th>Данные свидетельства</th><td>${certTypeText}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}</td></tr>`;
-}
 
+    // Новые данные (если есть)
     if (Object.values(formData.newData).some(v => v)) {
         let newDataStr = '';
         if (formData.newData.surname || formData.newData.name || formData.newData.patronymic) 
