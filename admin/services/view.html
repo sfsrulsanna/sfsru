@@ -40,7 +40,6 @@
         .btn { padding: 0.6rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .btn-primary { background: #007bff; color: white; }
-        /* Модальное окно */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
         .modal.active { display: flex; }
         .modal-content { background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
@@ -56,8 +55,6 @@
         .btn-small { padding: 0.3rem 0.8rem; font-size: 0.9rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; }
         .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
         .hidden { display: none; }
-        .photo-link { margin-top: 0.5rem; }
-        .photo-link a { color: #007bff; text-decoration: none; }
     </style>
     <script type="importmap">
         {
@@ -108,8 +105,6 @@
 
             <div id="appDetails" class="app-details hidden">
                 <table class="details-table" id="detailsTable"></table>
-                <!-- Добавим ссылку на фото в деталях, если нужно, но без большого блока -->
-                <div id="photoLinkContainer" class="photo-link hidden"></div>
             </div>
 
             <div id="historySection" class="history-section hidden">
@@ -303,13 +298,12 @@ async function loadApplication() {
     applicationNumber = data.application_number;
     document.getElementById('appNumber').textContent = data.application_number;
     renderDetails(data);
-    renderPhotoLink(data.photo_path); // вместо отдельного блока - ссылка в деталях
     await loadHistory();
     
     document.getElementById('loading').classList.add('hidden');
 }
 
-// Отображение деталей заявления в таблице
+// Отображение деталей заявления в таблице (без строки "Фото")
 function renderDetails(data) {
     const container = document.getElementById('detailsTable');
     const fields = [
@@ -324,7 +318,6 @@ function renderDetails(data) {
         ['Телефон', data.phone || '—'],
         ['Email', data.email || '—'],
         ['Отделение МВД', mvdMap[data.mvd_id] || data.mvd_id || '—'],
-        ['Фото', data.photo_path ? 'прикреплено' : 'нет'],
         ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
     ];
     let html = '';
@@ -333,27 +326,6 @@ function renderDetails(data) {
     });
     container.innerHTML = html;
     document.getElementById('appDetails').classList.remove('hidden');
-}
-
-// Ссылка на фото (вместо большого блока)
-async function renderPhotoLink(photoPath) {
-    const container = document.getElementById('photoLinkContainer');
-    if (!photoPath) {
-        container.classList.add('hidden');
-        return;
-    }
-    try {
-        const signedUrl = await getSignedUrl(photoPath);
-        if (signedUrl) {
-            container.innerHTML = `<strong>Фото заявителя:</strong> <a href="${signedUrl}" download="photo.jpg" target="_blank">Скачать фото</a>`;
-            container.classList.remove('hidden');
-        } else {
-            container.classList.add('hidden');
-        }
-    } catch (e) {
-        console.error('Ошибка загрузки фото:', e);
-        container.classList.add('hidden');
-    }
 }
 
 // Загрузка истории статусов с вложениями (показываем имена файлов)
@@ -388,7 +360,7 @@ async function loadHistory() {
             if (signedUrl) {
                 fileLinks.push(`<a href="${signedUrl}" target="_blank">📄 ${fileName}</a>`);
             } else {
-                fileLinks.push(`<span title="Недоступен">📄 ${fileName} (ошибка)</span>`);
+                fileLinks.push(`<span title="Файл не найден">📄 ${fileName} (недоступен)</span>`);
             }
         }
         html += `
@@ -413,13 +385,10 @@ function showError(msg) {
 
 // Открыть модальное окно для изменения статуса
 function openStatusModal() {
-    // Очищаем форму
     document.getElementById('modalComment').value = '';
     document.getElementById('modalFiles').value = '';
     document.getElementById('fileList').innerHTML = '';
     uploadedFiles = [];
-    // Устанавливаем текущий статус в выпадающем списке (опционально)
-    // Но мы можем получить текущий статус из таблицы, но это не обязательно, оставим по умолчанию "processing"
     document.getElementById('actionModal').classList.add('active');
 }
 
@@ -450,12 +419,10 @@ document.getElementById('modalFiles').addEventListener('change', (e) => {
         btn.addEventListener('click', (e) => {
             const idx = parseInt(e.target.dataset.index);
             uploadedFiles.splice(idx, 1);
-            // Обновляем input files
             const dt = new DataTransfer();
             uploadedFiles.forEach(f => dt.items.add(f));
             document.getElementById('modalFiles').files = dt.files;
             e.target.closest('.file-item').remove();
-            // Переиндексируем кнопки
             document.querySelectorAll('.file-item .btn-small').forEach((btn, newIdx) => {
                 btn.dataset.index = newIdx;
             });
@@ -477,7 +444,6 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
 
     console.log('Изменение статуса:', selectedStatus, 'комментарий:', comment, 'файлов:', files.length);
 
-    // Загружаем файлы в хранилище
     const attachmentPaths = [];
     for (const file of files) {
         const safeName = safeFileName(file.name);
@@ -494,7 +460,6 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
         console.log('Файл загружен:', filePath);
     }
 
-    // Запись в историю
     const { error: historyError } = await supabase
         .schema('services')
         .from('passport_status_history')
@@ -512,7 +477,6 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
         return;
     }
 
-    // Обновляем текущий статус в основной таблице
     const { error: updateError } = await supabase
         .schema('services')
         .from('passport')
@@ -527,7 +491,6 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
 
     console.log('Статус обновлён, история сохранена');
     closeModal();
-    // Перезагружаем страницу для отображения обновлений
     window.location.reload();
 });
 
@@ -537,12 +500,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadApplication();
 
-    // Обработчик для кнопки "Изменить статус"
     document.getElementById('changeStatusBtn').addEventListener('click', openStatusModal);
-    
-    // Закрытие модалки по крестику
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
-    // Закрытие по клику вне окна
     window.addEventListener('click', (e) => {
         const modal = document.getElementById('actionModal');
         if (e.target === modal) closeModal();
