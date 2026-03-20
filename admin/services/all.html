@@ -2,9 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Все услуги — Админ панель СФСРЮ</title>
-    <!-- favicons (как в других страницах) -->
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -21,69 +21,188 @@
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-    <!-- ... остальные favicons ... -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+            border-left: 4px solid #7b091a;
+            padding-left: 1rem;
+        }
+        .page-description {
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        .service-tabs {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .service-tab {
+            background: #f1f5f9;
+            border: none;
+            padding: 0.75rem 1.75rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            color: #1e293b;
+        }
+        .service-tab:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
+        }
+        .service-tab.active {
+            background: #7b091a;
+            color: white;
+            box-shadow: 0 2px 8px rgba(123, 9, 26, 0.2);
+        }
+        .back-link {
+            margin-bottom: 1.5rem;
+        }
+        .back-link a {
+            color: #7b091a;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
         .filters {
             display: flex;
             gap: 1rem;
             margin-bottom: 2rem;
             flex-wrap: wrap;
             align-items: center;
+            background: white;
+            padding: 1rem;
+            border-radius: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         .filters select, .filters input {
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 40px;
+            font-size: 0.95rem;
             min-width: 200px;
+            background: white;
+        }
+        .filters button {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            border: none;
+            padding: 0.6rem 1.5rem;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .filters button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
         }
         .stats-badge {
-            background: #f8f9fa;
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
+            background: #f1f5f9;
+            padding: 0.4rem 1rem;
+            border-radius: 40px;
             font-size: 0.9rem;
-            margin-left: 1rem;
+            font-weight: 500;
+            color: #1e293b;
         }
         .app-table {
             width: 100%;
             border-collapse: collapse;
             background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }
         .app-table th {
-            background: #f8f9fa;
-            padding: 12px;
+            background: #f8fafc;
+            padding: 12px 16px;
             text-align: left;
             font-weight: 600;
+            color: #0f172a;
+            border-bottom: 1px solid #e2e8f0;
         }
         .app-table td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
+            padding: 12px 16px;
+            border-bottom: 1px solid #e2e8f0;
+            color: #1e293b;
         }
-        .app-table tr:hover {
-            background: #f5f5f5;
+        .app-table tr:hover td {
+            background: #fef9e3;
         }
         .btn-view {
-            background: #007bff;
+            background: linear-gradient(135deg, #007bff, #0056b3);
             color: white;
             border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
+            padding: 6px 16px;
+            border-radius: 40px;
             cursor: pointer;
             text-decoration: none;
             display: inline-block;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .btn-view:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
         }
         .loading, .no-data, .error {
             text-align: center;
             padding: 2rem;
-            color: #666;
+            color: #64748b;
+            font-size: 1rem;
+        }
+        .error {
+            color: #dc3545;
+            background: #fff5f5;
+            border-radius: 12px;
+        }
+        @media (max-width: 768px) {
+            .app-table, .app-table tbody, .app-table tr, .app-table td, .app-table th {
+                display: block;
+            }
+            .app-table tr {
+                margin-bottom: 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+            .app-table th {
+                display: none;
+            }
+            .app-table td {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 12px;
+                border-bottom: none;
+            }
+            .app-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #0f172a;
+                margin-right: 1rem;
+            }
         }
     </style>
     <script type="importmap">
@@ -99,7 +218,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ / Все услуги</h1>
+                <h1>СФСРЮ — Администратор</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -108,13 +227,12 @@
             </button>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная админки</a></li>
+                    <li><a href="../index.html">Главная администратора</a></li>
                     <li><a href="index.html">Услуги</a></li>
-                    <li><a href="../certificates/index.html">Свидетельства</a></li>
-                    <li><a href="#">Документы</a></li>
-                    <li><a href="#">Адреса</a></li>
-                    <li><a href="#">Регистры</a></li>
-                    <li><a href="#">Законы</a></li>
+                    <li><a href="../documents/">Документы</a></li>
+                    <li><a href="../addresses/">Адреса</a></li>
+                    <li><a href="../registry/">Регистры</a></li>
+                    <li><a href="../laws/">Законы</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
@@ -128,8 +246,17 @@
 
     <main class="main-content">
         <div class="container">
+            <div class="back-link">
+                <a href="index.html?type=passport"><i class="fas fa-arrow-left"></i> На главную услуг</a>
+            </div>
             <h1 class="page-title">Все услуги</h1>
-            <p class="page-description">Полный список заявлений на получение паспорта</p>
+            <p class="page-description">Полный список заявлений</p>
+
+            <div class="service-tabs">
+                <button class="service-tab" data-type="passport">Внутренние паспорта</button>
+                <button class="service-tab" data-type="foreign">Загранпаспорта</button>
+                <button class="service-tab" data-type="other">Другие услуги</button>
+            </div>
 
             <div class="filters">
                 <select id="statusFilter">
@@ -143,22 +270,15 @@
                     <option value="cancelled">Отменено</option>
                 </select>
                 <input type="text" id="searchInput" placeholder="Поиск по номеру или личному коду">
-                <button id="applyFilters" class="btn btn-primary">Применить</button>
+                <button id="applyFilters">Применить</button>
                 <span id="totalCount" class="stats-badge">Всего: 0</span>
             </div>
 
             <div id="loading" class="loading">Загрузка...</div>
 
-            <table class="app-table">
-                <thead>
-                    <tr>
-                        <th>Номер заявления</th>
-                        <th>Дата</th>
-                        <th>Личный код</th>
-                        <th>Причина</th>
-                        <th>Статус</th>
-                        <th>Действие</th>
-                    </tr>
+            <table class="app-table" id="appsTable">
+                <thead id="tableHeader">
+                    <!-- заголовок динамический -->
                 </thead>
                 <tbody id="appsTableBody">
                     <tr><td colspan="6" class="no-data">Нет данных</td></tr>
@@ -174,119 +294,181 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-	import { supabase } from '../../../js/supabase-config.js';
-import { requireAdmin } from '../certificates/js/certificates-common.js';
+        import { supabase } from '../../../js/supabase-config.js';
+        import { requireAdmin } from '../certificates/js/certificates-common.js';
 
-// Маппинг статусов на русский язык
-const statusMap = {
-    'submitted': 'Отправлено в ведомство',
-    'processing': 'В работе',
-    'interim': 'Промежуточные результаты',
-    'positive': 'Принято положительное решение',
-    'completed': 'Результат выдан',
-    'rejected': 'Отказано',
-    'cancelled': 'Отменено'
-};
-
-// Маппинг причин на русский язык
-const reasonMap = {
-    '14_20_45': 'Исполнилось 14, 20 или 45 лет',
-    'no_space': 'Закончилось место для штампов',
-    'name_changed': 'Изменилось ФИО, дата или место рождения',
-    'lost': 'Паспорт утерян или украден',
-    'damaged': 'Паспорт стал непригодным к использованию',
-    'citizenship': 'Получение гражданства СФСРЮ',
-    'appearance': 'Изменилась внешность',
-    'error': 'Ошибка в паспорте'
-};
-
-let allData = []; // для последующей фильтрации на клиенте
-
-async function loadApplications(filters = {}) {
-    const loading = document.getElementById('loading');
-    const tbody = document.getElementById('appsTableBody');
-    loading.style.display = 'block';
-    tbody.innerHTML = '';
-
-    let query = supabase
-        .schema('services')
-        .from('passport')
-        .select('id, application_number, created_at, personal_code, reason, status')
-        .order('created_at', { ascending: false });
-
-    if (filters.status) {
-        query = query.eq('status', filters.status);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-        console.error('Ошибка загрузки:', error);
-        tbody.innerHTML = `<tr><td colspan="6" class="error">Ошибка загрузки: ${error.message}</td></tr>`;
-        loading.style.display = 'none';
-        return;
-    }
-
-    allData = data || [];
-    applyClientFilters(filters.search);
-    loading.style.display = 'none';
-}
-
-function applyClientFilters(searchTerm) {
-    const tbody = document.getElementById('appsTableBody');
-    let filtered = allData;
-
-    if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filtered = filtered.filter(item =>
-            (item.application_number && item.application_number.toLowerCase().includes(term)) ||
-            (item.personal_code && item.personal_code.toLowerCase().includes(term))
-        );
-    }
-
-    document.getElementById('totalCount').textContent = `Всего: ${filtered.length}`;
-
-    if (filtered.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет записей</td></tr>';
-        return;
-    }
-
-    tbody.innerHTML = filtered.map(app => `
-        <tr>
-            <td>${app.application_number}</td>
-            <td>${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
-            <td>${app.personal_code || '—'}</td>
-            <td>${reasonMap[app.reason] || app.reason}</td>
-            <td>${statusMap[app.status] || app.status}</td>
-            <td><a href="view.html?id=${app.id}" class="btn-view">Просмотр</a></td>
-        </tr>
-    `).join('');
-}
-
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!await requireAdmin()) return;
-
-    const statusFilter = document.getElementById('statusFilter');
-    const searchInput = document.getElementById('searchInput');
-    const applyBtn = document.getElementById('applyFilters');
-
-    // Первоначальная загрузка
-    await loadApplications();
-
-    applyBtn.addEventListener('click', () => {
-        const filters = {
-            status: statusFilter.value || undefined,
-            search: searchInput.value.trim()
+        const tableMap = {
+            passport: 'passport',
+            foreign: 'foreign_passport',
+            other: 'service'
         };
-        loadApplications(filters);
-    });
+        const statusMap = {
+            'submitted': 'Отправлено в ведомство',
+            'processing': 'В работе',
+            'interim': 'Промежуточные результаты',
+            'positive': 'Принято положительное решение',
+            'completed': 'Результат выдан',
+            'rejected': 'Отказано',
+            'cancelled': 'Отменено'
+        };
+        const reasonMap = {
+            '14_20_45': 'Исполнилось 14, 20 или 45 лет',
+            'no_space': 'Закончилось место для штампов',
+            'name_changed': 'Изменилось ФИО, дата или место рождения',
+            'lost': 'Паспорт утерян или украден',
+            'damaged': 'Паспорт стал непригодным к использованию',
+            'citizenship': 'Получение гражданства СФСРЮ',
+            'appearance': 'Изменилась внешность',
+            'error': 'Ошибка в паспорте',
+            'first_14': 'Первичное получение в 14 лет',
+            'expired': 'Истёк срок действия'
+        };
 
-    // Выход
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-        await supabase.auth.signOut();
-        window.location.href = '../../login.html';
-    });
-});
-	</script>
+        let currentType = 'passport';
+        let allData = [];
+
+        function getDynamicColumnLabel() {
+            return currentType === 'other' ? 'Название услуги' : 'Причина';
+        }
+
+        function getDynamicColumnValue(item) {
+            if (currentType === 'other') {
+                return item.service_type || '—';
+            }
+            return reasonMap[item.reason] || item.reason || '—';
+        }
+
+        function updateTableHeader() {
+            const headerRow = document.getElementById('tableHeader');
+            const label = getDynamicColumnLabel();
+            headerRow.innerHTML = `
+                <tr>
+                    <th>Номер заявления</th>
+                    <th>Дата</th>
+                    <th>Личный код</th>
+                    <th>${label}</th>
+                    <th>Статус</th>
+                    <th>Действие</th>
+                </tr>
+            `;
+        }
+
+        async function loadAllData() {
+            const loading = document.getElementById('loading');
+            const tbody = document.getElementById('appsTableBody');
+            loading.style.display = 'block';
+            tbody.innerHTML = '';
+
+            const table = tableMap[currentType];
+            if (!table) return;
+
+            let query = supabase
+                .schema('services')
+                .from(table)
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const { data, error } = await query;
+
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="6" class="error">Ошибка: ${error.message}</td></tr>`;
+                loading.style.display = 'none';
+                return;
+            }
+
+            allData = data || [];
+            loading.style.display = 'none';
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchInput').value.trim().toLowerCase();
+            let filtered = allData;
+
+            if (status) {
+                filtered = filtered.filter(item => item.status === status);
+            }
+            if (search) {
+                filtered = filtered.filter(item =>
+                    (item.application_number && item.application_number.toLowerCase().includes(search)) ||
+                    (item.personal_code && item.personal_code.toLowerCase().includes(search))
+                );
+            }
+
+            document.getElementById('totalCount').textContent = `Всего: ${filtered.length}`;
+
+            const tbody = document.getElementById('appsTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет записей</td></tr>';
+                return;
+            }
+
+            const columnLabel = getDynamicColumnLabel();
+            tbody.innerHTML = filtered.map(app => {
+                const dynamicValue = getDynamicColumnValue(app);
+                return `
+                    <tr>
+                        <td data-label="Номер заявления">${app.application_number}</td>
+                        <td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
+                        <td data-label="Личный код">${app.personal_code || '—'}</td>
+                        <td data-label="${columnLabel}">${dynamicValue}</td>
+                        <td data-label="Статус">${statusMap[app.status] || app.status}</td>
+                        <td data-label="Действие">
+                            <a href="view.html?id=${app.id}&type=${currentType}" class="btn-view">Просмотр</a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function setActiveTab(type) {
+            document.querySelectorAll('.service-tab').forEach(tab => {
+                if (tab.dataset.type === type) tab.classList.add('active');
+                else tab.classList.remove('active');
+            });
+        }
+
+        async function switchServiceType(type) {
+            if (type === currentType) return;
+            currentType = type;
+            setActiveTab(type);
+            document.querySelector('.back-link a').href = `index.html?type=${currentType}`;
+            updateTableHeader();
+            await loadAllData();
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+
+            const urlParams = new URLSearchParams(window.location.search);
+            const typeParam = urlParams.get('type');
+            if (typeParam && tableMap[typeParam]) {
+                currentType = typeParam;
+            }
+            setActiveTab(currentType);
+            updateTableHeader();
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) document.getElementById('adminEmail').textContent = user.email;
+
+            await loadAllData();
+
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('searchInput').addEventListener('keyup', (e) => {
+                if (e.key === 'Enter') applyFilters();
+            });
+
+            document.querySelectorAll('.service-tab').forEach(tab => {
+                tab.addEventListener('click', () => switchServiceType(tab.dataset.type));
+            });
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+        });
+    </script>
 </body>
 </html>

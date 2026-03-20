@@ -2,8 +2,9 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Незавершённые услуги — Админ панель СФСРЮ</title>
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -20,46 +21,38 @@
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-	
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .app-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-        .app-table th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-        }
-        .app-table td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-        }
-        .btn-take {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
+        .container { max-width: 1280px; margin: 0 auto; padding: 1rem; }
+        .page-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; border-left: 4px solid #7b091a; padding-left: 1rem; }
+        .page-description { color: #64748b; margin-bottom: 2rem; font-size: 1rem; }
+        .service-tabs { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
+        .service-tab { background: #f1f5f9; border: none; padding: 0.75rem 1.75rem; border-radius: 40px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: all 0.2s; color: #1e293b; }
+        .service-tab:hover { background: #e2e8f0; transform: translateY(-2px); }
+        .service-tab.active { background: #7b091a; color: white; box-shadow: 0 2px 8px rgba(123,9,26,0.2); }
+        .back-link { margin-bottom: 1.5rem; }
+        .back-link a { color: #7b091a; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .app-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .app-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; }
+        .app-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+        .app-table tr:hover td { background: #fef9e3; }
+        .btn-take { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 6px 16px; border-radius: 40px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+        .btn-take:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(40,167,69,0.2); }
+        .loading, .no-data, .error { text-align: center; padding: 2rem; color: #64748b; font-size: 1rem; }
+        .error { color: #dc3545; background: #fff5f5; border-radius: 12px; }
+        @media (max-width: 768px) {
+            .app-table, .app-table tbody, .app-table tr, .app-table td, .app-table th { display: block; }
+            .app-table tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+            .app-table th { display: none; }
+            .app-table td { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: none; }
+            .app-table td::before { content: attr(data-label); font-weight: 600; color: #0f172a; margin-right: 1rem; }
         }
     </style>
     <script type="importmap">
-        {
-            "imports": {
-                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-            }
-        }
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
     </script>
 </head>
 <body>
@@ -67,7 +60,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ / Услуги (админ)</h1>
+                <h1>СФСРЮ — Администратор</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -76,13 +69,12 @@
             </button>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная админки</a></li>
+                    <li><a href="../index.html">Главная администратора</a></li>
                     <li><a href="index.html">Услуги</a></li>
-                    <li><a href="../certificates/index.html">Свидетельства</a></li>
-                    <li><a href="#">Документы</a></li>
-                    <li><a href="#">Адреса</a></li>
-                    <li><a href="#">Регистры</a></li>
-                    <li><a href="#">Законы</a></li>
+                    <li><a href="../documents/">Документы</a></li>
+                    <li><a href="../addresses/">Адреса</a></li>
+                    <li><a href="../registry/">Регистры</a></li>
+                    <li><a href="../laws/">Законы</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
@@ -93,95 +85,72 @@
         </div>
     </header>
     <div class="menu-overlay"></div>
-
     <main class="main-content">
         <div class="container">
+            <div class="back-link"><a href="index.html?type=passport"><i class="fas fa-arrow-left"></i> На главную услуг</a></div>
             <h1 class="page-title">Незавершённые услуги</h1>
-            <p class="page-description">Заявления со статусом "отправлено в ведомство"</p>
-
-            <table class="app-table">
-                <thead>
-                    <tr>
-                        <th>№ заявления</th>
-                        <th>Дата</th>
-                        <th>Личный код</th>
-                        <th>Причина</th>
-                        <th>Действие</th>
-                    </tr>
-                </thead>
-                <tbody id="appsTableBody">
-                    <tr><td colspan="5" class="loading">Загрузка...</td></tr>
-                </tbody>
+            <p class="page-description">Заявления со статусом «отправлено в ведомство»</p>
+            <div class="service-tabs">
+                <button class="service-tab" data-type="passport">Внутренние паспорта</button>
+                <button class="service-tab" data-type="foreign">Загранпаспорта</button>
+                <button class="service-tab" data-type="other">Другие услуги</button>
+            </div>
+            <table class="app-table" id="appsTable">
+                <thead id="tableHeader"></thead>
+                <tbody id="appsTableBody"><tr><td colspan="5" class="loading">Загрузка...</td></tr></tbody>
             </table>
         </div>
     </main>
-
-    <footer class="footer">
-        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-    </footer>
-
+    <footer class="footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p><p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p></footer>
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../certificates/js/certificates-common.js';
 
+        const tableMap = { passport: 'passport', foreign: 'foreign_passport', other: 'service' };
+        const reasonMap = { '14_20_45': 'Исполнилось 14, 20 или 45 лет', 'no_space': 'Закончилось место для штампов', 'name_changed': 'Изменилось ФИО, дата или место рождения', 'lost': 'Паспорт утерян или украден', 'damaged': 'Паспорт стал непригодным к использованию', 'citizenship': 'Получение гражданства СФСРЮ', 'appearance': 'Изменилась внешность', 'error': 'Ошибка в паспорте', 'first_14': 'Первичное получение в 14 лет', 'expired': 'Истёк срок действия' };
+
+        let currentType = 'passport';
+
+        function getDynamicColumnLabel() { return currentType === 'other' ? 'Название услуги' : 'Причина'; }
+        function getDynamicColumnValue(item) { return currentType === 'other' ? (item.service_type || '—') : (reasonMap[item.reason] || item.reason || '—'); }
+
+        function updateTableHeader() {
+            const label = getDynamicColumnLabel();
+            document.getElementById('tableHeader').innerHTML = `<tr><th>№ заявления</th><th>Дата</th><th>Личный код</th><th>${label}</th><th>Действие</th></tr>`;
+        }
+
         async function loadPending() {
             const tbody = document.getElementById('appsTableBody');
             tbody.innerHTML = '<tr><td colspan="5" class="loading">Загрузка...</td></tr>';
-
-            const { data, error } = await supabase
-                .schema('services')
-                .from('passport')
-                .select('id, application_number, created_at, personal_code, reason')
-                .eq('status', 'submitted')
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                tbody.innerHTML = `<tr><td colspan="5" class="error">Ошибка: ${error.message}</td></tr>`;
-                return;
-            }
-
-            if (!data.length) {
-                tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет заявлений</td></tr>';
-                return;
-            }
-
-            tbody.innerHTML = data.map(app => `
-                <tr>
-                    <td>${app.application_number}</td>
-                    <td>${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
-                    <td>${app.personal_code || '—'}</td>
-                    <td>${app.reason || '—'}</td>
-                    <td><button class="btn-take" data-id="${app.id}">Взять в работу</button></td>
-                </tr>
-            `).join('');
-
-            document.querySelectorAll('.btn-take').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = e.target.dataset.id;
-                    const { error } = await supabase
-                        .schema('services')
-                        .from('passport')
-                        .update({ status: 'processing', updated_at: new Date().toISOString() })
-                        .eq('id', id);
-                    if (error) {
-                        alert('Ошибка: ' + error.message);
-                    } else {
-                        window.location.href = `view.html?id=${id}`;
-                    }
-                });
-            });
+            const table = tableMap[currentType];
+            if (!table) return;
+            const { data, error } = await supabase.schema('services').from(table).select('id, application_number, created_at, personal_code, reason, service_type').eq('status', 'submitted').order('created_at', { ascending: false });
+            if (error) { tbody.innerHTML = `<tr><td colspan="5" class="error">Ошибка: ${error.message}</td></tr>`; return; }
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет заявлений</td></tr>'; return; }
+            const columnLabel = getDynamicColumnLabel();
+            tbody.innerHTML = data.map(app => `<tr><td data-label="№ заявления">${app.application_number}</td><td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td><td data-label="Личный код">${app.personal_code || '—'}</td><td data-label="${columnLabel}">${getDynamicColumnValue(app)}</td><td data-label="Действие"><button class="btn-take" data-id="${app.id}">Взять в работу</button></td></tr>`).join('');
+            document.querySelectorAll('.btn-take').forEach(btn => btn.addEventListener('click', async (e) => {
+                const id = e.target.dataset.id;
+                const { error } = await supabase.schema('services').from(tableMap[currentType]).update({ status: 'processing', updated_at: new Date().toISOString() }).eq('id', id);
+                if (error) alert('Ошибка: ' + error.message); else window.location.href = `view.html?id=${id}&type=${currentType}`;
+            }));
         }
+
+        function setActiveTab(type) { document.querySelectorAll('.service-tab').forEach(tab => { if (tab.dataset.type === type) tab.classList.add('active'); else tab.classList.remove('active'); }); }
+        async function switchServiceType(type) { if (type === currentType) return; currentType = type; setActiveTab(type); document.querySelector('.back-link a').href = `index.html?type=${currentType}`; updateTableHeader(); await loadPending(); }
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await requireAdmin()) return;
+            const urlParams = new URLSearchParams(window.location.search);
+            const typeParam = urlParams.get('type');
+            if (typeParam && tableMap[typeParam]) currentType = typeParam;
+            setActiveTab(currentType); updateTableHeader();
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) document.getElementById('adminEmail').textContent = user.email;
             await loadPending();
-
-            document.getElementById('logoutBtn').addEventListener('click', async () => {
-                await supabase.auth.signOut();
-                window.location.href = '../../login.html';
-            });
+            document.querySelectorAll('.service-tab').forEach(tab => tab.addEventListener('click', () => switchServiceType(tab.dataset.type)));
+            document.getElementById('logoutBtn').addEventListener('click', async () => { await supabase.auth.signOut(); window.location.href = '../../login.html'; });
         });
     </script>
 </body>
