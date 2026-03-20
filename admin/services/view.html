@@ -69,7 +69,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ / Просмотр заявления</h1>
+                <h1>СФСРЮ - Админка</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -104,7 +104,7 @@
             <div id="error" class="error hidden"></div>
 
             <div id="appDetails" class="app-details hidden">
-                <table class="details-table" id="detailsTable"></table>
+                <table class="details-table" id="detailsTable"><tr>
             </div>
 
             <div id="historySection" class="history-section hidden">
@@ -165,8 +165,12 @@ import { requireAdmin } from '../certificates/js/certificates-common.js';
 
 let currentAppId = null;
 let applicationNumber = null;
+let currentUserId = null;       // ID пользователя, подавшего заявление
 let uploadedFiles = [];
 let mvdMap = {};
+
+// Название услуги (для сообщений)
+const SERVICE_NAME = "Паспорт СФСРЮ";
 
 // Маппинг статусов на русский язык
 const statusMap = {
@@ -179,7 +183,7 @@ const statusMap = {
     'cancelled': 'Отменено'
 };
 
-// Маппинг причин на русский язык
+// Маппинг причин на русский язык (добавлены две новые)
 const reasonMap = {
     '14_20_45': 'Исполнилось 14, 20 или 45 лет',
     'no_space': 'Закончилось место для штампов',
@@ -188,7 +192,9 @@ const reasonMap = {
     'damaged': 'Паспорт стал непригодным к использованию',
     'citizenship': 'Получение гражданства СФСРЮ',
     'appearance': 'Изменилась внешность',
-    'error': 'Ошибка в паспорте'
+    'error': 'Ошибка в паспорте',
+    'first_14': 'Первичное получение в 14 лет',
+    'expired': 'Истёк срок действия'
 };
 
 // Вспомогательная функция для получения подписанной ссылки на файл
@@ -206,12 +212,11 @@ async function getSignedUrl(filePath) {
     }
 }
 
-// Извлечение имени файла из пути (последний фрагмент после '/', убираем timestamp если есть)
+// Извлечение имени файла из пути
 function extractFileNameFromPath(filePath) {
     if (!filePath) return 'файл';
     let parts = filePath.split('/');
     let fullName = parts[parts.length - 1];
-    // Убираем префикс с timestamp (число_)
     let match = fullName.match(/^\d+_(.+)$/);
     if (match) {
         return decodeURIComponent(match[1]);
@@ -219,7 +224,7 @@ function extractFileNameFromPath(filePath) {
     return decodeURIComponent(fullName);
 }
 
-// Форматирование JSONB данных в читаемый вид
+// Форматирование JSONB данных (личные данные) на русском
 function formatPersonalData(data) {
     if (!data) return '—';
     const parts = [];
@@ -238,16 +243,32 @@ function formatPersonalData(data) {
     return parts.join('<br>') || JSON.stringify(data);
 }
 
-// Форматирование reason_details в читаемый вид
+// Форматирование деталей причины (универсально, по-русски)
 function formatReasonDetails(details) {
     if (!details) return '—';
+    
+    // Если передан только тип (например, для first_14 может быть пустой объект)
+    if (typeof details === 'string') {
+        return details;
+    }
+    
     const typeMap = {
         'marriage': 'Свидетельство о браке',
         'divorce': 'Свидетельство о разводе',
-        'name_change': 'Свидетельство о перемене имени'
+        'name_change': 'Свидетельство о перемене имени',
+        'first_14': 'Первичное получение в 14 лет',
+        'expired': 'Истёк срок действия'
     };
-    const type = typeMap[details.type] || details.type;
-    return `${type}, №${details.number || '—'} от ${details.date ? new Date(details.date).toLocaleDateString('ru-RU') : '—'}, ${details.issuedBy || '—'}`;
+    
+    const type = typeMap[details.type] || details.type || '—';
+    let result = type;
+    
+    if (details.number || details.date || details.issuedBy) {
+        result += `, №${details.number || '—'} от ${details.date ? new Date(details.date).toLocaleDateString('ru-RU') : '—'}`;
+        if (details.issuedBy) result += `, выдан: ${details.issuedBy}`;
+    }
+    
+    return result;
 }
 
 // Безопасное имя файла
@@ -296,6 +317,7 @@ async function loadApplication() {
 
     console.log('Данные заявления:', data);
     applicationNumber = data.application_number;
+    currentUserId = data.user_id;          // сохраняем user_id для отправки сообщения
     document.getElementById('appNumber').textContent = data.application_number;
     renderDetails(data);
     await loadHistory();
@@ -303,7 +325,7 @@ async function loadApplication() {
     document.getElementById('loading').classList.add('hidden');
 }
 
-// Отображение деталей заявления в таблице (без строки "Фото")
+// Отображение деталей заявления в таблице
 function renderDetails(data) {
     const container = document.getElementById('detailsTable');
     const fields = [
@@ -322,13 +344,13 @@ function renderDetails(data) {
     ];
     let html = '';
     fields.forEach(([label, value]) => {
-        html += `<tr><th>${label}</th><td>${value}</td></tr>`;
+        html += `<tr><th>${label}</th><td>${value}</td>`;
     });
     container.innerHTML = html;
     document.getElementById('appDetails').classList.remove('hidden');
 }
 
-// Загрузка истории статусов с вложениями (показываем имена файлов)
+// Загрузка истории статусов с вложениями
 async function loadHistory() {
     const { data, error } = await supabase
         .schema('services')
@@ -376,6 +398,36 @@ async function loadHistory() {
     document.getElementById('historySection').classList.remove('hidden');
 }
 
+// Отправка уведомления пользователю
+async function sendStatusNotification(newStatus) {
+    if (!currentUserId) {
+        console.warn('Не найден user_id заявления, сообщение не отправлено');
+        return;
+    }
+    
+    const newStatusText = statusMap[newStatus] || newStatus;
+    const title = 'Изменение статуса заявления';
+    const content = `Статус вашего заявления №${applicationNumber} по получению услуги "${SERVICE_NAME}" изменен на "${newStatusText}".`;
+    
+    const { error } = await supabase
+        .schema('messages')
+        .from('user_messages')
+        .insert({
+            user_id: currentUserId,
+            title: title,
+            content: content,
+            type: 'status_change',
+            is_read: false,
+            created_at: new Date().toISOString()
+        });
+    
+    if (error) {
+        console.error('Ошибка отправки сообщения пользователю:', error);
+    } else {
+        console.log('Сообщение пользователю отправлено');
+    }
+}
+
 function showError(msg) {
     const err = document.getElementById('error');
     err.textContent = msg;
@@ -383,7 +435,6 @@ function showError(msg) {
     document.getElementById('loading').classList.add('hidden');
 }
 
-// Открыть модальное окно для изменения статуса
 function openStatusModal() {
     document.getElementById('modalComment').value = '';
     document.getElementById('modalFiles').value = '';
@@ -400,7 +451,6 @@ function closeModal() {
     uploadedFiles = [];
 }
 
-// Обработка выбора файлов
 document.getElementById('modalFiles').addEventListener('change', (e) => {
     const files = Array.from(e.target.files);
     const list = document.getElementById('fileList');
@@ -430,7 +480,6 @@ document.getElementById('modalFiles').addEventListener('change', (e) => {
     });
 });
 
-// Отправка формы (изменение статуса)
 document.getElementById('actionForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const selectedStatus = document.getElementById('statusSelect').value;
@@ -489,12 +538,14 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
         return;
     }
 
-    console.log('Статус обновлён, история сохранена');
+    // Отправляем уведомление пользователю
+    await sendStatusNotification(selectedStatus);
+
+    console.log('Статус обновлён, история сохранена, уведомление отправлено');
     closeModal();
     window.location.reload();
 });
 
-// Инициализация страницы
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await requireAdmin()) return;
 
