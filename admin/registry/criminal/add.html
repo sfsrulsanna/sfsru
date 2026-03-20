@@ -25,7 +25,6 @@
 <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
 <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
 <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="../../../css/index.css">
     <link rel="stylesheet" href="../../css/admin.css">
@@ -87,6 +86,26 @@
             margin-top: 0.5rem;
             font-size: 0.85rem;
             color: #475569;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.3rem 0.5rem;
+            background: #f8fafc;
+            margin-bottom: 0.3rem;
+            border-radius: 8px;
+        }
+        .btn-small {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 0.2rem 0.6rem;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.75rem;
         }
         .btn-submit {
             background: linear-gradient(135deg, #28a745, #1e7e34);
@@ -211,15 +230,15 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="photo">Фото</label>
-                        <input type="file" id="photo" name="photo" accept="image/jpeg,image/png,image/jpg">
-                        <div class="file-list" id="photoPreview"></div>
+                        <label for="photos">Фото (можно несколько)</label>
+                        <input type="file" id="photos" name="photos" multiple accept="image/jpeg,image/png,image/jpg">
+                        <div id="photosPreview" class="file-list"></div>
                     </div>
 
                     <div class="form-group">
                         <label for="documents">Документы (можно несколько)</label>
                         <input type="file" id="documents" name="documents" multiple accept=".pdf,.jpg,.jpeg,.png">
-                        <div class="file-list" id="docsPreview"></div>
+                        <div id="docsPreview" class="file-list"></div>
                     </div>
 
                     <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Сохранить запись</button>
@@ -237,7 +256,10 @@
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
         import { supabase } from '../../../js/supabase-config.js';
-        import { requireAdmin } from '../../certificates/js/certificates-common.js';
+        import { requireAdmin } from '../certificates/js/certificates-common.js';
+
+        let selectedPhotos = [];
+        let selectedDocs = [];
 
         function showMessage(text, type) {
             const msgDiv = document.getElementById('message');
@@ -251,24 +273,57 @@
             return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
         }
 
-        // Предпросмотр выбранных файлов
-        document.getElementById('photo').addEventListener('change', (e) => {
-            const preview = document.getElementById('photoPreview');
+        // Предпросмотр фото
+        document.getElementById('photos').addEventListener('change', (e) => {
+            selectedPhotos = Array.from(e.target.files);
+            const preview = document.getElementById('photosPreview');
             preview.innerHTML = '';
-            if (e.target.files.length > 0) {
-                preview.innerHTML = `<span><i class="fas fa-image"></i> ${e.target.files[0].name}</span>`;
-            }
+            selectedPhotos.forEach((file, idx) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <span><i class="fas fa-image"></i> ${file.name}</span>
+                    <button type="button" class="btn-small" data-type="photo" data-index="${idx}">Удалить</button>
+                `;
+                preview.appendChild(div);
+            });
         });
 
+        // Предпросмотр документов
         document.getElementById('documents').addEventListener('change', (e) => {
+            selectedDocs = Array.from(e.target.files);
             const preview = document.getElementById('docsPreview');
             preview.innerHTML = '';
-            const files = Array.from(e.target.files);
-            files.forEach(file => {
-                const span = document.createElement('span');
-                span.innerHTML = `<i class="fas fa-file-pdf"></i> ${file.name}<br>`;
-                preview.appendChild(span);
+            selectedDocs.forEach((file, idx) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <span><i class="fas fa-file-pdf"></i> ${file.name}</span>
+                    <button type="button" class="btn-small" data-type="doc" data-index="${idx}">Удалить</button>
+                `;
+                preview.appendChild(div);
             });
+        });
+
+        // Удаление из предпросмотра
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('btn-small')) {
+                const type = e.target.dataset.type;
+                const idx = parseInt(e.target.dataset.index);
+                if (type === 'photo') {
+                    selectedPhotos.splice(idx, 1);
+                    const dt = new DataTransfer();
+                    selectedPhotos.forEach(f => dt.items.add(f));
+                    document.getElementById('photos').files = dt.files;
+                    document.getElementById('photos').dispatchEvent(new Event('change'));
+                } else if (type === 'doc') {
+                    selectedDocs.splice(idx, 1);
+                    const dt = new DataTransfer();
+                    selectedDocs.forEach(f => dt.items.add(f));
+                    document.getElementById('documents').files = dt.files;
+                    document.getElementById('documents').dispatchEvent(new Event('change'));
+                }
+            }
         });
 
         document.getElementById('criminalForm').addEventListener('submit', async (e) => {
@@ -292,10 +347,10 @@
                 updated_at: new Date().toISOString()
             };
 
-            // Вставляем запись, получаем record_number (последовательный номер)
+            // Вставляем запись, получаем record_number (порядковый номер)
             const { data: inserted, error: insertError } = await supabase
-                .schema('criminal')
-                .from('records')
+                .schema('registry')
+                .from('criminal')
                 .insert(formData)
                 .select('id, record_number')
                 .single();
@@ -309,27 +364,25 @@
             const recordNumber = inserted.record_number;
             const recordId = inserted.id;
 
-            // Загрузка фото
-            const photoFile = document.getElementById('photo').files[0];
-            let photoPath = null;
-            if (photoFile) {
-                const safeName = safeFileName(photoFile.name);
-                const filePath = `${recordNumber}/photo/${Date.now()}_${safeName}`;
+            // Загрузка фото (несколько)
+            const photoPaths = [];
+            for (const file of selectedPhotos) {
+                const safeName = safeFileName(file.name);
+                const filePath = `${recordNumber}/photos/${Date.now()}_${safeName}`;
                 const { error: uploadError } = await supabase.storage
                     .from('criminal-files')
-                    .upload(filePath, photoFile);
+                    .upload(filePath, file);
                 if (uploadError) {
                     console.error('Ошибка загрузки фото:', uploadError);
                     showMessage('Ошибка загрузки фото: ' + uploadError.message, 'error');
                     return;
                 }
-                photoPath = filePath;
+                photoPaths.push(filePath);
             }
 
             // Загрузка документов
-            const docFiles = Array.from(document.getElementById('documents').files);
             const docPaths = [];
-            for (const file of docFiles) {
+            for (const file of selectedDocs) {
                 const safeName = safeFileName(file.name);
                 const filePath = `${recordNumber}/documents/${Date.now()}_${safeName}`;
                 const { error: uploadError } = await supabase.storage
@@ -345,12 +398,12 @@
 
             // Обновляем запись с путями к файлам
             const updateData = {};
-            if (photoPath) updateData.photo_path = photoPath;
+            if (photoPaths.length) updateData.photo_paths = photoPaths;
             if (docPaths.length) updateData.document_paths = docPaths;
             if (Object.keys(updateData).length) {
                 const { error: updateError } = await supabase
-                    .schema('criminal')
-                    .from('records')
+                    .schema('registry')
+                    .from('criminal')
                     .update(updateData)
                     .eq('id', recordId);
                 if (updateError) {
