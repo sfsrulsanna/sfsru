@@ -544,8 +544,14 @@ function extractFileNameFromPath(filePath) {
     return decodeURIComponent(fullName);
 }
 
+// Улучшенная функция форматирования личных данных (для новых данных)
 function formatPersonalData(data) {
     if (!data) return '—';
+    
+    // Проверяем, есть ли хоть какие-то непустые поля
+    const hasData = Object.values(data).some(val => val && val !== '');
+    if (!hasData) return '—';
+    
     const parts = [];
     if (data.surname || data.name || data.patronymic) {
         parts.push(`ФИО: ${data.surname || ''} ${data.name || ''} ${data.patronymic || ''}`.trim());
@@ -559,23 +565,34 @@ function formatPersonalData(data) {
     if (data.gender) {
         parts.push(`Пол: ${data.gender === 'male' ? 'Мужской' : 'Женский'}`);
     }
-    return parts.join('<br>') || JSON.stringify(data);
+    return parts.length ? parts.join('<br>') : '—';
 }
 
+// Функция форматирования деталей причины (полностью на русском)
 function formatReasonDetails(details) {
     if (!details) return '—';
     if (typeof details === 'string') return details;
+    
     const typeMap = {
         'marriage': 'Свидетельство о браке',
         'divorce': 'Свидетельство о разводе',
-        'name_change': 'Свидетельство о перемене имени'
+        'name_change': 'Свидетельство о перемене имени',
+        'birth_certificate': 'Свидетельство о рождении',  // добавлено
+        'first_14': 'Первичное получение в 14 лет',
+        'expired': 'Истёк срок действия'
     };
+    
     const type = typeMap[details.type] || details.type || '—';
     let result = type;
+    
     if (details.number || details.date || details.issuedBy) {
-        result += `, №${details.number || '—'} от ${details.date ? new Date(details.date).toLocaleDateString('ru-RU') : '—'}`;
-        if (details.issuedBy) result += `, выдан: ${details.issuedBy}`;
+        const parts = [];
+        if (details.number) parts.push(`№${details.number}`);
+        if (details.date) parts.push(`от ${new Date(details.date).toLocaleDateString('ru-RU')}`);
+        if (details.issuedBy) parts.push(`выдан: ${details.issuedBy}`);
+        if (parts.length) result += `, ${parts.join(', ')}`;
     }
+    
     return result;
 }
 
