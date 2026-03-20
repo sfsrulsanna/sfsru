@@ -192,18 +192,18 @@
             color: #7b091a;
         }
         
-        /* Кнопка изменения статуса */
+        /* Кнопки действий */
         .action-buttons {
             display: flex;
+            gap: 1rem;
             justify-content: center;
             margin: 2rem 0;
+            flex-wrap: wrap;
         }
         
-        .btn-primary {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
+        .btn-primary, .btn-danger {
             border: none;
-            padding: 0.75rem 2rem;
+            padding: 0.75rem 1.5rem;
             font-size: 1rem;
             font-weight: 500;
             border-radius: 40px;
@@ -215,10 +215,26 @@
             gap: 0.5rem;
         }
         
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+        }
+        
         .btn-primary:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0, 123, 255, 0.2);
             background: linear-gradient(135deg, #0069d9, #004085);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #b02a37);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(220, 53, 69, 0.2);
+            background: linear-gradient(135deg, #c82333, #a71d2a);
         }
         
         /* Модальное окно */
@@ -400,7 +416,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ / Просмотр заявления</h1>
+                <h1>СФСРЮ - Администратор</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -409,13 +425,12 @@
             </button>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная админки</a></li>
+                    <li><a href="../index.html">Главная администратора</a></li>
                     <li><a href="index.html">Услуги</a></li>
-                    <li><a href="../certificates/index.html">Свидетельства</a></li>
-                    <li><a href="#">Документы</a></li>
-                    <li><a href="#">Адреса</a></li>
-                    <li><a href="#">Регистры</a></li>
-                    <li><a href="#">Законы</a></li>
+                    <li><a href="../documents/">Документы</a></li>
+                    <li><a href="../addresses/">Адреса</a></li>
+                    <li><a href="../registry/">Регистры</a></li>
+                    <li><a href="../laws/">Законы</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
@@ -445,6 +460,7 @@
 
             <div class="action-buttons">
                 <button id="changeStatusBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Изменить статус</button>
+                <button id="deleteBtn" class="btn-danger"><i class="fas fa-trash-alt"></i> Удалить услугу</button>
             </div>
         </div>
     </main>
@@ -513,7 +529,8 @@ const statusMap = {
 };
 
 const reasonMap = {
-    '14_20_45': 'Исполнилось 14, 20 или 45 лет',
+    'first_14': 'Первичное получение в 14 лет',
+    'expired': 'Истёк срок действия',
     'no_space': 'Закончилось место для штампов',
     'name_changed': 'Изменилось ФИО, дата или место рождения',
     'lost': 'Паспорт утерян или украден',
@@ -574,9 +591,7 @@ function formatReasonDetails(details) {
     const typeMap = {
         'marriage': 'Свидетельство о браке',
         'divorce': 'Свидетельство о разводе',
-        'name_change': 'Свидетельство о перемене имени',
-        'first_14': 'Первичное получение в 14 лет',
-        'expired': 'Истёк срок действия'
+        'name_change': 'Свидетельство о перемене имени'
     };
     const type = typeMap[details.type] || details.type || '—';
     let result = type;
@@ -637,7 +652,6 @@ async function loadApplication() {
 
 function renderDetails(data) {
     const container = document.getElementById('detailsTable');
-    // Добавляем иконки к заголовкам для красоты
     const iconMap = {
         'Номер заявления': 'fa-hashtag',
         'Статус': 'fa-info-circle',
@@ -671,10 +685,10 @@ function renderDetails(data) {
     let html = '';
     fields.forEach(([label, value]) => {
         const icon = iconMap[label] || 'fa-tag';
-        html += `<tr>
+        html += `\\
                     <th><i class="fas ${icon}"></i> ${label}</th>
                     <td>${value}</td>
-                 </tr>`;
+                  \\`;
     });
     container.innerHTML = html;
     document.getElementById('appDetails').classList.remove('hidden');
@@ -756,6 +770,105 @@ async function sendStatusNotification(newStatus, comment, serviceId) {
         console.error('Ошибка отправки сообщения пользователю:', error);
     } else {
         console.log('Сообщение пользователю отправлено');
+    }
+}
+
+async function deleteApplication() {
+    if (!confirm('Вы уверены, что хотите полностью удалить это заявление и все связанные с ним данные? Это действие необратимо.')) {
+        return;
+    }
+    
+    try {
+        // 1. Получить все пути к файлам из основной записи и истории
+        const { data: passportData, error: passportFetchError } = await supabase
+            .schema('services')
+            .from('passport')
+            .select('photo_path')
+            .eq('id', currentAppId)
+            .single();
+            
+        if (passportFetchError && passportFetchError.code !== 'PGRST116') {
+            console.error('Ошибка получения photo_path:', passportFetchError);
+            alert('Ошибка при получении данных заявления: ' + passportFetchError.message);
+            return;
+        }
+        
+        const photoPath = passportData?.photo_path;
+        
+        const { data: historyData, error: historyFetchError } = await supabase
+            .schema('services')
+            .from('passport_status_history')
+            .select('attachments')
+            .eq('passport_id', currentAppId);
+            
+        if (historyFetchError) {
+            console.error('Ошибка получения истории:', historyFetchError);
+            alert('Ошибка при получении истории: ' + historyFetchError.message);
+            return;
+        }
+        
+        const allFilePaths = [];
+        if (photoPath) allFilePaths.push(photoPath);
+        historyData?.forEach(item => {
+            if (item.attachments && Array.isArray(item.attachments)) {
+                allFilePaths.push(...item.attachments);
+            }
+        });
+        
+        // 2. Удалить файлы из хранилища
+        if (allFilePaths.length > 0) {
+            const { error: storageError } = await supabase.storage
+                .from('services-files')
+                .remove(allFilePaths);
+            if (storageError) {
+                console.error('Ошибка удаления файлов:', storageError);
+                alert('Ошибка при удалении файлов: ' + storageError.message);
+                return;
+            }
+        }
+        
+        // 3. Удалить сообщения пользователя
+        const { error: messagesError } = await supabase
+            .schema('messages')
+            .from('user_messages')
+            .delete()
+            .eq('service_id', currentAppId);
+        if (messagesError) {
+            console.error('Ошибка удаления сообщений:', messagesError);
+            alert('Ошибка при удалении сообщений: ' + messagesError.message);
+            return;
+        }
+        
+        // 4. Удалить историю статусов
+        const { error: historyError } = await supabase
+            .schema('services')
+            .from('passport_status_history')
+            .delete()
+            .eq('passport_id', currentAppId);
+        if (historyError) {
+            console.error('Ошибка удаления истории:', historyError);
+            alert('Ошибка при удалении истории: ' + historyError.message);
+            return;
+        }
+        
+        // 5. Удалить основную запись
+        const { error: passportError } = await supabase
+            .schema('services')
+            .from('passport')
+            .delete()
+            .eq('id', currentAppId);
+        if (passportError) {
+            console.error('Ошибка удаления заявления:', passportError);
+            alert('Ошибка при удалении заявления: ' + passportError.message);
+            return;
+        }
+        
+        alert('Заявление и все связанные данные успешно удалены');
+        window.location.href = 'index.html';
+        
+    } catch (err) {
+        console.error('Непредвиденная ошибка при удалении:', err);
+        alert('Произошла ошибка при удалении: ' + err.message);
     }
 }
 
@@ -866,7 +979,7 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
         return;
     }
 
-	await sendStatusNotification(selectedStatus, comment, currentAppId);
+    await sendStatusNotification(selectedStatus, comment, currentAppId);
     closeModal();
     window.location.reload();
 });
@@ -875,6 +988,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!await requireAdmin()) return;
     await loadApplication();
     document.getElementById('changeStatusBtn').addEventListener('click', openStatusModal);
+    document.getElementById('deleteBtn').addEventListener('click', deleteApplication);
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     window.addEventListener('click', (e) => {
         const modal = document.getElementById('actionModal');
