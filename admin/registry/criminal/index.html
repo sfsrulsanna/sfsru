@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Уголовный реестр — Админ панель СФСРЮ</title>
+    <!-- favicons -->
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+<meta name="application-name" content="&nbsp;"/>
+<meta name="msapplication-TileColor" content="#FFFFFF" />
+<meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/index.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+            border-left: 4px solid #7b091a;
+            padding-left: 1rem;
+        }
+        .page-description {
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #7b091a;
+            margin-bottom: 0.5rem;
+        }
+        .stat-label {
+            color: #475569;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+        .btn-large {
+            padding: 0.85rem 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 40px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.2);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #218838, #1a6e2f);
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ — Администратор</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная администратора</a></li>
+                    <li><a href="../../services/">Услуги</a></li>
+                    <li><a href="../../documents/">Документы</a></li>
+                    <li><a href="../../addresses/">Адреса</a></li>
+                    <li><a href="../../index.html">Регистры</a></li>
+                    <li><a href="../../laws/">Законы</a></li>
+                    <li><a href="../../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Уголовный реестр</h1>
+            <p class="page-description">Управление записями о судимостях и уголовных делах</p>
+
+            <div class="stats-grid" id="stats">
+                <div class="stat-card"><div class="stat-number" id="totalRecords">0</div><div class="stat-label">Всего записей</div></div>
+                <div class="stat-card"><div class="stat-number" id="withPhoto">0</div><div class="stat-label">С фото</div></div>
+                <div class="stat-card"><div class="stat-number" id="withDocs">0</div><div class="stat-label">С документами</div></div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="add.html" class="btn-primary btn-large"><i class="fas fa-plus"></i> Добавить запись</a>
+                <a href="all.html" class="btn-primary btn-large"><i class="fas fa-list"></i> Все записи</a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script type="module">
+        import { supabase } from '../../../js/supabase-config.js';
+        import { requireAdmin } from '../../certificates/js/certificates-common.js';
+
+        async function loadStats() {
+            const { count: total, error: eTotal } = await supabase
+                .schema('criminal')
+                .from('records')
+                .select('*', { count: 'exact', head: true });
+
+            // Количество с фото
+            const { count: withPhoto, error: ePhoto } = await supabase
+                .schema('criminal')
+                .from('records')
+                .select('*', { count: 'exact', head: true })
+                .not('photo_path', 'is', null);
+
+            // Количество с документами
+            const { count: withDocs, error: eDocs } = await supabase
+                .schema('criminal')
+                .from('records')
+                .select('*', { count: 'exact', head: true })
+                .not('document_paths', 'is', null);
+
+            document.getElementById('totalRecords').textContent = total ?? 0;
+            document.getElementById('withPhoto').textContent = withPhoto ?? 0;
+            document.getElementById('withDocs').textContent = withDocs ?? 0;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) document.getElementById('adminEmail').textContent = user.email;
+
+            await loadStats();
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+        });
+    </script>
+</body>
+</html>
