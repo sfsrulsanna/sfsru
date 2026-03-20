@@ -539,7 +539,7 @@ async function generatePDF() {
         head: [data[0]],
         body: data.slice(1),
         theme: 'grid',
-        styles: { fontSize: 10, font: 'helvetica' }, // замените на 'PT Sans' если подключили
+        styles: { fontSize: 10, font: 'PT Sans' }, // замените на 'PT Sans' если подключили
         headStyles: { fillColor: [123, 9, 26] }
     });
 

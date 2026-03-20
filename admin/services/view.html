@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Просмотр заявления — Админ панель СФСРЮ</title>
-    <!-- favicons как в других страницах -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -21,37 +21,25 @@
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-    <!-- ... остальные favicons ... -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Стили для страницы */
         .app-details { background: white; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
         .details-table { width: 100%; border-collapse: collapse; }
         .details-table th { width: 30%; background: #f8f9fa; padding: 10px; text-align: right; border: 1px solid #dee2e6; }
         .details-table td { padding: 10px; border: 1px solid #dee2e6; }
-        .photo-section { margin: 2rem 0; text-align: center; }
-        .photo-section img { max-width: 300px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         .history-section { margin: 2rem 0; }
         .history-item { background: #f8f9fa; padding: 1rem; border-left: 4px solid #7b091a; margin-bottom: 1rem; border-radius: 4px; }
         .history-item .meta { font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; }
         .history-item .status { font-weight: 600; color: #7b091a; }
-        .attachments-list a { display: inline-block; margin-right: 1rem; }
-        .action-buttons { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 2rem 0; }
+        .attachments-list a { display: inline-block; margin-right: 1rem; margin-bottom: 0.5rem; background: #e9ecef; padding: 0.2rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem; }
+        .attachments-list a:hover { background: #dee2e6; }
+        .action-buttons { display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; }
         .btn { padding: 0.6rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .btn-work { background: #17a2b8; color: white; }
-        .btn-interim { background: #ffc107; color: #212529; }
-        .btn-positive { background: #28a745; color: white; }
-        .btn-reject { background: #dc3545; color: white; }
-        .btn-cancel { background: #6c757d; color: white; }
-        .btn-complete { background: #007bff; color: white; }
+        .btn-primary { background: #007bff; color: white; }
         /* Модальное окно */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
         .modal.active { display: flex; }
@@ -62,10 +50,14 @@
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
         .form-control { width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
+        select.form-control { background: white; }
         .file-list { margin-top: 1rem; }
         .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.5rem; border-radius: 4px; }
         .btn-small { padding: 0.3rem 0.8rem; font-size: 0.9rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; }
         .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
+        .hidden { display: none; }
+        .photo-link { margin-top: 0.5rem; }
+        .photo-link a { color: #007bff; text-decoration: none; }
     </style>
     <script type="importmap">
         {
@@ -116,12 +108,8 @@
 
             <div id="appDetails" class="app-details hidden">
                 <table class="details-table" id="detailsTable"></table>
-            </div>
-
-            <div id="photoSection" class="photo-section hidden">
-                <h3>Фото заявителя</h3>
-                <img id="photoImg" src="" alt="Фото">
-                <div><a id="photoDownloadLink" href="#" download="photo.jpg">Скачать фото</a></div>
+                <!-- Добавим ссылку на фото в деталях, если нужно, но без большого блока -->
+                <div id="photoLinkContainer" class="photo-link hidden"></div>
             </div>
 
             <div id="historySection" class="history-section hidden">
@@ -129,33 +117,39 @@
                 <div id="historyList"></div>
             </div>
 
-            <div class="action-buttons" id="actionButtons">
-                <button class="btn btn-work" data-action="processing">Взять в работу</button>
-                <button class="btn btn-interim" data-action="interim">Промежуточные результаты</button>
-                <button class="btn btn-positive" data-action="positive">Принято положительное решение</button>
-                <button class="btn btn-complete" data-action="completed">Результат выдан</button>
-                <button class="btn btn-reject" data-action="rejected">Отказано</button>
-                <button class="btn btn-cancel" data-action="cancelled">Отменить</button>
+            <div class="action-buttons">
+                <button id="changeStatusBtn" class="btn btn-primary">Изменить статус</button>
             </div>
         </div>
     </main>
 
-    <!-- Модальное окно для действий -->
+    <!-- Модальное окно для изменения статуса -->
     <div id="actionModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalTitle">Действие</h3>
-                <span class="close" onclick="closeModal()">&times;</span>
+                <h3 id="modalTitle">Изменение статуса</h3>
+                <span class="close" id="closeModalBtn">&times;</span>
             </div>
             <div class="modal-body">
                 <form id="actionForm">
                     <div class="form-group">
+                        <label for="statusSelect">Новый статус</label>
+                        <select id="statusSelect" class="form-control" required>
+                            <option value="processing">В работе</option>
+                            <option value="interim">Промежуточные результаты</option>
+                            <option value="positive">Принято положительное решение</option>
+                            <option value="completed">Результат выдан</option>
+                            <option value="rejected">Отказано</option>
+                            <option value="cancelled">Отменено</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label for="modalComment">Комментарий</label>
                         <textarea id="modalComment" class="form-control" rows="4"></textarea>
                     </div>
-                    <div id="fileUploadSection" class="form-group">
-                        <label for="modalFiles">Прикрепить файлы (PDF)</label>
-                        <input type="file" id="modalFiles" class="form-control" multiple accept=".pdf">
+                    <div class="form-group">
+                        <label for="modalFiles">Прикрепить файлы (PDF, изображения)</label>
+                        <input type="file" id="modalFiles" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png">
                         <div id="fileList" class="file-list"></div>
                     </div>
                     <button type="submit" class="btn btn-primary">Сохранить</button>
@@ -175,8 +169,7 @@ import { supabase } from '../../../js/supabase-config.js';
 import { requireAdmin } from '../certificates/js/certificates-common.js';
 
 let currentAppId = null;
-let applicationNumber = null; // <-- добавили
-let currentAction = null;
+let applicationNumber = null;
 let uploadedFiles = [];
 let mvdMap = {};
 
@@ -203,16 +196,6 @@ const reasonMap = {
     'error': 'Ошибка в паспорте'
 };
 
-// Соответствие действий кнопок статусам
-const actionToStatus = {
-    'processing': 'processing',
-    'interim': 'interim',
-    'positive': 'positive',
-    'completed': 'completed',
-    'rejected': 'rejected',
-    'cancelled': 'cancelled'
-};
-
 // Вспомогательная функция для получения подписанной ссылки на файл
 async function getSignedUrl(filePath) {
     if (!filePath) return null;
@@ -226,6 +209,19 @@ async function getSignedUrl(filePath) {
         console.error('Ошибка получения подписанной ссылки для', filePath, e);
         return null;
     }
+}
+
+// Извлечение имени файла из пути (последний фрагмент после '/', убираем timestamp если есть)
+function extractFileNameFromPath(filePath) {
+    if (!filePath) return 'файл';
+    let parts = filePath.split('/');
+    let fullName = parts[parts.length - 1];
+    // Убираем префикс с timestamp (число_)
+    let match = fullName.match(/^\d+_(.+)$/);
+    if (match) {
+        return decodeURIComponent(match[1]);
+    }
+    return decodeURIComponent(fullName);
 }
 
 // Форматирование JSONB данных в читаемый вид
@@ -242,7 +238,7 @@ function formatPersonalData(data) {
         parts.push(`Место рождения: ${data.birth_place}`);
     }
     if (data.gender) {
-        parts.push(`Пол: ${data.gender}`);
+        parts.push(`Пол: ${data.gender === 'male' ? 'Мужской' : 'Женский'}`);
     }
     return parts.join('<br>') || JSON.stringify(data);
 }
@@ -259,7 +255,7 @@ function formatReasonDetails(details) {
     return `${type}, №${details.number || '—'} от ${details.date ? new Date(details.date).toLocaleDateString('ru-RU') : '—'}, ${details.issuedBy || '—'}`;
 }
 
-// Безопасное имя файла (замена недопустимых символов)
+// Безопасное имя файла
 function safeFileName(name) {
     return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
 }
@@ -288,42 +284,39 @@ async function loadApplication() {
 
     console.log('Загрузка заявления ID:', id);
 
-    await Promise.all([
-        loadMvd(),
-        (async () => {
-            const { data, error } = await supabase
-                .schema('services')
-                .from('passport')
-                .select('*')
-                .eq('id', id)
-                .single();
+    await loadMvd();
+    
+    const { data, error } = await supabase
+        .schema('services')
+        .from('passport')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-            if (error) {
-                console.error('Ошибка загрузки заявления:', error);
-                showError('Заявление не найдено');
-                return;
-            }
+    if (error) {
+        console.error('Ошибка загрузки заявления:', error);
+        showError('Заявление не найдено');
+        return;
+    }
 
-            console.log('Данные заявления:', data);
-            applicationNumber = data.application_number; // <-- сохраняем номер заявления
-            document.getElementById('appNumber').textContent = data.application_number;
-            renderDetails(data);
-            renderPhoto(data.photo_path);
-            loadHistory();
-        })()
-    ]);
-
+    console.log('Данные заявления:', data);
+    applicationNumber = data.application_number;
+    document.getElementById('appNumber').textContent = data.application_number;
+    renderDetails(data);
+    renderPhotoLink(data.photo_path); // вместо отдельного блока - ссылка в деталях
+    await loadHistory();
+    
     document.getElementById('loading').classList.add('hidden');
 }
 
-// Отображение деталей заявления в таблице (на русском)
+// Отображение деталей заявления в таблице
 function renderDetails(data) {
     const container = document.getElementById('detailsTable');
     const fields = [
         ['Номер заявления', data.application_number],
         ['Статус', statusMap[data.status] || data.status],
         ['Дата создания', new Date(data.created_at).toLocaleString()],
-        ['Личный код', data.personal_code],
+        ['Личный код', data.personal_code || '—'],
         ['Причина', reasonMap[data.reason] || data.reason],
         ['Детали причины', formatReasonDetails(data.reason_details)],
         ['Личные данные', formatPersonalData(data.personal_data)],
@@ -331,7 +324,7 @@ function renderDetails(data) {
         ['Телефон', data.phone || '—'],
         ['Email', data.email || '—'],
         ['Отделение МВД', mvdMap[data.mvd_id] || data.mvd_id || '—'],
-        ['Фото', data.photo_path ? 'загружено' : 'нет'],
+        ['Фото', data.photo_path ? 'прикреплено' : 'нет'],
         ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
     ];
     let html = '';
@@ -342,27 +335,28 @@ function renderDetails(data) {
     document.getElementById('appDetails').classList.remove('hidden');
 }
 
-// Отображение фото с подписанной ссылкой
-async function renderPhoto(photoPath) {
-    const section = document.getElementById('photoSection');
+// Ссылка на фото (вместо большого блока)
+async function renderPhotoLink(photoPath) {
+    const container = document.getElementById('photoLinkContainer');
     if (!photoPath) {
-        section.classList.add('hidden');
+        container.classList.add('hidden');
         return;
     }
     try {
         const signedUrl = await getSignedUrl(photoPath);
-        if (!signedUrl) throw new Error('Не удалось получить ссылку на фото');
-        document.getElementById('photoImg').src = signedUrl;
-        document.getElementById('photoDownloadLink').href = signedUrl;
-        section.classList.remove('hidden');
+        if (signedUrl) {
+            container.innerHTML = `<strong>Фото заявителя:</strong> <a href="${signedUrl}" download="photo.jpg" target="_blank">Скачать фото</a>`;
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
     } catch (e) {
         console.error('Ошибка загрузки фото:', e);
-        section.innerHTML = '<p class="error">Не удалось загрузить фото</p>';
-        section.classList.remove('hidden');
+        container.classList.add('hidden');
     }
 }
 
-// Загрузка истории статусов с вложениями
+// Загрузка истории статусов с вложениями (показываем имена файлов)
 async function loadHistory() {
     const { data, error } = await supabase
         .schema('services')
@@ -390,10 +384,11 @@ async function loadHistory() {
         const fileLinks = [];
         for (const filePath of (item.attachments || [])) {
             const signedUrl = await getSignedUrl(filePath);
+            const fileName = extractFileNameFromPath(filePath);
             if (signedUrl) {
-                fileLinks.push(`<a href="${signedUrl}" target="_blank">📎 файл</a>`);
+                fileLinks.push(`<a href="${signedUrl}" target="_blank">📄 ${fileName}</a>`);
             } else {
-                fileLinks.push(`<span title="Недоступен">📎 (ошибка)</span>`);
+                fileLinks.push(`<span title="Недоступен">📄 ${fileName} (ошибка)</span>`);
             }
         }
         html += `
@@ -409,7 +404,6 @@ async function loadHistory() {
     document.getElementById('historySection').classList.remove('hidden');
 }
 
-// Показать ошибку
 function showError(msg) {
     const err = document.getElementById('error');
     err.textContent = msg;
@@ -417,42 +411,27 @@ function showError(msg) {
     document.getElementById('loading').classList.add('hidden');
 }
 
-// Открыть модальное окно для выбранного действия
-window.openModal = (action) => {
-    currentAction = action;
-    document.getElementById('modalTitle').textContent = getActionTitle(action);
-    const fileSection = document.getElementById('fileUploadSection');
-    if (action === 'cancelled') {
-        fileSection.style.display = 'none';
-    } else {
-        fileSection.style.display = 'block';
-    }
+// Открыть модальное окно для изменения статуса
+function openStatusModal() {
+    // Очищаем форму
+    document.getElementById('modalComment').value = '';
+    document.getElementById('modalFiles').value = '';
+    document.getElementById('fileList').innerHTML = '';
+    uploadedFiles = [];
+    // Устанавливаем текущий статус в выпадающем списке (опционально)
+    // Но мы можем получить текущий статус из таблицы, но это не обязательно, оставим по умолчанию "processing"
     document.getElementById('actionModal').classList.add('active');
-};
+}
 
-// Закрыть модальное окно
-window.closeModal = () => {
+function closeModal() {
     document.getElementById('actionModal').classList.remove('active');
     document.getElementById('modalComment').value = '';
     document.getElementById('modalFiles').value = '';
     document.getElementById('fileList').innerHTML = '';
     uploadedFiles = [];
-};
-
-// Заголовок для модалки
-function getActionTitle(action) {
-    const titles = {
-        'processing': 'Взять в работу',
-        'interim': 'Промежуточные результаты',
-        'positive': 'Принято положительное решение',
-        'completed': 'Результат выдан',
-        'rejected': 'Отказано',
-        'cancelled': 'Отменить'
-    };
-    return titles[action] || 'Действие';
 }
 
-// Обработка выбора файлов для загрузки
+// Обработка выбора файлов
 document.getElementById('modalFiles').addEventListener('change', (e) => {
     const files = Array.from(e.target.files);
     const list = document.getElementById('fileList');
@@ -469,29 +448,40 @@ document.getElementById('modalFiles').addEventListener('change', (e) => {
     });
     document.querySelectorAll('.file-item .btn-small').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            const idx = e.target.dataset.index;
+            const idx = parseInt(e.target.dataset.index);
             uploadedFiles.splice(idx, 1);
+            // Обновляем input files
             const dt = new DataTransfer();
             uploadedFiles.forEach(f => dt.items.add(f));
             document.getElementById('modalFiles').files = dt.files;
             e.target.closest('.file-item').remove();
+            // Переиндексируем кнопки
+            document.querySelectorAll('.file-item .btn-small').forEach((btn, newIdx) => {
+                btn.dataset.index = newIdx;
+            });
         });
     });
 });
 
-// Отправка формы (сохранение статуса, комментария и файлов)
+// Отправка формы (изменение статуса)
 document.getElementById('actionForm').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const selectedStatus = document.getElementById('statusSelect').value;
     const comment = document.getElementById('modalComment').value.trim();
     const files = uploadedFiles;
 
-    console.log('Отправка действия:', currentAction, 'комментарий:', comment, 'файлов:', files.length);
+    if (!selectedStatus) {
+        alert('Выберите статус');
+        return;
+    }
 
-    // Загружаем файлы в хранилище, используя номер заявления
+    console.log('Изменение статуса:', selectedStatus, 'комментарий:', comment, 'файлов:', files.length);
+
+    // Загружаем файлы в хранилище
     const attachmentPaths = [];
     for (const file of files) {
         const safeName = safeFileName(file.name);
-        const filePath = `passport/${applicationNumber}/${Date.now()}_${safeName}`; // <-- изменено
+        const filePath = `passport/${applicationNumber}/${Date.now()}_${safeName}`;
         const { error } = await supabase.storage
             .from('services-files')
             .upload(filePath, file);
@@ -510,7 +500,7 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
         .from('passport_status_history')
         .insert({
             passport_id: currentAppId,
-            status: actionToStatus[currentAction],
+            status: selectedStatus,
             comment: comment,
             attachments: attachmentPaths,
             created_by: (await supabase.auth.getUser()).data.user.id
@@ -526,7 +516,7 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
     const { error: updateError } = await supabase
         .schema('services')
         .from('passport')
-        .update({ status: actionToStatus[currentAction], updated_at: new Date().toISOString() })
+        .update({ status: selectedStatus, updated_at: new Date().toISOString() })
         .eq('id', currentAppId);
 
     if (updateError) {
@@ -537,6 +527,7 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
 
     console.log('Статус обновлён, история сохранена');
     closeModal();
+    // Перезагружаем страницу для отображения обновлений
     window.location.reload();
 });
 
@@ -546,11 +537,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadApplication();
 
-    document.querySelectorAll('.action-buttons .btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const action = btn.dataset.action;
-            openModal(action);
-        });
+    // Обработчик для кнопки "Изменить статус"
+    document.getElementById('changeStatusBtn').addEventListener('click', openStatusModal);
+    
+    // Закрытие модалки по крестику
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    // Закрытие по клику вне окна
+    window.addEventListener('click', (e) => {
+        const modal = document.getElementById('actionModal');
+        if (e.target === modal) closeModal();
     });
 
     document.getElementById('logoutBtn').addEventListener('click', async () => {
