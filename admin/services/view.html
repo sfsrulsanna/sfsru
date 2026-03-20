@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Просмотр заявления — Админ панель СФСРЮ</title>
     <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
@@ -26,35 +26,366 @@
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .app-details { background: white; border-radius: 8px; padding: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 2rem; }
-        .details-table { width: 100%; border-collapse: collapse; }
-        .details-table th { width: 30%; background: #f8f9fa; padding: 10px; text-align: right; border: 1px solid #dee2e6; }
-        .details-table td { padding: 10px; border: 1px solid #dee2e6; }
-        .history-section { margin: 2rem 0; }
-        .history-item { background: #f8f9fa; padding: 1rem; border-left: 4px solid #7b091a; margin-bottom: 1rem; border-radius: 4px; }
-        .history-item .meta { font-size: 0.9rem; color: #666; margin-bottom: 0.5rem; }
-        .history-item .status { font-weight: 600; color: #7b091a; }
-        .attachments-list a { display: inline-block; margin-right: 1rem; margin-bottom: 0.5rem; background: #e9ecef; padding: 0.2rem 0.6rem; border-radius: 4px; text-decoration: none; font-size: 0.9rem; }
-        .attachments-list a:hover { background: #dee2e6; }
-        .action-buttons { display: flex; gap: 1rem; justify-content: center; margin: 2rem 0; }
-        .btn { padding: 0.6rem 1.5rem; border: none; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: all 0.3s; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .btn-primary { background: #007bff; color: white; }
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; padding: 2rem; border-radius: 8px; max-width: 500px; width: 90%; max-height: 80vh; overflow-y: auto; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-        .modal-header h3 { margin: 0; }
-        .close { font-size: 1.5rem; cursor: pointer; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
-        .form-control { width: 100%; padding: 0.6rem; border: 1px solid #ccc; border-radius: 4px; font-size: 1rem; }
-        select.form-control { background: white; }
-        .file-list { margin-top: 1rem; }
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: #f8f9fa; margin-bottom: 0.5rem; border-radius: 4px; }
-        .btn-small { padding: 0.3rem 0.8rem; font-size: 0.9rem; background: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
-        .hidden { display: none; }
+        /* Общие улучшения */
+        .container {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: #1e293b;
+            border-left: 4px solid #7b091a;
+            padding-left: 1rem;
+        }
+        
+        /* Карточка деталей */
+        .app-details {
+            background: white;
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            margin-bottom: 2rem;
+            transition: box-shadow 0.2s;
+        }
+        
+        .app-details:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        /* Таблица с адаптивностью */
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+        
+        .details-table th,
+        .details-table td {
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+            vertical-align: top;
+        }
+        
+        .details-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #0f172a;
+            width: 30%;
+            text-align: right;
+            font-size: 0.9rem;
+        }
+        
+        .details-table td {
+            background: white;
+            color: #1e293b;
+        }
+        
+        /* Чередование строк для читаемости */
+        .details-table tr:nth-child(even) td {
+            background-color: #fefefe;
+        }
+        
+        /* Адаптив для мобильных */
+        @media (max-width: 768px) {
+            .details-table,
+            .details-table tbody,
+            .details-table tr,
+            .details-table th,
+            .details-table td {
+                display: block;
+            }
+            
+            .details-table tr {
+                margin-bottom: 1rem;
+                border: 1px solid #e2e8f0;
+                border-radius: 12px;
+                overflow: hidden;
+            }
+            
+            .details-table th {
+                width: 100%;
+                text-align: left;
+                background: #f1f5f9;
+                border-bottom: none;
+            }
+            
+            .details-table td {
+                border-top: none;
+            }
+        }
+        
+        /* История статусов */
+        .history-section {
+            margin: 2rem 0;
+        }
+        
+        .history-section h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .history-section h3 i {
+            color: #7b091a;
+        }
+        
+        .history-item {
+            background: #ffffff;
+            padding: 1.25rem;
+            border-left: 4px solid #7b091a;
+            margin-bottom: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+        
+        .history-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        
+        .history-item .meta {
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .history-item .status {
+            font-weight: 700;
+            color: #7b091a;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .attachments-list {
+            margin-top: 0.75rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .attachments-list a {
+            background: #f1f5f9;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            color: #0f172a;
+            transition: background 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .attachments-list a:hover {
+            background: #e2e8f0;
+            color: #7b091a;
+        }
+        
+        /* Кнопка изменения статуса */
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.2);
+            background: linear-gradient(135deg, #0069d9, #004085);
+        }
+        
+        /* Модальное окно */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.2s;
+        }
+        
+        .modal.active {
+            display: flex;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.2);
+            animation: slideUp 0.2s ease;
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        
+        .close {
+            font-size: 1.75rem;
+            cursor: pointer;
+            color: #64748b;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        
+        .close:hover {
+            color: #7b091a;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.7rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+        }
+        
+        select.form-control {
+            background: white;
+            cursor: pointer;
+        }
+        
+        .file-list {
+            margin-top: 0.75rem;
+        }
+        
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: #f8fafc;
+            margin-bottom: 0.5rem;
+            border-radius: 12px;
+            font-size: 0.9rem;
+        }
+        
+        .btn-small {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+            background: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .btn-small:hover {
+            background: #b02a37;
+        }
+        
+        /* Загрузка и ошибки */
+        .loading, .no-data, .error {
+            text-align: center;
+            padding: 2rem;
+            color: #64748b;
+            font-size: 1rem;
+        }
+        
+        .error {
+            color: #dc3545;
+            background: #fff5f5;
+            border-radius: 12px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        /* Иконки в таблице */
+        .details-table th i {
+            margin-right: 0.5rem;
+            width: 1.25rem;
+            color: #7b091a;
+        }
+        
+        footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #475569;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1.5rem;
+        }
     </style>
     <script type="importmap">
         {
@@ -69,7 +400,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ - Админка</h1>
+                <h1>СФСРЮ / Просмотр заявления</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -104,16 +435,16 @@
             <div id="error" class="error hidden"></div>
 
             <div id="appDetails" class="app-details hidden">
-                <table class="details-table" id="detailsTable"><tr>
+                <table class="details-table" id="detailsTable">\\
             </div>
 
             <div id="historySection" class="history-section hidden">
-                <h3>История статусов</h3>
+                <h3><i class="fas fa-history"></i> История статусов</h3>
                 <div id="historyList"></div>
             </div>
 
             <div class="action-buttons">
-                <button id="changeStatusBtn" class="btn btn-primary">Изменить статус</button>
+                <button id="changeStatusBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Изменить статус</button>
             </div>
         </div>
     </main>
@@ -122,7 +453,7 @@
     <div id="actionModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="modalTitle">Изменение статуса</h3>
+                <h3>Изменение статуса</h3>
                 <span class="close" id="closeModalBtn">&times;</span>
             </div>
             <div class="modal-body">
@@ -147,7 +478,7 @@
                         <input type="file" id="modalFiles" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png">
                         <div id="fileList" class="file-list"></div>
                     </div>
-                    <button type="submit" class="btn btn-primary">Сохранить</button>
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Сохранить</button>
                 </form>
             </div>
         </div>
@@ -165,14 +496,12 @@ import { requireAdmin } from '../certificates/js/certificates-common.js';
 
 let currentAppId = null;
 let applicationNumber = null;
-let currentUserId = null;       // ID пользователя, подавшего заявление
+let currentUserId = null;
 let uploadedFiles = [];
 let mvdMap = {};
 
-// Название услуги (для сообщений)
 const SERVICE_NAME = "Паспорт СФСРЮ";
 
-// Маппинг статусов на русский язык
 const statusMap = {
     'submitted': 'Отправлено в ведомство',
     'processing': 'В работе',
@@ -183,7 +512,6 @@ const statusMap = {
     'cancelled': 'Отменено'
 };
 
-// Маппинг причин на русский язык (добавлены две новые)
 const reasonMap = {
     '14_20_45': 'Исполнилось 14, 20 или 45 лет',
     'no_space': 'Закончилось место для штампов',
@@ -197,7 +525,6 @@ const reasonMap = {
     'expired': 'Истёк срок действия'
 };
 
-// Вспомогательная функция для получения подписанной ссылки на файл
 async function getSignedUrl(filePath) {
     if (!filePath) return null;
     try {
@@ -212,7 +539,6 @@ async function getSignedUrl(filePath) {
     }
 }
 
-// Извлечение имени файла из пути
 function extractFileNameFromPath(filePath) {
     if (!filePath) return 'файл';
     let parts = filePath.split('/');
@@ -224,7 +550,6 @@ function extractFileNameFromPath(filePath) {
     return decodeURIComponent(fullName);
 }
 
-// Форматирование JSONB данных (личные данные) на русском
 function formatPersonalData(data) {
     if (!data) return '—';
     const parts = [];
@@ -243,15 +568,9 @@ function formatPersonalData(data) {
     return parts.join('<br>') || JSON.stringify(data);
 }
 
-// Форматирование деталей причины (универсально, по-русски)
 function formatReasonDetails(details) {
     if (!details) return '—';
-    
-    // Если передан только тип (например, для first_14 может быть пустой объект)
-    if (typeof details === 'string') {
-        return details;
-    }
-    
+    if (typeof details === 'string') return details;
     const typeMap = {
         'marriage': 'Свидетельство о браке',
         'divorce': 'Свидетельство о разводе',
@@ -259,24 +578,19 @@ function formatReasonDetails(details) {
         'first_14': 'Первичное получение в 14 лет',
         'expired': 'Истёк срок действия'
     };
-    
     const type = typeMap[details.type] || details.type || '—';
     let result = type;
-    
     if (details.number || details.date || details.issuedBy) {
         result += `, №${details.number || '—'} от ${details.date ? new Date(details.date).toLocaleDateString('ru-RU') : '—'}`;
         if (details.issuedBy) result += `, выдан: ${details.issuedBy}`;
     }
-    
     return result;
 }
 
-// Безопасное имя файла
 function safeFileName(name) {
     return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
 }
 
-// Загрузка списка отделений МВД
 async function loadMvd() {
     const { data, error } = await supabase
         .from('mvd')
@@ -288,7 +602,6 @@ async function loadMvd() {
     data.forEach(item => { mvdMap[item.id] = item.name; });
 }
 
-// Загрузка данных заявления
 async function loadApplication() {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
@@ -297,8 +610,6 @@ async function loadApplication() {
         return;
     }
     currentAppId = id;
-
-    console.log('Загрузка заявления ID:', id);
 
     await loadMvd();
     
@@ -315,9 +626,8 @@ async function loadApplication() {
         return;
     }
 
-    console.log('Данные заявления:', data);
     applicationNumber = data.application_number;
-    currentUserId = data.user_id;          // сохраняем user_id для отправки сообщения
+    currentUserId = data.user_id;
     document.getElementById('appNumber').textContent = data.application_number;
     renderDetails(data);
     await loadHistory();
@@ -325,9 +635,24 @@ async function loadApplication() {
     document.getElementById('loading').classList.add('hidden');
 }
 
-// Отображение деталей заявления в таблице
 function renderDetails(data) {
     const container = document.getElementById('detailsTable');
+    // Добавляем иконки к заголовкам для красоты
+    const iconMap = {
+        'Номер заявления': 'fa-hashtag',
+        'Статус': 'fa-info-circle',
+        'Дата создания': 'fa-calendar-alt',
+        'Личный код': 'fa-id-card',
+        'Причина': 'fa-question-circle',
+        'Детали причины': 'fa-file-alt',
+        'Личные данные': 'fa-user',
+        'Новые данные': 'fa-user-edit',
+        'Телефон': 'fa-phone',
+        'Email': 'fa-envelope',
+        'Отделение МВД': 'fa-building',
+        'Последнее обновление': 'fa-clock'
+    };
+    
     const fields = [
         ['Номер заявления', data.application_number],
         ['Статус', statusMap[data.status] || data.status],
@@ -342,15 +667,19 @@ function renderDetails(data) {
         ['Отделение МВД', mvdMap[data.mvd_id] || data.mvd_id || '—'],
         ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
     ];
+    
     let html = '';
     fields.forEach(([label, value]) => {
-        html += `<tr><th>${label}</th><td>${value}</td>`;
+        const icon = iconMap[label] || 'fa-tag';
+        html += `<tr>
+                    <th><i class="fas ${icon}"></i> ${label}</th>
+                    <td>${value}</td>
+                 </tr>`;
     });
     container.innerHTML = html;
     document.getElementById('appDetails').classList.remove('hidden');
 }
 
-// Загрузка истории статусов с вложениями
 async function loadHistory() {
     const { data, error } = await supabase
         .schema('services')
@@ -380,15 +709,15 @@ async function loadHistory() {
             const signedUrl = await getSignedUrl(filePath);
             const fileName = extractFileNameFromPath(filePath);
             if (signedUrl) {
-                fileLinks.push(`<a href="${signedUrl}" target="_blank">📄 ${fileName}</a>`);
+                fileLinks.push(`<a href="${signedUrl}" target="_blank"><i class="fas fa-paperclip"></i> ${fileName}</a>`);
             } else {
-                fileLinks.push(`<span title="Файл не найден">📄 ${fileName} (недоступен)</span>`);
+                fileLinks.push(`<span><i class="fas fa-exclamation-triangle"></i> ${fileName} (недоступен)</span>`);
             }
         }
         html += `
             <div class="history-item">
-                <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
-                <div class="status">${statusText}</div>
+                <div class="meta"><i class="far fa-clock"></i> ${new Date(item.created_at).toLocaleString()}</div>
+                <div class="status"><i class="fas fa-tag"></i> ${statusText}</div>
                 <div>${item.comment || ''}</div>
                 <div class="attachments-list">${fileLinks.join(' ')}</div>
             </div>
@@ -398,16 +727,17 @@ async function loadHistory() {
     document.getElementById('historySection').classList.remove('hidden');
 }
 
-// Отправка уведомления пользователю
-async function sendStatusNotification(newStatus) {
+async function sendStatusNotification(newStatus, comment, serviceId) {
     if (!currentUserId) {
         console.warn('Не найден user_id заявления, сообщение не отправлено');
         return;
     }
-    
     const newStatusText = statusMap[newStatus] || newStatus;
     const title = 'Изменение статуса заявления';
-    const content = `Статус вашего заявления №${applicationNumber} по получению услуги "${SERVICE_NAME}" изменен на "${newStatusText}".`;
+    let content = `Статус вашего заявления №${applicationNumber} по получению услуги "${SERVICE_NAME}" изменен на "${newStatusText}".`;
+    if (comment && comment.trim()) {
+        content += `\n\nКомментарий: ${comment.trim()}`;
+    }
     
     const { error } = await supabase
         .schema('messages')
@@ -418,6 +748,7 @@ async function sendStatusNotification(newStatus) {
             content: content,
             type: 'status_change',
             is_read: false,
+            service_id: serviceId,
             created_at: new Date().toISOString()
         });
     
@@ -460,7 +791,7 @@ document.getElementById('modalFiles').addEventListener('change', (e) => {
         const div = document.createElement('div');
         div.className = 'file-item';
         div.innerHTML = `
-            <span>${file.name}</span>
+            <span><i class="fas fa-file"></i> ${file.name}</span>
             <button type="button" class="btn-small" data-index="${index}">Удалить</button>
         `;
         list.appendChild(div);
@@ -491,8 +822,6 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
         return;
     }
 
-    console.log('Изменение статуса:', selectedStatus, 'комментарий:', comment, 'файлов:', files.length);
-
     const attachmentPaths = [];
     for (const file of files) {
         const safeName = safeFileName(file.name);
@@ -506,7 +835,6 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
             return;
         }
         attachmentPaths.push(filePath);
-        console.log('Файл загружен:', filePath);
     }
 
     const { error: historyError } = await supabase
@@ -538,26 +866,20 @@ document.getElementById('actionForm').addEventListener('submit', async (e) => {
         return;
     }
 
-    // Отправляем уведомление пользователю
-    await sendStatusNotification(selectedStatus);
-
-    console.log('Статус обновлён, история сохранена, уведомление отправлено');
+	await sendStatusNotification(selectedStatus, comment, currentAppId);
     closeModal();
     window.location.reload();
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await requireAdmin()) return;
-
     await loadApplication();
-
     document.getElementById('changeStatusBtn').addEventListener('click', openStatusModal);
     document.getElementById('closeModalBtn').addEventListener('click', closeModal);
     window.addEventListener('click', (e) => {
         const modal = document.getElementById('actionModal');
         if (e.target === modal) closeModal();
     });
-
     document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = '../../login.html';
