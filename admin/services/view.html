@@ -823,6 +823,18 @@ async function deleteApplication() {
             }
         }
         
+        // 3. Удалить сообщения пользователя
+        const { error: messagesError } = await supabase
+            .schema('messages')
+            .from('user_messages')
+            .delete()
+            .eq('service_id', currentAppId);
+        if (messagesError) {
+            console.error('Ошибка удаления сообщений:', messagesError);
+            alert('Ошибка при удалении сообщений: ' + messagesError.message);
+            return;
+        }
+        
         // 4. Удалить историю статусов
         const { error: historyError } = await supabase
             .schema('services')
