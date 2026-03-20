@@ -64,6 +64,30 @@
             padding: 1rem 2rem;
             font-size: 1.1rem;
         }
+        .service-tabs {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        .service-tab {
+            background: #f0f0f0;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+        .service-tab:hover {
+            background: #e0e0e0;
+        }
+        .service-tab.active {
+            background: #7b091a;
+            color: white;
+        }
     </style>
     <script type="importmap">
         {
@@ -78,7 +102,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ / Услуги (админ)</h1>
+                <h1>СФСРЮ — Администратор</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -87,13 +111,12 @@
             </button>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная админки</a></li>
-                    <li><a href="index.html" class="active">Услуги</a></li>
-                    <li><a href="../certificates/index.html">Свидетельства</a></li>
-                    <li><a href="#">Документы</a></li>
-                    <li><a href="#">Адреса</a></li>
-                    <li><a href="#">Регистры</a></li>
-                    <li><a href="#">Законы</a></li>
+                    <li><a href="../index.html">Главная администратора</a></li>
+                    <li><a href="index.html">Услуги</a></li>
+                    <li><a href="../documents/">Документы</a></li>
+                    <li><a href="../addresses/">Адреса</a></li>
+                    <li><a href="../registry/">Регистры</a></li>
+                    <li><a href="../laws/">Законы</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
@@ -108,7 +131,13 @@
     <main class="main-content">
         <div class="container">
             <h1 class="page-title">Управление услугами</h1>
-            <p class="page-description">Статистика и навигация по заявлениям на получение паспорта</p>
+            <p class="page-description">Статистика и навигация по заявлениям</p>
+
+            <div class="service-tabs">
+                <button class="service-tab active" data-type="passport">Внутренние паспорта</button>
+                <button class="service-tab" data-type="foreign">Загранпаспорта</button>
+                <button class="service-tab" data-type="other">Другие услуги</button>
+            </div>
 
             <div class="stats-grid" id="stats">
                 <div class="stat-card"><div class="stat-number" id="totalApps">0</div><div class="stat-label">Всего заявлений</div></div>
@@ -119,9 +148,9 @@
             </div>
 
             <div class="action-buttons">
-                <a href="all.html" class="btn btn-primary btn-large">Все услуги</a>
-                <a href="pending.html" class="btn btn-primary btn-large">Не завершённые</a>
-                <a href="processing.html" class="btn btn-primary btn-large">В работе</a>
+                <a href="#" id="allLink" class="btn btn-primary btn-large">Все услуги</a>
+                <a href="#" id="pendingLink" class="btn btn-primary btn-large">Не завершённые</a>
+                <a href="#" id="processingLink" class="btn btn-primary btn-large">В работе</a>
             </div>
         </div>
     </main>
@@ -136,12 +165,77 @@
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../certificates/js/certificates-common.js';
 
+        let currentType = 'passport'; // passport, foreign, other
+
+        // Маппинг типов услуг к таблицам в схеме services
+        const tableMap = {
+            passport: 'passport',
+            foreign: 'foreign_passport',
+            other: 'service' // предположим, что общая таблица для прочих услуг
+        };
+
+        // Названия типов для отображения в заголовках (можно использовать в ссылках)
+        const typeNames = {
+            passport: 'Внутренние паспорта',
+            foreign: 'Загранпаспорта',
+            other: 'Другие услуги'
+        };
+
+        // Статусы, которые считаются "отправлено", "в работе", "завершено", "отказано"
+        // Для всех таблиц используем одинаковые ключи статусов
+        const statusGroups = {
+            submitted: ['submitted'], // отправлено
+            processing: ['processing', 'interim', 'positive'], // в работе (включая промежуточные и положительное решение)
+            completed: ['completed'], // завершено (результат выдан)
+            rejected: ['rejected', 'cancelled'] // отказано или отменено
+        };
+
         async function loadStats() {
-            const { count: total, error: e1 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true });
-            const { count: submitted, error: e2 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'submitted');
-            const { count: processing, error: e3 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'processing');
-            const { count: completed, error: e4 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'completed');
-            const { count: rejected, error: e5 } = await supabase.schema('services').from('passport').select('*', { count: 'exact', head: true }).eq('status', 'rejected');
+            const table = tableMap[currentType];
+            if (!table) {
+                console.error('Неизвестный тип услуги:', currentType);
+                return;
+            }
+
+            // Общее количество
+            const { count: total, error: eTotal } = await supabase
+                .schema('services')
+                .from(table)
+                .select('*', { count: 'exact', head: true });
+
+            // Отправленные (статус submitted)
+            const { count: submitted, error: eSub } = await supabase
+                .schema('services')
+                .from(table)
+                .select('*', { count: 'exact', head: true })
+                .in('status', statusGroups.submitted);
+
+            // В работе (processing, interim, positive)
+            const { count: processing, error: eProc } = await supabase
+                .schema('services')
+                .from(table)
+                .select('*', { count: 'exact', head: true })
+                .in('status', statusGroups.processing);
+
+            // Завершено (completed)
+            const { count: completed, error: eComp } = await supabase
+                .schema('services')
+                .from(table)
+                .select('*', { count: 'exact', head: true })
+                .in('status', statusGroups.completed);
+
+            // Отказано (rejected, cancelled)
+            const { count: rejected, error: eRej } = await supabase
+                .schema('services')
+                .from(table)
+                .select('*', { count: 'exact', head: true })
+                .in('status', statusGroups.rejected);
+
+            if (eTotal) console.error('Ошибка загрузки общего количества:', eTotal);
+            if (eSub) console.error('Ошибка загрузки отправленных:', eSub);
+            if (eProc) console.error('Ошибка загрузки в работе:', eProc);
+            if (eComp) console.error('Ошибка загрузки завершённых:', eComp);
+            if (eRej) console.error('Ошибка загрузки отказанных:', eRej);
 
             document.getElementById('totalApps').textContent = total ?? 0;
             document.getElementById('submittedApps').textContent = submitted ?? 0;
@@ -150,10 +244,58 @@
             document.getElementById('rejectedApps').textContent = rejected ?? 0;
         }
 
+        function updateNavigationLinks() {
+            // Формируем базовый URL для страниц списка с параметром type
+            const allUrl = `all.html?type=${currentType}`;
+            const pendingUrl = `pending.html?type=${currentType}`;
+            const processingUrl = `processing.html?type=${currentType}`;
+            
+            document.getElementById('allLink').href = allUrl;
+            document.getElementById('pendingLink').href = pendingUrl;
+            document.getElementById('processingLink').href = processingUrl;
+        }
+
+        function setActiveTab(type) {
+            document.querySelectorAll('.service-tab').forEach(tab => {
+                if (tab.dataset.type === type) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+        }
+
+        async function switchServiceType(type) {
+            if (type === currentType) return;
+            currentType = type;
+            setActiveTab(type);
+            await loadStats();
+            updateNavigationLinks();
+        }
+
+        // Инициализация страницы
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await requireAdmin()) return;
-            await loadStats();
 
+            // Получаем текущий пользовательский email (опционально)
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                document.getElementById('adminEmail').textContent = user.email;
+            }
+
+            // Загружаем статистику для типа по умолчанию (passport)
+            await loadStats();
+            updateNavigationLinks();
+
+            // Обработчики для переключения услуг
+            document.querySelectorAll('.service-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const type = tab.dataset.type;
+                    switchServiceType(type);
+                });
+            });
+
+            // Выход
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
                 window.location.href = '../../login.html';
