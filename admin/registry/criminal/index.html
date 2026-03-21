@@ -181,21 +181,21 @@
 
         async function loadStats() {
             const { count: total, error: eTotal } = await supabase
-                .schema('criminal')
-                .from('records')
+                .schema('registry')
+                .from('criminal')
                 .select('*', { count: 'exact', head: true });
 
             // Количество с фото
             const { count: withPhoto, error: ePhoto } = await supabase
-                .schema('criminal')
-                .from('records')
+                .schema('registry')
+                .from('criminal')
                 .select('*', { count: 'exact', head: true })
                 .not('photo_path', 'is', null);
 
             // Количество с документами
             const { count: withDocs, error: eDocs } = await supabase
-                .schema('criminal')
-                .from('records')
+                .schema('registry')
+                .from('criminal')
                 .select('*', { count: 'exact', head: true })
                 .not('document_paths', 'is', null);
 
