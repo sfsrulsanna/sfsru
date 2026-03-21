@@ -5,27 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Все записи — Уголовный реестр СФСРЮ</title>
     <!-- favicons -->
-<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
-<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
-<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
-<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
-<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
-<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
-<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
-<link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
-<link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
-<link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
-<link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
-<meta name="application-name" content="&nbsp;"/>
-<meta name="msapplication-TileColor" content="#FFFFFF" />
-<meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
-<meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
-<meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
-<meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
-<meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="../../../css/index.css">
     <link rel="stylesheet" href="../../css/admin.css">
@@ -237,16 +232,18 @@
 
             <table class="app-table">
                 <thead>
-                    <tr>
+                     <tr>
                         <th>№ записи</th>
                         <th>ФИО</th>
                         <th>Дата рождения</th>
                         <th>Статья УК</th>
                         <th>Фото</th>
                         <th>Действие</th>
-                    </thead>
+                    </tr>
+                </thead>
                 <tbody id="appsTableBody">
-                    <tr><td colspan="6" class="no-data">Нет данных</td>             </tbody>
+                    <tr><td colspan="6" class="no-data">Нет данных</td></tr>
+                </tbody>
             </table>
         </div>
     </main>
@@ -256,7 +253,7 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="../../js/mob-menu.js"></script>
+    <script src="../../../js/mob-menu.js"></script>
     <script type="module">
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../../certificates/js/certificates-common.js';
@@ -276,7 +273,7 @@
                 .order('record_number', { ascending: false });
 
             if (error) {
-                tbody.innerHTML = `70 <td colspan="6" class="error">Ошибка: ${error.message}</td> </tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="error">Ошибка: ${error.message}</td></tr>`;
                 loading.style.display = 'none';
                 return;
             }
@@ -302,7 +299,7 @@
 
             const tbody = document.getElementById('appsTableBody');
             if (filtered.length === 0) {
-                tbody.innerHTML = '70<td colspan="6" class="no-data">Нет записей</td> </tr>';
+                tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет записей</td></tr>';
                 return;
             }
 
@@ -312,7 +309,7 @@
                     <td data-label="ФИО">${record.full_name}</td>
                     <td data-label="Дата рождения">${record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—'}</td>
                     <td data-label="Статья УК">${record.crime_article || '—'}</td>
-                    <td data-label="Фото">${record.photo_path ? '<i class="fas fa-check-circle" style="color:#28a745"></i> есть' : '<i class="fas fa-times-circle" style="color:#dc3545"></i> нет'}</td>
+                    <td data-label="Фото">${record.photo_paths && record.photo_paths.length ? '<i class="fas fa-check-circle" style="color:#28a745"></i> есть' : '<i class="fas fa-times-circle" style="color:#dc3545"></i> нет'}</td>
                     <td data-label="Действие">
                         <a href="view.html?id=${record.id}" class="btn-view">Просмотр</a>
                     </td>
@@ -335,7 +332,7 @@
 
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
-                window.location.href = '../../login.html';
+                window.location.href = '../../../login.html';
             });
         });
     </script>
