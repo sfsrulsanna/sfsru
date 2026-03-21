@@ -123,7 +123,7 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="../../../js/mob-menu.js"></script>
+    <script src="../../js/mob-menu.js"></script>
     <script type="module">
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../../certificates/js/certificates-common.js';
@@ -188,7 +188,17 @@
                 return;
             }
 
+            // Получаем следующий свободный номер записи через RPC
+            const { data: nextNumber, error: seqError } = await supabase.rpc('get_next_record_number');
+            if (seqError) {
+                console.error('Ошибка получения номера:', seqError);
+                showMessage('Ошибка получения номера записи: ' + seqError.message, 'error');
+                return;
+            }
+
+            // Создаём объект для вставки с указанным record_number
             const formData = {
+                record_number: nextNumber,
                 full_name,
                 birth_date: document.getElementById('birth_date').value || null,
                 birth_place: document.getElementById('birth_place').value || null,
@@ -200,6 +210,7 @@
                 updated_at: new Date().toISOString()
             };
 
+            // Вставляем запись с ручным номером
             const { data: inserted, error: insertError } = await supabase
                 .schema('registry')
                 .from('criminal')
@@ -216,6 +227,7 @@
             const recordNumber = inserted.record_number;
             const recordId = inserted.id;
 
+            // Загрузка фото
             const photoPaths = [];
             for (const file of selectedPhotos) {
                 const safeName = safeFileName(file.name);
@@ -230,6 +242,7 @@
                 photoPaths.push(filePath);
             }
 
+            // Загрузка документов
             const docPaths = [];
             for (const file of selectedDocs) {
                 const safeName = safeFileName(file.name);
@@ -244,6 +257,7 @@
                 docPaths.push(filePath);
             }
 
+            // Обновляем запись путями к файлам
             const updateData = {};
             if (photoPaths.length) updateData.photo_paths = photoPaths;
             if (docPaths.length) updateData.document_paths = docPaths;
@@ -259,7 +273,7 @@
                 }
             }
 
-            showMessage('Запись успешно добавлена', 'success');
+            showMessage(`Запись успешно добавлена (№${recordNumber})`, 'success');
             setTimeout(() => window.location.href = 'all.html', 1500);
         });
 
@@ -277,7 +291,7 @@
             if (user?.email) document.getElementById('adminEmail').textContent = user.email;
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
-                window.location.href = '../../../login.html';
+                window.location.href = '../../login.html';
             });
         });
     </script>
