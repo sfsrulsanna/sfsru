@@ -26,14 +26,80 @@
     <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-    <!-- Подключаем внешний CSS -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
-    <!-- Подключаем Supabase JS -->
+    <style>
+        /* Дополнительные стили для новой логики */
+        .photo-thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .photo-thumb {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .photo-thumb:hover {
+            border-color: #7b091a;
+        }
+        .photo-thumb.active {
+            border-color: #7b091a;
+        }
+        .main-photo-img {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+        .documents-list {
+            margin-top: 12px;
+        }
+        .documents-list a {
+            display: block;
+            margin: 6px 0;
+            color: #007bff;
+            text-decoration: none;
+        }
+        .documents-list a:hover {
+            text-decoration: underline;
+        }
+        .access-message {
+            margin: 1rem 0;
+            padding: 0.5rem;
+            border-radius: 4px;
+        }
+        .access-message.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .auth-section {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .btn {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            border: none;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -66,16 +132,14 @@
 
             <div id="accessMessage" class="access-message"></div>
 
-            <!-- Контейнер для карточек -->
             <div class="cards-grid" id="cardsGrid">
                 <!-- карточки будут добавлены динамически -->
             </div>
-			            <!-- Блок авторизации -->
             <div class="auth-section" id="authSection"></div>
         </div>
     </main>
 
-    <!-- Модальное окно с подробной информацией -->
+    <!-- Модальное окно -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal modal-large">
             <div class="modal-header">
@@ -84,38 +148,19 @@
             </div>
             <div class="modal-body">
                 <div class="modal-content">
-                    <!-- Левая колонка с фото -->
                     <div class="modal-photo-section">
                         <div class="main-photo">
                             <img id="modalMainPhoto" src="" alt="Фото" class="main-photo-img">
                         </div>
-                        <div class="photo-thumbnails" id="photoThumbnails">
-                            <!-- миниатюры дополнительных фото -->
-                        </div>
+                        <div class="photo-thumbnails" id="photoThumbnails"></div>
                     </div>
-                    <!-- Правая колонка с данными -->
                     <div class="modal-info-section">
                         <div class="info-table">
-                            <div class="info-row">
-                                <span class="info-label">Дата рождения</span>
-                                <span class="info-value" id="modalBirthDate">—</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Место рождения</span>
-                                <span class="info-value" id="modalBirthPlace">—</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Пол</span>
-                                <span class="info-value" id="modalGender">—</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Гражданство</span>
-                                <span class="info-value" id="modalCitizenship">—</span>
-                            </div>
-                            <div class="info-row">
-                                <span class="info-label">Статья УК</span>
-                                <span class="info-value" id="modalCrimeArticle">—</span>
-                            </div>
+                            <div class="info-row"><span class="info-label">Дата рождения</span><span class="info-value" id="modalBirthDate">—</span></div>
+                            <div class="info-row"><span class="info-label">Место рождения</span><span class="info-value" id="modalBirthPlace">—</span></div>
+                            <div class="info-row"><span class="info-label">Пол</span><span class="info-value" id="modalGender">—</span></div>
+                            <div class="info-row"><span class="info-label">Гражданство</span><span class="info-value" id="modalCitizenship">—</span></div>
+                            <div class="info-row"><span class="info-label">Статья УК</span><span class="info-value" id="modalCrimeArticle">—</span></div>
                         </div>
                         <div class="details-section">
                             <h3>Подробная информация</h3>
@@ -123,9 +168,7 @@
                         </div>
                         <div class="documents-section">
                             <h3>Документы и материалы дела</h3>
-                            <div id="documentsList" class="documents-list">
-                                <!-- список ссылок на PDF -->
-                            </div>
+                            <div id="documentsList" class="documents-list"></div>
                         </div>
                     </div>
                 </div>
@@ -133,13 +176,213 @@
         </div>
     </div>
 
-    <!-- Подвал сайта -->
     <footer class="footer">
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <!-- Подключаем основной JS -->
     <script src="../../js/registry/criminal-registry.js" defer></script>
+    <script type="module">
+        // Импорт supabase клиента и основной логики (если в отдельном файле, оставляем его, но здесь дублируем для надёжности)
+        // Для чистоты кода, перенесём логику в этот модуль, чтобы избежать перезагрузок.
+        import { supabase } from '../../../js/supabase-config.js';
+        
+        let currentRecords = [];
+        let currentModalRecord = null;
+        let currentPhotoIndex = 0;
+
+        // Инициализация
+        async function init() {
+            await loadRecords();
+            setupModalEvents();
+        }
+
+        // Получение подписанной ссылки
+        async function getSignedUrl(filePath) {
+            if (!filePath) return null;
+            try {
+                const { data, error } = await supabase.storage
+                    .from('registry-files')
+                    .createSignedUrl(filePath, 3600);
+                if (error) throw error;
+                return data.signedUrl;
+            } catch (e) {
+                console.error('Ошибка получения ссылки для', filePath, e);
+                return null;
+            }
+        }
+
+        // Загрузка всех записей
+        async function loadRecords() {
+            const { data, error } = await supabase
+                .schema('registry')
+                .from('criminal')
+                .select('*')
+                .order('record_number', { ascending: false });
+
+            if (error) {
+                console.error('Ошибка загрузки:', error);
+                showMessage('Не удалось загрузить данные реестра', 'error');
+                return;
+            }
+
+            currentRecords = data || [];
+            renderCards();
+        }
+
+        // Рендер карточек
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            if (!grid) return;
+
+            if (currentRecords.length === 0) {
+                grid.innerHTML = '<p class="no-data">Нет записей в реестре</p>';
+                return;
+            }
+
+            grid.innerHTML = currentRecords.map(record => {
+                const firstPhoto = record.photo_paths && record.photo_paths.length > 0 ? record.photo_paths[0] : null;
+                const photoHtml = firstPhoto ? `<div class="card-photo"><img src="/api/placeholder?size=200" data-photo-path="${firstPhoto}" alt="Фото"></div>` : '<div class="card-photo no-photo">Нет фото</div>';
+                return `
+                    <div class="card" data-id="${record.id}">
+                        ${photoHtml}
+                        <div class="card-content">
+                            <h3 class="card-title">${escapeHtml(record.full_name)}</h3>
+                            <p class="card-subtitle">№ записи: ${record.record_number}</p>
+                            <p class="card-subtitle">Статья: ${record.crime_article || '—'}</p>
+                            <button class="btn-details" data-id="${record.id}">Подробнее</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Загружаем реальные фото в карточки (асинхронно)
+            document.querySelectorAll('.card-photo img[data-photo-path]').forEach(async (img) => {
+                const path = img.dataset.photoPath;
+                const url = await getSignedUrl(path);
+                if (url) img.src = url;
+            });
+
+            // Навешиваем обработчики на кнопки "Подробнее"
+            document.querySelectorAll('.btn-details').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = btn.dataset.id;
+                    const record = currentRecords.find(r => r.id === id);
+                    if (record) await showModal(record);
+                });
+            });
+        }
+
+        // Показать модальное окно с записью
+        async function showModal(record) {
+            currentModalRecord = record;
+            document.getElementById('modalFullName').textContent = record.full_name;
+            document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
+            document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
+            document.getElementById('modalGender').textContent = record.gender || '—';
+            document.getElementById('modalCitizenship').textContent = record.citizenship || '—';
+            document.getElementById('modalCrimeArticle').textContent = record.crime_article || '—';
+            document.getElementById('modalDetails').textContent = record.details || '—';
+
+            // Загрузка фото
+            const photoPaths = record.photo_paths || [];
+            const thumbContainer = document.getElementById('photoThumbnails');
+            const mainPhoto = document.getElementById('modalMainPhoto');
+            
+            if (photoPaths.length === 0) {
+                mainPhoto.src = '';
+                thumbContainer.innerHTML = '<p>Нет фотографий</p>';
+            } else {
+                thumbContainer.innerHTML = '';
+                for (let i = 0; i < photoPaths.length; i++) {
+                    const url = await getSignedUrl(photoPaths[i]);
+                    if (url) {
+                        const thumb = document.createElement('img');
+                        thumb.src = url;
+                        thumb.classList.add('photo-thumb');
+                        if (i === 0) thumb.classList.add('active');
+                        thumb.addEventListener('click', () => {
+                            mainPhoto.src = url;
+                            document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('active'));
+                            thumb.classList.add('active');
+                        });
+                        thumbContainer.appendChild(thumb);
+                        if (i === 0) mainPhoto.src = url;
+                    }
+                }
+            }
+
+            // Загрузка документов
+            const docPaths = record.document_paths || [];
+            const docsContainer = document.getElementById('documentsList');
+            if (docPaths.length === 0) {
+                docsContainer.innerHTML = '<p>Нет документов</p>';
+            } else {
+                docsContainer.innerHTML = '';
+                for (const path of docPaths) {
+                    const url = await getSignedUrl(path);
+                    if (url) {
+                        const fileName = path.split('/').pop();
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.textContent = fileName;
+                        link.target = '_blank';
+                        docsContainer.appendChild(link);
+                    } else {
+                        const span = document.createElement('span');
+                        span.textContent = 'Документ недоступен';
+                        span.style.color = '#dc3545';
+                        docsContainer.appendChild(span);
+                    }
+                }
+            }
+
+            document.getElementById('modalOverlay').classList.add('active');
+        }
+
+        function setupModalEvents() {
+            const modal = document.getElementById('modalOverlay');
+            const closeBtn = document.getElementById('modalClose');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', () => modal.classList.remove('active'));
+            }
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('active');
+            });
+        }
+
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('accessMessage');
+            msgDiv.textContent = text;
+            msgDiv.className = `access-message ${type}`;
+            setTimeout(() => msgDiv.textContent = '', 5000);
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
+
+        // Запускаем инициализацию
+        init();
+
+        // Отключаем обновление страницы при фокусе/переключении вкладок
+        window.addEventListener('pageshow', (event) => {
+            if (event.persisted) {
+                // Если страница восстановлена из кэша, просто обновляем данные без перезагрузки
+                loadRecords();
+            }
+        });
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) {
+                loadRecords();
+            }
+        });
+    </script>
 </body>
 </html>
