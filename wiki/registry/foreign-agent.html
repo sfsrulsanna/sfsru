@@ -31,9 +31,116 @@
     <link rel="stylesheet" href="../../css/registry/foreign-agent.css">
     <!-- Подключаем Supabase JS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <style>
+        /* Дополнительные стили для вкладок */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab:hover {
+            color: #1e293b;
+        }
+        .tab.active {
+            color: #7b091a;
+            border-bottom-color: #7b091a;
+        }
+        .table-wrapper {
+            overflow-x: auto;
+        }
+        .registry-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .registry-table th,
+        .registry-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .registry-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .registry-table tr:hover td {
+            background: #fef9e3;
+            cursor: pointer;
+        }
+        .access-message {
+            background: #fef9e3;
+            border-left: 4px solid #7b091a;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        .auth-section {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .modal {
+            max-width: 800px;
+        }
+        .agent-info-table {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 0.75rem 1rem;
+            margin-bottom: 1rem;
+        }
+        .info-row {
+            display: contents;
+        }
+        .info-label {
+            font-weight: 600;
+            color: #0f172a;
+            background: #f8fafc;
+            padding: 0.5rem;
+            border-radius: 6px;
+        }
+        .info-value {
+            padding: 0.5rem;
+            color: #1e293b;
+        }
+        .warning-badge {
+            display: inline-block;
+            background: #fee2e2;
+            color: #7b091a;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 768px) {
+            .agent-info-table {
+                grid-template-columns: 1fr;
+                gap: 0.5rem;
+            }
+            .info-row {
+                display: block;
+                margin-bottom: 0.5rem;
+            }
+            .info-label {
+                display: block;
+                margin-bottom: 0.25rem;
+            }
+        }
+    </style>
 </head>
 <body>
-    <!-- Шапка (без блока авторизации) -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -66,103 +173,39 @@
 
             <div id="accessMessage" class="access-message"></div>
 
-            <!-- Обёртка для таблицы (изначально скрыта) -->
+            <!-- Вкладки -->
+            <div class="tabs">
+                <button class="tab active" data-type="individual">Физические лица</button>
+                <button class="tab" data-type="legal">Юридические лица</button>
+            </div>
+
+            <!-- Таблица -->
             <div class="table-wrapper" id="tableWrapper" style="display: none;">
                 <table class="registry-table" id="agentsTable">
-                    <thead>
-                        <tr>
-                            <th>№</th>
-                            <th>Полное наименование / ФИО</th>
-                            <th>Псевдоним</th>
-                            <th>Основания</th>
-                            <th>Дата включения</th>
-                            <th>Дата исключения</th>
-                        </tr>
+                    <thead id="tableHeader">
+                        <!-- заголовок динамический -->
                     </thead>
                     <tbody id="agentsTbody">
                         <!-- строки динамически -->
                     </tbody>
                 </table>
             </div>
-			<!-- Блок авторизации (теперь здесь) -->
+
+            <!-- Блок авторизации -->
             <div class="auth-section" id="authSection"></div>
         </div>
     </main>
 
-    <!-- Модальное окно в виде таблицы -->
+    <!-- Модальное окно -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal">
             <div class="modal-header">
-                <h2 class="modal-title" id="modalFullName">Загрузка...</h2>
-                <p class="modal-subtitle" id="modalAlias">Загрузка...</p>
+                <h2 class="modal-title" id="modalTitle">Загрузка...</h2>
                 <button class="modal-close" id="modalClose">&times;</button>
             </div>
             <div class="modal-body">
-                <div class="agent-info-table">
-                    <div class="info-row">
-                        <div class="info-label">Основания для включения</div>
-                        <div class="info-value" id="modalReason">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Дата включения в реестр</div>
-                        <div class="info-value" id="modalInclusionDate">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Дата исключения из реестра</div>
-                        <div class="info-value" id="modalExclusionDate">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Доменное имя информационного ресурса</div>
-                        <div class="info-value" id="modalDomain">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Тип иностранного агента</div>
-                        <div class="info-value" id="modalType">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">ИНН</div>
-                        <div class="info-value" id="modalINN">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">НСС (при наличии)</div>
-                        <div class="info-value" id="modalNSS">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Дата рождения / образования организации</div>
-                        <div class="info-value" id="modalBirthDate">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Электронная почта</div>
-                        <div class="info-value" id="modalEmail">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Номер телефона</div>
-                        <div class="info-value" id="modalPhoneNumber">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Номер специального счета</div>
-                        <div class="info-value" id="modalAccountNumber">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Наименование и местонахождение банка</div>
-                        <div class="info-value" id="modalBankName">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">БИК уполномоченного банка</div>
-                        <div class="info-value" id="modalBIC">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Номер корреспондентского счета</div>
-                        <div class="info-value" id="modalCorrAccount">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Дата открытия специального счета</div>
-                        <div class="info-value" id="modalAccountOpenDate">—</div>
-                    </div>
-                    <div class="info-row">
-                        <div class="info-label">Дополнительные данные</div>
-                        <div class="info-value" id="modalMore">—</div>
-                    </div>
+                <div id="modalContent" class="agent-info-table">
+                    <!-- динамическое содержимое -->
                 </div>
                 <div class="modal-footer">
                     <span class="warning-badge">⚠ Информация Министерства юстиции СФСРЮ</span>
@@ -171,13 +214,11 @@
         </div>
     </div>
 
-    <!-- Подвал сайта -->
     <footer class="footer">
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <!-- Подключаем основной JS -->
-    <script src="../../js/registry/foreign-agent.js" defer></script>
+    <script src="../../js/registry/foreign-agent.js" type="module"></script>
 </body>
 </html>

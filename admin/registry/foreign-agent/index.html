@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Регистры — Админ панель СФСРЮ</title>
-    <!-- favicons -->
+    <title>Реестр иностранных агентов — Админ панель СФСРЮ</title>
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -21,20 +21,15 @@
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-
-    <link rel="stylesheet" href="../../css/style.css">
-    <link rel="stylesheet" href="../../css/index.css">
-    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/index.css">
+    <link rel="stylesheet" href="../../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         .container {
             max-width: 1280px;
             margin: 0 auto;
-            padding: 2rem 1rem;
+            padding: 1rem;
         }
         .page-title {
             font-size: 1.75rem;
@@ -49,67 +44,68 @@
             margin-bottom: 2rem;
             font-size: 1rem;
         }
-        .registry-grid {
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 2rem;
-            margin: 2rem 0;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
-        .registry-card {
+        .stat-card {
             background: white;
-            border-radius: 24px;
-            padding: 2rem;
+            border-radius: 16px;
+            padding: 1.5rem;
             text-align: center;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-            text-decoration: none;
-            color: inherit;
-            display: block;
+            transition: transform 0.2s;
         }
-        .registry-card:hover {
+        .stat-card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
         }
-        .card-icon {
-            font-size: 3.5rem;
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
             color: #7b091a;
-            margin-bottom: 1rem;
-        }
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 600;
             margin-bottom: 0.5rem;
-            color: #0f172a;
         }
-        .card-description {
+        .stat-label {
             color: #475569;
             font-size: 0.9rem;
-            margin-top: 0.5rem;
+            font-weight: 500;
         }
-        .badge-coming {
-            display: inline-block;
-            background: #f1f5f9;
-            color: #475569;
-            font-size: 0.7rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            margin-top: 1rem;
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+            flex-wrap: wrap;
         }
-        @media (max-width: 768px) {
-            .registry-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
-            }
-            .registry-card {
-                padding: 1.5rem;
-            }
-            .card-icon {
-                font-size: 2.5rem;
-            }
-            .card-title {
-                font-size: 1.25rem;
-            }
+        .btn-large {
+            padding: 0.85rem 2rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 40px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border: none;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.2);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+        }
+        .btn-success:hover {
+            background: linear-gradient(135deg, #218838, #1a6e2f);
         }
     </style>
     <script type="importmap">
@@ -134,13 +130,13 @@
             </button>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная администратора</a></li>
-                    <li><a href="../services/">Услуги</a></li>
-                    <li><a href="../documents/">Документы</a></li>
-                    <li><a href="../addresses/">Адреса</a></li>
-                    <li><a href=".index.html" class="active">Регистры</a></li>
-                    <li><a href="../laws/">Законы</a></li>
-                    <li><a href="../../index.html">На сайт</a></li>
+                    <li><a href="../../index.html">Главная админки</a></li>
+                    <li><a href="../../services/">Услуги</a></li>
+                    <li><a href="../../documents/">Документы</a></li>
+                    <li><a href="../../addresses/">Адреса</a></li>
+                    <li><a href="../../registry/" class="active">Регистры</a></li>
+                    <li><a href="../../laws/">Законы</a></li>
+                    <li><a href="../../../index.html">На сайт</a></li>
                 </ul>
             </nav>
             <div class="admin-user">
@@ -153,22 +149,21 @@
 
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Управление регистрами</h1>
-            <p class="page-description">Выберите реестр для просмотра и редактирования записей</p>
+            <div class="back-link">
+                <a href="../index.html"><i class="fas fa-arrow-left"></i> На главную регистров</a>
+            </div>
+            <h1 class="page-title">Реестр иностранных агентов</h1>
+            <p class="page-description">Управление записями о лицах и организациях, подпадающих под иностранное влияние</p>
 
-            <div class="registry-grid">
-                <a href="criminal/" class="registry-card">
-                    <div class="card-icon"><i class="fas fa-gavel"></i></div>
-                    <div class="card-title">Уголовный реестр</div>
-                    <div class="card-description">Реестр разыскиваемых лиц по уголовным делам</div>
-                </a>
+            <div class="stats-grid" id="stats">
+                <div class="stat-card"><div class="stat-number" id="totalIndividuals">0</div><div class="stat-label">Физические лица</div></div>
+                <div class="stat-card"><div class="stat-number" id="totalLegal">0</div><div class="stat-label">Юридические лица</div></div>
+            </div>
 
-                <a href="foreign-agents/" class="registry-card">
-                    <div class="card-icon"><i class="fas fa-flag-checkered"></i></div>
-                    <div class="card-title">Реестр иностранных агентов</div>
-                    <div class="card-description">Управление списком иностранных агентов</div>
-                    <div class="badge-coming">В разработке</div>
-                </a>
+            <div class="action-buttons">
+                <a href="add.html?type=individual" class="btn-primary btn-large"><i class="fas fa-user-plus"></i> Добавить физ. лицо</a>
+                <a href="add.html?type=legal" class="btn-primary btn-large"><i class="fas fa-building"></i> Добавить юр. лицо</a>
+                <a href="all.html" class="btn-primary btn-large"><i class="fas fa-list"></i> Все записи</a>
             </div>
         </div>
     </main>
@@ -180,16 +175,30 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-        import { supabase } from '../../js/supabase-config.js';
-        import { requireAdmin } from '../certificates/js/certificates-common.js';
+        import { supabase } from '../../../js/supabase-config.js';
+        import { requireAdmin } from '../../certificates/js/certificates-common.js';
+
+        async function loadStats() {
+            const { count: individuals, error: e1 } = await supabase
+                .schema('registry')
+                .from('foreign_agents')
+                .select('*', { count: 'exact', head: true });
+            const { count: legal, error: e2 } = await supabase
+                .schema('registry')
+                .from('foreign_agents_org')
+                .select('*', { count: 'exact', head: true });
+
+            if (!e1) document.getElementById('totalIndividuals').textContent = individuals ?? 0;
+            if (!e2) document.getElementById('totalLegal').textContent = legal ?? 0;
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await requireAdmin()) return;
 
             const { data: { user } } = await supabase.auth.getUser();
-            if (user?.email) {
-                document.getElementById('adminEmail').textContent = user.email;
-            }
+            if (user?.email) document.getElementById('adminEmail').textContent = user.email;
+
+            await loadStats();
 
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();

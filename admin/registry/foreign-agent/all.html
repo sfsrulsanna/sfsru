@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Все записи — Уголовный реестр СФСРЮ</title>
-    <!-- favicons -->
+    <title>Все записи — Реестр иностранных агентов</title>
+    <!-- favicons (как в index.html) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -54,6 +54,30 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+        }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab:hover {
+            color: #1e293b;
+        }
+        .tab.active {
+            color: #7b091a;
+            border-bottom-color: #7b091a;
         }
         .filters {
             display: flex;
@@ -119,6 +143,7 @@
         }
         .app-table tr:hover td {
             background: #fef9e3;
+            cursor: pointer;
         }
         .btn-view {
             background: linear-gradient(135deg, #007bff, #0056b3);
@@ -197,7 +222,7 @@
             </button>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../../index.html">Главная администратора</a></li>
+                    <li><a href="../../index.html">Главная админки</a></li>
                     <li><a href="../../services/">Услуги</a></li>
                     <li><a href="../../documents/">Документы</a></li>
                     <li><a href="../../addresses/">Адреса</a></li>
@@ -220,10 +245,15 @@
                 <a href="index.html"><i class="fas fa-arrow-left"></i> На главную реестра</a>
             </div>
             <h1 class="page-title">Все записи</h1>
-            <p class="page-description">Полный список уголовного реестра</p>
+            <p class="page-description">Полный список реестра иностранных агентов</p>
+
+            <div class="tabs">
+                <button class="tab active" data-type="individual">Физические лица</button>
+                <button class="tab" data-type="legal">Юридические лица</button>
+            </div>
 
             <div class="filters">
-                <input type="text" id="searchInput" placeholder="Поиск по имени, статье, номеру записи...">
+                <input type="text" id="searchInput" placeholder="Поиск по имени, названию, ИНН...">
                 <button id="applyFilters">Применить</button>
                 <span id="totalCount" class="stats-badge">Всего: 0</span>
             </div>
@@ -231,19 +261,8 @@
             <div id="loading" class="loading">Загрузка...</div>
 
             <table class="app-table">
-                <thead>
-                     <tr>
-                        <th>№ записи</th>
-                        <th>ФИО</th>
-                        <th>Дата рождения</th>
-                        <th>Статья УК</th>
-                        <th>Фото</th>
-                        <th>Действие</th>
-                    </tr>
-                </thead>
-                <tbody id="appsTableBody">
-                    <tr><td colspan="6" class="no-data">Нет данных</td></tr>
-                </tbody>
+                <thead id="tableHeader"></thead>
+                <tbody id="appsTableBody">...</tbody>
             </table>
         </div>
     </main>
@@ -253,68 +272,132 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="../../../js/mob-menu.js"></script>
+    <script src="../../js/mob-menu.js"></script>
     <script type="module">
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../../certificates/js/certificates-common.js';
 
+        let currentType = 'individual';
         let allData = [];
 
-        async function loadAllRecords() {
-            const loading = document.getElementById('loading');
-            const tbody = document.getElementById('appsTableBody');
-            loading.style.display = 'block';
-            tbody.innerHTML = '';
+        function escapeHTML(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
 
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            try {
+                return new Date(dateStr).toLocaleDateString('ru-RU');
+            } catch {
+                return dateStr;
+            }
+        }
+
+        async function loadData() {
+            const table = currentType === 'individual' ? 'foreign_agents' : 'foreign_agents_org';
             const { data, error } = await supabase
                 .schema('registry')
-                .from('criminal')
+                .from(table)
                 .select('*')
-                .order('record_number', { ascending: false });
+                .order('serial_number', { ascending: true });
 
             if (error) {
-                tbody.innerHTML = `<tr><td colspan="6" class="error">Ошибка: ${error.message}</td></tr>`;
-                loading.style.display = 'none';
-                return;
+                console.error('Ошибка загрузки:', error);
+                document.getElementById('appsTableBody').innerHTML = `<tr><td colspan="10" class="error">Ошибка: ${error.message}</td></tr>`;
+                return null;
             }
-
-            allData = data || [];
-            loading.style.display = 'none';
-            applyFilters();
+            return data || [];
         }
 
         function applyFilters() {
             const search = document.getElementById('searchInput').value.trim().toLowerCase();
             let filtered = allData;
-
             if (search) {
-                filtered = filtered.filter(item =>
-                    (item.full_name && item.full_name.toLowerCase().includes(search)) ||
-                    (item.crime_article && item.crime_article.toLowerCase().includes(search)) ||
-                    (item.record_number && item.record_number.toString().includes(search))
-                );
+                if (currentType === 'individual') {
+                    filtered = filtered.filter(item =>
+                        (item.full_name && item.full_name.toLowerCase().includes(search)) ||
+                        (item.inn && item.inn.toLowerCase().includes(search)) ||
+                        (item.alias && item.alias.toLowerCase().includes(search))
+                    );
+                } else {
+                    filtered = filtered.filter(item =>
+                        (item.org_name && item.org_name.toLowerCase().includes(search)) ||
+                        (item.org_short_name && item.org_short_name.toLowerCase().includes(search)) ||
+                        (item.inn && item.inn.toLowerCase().includes(search))
+                    );
+                }
             }
-
             document.getElementById('totalCount').textContent = `Всего: ${filtered.length}`;
+            renderTable(filtered);
+        }
 
+        function renderTable(data) {
             const tbody = document.getElementById('appsTableBody');
-            if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет записей</td></tr>';
+            const thead = document.getElementById('tableHeader');
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="10" class="no-data">Нет записей</td></tr>';
+                thead.innerHTML = '';
                 return;
             }
 
-            tbody.innerHTML = filtered.map(record => `
-                <tr>
-                    <td data-label="№ записи">${record.record_number}</td>
-                    <td data-label="ФИО">${record.full_name}</td>
-                    <td data-label="Дата рождения">${record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—'}</td>
-                    <td data-label="Статья УК">${record.crime_article || '—'}</td>
-                    <td data-label="Фото">${record.photo_paths && record.photo_paths.length ? '<i class="fas fa-check-circle" style="color:#28a745"></i> есть' : '<i class="fas fa-times-circle" style="color:#dc3545"></i> нет'}</td>
-                    <td data-label="Действие">
-                        <a href="view.html?id=${record.id}" class="btn-view">Просмотр</a>
-                    </td>
-                </tr>
-            `).join('');
+            // Заголовки
+            let headers = [];
+            if (currentType === 'individual') {
+                headers = ['№ п/п', 'ФИО', 'Псевдоним', 'ИНН', 'Дата включения', 'Дата исключения'];
+            } else {
+                headers = ['№ п/п', 'Краткое название', 'Полное наименование', 'ИНН', 'Дата включения', 'Дата исключения'];
+            }
+            thead.innerHTML = `<tr>${headers.map(h => `<th>${escapeHTML(h)}</th>`).join('')}</tr>`;
+
+            tbody.innerHTML = data.map(item => {
+                const serial = item.serial_number || item.id;
+                let row = `<tr data-id="${item.id}" data-type="${currentType}">`;
+                row += `<td data-label="№ п/п">${serial}</td>`;
+                if (currentType === 'individual') {
+                    row += `<td data-label="ФИО">${escapeHTML(item.full_name || '')}</td>`;
+                    row += `<td data-label="Псевдоним">${escapeHTML(item.alias || '')}</td>`;
+                    row += `<td data-label="ИНН">${escapeHTML(item.inn || '')}</td>`;
+                } else {
+                    row += `<td data-label="Краткое название">${escapeHTML(item.org_short_name || '')}</td>`;
+                    row += `<td data-label="Полное наименование">${escapeHTML(item.org_name || '')}</td>`;
+                    row += `<td data-label="ИНН">${escapeHTML(item.inn || '')}</td>`;
+                }
+                row += `<td data-label="Дата включения">${formatDate(item.inclusion_date)}</td>`;
+                row += `<td data-label="Дата исключения">${formatDate(item.exclusion_date)}</td>`;
+                row += `</tr>`;
+                return row;
+            }).join('');
+
+            // Добавляем клик на строки
+            document.querySelectorAll('#appsTableBody tr').forEach(row => {
+                row.addEventListener('click', () => {
+                    const id = row.getAttribute('data-id');
+                    const type = row.getAttribute('data-type');
+                    window.location.href = `view.html?id=${id}&type=${type}`;
+                });
+            });
+        }
+
+        async function switchType(type) {
+            if (type === currentType) return;
+            currentType = type;
+            document.querySelectorAll('.tab').forEach(t => {
+                if (t.dataset.type === type) t.classList.add('active');
+                else t.classList.remove('active');
+            });
+            document.getElementById('loading').style.display = 'block';
+            const data = await loadData();
+            document.getElementById('loading').style.display = 'none';
+            if (data !== null) {
+                allData = data;
+                applyFilters();
+            }
         }
 
         document.addEventListener('DOMContentLoaded', async () => {
@@ -323,8 +406,19 @@
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) document.getElementById('adminEmail').textContent = user.email;
 
-            await loadAllRecords();
+            // Загрузка начальных данных
+            document.getElementById('loading').style.display = 'block';
+            const data = await loadData();
+            document.getElementById('loading').style.display = 'none';
+            if (data !== null) {
+                allData = data;
+                applyFilters();
+            }
 
+            // Обработчики вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchType(tab.dataset.type));
+            });
             document.getElementById('applyFilters').addEventListener('click', applyFilters);
             document.getElementById('searchInput').addEventListener('keyup', (e) => {
                 if (e.key === 'Enter') applyFilters();
@@ -332,7 +426,7 @@
 
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
-                window.location.href = '../../../login.html';
+                window.location.href = '../../login.html';
             });
         });
     </script>

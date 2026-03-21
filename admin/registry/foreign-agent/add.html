@@ -2,17 +2,77 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добавление иностранного агента</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Добавление иностранного агента — Админ панель СФСРЮ</title>
+    <!-- favicons (как в других страницах) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/index.css">
     <link rel="stylesheet" href="../../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .form-container {
+        .container {
             max-width: 800px;
-            margin: 2rem auto;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        .page-title {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #1e293b;
+            border-left: 4px solid #7b091a;
+            padding-left: 1rem;
+        }
+        .page-description {
+            color: #64748b;
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+        .form-card {
             background: white;
+            border-radius: 16px;
             padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            font-size: 1rem;
+            font-weight: 500;
+            color: #64748b;
+            cursor: pointer;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+        .tab:hover {
+            color: #1e293b;
+        }
+        .tab.active {
+            color: #7b091a;
+            border-bottom-color: #7b091a;
         }
         .form-group {
             margin-bottom: 1.5rem;
@@ -21,13 +81,20 @@
             display: block;
             font-weight: 600;
             margin-bottom: 0.5rem;
+            color: #1e293b;
         }
         .form-group input, .form-group textarea, .form-group select {
             width: 100%;
-            padding: 0.6rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
+            padding: 0.7rem 1rem;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            transition: border 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            outline: none;
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
         }
         .form-row {
             display: grid;
@@ -35,132 +102,442 @@
             gap: 1rem;
         }
         .btn-submit {
-            background: #28a745;
+            background: linear-gradient(135deg, #28a745, #1e7e34);
             color: white;
             border: none;
             padding: 0.8rem 2rem;
-            font-size: 1.1rem;
-            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 500;
+            border-radius: 40px;
             cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
         .btn-submit:hover {
-            background: #218838;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(40,167,69,0.2);
         }
         .message {
             margin-top: 1rem;
             padding: 0.8rem;
-            border-radius: 4px;
+            border-radius: 12px;
         }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .hidden {
+            display: none;
+        }
+        .back-link {
+            margin-bottom: 1.5rem;
+        }
+        .back-link a {
+            color: #7b091a;
+            text-decoration: none;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .field-group {
+            transition: all 0.2s;
+        }
     </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
 </head>
 <body>
-    <header class="admin-header">
-        <div class="admin-header-container">
-            <div class="admin-logo">
-                <img src="../../../assets/logo.png" alt="Logo">
-                <span>Админ-панель</span>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ — Администратор</h1>
             </div>
-            <div class="admin-user" id="authSection"></div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная админки</a></li>
+                    <li><a href="../../services/">Услуги</a></li>
+                    <li><a href="../../documents/">Документы</a></li>
+                    <li><a href="../../addresses/">Адреса</a></li>
+                    <li><a href="../../registry/" class="active">Регистры</a></li>
+                    <li><a href="../../laws/">Законы</a></li>
+                    <li><a href="../../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
         </div>
     </header>
+    <div class="menu-overlay"></div>
 
-    <main class="admin-main">
+    <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Добавить иностранного агента</h1>
-            <div class="form-container">
+            <div class="back-link">
+                <a href="index.html"><i class="fas fa-arrow-left"></i> На главную регистров</a>
+            </div>
+            <h1 class="page-title">Добавление иностранного агента</h1>
+            <p class="page-description">Внесите информацию о лице или организации, подпадающей под иностранное влияние</p>
+
+            <div class="form-card">
+                <div class="tabs">
+                    <button class="tab active" data-type="individual">Физическое лицо</button>
+                    <button class="tab" data-type="legal">Юридическое лицо</button>
+                </div>
+
                 <form id="agentForm">
-                    <div class="form-group">
-                        <label for="full_name">Полное имя *</label>
-                        <input type="text" id="full_name" name="full_name" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="alias">Псевдоним</label>
-                        <input type="text" id="alias" name="alias">
-                    </div>
-                    <div class="form-group">
-                        <label for="reason">Основание включения</label>
-                        <textarea id="reason" name="reason" rows="3"></textarea>
-                    </div>
-                    <div class="form-row">
+                    <!-- Блок для физического лица -->
+                    <div id="individualFields" class="field-group">
                         <div class="form-group">
-                            <label for="inclusion_date">Дата включения</label>
-                            <input type="date" id="inclusion_date" name="inclusion_date">
+                            <label for="full_name">Полное имя *</label>
+                            <input type="text" id="full_name" name="full_name" required>
                         </div>
                         <div class="form-group">
-                            <label for="exclusion_date">Дата исключения</label>
-                            <input type="date" id="exclusion_date" name="exclusion_date">
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="domain">Домены (через запятую)</label>
-                        <input type="text" id="domain" name="domain" placeholder="example.com, test.org">
-                    </div>
-                    <div class="form-group">
-                        <label for="type">Тип</label>
-                        <input type="text" id="type" name="type">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="inn">ИНН</label>
-                            <input type="text" id="inn" name="inn">
+                            <label for="alias">Псевдоним</label>
+                            <input type="text" id="alias" name="alias">
                         </div>
                         <div class="form-group">
-                            <label for="nss">СНИЛС</label>
-                            <input type="text" id="nss" name="nss">
+                            <label for="reason">Основание включения</label>
+                            <textarea id="reason" name="reason" rows="3"></textarea>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="birth_date">Дата рождения</label>
-                        <input type="date" id="birth_date" name="birth_date">
-                    </div>
-                    <div class="form-group">
-                        <label for="email">Email (через запятую)</label>
-                        <input type="text" id="email" name="email" placeholder="mail@example.com">
-                    </div>
-                    <div class="form-group">
-                        <label for="phone_number">Телефоны (через запятую)</label>
-                        <input type="text" id="phone_number" name="phone_number" placeholder="+7 123 456-78-90">
-                    </div>
-                    <div class="form-group">
-                        <label for="account_number">Номер счёта</label>
-                        <input type="text" id="account_number" name="account_number">
-                    </div>
-                    <div class="form-group">
-                        <label for="bank_name">Название банка</label>
-                        <input type="text" id="bank_name" name="bank_name">
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="bic">БИК</label>
-                            <input type="text" id="bic" name="bic">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inclusion_date">Дата включения</label>
+                                <input type="date" id="inclusion_date" name="inclusion_date">
+                            </div>
+                            <div class="form-group">
+                                <label for="exclusion_date">Дата исключения</label>
+                                <input type="date" id="exclusion_date" name="exclusion_date">
+                            </div>
                         </div>
                         <div class="form-group">
-                            <label for="corr_account">Корр. счёт</label>
-                            <input type="text" id="corr_account" name="corr_account">
+                            <label for="domain">Домены (через запятую)</label>
+                            <input type="text" id="domain" name="domain" placeholder="example.com, test.org">
+                        </div>
+                        <div class="form-group">
+                            <label for="type">Тип иностранного агента</label>
+                            <input type="text" id="type" name="type">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inn">ИНН</label>
+                                <input type="text" id="inn" name="inn">
+                            </div>
+                            <div class="form-group">
+                                <label for="nss">СНИЛС</label>
+                                <input type="text" id="nss" name="nss">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="birth_date">Дата рождения</label>
+                            <input type="date" id="birth_date" name="birth_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="email">Email (через запятую)</label>
+                            <input type="text" id="email" name="email" placeholder="mail@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number">Телефоны (через запятую)</label>
+                            <input type="text" id="phone_number" name="phone_number" placeholder="+7 123 456-78-90">
+                        </div>
+                        <div class="form-group">
+                            <label for="account_number">Номер специального счета</label>
+                            <input type="text" id="account_number" name="account_number">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_name">Наименование и местонахождение банка</label>
+                            <input type="text" id="bank_name" name="bank_name">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bic">БИК уполномоченного банка</label>
+                                <input type="text" id="bic" name="bic">
+                            </div>
+                            <div class="form-group">
+                                <label for="corr_account">Номер корреспондентского счета</label>
+                                <input type="text" id="corr_account" name="corr_account">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="account_open_date">Дата открытия специального счета</label>
+                            <input type="date" id="account_open_date" name="account_open_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="more">Дополнительные данные</label>
+                            <textarea id="more" name="more" rows="4"></textarea>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="account_open_date">Дата открытия счёта</label>
-                        <input type="date" id="account_open_date" name="account_open_date">
+
+                    <!-- Блок для юридического лица -->
+                    <div id="legalFields" class="field-group" style="display: none;">
+                        <div class="form-group">
+                            <label for="org_name">Полное наименование организации *</label>
+                            <input type="text" id="org_name" name="org_name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="org_short_name">Краткое название организации</label>
+                            <input type="text" id="org_short_name" name="org_short_name">
+                        </div>
+                        <div class="form-group">
+                            <label for="inn_legal">ИНН</label>
+                            <input type="text" id="inn_legal" name="inn_legal">
+                        </div>
+                        <div class="form-group">
+                            <label for="ogrn">ОГРН</label>
+                            <input type="text" id="ogrn" name="ogrn">
+                        </div>
+                        <div class="form-group">
+                            <label for="establishment_date">Дата образования организации</label>
+                            <input type="date" id="establishment_date" name="establishment_date">
+                        </div>
+                        <div class="form-group">
+                            <label for="head">Руководитель организации</label>
+                            <input type="text" id="head" name="head">
+                        </div>
+                        <div class="form-group">
+                            <label for="participants">Участники организации</label>
+                            <textarea id="participants" name="participants" rows="3" placeholder="ФИО или наименования участников"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="reason_legal">Основание включения</label>
+                            <textarea id="reason_legal" name="reason_legal" rows="3"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="inclusion_date_legal">Дата включения</label>
+                                <input type="date" id="inclusion_date_legal" name="inclusion_date_legal">
+                            </div>
+                            <div class="form-group">
+                                <label for="exclusion_date_legal">Дата исключения</label>
+                                <input type="date" id="exclusion_date_legal" name="exclusion_date_legal">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="domain_legal">Домены (через запятую)</label>
+                            <input type="text" id="domain_legal" name="domain_legal" placeholder="example.com, test.org">
+                        </div>
+                        <div class="form-group">
+                            <label for="type_legal">Тип иностранного агента</label>
+                            <input type="text" id="type_legal" name="type_legal">
+                        </div>
+                        <div class="form-group">
+                            <label for="address">Адрес (место нахождения)</label>
+                            <input type="text" id="address" name="address">
+                        </div>
+                        <div class="form-group">
+                            <label for="email_legal">Email (через запятую)</label>
+                            <input type="text" id="email_legal" name="email_legal" placeholder="mail@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone_number_legal">Телефоны (через запятую)</label>
+                            <input type="text" id="phone_number_legal" name="phone_number_legal" placeholder="+7 123 456-78-90">
+                        </div>
+                        <div class="form-group">
+                            <label for="account_number_legal">Номер специального счета</label>
+                            <input type="text" id="account_number_legal" name="account_number_legal">
+                        </div>
+                        <div class="form-group">
+                            <label for="bank_name_legal">Наименование и местонахождение банка</label>
+                            <input type="text" id="bank_name_legal" name="bank_name_legal">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="bic_legal">БИК уполномоченного банка</label>
+                                <input type="text" id="bic_legal" name="bic_legal">
+                            </div>
+                            <div class="form-group">
+                                <label for="corr_account_legal">Номер корреспондентского счета</label>
+                                <input type="text" id="corr_account_legal" name="corr_account_legal">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="account_open_date_legal">Дата открытия специального счета</label>
+                            <input type="date" id="account_open_date_legal" name="account_open_date_legal">
+                        </div>
+                        <div class="form-group">
+                            <label for="more_legal">Дополнительные данные</label>
+                            <textarea id="more_legal" name="more_legal" rows="4"></textarea>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="more">Дополнительно</label>
-                        <textarea id="more" name="more" rows="4"></textarea>
-                    </div>
-                    <button type="submit" class="btn-submit">Сохранить</button>
+
+                    <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Сохранить</button>
                 </form>
-                <div id="message" class="message" style="display: none;"></div>
+                <div id="message" class="message hidden"></div>
             </div>
         </div>
     </main>
 
-    <footer class="admin-footer">
-        &copy; 2026 Государственное управление
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="../../js/add_foreign-agent.js"></script>
+    <script src="../../js/mob-menu.js"></script>
+    <script type="module">
+        import { supabase } from '../../../js/supabase-config.js';
+        import { requireAdmin } from '../../certificates/js/certificates-common.js';
+
+        let currentType = 'individual'; // 'individual' или 'legal'
+
+        function showMessage(text, type) {
+            const msgDiv = document.getElementById('message');
+            msgDiv.textContent = text;
+            msgDiv.className = `message ${type}`;
+            msgDiv.classList.remove('hidden');
+            setTimeout(() => msgDiv.classList.add('hidden'), 5000);
+        }
+
+        function switchTabs(type) {
+            currentType = type;
+            const individualFields = document.getElementById('individualFields');
+            const legalFields = document.getElementById('legalFields');
+            const tabs = document.querySelectorAll('.tab');
+            
+            tabs.forEach(tab => {
+                if (tab.dataset.type === type) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            if (type === 'individual') {
+                individualFields.style.display = 'block';
+                legalFields.style.display = 'none';
+                // Убираем required с полей юридического лица
+                document.getElementById('org_name').removeAttribute('required');
+                document.getElementById('full_name').setAttribute('required', 'required');
+            } else {
+                individualFields.style.display = 'none';
+                legalFields.style.display = 'block';
+                document.getElementById('full_name').removeAttribute('required');
+                document.getElementById('org_name').setAttribute('required', 'required');
+            }
+        }
+
+        async function submitForm(e) {
+            e.preventDefault();
+            
+            let data = {};
+            let tableName = '';
+            
+            if (currentType === 'individual') {
+                tableName = 'foreign_agents';
+                data = {
+                    full_name: document.getElementById('full_name').value.trim(),
+                    alias: document.getElementById('alias').value.trim() || null,
+                    reason: document.getElementById('reason').value.trim() || null,
+                    inclusion_date: document.getElementById('inclusion_date').value || null,
+                    exclusion_date: document.getElementById('exclusion_date').value || null,
+                    domain: document.getElementById('domain').value.trim() || null,
+                    type: document.getElementById('type').value.trim() || null,
+                    inn: document.getElementById('inn').value.trim() || null,
+                    nss: document.getElementById('nss').value.trim() || null,
+                    birth_date: document.getElementById('birth_date').value || null,
+                    email: document.getElementById('email').value.trim() || null,
+                    phone_number: document.getElementById('phone_number').value.trim() || null,
+                    account_number: document.getElementById('account_number').value.trim() || null,
+                    bank_name: document.getElementById('bank_name').value.trim() || null,
+                    bic: document.getElementById('bic').value.trim() || null,
+                    corr_account: document.getElementById('corr_account').value.trim() || null,
+                    account_open_date: document.getElementById('account_open_date').value || null,
+                    more: document.getElementById('more').value.trim() || null
+                };
+                if (!data.full_name) {
+                    showMessage('Полное имя обязательно для заполнения', 'error');
+                    return;
+                }
+            } else {
+                tableName = 'foreign_agents_org';
+                data = {
+                    org_name: document.getElementById('org_name').value.trim(),
+                    org_short_name: document.getElementById('org_short_name').value.trim() || null,
+                    inn: document.getElementById('inn_legal').value.trim() || null,
+                    ogrn: document.getElementById('ogrn').value.trim() || null,
+                    establishment_date: document.getElementById('establishment_date').value || null,
+                    head: document.getElementById('head').value.trim() || null,
+                    participants: document.getElementById('participants').value.trim() || null,
+                    reason: document.getElementById('reason_legal').value.trim() || null,
+                    inclusion_date: document.getElementById('inclusion_date_legal').value || null,
+                    exclusion_date: document.getElementById('exclusion_date_legal').value || null,
+                    domain: document.getElementById('domain_legal').value.trim() || null,
+                    type: document.getElementById('type_legal').value.trim() || null,
+                    address: document.getElementById('address').value.trim() || null,
+                    email: document.getElementById('email_legal').value.trim() || null,
+                    phone_number: document.getElementById('phone_number_legal').value.trim() || null,
+                    account_number: document.getElementById('account_number_legal').value.trim() || null,
+                    bank_name: document.getElementById('bank_name_legal').value.trim() || null,
+                    bic: document.getElementById('bic_legal').value.trim() || null,
+                    corr_account: document.getElementById('corr_account_legal').value.trim() || null,
+                    account_open_date: document.getElementById('account_open_date_legal').value || null,
+                    more: document.getElementById('more_legal').value.trim() || null
+                };
+                if (!data.org_name) {
+                    showMessage('Наименование организации обязательно для заполнения', 'error');
+                    return;
+                }
+            }
+            
+            // Добавляем временные метки
+            data.created_at = new Date().toISOString();
+            data.updated_at = new Date().toISOString();
+            
+            const { error } = await supabase
+                .schema('registry')
+                .from(tableName)
+                .insert(data);
+            
+            if (error) {
+                console.error('Ошибка вставки:', error);
+                showMessage('Ошибка сохранения: ' + error.message, 'error');
+                return;
+            }
+            
+            showMessage('Запись успешно добавлена', 'success');
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+            
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user?.email) {
+                document.getElementById('adminEmail').textContent = user.email;
+            }
+            
+            // Настройка переключения вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => switchTabs(tab.dataset.type));
+            });
+            
+            document.getElementById('agentForm').addEventListener('submit', submitForm);
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+        });
+    </script>
 </body>
 </html>
