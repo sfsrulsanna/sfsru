@@ -29,16 +29,95 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
     <style>
-        /* Дополнительные стили для новой логики */
+        /* Дополнительные стили для карточек и модального окна */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .criminal-card {
+            background: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            cursor: pointer;
+        }
+        .criminal-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .card-photo {
+            aspect-ratio: 3 / 4;
+            background: #f0f0f0;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.2s;
+        }
+        .criminal-card:hover .card-photo img {
+            transform: scale(1.03);
+        }
+        .card-info {
+            padding: 1rem;
+        }
+        .card-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            color: #1e293b;
+        }
+        .card-number {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+        .card-article {
+            font-size: 0.85rem;
+            margin-top: 0.5rem;
+            color: #7b091a;
+        }
+        .loading-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .modal-photo-section {
+            flex: 1;
+            min-width: 200px;
+        }
+        .main-photo {
+            aspect-ratio: 3 / 4;
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .main-photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
         .photo-thumbnails {
             display: flex;
-            gap: 8px;
-            margin-top: 12px;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
             flex-wrap: wrap;
         }
         .photo-thumb {
             width: 60px;
-            height: 60px;
+            height: 80px;
             object-fit: cover;
             border-radius: 4px;
             cursor: pointer;
@@ -48,53 +127,51 @@
         .photo-thumb:hover {
             border-color: #7b091a;
         }
-        .photo-thumb.active {
-            border-color: #7b091a;
-        }
-        .main-photo-img {
-            width: 100%;
-            max-height: 300px;
-            object-fit: contain;
-            background: #f0f0f0;
-            border-radius: 8px;
-        }
         .documents-list {
-            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
         }
-        .documents-list a {
-            display: block;
-            margin: 6px 0;
-            color: #007bff;
+        .doc-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #f1f5f9;
+            padding: 0.5rem 1rem;
+            border-radius: 40px;
             text-decoration: none;
+            color: #1e293b;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+            width: fit-content;
         }
-        .documents-list a:hover {
-            text-decoration: underline;
+        .doc-button:hover {
+            background: #e2e8f0;
+            transform: translateY(-2px);
         }
-        .access-message {
-            margin: 1rem 0;
-            padding: 0.5rem;
-            border-radius: 4px;
-        }
-        .access-message.error {
-            background: #f8d7da;
-            color: #721c24;
+        .doc-button i {
+            font-size: 1rem;
         }
         .auth-section {
             margin-top: 2rem;
             text-align: center;
         }
-        .btn {
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-            border: none;
+        .access-message {
+            text-align: center;
+            padding: 1rem;
+            background: #fef9e3;
+            border-left: 4px solid #7b091a;
+            margin-bottom: 1rem;
         }
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-        .hidden {
-            display: none;
+        @media (max-width: 768px) {
+            .modal-content {
+                flex-direction: column;
+            }
+            .photo-thumbnails {
+                justify-content: center;
+            }
         }
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -181,208 +258,269 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="../../js/registry/criminal-registry.js" defer></script>
     <script type="module">
-        // Импорт supabase клиента и основной логики (если в отдельном файле, оставляем его, но здесь дублируем для надёжности)
-        // Для чистоты кода, перенесём логику в этот модуль, чтобы избежать перезагрузок.
-        import { supabase } from '../../../js/supabase-config.js';
-        
-        let currentRecords = [];
-        let currentModalRecord = null;
-        let currentPhotoIndex = 0;
+import { supabase } from '../../../js/supabase-config.js';
 
-        // Инициализация
-        async function init() {
-            await loadRecords();
-            setupModalEvents();
-        }
+// Кэш данных и ссылок
+let recordsCache = null;
+let loadingPromise = null;
 
-        // Получение подписанной ссылки
-        async function getSignedUrl(filePath) {
-            if (!filePath) return null;
-            try {
-                const { data, error } = await supabase.storage
-                    .from('registry-files')
-                    .createSignedUrl(filePath, 3600);
-                if (error) throw error;
-                return data.signedUrl;
-            } catch (e) {
-                console.error('Ошибка получения ссылки для', filePath, e);
-                return null;
-            }
-        }
+// Инициализация
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadRecords();
+    setupEventListeners();
+});
 
-        // Загрузка всех записей
-        async function loadRecords() {
+async function loadRecords() {
+    if (recordsCache) return;
+    if (loadingPromise) return loadingPromise;
+
+    loadingPromise = (async () => {
+        try {
             const { data, error } = await supabase
                 .schema('registry')
                 .from('criminal')
-                .select('*')
+                .select('id, record_number, full_name, birth_date, birth_place, gender, citizenship, crime_article, details, photo_paths, document_paths')
                 .order('record_number', { ascending: false });
 
-            if (error) {
-                console.error('Ошибка загрузки:', error);
-                showMessage('Не удалось загрузить данные реестра', 'error');
-                return;
-            }
-
-            currentRecords = data || [];
+            if (error) throw error;
+            recordsCache = data || [];
             renderCards();
+        } catch (err) {
+            console.error('Ошибка загрузки реестра:', err);
+            document.getElementById('accessMessage').innerHTML = '<div class="access-message error">Не удалось загрузить данные. Попробуйте позже.</div>';
+        } finally {
+            loadingPromise = null;
         }
+    })();
+    return loadingPromise;
+}
 
-        // Рендер карточек
-        function renderCards() {
-            const grid = document.getElementById('cardsGrid');
-            if (!grid) return;
+function renderCards() {
+    const grid = document.getElementById('cardsGrid');
+    if (!grid) return;
 
-            if (currentRecords.length === 0) {
-                grid.innerHTML = '<p class="no-data">Нет записей в реестре</p>';
-                return;
+    if (!recordsCache || recordsCache.length === 0) {
+        grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
+        return;
+    }
+
+    grid.innerHTML = recordsCache.map(record => `
+        <div class="criminal-card" data-id="${record.id}">
+            <div class="card-photo">
+                <div class="loading-placeholder"></div>
+                <img data-src="placeholder" alt="Фото" style="display: none;">
+            </div>
+            <div class="card-info">
+                <div class="card-name">${escapeHtml(record.full_name)}</div>
+                <div class="card-number">№ записи: ${record.record_number}</div>
+                <div class="card-article">${escapeHtml(record.crime_article || '—')}</div>
+            </div>
+        </div>
+    `).join('');
+
+    // Ленивая загрузка фото
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const card = entry.target;
+                const id = card.dataset.id;
+                const record = recordsCache.find(r => r.id === id);
+                if (record && record.photo_paths && record.photo_paths.length) {
+                    loadPhotoForCard(card, record.photo_paths[0]);
+                } else {
+                    // Если нет фото, показываем заглушку
+                    const photoDiv = card.querySelector('.card-photo');
+                    if (photoDiv) {
+                        const placeholder = photoDiv.querySelector('.loading-placeholder');
+                        if (placeholder) placeholder.style.display = 'none';
+                        const fallback = document.createElement('div');
+                        fallback.className = 'no-photo';
+                        fallback.textContent = 'Нет фото';
+                        fallback.style.cssText = 'display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;';
+                        photoDiv.appendChild(fallback);
+                    }
+                }
+                observer.unobserve(card);
             }
+        });
+    }, { rootMargin: '0px 0px 200px 0px' });
 
-            grid.innerHTML = currentRecords.map(record => {
-                const firstPhoto = record.photo_paths && record.photo_paths.length > 0 ? record.photo_paths[0] : null;
-                const photoHtml = firstPhoto ? `<div class="card-photo"><img src="/api/placeholder?size=200" data-photo-path="${firstPhoto}" alt="Фото"></div>` : '<div class="card-photo no-photo">Нет фото</div>';
-                return `
-                    <div class="card" data-id="${record.id}">
-                        ${photoHtml}
-                        <div class="card-content">
-                            <h3 class="card-title">${escapeHtml(record.full_name)}</h3>
-                            <p class="card-subtitle">№ записи: ${record.record_number}</p>
-                            <p class="card-subtitle">Статья: ${record.crime_article || '—'}</p>
-                            <button class="btn-details" data-id="${record.id}">Подробнее</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+    document.querySelectorAll('.criminal-card').forEach(card => observer.observe(card));
+}
 
-            // Загружаем реальные фото в карточки (асинхронно)
-            document.querySelectorAll('.card-photo img[data-photo-path]').forEach(async (img) => {
-                const path = img.dataset.photoPath;
-                const url = await getSignedUrl(path);
-                if (url) img.src = url;
-            });
+async function loadPhotoForCard(card, photoPath) {
+    try {
+        const { data, error } = await supabase.storage
+            .from('registry-files')
+            .createSignedUrl(photoPath, 3600);
+        if (error) throw error;
 
-            // Навешиваем обработчики на кнопки "Подробнее"
-            document.querySelectorAll('.btn-details').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = btn.dataset.id;
-                    const record = currentRecords.find(r => r.id === id);
-                    if (record) await showModal(record);
+        const img = document.createElement('img');
+        img.src = data.signedUrl;
+        img.alt = 'Фото';
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'cover';
+
+        const photoDiv = card.querySelector('.card-photo');
+        if (photoDiv) {
+            photoDiv.innerHTML = '';
+            photoDiv.appendChild(img);
+        }
+    } catch (err) {
+        console.error('Ошибка загрузки фото:', err);
+        const photoDiv = card.querySelector('.card-photo');
+        if (photoDiv) {
+            photoDiv.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;">Ошибка</div>';
+        }
+    }
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
+}
+
+async function openModal(recordId) {
+    const record = recordsCache.find(r => r.id === recordId);
+    if (!record) return;
+
+    // Заполняем текстовые данные
+    document.getElementById('modalFullName').textContent = record.full_name;
+    document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
+    document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
+    document.getElementById('modalGender').textContent = record.gender || '—';
+    document.getElementById('modalCitizenship').textContent = record.citizenship || '—';
+    document.getElementById('modalCrimeArticle').textContent = record.crime_article || '—';
+    document.getElementById('modalDetails').textContent = record.details || '—';
+
+    // Фото
+    const photoPaths = record.photo_paths || [];
+    const mainPhoto = document.getElementById('modalMainPhoto');
+    const thumbnailsContainer = document.getElementById('photoThumbnails');
+    thumbnailsContainer.innerHTML = '';
+
+    if (photoPaths.length) {
+        // Загружаем ссылки на фото
+        const signedUrls = await Promise.all(photoPaths.map(async (path) => {
+            try {
+                const { data } = await supabase.storage.from('registry-files').createSignedUrl(path, 3600);
+                return data.signedUrl;
+            } catch { return null; }
+        }));
+
+        const validUrls = signedUrls.filter(u => u);
+        if (validUrls.length) {
+            mainPhoto.src = validUrls[0];
+            mainPhoto.onerror = () => { mainPhoto.src = ''; };
+
+            validUrls.forEach((url, idx) => {
+                const thumb = document.createElement('img');
+                thumb.src = url;
+                thumb.className = 'photo-thumb';
+                thumb.addEventListener('click', () => {
+                    mainPhoto.src = url;
                 });
+                thumbnailsContainer.appendChild(thumb);
             });
+        } else {
+            mainPhoto.src = '';
+            mainPhoto.alt = 'Нет фото';
         }
+    } else {
+        mainPhoto.src = '';
+        mainPhoto.alt = 'Нет фото';
+    }
 
-        // Показать модальное окно с записью
-        async function showModal(record) {
-            currentModalRecord = record;
-            document.getElementById('modalFullName').textContent = record.full_name;
-            document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
-            document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
-            document.getElementById('modalGender').textContent = record.gender || '—';
-            document.getElementById('modalCitizenship').textContent = record.citizenship || '—';
-            document.getElementById('modalCrimeArticle').textContent = record.crime_article || '—';
-            document.getElementById('modalDetails').textContent = record.details || '—';
+    // Документы
+    const docPaths = record.document_paths || [];
+    const docsContainer = document.getElementById('documentsList');
+    docsContainer.innerHTML = '';
 
-            // Загрузка фото
-            const photoPaths = record.photo_paths || [];
-            const thumbContainer = document.getElementById('photoThumbnails');
-            const mainPhoto = document.getElementById('modalMainPhoto');
-            
-            if (photoPaths.length === 0) {
-                mainPhoto.src = '';
-                thumbContainer.innerHTML = '<p>Нет фотографий</p>';
-            } else {
-                thumbContainer.innerHTML = '';
-                for (let i = 0; i < photoPaths.length; i++) {
-                    const url = await getSignedUrl(photoPaths[i]);
-                    if (url) {
-                        const thumb = document.createElement('img');
-                        thumb.src = url;
-                        thumb.classList.add('photo-thumb');
-                        if (i === 0) thumb.classList.add('active');
-                        thumb.addEventListener('click', () => {
-                            mainPhoto.src = url;
-                            document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('active'));
-                            thumb.classList.add('active');
-                        });
-                        thumbContainer.appendChild(thumb);
-                        if (i === 0) mainPhoto.src = url;
-                    }
+    if (docPaths.length) {
+        for (const path of docPaths) {
+            try {
+                const { data } = await supabase.storage.from('registry-files').createSignedUrl(path, 3600);
+                if (data?.signedUrl) {
+                    const fileName = path.split('/').pop().replace(/^\d+_/, '');
+                    const button = document.createElement('a');
+                    button.href = data.signedUrl;
+                    button.download = fileName;
+                    button.target = '_blank';
+                    button.className = 'doc-button';
+                    button.innerHTML = `<i class="fas fa-file-pdf"></i> ${escapeHtml(fileName)}`;
+                    docsContainer.appendChild(button);
                 }
+            } catch (err) {
+                console.error('Ошибка загрузки документа:', err);
             }
-
-            // Загрузка документов
-            const docPaths = record.document_paths || [];
-            const docsContainer = document.getElementById('documentsList');
-            if (docPaths.length === 0) {
-                docsContainer.innerHTML = '<p>Нет документов</p>';
-            } else {
-                docsContainer.innerHTML = '';
-                for (const path of docPaths) {
-                    const url = await getSignedUrl(path);
-                    if (url) {
-                        const fileName = path.split('/').pop();
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.textContent = fileName;
-                        link.target = '_blank';
-                        docsContainer.appendChild(link);
-                    } else {
-                        const span = document.createElement('span');
-                        span.textContent = 'Документ недоступен';
-                        span.style.color = '#dc3545';
-                        docsContainer.appendChild(span);
-                    }
-                }
-            }
-
-            document.getElementById('modalOverlay').classList.add('active');
         }
+    } else {
+        docsContainer.innerHTML = '<p class="no-docs">Нет прикреплённых документов</p>';
+    }
 
-        function setupModalEvents() {
-            const modal = document.getElementById('modalOverlay');
-            const closeBtn = document.getElementById('modalClose');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', () => modal.classList.remove('active'));
-            }
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) modal.classList.remove('active');
-            });
-        }
+    // Показать модалку
+    document.getElementById('modalOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
 
-        function showMessage(text, type) {
-            const msgDiv = document.getElementById('accessMessage');
-            msgDiv.textContent = text;
-            msgDiv.className = `access-message ${type}`;
-            setTimeout(() => msgDiv.textContent = '', 5000);
-        }
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
-        // Запускаем инициализацию
-        init();
-
-        // Отключаем обновление страницы при фокусе/переключении вкладок
-        window.addEventListener('pageshow', (event) => {
-            if (event.persisted) {
-                // Если страница восстановлена из кэша, просто обновляем данные без перезагрузки
-                loadRecords();
+function setupEventListeners() {
+    // Открытие карточек
+    const grid = document.getElementById('cardsGrid');
+    if (grid) {
+        grid.addEventListener('click', (e) => {
+            const card = e.target.closest('.criminal-card');
+            if (card && card.dataset.id) {
+                openModal(card.dataset.id);
             }
         });
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden) {
-                loadRecords();
-            }
+    }
+
+    // Закрытие модалки
+    const modalClose = document.getElementById('modalClose');
+    const modalOverlay = document.getElementById('modalOverlay');
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
+        if (e.target === modalOverlay) closeModal();
+    });
+
+    // Мобильное меню
+    const menuToggle = document.getElementById('menuToggle');
+    const navMenu = document.getElementById('navMenu');
+    const menuOverlay = document.getElementById('menuOverlay');
+    if (menuToggle && navMenu && menuOverlay) {
+        menuToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+            menuOverlay.classList.toggle('active');
+            document.body.classList.toggle('menu-open');
         });
+        menuOverlay.addEventListener('click', () => {
+            navMenu.classList.remove('active');
+            menuOverlay.classList.remove('active');
+            document.body.classList.remove('menu-open');
+        });
+    }
+
+    // Выход (если есть кнопка выхода)
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '../../login.html';
+        });
+    }
+}
     </script>
 </body>
 </html>
