@@ -265,16 +265,16 @@ function goToStep(step) {
     if (step === 4) renderProfileData();
 
     if (step === 5) {
-        const newSurname = document.getElementById('newSurname');
-        const newName = document.getElementById('newName');
-        const newPatronymic = document.getElementById('newPatronymic');
-        const newBirthDate = document.getElementById('newBirthDate');
-        const newBirthPlace = document.getElementById('newBirthPlace');
-        if (newSurname) newSurname.value = formData.newData.surname || '';
-        if (newName) newName.value = formData.newData.name || '';
-        if (newPatronymic) newPatronymic.value = formData.newData.patronymic || '';
-        if (newBirthDate) newBirthDate.value = formData.newData.birth_date || '';
-        if (newBirthPlace) newBirthPlace.value = formData.newData.birth_place || '';
+        const el1 = document.getElementById('newSurname');
+        const el2 = document.getElementById('newName');
+        const el3 = document.getElementById('newPatronymic');
+        const el4 = document.getElementById('newBirthDate');
+        const el5 = document.getElementById('newBirthPlace');
+        if (el1) el1.value = formData.newData.surname || '';
+        if (el2) el2.value = formData.newData.name || '';
+        if (el3) el3.value = formData.newData.patronymic || '';
+        if (el4) el4.value = formData.newData.birth_date || '';
+        if (el5) el5.value = formData.newData.birth_place || '';
     }
 
     if (step === 6) {
@@ -288,24 +288,24 @@ function goToStep(step) {
             if (typeSelector) typeSelector.classList.remove('hidden');
         }
         if (formData.reasonDetails) {
-            const certNumber = document.getElementById('certificateNumber');
-            const certDate = document.getElementById('certificateDate');
-            const certIssued = document.getElementById('certificateIssuedBy');
-            const certType = document.getElementById('certificateType');
-            if (certNumber) certNumber.value = formData.reasonDetails.number || '';
-            if (certDate) certDate.value = formData.reasonDetails.date || '';
-            if (certIssued) certIssued.value = formData.reasonDetails.issuedBy || '';
-            if (certType && formData.reason === 'name_changed') {
-                certType.value = formData.reasonDetails.type || 'marriage';
+            const el1 = document.getElementById('certificateNumber');
+            const el2 = document.getElementById('certificateDate');
+            const el3 = document.getElementById('certificateIssuedBy');
+            const el4 = document.getElementById('certificateType');
+            if (el1) el1.value = formData.reasonDetails.number || '';
+            if (el2) el2.value = formData.reasonDetails.date || '';
+            if (el3) el3.value = formData.reasonDetails.issuedBy || '';
+            if (el4 && formData.reason === 'name_changed') {
+                el4.value = formData.reasonDetails.type || 'marriage';
             }
         }
     }
 
     if (step === 7) {
-        const phone = document.getElementById('phone');
-        const email = document.getElementById('email');
-        if (phone) phone.value = formData.phone;
-        if (email) email.value = formData.email;
+        const el1 = document.getElementById('phone');
+        const el2 = document.getElementById('email');
+        if (el1) el1.value = formData.phone;
+        if (el2) el2.value = formData.email;
     }
 
     if (step === 8) {
@@ -346,11 +346,16 @@ async function validateStep(step) {
             break;
         }
         case 5: {
-            const surname = document.getElementById('newSurname')?.value.trim() || '';
-            const name = document.getElementById('newName')?.value.trim() || '';
-            const patronymic = document.getElementById('newPatronymic')?.value.trim() || '';
-            const birthDate = document.getElementById('newBirthDate')?.value || '';
-            const birthPlace = document.getElementById('newBirthPlace')?.value.trim() || '';
+            const el1 = document.getElementById('newSurname');
+            const el2 = document.getElementById('newName');
+            const el3 = document.getElementById('newPatronymic');
+            const el4 = document.getElementById('newBirthDate');
+            const el5 = document.getElementById('newBirthPlace');
+            const surname = el1?.value.trim() || '';
+            const name = el2?.value.trim() || '';
+            const patronymic = el3?.value.trim() || '';
+            const birthDate = el4?.value || '';
+            const birthPlace = el5?.value.trim() || '';
             if (!surname && !name && !patronymic && !birthDate && !birthPlace) {
                 showError('Заполните хотя бы одно поле новых данных.');
                 return false;
@@ -358,9 +363,13 @@ async function validateStep(step) {
             break;
         }
         case 6: {
-            const certNumber = document.getElementById('certificateNumber')?.value.trim() || '';
-            const certDate = document.getElementById('certificateDate')?.value || '';
-            const certIssued = document.getElementById('certificateIssuedBy')?.value.trim() || '';
+            const el1 = document.getElementById('certificateNumber');
+            const el2 = document.getElementById('certificateDate');
+            const el3 = document.getElementById('certificateIssuedBy');
+            const el4 = document.getElementById('certificateType');
+            const certNumber = el1?.value.trim() || '';
+            const certDate = el2?.value || '';
+            const certIssued = el3?.value.trim() || '';
             if (!certNumber || !certDate || !certIssued) {
                 showError('Заполните все поля свидетельства');
                 return false;
@@ -368,13 +377,15 @@ async function validateStep(step) {
             if (formData.reason === 'first_14') {
                 formData.reasonDetails = { type: 'birth_certificate', number: certNumber, date: certDate, issuedBy: certIssued };
             } else if (formData.reason === 'name_changed') {
-                formData.reasonDetails = { type: document.getElementById('certificateType')?.value || 'marriage', number: certNumber, date: certDate, issuedBy: certIssued };
+                formData.reasonDetails = { type: el4?.value || 'marriage', number: certNumber, date: certDate, issuedBy: certIssued };
             }
             break;
         }
         case 7: {
-            const phone = document.getElementById('phone')?.value.trim() || '';
-            const email = document.getElementById('email')?.value.trim() || '';
+            const el1 = document.getElementById('phone');
+            const el2 = document.getElementById('email');
+            const phone = el1?.value.trim() || '';
+            const email = el2?.value.trim() || '';
             if (!phone || !email) {
                 showError('Заполните телефон и email');
                 return false;
@@ -384,9 +395,12 @@ async function validateStep(step) {
             break;
         }
         case 8: {
-            formData.addresses.permanent = document.getElementById('permanentAddress')?.value.trim() || '';
-            formData.addresses.temporary = document.getElementById('temporaryAddress')?.value.trim() || '';
-            formData.addresses.actual = document.getElementById('actualAddress')?.value.trim() || '';
+            const el1 = document.getElementById('permanentAddress');
+            const el2 = document.getElementById('temporaryAddress');
+            const el3 = document.getElementById('actualAddress');
+            formData.addresses.permanent = el1?.value.trim() || '';
+            formData.addresses.temporary = el2?.value.trim() || '';
+            formData.addresses.actual = el3?.value.trim() || '';
             if (!formData.addresses.permanent && !formData.addresses.actual) {
                 showError('Укажите адрес постоянной регистрации или фактический адрес');
                 return false;
@@ -519,7 +533,8 @@ function prepareSummary() {
     html += `<tr><th>Отделение МВД</th><td>${mvdName}</td></tr>`;
     html += `<tr><th>Фото</th><td>загружено</td></tr>`;
     html += '</table>';
-    document.getElementById('summary').innerHTML = html;
+    const summary = document.getElementById('summary');
+    if (summary) summary.innerHTML = html;
 }
 
 // --- PDF и Отправка ---
@@ -668,8 +683,14 @@ async function submitApplication() {
 // --- Инициализация ---
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Показываем первый шаг сразу
+    // !!! ПОКАЗЫВАЕМ ШАГ 1 СРАЗУ, ДО ЗАГРУЗКИ ДАННЫХ !!!
     goToStep(1);
+    
+    // Показываем лоадер
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const formContainer = document.getElementById('applicationForm');
+    if (loadingOverlay) loadingOverlay.classList.remove('hidden');
+    if (formContainer) formContainer.classList.add('loading');
     
     // Загружаем данные в фоне
     try {
@@ -682,9 +703,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Данные загружены
         isDataLoaded = true;
         
-        // Скрываем лоадер и показываем форму
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const formContainer = document.getElementById('applicationForm');
         const activeWarning = document.getElementById('activeApplicationWarning');
         
         if (hasActiveApp) {
@@ -694,7 +712,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (activeWarning) activeWarning.classList.add('hidden');
             if (formContainer) {
                 formContainer.classList.remove('hidden');
-                formContainer.classList.add('loaded');
+                formContainer.classList.remove('loading');
             }
         }
         
@@ -702,8 +720,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         
     } catch (e) {
         console.error('Ошибка инициализации:', e);
-        const loadingOverlay = document.getElementById('loadingOverlay');
         if (loadingOverlay) loadingOverlay.classList.add('hidden');
+        if (formContainer) formContainer.classList.remove('loading');
         showError('Ошибка загрузки данных. Обновите страницу.');
     }
 
