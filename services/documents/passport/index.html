@@ -64,280 +64,260 @@
     </header>
     <div class="menu-overlay"></div>
 
-<div class="service-container">
-    <h1>Получение паспорта гражданина СФСРЮ</h1>
+    <main class="main-content">
+        <div class="service-container">
+            <h1>Получение паспорта гражданина СФСРЮ</h1>
 
-    <!-- Предупреждение об активном заявлении -->
-    <div id="activeApplicationWarning" class="alert alert-warning hidden">
-        <i class="fas fa-exclamation-triangle"></i>
-        <div>
-            <strong>У вас уже есть активное заявление</strong><br>
-            Вы можете подать новое заявление только после завершения текущего.
-            <a href="../../../profile.html" style="color: #856404; font-weight: bold;">Перейти в личный кабинет</a>
-        </div>
+            <div id="errorMessage" class="alert alert-danger hidden"></div>
+            <div id="successMessage" class="alert alert-success hidden"></div>
+
+            <div id="activeApplicationWarning" class="blocking-warning hidden">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2>У вас уже есть активное заявление</h2>
+                <p>Вы можете подать новое заявление только после завершения текущего.</p>
+                <a href="../../../profile.html" class="btn btn-primary">Перейти в личный кабинет</a>
+            </div>
+
+            <form id="applicationForm">
+                <!-- Шаг 1: Информация -->
+                <div class="step-content" data-step="1">
+                    <h2>Получение паспорта</h2>
+                    <p>Услуга поможет оформить паспорт, если:</p>
+                    <ul class="plain-list">
+						<li>первичное получение паспорта в 14 лет</li>
+						<li>истек срок действия паспорта</li>
+                        <li>изменились фамилия, имя или отчество</li>
+                        <li>паспорт стал непригодным</li>
+                        <li>изменилась внешность</li>
+                        <li>закончилось место для штампов</li>
+                        <li>изменились дата или место рождения</li>
+                    </ul>
+                    <p>Если паспорт потерян или украден, запишитесь на приём и подайте заявление в МВД</p>
+                    <div class="navigation">
+                        <span></span>
+                        <button type="button" class="btn btn-primary next-step">Начать</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 2: Выбор причины -->
+                <div class="step-content hidden" data-step="2">
+                    <h2>Выберите причину оформления</h2>
+                    <div class="radio-group">
+						<label><input type="radio" name="reason" value="first_14"> Первичное получение в 14 лет</label>
+						<label><input type="radio" name="reason" value="expired"> Срок действия паспорта истёк</label>
+						<label><input type="radio" name="reason" value="no_space"> Закончилось место для штампов</label>
+                        <label><input type="radio" name="reason" value="name_changed"> Изменилось ФИО, дата или место рождения</label>
+                        <label><input type="radio" name="reason" value="lost"> Паспорт утерян или украден</label>
+                        <label><input type="radio" name="reason" value="damaged"> Паспорт стал непригодным к использованию</label>
+                        <label><input type="radio" name="reason" value="citizenship"> Получение гражданства СФСРЮ</label>
+                        <label><input type="radio" name="reason" value="appearance"> Изменилась внешность</label>
+                        <label><input type="radio" name="reason" value="error"> Ошибка в паспорте</label>
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 3: Информация о стоимости и необходимых документах -->
+                <div class="step-content hidden" data-step="3">
+                    <div id="step3NormalContent">
+                        <h2>Что нужно для подачи заявления</h2>
+                        <ul class="plain-list">
+                            <li>Ваше фото</li>
+                            <li>Данные свидетельства о заключении или расторжении брака — если вы в браке или в разводе</li>
+                            <li>ФИО родителей, как они указаны в вашем свидетельстве о рождении</li>
+                        </ul>
+                        <p><strong>Срок оказания услуги:</strong> 5 рабочих дней</p>
+                        <p><strong>Стоимость:</strong> <span id="priceDisplay">300</span></p>
+                        <p><small>Пошлину можно будет оплатить после проверки заявления в МВД</small></p>
+                    </div>
+<div id="lostMessage" class="blocking-warning hidden">
+    <i class="fas fa-exclamation-triangle"></i>
+    <h2>Онлайн-подача недоступна</h2>
+    <p>Для оформления паспорта по причине утери или кражи необходимо лично обратиться в отделение МВД.</p>
+</div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step" id="step3NextBtn">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 4: Проверка данных профиля -->
+                <div class="step-content hidden" data-step="4">
+                    <h2>Проверьте ваши данные</h2>
+                    <div id="profileData"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+<!-- Шаг 5: Новые данные (только для причин, требующих изменения) -->
+<div class="step-content hidden" data-step="5">
+    <h2>Введите новые данные</h2>
+    <div class="form-group">
+        <label>Новая фамилия</label>
+        <input type="text" class="form-control" id="newSurname">
     </div>
-
-    <!-- Контейнер формы -->
-    <div id="applicationForm">
-
-        <!-- Сообщения об ошибках/успехе -->
-        <div id="errorMessage" class="alert alert-danger hidden"></div>
-        <div id="successMessage" class="alert alert-success hidden"></div>
-
-        <!-- Шаг 1: Intro -->
-        <div class="step-content" data-step="1">
-            <h2>Начать оформление</h2>
-            <p>Услуга поможет оформить паспорт, если:</p>
-            <ul class="plain-list">
-                <li>Первичное получение паспорта в 14 лет</li>
-                <li>Истек срок действия паспорта</li>
-                <li>Изменились фамилия, имя или отчество</li>
-                <li>Паспорт стал непригоден</li>
-                <li>Изменилась внешность</li>
-                <li>Закончилось место для штампов</li>
-            </ul>
-            <div class="alert alert-warning">
-                <i class="fas fa-info-circle"></i> Если паспорт потерян или украден, необходимо лично обратиться в МВД.
-            </div>
-            <div class="navigation">
-                <button class="btn btn-primary next-step">Начать</button>
-            </div>
-        </div>
-
-        <!-- Шаг 2: Причина -->
-        <div class="step-content hidden" data-step="2">
-            <h2>Выберите причину оформления</h2>
-            <div class="radio-group">
-                <label><input type="radio" name="reason" value="first_14"> Первичное получение в 14 лет</label>
-                <label><input type="radio" name="reason" value="expired"> Срок действия паспорта истёк</label>
-                <label><input type="radio" name="reason" value="stamps"> Закончилось место для штампов</label>
-                <label><input type="radio" name="reason" value="name_changed"> Изменилось ФИО, дата или место рождения</label>
-                <label><input type="radio" name="reason" value="lost"> Паспорт утерян или украден</label>
-                <label><input type="radio" name="reason" value="damaged"> Паспорт стал непригоден к использованию</label>
-                <label><input type="radio" name="reason" value="citizenship"> Получение гражданства СФСРЮ</label>
-                <label><input type="radio" name="reason" value="appearance"> Изменилась внешность</label>
-                <label><input type="radio" name="reason" value="error"> Ошибка в паспорте</label>
-            </div>
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 3: Условия -->
-        <div class="step-content hidden" data-step="3">
-            <div id="step3NormalContent">
-                <h2>Что нужно для подачи заявления</h2>
-                <ul class="plain-list">
-                    <li>Ваше фото (JPG, до 1 МБ)</li>
-                    <li>Данные свидетельства (о браке, рождении и т.д.)</li>
-                    <li>ФИО родителей (из свидетельства о рождении)</li>
-                </ul>
-                <div class="address-block">
-                    <p><strong>Срок оказания услуги:</strong> 5 рабочих дней</p>
-                    <p><strong>Стоимость:</strong> <span id="priceDisplay">300 ₽</span></p>
-                    <small>Пошлину можно будет оплатить после проверки заявления в МВД</small>
-                </div>
-            </div>
-            
-            <div id="lostMessage" class="blocking-warning hidden">
-                <i class="fas fa-hand-paper"></i>
-                <h2>Онлайн-подача недоступна</h2>
-                <p>Для оформления паспорта по причине утери или кражи необходимо лично обратиться в отделение МВД.</p>
-            </div>
-
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step" id="step3NextBtn">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 4: Проверка профиля -->
-        <div class="step-content hidden" data-step="4">
-            <h2>Проверьте ваши данные</h2>
-            <div id="profileData"></div>
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 5: Новые данные -->
-        <div class="step-content hidden" data-step="5">
-            <h2>Введите новые данные</h2>
-            <p class="form-note">Если какие‑то данные не изменились, укажите их текущие значения.</p>
-            <div class="form-group">
-                <label>Новая фамилия</label>
-                <input type="text" id="newSurname" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Новое имя</label>
-                <input type="text" id="newName" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Новое отчество</label>
-                <input type="text" id="newPatronymic" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Новая дата рождения</label>
-                <input type="date" id="newBirthDate" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Новое место рождения</label>
-                <input type="text" id="newBirthPlace" class="form-control">
-            </div>
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 6: Документы -->
-        <div class="step-content hidden" data-step="6">
-            <h2>Данные свидетельства</h2>
-            
-            <div id="birthCertificateStatic" class="hidden">
-                <div class="alert alert-info">Для первичного получения требуется свидетельство о рождении.</div>
-            </div>
-
-            <div id="certificateTypeSelector">
-                <div class="form-group">
-                    <label>Тип свидетельства</label>
-                    <select id="certificateType" class="form-control">
-                        <option value="marriage">Свидетельство о браке</option>
-                        <option value="divorce">Свидетельство о разводе</option>
-                        <option value="name_change">Свидетельство о перемене имени</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label>Серия и номер</label>
-                <input type="text" id="certificateNumber" class="form-control" placeholder="Серия и номер">
-            </div>
-            <div class="form-group">
-                <label>Дата выдачи</label>
-                <input type="date" id="certificateDate" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Кем выдано</label>
-                <input type="text" id="certificateIssuedBy" class="form-control">
-            </div>
-
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 7: Контакты -->
-        <div class="step-content hidden" data-step="7">
-            <h2>Контактные данные</h2>
-            <div class="form-group">
-                <label>Номер телефона</label>
-                <input type="tel" id="phone" class="form-control">
-            </div>
-            <div class="form-group">
-                <label>Email</label>
-                <input type="email" id="email" class="form-control">
-            </div>
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 8: Адреса -->
-        <div class="step-content hidden" data-step="8">
-            <h2>Адреса проживания</h2>
-            <div class="form-group">
-                <label>Адрес постоянной регистрации</label>
-                <input type="text" id="permanentAddress" class="form-control" placeholder="Улица, дом, квартира">
-            </div>
-            <div class="form-group">
-                <label>Адрес временной регистрации</label>
-                <input type="text" id="temporaryAddress" class="form-control" placeholder="Если есть">
-            </div>
-            <div class="form-group">
-                <label>Фактический адрес проживания</label>
-                <input type="text" id="actualAddress" class="form-control" placeholder="Где вы живете сейчас">
-            </div>
-            
-            <div class="text-center">
-                <a href="../../../personal-profile/addresses.html" target="_blank" class="btn btn-secondary edit-address-btn">
-                    <i class="fas fa-edit"></i> Изменить адреса в профиле
-                </a>
-            </div>
-
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 9: Фото -->
-        <div class="step-content hidden" data-step="9">
-            <h2>Загрузите фото</h2>
-            <p>Формат JPG, не более 1 МБ</p>
-            
-            <div class="upload-area" id="dropZone">
-                <i class="fas fa-cloud-upload-alt"></i>
-                <p>Перетащите файл сюда или нажмите для выбора</p>
-                <input type="file" id="photoUpload" accept="image/jpeg" hidden>
-            </div>
-
-            <div id="uploadProgressContainer" class="upload-progress hidden">
-                <div class="progress" style="height: 6px; background: #f0f0f0; border-radius: 3px; overflow: hidden;">
-                    <div id="uploadProgressBar" class="progress-bar" style="height: 100%; background: #7b091a; width: 0%; transition: width 0.3s;"></div>
-                </div>
-                <div id="fileList" class="file-list mt-2"></div>
-            </div>
-
-            <div id="photoPreview" class="photo-preview hidden">
-                <img id="previewImg" src="" alt="Предпросмотр">
-            </div>
-
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step" id="step9NextBtn">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 10: МВД -->
-        <div class="step-content hidden" data-step="10">
-            <h2>Выберите отделение МВД</h2>
-            <div id="mvdList" class="mvd-grid"></div>
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary next-step">Далее</button>
-            </div>
-        </div>
-
-        <!-- Шаг 11: Проверка -->
-        <div class="step-content hidden" data-step="11">
-            <h2>Проверьте заявление</h2>
-            <div id="summary"></div>
-            <div class="navigation">
-                <button class="btn btn-secondary prev-step">Назад</button>
-                <button class="btn btn-primary" id="submitApplication">Отправить заявление</button>
-            </div>
-        </div>
-
-        <!-- Шаг 12: Успех -->
-        <div class="step-content hidden" data-step="12">
-            <div class="text-center" style="padding: 2rem 0;">
-                <i class="fas fa-check-circle" style="font-size: 4rem; color: #28a745; margin-bottom: 1rem;"></i>
-                <h2>Заявление отправлено!</h2>
-                <p>Номер вашего заявления: <strong id="applicationNumber" style="color: #7b091a; font-size: 1.2rem;"></strong></p>
-                <p>Вы можете отслеживать статус в личном кабинете.</p>
-                <div class="navigation" style="border: none; flex-direction: column; gap: 0.5rem;">
-                    <a href="../../../services.html" class="btn btn-secondary">На главную услуг</a>
-                    <a href="../../../profile.html" class="btn btn-primary">В личный кабинет</a>
-                </div>
-            </div>
-        </div>
+    <div class="form-group">
+        <label>Новое имя</label>
+        <input type="text" class="form-control" id="newName">
+    </div>
+    <div class="form-group">
+        <label>Новое отчество</label>
+        <input type="text" class="form-control" id="newPatronymic">
+    </div>
+    <div class="form-group">
+        <label>Новая дата рождения</label>
+        <input type="date" class="form-control" id="newBirthDate">
+    </div>
+    <div class="form-group">
+        <label>Новое место рождения</label>
+        <input type="text" class="form-control" id="newBirthPlace">
+    </div>
+    <div class="form-note">
+        Если какие‑то данные не изменились, укажите их текущие значения.
+    </div>
+    <div class="navigation">
+        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+        <button type="button" class="btn btn-primary next-step">Далее</button>
     </div>
 </div>
+
+<!-- Шаг 6: Данные свидетельства -->
+<div class="step-content hidden" data-step="6">
+    <h2>Данные свидетельства</h2>
+    
+    <!-- Блок для first_14 (статичный текст) -->
+    <div id="birthCertificateStatic" class="hidden">
+        <p><strong>Тип свидетельства:</strong> Свидетельство о рождении</p>
+    </div>
+    
+    <!-- Блок для name_changed (выбор типа) -->
+    <div id="certificateTypeSelector">
+        <div class="form-group">
+            <label>Тип свидетельства</label>
+            <select class="form-control" id="certificateType">
+                <option value="marriage">Свидетельство о браке</option>
+                <option value="divorce">Свидетельство о разводе</option>
+                <option value="name_change">Свидетельство о перемене имени</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Общие поля для всех свидетельств -->
+    <div class="form-group">
+        <label>Серия и номер свидетельства</label>
+        <input type="text" class="form-control" id="certificateNumber">
+    </div>
+    <div class="form-group">
+        <label>Дата выдачи</label>
+        <input type="date" class="form-control" id="certificateDate">
+    </div>
+    <div class="form-group">
+        <label>Кем выдано</label>
+        <input type="text" class="form-control" id="certificateIssuedBy">
+    </div>
+
+    <div class="navigation">
+        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+        <button type="button" class="btn btn-primary next-step">Далее</button>
+    </div>
+</div>
+
+                <!-- Шаг 7: Контактные данные -->
+                <div class="step-content hidden" data-step="7">
+                    <h2>Контактные данные</h2>
+                    <div class="form-group">
+                        <label>Номер телефона</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="+7 (999) 123-45-67">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" class="form-control" id="email" placeholder="mail@example.com">
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+<!-- Шаг 6: Адреса проживания -->
+<div class="step-content hidden" data-step="6">
+    <h2>Адреса проживания</h2>
+    <div class="form-group">
+        <label>Адрес постоянной регистрации</label>
+        <input type="text" id="registration_address" class="form-control" placeholder="Например: г. Поповск, ул. Ленина, д. 1, кв. 5">
+    </div>
+    <div class="form-group">
+        <label>Фактический адрес проживания</label>
+        <input type="text" id="actual_address" class="form-control" placeholder="Если совпадает с пропиской, оставьте пустым">
+    </div>
+    <div class="navigation">
+        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+        <button type="button" class="btn btn-primary next-step">Далее</button>
+    </div>
+</div>
+
+                <!-- Шаг 8: Загрузка фото -->
+                <div class="step-content hidden" data-step="8">
+                    <h2>Загрузите фото</h2>
+                    <p>Формат JPG, не более 1 МБ</p>
+                    <div class="upload-area" id="dropZone">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <p>Перетащите файл сюда или нажмите для выбора</p>
+                        <input type="file" id="photoUpload" accept=".jpg,.jpeg" style="display: none;">
+                    </div>
+                    <div id="photoPreview" class="photo-preview hidden">
+                        <img id="previewImg" src="#" alt="Предпросмотр">
+                    </div>
+                    <div class="upload-progress hidden" id="uploadProgressContainer">
+                        <div class="progress">
+                            <div class="progress-bar" id="uploadProgressBar" style="width: 0%;"></div>
+                        </div>
+                        <div class="file-list" id="fileList"></div>
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step" id="step8NextBtn" disabled>Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 9: Выбор отделения МВД -->
+                <div class="step-content hidden" data-step="9">
+                    <h2>Выберите отделение МВД</h2>
+                    <div id="mvdList" class="mvd-grid"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 10: Просмотр и отправка -->
+                <div class="step-content hidden" data-step="10">
+                    <h2>Проверьте заявление</h2>
+                    <div id="summary"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary" id="submitApplication">Отправить заявление</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 11: Завершение -->
+                <div class="step-content hidden" data-step="11">
+                    <h2>Заявление отправлено!</h2>
+                    <p>Номер вашего заявления: <strong id="applicationNumber"></strong></p>
+                    <p>Вы можете отслеживать статус в личном кабинете.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <a href="../../../services.html" class="btn btn-secondary btn-lg">На главную услуг</a>
+                        <a href="../../../profile.html" class="btn btn-secondary btn-lg">В личный кабинет</a>
+                        <a id="gotoServiceLink" href="#" class="btn btn-primary btn-lg">Перейти к заявлению</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
 
     <footer class="footer">
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
