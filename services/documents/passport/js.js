@@ -30,17 +30,20 @@ function generateApplicationNumber() {
 
 function showError(msg) {
     const errDiv = document.getElementById('errorMessage');
-    errDiv.textContent = msg;
-    errDiv.classList.remove('hidden');
-    errDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    setTimeout(() => errDiv.classList.add('hidden'), 5000);
+    if (errDiv) {
+        errDiv.textContent = msg;
+        errDiv.classList.remove('hidden');
+        setTimeout(() => errDiv.classList.add('hidden'), 5000);
+    }
 }
 
 function showSuccess(msg) {
     const successDiv = document.getElementById('successMessage');
-    successDiv.textContent = msg;
-    successDiv.classList.remove('hidden');
-    setTimeout(() => successDiv.classList.add('hidden'), 5000);
+    if (successDiv) {
+        successDiv.textContent = msg;
+        successDiv.classList.remove('hidden');
+        setTimeout(() => successDiv.classList.add('hidden'), 5000);
+    }
 }
 
 // --- Загрузка данных ---
@@ -210,7 +213,6 @@ function getPrevStep(step) {
 
 function goToStep(step) {
     if (step < 1 || step > 12) return;
-    if (!isDataLoaded) return;
     
     const currentContent = document.querySelector(`.step-content[data-step="${currentStep}"]`);
     const targetStep = document.querySelector(`.step-content[data-step="${step}"]`);
@@ -242,13 +244,13 @@ function goToStep(step) {
         const lostBlock = document.getElementById('lostMessage');
         const nextBtn = document.getElementById('step3NextBtn');
         if (isLostReason) {
-            normalContent.classList.add('hidden');
-            lostBlock.classList.remove('hidden');
-            nextBtn.disabled = true;
+            if (normalContent) normalContent.classList.add('hidden');
+            if (lostBlock) lostBlock.classList.remove('hidden');
+            if (nextBtn) nextBtn.disabled = true;
         } else {
-            normalContent.classList.remove('hidden');
-            lostBlock.classList.add('hidden');
-            nextBtn.disabled = false;
+            if (normalContent) normalContent.classList.remove('hidden');
+            if (lostBlock) lostBlock.classList.add('hidden');
+            if (nextBtn) nextBtn.disabled = false;
         }
         let price = 300;
         if (formData.reason === 'lost' || formData.reason === 'damaged') price = 1500;
@@ -263,36 +265,47 @@ function goToStep(step) {
     if (step === 4) renderProfileData();
 
     if (step === 5) {
-        document.getElementById('newSurname').value = formData.newData.surname || '';
-        document.getElementById('newName').value = formData.newData.name || '';
-        document.getElementById('newPatronymic').value = formData.newData.patronymic || '';
-        document.getElementById('newBirthDate').value = formData.newData.birth_date || '';
-        document.getElementById('newBirthPlace').value = formData.newData.birth_place || '';
+        const newSurname = document.getElementById('newSurname');
+        const newName = document.getElementById('newName');
+        const newPatronymic = document.getElementById('newPatronymic');
+        const newBirthDate = document.getElementById('newBirthDate');
+        const newBirthPlace = document.getElementById('newBirthPlace');
+        if (newSurname) newSurname.value = formData.newData.surname || '';
+        if (newName) newName.value = formData.newData.name || '';
+        if (newPatronymic) newPatronymic.value = formData.newData.patronymic || '';
+        if (newBirthDate) newBirthDate.value = formData.newData.birth_date || '';
+        if (newBirthPlace) newBirthPlace.value = formData.newData.birth_place || '';
     }
 
     if (step === 6) {
         const birthStatic = document.getElementById('birthCertificateStatic');
         const typeSelector = document.getElementById('certificateTypeSelector');
         if (formData.reason === 'first_14') {
-            birthStatic.classList.remove('hidden');
-            typeSelector.classList.add('hidden');
+            if (birthStatic) birthStatic.classList.remove('hidden');
+            if (typeSelector) typeSelector.classList.add('hidden');
         } else {
-            birthStatic.classList.add('hidden');
-            typeSelector.classList.remove('hidden');
+            if (birthStatic) birthStatic.classList.add('hidden');
+            if (typeSelector) typeSelector.classList.remove('hidden');
         }
         if (formData.reasonDetails) {
-            document.getElementById('certificateNumber').value = formData.reasonDetails.number || '';
-            document.getElementById('certificateDate').value = formData.reasonDetails.date || '';
-            document.getElementById('certificateIssuedBy').value = formData.reasonDetails.issuedBy || '';
-            if (formData.reason === 'name_changed') {
-                document.getElementById('certificateType').value = formData.reasonDetails.type || 'marriage';
+            const certNumber = document.getElementById('certificateNumber');
+            const certDate = document.getElementById('certificateDate');
+            const certIssued = document.getElementById('certificateIssuedBy');
+            const certType = document.getElementById('certificateType');
+            if (certNumber) certNumber.value = formData.reasonDetails.number || '';
+            if (certDate) certDate.value = formData.reasonDetails.date || '';
+            if (certIssued) certIssued.value = formData.reasonDetails.issuedBy || '';
+            if (certType && formData.reason === 'name_changed') {
+                certType.value = formData.reasonDetails.type || 'marriage';
             }
         }
     }
 
     if (step === 7) {
-        document.getElementById('phone').value = formData.phone;
-        document.getElementById('email').value = formData.email;
+        const phone = document.getElementById('phone');
+        const email = document.getElementById('email');
+        if (phone) phone.value = formData.phone;
+        if (email) email.value = formData.email;
     }
 
     if (step === 8) {
@@ -333,11 +346,11 @@ async function validateStep(step) {
             break;
         }
         case 5: {
-            const surname = document.getElementById('newSurname').value.trim(); 
-            const name = document.getElementById('newName').value.trim();
-            const patronymic = document.getElementById('newPatronymic').value.trim();
-            const birthDate = document.getElementById('newBirthDate').value;
-            const birthPlace = document.getElementById('newBirthPlace').value.trim();
+            const surname = document.getElementById('newSurname')?.value.trim() || '';
+            const name = document.getElementById('newName')?.value.trim() || '';
+            const patronymic = document.getElementById('newPatronymic')?.value.trim() || '';
+            const birthDate = document.getElementById('newBirthDate')?.value || '';
+            const birthPlace = document.getElementById('newBirthPlace')?.value.trim() || '';
             if (!surname && !name && !patronymic && !birthDate && !birthPlace) {
                 showError('Заполните хотя бы одно поле новых данных.');
                 return false;
@@ -345,9 +358,9 @@ async function validateStep(step) {
             break;
         }
         case 6: {
-            const certNumber = document.getElementById('certificateNumber').value.trim();
-            const certDate = document.getElementById('certificateDate').value;
-            const certIssued = document.getElementById('certificateIssuedBy').value.trim();
+            const certNumber = document.getElementById('certificateNumber')?.value.trim() || '';
+            const certDate = document.getElementById('certificateDate')?.value || '';
+            const certIssued = document.getElementById('certificateIssuedBy')?.value.trim() || '';
             if (!certNumber || !certDate || !certIssued) {
                 showError('Заполните все поля свидетельства');
                 return false;
@@ -355,13 +368,13 @@ async function validateStep(step) {
             if (formData.reason === 'first_14') {
                 formData.reasonDetails = { type: 'birth_certificate', number: certNumber, date: certDate, issuedBy: certIssued };
             } else if (formData.reason === 'name_changed') {
-                formData.reasonDetails = { type: document.getElementById('certificateType').value, number: certNumber, date: certDate, issuedBy: certIssued };
+                formData.reasonDetails = { type: document.getElementById('certificateType')?.value || 'marriage', number: certNumber, date: certDate, issuedBy: certIssued };
             }
             break;
         }
         case 7: {
-            const phone = document.getElementById('phone').value.trim();
-            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone')?.value.trim() || '';
+            const email = document.getElementById('email')?.value.trim() || '';
             if (!phone || !email) {
                 showError('Заполните телефон и email');
                 return false;
@@ -371,9 +384,9 @@ async function validateStep(step) {
             break;
         }
         case 8: {
-            formData.addresses.permanent = document.getElementById('permanentAddress').value.trim();
-            formData.addresses.temporary = document.getElementById('temporaryAddress').value.trim();
-            formData.addresses.actual = document.getElementById('actualAddress').value.trim();
+            formData.addresses.permanent = document.getElementById('permanentAddress')?.value.trim() || '';
+            formData.addresses.temporary = document.getElementById('temporaryAddress')?.value.trim() || '';
+            formData.addresses.actual = document.getElementById('actualAddress')?.value.trim() || '';
             if (!formData.addresses.permanent && !formData.addresses.actual) {
                 showError('Укажите адрес постоянной регистрации или фактический адрес');
                 return false;
@@ -437,8 +450,8 @@ async function uploadPhoto(file) {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-        const preview = document.getElementById('photoPreview');
         const img = document.getElementById('previewImg');
+        const preview = document.getElementById('photoPreview');
         if (img) img.src = e.target.result;
         if (preview) preview.classList.remove('hidden');
     };
@@ -464,11 +477,11 @@ function renderProfileData() {
 
 function prepareSummary() {
     formData.newData = {
-        surname: document.getElementById('newSurname').value,
-        name: document.getElementById('newName').value,
-        patronymic: document.getElementById('newPatronymic').value,
-        birth_date: document.getElementById('newBirthDate').value,
-        birth_place: document.getElementById('newBirthPlace').value
+        surname: document.getElementById('newSurname')?.value || '',
+        name: document.getElementById('newName')?.value || '',
+        patronymic: document.getElementById('newPatronymic')?.value || '',
+        birth_date: document.getElementById('newBirthDate')?.value || '',
+        birth_place: document.getElementById('newBirthPlace')?.value || ''
     };
 
     let html = '<table class="summary-table">';
@@ -655,7 +668,7 @@ async function submitApplication() {
 // --- Инициализация ---
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Показываем первый шаг сразу (без ожидания загрузки данных)
+    // Показываем первый шаг сразу
     goToStep(1);
     
     // Загружаем данные в фоне
@@ -675,20 +688,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         const activeWarning = document.getElementById('activeApplicationWarning');
         
         if (hasActiveApp) {
-            activeWarning.classList.remove('hidden');
-            formContainer.classList.add('hidden');
+            if (activeWarning) activeWarning.classList.remove('hidden');
+            if (formContainer) formContainer.classList.add('hidden');
         } else {
-            activeWarning.classList.add('hidden');
-            formContainer.classList.remove('hidden');
-            formContainer.classList.add('loaded');
+            if (activeWarning) activeWarning.classList.add('hidden');
+            if (formContainer) {
+                formContainer.classList.remove('hidden');
+                formContainer.classList.add('loaded');
+            }
         }
         
-        loadingOverlay.classList.add('hidden');
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
         
     } catch (e) {
         console.error('Ошибка инициализации:', e);
         const loadingOverlay = document.getElementById('loadingOverlay');
-        loadingOverlay.classList.add('hidden');
+        if (loadingOverlay) loadingOverlay.classList.add('hidden');
         showError('Ошибка загрузки данных. Обновите страницу.');
     }
 
@@ -776,7 +791,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             submitBtn.textContent = 'Отправить заявление';
             
             if (success) {
-                document.getElementById('applicationNumber').textContent = applicationNumber;
+                const appNumEl = document.getElementById('applicationNumber');
+                if (appNumEl) appNumEl.textContent = applicationNumber;
                 goToStep(12);
             }
         });
