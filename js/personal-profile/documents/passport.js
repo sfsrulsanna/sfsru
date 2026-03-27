@@ -1,48 +1,31 @@
 import { supabase } from '../../../js/supabase-config.js';
 
-// -------------------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --------------------
+// Глобальные переменные
 let userPersonalCode = null;
-let currentDocId = null;          // ID текущего (активного) паспорта
-let userProfile = null;
+let currentPageIndex = 0;
+let pagesData = [];      // массив данных для каждой страницы (HTML строки)
+let totalPages = 0;
+let flipAnimationTimeout = null;
 
-// -------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --------------------
+// Вспомогательные функции
 function formatDate(dateString) {
   if (!dateString) return '—';
   try {
     const date = new Date(dateString);
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-    return `${day}.${month}.${year}`;
+    return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear()}`;
   } catch {
     return dateString;
   }
 }
 
-function getStatusLabel(status) {
-  if (status === 'verified') return '✅ Подтверждено';
-  if (status === 'oncheck') return '⏳ На проверке';
-  if (status === 'rejected') return '❌ Отклонено';
-  if (status === 'archived') return '📦 Архивный';
-  return '—';
-}
-
-function getStatusClass(status) {
-  if (status === 'verified') return 'document-status status-verified';
-  if (status === 'oncheck') return 'document-status status-pending';
-  if (status === 'rejected') return 'document-status status-rejected';
-  if (status === 'archived') return 'document-status status-archived';
-  return 'document-status';
-}
-
 function escapeHTML(str) {
   if (!str) return '—';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
+  return String(str).replace(/[&<>]/g, function(m) {
+    if (m === '&') return '&amp;';
+    if (m === '<') return '&lt;';
+    if (m === '>') return '&gt;';
+    return m;
+  });
 }
 
 async function getPassportPhotoSignedUrl(personalCode) {
@@ -60,38 +43,33 @@ async function getPassportPhotoSignedUrl(personalCode) {
   }
 }
 
-// -------------------- ЗАГРУЗКА ПРОФИЛЯ --------------------
+// Загрузка профиля пользователя
 async function loadUserProfile() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession();
   if (sessionError || !session) {
     window.location.href = '../../login.html';
     return null;
   }
-
   const { data, error } = await supabase
     .from('users')
     .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
     .eq('id', session.user.id)
     .single();
-
   if (error) {
     console.error('Ошибка загрузки профиля:', error);
     return null;
   }
-
   userPersonalCode = data.personal_code;
-  userProfile = data;
   return data;
 }
 
-// -------------------- ЗАГРУЗКА ПАСПОРТОВ (активный + архивные) --------------------
-async function loadPassports() {
+// Загрузка данных паспорта
+async function loadPassportData() {
   try {
     const profile = await loadUserProfile();
-    if (!profile) return;
+    if (!profile) return null;
 
-    // Получаем все паспорта пользователя
-    const { data: allPassports, error } = await supabase
+    const { data: passports, error } = await supabase
       .schema('documents')
       .from('passport')
       .select('*')
@@ -99,346 +77,244 @@ async function loadPassports() {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
+    if (!passports || passports.length === 0) return null;
 
-    if (!allPassports || allPassports.length === 0) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('noData').style.display = 'block';
-      return;
-    }
-
-    // Разделяем: активные (не архивные) и архивные
-    const activePassports = allPassports.filter(p => p.status !== 'archived');
-    const archivedPassports = allPassports.filter(p => p.status === 'archived');
-
-    if (activePassports.length === 0) {
-      document.getElementById('loading').style.display = 'none';
-      document.getElementById('noData').style.display = 'block';
-      return;
-    }
-
-    // Активный паспорт – самый свежий (по created_at)
-    const active = activePassports[0];
-    currentDocId = active.id;
-
-    // Отображаем активный паспорт
-    renderPassport(active);
-
-    // Отображаем архивные паспорта
-    if (archivedPassports.length > 0) {
-      renderArchivedPassports(archivedPassports);
-    }
-
-    // Скрываем загрузку
-    document.getElementById('loading').style.display = 'none';
+    // Активный паспорт – первый (создан позже всех) и не архивный
+    const activePassport = passports.find(p => p.status !== 'archived');
+    if (!activePassport) return null;
+    return activePassport;
   } catch (err) {
-    console.error('Ошибка загрузки паспортов:', err);
-    const loadingEl = document.getElementById('loading');
-    if (loadingEl) loadingEl.textContent = 'Ошибка загрузки данных';
+    console.error('Ошибка загрузки паспорта:', err);
+    return null;
   }
 }
 
-// -------------------- ОТРИСОВКА АКТИВНОГО ПАСПОРТА --------------------
-function renderPassport(data) {
-  const statusText = getStatusLabel(data.status);
-  const statusClass = getStatusClass(data.status);
+// Построение HTML для каждой страницы
+function buildPages(passportData) {
+  const pages = [];
 
-  const html = `
-    <div class="passport-template">
-      <div class="passport-header">
-        <div class="country-name">СФСР ЮЛЬСАННА</div>
-        <div class="document-type">ПАСПОРТ</div>
+  // Страница 1 – обложка
+  pages.push(`
+    <div class="page page-cover">
+      <div class="cover-content">
+        <div class="cover-title">СОВЕТСКАЯ ФЕДЕРАТИВНАЯ СОЦИАЛИСТИЧЕСКАЯ РЕСПУБЛИКА ЮЛЬСАННА</div>
+        <img src="../../images/gerb.png" alt="Герб" class="cover-gerb" />
+        <div class="cover-gold-text">ПАСПОРТ</div>
       </div>
-      <div class="passport-content">
-        <div class="data-field">
-          <div class="field-label">Серия и номер</div>
-          <div class="field-value series-number">${escapeHTML(data.series_number || '—')}</div>
-        </div>
-        <div class="data-field">
-          <div class="field-label">Дата выдачи</div>
-          <div class="field-value">${formatDate(data.issue_date)}</div>
-        </div>
-        <div class="data-field">
-          <div class="field-label">Срок действия</div>
-          <div class="field-value">${formatDate(data.expiry_date)}</div>
-        </div>
-        <div class="data-field">
-          <div class="field-label">Кем выдан</div>
-          <div class="field-value">${escapeHTML(data.issued_by || '—')}</div>
-        </div>
-        <div class="data-field">
-          <div class="field-label">Код подразделения</div>
-          <div class="field-value">${escapeHTML(data.department_code || '—')}</div>
-        </div>
-        <div class="data-field">
-          <div class="field-label">Личный код</div>
-          <div class="field-value">${escapeHTML(data.personal_code || '—')}</div>
-        </div>
+      <div class="page-number">1</div>
+    </div>
+  `);
 
-        <div class="passport-divider"></div>
-
-        <div class="passport-lower">
-          <div class="photo-barcode-section">
-            <div class="passport-photo-container">
-              <img id="passportAvatar" src="../../images/default-avatar.png" alt="Фото" class="passport-photo" />
-            </div>
-            <div class="barcode-container">
-              <svg id="passportBarcode" class="barcode"></svg>
-            </div>
-            <div style="text-align: center; margin-top: 15px;">
-              <div id="passportQrCode" style="display: inline-block; width: 80px; height: 80px;"></div>
-            </div>
-          </div>
-
-          <div class="fio-section">
-            <div class="data-field">
-              <div class="field-label">Фамилия</div>
-              <div class="field-value">${escapeHTML(data.surname || '—')}</div>
-            </div>
-            <div class="data-field">
-              <div class="field-label">Имя</div>
-              <div class="field-value">${escapeHTML(data.name || '—')}</div>
-            </div>
-            <div class="data-field">
-              <div class="field-label">Отчество</div>
-              <div class="field-value">${escapeHTML(data.patronymic || '—')}</div>
-            </div>
-            <div class="data-field">
-              <div class="field-label">Пол</div>
-              <div class="field-value">${escapeHTML(data.gender || '—')}</div>
-            </div>
-            <div class="data-field">
-              <div class="field-label">Дата рождения</div>
-              <div class="field-value">${formatDate(data.birth_date)}</div>
-            </div>
-            <div class="data-field">
-              <div class="field-label">Место рождения</div>
-              <div class="field-value">${escapeHTML(data.birth_place || '—')}</div>
-            </div>
-          </div>
+  // Страница 2-3 (разворот с данными владельца)
+  const photoUrl = await getPassportPhotoSignedUrl(passportData.personal_code);
+  const qrUrl = `https://e-pass-sfsru.web.app/${passportData.personal_code}/`;
+  pages.push(`
+    <div class="page">
+      <h2>Личные данные</h2>
+      <div class="photo-row">
+        <img id="passportAvatar" src="${photoUrl || '../../images/default-avatar.png'}" class="passport-photo" alt="Фото" />
+        <div class="qr-barcode">
+          <div id="passportQrCode"></div>
+          <svg id="passportBarcode" class="barcode"></svg>
         </div>
       </div>
+      <div class="data-row"><div class="data-label">Фамилия</div><div class="data-value">${escapeHTML(passportData.surname || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Имя</div><div class="data-value">${escapeHTML(passportData.name || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Отчество</div><div class="data-value">${escapeHTML(passportData.patronymic || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Дата рождения</div><div class="data-value">${formatDate(passportData.birth_date)}</div></div>
+      <div class="data-row"><div class="data-label">Место рождения</div><div class="data-value">${escapeHTML(passportData.birth_place || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Пол</div><div class="data-value">${escapeHTML(passportData.gender || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Личный код</div><div class="data-value">${escapeHTML(passportData.personal_code || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Серия и номер</div><div class="data-value series-number">${escapeHTML(passportData.series_number || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Дата выдачи</div><div class="data-value">${formatDate(passportData.issue_date)}</div></div>
+      <div class="data-row"><div class="data-label">Срок действия</div><div class="data-value">${formatDate(passportData.expiry_date)}</div></div>
+      <div class="data-row"><div class="data-label">Кем выдан</div><div class="data-value">${escapeHTML(passportData.issued_by || '—')}</div></div>
+      <div class="data-row"><div class="data-label">Код подразделения</div><div class="data-value">${escapeHTML(passportData.department_code || '—')}</div></div>
+      <div class="page-number">2-3</div>
     </div>
-    <div class="status-and-edit">
-      <span class="${statusClass}">${statusText}</span>
+  `);
+
+  // Страница 5 – прописка (история регистрации)
+  let residencesHtml = '<p>Нет данных о регистрации</p>';
+  if (passportData.residences && passportData.residences.length) {
+    residencesHtml = `
+      <table class="small-table">
+        <thead><tr><th>Адрес</th><th>Дата регистрации</th><th>Дата снятия</th><th>Тип жилья</th></tr></thead>
+        <tbody>
+          ${passportData.residences.map(r => `
+            <tr>
+              <td>${escapeHTML(r.address || '—')}</td>
+              <td>${formatDate(r.registrationDate)}</td>
+              <td>${formatDate(r.deregistrationDate)}</td>
+              <td>${escapeHTML(r.housingType || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  pages.push(`
+    <div class="page">
+      <h2>Прописка / регистрация</h2>
+      <div class="table-section">${residencesHtml}</div>
+      <div class="page-number">5</div>
     </div>
-  `;
+  `);
 
-  document.getElementById('passportContent').innerHTML = html;
-  document.getElementById('passportContent').style.display = 'block';
+  // Страница 13 – воинская обязанность
+  const militaryHtml = passportData.is_military_obligated !== undefined ? `
+    <div class="data-row"><div class="data-label">Военнообязанный</div><div class="data-value">${passportData.is_military_obligated ? 'Да' : 'Нет'}</div></div>
+    <div class="data-row"><div class="data-label">Военный билет</div><div class="data-value">${escapeHTML(passportData.military_idn || '—')}</div></div>
+  ` : '<p>Нет данных о воинской обязанности</p>';
+  pages.push(`
+    <div class="page">
+      <h2>Воинская обязанность</h2>
+      ${militaryHtml}
+      <div class="page-number">13</div>
+    </div>
+  `);
 
-  // QR и штрихкод
-  const personalCode = data.personal_code || '';
-  if (personalCode) {
-    const qrContainer = document.getElementById('passportQrCode');
-    if (qrContainer) {
-      qrContainer.innerHTML = '';
-      new QRCode(qrContainer, {
-        text: `https://e-pass-sfsru.web.app/${personalCode}/`,
-        width: 80,
-        height: 80,
-        colorDark: '#000',
-        colorLight: '#fff',
+  // Страница 14 – семейное положение
+  let maritalHtml = '<p>Нет данных</p>';
+  if (passportData.marital_statuses && passportData.marital_statuses.length) {
+    maritalHtml = `
+      <table class="small-table">
+        <thead><tr><th>Статус</th><th>Дата изменения</th><th>ФИО супруга</th><th>Номер акта</th></tr></thead>
+        <tbody>
+          ${passportData.marital_statuses.map(m => `
+            <tr>
+              <td>${escapeHTML(m.status || '—')}</td>
+              <td>${formatDate(m.changeDate)}</td>
+              <td>${escapeHTML(m.spouseName || '—')}</td>
+              <td>${escapeHTML(m.actNumber || '—')}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  }
+  pages.push(`
+    <div class="page">
+      <h2>Семейное положение</h2>
+      ${maritalHtml}
+      <div class="page-number">14</div>
+    </div>
+  `);
+
+  // Страницы 16-19 – ранее выданные документы
+  let prevDocsHtml = '<p>Нет данных о ранее выданных документах</p>';
+  const prevPass = passportData.previous_passports || [];
+  const prevForeign = passportData.previous_foreign_passports || [];
+  const prevId = passportData.previous_id_cards || [];
+  if (prevPass.length || prevForeign.length || prevId.length) {
+    prevDocsHtml = '';
+    if (prevPass.length) {
+      prevDocsHtml += `<h3>Ранее выданные паспорта</h3>
+        <table class="small-table"><thead><tr><th>Серия и номер</th><th>Дата выдачи</th><th>Кем выдан</th><th>Причина замены</th></tr></thead>
+        <tbody>${prevPass.map(p => `
+          <tr><td>${escapeHTML(p.seriesNumber || '—')}</td><td>${formatDate(p.issueDate)}</td><td>${escapeHTML(p.issuedBy || '—')}</td><td>${escapeHTML(p.reason || '—')}</td></tr>
+        `).join('')}</tbody></table>`;
+    }
+    if (prevForeign.length) {
+      prevDocsHtml += `<h3>Заграничные паспорта</h3>
+        <table class="small-table"><thead><tr><th>Серия и номер</th><th>Дата выдачи</th><th>Кем выдан</th></tr></thead>
+        <tbody>${prevForeign.map(p => `
+          <tr><td>${escapeHTML(p.seriesNumber || '—')}</td><td>${formatDate(p.issueDate)}</td><td>${escapeHTML(p.issuedBy || '—')}</td></tr>
+        `).join('')}</tbody></table>`;
+    }
+    if (prevId.length) {
+      prevDocsHtml += `<h3>ID-карты</h3>
+        <table class="small-table"><thead><tr><th>Серия и номер</th><th>Дата выдачи</th><th>Кем выдан</th></tr></thead>
+        <tbody>${prevId.map(p => `
+          <tr><td>${escapeHTML(p.seriesNumber || '—')}</td><td>${formatDate(p.issueDate)}</td><td>${escapeHTML(p.issuedBy || '—')}</td></tr>
+        `).join('')}</tbody></table>`;
+    }
+  }
+  pages.push(`
+    <div class="page">
+      <h2>Ранее выданные документы</h2>
+      <div class="table-section">${prevDocsHtml}</div>
+      <div class="page-number">16-19</div>
+    </div>
+  `);
+
+  return pages;
+}
+
+// Отрисовка книги
+async function renderBook(passportData) {
+  pagesData = await buildPages(passportData);
+  totalPages = pagesData.length;
+  currentPageIndex = 0;
+
+  const container = document.getElementById('bookPages');
+  container.innerHTML = pagesData[currentPageIndex];
+
+  // Генерация QR и штрихкода для страницы с данными (страница 2)
+  setTimeout(() => {
+    const qrDiv = document.getElementById('passportQrCode');
+    if (qrDiv && passportData.personal_code) {
+      qrDiv.innerHTML = '';
+      new QRCode(qrDiv, {
+        text: `https://e-pass-sfsru.web.app/${passportData.personal_code}/`,
+        width: 80, height: 80,
+        colorDark: '#000', colorLight: '#fff',
         correctLevel: QRCode.CorrectLevel.L
       });
     }
-
-    const avatarImg = document.getElementById('passportAvatar');
-    if (avatarImg) {
-      avatarImg.src = '../../images/default-avatar.png';
-      getPassportPhotoSignedUrl(personalCode).then(url => {
-        if (url) avatarImg.src = url;
-      });
+    const seriesNumber = (passportData.series_number || '').replace(/\s/g, '');
+    if (seriesNumber.length >= 6) {
+      try {
+        JsBarcode("#passportBarcode", seriesNumber, { format: "CODE128", displayValue: false, height: 40, margin: 0 });
+      } catch(e) {}
     }
-  }
+  }, 100);
 
-  const seriesNumber = (data.series_number || '').replace(/\s/g, '');
-  if (seriesNumber.length >= 6) {
-    try {
-      JsBarcode("#passportBarcode", seriesNumber, {
-        format: "CODE128",
-        displayValue: false,
-        height: 50,
-        margin: 0
-      });
-    } catch(e) {}
-  }
-
-  // Сохраняем дополнительные данные для кнопки "Подробная информация"
-  window.extraData = data;
+  document.getElementById('passportBook').style.display = 'block';
+  document.getElementById('loading').style.display = 'none';
+  updateButtons();
 }
 
-// -------------------- ОТРИСОВКА АРХИВНЫХ ПАСПОРТОВ (карточки) --------------------
-function renderArchivedPassports(passports) {
-  const container = document.getElementById('archivedPassports');
-  const block = document.getElementById('archivedBlock');
+function updateButtons() {
+  const prevBtn = document.getElementById('prevPageBtn');
+  const nextBtn = document.getElementById('nextPageBtn');
+  prevBtn.disabled = currentPageIndex === 0;
+  nextBtn.disabled = currentPageIndex === totalPages - 1;
+}
 
-  if (!passports.length) {
-    block.style.display = 'none';
+function flipPage(direction) {
+  if (flipAnimationTimeout) return;
+  const container = document.getElementById('bookPages');
+  container.classList.add(direction === 'next' ? 'flipping-left' : 'flipping-right');
+  flipAnimationTimeout = setTimeout(() => {
+    container.classList.remove('flipping-left', 'flipping-right');
+    if (direction === 'next' && currentPageIndex < totalPages - 1) {
+      currentPageIndex++;
+      container.innerHTML = pagesData[currentPageIndex];
+      updateButtons();
+    } else if (direction === 'prev' && currentPageIndex > 0) {
+      currentPageIndex--;
+      container.innerHTML = pagesData[currentPageIndex];
+      updateButtons();
+    }
+    flipAnimationTimeout = null;
+  }, 500);
+}
+
+// Инициализация
+document.addEventListener('DOMContentLoaded', async () => {
+  const loadingEl = document.getElementById('loading');
+  const noDataEl = document.getElementById('noData');
+  
+  const passportData = await loadPassportData();
+  if (!passportData) {
+    loadingEl.style.display = 'none';
+    noDataEl.style.display = 'block';
     return;
   }
 
-  container.innerHTML = passports.map(p => `
-    <div class="archived-card">
-      <h4>${escapeHTML(p.series_number || '—')}</h4>
-      <p><strong>Дата выдачи:</strong> ${formatDate(p.issue_date)}</p>
-      <p><strong>Срок действия:</strong> ${formatDate(p.expiry_date)}</p>
-      <p><strong>Кем выдан:</strong> ${escapeHTML(p.issued_by || '—')}</p>
-      <span class="status-badge">Архивный</span>
-    </div>
-  `).join('');
-
-  block.style.display = 'block';
-}
-
-// -------------------- ДОПОЛНИТЕЛЬНЫЕ СЕКЦИИ (рендерим при клике) --------------------
-function renderExtraSections(data) {
-  let extraHtml = '';
-
-  if (data.residences && data.residences.length) {
-    extraHtml += `
-      <h3 class="section-title"><i class="fas fa-home"></i> История регистрации</h3>
-      <div class="info-table">
-        <table>
-          <thead><tr><th>Адрес</th><th>Дата регистрации</th><th>Дата снятия</th><th>Тип жилья</th></tr></thead>
-          <tbody>
-            ${data.residences.map(r => `
-              <tr>
-                <td>${escapeHTML(r.address || '—')}</td>
-                <td>${formatDate(r.registrationDate)}</td>
-                <td>${formatDate(r.deregistrationDate)}</td>
-                <td>${escapeHTML(r.housingType || '—')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  if (data.marital_statuses && data.marital_statuses.length) {
-    extraHtml += `
-      <h3 class="section-title"><i class="fas fa-heart"></i> Семейное положение</h3>
-      <div class="info-table">
-        <table>
-          <thead><tr><th>Статус</th><th>Дата изменения</th><th>ФИО супруга</th><th>Номер акта</th></tr></thead>
-          <tbody>
-            ${data.marital_statuses.map(m => `
-              <tr>
-                <td>${escapeHTML(m.status || '—')}</td>
-                <td>${formatDate(m.changeDate)}</td>
-                <td>${escapeHTML(m.spouseName || '—')}</td>
-                <td>${escapeHTML(m.actNumber || '—')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  if (data.is_military_obligated !== undefined) {
-    extraHtml += `
-      <h3 class="section-title"><i class="fas fa-shield-alt"></i> Военная обязанность</h3>
-      <div class="info-table">
-        <table>
-          <thead><tr><th>Военнообязанный</th><th>Военный билет</th></tr></thead>
-          <tbody>
-            <tr>
-              <td>${data.is_military_obligated ? 'Да' : 'Нет'}</td>
-              <td>${escapeHTML(data.military_idn || '—')}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  if (data.previous_passports && data.previous_passports.length) {
-    extraHtml += `
-      <h3 class="section-title"><i class="fas fa-history"></i> Ранее выданные паспорта</h3>
-      <div class="info-table">
-        <table>
-          <thead><tr><th>Серия и номер</th><th>Дата выдачи</th><th>Кем выдан</th><th>Причина замены</th></tr></thead>
-          <tbody>
-            ${data.previous_passports.map(p => `
-              <tr>
-                <td>${escapeHTML(p.seriesNumber || '—')}</td>
-                <td>${formatDate(p.issueDate)}</td>
-                <td>${escapeHTML(p.issuedBy || '—')}</td>
-                <td>${escapeHTML(p.reason || '—')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  if (data.previous_foreign_passports && data.previous_foreign_passports.length) {
-    extraHtml += `
-      <h3 class="section-title"><i class="fas fa-passport"></i> Ранее выданные заграничные паспорта</h3>
-      <div class="info-table">
-        <table>
-          <thead><tr><th>Серия и номер</th><th>Дата выдачи</th><th>Кем выдан</th></tr></thead>
-          <tbody>
-            ${data.previous_foreign_passports.map(p => `
-              <tr>
-                <td>${escapeHTML(p.seriesNumber || '—')}</td>
-                <td>${formatDate(p.issueDate)}</td>
-                <td>${escapeHTML(p.issuedBy || '—')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  if (data.previous_id_cards && data.previous_id_cards.length) {
-    extraHtml += `
-      <h3 class="section-title"><i class="fas fa-id-card"></i> Ранее выданные ID-карты</h3>
-      <div class="info-table">
-        <table>
-          <thead><tr><th>Серия и номер</th><th>Дата выдачи</th><th>Кем выдан</th></tr></thead>
-          <tbody>
-            ${data.previous_id_cards.map(p => `
-              <tr>
-                <td>${escapeHTML(p.seriesNumber || '—')}</td>
-                <td>${formatDate(p.issueDate)}</td>
-                <td>${escapeHTML(p.issuedBy || '—')}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-  const extraContainer = document.getElementById('extraSections');
-  extraContainer.innerHTML = extraHtml;
-}
-
-// -------------------- ИНИЦИАЛИЗАЦИЯ --------------------
-document.addEventListener('DOMContentLoaded', async () => {
-  await loadPassports();
-
-  // Кнопка "Подробная информация" – показывает/скрывает дополнительные секции
-  const detailsBtn = document.getElementById('showDetailsBtn');
-  const extraContainer = document.getElementById('extraSections');
-
-  if (detailsBtn && extraContainer) {
-    detailsBtn.addEventListener('click', () => {
-      if (extraContainer.style.display === 'none' || !extraContainer.style.display) {
-        // Если секции ещё не отрендерены, рендерим их
-        if (window.extraData && extraContainer.innerHTML === '') {
-          renderExtraSections(window.extraData);
-        }
-        extraContainer.style.display = 'block';
-        detailsBtn.innerHTML = '<i class="fas fa-info-circle"></i> Скрыть подробную информацию';
-      } else {
-        extraContainer.style.display = 'none';
-        detailsBtn.innerHTML = '<i class="fas fa-info-circle"></i> Подробная информация';
-      }
-    });
-  }
+  await renderBook(passportData);
+  
+  document.getElementById('prevPageBtn').addEventListener('click', () => flipPage('prev'));
+  document.getElementById('nextPageBtn').addEventListener('click', () => flipPage('next'));
 });
