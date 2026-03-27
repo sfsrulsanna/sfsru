@@ -113,11 +113,6 @@ async function viewPassport(id) {
 
 // Рендер паспорта в модалке просмотра
 function renderPassportInModal(data) {
-    const statusText = getStatusLabel(data.status);
-    const statusClass = getStatusClass(data.status);
-
-    document.documentElement.style.setProperty('--primary-red', '#7b091a');
-
     const html = `
         <div class="passport-template">
             <div class="passport-header">
@@ -518,47 +513,9 @@ function renderEditForm(data) {
     document.getElementById('addPrevIdCardBtn').addEventListener('click', addPrevIdCardBlock);
 
     addStatusButton();
-	
-// Перед вставкой проверяем, нет ли уже паспорта с таким личным кодом
-if (formData.personal_code) {
-    const { data: existingByCode, error: checkError } = await supabase
-        .schema('documents')
-        .from('passport')
-        .select('id')
-        .eq('personal_code', formData.personal_code)
-        .maybeSingle();
-
-    if (checkError) {
-        console.error('Ошибка проверки:', checkError);
-    }
-
-    if (existingByCode && (!currentPassportId || existingByCode.id !== currentPassportId)) {
-        alert('Паспорт с таким личным кодом уже существует!');
-        return;
-    }
 }
 
-// Если серия и номер также уникальны, добавьте аналогичную проверку
-if (formData.series_number) {
-    const { data: existingBySeries, error: checkError } = await supabase
-        .schema('documents')
-        .from('passport')
-        .select('id')
-        .eq('series_number', formData.series_number)
-        .maybeSingle();
-
-    if (checkError) {
-        console.error('Ошибка проверки:', checkError);
-    }
-
-    if (existingBySeries && (!currentPassportId || existingBySeries.id !== currentPassportId)) {
-        alert('Паспорт с такой серией и номером уже существует!');
-        return;
-    }
-}
-}
-
-// --- Функции рендера секций ---
+// --- Функции рендера секций (без изменений) ---
 function renderResidencesSection(items) {
     const container = document.getElementById('residencesContainer');
     container.innerHTML = '';
@@ -1092,9 +1049,7 @@ document.getElementById('confirmUploadBtn').addEventListener('click', async () =
     }
 
     // Загружаем файл
-    const fileExt = file.name.split('.').pop();
-    const fileName = `photo.jpg`; // всегда photo.jpg
-    const filePath = `passport/${encodeURIComponent(personalCode)}/${fileName}`;
+    const filePath = `passport/${encodeURIComponent(personalCode)}/photo.jpg`;
 
     const { error: uploadError } = await supabase.storage
         .from('documents-files')
@@ -1102,7 +1057,11 @@ document.getElementById('confirmUploadBtn').addEventListener('click', async () =
 
     if (uploadError) {
         console.error('Ошибка загрузки:', uploadError);
-        alert('Ошибка загрузки фото: ' + uploadError.message);
+        if (uploadError.message.includes('row-level security')) {
+            alert('Ошибка загрузки: недостаточно прав. Убедитесь, что политики RLS настроены для storage.');
+        } else {
+            alert('Ошибка загрузки фото: ' + uploadError.message);
+        }
     } else {
         alert('Фото успешно загружено!');
         closeUploadModal();
@@ -1135,6 +1094,10 @@ document.addEventListener('click', async (e) => {
             return;
         }
 
+        // Проверка на дубликаты
+        const isDuplicate = await checkDuplicate(formData, currentPassportId);
+        if (isDuplicate) return;
+
         const record = {
             ...formData,
             status: formData.status || 'oncheck',
@@ -1158,13 +1121,63 @@ document.addEventListener('click', async (e) => {
         }
 
         if (result.error) {
-            alert('Ошибка сохранения: ' + result.error.message);
+            console.error('Ошибка сохранения:', result.error);
+            if (result.error.code === '23505') { // unique violation
+                alert('Ошибка: паспорт с таким личным кодом или серией/номером уже существует.');
+            } else {
+                alert('Ошибка сохранения: ' + result.error.message);
+            }
         } else {
             closeEditModal();
             loadPassports();
         }
     }
 });
+
+// Проверка на дубликаты (личный код и серия/номер)
+async function checkDuplicate(formData, excludeId) {
+    // Проверка по личному коду
+    if (formData.personal_code) {
+        let query = supabase
+            .schema('documents')
+            .from('passport')
+            .select('id')
+            .eq('personal_code', formData.personal_code);
+        if (excludeId) {
+            query = query.neq('id', excludeId);
+        }
+        const { data: existingByCode, error } = await query.maybeSingle();
+        if (error) {
+            console.error('Ошибка проверки личного кода:', error);
+        }
+        if (existingByCode) {
+            alert('Паспорт с таким личным кодом уже существует!');
+            return true;
+        }
+    }
+
+    // Проверка по серии и номеру
+    if (formData.series_number) {
+        let query = supabase
+            .schema('documents')
+            .from('passport')
+            .select('id')
+            .eq('series_number', formData.series_number);
+        if (excludeId) {
+            query = query.neq('id', excludeId);
+        }
+        const { data: existingBySeries, error } = await query.maybeSingle();
+        if (error) {
+            console.error('Ошибка проверки серии/номера:', error);
+        }
+        if (existingBySeries) {
+            alert('Паспорт с такой серией и номером уже существует!');
+            return true;
+        }
+    }
+
+    return false;
+}
 
 // Вспомогательные функции
 function escapeHTML(str) {
