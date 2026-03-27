@@ -341,6 +341,13 @@ window.closeEditModal = () => {
     document.getElementById('editModal').classList.remove('active');
 };
 
+window.closeUploadModal = () => {
+    document.getElementById('uploadPhotoModal').classList.remove('active');
+    document.getElementById('uploadPersonalCode').value = '';
+    document.getElementById('photoFile').value = '';
+    document.getElementById('uploadPreview').style.display = 'none';
+};
+
 // Открытие формы добавления
 document.getElementById('addBtn').addEventListener('click', () => {
     currentPassportId = null;
@@ -510,7 +517,7 @@ function renderEditForm(data) {
     document.getElementById('addPrevForeignBtn').addEventListener('click', addPrevForeignBlock);
     document.getElementById('addPrevIdCardBtn').addEventListener('click', addPrevIdCardBlock);
 
-    addStatusButton(); // Добавляем кнопку "Изменить статус" в футер
+    addStatusButton();
 }
 
 // --- Функции рендера секций ---
@@ -874,17 +881,13 @@ function collectEditFormData() {
 }
 
 // ================== КНОПКА ИЗМЕНЕНИЯ СТАТУСА ==================
-
-// Добавляем кнопку "Изменить статус" в футер модального окна
 function addStatusButton() {
     const modalFooter = document.querySelector('#editModal .modal-footer');
-    // Очищаем футер (оставляем только наши будущие кнопки)
     modalFooter.innerHTML = `
         <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
         <button type="button" class="btn-primary" id="savePassportBtn">Сохранить</button>
     `;
 
-    // Добавляем контейнер для кнопки изменения статуса перед кнопками
     const buttonContainer = document.createElement('div');
     buttonContainer.style.marginBottom = '1rem';
     buttonContainer.style.display = 'flex';
@@ -892,7 +895,7 @@ function addStatusButton() {
 
     const changeStatusBtn = document.createElement('button');
     changeStatusBtn.type = 'button';
-    changeStatusBtn.className = 'btn btn-warning';
+    changeStatusBtn.className = 'btn-warning';
     changeStatusBtn.textContent = 'Изменить статус';
     changeStatusBtn.addEventListener('click', openStatusModal);
 
@@ -900,7 +903,6 @@ function addStatusButton() {
     modalFooter.insertBefore(buttonContainer, modalFooter.firstChild);
 }
 
-// Открытие модального окна статуса
 function openStatusModal() {
     const modal = document.getElementById('statusModal');
     if (modal) {
@@ -910,13 +912,11 @@ function openStatusModal() {
     }
 }
 
-// Закрытие модалки статуса
 window.closeStatusModal = function() {
     const modal = document.getElementById('statusModal');
     if (modal) modal.classList.remove('active');
 };
 
-// Подтверждение изменения статуса
 async function confirmStatusChange() {
     const newStatus = document.getElementById('statusSelect').value;
     const comment = document.getElementById('statusComment').value.trim();
@@ -993,14 +993,101 @@ async function confirmStatusChange() {
     }
 }
 
-// Обработчик кнопки подтверждения
 document.addEventListener('click', (e) => {
     if (e.target.id === 'confirmStatusBtn') {
         confirmStatusChange();
     }
 });
 
-// ================== СОХРАНЕНИЕ ПАСПОРТА (через делегирование) ==================
+// ================== ЗАГРУЗКА ФОТО ==================
+document.getElementById('uploadPhotoBtn').addEventListener('click', () => {
+    document.getElementById('uploadPhotoModal').classList.add('active');
+});
+
+document.getElementById('photoFile').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const preview = document.getElementById('uploadPreview');
+            const img = document.getElementById('previewImage');
+            img.src = event.target.result;
+            preview.style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    } else {
+        document.getElementById('uploadPreview').style.display = 'none';
+    }
+});
+
+document.getElementById('confirmUploadBtn').addEventListener('click', async () => {
+    const personalCode = document.getElementById('uploadPersonalCode').value.trim();
+    const fileInput = document.getElementById('photoFile');
+    const file = fileInput.files[0];
+
+    if (!personalCode) {
+        alert('Введите личный код');
+        return;
+    }
+    if (!file) {
+        alert('Выберите файл');
+        return;
+    }
+
+    // Проверяем, существует ли паспорт с таким личным кодом
+    const { data: existingPassport, error: checkError } = await supabase
+        .schema('documents')
+        .from('passport')
+        .select('id')
+        .eq('personal_code', personalCode)
+        .maybeSingle();
+
+    if (checkError) {
+        console.error(checkError);
+        alert('Ошибка проверки паспорта');
+        return;
+    }
+
+    if (!existingPassport) {
+        alert('Паспорт с таким личным кодом не найден в базе');
+        return;
+    }
+
+    // Загружаем файл
+    const fileExt = file.name.split('.').pop();
+    const fileName = `photo.jpg`; // всегда photo.jpg
+    const filePath = `passport/${encodeURIComponent(personalCode)}/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('documents-files')
+        .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+        console.error('Ошибка загрузки:', uploadError);
+        alert('Ошибка загрузки фото: ' + uploadError.message);
+    } else {
+        alert('Фото успешно загружено!');
+        closeUploadModal();
+        // Если открыт просмотр паспорта с этим личным кодом, обновляем фото
+        if (currentPassportId) {
+            const { data: currentPassport } = await supabase
+                .schema('documents')
+                .from('passport')
+                .select('personal_code')
+                .eq('id', currentPassportId)
+                .single();
+            if (currentPassport && currentPassport.personal_code === personalCode) {
+                const newUrl = await getSignedUrl(personalCode);
+                if (newUrl) {
+                    const imgElement = document.getElementById('passportAvatar');
+                    if (imgElement) imgElement.src = newUrl;
+                }
+            }
+        }
+    }
+});
+
+// ================== СОХРАНЕНИЕ ПАСПОРТА ==================
 document.addEventListener('click', async (e) => {
     if (e.target.id === 'savePassportBtn') {
         const formData = collectEditFormData();

@@ -29,7 +29,6 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
-    <!-- Стили для паспорта (скопированы из пользовательской страницы) -->
     <link rel="stylesheet" href="../../css/personal-profile/passport.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -62,54 +61,67 @@
             padding: 12px;
             border-bottom: 1px solid #eee;
         }
-        .btn-add {
-            margin-bottom: 1rem;
-            background: #28a745;
-            color: white;
-            border: none;
+        /* Унифицированные размеры для всех кнопок */
+        .btn-add,
+        .btn-view,
+        .btn-edit,
+        .btn-secondary,
+        .btn-primary,
+        .btn-warning,
+        .btn-logout,
+        .btn-add-record,
+        .btn-upload-photo {
             padding: 0.6rem 1.2rem;
+            font-size: 1rem;
             border-radius: 4px;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: background 0.2s, transform 0.1s;
+            border: none;
+            display: inline-block;
+            text-align: center;
+            line-height: 1;
+            margin: 0.2rem;
         }
-        .btn-add:hover {
-            background: #218838;
+        .btn-add { background: #28a745; color: white; }
+        .btn-add:hover { background: #218838; }
+        .btn-view { background: #007bff; color: white; }
+        .btn-view:hover { background: #0056b3; }
+        .btn-edit { background: #ffc107; color: #212529; }
+        .btn-edit:hover { background: #e0a800; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-logout {
+            background: #dc3545;
+            color: white;
+            padding: 0.5rem 1rem;
+            margin-left: 0.5rem;
         }
-        .btn-view {
-            background: #007bff;
+        .btn-logout:hover { background: #c82333; }
+        .btn-add-record { background: #17a2b8; color: white; }
+        .btn-add-record:hover { background: #138496; }
+        .btn-upload-photo { background: #6f42c1; color: white; }
+        .btn-upload-photo:hover { background: #5a32a3; }
+
+        /* Кнопки удаления записей в формах */
+        .btn-remove {
+            background: #dc3545;
             color: white;
             border: none;
-            padding: 0.3rem 0.8rem;
-            border-radius: 4px;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
             cursor: pointer;
-            margin-right: 0.5rem;
-            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
         }
-        .btn-view:hover {
-            background: #0056b3;
-        }
-        .btn-edit {
-            background: #ffc107;
-            color: #212529;
-            border: none;
-            padding: 0.3rem 0.8rem;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .btn-edit:hover {
-            background: #e0a800;
-        }
-        .status-badge {
-            display: inline-block;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-        }
-        .status-verified { background: #d4edda; color: #155724; }
-        .status-oncheck { background: #fff3cd; color: #856404; }
-        .status-rejected { background: #f8d7da; color: #721c24; }
-        .status-archived { background: #e2e3e5; color: #383d41; }
 
         /* Модальные окна */
         .modal-overlay {
@@ -168,36 +180,29 @@
             gap: 0.5rem;
         }
 
-        /* Кнопки в модальных окнах */
-        .btn-secondary, .btn-primary {
-            border: none;
-            padding: 0.5rem 1rem;
+        /* Стили для формы загрузки фото */
+        .upload-preview {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        .upload-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border: 1px solid #ddd;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background 0.2s, transform 0.1s;
         }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
+
+        /* Остальные стили */
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
         }
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        .btn-primary {
-            background: #007bff;
-            color: white;
-        }
-        .btn-primary:hover {
-            background: #0056b3;
-        }
-        .btn-warning {
-            background: #ffc107;
-            color: #212529;
-        }
-        .btn-warning:hover {
-            background: #e0a800;
-        }
+        .status-verified { background: #d4edda; color: #155724; }
+        .status-oncheck { background: #fff3cd; color: #856404; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-archived { background: #e2e3e5; color: #383d41; }
 
         .form-section {
             margin-bottom: 2rem;
@@ -232,31 +237,6 @@
             margin-bottom: 1rem;
             position: relative;
         }
-        .btn-remove {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-            background: #dc3545;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-add-record {
-            background: #17a2b8;
-            color: white;
-            border: none;
-            padding: 0.3rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        /* Стили для фото в просмотре */
         .photo-section {
             margin: 2rem 0;
             text-align: center;
@@ -266,7 +246,6 @@
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         }
-
         .loading, .no-data, .error {
             text-align: center;
             padding: 2rem;
@@ -319,7 +298,10 @@
             <h1 class="page-title">Управление паспортами</h1>
             <p class="page-description">Все записи паспортов граждан</p>
 
-            <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить паспорт</button>
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить паспорт</button>
+                <button id="uploadPhotoBtn" class="btn-upload-photo"><i class="fas fa-camera"></i> Загрузить фото</button>
+            </div>
 
             <div id="loading" class="loading">Загрузка...</div>
 
@@ -371,12 +353,12 @@
                 <!-- Форма будет сгенерирована динамически -->
             </div>
             <div class="modal-footer">
-                <!-- Здесь появятся кнопки "Отмена", "Сохранить" и "Изменить статус" -->
+                <!-- Здесь появятся кнопки -->
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно изменения статуса (встроено в HTML) -->
+    <!-- Модальное окно изменения статуса -->
     <div id="statusModal" class="modal-overlay">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
@@ -401,6 +383,33 @@
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" onclick="closeStatusModal()">Отмена</button>
                 <button type="button" class="btn-primary" id="confirmStatusBtn">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно загрузки фото -->
+    <div id="uploadPhotoModal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h4>Загрузка фото паспорта</h4>
+                <button type="button" class="close-modal" onclick="closeUploadModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="uploadPersonalCode">Личный код владельца</label>
+                    <input type="text" id="uploadPersonalCode" class="form-input" placeholder="Введите личный код" required>
+                </div>
+                <div class="form-group">
+                    <label for="photoFile">Файл фото (jpg/png)</label>
+                    <input type="file" id="photoFile" class="form-input" accept="image/jpeg,image/png">
+                </div>
+                <div class="upload-preview" id="uploadPreview" style="display: none;">
+                    <img id="previewImage" src="#" alt="Предпросмотр">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeUploadModal()">Отмена</button>
+                <button type="button" class="btn-primary" id="confirmUploadBtn">Загрузить</button>
             </div>
         </div>
     </div>
