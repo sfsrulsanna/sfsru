@@ -518,6 +518,44 @@ function renderEditForm(data) {
     document.getElementById('addPrevIdCardBtn').addEventListener('click', addPrevIdCardBlock);
 
     addStatusButton();
+	
+// Перед вставкой проверяем, нет ли уже паспорта с таким личным кодом
+if (formData.personal_code) {
+    const { data: existingByCode, error: checkError } = await supabase
+        .schema('documents')
+        .from('passport')
+        .select('id')
+        .eq('personal_code', formData.personal_code)
+        .maybeSingle();
+
+    if (checkError) {
+        console.error('Ошибка проверки:', checkError);
+    }
+
+    if (existingByCode && (!currentPassportId || existingByCode.id !== currentPassportId)) {
+        alert('Паспорт с таким личным кодом уже существует!');
+        return;
+    }
+}
+
+// Если серия и номер также уникальны, добавьте аналогичную проверку
+if (formData.series_number) {
+    const { data: existingBySeries, error: checkError } = await supabase
+        .schema('documents')
+        .from('passport')
+        .select('id')
+        .eq('series_number', formData.series_number)
+        .maybeSingle();
+
+    if (checkError) {
+        console.error('Ошибка проверки:', checkError);
+    }
+
+    if (existingBySeries && (!currentPassportId || existingBySeries.id !== currentPassportId)) {
+        alert('Паспорт с такой серией и номером уже существует!');
+        return;
+    }
+}
 }
 
 // --- Функции рендера секций ---
