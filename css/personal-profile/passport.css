@@ -1,4 +1,4 @@
-/* ===== passport.css – книга с перелистыванием ===== */
+/* ===== passport.css – книга с перелистыванием + архивные карточки ===== */
 
 :root {
   --primary-red: #7b091a;
@@ -46,6 +46,35 @@ html {
   background: white;
   border-radius: 12px;
   margin: 2rem auto;
+}
+
+/* ===== СТАТУС ===== */
+.document-status {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  background: transparent;
+  font-weight: 500;
+}
+.status-verified {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+}
+.status-pending {
+  background: rgba(255, 193, 7, 0.15);
+  color: #856404;
+}
+.status-rejected {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+}
+.status-archived {
+  background: rgba(108, 117, 125, 0.15);
+  color: #6c757d;
 }
 
 /* ===== КНИГА ===== */
@@ -122,7 +151,7 @@ html {
   flex-direction: column;
 }
 
-/* Анимация перелистывания (слайд с поворотом) */
+/* Анимация перелистывания */
 .book-pages.flipping-left {
   animation: flipLeft 0.5s ease-in-out forwards;
 }
@@ -141,9 +170,7 @@ html {
   100% { transform: rotateY(0deg); opacity: 1; }
 }
 
-/* ===== СТИЛИ СТРАНИЦ ===== */
-
-/* Обложка */
+/* Стили страниц (обложка, внутренние) */
 .page-cover {
   background: var(--primary-red);
   color: var(--gold);
@@ -172,10 +199,8 @@ html {
 .cover-gerb {
   max-width: 120px;
   margin: 2rem auto;
-  filter: brightness(0) invert(1); /* белый герб на красном */
+  filter: brightness(0) invert(1);
 }
-
-/* Внутренние страницы */
 .page h2 {
   color: var(--primary-red);
   border-bottom: 2px solid var(--gold);
@@ -247,8 +272,46 @@ html {
   color: #999;
 }
 
-/* ===== АДАПТАЦИЯ ===== */
+/* ===== АРХИВНЫЕ ПАСПОРТА (карточки) ===== */
+.archived-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin: 1.5rem 0;
+}
+.archived-card {
+  background: #f9f9f9;
+  border: 1px solid #e0e0e0;
+  border-radius: 12px;
+  padding: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.archived-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+.archived-card h4 {
+  color: var(--primary-red);
+  margin-bottom: 0.5rem;
+  font-size: 1.1rem;
+}
+.archived-card p {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+}
+.archived-card .status-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 4px;
+  background: #6c757d;
+  color: white;
+}
 @media (max-width: 600px) {
+  .archived-grid {
+    grid-template-columns: 1fr;
+  }
   .page {
     padding: 1rem;
     min-height: 500px;
@@ -290,4 +353,25 @@ html {
 }
 .error-link:hover {
   text-decoration: none;
+}
+
+/* Адаптация для очень маленьких экранов */
+.too-small-message {
+  display: none;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+  background: #f9f9f9;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+@media (max-width: 320px) {
+  .too-small-message {
+    display: block;
+  }
+  .profile-container > *:not(.too-small-message) {
+    display: none !important;
+  }
 }

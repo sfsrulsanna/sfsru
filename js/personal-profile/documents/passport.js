@@ -3,16 +3,18 @@ import { supabase } from '../../../js/supabase-config.js';
 // Глобальные переменные
 let userPersonalCode = null;
 let currentPageIndex = 0;
-let pagesData = [];      // массив данных для каждой страницы (HTML строки)
+let pagesData = [];
 let totalPages = 0;
 let flipAnimationTimeout = null;
+let activePassport = null;   // текущий активный паспорт
+let archivedPassports = [];   // архивные паспорта
 
 // Вспомогательные функции
 function formatDate(dateString) {
   if (!dateString) return '—';
   try {
     const date = new Date(dateString);
-    return `${String(date.getDate()).padStart(2,'0')}.${String(date.getMonth()+1).padStart(2,'0')}.${date.getFullYear()}`;
+    return `${String(date.getDate()).padStart(2, '0')}.${String(date.getMonth() + 1).padStart(2, '0')}.${date.getFullYear()}`;
   } catch {
     return dateString;
   }
@@ -26,6 +28,22 @@ function escapeHTML(str) {
     if (m === '>') return '&gt;';
     return m;
   });
+}
+
+function getStatusLabel(status) {
+  if (status === 'verified') return '✅ Подтверждено';
+  if (status === 'oncheck') return '⏳ На проверке';
+  if (status === 'rejected') return '❌ Отклонено';
+  if (status === 'archived') return '📦 Архивный';
+  return '—';
+}
+
+function getStatusClass(status) {
+  if (status === 'verified') return 'document-status status-verified';
+  if (status === 'oncheck') return 'document-status status-pending';
+  if (status === 'rejected') return 'document-status status-rejected';
+  if (status === 'archived') return 'document-status status-archived';
+  return 'document-status';
 }
 
 async function getPassportPhotoSignedUrl(personalCode) {
@@ -63,11 +81,11 @@ async function loadUserProfile() {
   return data;
 }
 
-// Загрузка данных паспорта
-async function loadPassportData() {
+// Загрузка всех паспортов пользователя
+async function loadAllPassports() {
   try {
     const profile = await loadUserProfile();
-    if (!profile) return null;
+    if (!profile) return { active: null, archived: [] };
 
     const { data: passports, error } = await supabase
       .schema('documents')
@@ -77,20 +95,20 @@ async function loadPassportData() {
       .order('created_at', { ascending: false });
 
     if (error) throw error;
-    if (!passports || passports.length === 0) return null;
+    if (!passports || passports.length === 0) return { active: null, archived: [] };
 
-    // Активный паспорт – первый (создан позже всех) и не архивный
-    const activePassport = passports.find(p => p.status !== 'archived');
-    if (!activePassport) return null;
-    return activePassport;
+    // Активный – первый не архивный
+    const active = passports.find(p => p.status !== 'archived');
+    const archived = passports.filter(p => p.status === 'archived');
+    return { active, archived };
   } catch (err) {
-    console.error('Ошибка загрузки паспорта:', err);
-    return null;
+    console.error('Ошибка загрузки паспортов:', err);
+    return { active: null, archived: [] };
   }
 }
 
-// Построение HTML для каждой страницы
-function buildPages(passportData) {
+// Построение HTML для каждой страницы (на основе активного паспорта)
+async function buildPages(passportData) {
   const pages = [];
 
   // Страница 1 – обложка
@@ -105,9 +123,8 @@ function buildPages(passportData) {
     </div>
   `);
 
-  // Страница 2-3 (разворот с данными владельца)
+  // Страница 2-3 – личные данные + фото, QR, штрихкод
   const photoUrl = await getPassportPhotoSignedUrl(passportData.personal_code);
-  const qrUrl = `https://e-pass-sfsru.web.app/${passportData.personal_code}/`;
   pages.push(`
     <div class="page">
       <h2>Личные данные</h2>
@@ -134,12 +151,12 @@ function buildPages(passportData) {
     </div>
   `);
 
-  // Страница 5 – прописка (история регистрации)
+  // Страница 5 – прописка
   let residencesHtml = '<p>Нет данных о регистрации</p>';
   if (passportData.residences && passportData.residences.length) {
     residencesHtml = `
       <table class="small-table">
-        <thead><tr><th>Адрес</th><th>Дата регистрации</th><th>Дата снятия</th><th>Тип жилья</th></tr></thead>
+        <thead> <tr><th>Адрес</th><th>Дата регистрации</th><th>Дата снятия</th><th>Тип жилья</th></tr> </thead>
         <tbody>
           ${passportData.residences.map(r => `
             <tr>
@@ -179,7 +196,7 @@ function buildPages(passportData) {
   if (passportData.marital_statuses && passportData.marital_statuses.length) {
     maritalHtml = `
       <table class="small-table">
-        <thead><tr><th>Статус</th><th>Дата изменения</th><th>ФИО супруга</th><th>Номер акта</th></tr></thead>
+        <thead> <tr><th>Статус</th><th>Дата изменения</th><th>ФИО супруга</th><th>Номер акта</th></tr> </thead>
         <tbody>
           ${passportData.marital_statuses.map(m => `
             <tr>
@@ -241,6 +258,40 @@ function buildPages(passportData) {
   return pages;
 }
 
+// Отображение статуса текущего паспорта
+function renderStatus(passport) {
+  const statusBlock = document.getElementById('statusBlock');
+  if (!statusBlock) return;
+  const statusText = getStatusLabel(passport.status);
+  const statusClass = getStatusClass(passport.status);
+  statusBlock.innerHTML = `<span class="${statusClass}">${statusText}</span>`;
+  statusBlock.style.display = 'block';
+}
+
+// Отображение архивных паспортов
+function renderArchivedPassports(archived) {
+  const block = document.getElementById('archivedBlock');
+  const container = document.getElementById('archivedPassports');
+  if (!block || !container) return;
+
+  if (!archived.length) {
+    block.style.display = 'none';
+    return;
+  }
+
+  container.innerHTML = archived.map(p => `
+    <div class="archived-card">
+      <h4>${escapeHTML(p.series_number || '—')}</h4>
+      <p><strong>Дата выдачи:</strong> ${formatDate(p.issue_date)}</p>
+      <p><strong>Срок действия:</strong> ${formatDate(p.expiry_date)}</p>
+      <p><strong>Кем выдан:</strong> ${escapeHTML(p.issued_by || '—')}</p>
+      <span class="status-badge">Архивный</span>
+    </div>
+  `).join('');
+
+  block.style.display = 'block';
+}
+
 // Отрисовка книги
 async function renderBook(passportData) {
   pagesData = await buildPages(passportData);
@@ -250,7 +301,7 @@ async function renderBook(passportData) {
   const container = document.getElementById('bookPages');
   container.innerHTML = pagesData[currentPageIndex];
 
-  // Генерация QR и штрихкода для страницы с данными (страница 2)
+  // Генерация QR и штрихкода для страницы 2-3 (немного задержка)
   setTimeout(() => {
     const qrDiv = document.getElementById('passportQrCode');
     if (qrDiv && passportData.personal_code) {
@@ -305,16 +356,28 @@ function flipPage(direction) {
 document.addEventListener('DOMContentLoaded', async () => {
   const loadingEl = document.getElementById('loading');
   const noDataEl = document.getElementById('noData');
-  
-  const passportData = await loadPassportData();
-  if (!passportData) {
+
+  // Загружаем все паспорта
+  const { active, archived } = await loadAllPassports();
+  if (!active) {
     loadingEl.style.display = 'none';
     noDataEl.style.display = 'block';
     return;
   }
 
-  await renderBook(passportData);
-  
+  activePassport = active;
+  archivedPassports = archived;
+
+  // Отображаем статус
+  renderStatus(active);
+
+  // Отображаем архивные паспорта
+  renderArchivedPassports(archived);
+
+  // Рендерим книгу
+  await renderBook(active);
+
+  // Навешиваем обработчики кнопок
   document.getElementById('prevPageBtn').addEventListener('click', () => flipPage('prev'));
   document.getElementById('nextPageBtn').addEventListener('click', () => flipPage('next'));
 });
