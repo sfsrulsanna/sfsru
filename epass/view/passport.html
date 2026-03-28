@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Электронный паспорт СФСРЮ</title>
-  <!-- favicons (те же, что на сайте) -->
+  <!-- favicons (полный набор) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -30,11 +30,11 @@
   <link rel="stylesheet" href="../../../css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    /* Дополнительные стили для страницы паспорта */
+    /* Дополнительные стили для карточки паспорта */
     .passport-container {
       max-width: 800px;
       margin: 2rem auto;
-      padding: 1rem;
+      padding: 0 1rem;
     }
     .passport-card {
       background: white;
@@ -111,18 +111,8 @@
       margin: 2rem auto;
       max-width: 600px;
     }
-    .error {
+    .error, .access-denied {
       color: #dc3545;
-    }
-    .access-denied {
-      color: #856404;
-      background: #fff3cd;
-    }
-    .footer-text {
-      text-align: center;
-      margin-top: 2rem;
-      color: #666;
-      font-size: 0.8rem;
     }
     @media (max-width: 600px) {
       .info-grid {
@@ -140,15 +130,15 @@
   <header class="header">
     <div class="header-container">
       <div class="logo">
-        <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+        <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
         <h1>СФСРЮ</h1>
       </div>
-      <button class="menu-toggle" aria-label="Открыть меню">
+      <button id="menuToggle" class="menu-toggle" aria-label="Открыть меню">
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
       </button>
-      <nav class="nav-menu">
+      <nav class="nav-menu" id="mainNav">
         <ul>
           <li><a href="../../../index.html">Главная</a></li>
           <li><a href="../../../news.html">Новости</a></li>
@@ -161,27 +151,27 @@
     </div>
   </header>
 
+  <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main class="main-content">
     <div class="passport-container">
       <div id="loading" class="loading">
         <i class="fas fa-spinner fa-pulse"></i> Загрузка данных...
       </div>
-      <div id="accessDenied" class="access-denied" style="display: none;">
-        <i class="fas fa-lock"></i> Доступ запрещён.<br>
-        Вы не являетесь владельцем документа и не администратор.
-      </div>
       <div id="error" class="error" style="display: none;"></div>
+      <div id="accessDenied" class="access-denied" style="display: none;">
+        <i class="fas fa-lock"></i> Доступ запрещён<br>
+        Вы не являетесь владельцем этого документа и не имеете прав администратора.
+      </div>
       <div id="passport" class="passport-card" style="display: none;"></div>
     </div>
   </main>
 
-  <!-- ПОДВАЛ (как на всех страницах) -->
+  <!-- ПОДВАЛ -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <script src="../../../js/mob-menu.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script type="importmap">
@@ -194,11 +184,12 @@
   <script type="module">
     import { createClient } from '@supabase/supabase-js';
 
-    // Инициализация Supabase
+    // Инициализация Supabase (используйте свои данные)
     const supabaseUrl = 'https://qeewwoklmjysactfhrum.supabase.co';
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1Mjg4MTUsImV4cCI6MjA1NjEwNDgxNX0.JkPq7wGXlQzR2dC9eFq3yDzF0g6o0fZ3f6H7yR2aA';
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
+    // Функции форматирования
     function formatDate(dateStr) {
       if (!dateStr) return '—';
       try {
@@ -224,35 +215,39 @@
 
     if (!targetPersonalCode) {
       document.getElementById('loading').style.display = 'none';
-      document.getElementById('error').textContent = 'Личный код не указан в адресе.';
-      document.getElementById('error').style.display = 'block';
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = 'Личный код не указан в адресе.';
+      errorDiv.style.display = 'block';
     } else {
-      // Проверяем авторизацию
-      supabase.auth.getUser().then(async ({ data: { user }, error: userError }) => {
-        if (userError) {
-          // Не авторизован – показываем доступ запрещён
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('accessDenied').style.display = 'block';
+      // Проверка авторизации
+      supabase.auth.getSession().then(async ({ data: { session }, error: sessionError }) => {
+        if (sessionError || !session) {
+          // Не авторизован – перенаправляем на логин
+          window.location.href = '../../../login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
           return;
         }
 
-        // Получаем информацию о текущем пользователе: personal_code и role
-        const { data: userData, error: profileError } = await supabase
+        const userId = session.user.id;
+
+        // Получаем личный код и роль текущего пользователя
+        const { data: userData, error: userError } = await supabase
           .from('users')
           .select('personal_code, role')
-          .eq('id', user.id)
+          .eq('id', userId)
           .single();
 
-        if (profileError) {
-          console.error('Ошибка загрузки профиля:', profileError);
+        if (userError) {
+          console.error(userError);
           document.getElementById('loading').style.display = 'none';
-          document.getElementById('error').textContent = 'Ошибка загрузки профиля.';
-          document.getElementById('error').style.display = 'block';
+          const errorDiv = document.getElementById('error');
+          errorDiv.textContent = 'Ошибка загрузки профиля пользователя.';
+          errorDiv.style.display = 'block';
           return;
         }
 
-        const isOwner = userData?.personal_code === targetPersonalCode;
-        const isAdmin = userData?.role === 'admin';
+        const currentUserCode = userData.personal_code;
+        const isAdmin = userData.role === 'admin';
+        const isOwner = currentUserCode === targetPersonalCode;
 
         if (!isOwner && !isAdmin) {
           document.getElementById('loading').style.display = 'none';
@@ -260,44 +255,27 @@
           return;
         }
 
-        // Загружаем паспорт
-        const { data: passport, error: passportError } = await supabase
-          .schema('documents')
-          .from('passport')
-          .select('*')
-          .eq('personal_code', targetPersonalCode)
-          .neq('status', 'archived')   // только активные (не архивные)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
-
-        if (passportError) {
-          console.error(passportError);
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('error').textContent = 'Ошибка загрузки паспорта.';
-          document.getElementById('error').style.display = 'block';
-          return;
-        }
-
-        if (!passport) {
-          document.getElementById('loading').style.display = 'none';
-          document.getElementById('error').textContent = 'Активный паспорт не найден.';
-          document.getElementById('error').style.display = 'block';
-          return;
-        }
-
-        // Отображаем паспорт
-        renderPassport(passport);
-      }).catch(err => {
-        console.error(err);
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('error').textContent = 'Ошибка авторизации.';
-        document.getElementById('error').style.display = 'block';
+        // Пользователь имеет право – загружаем паспорт
+        supabase.rpc('get_passport_by_personal_code', { p_code: targetPersonalCode })
+          .then(({ data, error }) => {
+            if (error) throw error;
+            if (!data) {
+              throw new Error('Паспорт не найден или неактивен');
+            }
+            renderPassport(data);
+          })
+          .catch(err => {
+            console.error(err);
+            document.getElementById('loading').style.display = 'none';
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = 'Ошибка загрузки данных: ' + err.message;
+            errorDiv.style.display = 'block';
+          });
       });
     }
 
     async function renderPassport(passport) {
-      // Фото
+      // Получение фото из storage
       let photoUrl = '../../../images/default-avatar.png';
       if (passport.personal_code) {
         const filePath = `passport/${encodeURIComponent(passport.personal_code)}/photo.jpg`;
@@ -349,7 +327,7 @@
       container.style.display = 'block';
       document.getElementById('loading').style.display = 'none';
 
-      // QR-код
+      // Генерация QR-кода
       const qrDiv = document.getElementById('qrContainer');
       if (qrDiv && passport.personal_code) {
         const qrText = `https://e-pass-sfsru.web.app/${passport.personal_code}/`;
@@ -363,7 +341,7 @@
         });
       }
 
-      // Штрихкод
+      // Генерация штрихкода по серии и номеру
       const seriesNumber = (passport.series_number || '').replace(/\s/g, '');
       if (seriesNumber.length >= 6) {
         try {
@@ -377,5 +355,6 @@
       }
     }
   </script>
+  <script src="../../../js/mob-menu.js"></script>
 </body>
 </html>
