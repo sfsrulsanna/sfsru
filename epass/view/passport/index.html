@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Паспорт гражданина СФСРЮ | E-Pass</title>
+  <link rel="stylesheet" href="../../../css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <style>
+    /* Стили для публичной страницы паспорта */
+    body {
+      background: #f0f0f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .passport-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 1rem;
+    }
+    .passport-card {
+      background: white;
+      border: 2px solid #7b091a;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      border-bottom: 2px solid #7b091a;
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .header h1 {
+      color: #7b091a;
+      margin: 0;
+      font-size: 1.8rem;
+    }
+    .header p {
+      color: #666;
+      margin: 0.5rem 0 0;
+    }
+    .photo-section {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .passport-photo {
+      width: 150px;
+      height: 200px;
+      object-fit: cover;
+      border: 2px solid #7b091a;
+      border-radius: 8px;
+      background: #eee;
+    }
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 0.8rem 1rem;
+      margin: 1.5rem 0;
+    }
+    .info-label {
+      font-weight: bold;
+      color: #7b091a;
+    }
+    .info-value {
+      color: #333;
+    }
+    .series-number {
+      font-size: 1.3rem;
+      font-weight: bold;
+      letter-spacing: 2px;
+    }
+    .qr-barcode {
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      padding-top: 1rem;
+      border-top: 1px dashed #ccc;
+    }
+    .qr-code, .barcode-container {
+      text-align: center;
+    }
+    .barcode {
+      max-width: 200px;
+      height: auto;
+    }
+    .loading, .error {
+      text-align: center;
+      padding: 3rem;
+      background: white;
+      border-radius: 12px;
+      margin: 2rem auto;
+      max-width: 600px;
+    }
+    .error {
+      color: #dc3545;
+    }
+    .footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: #666;
+      font-size: 0.8rem;
+    }
+    @media (max-width: 600px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+      }
+      .passport-card {
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="passport-container">
+    <div id="loading" class="loading">
+      <i class="fas fa-spinner fa-pulse"></i> Загрузка данных...
+    </div>
+    <div id="error" class="error" style="display: none;"></div>
+    <div id="passport" class="passport-card" style="display: none;"></div>
+    <div class="footer">
+      <p>Паспорт гражданина СФСРЮ</p>
+      <p><a href="/">Вернуться на главную</a></p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+      }
+    }
+  </script>
+  <script type="module">
+    import { createClient } from '@supabase/supabase-js';
+
+    // Инициализация Supabase (используйте свои данные)
+    const supabaseUrl = 'https://qeewwoklmjysactfhrum.supabase.co';
+    const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1Mjg4MTUsImV4cCI6MjA1NjEwNDgxNX0.JkPq7wGXlQzR2dC9eFq3yDzF0g6o0fZ3f6H7yR2aA';
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+    // Функция форматирования даты
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        const d = new Date(dateStr);
+        return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+      } catch {
+        return dateStr;
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '—';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    // Получение личного кода из URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const personalCode = urlParams.get('personal_code');
+
+    if (!personalCode) {
+      document.getElementById('loading').style.display = 'none';
+      const errorDiv = document.getElementById('error');
+      errorDiv.textContent = 'Личный код не указан в адресе.';
+      errorDiv.style.display = 'block';
+    } else {
+      // Вызов RPC-функции для получения паспорта
+      supabase.rpc('get_passport_by_personal_code', { p_code: personalCode })
+        .then(({ data, error }) => {
+          if (error) throw error;
+          if (!data) {
+            throw new Error('Паспорт не найден или неактивен');
+          }
+          renderPassport(data);
+        })
+        .catch(err => {
+          console.error(err);
+          document.getElementById('loading').style.display = 'none';
+          const errorDiv = document.getElementById('error');
+          errorDiv.textContent = 'Ошибка загрузки данных: ' + err.message;
+          errorDiv.style.display = 'block';
+        });
+    }
+
+    async function renderPassport(passport) {
+      // Получение фото из storage
+      let photoUrl = '../../images/default-avatar.png';
+      if (passport.personal_code) {
+        const filePath = `passport/${encodeURIComponent(passport.personal_code)}/photo.jpg`;
+        const { data: signedUrl, error } = await supabase.storage
+          .from('documents-files')
+          .createSignedUrl(filePath, 3600);
+        if (!error && signedUrl) photoUrl = signedUrl.signedUrl;
+      }
+
+      const html = `
+        <div class="header">
+          <h1>ПАСПОРТ ГРАЖДАНИНА СФСРЮ</h1>
+          <p>Система E-Pass</p>
+        </div>
+
+        <div class="photo-section">
+          <img src="${photoUrl}" alt="Фотография" class="passport-photo" id="passportPhoto">
+        </div>
+
+        <div class="info-grid">
+          <div class="info-label">Фамилия</div><div class="info-value">${escapeHtml(passport.surname || '—')}</div>
+          <div class="info-label">Имя</div><div class="info-value">${escapeHtml(passport.name || '—')}</div>
+          <div class="info-label">Отчество</div><div class="info-value">${escapeHtml(passport.patronymic || '—')}</div>
+          <div class="info-label">Дата рождения</div><div class="info-value">${formatDate(passport.birth_date)}</div>
+          <div class="info-label">Место рождения</div><div class="info-value">${escapeHtml(passport.birth_place || '—')}</div>
+          <div class="info-label">Пол</div><div class="info-value">${escapeHtml(passport.gender || '—')}</div>
+          <div class="info-label">Личный код</div><div class="info-value">${escapeHtml(passport.personal_code || '—')}</div>
+          <div class="info-label">Серия и номер</div><div class="info-value series-number">${escapeHtml(passport.series_number || '—')}</div>
+          <div class="info-label">Дата выдачи</div><div class="info-value">${formatDate(passport.issue_date)}</div>
+          <div class="info-label">Срок действия</div><div class="info-value">${formatDate(passport.expiry_date)}</div>
+          <div class="info-label">Кем выдан</div><div class="info-value">${escapeHtml(passport.issued_by || '—')}</div>
+          <div class="info-label">Код подразделения</div><div class="info-value">${escapeHtml(passport.department_code || '—')}</div>
+        </div>
+
+        <div class="qr-barcode">
+          <div class="qr-code">
+            <div id="qrContainer"></div>
+            <div style="font-size:0.8rem; margin-top:5px;">QR-код для проверки</div>
+          </div>
+          <div class="barcode-container">
+            <svg id="barcodeSvg" class="barcode"></svg>
+            <div style="font-size:0.8rem; margin-top:5px;">Штрихкод серии/номера</div>
+          </div>
+        </div>
+      `;
+
+      const container = document.getElementById('passport');
+      container.innerHTML = html;
+      container.style.display = 'block';
+      document.getElementById('loading').style.display = 'none';
+
+      // Генерация QR-кода
+      const qrDiv = document.getElementById('qrContainer');
+      if (qrDiv && passport.personal_code) {
+        const qrText = `https://e-pass-sfsru.web.app/${passport.personal_code}/`;
+        new QRCode(qrDiv, {
+          text: qrText,
+          width: 100,
+          height: 100,
+          colorDark: '#000',
+          colorLight: '#fff',
+          correctLevel: QRCode.CorrectLevel.L
+        });
+      }
+
+      // Генерация штрихкода по серии и номеру
+      const seriesNumber = (passport.series_number || '').replace(/\s/g, '');
+      if (seriesNumber.length >= 6) {
+        try {
+          JsBarcode("#barcodeSvg", seriesNumber, {
+            format: "CODE128",
+            displayValue: false,
+            height: 50,
+            margin: 0
+          });
+        } catch(e) { console.warn('Barcode error', e); }
+      }
+    }
+  </script>
+</body>
+</html>
