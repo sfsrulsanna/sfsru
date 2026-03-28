@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Электронный паспорт СФСРЮ</title>
-  <!-- favicons (полный набор) -->
+  <!-- favicons -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -30,7 +30,6 @@
   <link rel="stylesheet" href="../../../css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    /* Дополнительные стили для карточки паспорта */
     .passport-container {
       max-width: 800px;
       margin: 2rem auto;
@@ -126,7 +125,6 @@
   </style>
 </head>
 <body>
-  <!-- ШАПКА (как на всех страницах) -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -151,7 +149,6 @@
     </div>
   </header>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main class="main-content">
     <div class="passport-container">
       <div id="loading" class="loading">
@@ -166,7 +163,6 @@
     </div>
   </main>
 
-  <!-- ПОДВАЛ -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
@@ -184,12 +180,10 @@
   <script type="module">
     import { createClient } from '@supabase/supabase-js';
 
-    // Инициализация Supabase (используйте свои данные)
     const supabaseUrl = 'https://qeewwoklmjysactfhrum.supabase.co';
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1Mjg4MTUsImV4cCI6MjA1NjEwNDgxNX0.JkPq7wGXlQzR2dC9eFq3yDzF0g6o0fZ3f6H7yR2aA';
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Функции форматирования
     function formatDate(dateStr) {
       if (!dateStr) return '—';
       try {
@@ -209,7 +203,6 @@
         .replace(/"/g, '&quot;');
     }
 
-    // Получение личного кода из URL
     const urlParams = new URLSearchParams(window.location.search);
     const targetPersonalCode = urlParams.get('personal_code');
 
@@ -219,28 +212,23 @@
       errorDiv.textContent = 'Личный код не указан в адресе.';
       errorDiv.style.display = 'block';
     } else {
-      // Проверка авторизации
       supabase.auth.getSession().then(async ({ data: { session }, error: sessionError }) => {
         if (sessionError || !session) {
-          // Не авторизован – перенаправляем на логин
           window.location.href = '../../../login.html?redirect=' + encodeURIComponent(window.location.pathname + window.location.search);
           return;
         }
 
         const userId = session.user.id;
 
-        // Получаем личный код и роль текущего пользователя
+        // Используем RPC-функцию для получения данных пользователя (обход RLS)
         const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('personal_code, role')
-          .eq('id', userId)
-          .single();
+          .rpc('get_user_by_id', { user_id: userId });
 
-        if (userError) {
-          console.error(userError);
+        if (userError || !userData) {
+          console.error('Ошибка получения данных пользователя:', userError);
           document.getElementById('loading').style.display = 'none';
           const errorDiv = document.getElementById('error');
-          errorDiv.textContent = 'Ошибка загрузки профиля пользователя.';
+          errorDiv.textContent = 'Не удалось загрузить данные пользователя. Возможно, вы не зарегистрированы в системе.';
           errorDiv.style.display = 'block';
           return;
         }
@@ -255,13 +243,11 @@
           return;
         }
 
-        // Пользователь имеет право – загружаем паспорт
+        // Загружаем паспорт через RPC
         supabase.rpc('get_passport_by_personal_code', { p_code: targetPersonalCode })
           .then(({ data, error }) => {
             if (error) throw error;
-            if (!data) {
-              throw new Error('Паспорт не найден или неактивен');
-            }
+            if (!data) throw new Error('Паспорт не найден или неактивен');
             renderPassport(data);
           })
           .catch(err => {
@@ -275,7 +261,6 @@
     }
 
     async function renderPassport(passport) {
-      // Получение фото из storage
       let photoUrl = '../../../images/default-avatar.png';
       if (passport.personal_code) {
         const filePath = `passport/${encodeURIComponent(passport.personal_code)}/photo.jpg`;
@@ -290,11 +275,9 @@
           <h1>ПАСПОРТ ГРАЖДАНИНА СФСРЮ</h1>
           <p>Электронная копия документа</p>
         </div>
-
         <div class="photo-section">
           <img src="${photoUrl}" alt="Фотография" class="passport-photo" id="passportPhoto">
         </div>
-
         <div class="info-grid">
           <div class="info-label">Фамилия</div><div class="info-value">${escapeHtml(passport.surname || '—')}</div>
           <div class="info-label">Имя</div><div class="info-value">${escapeHtml(passport.name || '—')}</div>
@@ -309,7 +292,6 @@
           <div class="info-label">Кем выдан</div><div class="info-value">${escapeHtml(passport.issued_by || '—')}</div>
           <div class="info-label">Код подразделения</div><div class="info-value">${escapeHtml(passport.department_code || '—')}</div>
         </div>
-
         <div class="qr-barcode">
           <div class="qr-code">
             <div id="qrContainer"></div>
@@ -327,7 +309,7 @@
       container.style.display = 'block';
       document.getElementById('loading').style.display = 'none';
 
-      // Генерация QR-кода
+      // QR-код
       const qrDiv = document.getElementById('qrContainer');
       if (qrDiv && passport.personal_code) {
         const qrText = `https://e-pass-sfsru.web.app/${passport.personal_code}/`;
@@ -341,7 +323,7 @@
         });
       }
 
-      // Генерация штрихкода по серии и номеру
+      // Штрихкод
       const seriesNumber = (passport.series_number || '').replace(/\s/g, '');
       if (seriesNumber.length >= 6) {
         try {
