@@ -13,25 +13,41 @@ async function loadUsers() {
     loading.style.display = 'block';
     tableContainer.style.display = 'none';
 
-    let query = supabase
-        .from('users')
-        .select('id, surname, name, patronymic, personal_code, email, date_of_birth, gender, role')
-        .order(sortField, { ascending: sortDirection === 'asc' });
-
-    const { data, error } = await query;
+    // Используем RPC-функцию для получения всех пользователей (только для админов)
+    const { data, error } = await supabase.rpc('get_all_users');
 
     if (error) {
         console.error('Ошибка загрузки:', error);
-        document.getElementById('tableBody').innerHTML = ` <tr><td colspan="7" class="error">Ошибка: ${error.message}</td></tr> `;
+        document.getElementById('tableBody').innerHTML = ` 
+            <td colspan="7" class="error">Ошибка: ${error.message}</td>
+        `;
         loading.style.display = 'none';
         tableContainer.style.display = 'block';
         return;
     }
 
     allUsers = data || [];
+    // Сортировка вручную, так как RPC возвращает JSONB массив
+    sortUsers();
     applySearch();
     loading.style.display = 'none';
     tableContainer.style.display = 'block';
+}
+
+function sortUsers() {
+    allUsers.sort((a, b) => {
+        let aVal = a[sortField] || '';
+        let bVal = b[sortField] || '';
+        if (sortField === 'surname') {
+            aVal = `${a.surname} ${a.name}`;
+            bVal = `${b.surname} ${b.name}`;
+        }
+        if (sortDirection === 'asc') {
+            return aVal.localeCompare(bVal);
+        } else {
+            return bVal.localeCompare(aVal);
+        }
+    });
 }
 
 function applySearch() {
@@ -51,28 +67,30 @@ function applySearch() {
 function renderTable(users) {
     const tbody = document.getElementById('tableBody');
     if (users.length === 0) {
-        tbody.innerHTML = ' <tr><td colspan="7" class="no-data">Нет пользователей</td></tr> ';
+        tbody.innerHTML = ' 
+            <td colspan="7" class="no-data">Нет пользователей</td>
+        ';
         return;
     }
 
     tbody.innerHTML = users.map(user => {
         const fullName = `${user.surname || ''} ${user.name || ''} ${user.patronymic || ''}`.trim() || '—';
         const roleClass = user.role === 'admin' ? 'admin' : '';
-        const genderDisplay = user.gender === 'male' ? 'М' : (user.gender === 'female' ? 'Ж' : '—');
+        const genderLabel = user.gender === 'male' ? 'М' : (user.gender === 'female' ? 'Ж' : '—');
         const birthDate = formatDate(user.date_of_birth);
         return `
-            <tr>
-                <td>${escapeHTML(fullName)}</td>
-                <td>${escapeHTML(user.personal_code || '—')}</td>
-                <td>${escapeHTML(user.email || '—')}</td>
-                <td>${birthDate}</td>
-                <td>${genderDisplay}</td>
-                <td><span class="role-badge ${roleClass}">${escapeHTML(user.role || 'user')}</span></td>
-                <td>
+             <tr>
+                 <td>${escapeHTML(fullName)}</td>
+                 <td>${escapeHTML(user.personal_code || '—')}</td>
+                 <td>${escapeHTML(user.email || '—')}</td>
+                 <td>${birthDate}</td>
+                 <td>${genderLabel}</td>
+                 <td><span class="role-badge ${roleClass}">${escapeHTML(user.role || 'user')}</span></td>
+                 <td>
                     <button class="btn-edit" data-id="${user.id}">Редактировать</button>
                     <button class="btn-delete" data-id="${user.id}">Удалить</button>
-                </td>
-            </tr>
+                 </td>
+             </tr>
         `;
     }).join('');
 
@@ -84,7 +102,6 @@ function renderTable(users) {
     });
 }
 
-// Сортировка
 document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
         const field = th.dataset.sort;
@@ -96,11 +113,11 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
         }
         document.querySelectorAll('th i').forEach(i => i.className = 'fas fa-sort');
         th.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
-        loadUsers();
+        sortUsers();
+        applySearch();
     });
 });
 
-// Поиск
 document.getElementById('searchInput').addEventListener('input', (e) => {
     searchTerm = e.target.value;
     applySearch();
@@ -160,16 +177,10 @@ function openEditModal(user = null) {
     document.getElementById('editModal').classList.add('active');
 }
 
-document.getElementById('addBtn').addEventListener('click', () => {
-    openEditModal(null);
-});
+document.getElementById('addBtn').addEventListener('click', () => openEditModal(null));
 
 async function editUser(id) {
-    const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', id)
-        .single();
+    const { data, error } = await supabase.rpc('get_user_by_id', { user_id: id });
     if (error || !data) {
         alert('Ошибка загрузки данных пользователя');
         return;
@@ -195,36 +206,16 @@ async function saveUser() {
         return;
     }
 
-    // Проверка уникальности personal_code
-    let query = supabase.from('users').select('id').eq('personal_code', formData.personal_code);
+    // Если редактируем существующего, передаём id
     if (currentUserId) {
-        query = query.neq('id', currentUserId);
-    }
-    const { data: existing, error: checkError } = await query.maybeSingle();
-    if (checkError) {
-        console.error(checkError);
-    }
-    if (existing) {
-        alert('Пользователь с таким личным кодом уже существует');
-        return;
+        formData.id = currentUserId;
     }
 
-    let result;
-    if (currentUserId) {
-        result = await supabase
-            .from('users')
-            .update(formData)
-            .eq('id', currentUserId);
-    } else {
-        const newId = crypto.randomUUID();
-        result = await supabase
-            .from('users')
-            .insert([{ ...formData, id: newId }]);
-    }
+    const { data, error } = await supabase.rpc('upsert_user', { user_data: formData });
 
-    if (result.error) {
-        alert('Ошибка сохранения: ' + result.error.message);
-        console.error(result.error);
+    if (error) {
+        alert('Ошибка сохранения: ' + error.message);
+        console.error(error);
     } else {
         closeEditModal();
         loadUsers();
@@ -234,10 +225,7 @@ async function saveUser() {
 async function deleteUser(id) {
     if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие необратимо.')) return;
 
-    const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', id);
+    const { error } = await supabase.rpc('delete_user', { user_id: id });
 
     if (error) {
         alert('Ошибка удаления: ' + error.message);
