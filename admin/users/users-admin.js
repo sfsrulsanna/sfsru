@@ -13,21 +13,17 @@ async function loadUsers() {
     loading.style.display = 'block';
     tableContainer.style.display = 'none';
 
-    // Используем RPC-функцию для получения всех пользователей (только для админов)
     const { data, error } = await supabase.rpc('get_all_users');
 
     if (error) {
         console.error('Ошибка загрузки:', error);
-        document.getElementById('tableBody').innerHTML = ` 
-            <td colspan="7" class="error">Ошибка: ${error.message}</td>
-        `;
+        document.getElementById('tableBody').innerHTML = '<tr><td colspan="7" class="error">Ошибка: ' + error.message + '</td></tr>';
         loading.style.display = 'none';
         tableContainer.style.display = 'block';
         return;
     }
 
     allUsers = data || [];
-    // Сортировка вручную, так как RPC возвращает JSONB массив
     sortUsers();
     applySearch();
     loading.style.display = 'none';
@@ -67,32 +63,32 @@ function applySearch() {
 function renderTable(users) {
     const tbody = document.getElementById('tableBody');
     if (users.length === 0) {
-        tbody.innerHTML = ' 
-            <td colspan="7" class="no-data">Нет пользователей</td>
-        ';
+        tbody.innerHTML = '<tr><td colspan="7" class="no-data">Нет пользователей</td></tr>';
         return;
     }
 
-    tbody.innerHTML = users.map(user => {
+    let rows = '';
+    for (const user of users) {
         const fullName = `${user.surname || ''} ${user.name || ''} ${user.patronymic || ''}`.trim() || '—';
         const roleClass = user.role === 'admin' ? 'admin' : '';
         const genderLabel = user.gender === 'male' ? 'М' : (user.gender === 'female' ? 'Ж' : '—');
         const birthDate = formatDate(user.date_of_birth);
-        return `
-             <tr>
-                 <td>${escapeHTML(fullName)}</td>
-                 <td>${escapeHTML(user.personal_code || '—')}</td>
-                 <td>${escapeHTML(user.email || '—')}</td>
-                 <td>${birthDate}</td>
-                 <td>${genderLabel}</td>
-                 <td><span class="role-badge ${roleClass}">${escapeHTML(user.role || 'user')}</span></td>
-                 <td>
+        rows += `
+            <tr>
+                <td>${escapeHTML(fullName)}</td>
+                <td>${escapeHTML(user.personal_code || '—')}</td>
+                <td>${escapeHTML(user.email || '—')}</td>
+                <td>${birthDate}</td>
+                <td>${genderLabel}</td>
+                <td><span class="role-badge ${roleClass}">${escapeHTML(user.role || 'user')}</span></td>
+                <td>
                     <button class="btn-edit" data-id="${user.id}">Редактировать</button>
                     <button class="btn-delete" data-id="${user.id}">Удалить</button>
-                 </td>
-             </tr>
+                </td>
+            </tr>
         `;
-    }).join('');
+    }
+    tbody.innerHTML = rows;
 
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', () => editUser(btn.dataset.id));
@@ -206,7 +202,6 @@ async function saveUser() {
         return;
     }
 
-    // Если редактируем существующего, передаём id
     if (currentUserId) {
         formData.id = currentUserId;
     }
