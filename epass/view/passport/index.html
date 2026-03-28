@@ -3,17 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Паспорт гражданина СФСРЮ | E-Pass</title>
+  <title>Электронный паспорт СФСРЮ</title>
+  <!-- favicons (те же, что на сайте) -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+
+  <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../../css/style.css">
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    /* Стили для публичной страницы паспорта */
-    body {
-      background: #f0f0f0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-    }
+    /* Дополнительные стили для страницы паспорта */
     .passport-container {
       max-width: 800px;
       margin: 2rem auto;
@@ -26,18 +43,18 @@
       padding: 2rem;
       box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     }
-    .header {
+    .header-title {
       text-align: center;
       border-bottom: 2px solid #7b091a;
       margin-bottom: 1.5rem;
       padding-bottom: 0.5rem;
     }
-    .header h1 {
+    .header-title h1 {
       color: #7b091a;
       margin: 0;
       font-size: 1.8rem;
     }
-    .header p {
+    .header-title p {
       color: #666;
       margin: 0.5rem 0 0;
     }
@@ -86,7 +103,7 @@
       max-width: 200px;
       height: auto;
     }
-    .loading, .error {
+    .loading, .error, .access-denied {
       text-align: center;
       padding: 3rem;
       background: white;
@@ -97,7 +114,11 @@
     .error {
       color: #dc3545;
     }
-    .footer {
+    .access-denied {
+      color: #856404;
+      background: #fff3cd;
+    }
+    .footer-text {
       text-align: center;
       margin-top: 2rem;
       color: #666;
@@ -115,18 +136,52 @@
   </style>
 </head>
 <body>
-  <div class="passport-container">
-    <div id="loading" class="loading">
-      <i class="fas fa-spinner fa-pulse"></i> Загрузка данных...
+  <!-- ШАПКА (как на всех страницах) -->
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../../../index.html">Главная</a></li>
+          <li><a href="../../../news.html">Новости</a></li>
+          <li><a href="../../../wiki/">Википедия</a></li>
+          <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../../../services.html">Услуги</a></li>
+          <li><a href="../../../profile.html">Личный кабинет</a></li>
+        </ul>
+      </nav>
     </div>
-    <div id="error" class="error" style="display: none;"></div>
-    <div id="passport" class="passport-card" style="display: none;"></div>
-    <div class="footer">
-      <p>Паспорт гражданина СФСРЮ</p>
-      <p><a href="/">Вернуться на главную</a></p>
-    </div>
-  </div>
+  </header>
 
+  <main class="main-content">
+    <div class="passport-container">
+      <div id="loading" class="loading">
+        <i class="fas fa-spinner fa-pulse"></i> Загрузка данных...
+      </div>
+      <div id="accessDenied" class="access-denied" style="display: none;">
+        <i class="fas fa-lock"></i> Доступ запрещён.<br>
+        Вы не являетесь владельцем документа и не администратор.
+      </div>
+      <div id="error" class="error" style="display: none;"></div>
+      <div id="passport" class="passport-card" style="display: none;"></div>
+    </div>
+  </main>
+
+  <!-- ПОДВАЛ (как на всех страницах) -->
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
+
+  <script src="../../../js/mob-menu.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script type="importmap">
@@ -139,12 +194,11 @@
   <script type="module">
     import { createClient } from '@supabase/supabase-js';
 
-    // Инициализация Supabase (используйте свои данные)
+    // Инициализация Supabase
     const supabaseUrl = 'https://qeewwoklmjysactfhrum.supabase.co';
     const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDA1Mjg4MTUsImV4cCI6MjA1NjEwNDgxNX0.JkPq7wGXlQzR2dC9eFq3yDzF0g6o0fZ3f6H7yR2aA';
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-    // Функция форматирования даты
     function formatDate(dateStr) {
       if (!dateStr) return '—';
       try {
@@ -166,35 +220,85 @@
 
     // Получение личного кода из URL
     const urlParams = new URLSearchParams(window.location.search);
-    const personalCode = urlParams.get('personal_code');
+    const targetPersonalCode = urlParams.get('personal_code');
 
-    if (!personalCode) {
+    if (!targetPersonalCode) {
       document.getElementById('loading').style.display = 'none';
-      const errorDiv = document.getElementById('error');
-      errorDiv.textContent = 'Личный код не указан в адресе.';
-      errorDiv.style.display = 'block';
+      document.getElementById('error').textContent = 'Личный код не указан в адресе.';
+      document.getElementById('error').style.display = 'block';
     } else {
-      // Вызов RPC-функции для получения паспорта
-      supabase.rpc('get_passport_by_personal_code', { p_code: personalCode })
-        .then(({ data, error }) => {
-          if (error) throw error;
-          if (!data) {
-            throw new Error('Паспорт не найден или неактивен');
-          }
-          renderPassport(data);
-        })
-        .catch(err => {
-          console.error(err);
+      // Проверяем авторизацию
+      supabase.auth.getUser().then(async ({ data: { user }, error: userError }) => {
+        if (userError) {
+          // Не авторизован – показываем доступ запрещён
           document.getElementById('loading').style.display = 'none';
-          const errorDiv = document.getElementById('error');
-          errorDiv.textContent = 'Ошибка загрузки данных: ' + err.message;
-          errorDiv.style.display = 'block';
-        });
+          document.getElementById('accessDenied').style.display = 'block';
+          return;
+        }
+
+        // Получаем информацию о текущем пользователе: personal_code и role
+        const { data: userData, error: profileError } = await supabase
+          .from('users')
+          .select('personal_code, role')
+          .eq('id', user.id)
+          .single();
+
+        if (profileError) {
+          console.error('Ошибка загрузки профиля:', profileError);
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error').textContent = 'Ошибка загрузки профиля.';
+          document.getElementById('error').style.display = 'block';
+          return;
+        }
+
+        const isOwner = userData?.personal_code === targetPersonalCode;
+        const isAdmin = userData?.role === 'admin';
+
+        if (!isOwner && !isAdmin) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('accessDenied').style.display = 'block';
+          return;
+        }
+
+        // Загружаем паспорт
+        const { data: passport, error: passportError } = await supabase
+          .schema('documents')
+          .from('passport')
+          .select('*')
+          .eq('personal_code', targetPersonalCode)
+          .neq('status', 'archived')   // только активные (не архивные)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (passportError) {
+          console.error(passportError);
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error').textContent = 'Ошибка загрузки паспорта.';
+          document.getElementById('error').style.display = 'block';
+          return;
+        }
+
+        if (!passport) {
+          document.getElementById('loading').style.display = 'none';
+          document.getElementById('error').textContent = 'Активный паспорт не найден.';
+          document.getElementById('error').style.display = 'block';
+          return;
+        }
+
+        // Отображаем паспорт
+        renderPassport(passport);
+      }).catch(err => {
+        console.error(err);
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('error').textContent = 'Ошибка авторизации.';
+        document.getElementById('error').style.display = 'block';
+      });
     }
 
     async function renderPassport(passport) {
-      // Получение фото из storage
-      let photoUrl = '../../images/default-avatar.png';
+      // Фото
+      let photoUrl = '../../../images/default-avatar.png';
       if (passport.personal_code) {
         const filePath = `passport/${encodeURIComponent(passport.personal_code)}/photo.jpg`;
         const { data: signedUrl, error } = await supabase.storage
@@ -204,9 +308,9 @@
       }
 
       const html = `
-        <div class="header">
+        <div class="header-title">
           <h1>ПАСПОРТ ГРАЖДАНИНА СФСРЮ</h1>
-          <p>Система E-Pass</p>
+          <p>Электронная копия документа</p>
         </div>
 
         <div class="photo-section">
@@ -245,7 +349,7 @@
       container.style.display = 'block';
       document.getElementById('loading').style.display = 'none';
 
-      // Генерация QR-кода
+      // QR-код
       const qrDiv = document.getElementById('qrContainer');
       if (qrDiv && passport.personal_code) {
         const qrText = `https://e-pass-sfsru.web.app/${passport.personal_code}/`;
@@ -259,7 +363,7 @@
         });
       }
 
-      // Генерация штрихкода по серии и номеру
+      // Штрихкод
       const seriesNumber = (passport.series_number || '').replace(/\s/g, '');
       if (seriesNumber.length >= 6) {
         try {
