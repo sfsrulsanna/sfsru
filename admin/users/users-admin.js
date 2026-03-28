@@ -17,8 +17,8 @@ async function loadUsers() {
 
     if (error) {
         console.error('Ошибка загрузки:', error);
-        document.getElementById('tableBody').innerHTML = ' 
-            <td colspan="8" class="error">Ошибка: ' + error.message + '   ';
+        document.getElementById('tableBody').innerHTML = 
+            '<tr><td colspan="8" class="error">Ошибка: ' + error.message + '</td></tr>';
         loading.style.display = 'none';
         tableContainer.style.display = 'block';
         return;
@@ -65,8 +65,7 @@ function applySearch() {
 function renderTable(users) {
     const tbody = document.getElementById('tableBody');
     if (users.length === 0) {
-        tbody.innerHTML = ' 
-            <td colspan="8" class="no-data">Нет пользователей   ';
+        tbody.innerHTML = '<tr><td colspan="8" class="no-data">Нет пользователей</td></tr>';
         return;
     }
 
@@ -151,7 +150,7 @@ function openEditModal(user = null) {
         </div>
         <div class="form-group">
             <label>Телефон</label>
-            <input type="tel" id="phone" class="form-input" value="${escapeHTML(user?.phone || '')}" placeholder="+7 XXX XXX-XX-XX">
+            <input type="tel" id="phone" class="form-input" value="${escapeHTML(user?.phone || '')}">
         </div>
         <div class="form-group">
             <label>Дата рождения</label>
@@ -255,7 +254,7 @@ function escapeHTML(str) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
+        .replace(/'/g, '&#39;');
 }
 
 window.closeEditModal = () => {
