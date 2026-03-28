@@ -1,13 +1,12 @@
 import { supabase } from '../../js/supabase-config.js';
 import { requireAdmin } from '../certificates/js/certificates-common.js';
 
-let currentUserId = null;        // ID редактируемого пользователя
+let currentUserId = null;
 let sortField = 'surname';
 let sortDirection = 'asc';
 let allUsers = [];
 let searchTerm = '';
 
-// Загрузка пользователей
 async function loadUsers() {
     const loading = document.getElementById('loading');
     const tableContainer = document.getElementById('tableContainer');
@@ -23,7 +22,7 @@ async function loadUsers() {
 
     if (error) {
         console.error('Ошибка загрузки:', error);
-        document.getElementById('tableBody').innerHTML = `<tr><td colspan="7" class="error">Ошибка: ${error.message}</td></tr>`;
+        document.getElementById('tableBody').innerHTML = ` <tr><td colspan="7" class="error">Ошибка: ${error.message}</td></tr> `;
         loading.style.display = 'none';
         tableContainer.style.display = 'block';
         return;
@@ -52,14 +51,14 @@ function applySearch() {
 function renderTable(users) {
     const tbody = document.getElementById('tableBody');
     if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="no-data">Нет пользователей</td></tr>';
+        tbody.innerHTML = ' <tr><td colspan="7" class="no-data">Нет пользователей</td></tr> ';
         return;
     }
 
     tbody.innerHTML = users.map(user => {
         const fullName = `${user.surname || ''} ${user.name || ''} ${user.patronymic || ''}`.trim() || '—';
         const roleClass = user.role === 'admin' ? 'admin' : '';
-        const gender = user.gender === 'Мужской' ? 'М' : (user.gender === 'Женский' ? 'Ж' : '—');
+        const genderDisplay = user.gender === 'male' ? 'М' : (user.gender === 'female' ? 'Ж' : '—');
         const birthDate = formatDate(user.date_of_birth);
         return `
             <tr>
@@ -67,7 +66,7 @@ function renderTable(users) {
                 <td>${escapeHTML(user.personal_code || '—')}</td>
                 <td>${escapeHTML(user.email || '—')}</td>
                 <td>${birthDate}</td>
-                <td>${gender}</td>
+                <td>${genderDisplay}</td>
                 <td><span class="role-badge ${roleClass}">${escapeHTML(user.role || 'user')}</span></td>
                 <td>
                     <button class="btn-edit" data-id="${user.id}">Редактировать</button>
@@ -77,7 +76,6 @@ function renderTable(users) {
         `;
     }).join('');
 
-    // Навешиваем обработчики
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', () => editUser(btn.dataset.id));
     });
@@ -108,7 +106,6 @@ document.getElementById('searchInput').addEventListener('input', (e) => {
     applySearch();
 });
 
-// Форма редактирования/добавления
 function openEditModal(user = null) {
     currentUserId = user?.id || null;
     const title = currentUserId ? 'Редактирование пользователя' : 'Добавление пользователя';
@@ -146,8 +143,8 @@ function openEditModal(user = null) {
         <div class="form-group">
             <label>Пол</label>
             <select id="gender" class="form-input">
-                <option value="Мужской" ${user?.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
-                <option value="Женский" ${user?.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+                <option value="male" ${user?.gender === 'male' ? 'selected' : ''}>Мужской</option>
+                <option value="female" ${user?.gender === 'female' ? 'selected' : ''}>Женский</option>
             </select>
         </div>
         <div class="form-group">
@@ -163,12 +160,10 @@ function openEditModal(user = null) {
     document.getElementById('editModal').classList.add('active');
 }
 
-// Добавление нового пользователя
 document.getElementById('addBtn').addEventListener('click', () => {
     openEditModal(null);
 });
 
-// Редактирование
 async function editUser(id) {
     const { data, error } = await supabase
         .from('users')
@@ -182,7 +177,6 @@ async function editUser(id) {
     openEditModal(data);
 }
 
-// Сохранение пользователя
 async function saveUser() {
     const formData = {
         surname: document.getElementById('surname')?.value.trim() || '',
@@ -222,8 +216,6 @@ async function saveUser() {
             .update(formData)
             .eq('id', currentUserId);
     } else {
-        // Создаём новую запись (id не указываем – пусть Supabase сгенерирует, но у нас id должен быть тем же, что в auth? 
-        // Здесь мы создаём запись без привязки к auth. ID можно сгенерировать самостоятельно (uuid).
         const newId = crypto.randomUUID();
         result = await supabase
             .from('users')
@@ -239,7 +231,6 @@ async function saveUser() {
     }
 }
 
-// Удаление пользователя
 async function deleteUser(id) {
     if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие необратимо.')) return;
 
@@ -255,7 +246,6 @@ async function deleteUser(id) {
     }
 }
 
-// Вспомогательные
 function formatDate(dateStr) {
     if (!dateStr) return '—';
     try {
@@ -282,7 +272,6 @@ window.closeEditModal = () => {
 
 document.getElementById('saveUserBtn').addEventListener('click', saveUser);
 
-// Инициализация
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await requireAdmin()) return;
 
