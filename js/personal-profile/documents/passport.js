@@ -307,7 +307,7 @@ async function renderBook(passportData) {
     if (qrDiv && passportData.personal_code) {
       qrDiv.innerHTML = '';
       new QRCode(qrDiv, {
-        text: `https://e-pass-sfsru.web.app/${passportData.personal_code}/`,
+const qrText = `https://sfsru.vercel.app/epass/view/passport.html?personal_code=${passport.personal_code}`;
         width: 80, height: 80,
         colorDark: '#000', colorLight: '#fff',
         correctLevel: QRCode.CorrectLevel.L
