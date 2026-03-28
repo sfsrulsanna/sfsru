@@ -17,7 +17,8 @@ async function loadUsers() {
 
     if (error) {
         console.error('Ошибка загрузки:', error);
-        document.getElementById('tableBody').innerHTML = '<tr><td colspan="7" class="error">Ошибка: ' + error.message + '</td></tr>';
+        document.getElementById('tableBody').innerHTML = ' 
+            <td colspan="8" class="error">Ошибка: ' + error.message + '   ';
         loading.style.display = 'none';
         tableContainer.style.display = 'block';
         return;
@@ -54,7 +55,8 @@ function applySearch() {
             const fullName = `${user.surname} ${user.name} ${user.patronymic}`.toLowerCase();
             return fullName.includes(term) ||
                    (user.personal_code && user.personal_code.toLowerCase().includes(term)) ||
-                   (user.email && user.email.toLowerCase().includes(term));
+                   (user.email && user.email.toLowerCase().includes(term)) ||
+                   (user.phone && user.phone.toLowerCase().includes(term));
         });
     }
     renderTable(filtered);
@@ -63,7 +65,8 @@ function applySearch() {
 function renderTable(users) {
     const tbody = document.getElementById('tableBody');
     if (users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="no-data">Нет пользователей</td></tr>';
+        tbody.innerHTML = ' 
+            <td colspan="8" class="no-data">Нет пользователей   ';
         return;
     }
 
@@ -78,6 +81,7 @@ function renderTable(users) {
                 <td>${escapeHTML(fullName)}</td>
                 <td>${escapeHTML(user.personal_code || '—')}</td>
                 <td>${escapeHTML(user.email || '—')}</td>
+                <td>${escapeHTML(user.phone || '—')}</td>
                 <td>${birthDate}</td>
                 <td>${genderLabel}</td>
                 <td><span class="role-badge ${roleClass}">${escapeHTML(user.role || 'user')}</span></td>
@@ -146,6 +150,10 @@ function openEditModal(user = null) {
             <input type="email" id="email" class="form-input" value="${escapeHTML(user?.email || '')}">
         </div>
         <div class="form-group">
+            <label>Телефон</label>
+            <input type="tel" id="phone" class="form-input" value="${escapeHTML(user?.phone || '')}" placeholder="+7 XXX XXX-XX-XX">
+        </div>
+        <div class="form-group">
             <label>Дата рождения</label>
             <input type="date" id="date_of_birth" class="form-input" value="${user?.date_of_birth || ''}">
         </div>
@@ -191,6 +199,7 @@ async function saveUser() {
         patronymic: document.getElementById('patronymic')?.value.trim() || '',
         personal_code: document.getElementById('personal_code')?.value.trim() || '',
         email: document.getElementById('email')?.value.trim() || null,
+        phone: document.getElementById('phone')?.value.trim() || null,
         date_of_birth: document.getElementById('date_of_birth')?.value || null,
         place_of_birth: document.getElementById('place_of_birth')?.value.trim() || '',
         gender: document.getElementById('gender')?.value || null,
