@@ -139,19 +139,20 @@ function getNextStep(step) {
             else if (formData.reason === 'first_14') {
                 return 6;
             }
-            // Иначе сразу на контакты (шаг 7)
+            // Иначе сразу на адреса (шаг 7a)
             else {
-                return 7;
+                return '7a';
             }
         case 5:
-            // После новых данных: если причина name_changed, то нужен шаг 6, иначе сразу на контакты
+            // После новых данных: если причина name_changed, то нужен шаг 6, иначе сразу на адреса
             if (formData.reason === 'name_changed') {
                 return 6;
             } else {
-                return 7;
+                return '7a';
             }
-        case 6: return 7;
-        case 7: return 8;
+        case 6: return '7a';
+        case '7a': return '7b';
+        case '7b': return 8;
         case 8: return 9;
         case 9: return 10;
         case 10: return 11;
@@ -172,8 +173,8 @@ function getPrevStep(step) {
             } else {
                 return 4;
             }
-        case 7:
-            // С шага 7: если причина требовала свидетельства, то на шаг 6, если новых данных, то на шаг 5, иначе на шаг 4
+        case '7a':
+            // С шага 7a назад: если причина требовала свидетельства, то на шаг 6, если новых данных, то на шаг 5, иначе на шаг 4
             if (formData.reason === 'name_changed' || formData.reason === 'first_14') {
                 return 6;
             } else if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
@@ -181,7 +182,8 @@ function getPrevStep(step) {
             } else {
                 return 4;
             }
-        case 8: return 7;
+        case '7b': return '7a';
+        case 8: return '7b';
         case 9: return 8;
         case 10: return 9;
         case 11: return 10;
@@ -274,7 +276,12 @@ if (step === 6) {
     }
 }
 
-    if (step === 7) {
+    if (step === '7a') {
+        document.getElementById('registration_address').value = userProfile.registration_address || '';
+        document.getElementById('actual_address').value = userProfile.actual_address || '';
+    }
+
+    if (step === '7b') {
         document.getElementById('phone').value = formData.phone;
         document.getElementById('email').value = formData.email;
     }
@@ -351,7 +358,15 @@ case 6: {
     }
     break;
 }
-        case 7: {
+        case '7a': {
+            const regAddr = document.getElementById('registration_address').value.trim();
+            if (!regAddr) {
+                showError('Заполните адрес постоянной регистрации');
+                return false;
+            }
+            break;
+        }
+        case '7b': {
             const phone = document.getElementById('phone').value.trim();
             const email = document.getElementById('email').value.trim();
             if (!phone || !email) {
@@ -471,6 +486,12 @@ function prepareSummary() {
 
     html += `<tr><th>Телефон</th><td>${formData.phone}</td></tr>`;
     html += `<tr><th>Email</th><td>${formData.email}</td></tr>`;
+    const regAddr = document.getElementById('registration_address')?.value || '—';
+    const actualAddr = document.getElementById('actual_address')?.value || '—';
+    html += `<tr><th>Адрес регистрации</th><td>${regAddr}</td></tr>`;
+    if (actualAddr && actualAddr !== regAddr) {
+        html += `<tr><th>Фактический адрес</th><td>${actualAddr}</td></tr>`;
+    }
     const mvdName = mvdList.find(m => m.id === selectedMvdId)?.name || '—';
     html += `<tr><th>Отделение МВД</th><td>${mvdName}</td></tr>`;
     html += `<tr><th>Фото</th><td>загружено</td></tr>`;
