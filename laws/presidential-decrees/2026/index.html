@@ -27,6 +27,27 @@
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="../../../css/laws.css">
 	<link rel="stylesheet" href="../../../css/decrees.css">
+    <style>
+        .year-filter-wrapper {
+            max-width: 1000px; margin: 0 auto 20px; padding: 0 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        #year-filter {
+            padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px;
+            background: #fff; font-size: 0.95rem; cursor: pointer;
+        }
+        .law-btn.archived {
+            opacity: 0.65;
+            background: rgba(240, 240, 240, 0.7) !important;
+        }
+        .badge-repealed {
+            position: absolute; top: 12px; right: 12px;
+            background: #c00; color: #fff; font-size: 0.7rem; font-weight: 700;
+            padding: 4px 8px; border-radius: 6px; z-index: 10;
+            pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+    </style>
 </head>
 <body>
     <!-- Шапка -->
@@ -69,8 +90,16 @@
             </div>
         </div>
 
+        <!-- Фильтр по году -->
+        <div class="year-filter-wrapper">
+            <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
+            <select id="year-filter"></select>
+        </div>
+
+        <!-- Сетка карточек -->
         <div id="decrees-grid" class="decrees-grid"></div>
 
+        <!-- Просмотрщик PDF -->
         <div id="pdf-viewer" style="display:none; max-width: 1000px; margin: 20px auto; padding: 0 15px;">
             <div style="margin:15px 0; display:flex; gap:8px; flex-wrap:wrap;">
                 <button id="btn-back" class="law-btn" style="padding:0.8rem 1.2rem; min-height:auto; font-size:0.95rem; width:auto; flex:none;">
@@ -84,8 +113,7 @@
                 <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
             </div>
             
-            <!-- ✅ ИСПРАВЛЕНО: убран overflow:hidden, высота увеличена -->
-            <div id="pdf-container" style="width:85%; min-height: 90vh; height: 90vh; border:1px solid #ccc; background:#f4f4f4; border-radius:12px; display:none; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <div id="pdf-container" style="width:100%; min-height: 100vh; height: 120vh; border:1px solid #ccc; background:#f4f4f4; border-radius:12px; display:none; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
                 <iframe id="pdf-frame" src="" title="Просмотр указа" style="width:100%; height:100%; border:none;"></iframe>
             </div>
             
@@ -116,15 +144,12 @@
     <script>
     (function() {
         'use strict';
-
-        // 🔧 НАСТРОЙКИ (вставьте свой ключ)
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
         const BUCKET_NAME = 'laws-files1';
         const BUCKET_PATH = 'de/';
         const TABLE_NAME = 'president_decrees';
         const TABLE_SCHEMA = 'laws';
-        const IS_REPEALED = window.location.pathname.includes('repealed.html');
 
         if (!window.supabase || typeof window.supabase.createClient !== 'function') {
             const g = document.getElementById('decrees-grid');
@@ -148,43 +173,62 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             btnBack: document.getElementById('btn-back'),
             download: document.getElementById('pdf-download'),
             fallback: document.getElementById('fallback-link'),
-            intro: document.getElementById('laws-intro-text')
+            intro: document.getElementById('laws-intro-text'),
+            yearFilter: document.getElementById('year-filter')
         };
 
         let cache = null;
         const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
 
-        async function fetchDecrees() {
+        async function fetchAllDecrees() {
             if (cache) return cache;
+            // Загружаем ВСЕ указы без фильтрации
             const { data, error } = await supabase.from(TABLE_NAME).select('*').order('sort_order', { ascending: true });
             if (error) throw new Error('Ошибка БД: ' + error.message);
             if (!data || data.length === 0) throw new Error('Таблица пуста или RLS блокирует чтение.');
-
-            const target = !IS_REPEALED;
-            cache = data.filter(row => {
-                const v = row.is_active;
-                return (v === true || v === 'true' || v === 1) === target;
-            });
+            cache = data;
             return cache;
         }
 
-        async function renderGrid() {
+        function populateYearFilter() {
+            if (!els.yearFilter) return;
+            // Собираем уникальные года, сортируем по убыванию
+            const years = [...new Set(cache.map(d => d.year))].sort((a, b) => b - a);
+            const currentYear = new Date().getFullYear();
+            els.yearFilter.innerHTML = years.map(y => 
+                `<option value="${y}" ${y === 2026 ? 'selected' : ''}>${y}</option>`
+            ).join('');
+        }
+
+        function renderGrid(selectedYear) {
             els.grid.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка указов...</div>';
             try {
-                const list = await fetchDecrees();
+                const year = parseInt(selectedYear) || 2026;
+                const list = cache.filter(d => d.year === year);
                 els.grid.innerHTML = '';
+                
                 if (!list.length) {
-                    els.grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">${IS_REPEALED ? 'Архив пуст.' : 'Нет активных указов.'}</p>`;
+                    els.grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">В ${year} году указы не найдены.</p>`;
                     return;
                 }
+
                 list.forEach(d => {
+                    const isRepealed = !d.is_active;
                     const a = document.createElement('a');
-                    a.className = 'law-btn' + (!d.is_active ? ' archived' : '');
+                    // Если указ утратил силу, добавляем класс archived для прозрачности
+                    a.className = 'law-btn' + (isRepealed ? ' archived' : '');
                     a.href = `?pdf=${encodeURIComponent(d.filename)}`;
-                    a.innerHTML = `<span class="law-icon">🖋️</span><h3>Указ ${d.number} от ${fmt(d.date_issued)}</h3><p>«${d.title}»</p>`;
+                    a.innerHTML = `
+                        ${isRepealed ? '<span class="badge-repealed">Утратил силу</span>' : ''}
+                        <span class="law-icon">🖋️</span>
+                        <h3>Указ ${d.number} от ${fmt(d.date_issued)}</h3>
+                        <p>«${d.title}»</p>
+                    `;
+                    
                     a.addEventListener('click', e => {
                         e.preventDefault();
-                        window.history.pushState({ pdf: d.filename }, '', `?pdf=${encodeURIComponent(d.filename)}`);
+                        // Сохраняем год в истории для корректного возврата
+                        window.history.pushState({ pdf: d.filename, year: year }, '', `?pdf=${encodeURIComponent(d.filename)}`);
                         route();
                     });
                     els.grid.appendChild(a);
@@ -207,6 +251,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             const decree = (cache || []).find(d => d.filename === filename);
             if (decree) {
                 els.title.textContent = `Указ Президента СФСРЮ ${decree.number} от ${fmt(decree.date_issued)} «${decree.title}»`;
+                els.meta.textContent = 'СФСРЮ';
             } else {
                 els.title.textContent = 'Просмотр документа';
                 els.meta.textContent = '';
@@ -232,22 +277,53 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         }
 
         function route() {
-            const pdf = new URLSearchParams(window.location.search).get('pdf');
+            const params = new URLSearchParams(window.location.search);
+            const pdf = params.get('pdf');
+            
             if (pdf) {
                 loadPDF(pdf);
             } else {
+                // Возврат к списку
                 els.viewer.style.display = 'none';
                 els.grid.style.display = 'flex';
-                renderGrid();
                 if (els.intro) els.intro.style.display = 'block';
-                els.title.textContent = IS_REPEALED ? 'Указы Президента СФСРЮ, утратившие силу — 2026 год' : 'Указы Президента СФСРЮ — 2026 год';
+                
+                const currentYear = els.yearFilter ? els.yearFilter.value : 2026;
+                els.title.textContent = `Указы Президента СФСРЮ — ${currentYear} год`;
                 els.meta.textContent = '';
+                renderGrid(currentYear);
             }
         }
 
-        if (els.btnBack) els.btnBack.addEventListener('click', e => { e.preventDefault(); window.history.pushState({}, '', window.location.pathname); route(); });
+        // Обработчик смены года
+        if (els.yearFilter) {
+            els.yearFilter.addEventListener('change', () => {
+                const selected = els.yearFilter.value;
+                els.title.textContent = `Указы Президента СФСРЮ — ${selected} год`;
+                renderGrid(selected);
+            });
+        }
+
+        // Кнопка "Назад"
+        if (els.btnBack) {
+            els.btnBack.addEventListener('click', e => {
+                e.preventDefault();
+                window.history.pushState({}, '', window.location.pathname);
+                route();
+            });
+        }
+
+        // Инициализация
         window.addEventListener('popstate', route);
-        window.addEventListener('DOMContentLoaded', route);
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await fetchAllDecrees();
+                populateYearFilter();
+                route();
+            } catch (err) {
+                els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+            }
+        });
     })();
     </script>
 </body>
