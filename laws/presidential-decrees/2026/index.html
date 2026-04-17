@@ -4,64 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Указы Президента СФСРЮ — 2026 год</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
-        :root {
-            --primary: #c62828;
-            --bg: #f5f5f5;
-            --text: #212121;
-            --card: #ffffff;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0; padding: 0; background: var(--bg); color: var(--text);
-        }
-        nav {
-            background: #263238; padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 15px;
-        }
-        nav a {
-            color: #eceff1; text-decoration: none; font-size: 0.95rem;
-        }
+        :root { --primary: #c62828; --bg: #f5f5f5; --text: #212121; --card: #ffffff; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; background: var(--bg); color: var(--text); }
+        nav { background: #263238; padding: 12px 20px; display: flex; flex-wrap: wrap; gap: 15px; }
+        nav a { color: #eceff1; text-decoration: none; font-size: 0.95rem; }
         nav a:hover { text-decoration: underline; }
-        .container {
-            max-width: 960px; margin: 30px auto; background: var(--card);
-            padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+        .container { max-width: 960px; margin: 30px auto; background: var(--card); padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         h1 { margin-top: 0; color: var(--primary); }
         .intro { margin-bottom: 20px; line-height: 1.5; color: #555; }
         
         #pdf-viewer { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
-        #pdf-viewer iframe {
-            width: 100%; height: 70vh; border: 1px solid #ccc; border-radius: 4px;
-        }
-        .btn-back {
-            display: inline-block; margin-bottom: 15px; color: var(--primary); 
-            text-decoration: none; font-weight: 500; cursor: pointer;
-        }
+        #pdf-container { position: relative; width: 100%; height: 75vh; background: #eee; border-radius: 4px; overflow: hidden; }
+        #pdf-container iframe { width: 100%; height: 100%; border: none; }
+        
+        .btn-back { display: inline-block; margin-bottom: 15px; color: var(--primary); text-decoration: none; font-weight: 500; cursor: pointer; }
         .btn-back:hover { text-decoration: underline; }
-        .download-link {
-            display: inline-block; margin-top: 10px; color: #0056b3; text-decoration: none;
-        }
-
+        .download-link { display: inline-block; margin-top: 10px; color: #0056b3; text-decoration: none; }
+        
         #decree-list ul { list-style: none; padding: 0; }
         #decree-list li { margin: 12px 0; }
-        #decree-list a {
-            text-decoration: none; color: #0056b3; font-weight: 500;
-            transition: color 0.2s;
-        }
+        #decree-list a { text-decoration: none; color: #0056b3; font-weight: 500; transition: color 0.2s; }
         #decree-list a:hover { color: var(--primary); }
         .archived { color: #757575 !important; font-style: italic; }
-
-        footer {
-            text-align: center; margin-top: 40px; padding: 20px; color: #666; font-size: 0.9rem;
-            border-top: 1px solid #ddd;
-        }
-        .error-msg { color: var(--primary); padding: 10px; background: #ffebee; border-radius: 4px; }
+        
+        footer { text-align: center; margin-top: 40px; padding: 20px; color: #666; font-size: 0.9rem; border-top: 1px solid #ddd; }
+        
+        .loader { display: none; text-align: center; padding: 40px 0; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 36px; height: 36px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .error-msg { color: #d32f2f; background: #ffebee; padding: 12px; border-radius: 4px; margin-top: 10px; display: none; }
+        .debug-info { font-family: monospace; font-size: 0.8rem; color: #777; margin-top: 5px; word-break: break-all; }
     </style>
 </head>
 <body>
-
     <nav>
-        <a href="index.html">Главная</a>
+        <a href="../../../index.html">Главная</a>
         <a href="../../../news.html">Новости</a>
         <a href="../../../wiki/">Википедия</a>
         <a href="../../../healthcare.html">Здравоохранение</a>
@@ -71,89 +51,128 @@
 
     <div class="container">
         <h1 id="page-title">Указы Президента СФСРЮ — 2026 год</h1>
-        <p class="intro">
-            В планах на 2026 год стоит укрепление экономической и политической систем. 
-            Все указы вступили в силу с момента подписания и опубликования в официальных источниках.
-        </p>
+        <p class="intro">В планах на 2026 год стоит укрепление экономической и политической систем. Все указы вступили в силу с момента подписания и опубликования в официальных источниках.</p>
 
-        <!-- Блок просмотра PDF -->
         <div id="pdf-viewer">
-            <a class="btn-back" id="back-btn">◀ Вернуться к списку указов</a>
-            <iframe id="pdf-frame" src="" title="Просмотр указа"></iframe>
-            <div id="pdf-status"></div>
-            <a id="pdf-download" class="download-link" href="#" download>⬇️ Скачать PDF</a>
+            <a class="btn-back" id="back-btn">◀ Вернуться к списку</a>
+            <div id="loader" class="loader">
+                <div class="spinner"></div>
+                Получение защищённой ссылки из Supabase...
+            </div>
+            <div id="pdf-container">
+                <iframe id="pdf-frame" src="" title="Просмотр указа"></iframe>
+            </div>
+            <div id="pdf-error" class="error-msg"></div>
+            <a id="pdf-download" class="download-link" href="#" target="_blank">⬇️ Скачать PDF напрямую</a>
+            <div id="pdf-debug" class="debug-info"></div>
         </div>
 
-        <!-- Список указов -->
         <div id="decree-list">
             <ul>
                 <li><a href="?pdf=de-21012026-001">🖋️ Указ №001 от 21.01.2026 «О приеме в гражданство СФСРЮ»</a></li>
-                <li><a href="?pdf=de-27012026-002">🖋️ Указ №002 от 27.01.2026 «О введении Единого портала электронных услуг и правовом статусе электронных документов»</a></li>
+                <li><a href="?pdf=de-27012026-002">🖋️ Указ №002 от 27.01.2026 «О введении Единого портала...»</a></li>
                 <li><a href="?pdf=de-27012026-003">🖋️ Указ №003 от 27.01.2026 «Об освобождении от должности Вице-президента»</a></li>
                 <li><a href="?pdf=de-28012026-004">🖋️ Указ №004 от 28.01.2026 «О назначении на должность Вице-президента»</a></li>
-                <li><a href="?pdf=de-07022026-005">🖋️ Указ №005 от 07.02.2026 «О признании отдельных лиц и общественных объединений осуществляющими деятельность под иностранным влиянием»</a></li>
-                <li><a href="?pdf=de-20022026-006" class="archived">🖋️ Указ №006 от 20.02.2026 «О признании утратившими силу отдельных указов...»</a></li>
-                <li><a href="?pdf=de-23022026-007">🖋️ Указ №007 от 23.02.2026 «О признании утратившим силу отдельного указа... и восстановлении в должности»</a></li>
+                <li><a href="?pdf=de-07022026-005">🖋️ Указ №005 от 07.02.2026 «О признании отдельных лиц...»</a></li>
+                <li><a href="?pdf=de-20022026-006" class="archived">🖋️ Указ №006 от 20.02.2026 «О признании утратившими силу...»</a></li>
+                <li><a href="?pdf=de-23022026-007">🖋️ Указ №007 от 23.02.2026 «О восстановлении в должности...»</a></li>
                 <li><a href="?pdf=de-03032026-008">🖋️ Указ №008 от 03.03.2026 «О приёме в гражданство СФСРЮ»</a></li>
-                <li style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;">
-                    <a href="repealed.html">⚠️ Указы, утратившие силу (Архив 2026)</a>
-                </li>
+                <li style="margin-top:20px; border-top:1px solid #eee; padding-top:10px;"><a href="repealed.html">⚠️ Указы, утратившие силу (Архив)</a></li>
             </ul>
         </div>
     </div>
 
-    <footer>
-        © 2026 СФСРЮ. Все права защищены пролетариатом.<br>
-        Телефон: +7 (993) 609-81-26 | Почта: sfsr.ulsanna@gmail.com
-    </footer>
+    <footer>© 2026 СФСРЮ. Все права защищены пролетариатом.<br>Телефон: +7 (993) 609-81-26 | Почта: sfsr.ulsanna@gmail.com</footer>
 
     <script>
-        // Настройка путей (измените, если структура папок отличается)
-        const PDF_DIR = 'pdf/'; 
+        // 🔧 ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ SUPABASE DASHBOARD
+		const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        const BUCKET_NAME = 'laws-files1';
+        const BUCKET_PATH = 'de/'; // Путь внутри бакета
+
+        // Инициализация клиента
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadDecree(pdfName) {
+            const viewer = document.getElementById('pdf-viewer');
+            const list = document.getElementById('decree-list');
+            const loader = document.getElementById('loader');
+            const container = document.getElementById('pdf-container');
+            const frame = document.getElementById('pdf-frame');
+            const download = document.getElementById('pdf-download');
+            const errorBox = document.getElementById('pdf-error');
+            const debug = document.getElementById('pdf-debug');
+            const title = document.getElementById('page-title');
+
+            viewer.style.display = 'block';
+            list.style.display = 'none';
+            title.textContent = 'Просмотр документа';
+            loader.style.display = 'block';
+            container.style.display = 'none';
+            errorBox.style.display = 'none';
+            debug.textContent = '';
+            frame.src = '';
+
+            const filePath = `${BUCKET_PATH}${pdfName}.pdf`;
+
+            try {
+                // 1. Запрашиваем временную ссылку (действует 1 час)
+                const { data, error } = await supabase.storage
+                    .from(BUCKET_NAME)
+                    .createSignedUrl(filePath, 3600);
+
+                if (error) throw new Error(error.message || 'Не удалось получить доступ к хранилищу');
+
+                const signedUrl = data.signedUrl;
+                debug.textContent = `🔑 Ссылка получена. Истекает через 60 мин. Путь в бакете: ${filePath}`;
+
+                // 2. Подставляем в iframe и кнопку скачивания
+                frame.src = signedUrl;
+                download.href = signedUrl;
+
+                // 3. Обработка загрузки PDF
+                frame.onload = () => {
+                    loader.style.display = 'none';
+                    container.style.display = 'block';
+                };
+
+                // Fallback: некоторые браузеры не шлют onload для PDF
+                setTimeout(() => {
+                    if (loader.style.display !== 'none') {
+                        loader.style.display = 'none';
+                        container.style.display = 'block';
+                    }
+                }, 3000);
+
+            } catch (err) {
+                loader.style.display = 'none';
+                errorBox.style.display = 'block';
+                errorBox.innerHTML = `⚠️ <strong>Ошибка загрузки:</strong> ${err.message}<br>
+                Проверьте: 1) правильность ключей Supabase 2) наличие файла в бакете 3) политики доступа.`;
+                console.error('Supabase Load Error:', err);
+            }
+        }
 
         function handleRoute() {
             const params = new URLSearchParams(window.location.search);
             const pdfName = params.get('pdf');
-            const viewer = document.getElementById('pdf-viewer');
-            const list = document.getElementById('decree-list');
-            const frame = document.getElementById('pdf-frame');
-            const download = document.getElementById('pdf-download');
-            const title = document.getElementById('page-title');
-            const status = document.getElementById('pdf-status');
-
             if (pdfName) {
-                // Показываем просмотрщик, скрываем список
-                viewer.style.display = 'block';
-                list.style.display = 'none';
-                title.textContent = 'Просмотр документа';
-                status.innerHTML = '';
-
-                const pdfPath = `${PDF_DIR}${pdfName}.pdf`;
-                frame.src = pdfPath;
-                download.href = pdfPath;
-
-                // Простая проверка загрузки (iframe не даёт событий ошибки для кросс-доменов, но для локальных работает)
-                frame.onload = () => { status.innerHTML = ''; };
-                frame.onerror = () => { 
-                    status.innerHTML = '<p class="error-msg">⚠️ Файл не найден. Проверьте путь: ' + pdfPath + '</p>'; 
-                };
+                loadDecree(pdfName);
             } else {
-                // Режим списка
-                viewer.style.display = 'none';
-                list.style.display = 'block';
-                title.textContent = 'Указы Президента СФСРЮ — 2026 год';
-                frame.src = '';
+                document.getElementById('pdf-viewer').style.display = 'none';
+                document.getElementById('decree-list').style.display = 'block';
+                document.getElementById('page-title').textContent = 'Указы Президента СФСРЮ — 2026 год';
             }
         }
 
         // Кнопка "Назад" без перезагрузки
         document.getElementById('back-btn').addEventListener('click', (e) => {
             e.preventDefault();
-            history.pushState({}, document.title, window.location.pathname);
+            window.history.pushState({}, '', window.location.pathname);
             handleRoute();
         });
 
-        // Инициализация при загрузке и при нажатии "Назад/Вперёд" в браузере
         window.addEventListener('DOMContentLoaded', handleRoute);
         window.addEventListener('popstate', handleRoute);
     </script>
