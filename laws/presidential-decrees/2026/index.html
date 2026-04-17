@@ -106,50 +106,26 @@
     (function() {
         'use strict';
 
-        // =====================================================================
-        // 🔧 НАСТРОЙКИ ПОЛЬЗОВАТЕЛЯ — ЗАПОЛНИТЕ ПЕРЕД ЗАПУСКОМ
-        // =====================================================================
-		const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
         const BUCKET_NAME = 'laws-files1';
         const BUCKET_PATH = 'de/';
         const TABLE_NAME = 'president_decrees';
         const TABLE_SCHEMA = 'laws';
-
-        // Автоопределение: repealed.html показывает только неактивные указы
         const IS_REPEALED_PAGE = window.location.pathname.includes('repealed.html');
 
-        // =====================================================================
-        // Проверка загрузки Supabase CDN
-        // =====================================================================
         if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-            console.error('❌ Ошибка: библиотека Supabase не загрузилась.');
             const grid = document.getElementById('decrees-grid');
-            if (grid) {
-                grid.innerHTML = '<div style="color:#c00; background:#ffebee; padding:15px; border-radius:8px; text-align:center; border:1px solid #ffcdd2;">' +
-                    '⚠️ Не удалось загрузить модуль Supabase.<br>' +
-                    'Проверьте подключение к интернету или отключите блокировщики рекламы.<br>' +
-                    'Если проблема сохраняется — сохраните файл supabase.js локально и подключите его вручную.' +
-                    '</div>';
-            }
+            if (grid) grid.innerHTML = '<div style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;border:1px solid #ffcdd2;">⚠️ Библиотека Supabase не загрузилась. Проверьте интернет или отключите блокировщики.</div>';
             return;
         }
 
-        // =====================================================================
-        // Инициализация клиента Supabase с явным указанием схемы
-        // =====================================================================
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             db: { schema: TABLE_SCHEMA }
         });
 
-        // =====================================================================
-        // Кэш для данных указов (чтобы не запрашивать БД при каждом переходе)
-        // =====================================================================
         let decreesCache = null;
 
-        // =====================================================================
-        // Ссылки на DOM-элементы
-        // =====================================================================
         const elements = {
             grid: document.getElementById('decrees-grid'),
             viewer: document.getElementById('pdf-viewer'),
@@ -161,148 +137,95 @@
             meta: document.getElementById('meta-info'),
             btnBack: document.getElementById('btn-back'),
             download: document.getElementById('pdf-download'),
-            fallback: document.getElementById('fallback-link')
+            fallback: document.getElementById('fallback-link'),
+            introText: document.getElementById('laws-intro-text')
         };
 
-        // =====================================================================
-        // Вспомогательная функция: форматирование даты
-        // =====================================================================
         function formatDate(dateString) {
             if (!dateString) return '';
-            const date = new Date(dateString);
-            return date.toLocaleDateString('ru-RU', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
-            });
+            return new Date(dateString).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // =====================================================================
-        // Функция 1: Загрузка списка указов из базы данных
-        // =====================================================================
-async function fetchDecreesFromDatabase() {
-    if (decreesCache !== null) return decreesCache;
+        async function fetchDecreesFromDatabase() {
+            if (decreesCache !== null) return decreesCache;
 
-    console.log('🔍 Запрос без фильтра...');
-    
-    const response = await supabaseClient
-        .from(TABLE_NAME)
-        .select('*')
-        .order('sort_order', { ascending: true });
+            console.log('🔍 Запрос без фильтра...');
+            const response = await supabaseClient
+                .from(TABLE_NAME)
+                .select('*')
+                .order('sort_order', { ascending: true });
 
-    // Логируем полный ответ для отладки
-    console.log('📦 Raw Supabase Response:', response);
+            console.log('📊 Ответ Supabase:', { status: 200, error: response.error ? response.error.message : null, receivedRows: response.data ? response.data.length : 0 });
 
-    if (response.error) {
-        throw new Error('Ошибка БД: ' + response.error.message);
-    }
+            if (response.error) {
+                throw new Error('Supabase вернул ошибку: ' + response.error.message);
+            }
 
-    // Если пришёл null или пустой массив
-    if (!response.data || response.data.length === 0) {
-        console.warn('⚠️ Supabase вернул пустой массив. Это на 99% RLS или пустая таблица.');
-        console.warn('Проверьте в Dashboard → Database → Tables → laws.president_decrees → Policies');
-        throw new Error('Доступ к данным заблокирован RLS или таблица пуста. Выполните SQL из инструкции.');
-    }
+            if (!response.data || response.data.length === 0) {
+                console.error('❌ БД вернула пустой массив. Проверьте: 1) данные в таблице 2) RLS политики 3) правильность ключей');
+                throw new Error('Данные не найдены. Выполните SQL-скрипт из инструкции.');
+            }
 
-    console.log(`✅ Загружено ${response.data.length} записей`);
-    decreesCache = response.data;
-    return response.data;
-}
+            // Фильтрация на клиенте для надёжности (обходит возможные проблемы типов в PostgREST)
+            const target = !IS_REPEALED_PAGE;
+            const filtered = response.data.filter(row => {
+                const val = row.is_active;
+                const isActive = (val === true || val === 'true' || val === 1);
+                return isActive === target;
+            });
 
-        // =====================================================================
-        // Функция 2: Рендеринг сетки карточек указов
-        // =====================================================================
+            console.log(`✅ Отфильтровано: ${filtered.length} записей (is_active=${target})`);
+            decreesCache = filtered;
+            return filtered;
+        }
+
         async function renderDecreesGrid() {
             const grid = elements.grid;
             if (!grid) return;
 
-            // Показываем индикатор загрузки
-            grid.innerHTML = '<div class="loader" style="text-align:center; padding:40px; width:100%;">' +
-                '<div class="spinner" style="border:4px solid #f3f3f3; border-top:4px solid #a00; border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>' +
-                'Загрузка списка указов...' +
-                '<style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>' +
-                '</div>';
+            grid.innerHTML = '<div class="loader" style="text-align:center; padding:40px; width:100%;"><div class="spinner" style="border:4px solid #f3f3f3; border-top:4px solid #a00; border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>Загрузка списка указов...<style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></div>';
 
             try {
-                // Получаем данные из БД
                 const decrees = await fetchDecreesFromDatabase();
                 grid.innerHTML = '';
 
-                // Если список пуст
                 if (!decrees || decrees.length === 0) {
-                    const emptyMessage = IS_REPEALED_PAGE 
-                        ? 'В архиве нет указов, утративших силу.' 
-                        : 'На данный момент нет активных указов.';
-                    grid.innerHTML = '<p style="text-align:center; color:#666; padding:2rem; font-size:1.1rem;">' + emptyMessage + '</p>';
+                    grid.innerHTML = '<p style="text-align:center; color:#666; padding:2rem; font-size:1.1rem;">' + (IS_REPEALED_PAGE ? 'В архиве нет указов, утративших силу.' : 'На данный момент нет активных указов.') + '</p>';
                     return;
                 }
 
-                // Создаём карточку для каждого указа
                 decrees.forEach(function(decree) {
-                    // Создаём элемент ссылки
                     const link = document.createElement('a');
                     link.className = 'law-btn';
-                    if (!decree.is_active) {
-                        link.classList.add('archived');
-                        link.style.opacity = '0.7';
-                    }
+                    if (!decree.is_active) { link.classList.add('archived'); link.style.opacity = '0.7'; }
                     link.href = '?pdf=' + encodeURIComponent(decree.filename);
-                    link.setAttribute('data-filename', decree.filename);
+                    link.innerHTML = '<span class="law-icon">🖋️</span><h3>Указ ' + decree.number + ' от ' + formatDate(decree.date_issued) + '</h3><p>«' + decree.title + '»</p>';
 
-                    // Формируем HTML содержимое карточки
-                    link.innerHTML = 
-                        '<span class="law-icon">🖋️</span>' +
-                        '<h3>Указ ' + decree.number + ' от ' + formatDate(decree.date_issued) + '</h3>' +
-                        '<p>«' + decree.title + '»</p>';
-
-                    // Обработчик клика — без перезагрузки страницы
                     link.addEventListener('click', function(event) {
                         event.preventDefault();
-                        const filename = decree.filename;
-                        // Меняем URL через History API
-                        window.history.pushState({ pdf: filename }, '', '?pdf=' + filename);
-                        // Переключаем интерфейс
+                        window.history.pushState({ pdf: decree.filename }, '', '?pdf=' + decree.filename);
                         handleRouteChange();
                     });
-
-                    // Добавляем карточку в сетку
                     grid.appendChild(link);
                 });
-
             } catch (error) {
-                // Показываем сообщение об ошибке
-                grid.innerHTML = '<div class="error-msg" style="color:#c00; background:#ffebee; padding:15px 20px; border-radius:8px; text-align:center; border:1px solid #ffcdd2; margin:1rem;">' +
-                    '⚠️ ' + error.message + '</div>';
-                console.error('Ошибка при рендеринге сетки:', error);
+                grid.innerHTML = '<div class="error-msg" style="color:#c00; background:#ffebee; padding:15px 20px; border-radius:8px; text-align:center; border:1px solid #ffcdd2; margin:1rem;">⚠️ ' + error.message + '</div>';
             }
         }
 
-        // =====================================================================
-        // Функция 3: Загрузка и отображение конкретного указа (PDF)
-        // =====================================================================
         async function loadDecreePDF(filename) {
-            const viewer = elements.viewer;
-            const grid = elements.grid;
-            const loader = elements.loader;
-            const container = elements.container;
-            const frame = elements.frame;
-            const errorBox = elements.error;
-            const title = elements.title;
-            const meta = elements.meta;
-            const download = elements.download;
-            const fallback = elements.fallback;
+            if (!elements.viewer) return;
 
-            if (!viewer) return;
+            elements.viewer.style.display = 'block';
+            if (elements.grid) elements.grid.style.display = 'none';
+            elements.loader.style.display = 'block';
+            elements.container.style.display = 'none';
+            elements.error.style.display = 'none';
+            elements.frame.src = '';
 
-            // Переключаем видимость блоков
-            viewer.style.display = 'block';
-            if (grid) grid.style.display = 'none';
-            loader.style.display = 'block';
-            container.style.display = 'none';
-            errorBox.style.display = 'none';
-            frame.src = '';
+            // Скрываем вводный текст при открытии PDF
+            if (elements.introText) elements.introText.style.display = 'none';
 
-            // Ищем данные указа в кэше для отображения заголовка
             let decreeData = null;
             if (decreesCache && Array.isArray(decreesCache)) {
                 for (var i = 0; i < decreesCache.length; i++) {
@@ -313,122 +236,71 @@ async function fetchDecreesFromDatabase() {
                 }
             }
 
-            // Обновляем заголовок страницы
             if (decreeData) {
-                title.textContent = 'Указ Президента СФСРЮ ' + decreeData.number + ' от ' + 
-                    formatDate(decreeData.date_issued) + ' «' + decreeData.title + '»';
-                meta.textContent = 'СФСРЮ';
+                elements.title.textContent = 'Указ Президента СФСРЮ ' + decreeData.number + ' от ' + formatDate(decreeData.date_issued) + ' «' + decreeData.title + '»';
+                elements.meta.textContent = 'СФСРЮ';
             } else {
-                title.textContent = 'Просмотр документа';
-                meta.textContent = '';
+                elements.title.textContent = 'Просмотр документа';
+                elements.meta.textContent = '';
             }
 
-            // Формируем путь к файлу в бакете
             const filePath = BUCKET_PATH + filename + '.pdf';
-
             try {
-                // Запрашиваем временную подписанную ссылку (действует 1 час = 3600 сек)
-                const { data: urlData, error: urlError } = await supabaseClient
-                    .storage
-                    .from(BUCKET_NAME)
-                    .createSignedUrl(filePath, 3600);
+                const {  urlData, error: urlError } = await supabaseClient.storage.from(BUCKET_NAME).createSignedUrl(filePath, 3600);
+                if (urlError) throw new Error(urlError.message || 'Не удалось получить доступ к файлу');
 
-                if (urlError) {
-                    throw new Error(urlError.message || 'Не удалось получить доступ к файлу');
-                }
+                const cleanPdfUrl = urlData.signedUrl + '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH';
+                elements.frame.src = cleanPdfUrl;
+                elements.download.href = urlData.signedUrl;
+                elements.fallback.href = urlData.signedUrl;
 
-                // Формируем "чистый" URL для iframe — скрываем интерфейс браузера
-                const cleanPdfUrl = urlData.signedUrl + 
-                    '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH';
-
-                // Подставляем ссылку в iframe и кнопки
-                frame.src = cleanPdfUrl;
-                download.href = urlData.signedUrl;
-                fallback.href = urlData.signedUrl;
-
-                // Обработчик успешной загрузки iframe
-                frame.onload = function() {
-                    loader.style.display = 'none';
-                    container.style.display = 'block';
+                elements.frame.onload = function() {
+                    elements.loader.style.display = 'none';
+                    elements.container.style.display = 'block';
                 };
-
-                // Fallback: если onload не сработал за 3 секунды
                 setTimeout(function() {
-                    if (loader.style.display !== 'none') {
-                        loader.style.display = 'none';
-                        container.style.display = 'block';
+                    if (elements.loader.style.display !== 'none') {
+                        elements.loader.style.display = 'none';
+                        elements.container.style.display = 'block';
                     }
                 }, 3000);
-
             } catch (error) {
-                // Показываем ошибку пользователю
-                loader.style.display = 'none';
-                errorBox.style.display = 'block';
-                errorBox.innerHTML = '⚠️ <strong>Ошибка загрузки документа:</strong><br>' + 
-                    error.message + '<br><br>' +
-                    '<small style="color:#666;">Проверьте:<br>' +
-                    '1) Наличие файла в бакете: ' + BUCKET_NAME + '/' + filePath + '<br>' +
-                    '2) Настройки политик доступа (Policies) в Supabase Storage<br>' +
-                    '3) Корректность ключей доступа</small>';
-                console.error('Ошибка при загрузке PDF:', error);
+                elements.loader.style.display = 'none';
+                elements.error.style.display = 'block';
+                elements.error.innerHTML = '⚠️ <strong>Ошибка загрузки:</strong><br>' + error.message;
             }
         }
 
-        // =====================================================================
-        // Функция 4: Роутер — обработка изменения URL и переключение вида
-        // =====================================================================
         function handleRouteChange() {
-            // Получаем параметр ?pdf=... из URL
             const urlParams = new URLSearchParams(window.location.search);
             const pdfFilename = urlParams.get('pdf');
 
             if (pdfFilename) {
-                // Режим просмотра конкретного указа
                 loadDecreePDF(pdfFilename);
             } else {
-                // Режим списка указов
+                // Возвращаемся к списку
                 if (elements.viewer) elements.viewer.style.display = 'none';
                 if (elements.grid) {
                     elements.grid.style.display = 'flex';
                     renderDecreesGrid();
                 }
-                // Обновляем заголовок в зависимости от страницы
-                if (elements.title) {
-                    elements.title.textContent = IS_REPEALED_PAGE 
-                        ? 'Указы Президента СФСРЮ, утратившие силу — 2026 год' 
-                        : 'Указы Президента СФСРЮ — 2026 год';
-                }
+                if (elements.introText) elements.introText.style.display = 'block'; // Показываем текст обратно
+                if (elements.title) elements.title.textContent = IS_REPEALED_PAGE ? 'Указы Президента СФСРЮ, утратившие силу — 2026 год' : 'Указы Президента СФСРЮ — 2026 год';
                 if (elements.meta) elements.meta.textContent = '';
             }
         }
 
-        // =====================================================================
-        // Инициализация обработчиков событий
-        // =====================================================================
-        
-        // Кнопка "Назад" — возврат к списку без перезагрузки
         if (elements.btnBack) {
             elements.btnBack.addEventListener('click', function(event) {
                 event.preventDefault();
-                // Меняем URL на чистый (без ?pdf=...)
                 window.history.pushState({}, '', window.location.pathname);
-                // Переключаем интерфейс
                 handleRouteChange();
             });
         }
 
-        // Обработчик события "назад/вперёд" в браузере
-        window.addEventListener('popstate', function() {
-            handleRouteChange();
-        });
-
-        // Запуск при полной загрузке DOM
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', handleRouteChange);
-        } else {
-            // DOM уже готов
-            handleRouteChange();
-        }
+        window.addEventListener('popstate', handleRouteChange);
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', handleRouteChange);
+        else handleRouteChange();
 
     })();
     </script>
