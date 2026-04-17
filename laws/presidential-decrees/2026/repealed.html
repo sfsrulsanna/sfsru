@@ -70,7 +70,7 @@
 
         <div class="decrees-grid">
             <!-- Одна кнопка – она автоматически растянется на всю ширину -->
-            <a href="de-20022026-006.html" class="law-btn">
+            <a href="?pdf=de-20022026-006" class="law-btn">
                 <span class="law-icon">🖋️</span>
                 <h3>Указ №006 от 20.02.2026</h3>
                 <p>«О признании утратившими силу отдельных указов Президента СФСРЮ и возложении обязанностей Вице-президента СФСРЮ»</p>
@@ -85,6 +85,112 @@
     </footer>
 
     <script src="../../../js/mob-menu.js"></script>
+    <script>
+        (function() {
+            // 🔧 ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ SUPABASE
+			const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+			const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+            const BUCKET_NAME = 'laws-files1';
+            const BUCKET_PATH = 'de/';
 
+            if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+                console.error('❌ Supabase CDN не загружен.');
+                return;
+            }
+            const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+            const decrees = {
+                'de-21012026-001': 'Указ №001 от 21.01.2026 «О приеме в гражданство СФСРЮ»',
+                'de-27012026-002': 'Указ №002 от 27.01.2026 «О введении Единого портала электронных услуг и правовом статусе электронных документов»',
+                'de-27012026-003': 'Указ №003 от 27.01.2026 «Об освобождении от должности Вице-президента»',
+                'de-28012026-004': 'Указ №004 от 28.01.2026 «О назначении на должность Вице-президента»',
+                'de-07022026-005': 'Указ №005 от 07.02.2026 «О признании отдельных лиц и общественных объединений осуществляющими деятельность под иностранным влиянием»',
+                'de-20022026-006': 'Указ №006 от 20.02.2026 «О признании утратившими силу отдельных указов Президента СФСРЮ и возложении обязанностей Вице-президента СФСРЮ»',
+                'de-23022026-007': 'Указ №007 от 23.02.2026 «О признании утратившим силу отдельного указа Президента СФСРЮ и восстановлении в должности Вице-президента СФСРЮ»',
+                'de-03032026-008': 'Указ №008 от 03.03.2026 «О приёме в гражданство СФСРЮ»'
+            };
+
+            async function loadDecree(pdfName) {
+                const viewer = document.getElementById('pdf-viewer');
+                const list = document.getElementById('decree-list');
+                const title = document.getElementById('page-title');
+                const meta = document.getElementById('meta-info');
+                const loader = document.getElementById('loader');
+                const container = document.getElementById('pdf-container');
+                const frame = document.getElementById('pdf-frame');
+                const download = document.getElementById('pdf-download');
+                const fallback = document.getElementById('fallback-link');
+                const errorBox = document.getElementById('pdf-error');
+
+                viewer.style.display = 'block';
+                list.style.display = 'none';
+                loader.style.display = 'block';
+                container.style.display = 'none';
+                errorBox.style.display = 'none';
+                frame.src = '';
+
+                const decreeTitle = decrees[pdfName] || `Указ ${pdfName}`;
+                title.textContent = `Указ Президента СФСРЮ ${decreeTitle}`;
+                meta.textContent = 'СФСРЮ';
+
+                const filePath = `${BUCKET_PATH}${pdfName}.pdf`;
+
+                try {
+                    const { data, error } = await sbClient.storage
+                        .from(BUCKET_NAME)
+                        .createSignedUrl(filePath, 3600);
+
+                    if (error) throw new Error(error.message || 'Ошибка доступа к хранилищу');
+
+                    // 🚫 Скрываем интерфейс браузера для PDF
+                    const cleanUrl = `${data.signedUrl}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH`;
+
+                    frame.src = cleanUrl;
+                    download.href = data.signedUrl;
+                    fallback.href = data.signedUrl;
+
+                    frame.onload = () => {
+                        loader.style.display = 'none';
+                        container.style.display = 'block';
+                    };
+
+                    // Fallback если onload не сработает
+                    setTimeout(() => {
+                        if (loader.style.display !== 'none') {
+                            loader.style.display = 'none';
+                            container.style.display = 'block';
+                        }
+                    }, 3000);
+
+                } catch (err) {
+                    loader.style.display = 'none';
+                    errorBox.style.display = 'block';
+                    errorBox.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
+                    console.error('Supabase Error:', err);
+                }
+            }
+
+            function handleRoute() {
+                const params = new URLSearchParams(window.location.search);
+                const pdfName = params.get('pdf');
+                if (pdfName) {
+                    loadDecree(pdfName);
+                } else {
+                    document.getElementById('pdf-viewer').style.display = 'none';
+                    document.getElementById('decree-list').style.display = 'block';
+                    document.getElementById('page-title').textContent = 'Указы Президента СФСРЮ — 2026 год';
+                    document.getElementById('meta-info').textContent = '';
+                }
+            }
+
+            document.getElementById('btn-back').addEventListener('click', () => {
+                window.history.pushState({}, '', window.location.pathname);
+                handleRoute();
+            });
+
+            window.addEventListener('DOMContentLoaded', handleRoute);
+            window.addEventListener('popstate', handleRoute);
+        })();
+    </script>
 </body>
 </html>
