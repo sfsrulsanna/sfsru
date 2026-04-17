@@ -185,31 +185,51 @@ async function fetchDecreesFromDatabase() {
         return decreesCache;
     }
 
-    console.log('🔍 Запрос к БД: схема=' + TABLE_SCHEMA + ', таблица=' + TABLE_NAME + ', is_active=' + !IS_REPEALED_PAGE);
+    const targetActive = !IS_REPEALED_PAGE; // true для index.html, false для repealed.html
+    console.log('🔍 Запрос: is_active=' + targetActive + ' (страница: ' + (IS_REPEALED_PAGE ? 'repealed' : 'index') + ')');
 
-    const query = supabaseClient
+    // Сначала пробуем строгий булев фильтр
+    let { data, error } = await supabaseClient
         .from(TABLE_NAME)
         .select('*')
-        .eq('is_active', !IS_REPEALED_PAGE)
+        .eq('is_active', targetActive)
         .order('sort_order', { ascending: true });
 
-    const { data, error } = await query;
+    // Если 0 записей — пробуем фильтр по строке (на случай если в БД текст)
+    if (!error && data && data.length === 0) {
+        console.log('⚠️ Булев фильтр не дал результатов. Пробуем строковый фильтр...');
+        const { data: data2, error: error2 } = await supabaseClient
+            .from(TABLE_NAME)
+            .select('*')
+            .eq('is_active', targetActive ? 'true' : 'false')
+            .order('sort_order', { ascending: true });
+        
+        if (data2 && data2.length > 0) {
+            console.log('✅ Найдено через строковый фильтр:', data2.length, 'записей');
+            data = data2;
+        }
+    }
 
-    console.log('📦 Ответ от Supabase:', {
+    console.log('📦 Итоговый ответ:', {
         error: error,
         count: data ? data.length : 0,
-        sample: data ? data.slice(0, 2) : null
+        first: data && data[0] ? {
+            filename: data[0].filename,
+            is_active: data[0].is_active,
+            type: typeof data[0].is_active
+        } : null
     });
 
     if (error) {
         if (error.code === 'PGRST116' || (error.message && error.message.includes('404'))) {
-            throw new Error('Таблица «' + TABLE_SCHEMA + '.' + TABLE_NAME + '» не найдена.');
+            throw new Error('Таблица не найдена. Выполните SQL-скрипт создания.');
         }
-        throw new Error('Ошибка загрузки данных: ' + error.message);
+        throw new Error('Ошибка БД: ' + error.message);
     }
 
     if (!data || data.length === 0) {
-        console.warn('⚠️ Запрос вернул 0 записей. Проверьте: 1) фильтр is_active 2) значения в БД');
+        console.warn('⚠️ 0 записей. Проверьте в SQL Editor:');
+        console.warn('   SELECT is_active, COUNT(*) FROM laws.president_decrees GROUP BY is_active;');
     }
 
     decreesCache = data;
