@@ -181,59 +181,33 @@
         // Функция 1: Загрузка списка указов из базы данных
         // =====================================================================
 async function fetchDecreesFromDatabase() {
-    if (decreesCache !== null) {
-        return decreesCache;
-    }
+    if (decreesCache !== null) return decreesCache;
 
-    const targetActive = !IS_REPEALED_PAGE; // true для index.html, false для repealed.html
-    console.log('🔍 Запрос: is_active=' + targetActive + ' (страница: ' + (IS_REPEALED_PAGE ? 'repealed' : 'index') + ')');
-
-    // Сначала пробуем строгий булев фильтр
-    let { data, error } = await supabaseClient
+    console.log('🔍 Загружаем ВСЕ записи без фильтра для диагностики...');
+    
+    // 1. Запрос БЕЗ .eq() чтобы увидеть что реально лежит в БД
+    const { data, error } = await supabaseClient
         .from(TABLE_NAME)
         .select('*')
-        .eq('is_active', targetActive)
         .order('sort_order', { ascending: true });
 
-    // Если 0 записей — пробуем фильтр по строке (на случай если в БД текст)
-    if (!error && data && data.length === 0) {
-        console.log('⚠️ Булев фильтр не дал результатов. Пробуем строковый фильтр...');
-        const { data: data2, error: error2 } = await supabaseClient
-            .from(TABLE_NAME)
-            .select('*')
-            .eq('is_active', targetActive ? 'true' : 'false')
-            .order('sort_order', { ascending: true });
-        
-        if (data2 && data2.length > 0) {
-            console.log('✅ Найдено через строковый фильтр:', data2.length, 'записей');
-            data = data2;
-        }
-    }
+    if (error) throw new Error('Ошибка БД: ' + error.message);
+    if (!data || data.length === 0) throw new Error('Таблица пуста или RLS блокирует чтение.');
 
-    console.log('📦 Итоговый ответ:', {
-        error: error,
-        count: data ? data.length : 0,
-        first: data && data[0] ? {
-            filename: data[0].filename,
-            is_active: data[0].is_active,
-            type: typeof data[0].is_active
-        } : null
+    console.log('📦 Сырые данные из БД:', data);
+
+    // 2. Фильтрация на клиенте (надёжнее, чем PostgREST при битых типах)
+    const target = !IS_REPEALED_PAGE;
+    const filtered = data.filter(row => {
+        const val = row.is_active;
+        // Приводим к boolean: true, 'true', 1 -> true; остальное -> false
+        const isActive = (val === true || val === 'true' || val === 1 || val === '1');
+        return isActive === target;
     });
 
-    if (error) {
-        if (error.code === 'PGRST116' || (error.message && error.message.includes('404'))) {
-            throw new Error('Таблица не найдена. Выполните SQL-скрипт создания.');
-        }
-        throw new Error('Ошибка БД: ' + error.message);
-    }
-
-    if (!data || data.length === 0) {
-        console.warn('⚠️ 0 записей. Проверьте в SQL Editor:');
-        console.warn('   SELECT is_active, COUNT(*) FROM laws.president_decrees GROUP BY is_active;');
-    }
-
-    decreesCache = data;
-    return data;
+    console.log(`✅ Отфильтровано: ${filtered.length} записей (is_active=${target})`);
+    decreesCache = filtered;
+    return filtered;
 }
 
         // =====================================================================
