@@ -183,31 +183,30 @@
 async function fetchDecreesFromDatabase() {
     if (decreesCache !== null) return decreesCache;
 
-    console.log('🔍 Загружаем ВСЕ записи без фильтра для диагностики...');
+    console.log('🔍 Запрос без фильтра...');
     
-    // 1. Запрос БЕЗ .eq() чтобы увидеть что реально лежит в БД
-    const { data, error } = await supabaseClient
+    const response = await supabaseClient
         .from(TABLE_NAME)
         .select('*')
         .order('sort_order', { ascending: true });
 
-    if (error) throw new Error('Ошибка БД: ' + error.message);
-    if (!data || data.length === 0) throw new Error('Таблица пуста или RLS блокирует чтение.');
+    // Логируем полный ответ для отладки
+    console.log('📦 Raw Supabase Response:', response);
 
-    console.log('📦 Сырые данные из БД:', data);
+    if (response.error) {
+        throw new Error('Ошибка БД: ' + response.error.message);
+    }
 
-    // 2. Фильтрация на клиенте (надёжнее, чем PostgREST при битых типах)
-    const target = !IS_REPEALED_PAGE;
-    const filtered = data.filter(row => {
-        const val = row.is_active;
-        // Приводим к boolean: true, 'true', 1 -> true; остальное -> false
-        const isActive = (val === true || val === 'true' || val === 1 || val === '1');
-        return isActive === target;
-    });
+    // Если пришёл null или пустой массив
+    if (!response.data || response.data.length === 0) {
+        console.warn('⚠️ Supabase вернул пустой массив. Это на 99% RLS или пустая таблица.');
+        console.warn('Проверьте в Dashboard → Database → Tables → laws.president_decrees → Policies');
+        throw new Error('Доступ к данным заблокирован RLS или таблица пуста. Выполните SQL из инструкции.');
+    }
 
-    console.log(`✅ Отфильтровано: ${filtered.length} записей (is_active=${target})`);
-    decreesCache = filtered;
-    return filtered;
+    console.log(`✅ Загружено ${response.data.length} записей`);
+    decreesCache = response.data;
+    return response.data;
 }
 
         // =====================================================================
