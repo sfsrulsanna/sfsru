@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Указы Президента СФСРЮ — 2026 год</title>
-    <!-- Supabase JS Client -->
+    <!-- Supabase JS v2 -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <style>
         :root { --primary: #c62828; --bg: #f5f5f5; --text: #212121; --card: #ffffff; }
@@ -15,23 +15,18 @@
         .container { max-width: 960px; margin: 30px auto; background: var(--card); padding: 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
         h1 { margin-top: 0; color: var(--primary); }
         .intro { margin-bottom: 20px; line-height: 1.5; color: #555; }
-        
         #pdf-viewer { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 20px; }
         #pdf-container { position: relative; width: 100%; height: 75vh; background: #eee; border-radius: 4px; overflow: hidden; }
         #pdf-container iframe { width: 100%; height: 100%; border: none; }
-        
         .btn-back { display: inline-block; margin-bottom: 15px; color: var(--primary); text-decoration: none; font-weight: 500; cursor: pointer; }
         .btn-back:hover { text-decoration: underline; }
         .download-link { display: inline-block; margin-top: 10px; color: #0056b3; text-decoration: none; }
-        
         #decree-list ul { list-style: none; padding: 0; }
         #decree-list li { margin: 12px 0; }
         #decree-list a { text-decoration: none; color: #0056b3; font-weight: 500; transition: color 0.2s; }
         #decree-list a:hover { color: var(--primary); }
         .archived { color: #757575 !important; font-style: italic; }
-        
         footer { text-align: center; margin-top: 40px; padding: 20px; color: #666; font-size: 0.9rem; border-top: 1px solid #ddd; }
-        
         .loader { display: none; text-align: center; padding: 40px 0; }
         .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary); border-radius: 50%; width: 36px; height: 36px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -85,96 +80,98 @@
     <footer>© 2026 СФСРЮ. Все права защищены пролетариатом.<br>Телефон: +7 (993) 609-81-26 | Почта: sfsr.ulsanna@gmail.com</footer>
 
     <script>
-        // 🔧 ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ SUPABASE DASHBOARD
-		const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-        const BUCKET_NAME = 'laws-files1';
-        const BUCKET_PATH = 'de/'; // Путь внутри бакета
+        (function() {
+            // 🔧 ВСТАВЬТЕ СВОИ ДАННЫЕ ИЗ SUPABASE DASHBOARD
+            const SUPABASE_URL = 'https://ВАШ_ПРОЕКТ.supabase.co';
+            const SUPABASE_ANON_KEY = 'ВАШ_ANON_PUBLIC_KEY';
+            const BUCKET_NAME = 'laws-files1';
+            const BUCKET_PATH = 'de/';
 
-        // Инициализация клиента
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // Проверка загрузки CDN
+            if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+                console.error('❌ Supabase CDN не загружен. Проверьте интернет или адрес скрипта.');
+                return;
+            }
 
-        async function loadDecree(pdfName) {
-            const viewer = document.getElementById('pdf-viewer');
-            const list = document.getElementById('decree-list');
-            const loader = document.getElementById('loader');
-            const container = document.getElementById('pdf-container');
-            const frame = document.getElementById('pdf-frame');
-            const download = document.getElementById('pdf-download');
-            const errorBox = document.getElementById('pdf-error');
-            const debug = document.getElementById('pdf-debug');
-            const title = document.getElementById('page-title');
+            // Уникальное имя переменной во избежание конфликтов
+            const sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-            viewer.style.display = 'block';
-            list.style.display = 'none';
-            title.textContent = 'Просмотр документа';
-            loader.style.display = 'block';
-            container.style.display = 'none';
-            errorBox.style.display = 'none';
-            debug.textContent = '';
-            frame.src = '';
+            async function loadDecree(pdfName) {
+                const viewer = document.getElementById('pdf-viewer');
+                const list = document.getElementById('decree-list');
+                const loader = document.getElementById('loader');
+                const container = document.getElementById('pdf-container');
+                const frame = document.getElementById('pdf-frame');
+                const download = document.getElementById('pdf-download');
+                const errorBox = document.getElementById('pdf-error');
+                const debug = document.getElementById('pdf-debug');
+                const title = document.getElementById('page-title');
 
-            const filePath = `${BUCKET_PATH}${pdfName}.pdf`;
+                viewer.style.display = 'block';
+                list.style.display = 'none';
+                title.textContent = 'Просмотр документа';
+                loader.style.display = 'block';
+                container.style.display = 'none';
+                errorBox.style.display = 'none';
+                debug.textContent = '';
+                frame.src = '';
 
-            try {
-                // 1. Запрашиваем временную ссылку (действует 1 час)
-                const { data, error } = await supabase.storage
-                    .from(BUCKET_NAME)
-                    .createSignedUrl(filePath, 3600);
+                const filePath = `${BUCKET_PATH}${pdfName}.pdf`;
 
-                if (error) throw new Error(error.message || 'Не удалось получить доступ к хранилищу');
+                try {
+                    const { data, error } = await sbClient.storage
+                        .from(BUCKET_NAME)
+                        .createSignedUrl(filePath, 3600);
 
-                const signedUrl = data.signedUrl;
-                debug.textContent = `🔑 Ссылка получена. Истекает через 60 мин. Путь в бакете: ${filePath}`;
+                    if (error) throw new Error(error.message || 'Ошибка доступа к хранилищу');
 
-                // 2. Подставляем в iframe и кнопку скачивания
-                frame.src = signedUrl;
-                download.href = signedUrl;
+                    const signedUrl = data.signedUrl;
+                    debug.textContent = `✅ Ссылка получена (действует 1 час). Путь: ${filePath}`;
 
-                // 3. Обработка загрузки PDF
-                frame.onload = () => {
-                    loader.style.display = 'none';
-                    container.style.display = 'block';
-                };
+                    frame.src = signedUrl;
+                    download.href = signedUrl;
 
-                // Fallback: некоторые браузеры не шлют onload для PDF
-                setTimeout(() => {
-                    if (loader.style.display !== 'none') {
+                    // Fallback на случай если iframe не шлёт onload для PDF
+                    setTimeout(() => {
                         loader.style.display = 'none';
                         container.style.display = 'block';
-                    }
-                }, 3000);
+                    }, 2500);
 
-            } catch (err) {
-                loader.style.display = 'none';
-                errorBox.style.display = 'block';
-                errorBox.innerHTML = `⚠️ <strong>Ошибка загрузки:</strong> ${err.message}<br>
-                Проверьте: 1) правильность ключей Supabase 2) наличие файла в бакете 3) политики доступа.`;
-                console.error('Supabase Load Error:', err);
+                    frame.onload = () => {
+                        loader.style.display = 'none';
+                        container.style.display = 'block';
+                    };
+
+                } catch (err) {
+                    loader.style.display = 'none';
+                    errorBox.style.display = 'block';
+                    errorBox.innerHTML = `⚠️ <strong>Ошибка загрузки:</strong> ${err.message}<br>
+                    1) Проверьте ключи Supabase<br>2) Убедитесь что файл лежит в ${BUCKET_NAME}/${filePath}<br>3) Проверьте Policies бакета на SELECT`;
+                    console.error('Supabase Error:', err);
+                }
             }
-        }
 
-        function handleRoute() {
-            const params = new URLSearchParams(window.location.search);
-            const pdfName = params.get('pdf');
-            if (pdfName) {
-                loadDecree(pdfName);
-            } else {
-                document.getElementById('pdf-viewer').style.display = 'none';
-                document.getElementById('decree-list').style.display = 'block';
-                document.getElementById('page-title').textContent = 'Указы Президента СФСРЮ — 2026 год';
+            function handleRoute() {
+                const params = new URLSearchParams(window.location.search);
+                const pdfName = params.get('pdf');
+                if (pdfName) {
+                    loadDecree(pdfName);
+                } else {
+                    document.getElementById('pdf-viewer').style.display = 'none';
+                    document.getElementById('decree-list').style.display = 'block';
+                    document.getElementById('page-title').textContent = 'Указы Президента СФСРЮ — 2026 год';
+                }
             }
-        }
 
-        // Кнопка "Назад" без перезагрузки
-        document.getElementById('back-btn').addEventListener('click', (e) => {
-            e.preventDefault();
-            window.history.pushState({}, '', window.location.pathname);
-            handleRoute();
-        });
+            document.getElementById('back-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                window.history.pushState({}, '', window.location.pathname);
+                handleRoute();
+            });
 
-        window.addEventListener('DOMContentLoaded', handleRoute);
-        window.addEventListener('popstate', handleRoute);
+            window.addEventListener('DOMContentLoaded', handleRoute);
+            window.addEventListener('popstate', handleRoute);
+        })();
     </script>
 </body>
 </html>
