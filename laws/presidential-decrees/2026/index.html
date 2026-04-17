@@ -180,35 +180,41 @@
         // =====================================================================
         // Функция 1: Загрузка списка указов из базы данных
         // =====================================================================
-        async function fetchDecreesFromDatabase() {
-            // Возвращаем кэш если данные уже загружены
-            if (decreesCache !== null) {
-                return decreesCache;
-            }
+async function fetchDecreesFromDatabase() {
+    if (decreesCache !== null) {
+        return decreesCache;
+    }
 
-            // Формируем запрос с фильтрацией по is_active
-            const query = supabaseClient
-                .from(TABLE_NAME)
-                .select('*')
-                .eq('is_active', !IS_REPEALED_PAGE)
-                .order('sort_order', { ascending: true });
+    console.log('🔍 Запрос к БД: схема=' + TABLE_SCHEMA + ', таблица=' + TABLE_NAME + ', is_active=' + !IS_REPEALED_PAGE);
 
-            const { data, error } = await query;
+    const query = supabaseClient
+        .from(TABLE_NAME)
+        .select('*')
+        .eq('is_active', !IS_REPEALED_PAGE)
+        .order('sort_order', { ascending: true });
 
-            if (error) {
-                // Обработка ошибки 404 — таблица не найдена
-                if (error.code === 'PGRST116' || (error.message && error.message.includes('404'))) {
-                    throw new Error('Таблица «' + TABLE_SCHEMA + '.' + TABLE_NAME + '» не найдена в базе данных.<br>' +
-                        'Выполните SQL-скрипт создания таблицы в Supabase Dashboard → SQL Editor.');
-                }
-                // Другие ошибки
-                throw new Error('Ошибка загрузки данных: ' + error.message);
-            }
+    const { data, error } = await query;
 
-            // Сохраняем в кэш и возвращаем
-            decreesCache = data;
-            return data;
+    console.log('📦 Ответ от Supabase:', {
+        error: error,
+        count: data ? data.length : 0,
+        sample: data ? data.slice(0, 2) : null
+    });
+
+    if (error) {
+        if (error.code === 'PGRST116' || (error.message && error.message.includes('404'))) {
+            throw new Error('Таблица «' + TABLE_SCHEMA + '.' + TABLE_NAME + '» не найдена.');
         }
+        throw new Error('Ошибка загрузки данных: ' + error.message);
+    }
+
+    if (!data || data.length === 0) {
+        console.warn('⚠️ Запрос вернул 0 записей. Проверьте: 1) фильтр is_active 2) значения в БД');
+    }
+
+    decreesCache = data;
+    return data;
+}
 
         // =====================================================================
         // Функция 2: Рендеринг сетки карточек указов
