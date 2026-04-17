@@ -59,37 +59,52 @@
 
     <!-- Основной контент -->
     <main class="main-content">
-<div class="main-content">
-    <div class="laws-intro">
-        <h1 id="page-title">Указы Президента СФСРЮ — 2026 год</h1>
-        <div id="meta-info" class="meta" style="color:#777; font-size:0.9rem; margin-bottom:15px;"></div>
-        <p>В планах на 2026 год стоит укрепление экономической и политической систем. Все указы вступили в силу с момента подписания и опубликования в официальных источниках.</p>
-    </div>
+    <div class="main-content">
+        <div class="laws-intro">
+            <h1 id="page-title">Указы Президента СФСРЮ — 2026 год</h1>
+            <div id="meta-info" style="color:#777; font-size:0.9rem; margin-bottom:15px;"></div>
+            
+            <!-- Обёртка для автоматического скрытия при открытии PDF -->
+            <div id="laws-intro-text">
+                <p>В планах на 2026 год стоит укрепление экономической и политической систем. В основе этого лежат Указы Президента — особые нормативные правовые акты, исполняемые на территории всей СФСРЮ.</p>
+                <p>Все указы вступили в силу с момента подписания и опубликования в официальных источниках. Настоящие документы являются обязательными для исполнения на всей территории СФСРЮ.</p>
+            </div>
+        </div>
 
-    <!-- Сетка карточек (заполняется JS) -->
-    <div id="decrees-grid" class="decrees-grid"></div>
+        <!-- Сетка карточек -->
+        <div id="decrees-grid" class="decrees-grid"></div>
 
-    <!-- Просмотрщик PDF (скрыт по умолчанию) -->
-    <div id="pdf-viewer" style="display:none;">
-        <div class="pdf-controls" style="margin:15px 0; display:flex; gap:8px; flex-wrap:wrap;">
-            <button id="btn-back" class="law-btn" style="padding:0.5rem 1rem; min-height:auto; font-size:0.9rem;">◀ Назад</button>
+        <!-- Просмотрщик PDF (ограничен по ширине, центрирован) -->
+        <div id="pdf-viewer" style="display:none; max-width: 900px; margin: 20px auto; padding: 0 15px;">
+            <div style="margin:15px 0; display:flex; gap:8px; flex-wrap:wrap;">
+                <button id="btn-back" class="law-btn" style="padding:0.8rem 1.2rem; min-height:auto; font-size:0.95rem; width:auto; flex:none;">
+                    ◀ Вернуться к списку указов
+                </button>
+            </div>
+            
+            <div id="pdf-loader" class="loader" style="text-align:center; padding:40px; display:none;">
+                <div class="spinner" style="border:4px solid #f3f3f3; border-top:4px solid #a00; border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>
+                Загрузка указа...
+                <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
+            </div>
+            
+            <div id="pdf-container" style="width:100%; height:70vh; border:1px solid #ccc; background:#f4f4f4; border-radius:12px; display:none; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+                <iframe id="pdf-frame" src="" title="Просмотр указа" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+            
+            <div id="pdf-error" class="error-msg" style="color:#c00; background:#ffebee; padding:12px 16px; border-radius:8px; margin:12px 0; display:none; border-left:4px solid #c00;"></div>
+            
+            <p style="margin-top:15px; color:#666; font-size:0.9rem; text-align:center;">
+                Если PDF не отображается в браузере, <a id="fallback-link" href="#" target="_blank" style="color:#0056b3; font-weight:500;">скачайте файл напрямую</a>
+            </p>
+            
+            <div style="text-align:center; margin-top:10px;">
+                <a id="pdf-download" href="#" target="_blank" class="law-btn" style="display:inline-flex; padding:0.7rem 1.4rem; min-height:auto; width:auto; flex:none; font-size:0.95rem;">
+                    ⬇️ Скачать PDF
+                </a>
+            </div>
         </div>
-        
-        <div id="pdf-loader" class="loader" style="text-align:center; padding:40px; display:none;">
-            <div class="spinner" style="border:4px solid #f3f3f3; border-top:4px solid #a00; border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>
-            Загрузка указа...
-        </div>
-        
-        <div id="pdf-container" style="width:100%; height:70vh; border:1px solid #ccc; background:#f4f4f4; display:none;">
-            <iframe id="pdf-frame" src="" title="Просмотр указа" style="width:100%; height:100%; border:none;"></iframe>
-        </div>
-        
-        <div id="pdf-error" class="error-msg" style="color:#c00; background:#ffebee; padding:10px; border-radius:8px; margin:10px 0; display:none;"></div>
-        
-        <p style="margin-top:15px; color:#666; font-size:0.9rem;">Если PDF не отображается, <a id="fallback-link" href="#" target="_blank" style="color:#0056b3;">скачайте файл</a></p>
-        <a id="pdf-download" href="#" target="_blank" class="law-btn" style="display:inline-flex; padding:0.5rem 1rem; min-height:auto; margin-top:10px;">⬇️ Скачать PDF</a>
     </div>
-</div>
     </main>
 
     <!-- Подвал -->
