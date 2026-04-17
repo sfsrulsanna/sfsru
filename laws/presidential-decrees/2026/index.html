@@ -106,27 +106,26 @@
     (function() {
         'use strict';
 
+        // 🔧 НАСТРОЙКИ (вставьте свой ключ)
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
         const BUCKET_NAME = 'laws-files1';
         const BUCKET_PATH = 'de/';
         const TABLE_NAME = 'president_decrees';
         const TABLE_SCHEMA = 'laws';
-        const IS_REPEALED_PAGE = window.location.pathname.includes('repealed.html');
+        const IS_REPEALED = window.location.pathname.includes('repealed.html');
 
         if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-            const grid = document.getElementById('decrees-grid');
-            if (grid) grid.innerHTML = '<div style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;border:1px solid #ffcdd2;">⚠️ Библиотека Supabase не загрузилась. Проверьте интернет или отключите блокировщики.</div>';
+            const g = document.getElementById('decrees-grid');
+            if (g) g.innerHTML = '<p style="color:#c00;text-align:center;">⚠️ Библиотека Supabase не загрузилась. Проверьте интернет.</p>';
             return;
         }
 
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             db: { schema: TABLE_SCHEMA }
         });
 
-        let decreesCache = null;
-
-        const elements = {
+        const els = {
             grid: document.getElementById('decrees-grid'),
             viewer: document.getElementById('pdf-viewer'),
             loader: document.getElementById('pdf-loader'),
@@ -138,170 +137,107 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             btnBack: document.getElementById('btn-back'),
             download: document.getElementById('pdf-download'),
             fallback: document.getElementById('fallback-link'),
-            introText: document.getElementById('laws-intro-text')
+            intro: document.getElementById('laws-intro-text')
         };
 
-        function formatDate(dateString) {
-            if (!dateString) return '';
-            return new Date(dateString).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
-        }
+        let cache = null;
+        const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
 
-        async function fetchDecreesFromDatabase() {
-            if (decreesCache !== null) return decreesCache;
+        async function fetchDecrees() {
+            if (cache) return cache;
+            const { data, error } = await supabase.from(TABLE_NAME).select('*').order('sort_order', { ascending: true });
+            if (error) throw new Error('Ошибка БД: ' + error.message);
+            if (!data || data.length === 0) throw new Error('Таблица пуста или RLS блокирует чтение.');
 
-            console.log('🔍 Запрос без фильтра...');
-            const response = await supabaseClient
-                .from(TABLE_NAME)
-                .select('*')
-                .order('sort_order', { ascending: true });
-
-            console.log('📊 Ответ Supabase:', { status: 200, error: response.error ? response.error.message : null, receivedRows: response.data ? response.data.length : 0 });
-
-            if (response.error) {
-                throw new Error('Supabase вернул ошибку: ' + response.error.message);
-            }
-
-            if (!response.data || response.data.length === 0) {
-                console.error('❌ БД вернула пустой массив. Проверьте: 1) данные в таблице 2) RLS политики 3) правильность ключей');
-                throw new Error('Данные не найдены. Выполните SQL-скрипт из инструкции.');
-            }
-
-            // Фильтрация на клиенте для надёжности (обходит возможные проблемы типов в PostgREST)
-            const target = !IS_REPEALED_PAGE;
-            const filtered = response.data.filter(row => {
-                const val = row.is_active;
-                const isActive = (val === true || val === 'true' || val === 1);
-                return isActive === target;
+            const target = !IS_REPEALED;
+            cache = data.filter(row => {
+                const v = row.is_active;
+                return (v === true || v === 'true' || v === 1) === target;
             });
-
-            console.log(`✅ Отфильтровано: ${filtered.length} записей (is_active=${target})`);
-            decreesCache = filtered;
-            return filtered;
+            return cache;
         }
 
-        async function renderDecreesGrid() {
-            const grid = elements.grid;
-            if (!grid) return;
-
-            grid.innerHTML = '<div class="loader" style="text-align:center; padding:40px; width:100%;"><div class="spinner" style="border:4px solid #f3f3f3; border-top:4px solid #a00; border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>Загрузка списка указов...<style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style></div>';
-
+        async function renderGrid() {
+            els.grid.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка указов...</div>';
             try {
-                const decrees = await fetchDecreesFromDatabase();
-                grid.innerHTML = '';
-
-                if (!decrees || decrees.length === 0) {
-                    grid.innerHTML = '<p style="text-align:center; color:#666; padding:2rem; font-size:1.1rem;">' + (IS_REPEALED_PAGE ? 'В архиве нет указов, утративших силу.' : 'На данный момент нет активных указов.') + '</p>';
+                const list = await fetchDecrees();
+                els.grid.innerHTML = '';
+                if (!list.length) {
+                    els.grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">${IS_REPEALED ? 'Архив пуст.' : 'Нет активных указов.'}</p>`;
                     return;
                 }
-
-                decrees.forEach(function(decree) {
-                    const link = document.createElement('a');
-                    link.className = 'law-btn';
-                    if (!decree.is_active) { link.classList.add('archived'); link.style.opacity = '0.7'; }
-                    link.href = '?pdf=' + encodeURIComponent(decree.filename);
-                    link.innerHTML = '<span class="law-icon">🖋️</span><h3>Указ ' + decree.number + ' от ' + formatDate(decree.date_issued) + '</h3><p>«' + decree.title + '»</p>';
-
-                    link.addEventListener('click', function(event) {
-                        event.preventDefault();
-                        window.history.pushState({ pdf: decree.filename }, '', '?pdf=' + decree.filename);
-                        handleRouteChange();
+                list.forEach(d => {
+                    const a = document.createElement('a');
+                    a.className = 'law-btn' + (!d.is_active ? ' archived' : '');
+                    a.href = `?pdf=${encodeURIComponent(d.filename)}`;
+                    a.innerHTML = `<span class="law-icon">🖋️</span><h3>Указ ${d.number} от ${fmt(d.date_issued)}</h3><p>«${d.title}»</p>`;
+                    a.addEventListener('click', e => {
+                        e.preventDefault();
+                        window.history.pushState({ pdf: d.filename }, '', `?pdf=${encodeURIComponent(d.filename)}`);
+                        route();
                     });
-                    grid.appendChild(link);
+                    els.grid.appendChild(a);
                 });
-            } catch (error) {
-                grid.innerHTML = '<div class="error-msg" style="color:#c00; background:#ffebee; padding:15px 20px; border-radius:8px; text-align:center; border:1px solid #ffcdd2; margin:1rem;">⚠️ ' + error.message + '</div>';
+            } catch (err) {
+                els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
             }
         }
 
-        async function loadDecreePDF(filename) {
-            if (!elements.viewer) return;
+        async function loadPDF(filename) {
+            els.viewer.style.display = 'block';
+            els.grid.style.display = 'none';
+            els.loader.style.display = 'block';
+            els.container.style.display = 'none';
+            els.error.style.display = 'none';
+            els.frame.src = '';
 
-            elements.viewer.style.display = 'block';
-            if (elements.grid) elements.grid.style.display = 'none';
-            elements.loader.style.display = 'block';
-            elements.container.style.display = 'none';
-            elements.error.style.display = 'none';
-            elements.frame.src = '';
+            if (els.intro) els.intro.style.display = 'none';
 
-            // Скрываем вводный текст при открытии PDF
-            if (elements.introText) elements.introText.style.display = 'none';
-
-            let decreeData = null;
-            if (decreesCache && Array.isArray(decreesCache)) {
-                for (var i = 0; i < decreesCache.length; i++) {
-                    if (decreesCache[i].filename === filename) {
-                        decreeData = decreesCache[i];
-                        break;
-                    }
-                }
-            }
-
-            if (decreeData) {
-                elements.title.textContent = 'Указ Президента СФСРЮ ' + decreeData.number + ' от ' + formatDate(decreeData.date_issued) + ' «' + decreeData.title + '»';
-                elements.meta.textContent = 'СФСРЮ';
+            const decree = (cache || []).find(d => d.filename === filename);
+            if (decree) {
+                els.title.textContent = `Указ Президента СФСРЮ ${decree.number} от ${fmt(decree.date_issued)} «${decree.title}»`;
+                els.meta.textContent = 'СФСРЮ';
             } else {
-                elements.title.textContent = 'Просмотр документа';
-                elements.meta.textContent = '';
+                els.title.textContent = 'Просмотр документа';
+                els.meta.textContent = '';
             }
 
-            const filePath = BUCKET_PATH + filename + '.pdf';
+            const filePath = `${BUCKET_PATH}${filename}.pdf`;
             try {
-                const {  urlData, error: urlError } = await supabaseClient.storage.from(BUCKET_NAME).createSignedUrl(filePath, 3600);
-                if (urlError) throw new Error(urlError.message || 'Не удалось получить доступ к файлу');
+                const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(filePath, 3600);
+                if (error || !data?.signedUrl) throw new Error(error?.message || 'Файл не найден или нет доступа к бакету');
 
-                const cleanPdfUrl = urlData.signedUrl + '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH';
-                elements.frame.src = cleanPdfUrl;
-                elements.download.href = urlData.signedUrl;
-                elements.fallback.href = urlData.signedUrl;
+                const cleanUrl = data.signedUrl + '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH';
+                els.frame.src = cleanUrl;
+                els.download.href = data.signedUrl;
+                els.fallback.href = data.signedUrl;
 
-                elements.frame.onload = function() {
-                    elements.loader.style.display = 'none';
-                    elements.container.style.display = 'block';
-                };
-                setTimeout(function() {
-                    if (elements.loader.style.display !== 'none') {
-                        elements.loader.style.display = 'none';
-                        elements.container.style.display = 'block';
-                    }
-                }, 3000);
-            } catch (error) {
-                elements.loader.style.display = 'none';
-                elements.error.style.display = 'block';
-                elements.error.innerHTML = '⚠️ <strong>Ошибка загрузки:</strong><br>' + error.message;
+                els.frame.onload = () => { els.loader.style.display = 'none'; els.container.style.display = 'block'; };
+                setTimeout(() => { if (els.loader.style.display !== 'none') { els.loader.style.display = 'none'; els.container.style.display = 'block'; } }, 3000);
+            } catch (err) {
+                els.loader.style.display = 'none';
+                els.error.style.display = 'block';
+                els.error.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
             }
         }
 
-        function handleRouteChange() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const pdfFilename = urlParams.get('pdf');
-
-            if (pdfFilename) {
-                loadDecreePDF(pdfFilename);
+        function route() {
+            const pdf = new URLSearchParams(window.location.search).get('pdf');
+            if (pdf) {
+                loadPDF(pdf);
             } else {
-                // Возвращаемся к списку
-                if (elements.viewer) elements.viewer.style.display = 'none';
-                if (elements.grid) {
-                    elements.grid.style.display = 'flex';
-                    renderDecreesGrid();
-                }
-                if (elements.introText) elements.introText.style.display = 'block'; // Показываем текст обратно
-                if (elements.title) elements.title.textContent = IS_REPEALED_PAGE ? 'Указы Президента СФСРЮ, утратившие силу — 2026 год' : 'Указы Президента СФСРЮ — 2026 год';
-                if (elements.meta) elements.meta.textContent = '';
+                els.viewer.style.display = 'none';
+                els.grid.style.display = 'flex';
+                renderGrid();
+                if (els.intro) els.intro.style.display = 'block';
+                els.title.textContent = IS_REPEALED ? 'Указы Президента СФСРЮ, утратившие силу — 2026 год' : 'Указы Президента СФСРЮ — 2026 год';
+                els.meta.textContent = '';
             }
         }
 
-        if (elements.btnBack) {
-            elements.btnBack.addEventListener('click', function(event) {
-                event.preventDefault();
-                window.history.pushState({}, '', window.location.pathname);
-                handleRouteChange();
-            });
-        }
-
-        window.addEventListener('popstate', handleRouteChange);
-        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', handleRouteChange);
-        else handleRouteChange();
-
+        if (els.btnBack) els.btnBack.addEventListener('click', e => { e.preventDefault(); window.history.pushState({}, '', window.location.pathname); route(); });
+        window.addEventListener('popstate', route);
+        window.addEventListener('DOMContentLoaded', route);
     })();
     </script>
 </body>
