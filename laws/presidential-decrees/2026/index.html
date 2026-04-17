@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Указы Президента, утратившие силу — 2026 год</title>
+    <title>Указы Президента СФСРЮ — 2026 год</title>
 <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
 <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -58,24 +58,20 @@
     </header>
 
     <!-- Основной контент -->
-    <main class="main-content">
     <div class="main-content">
         <div class="laws-intro">
             <h1 id="page-title">Указы Президента СФСРЮ — 2026 год</h1>
             <div id="meta-info" style="color:#777; font-size:0.9rem; margin-bottom:15px;"></div>
             
-            <!-- Обёртка для автоматического скрытия при открытии PDF -->
             <div id="laws-intro-text">
                 <p>В планах на 2026 год стоит укрепление экономической и политической систем. В основе этого лежат Указы Президента — особые нормативные правовые акты, исполняемые на территории всей СФСРЮ.</p>
                 <p>Все указы вступили в силу с момента подписания и опубликования в официальных источниках. Настоящие документы являются обязательными для исполнения на всей территории СФСРЮ.</p>
             </div>
         </div>
 
-        <!-- Сетка карточек -->
         <div id="decrees-grid" class="decrees-grid"></div>
 
-        <!-- Просмотрщик PDF (ограничен по ширине, центрирован) -->
-        <div id="pdf-viewer" style="display:none; max-width: 900px; margin: 20px auto; padding: 0 15px;">
+        <div id="pdf-viewer" style="display:none; max-width: 1000px; margin: 20px auto; padding: 0 15px;">
             <div style="margin:15px 0; display:flex; gap:8px; flex-wrap:wrap;">
                 <button id="btn-back" class="law-btn" style="padding:0.8rem 1.2rem; min-height:auto; font-size:0.95rem; width:auto; flex:none;">
                     ◀ Вернуться к списку указов
@@ -88,7 +84,8 @@
                 <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
             </div>
             
-            <div id="pdf-container" style="width:100%; height:70vh; border:1px solid #ccc; background:#f4f4f4; border-radius:12px; display:none; overflow:hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <!-- ✅ ИСПРАВЛЕНО: убран overflow:hidden, высота увеличена -->
+            <div id="pdf-container" style="width:100%; min-height: 100vh; height: 120vh; border:1px solid #ccc; background:#f4f4f4; border-radius:12px; display:none; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
                 <iframe id="pdf-frame" src="" title="Просмотр указа" style="width:100%; height:100%; border:none;"></iframe>
             </div>
             
@@ -105,7 +102,6 @@
             </div>
         </div>
     </div>
-    </main>
 
     <!-- Подвал -->
     <footer class="footer">
@@ -211,7 +207,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             const decree = (cache || []).find(d => d.filename === filename);
             if (decree) {
                 els.title.textContent = `Указ Президента СФСРЮ ${decree.number} от ${fmt(decree.date_issued)} «${decree.title}»`;
-                els.meta.textContent = 'СФСРЮ';
             } else {
                 els.title.textContent = 'Просмотр документа';
                 els.meta.textContent = '';
