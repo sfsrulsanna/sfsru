@@ -102,150 +102,146 @@
 <!-- Загрузка Supabase с fallback на случай блокировки CDN -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
         onerror="this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
-
 <script>
 (function() {
-    // 🔧 ВСТАВЬТЕ СВОИ ДАННЫЕ
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
     const BUCKET_NAME = 'laws-files1';
     const BUCKET_PATH = 'de/';
-    const TABLE = 'laws.president_decrees';
-    
-    // Автоопределение страницы: repealed.html → показывает только неактивные
-    const IS_REPEALED_PAGE = window.location.pathname.includes('repealed.html');
+    const IS_REPEALED = window.location.pathname.includes('repealed.html');
 
-    // Ждём загрузки DOM и Supabase
-    function init() {
-        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-            document.getElementById('decrees-grid').innerHTML = 
-                '<div class="error-msg">⚠️ Не удалось загрузить модуль Supabase. Проверьте интернет или отключите блокировщики.</div>';
-            return;
-        }
-        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let cache = null;
-
-        const $grid = document.getElementById('decrees-grid');
-        const $viewer = document.getElementById('pdf-viewer');
-        const $loader = document.getElementById('pdf-loader');
-        const $container = document.getElementById('pdf-container');
-        const $frame = document.getElementById('pdf-frame');
-        const $error = document.getElementById('pdf-error');
-        const $title = document.getElementById('page-title');
-        const $meta = document.getElementById('meta-info');
-        const $btnBack = document.getElementById('btn-back');
-        const $download = document.getElementById('pdf-download');
-        const $fallback = document.getElementById('fallback-link');
-
-        const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
-
-        async function fetchDecrees() {
-            if (cache) return cache;
-            const { data, error } = await sb.from(TABLE)
-                .select('*')
-                .eq('is_active', !IS_REPEALED_PAGE)
-                .order('sort_order', { ascending: true });
-            if (error) throw new Error(error.message);
-            cache = data;
-            return data;
-        }
-
-        async function renderGrid() {
-            if (!$grid) return;
-            $grid.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка указов...</div>';
-            try {
-                const items = await fetchDecrees();
-                $grid.innerHTML = '';
-                if (items.length === 0) {
-                    $grid.innerHTML = '<p style="text-align:center;color:#666;">Список пуст.</p>';
-                    return;
-                }
-                items.forEach(item => {
-                    const a = document.createElement('a');
-                    a.className = 'law-btn';
-                    a.href = `?pdf=${item.filename}`;
-                    a.innerHTML = `
-                        <span class="law-icon">🖋️</span>
-                        <h3>Указ ${item.number} от ${fmt(item.date_issued)}</h3>
-                        <p>«${item.title}»</p>
-                    `;
-                    a.addEventListener('click', e => {
-                        e.preventDefault();
-                        window.history.pushState({ pdf: item.filename }, '', a.href);
-                        handleRoute();
-                    });
-                    $grid.appendChild(a);
-                });
-            } catch (err) {
-                $grid.innerHTML = `<div class="error-msg">⚠️ Ошибка: ${err.message}</div>`;
-            }
-        }
-
-        async function loadDecree(filename) {
-            if (!$viewer) return;
-            $viewer.style.display = 'block';
-            $grid.style.display = 'none';
-            $loader.style.display = 'block';
-            $container.style.display = 'none';
-            $error.style.display = 'none';
-            $frame.src = '';
-
-            const decree = (cache || []).find(d => d.filename === filename);
-            if (decree) {
-                $title.textContent = `Указ Президента СФСРЮ ${decree.number} от ${fmt(decree.date_issued)} «${decree.title}»`;
-                $meta.textContent = 'СФСРЮ';
-            } else {
-                $title.textContent = 'Просмотр документа';
-            }
-
-            const filePath = `${BUCKET_PATH}${filename}.pdf`;
-            try {
-                const { data, error } = await sb.storage.from(BUCKET_NAME).createSignedUrl(filePath, 3600);
-                if (error) throw new Error(error.message);
-
-                // Отключаем интерфейс браузера для PDF
-                const cleanUrl = `${data.signedUrl}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH`;
-                $frame.src = cleanUrl;
-                $download.href = data.signedUrl;
-                $fallback.href = data.signedUrl;
-
-                $frame.onload = () => { $loader.style.display = 'none'; $container.style.display = 'block'; };
-                setTimeout(() => { if ($loader.style.display !== 'none') { $loader.style.display = 'none'; $container.style.display = 'block'; } }, 3000);
-            } catch (err) {
-                $loader.style.display = 'none';
-                $error.style.display = 'block';
-                $error.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
-            }
-        }
-
-        function handleRoute() {
-            const pdf = new URLSearchParams(window.location.search).get('pdf');
-            if (pdf) {
-                loadDecree(pdf);
-            } else {
-                $viewer.style.display = 'none';
-                $grid.style.display = 'flex';
-                renderGrid();
-                $title.textContent = IS_REPEALED_PAGE 
-                    ? 'Указы Президента СФСРЮ, утратившие силу — 2026 год' 
-                    : 'Указы Президента СФСРЮ — 2026 год';
-                $meta.textContent = '';
-            }
-        }
-
-        if ($btnBack) $btnBack.addEventListener('click', e => { 
-            e.preventDefault(); 
-            window.history.pushState({}, '', window.location.pathname); 
-            handleRoute(); 
-        });
-
-        window.addEventListener('DOMContentLoaded', handleRoute);
-        window.addEventListener('popstate', handleRoute);
+    if (!window.supabase) {
+        document.getElementById('decrees-grid').innerHTML = '<p style="color:#c00;text-align:center;">⚠️ Библиотека Supabase не загрузилась.</p>';
+        return;
     }
 
-    // Запуск после загрузки скрипта Supabase
-    if (window.supabase) init();
-    else window.addEventListener('load', init);
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    let cache = null;
+
+    const $grid = document.getElementById('decrees-grid');
+    const $viewer = document.getElementById('pdf-viewer');
+    const $loader = document.getElementById('pdf-loader');
+    const $container = document.getElementById('pdf-container');
+    const $frame = document.getElementById('pdf-frame');
+    const $error = document.getElementById('pdf-error');
+    const $title = document.getElementById('page-title');
+    const $meta = document.getElementById('meta-info');
+    const $btnBack = document.getElementById('btn-back');
+    const $download = document.getElementById('pdf-download');
+    const $fallback = document.getElementById('fallback-link');
+
+    const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
+
+    // 1. Запрос с явным указанием схемы (обходит проблему 404 из-за точки)
+    async function fetchDecrees() {
+        if (cache) return cache;
+        const { data, error } = await sb
+            .from('laws.president_decrees')
+            .select('*')
+            .eq('is_active', !IS_REPEALED)
+            .order('sort_order', { ascending: true });
+
+        if (error) {
+            if (error.code === '404' || error.message.includes('404')) {
+                throw new Error('Таблица laws.president_decrees не найдена. Запустите SQL-скрипт в Supabase Dashboard.');
+            }
+            throw error;
+        }
+        cache = data;
+        return data;
+    }
+
+    async function renderGrid() {
+        if (!$grid) return;
+        $grid.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка указов...</div>';
+        try {
+            const items = await fetchDecrees();
+            $grid.innerHTML = '';
+            if (!items.length) {
+                $grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">${IS_REPEALED ? 'Архив пуст.' : 'Нет активных указов.'}</p>`;
+                return;
+            }
+            items.forEach(item => {
+                const a = document.createElement('a');
+                a.className = 'law-btn';
+                a.href = `?pdf=${item.filename}`;
+                a.innerHTML = `
+                    <span class="law-icon">🖋️</span>
+                    <h3>Указ ${item.number} от ${fmt(item.date_issued)}</h3>
+                    <p>«${item.title}»</p>
+                `;
+                a.addEventListener('click', e => {
+                    e.preventDefault();
+                    window.history.pushState({ pdf: item.filename }, '', a.href);
+                    handleRoute();
+                });
+                $grid.appendChild(a);
+            });
+        } catch (err) {
+            $grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+        }
+    }
+
+    async function loadDecree(filename) {
+        if (!$viewer) return;
+        $viewer.style.display = 'block';
+        $grid.style.display = 'none';
+        $loader.style.display = 'block';
+        $container.style.display = 'none';
+        $error.style.display = 'none';
+        $frame.src = '';
+
+        const decree = (cache || []).find(d => d.filename === filename);
+        if (decree) {
+            $title.textContent = `Указ Президента СФСРЮ ${decree.number} от ${fmt(decree.date_issued)} «${decree.title}»`;
+            $meta.textContent = 'СФСРЮ';
+        } else {
+            $title.textContent = 'Просмотр документа';
+        }
+
+        const filePath = `${BUCKET_PATH}${filename}.pdf`;
+        try {
+            const { data, error } = await sb.storage.from(BUCKET_NAME).createSignedUrl(filePath, 3600);
+            if (error) throw new Error(error.message);
+
+            // Отключаем интерфейс браузера для PDF
+            const cleanUrl = `${data.signedUrl}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH`;
+            $frame.src = cleanUrl;
+            $download.href = data.signedUrl;
+            $fallback.href = data.signedUrl;
+
+            $frame.onload = () => { $loader.style.display = 'none'; $container.style.display = 'block'; };
+            setTimeout(() => { if ($loader.style.display !== 'none') { $loader.style.display = 'none'; $container.style.display = 'block'; } }, 3000);
+        } catch (err) {
+            $loader.style.display = 'none';
+            $error.style.display = 'block';
+            $error.textContent = `⚠️ Ошибка загрузки PDF: ${err.message}`;
+        }
+    }
+
+    function handleRoute() {
+        const pdf = new URLSearchParams(window.location.search).get('pdf');
+        if (pdf) {
+            loadDecree(pdf);
+        } else {
+            $viewer.style.display = 'none';
+            $grid.style.display = 'flex';
+            renderGrid();
+            $title.textContent = IS_REPEALED 
+                ? 'Указы Президента СФСРЮ, утратившие силу — 2026 год' 
+                : 'Указы Президента СФСРЮ — 2026 год';
+            $meta.textContent = '';
+        }
+    }
+
+    if ($btnBack) $btnBack.addEventListener('click', e => { 
+        e.preventDefault(); 
+        window.history.pushState({}, '', window.location.pathname); 
+        handleRoute(); 
+    });
+
+    window.addEventListener('DOMContentLoaded', handleRoute);
+    window.addEventListener('popstate', handleRoute);
 })();
 </script>
 </body>
