@@ -4,100 +4,304 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Распоряжения Президента СФСРЮ</title>
-<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
-<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
-<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
-<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
-<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
-<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
-<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
+    <!-- все favicon и стили как у decrees, скопируйте из presidential-decrees.html -->
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
 <meta name="application-name" content="&nbsp;"/>
 <meta name="msapplication-TileColor" content="#FFFFFF" />
-<meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
-<meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
-<meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
-<meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
-<meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/laws.css">
+<meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <!-- ... (вставьте все favicon из вашего decrees.html) ... -->
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/laws.css">
+    <link rel="stylesheet" href="../../../css/decrees.css">
+    <style>
+        .year-filter-wrapper {
+            max-width: 1000px; margin: 0 auto 20px; padding: 0 20px;
+            display: flex; align-items: center; gap: 10px;
+        }
+        #year-filter {
+            padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px;
+            background: #fff; font-size: 0.95rem; cursor: pointer;
+        }
+        .law-btn.archived {
+            opacity: 0.65;
+            background: rgba(240, 240, 240, 0.7) !important;
+        }
+        .badge-repealed {
+            position: absolute; top: 12px; right: 12px;
+            background: #c00; color: #fff; font-size: 0.7rem; font-weight: 700;
+            padding: 4px 8px; border-radius: 6px; z-index: 10;
+            pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+    </style>
 </head>
 <body>
-    <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
-                <img src="../images/gerb.png" alt="Герб СФСРЮ">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
                 <h1>СФСРЮ</h1>
             </div>
-            
-            <!-- Кнопка гамбургер -->
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
                 <span class="menu-toggle-line"></span>
                 <span class="menu-toggle-line"></span>
             </button>
-            
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная</a></li>
-                    <li><a href="../news.html">Новости</a></li>
-                    <li><a href="../wiki/" class="active">Википедия</a></li>
-                    <li><a href="../healthcare.html">Здравоохранение</a></li>
-                    <li><a href="../services.html">Услуги</a></li>
-                    <li><a href="../profile.html">Личный кабинет</a></li>
+                    <li><a href="../../../index.html">Главная</a></li>
+                    <li><a href="../../../news.html">Новости</a></li>
+                    <li><a href="../../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../../services.html">Услуги</a></li>
+                    <li><a href="../../../profile.html">Личный кабинет</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
-    <!-- Основной контент -->
-    <main class="main-content">
+    <div class="main-content">
         <div class="laws-intro">
-            <h1>Распоряжения Президента СФСРЮ</h1>
-            <p>
-                Распоряжения Президента Советской Федеративной Социалистической Республики Юльсанна —
-                нормативные правовые акты, издаваемые главой государства в рамках его конституционных полномочий.
-                Распоряжения обычно направленны на определённое лицо или группу лиц, обязательны для исполнения 
-				на всей территории СФСРЮ и не должны противоречить Конституции и федеральным законам.
-            </p>
-            <p>
-                Ниже представлены архивы указов, сгруппированные по годам принятия.
-            </p>
+            <h1 id="page-title">Распоряжения Президента СФСРЮ — 2026 год</h1>
+            <div id="meta-info" style="color:#777; font-size:0.9rem; margin-bottom:15px;"></div>
+            <div id="laws-intro-text">
+                <p>Распоряжения Президента — это оперативные нормативные акты, обязательные для исполнения на всей территории СФСРЮ. Все распоряжения вступают в силу с момента подписания.</p>
+            </div>
         </div>
 
-        <div class="laws-categories">
-            <div class="law-row">
-                <a href="../laws/presidential-orders/2025/index.html" class="law-btn">
-                    <span class="law-icon">📋</span>
-                    <h3>2025 год</h3>
-                    <p>Распоряжения Президента за 2025 год</p>
-                </a>
-                <a href="../laws/presidential-orders/2026/index.html" class="law-btn">
-                    <span class="law-icon">📋</span>
-                    <h3>2026 год</h3>
-                    <p>Распоряжения Президента за 2026 год</p>
-                </a>
-                <a href="../laws/presidential-orders/2027/index.html" class="law-btn">
-                    <span class="law-icon">📋</span>
-                    <h3>2027 год</h3>
-                    <p>Распоряжения Президента за 2027 год</p>
+        <div style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
+            <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
+            <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
+        </div>
+
+        <div id="orders-grid" class="decrees-grid"></div>
+
+        <div id="pdf-viewer" style="display:none; width: 85%; margin: 20px auto; padding: 0 15px; box-sizing: border-box;">
+            <div style="margin:15px 0; display:flex; justify-content: center; flex-wrap:wrap;">
+                <button id="btn-back" class="law-btn" style="padding:0.8rem 1.2rem; min-height:auto; font-size:0.95rem; width:auto; flex:none;">
+                    ◀ Вернуться к списку распоряжений
+                </button>
+            </div>
+            <div id="pdf-loader" class="loader" style="text-align:center; padding:40px; display:none;">
+                <div class="spinner" style="border:4px solid #f3f3f3; border-top:4px solid #a00; border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>
+                Загрузка распоряжения...
+                <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
+            </div>
+            <div id="pdf-container" style="width: 100%; max-width: 794px; height: 1123px; margin: 0 auto; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); overflow: hidden;">
+                <iframe id="pdf-frame" src="" title="Просмотр распоряжения" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+            <div id="pdf-error" class="error-msg" style="color:#c00; background:#ffebee; padding:12px 16px; border-radius:8px; margin:12px 0; display:none; border-left:4px solid #c00;"></div>
+            <p style="margin-top:15px; color:#666; font-size:0.9rem; text-align:center;">
+                Если PDF не отображается в браузере, <a id="fallback-link" href="#" target="_blank" style="color:#0056b3; font-weight:500;">скачайте файл напрямую</a>
+            </p>
+            <div style="text-align:center; margin-top:10px;">
+                <a id="pdf-download" href="#" target="_blank" class="law-btn" style="display:inline-flex; padding:0.7rem 1.4rem; min-height:auto; width:auto; flex:none; font-size:0.95rem;">
+                    ⬇️ Скачать PDF
                 </a>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- Подвал -->
     <footer class="footer">
         <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="../js/mob-menu.js"></script>
+    <script src="../../../js/mob-menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
+            onerror="this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
+    <script>
+    (function() {
+        'use strict';
+
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        
+        const DEFAULT_BUCKET = 'laws-files1';
+        const DEFAULT_PATH = 'do/';
+        const TABLE_NAME = 'president_orders';
+        const TABLE_SCHEMA = 'laws';
+
+        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+            const g = document.getElementById('orders-grid');
+            if (g) g.innerHTML = '<p style="color:#c00;text-align:center;">⚠️ Библиотека Supabase не загрузилась.</p>';
+            return;
+        }
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            db: { schema: TABLE_SCHEMA }
+        });
+
+        const els = {
+            grid: document.getElementById('orders-grid'),
+            viewer: document.getElementById('pdf-viewer'),
+            loader: document.getElementById('pdf-loader'),
+            container: document.getElementById('pdf-container'),
+            frame: document.getElementById('pdf-frame'),
+            error: document.getElementById('pdf-error'),
+            title: document.getElementById('page-title'),
+            meta: document.getElementById('meta-info'),
+            btnBack: document.getElementById('btn-back'),
+            download: document.getElementById('pdf-download'),
+            fallback: document.getElementById('fallback-link'),
+            intro: document.getElementById('laws-intro-text'),
+            yearFilter: document.getElementById('year-filter')
+        };
+
+        let cache = null;
+        const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
+
+        async function fetchAllOrders() {
+            if (cache) return cache;
+            const { data, error } = await supabase.from(TABLE_NAME).select('*').order('sort_order', { ascending: true });
+            if (error) throw new Error('Ошибка БД: ' + error.message);
+            if (!data || data.length === 0) throw new Error('Таблица пуста или нет прав на чтение.');
+            cache = data;
+            return cache;
+        }
+
+        function populateYearFilter() {
+            if (!els.yearFilter) return;
+            const years = [...new Set(cache.map(d => d.year))].sort((a, b) => b - a);
+            const currentYear = new Date().getFullYear();
+            els.yearFilter.innerHTML = years.map(y => 
+                `<option value="${y}" ${y === 2026 ? 'selected' : ''}>${y}</option>`
+            ).join('');
+            if (years.length && !years.includes(2026)) els.yearFilter.value = years[0];
+        }
+
+        function renderGrid(selectedYear) {
+            els.grid.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка распоряжений...</div>';
+            try {
+                const year = parseInt(selectedYear);
+                const list = cache.filter(d => d.year === year);
+                els.grid.innerHTML = '';
+                
+                if (!list.length) {
+                    els.grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">В ${year} году распоряжения не найдены.</p>`;
+                    return;
+                }
+
+                list.forEach(d => {
+                    const isRepealed = !d.is_active;
+                    const a = document.createElement('a');
+                    a.className = 'law-btn' + (isRepealed ? ' archived' : '');
+                    a.href = `?pdf=${encodeURIComponent(d.filename)}`;
+                    a.innerHTML = `
+                        ${isRepealed ? '<span class="badge-repealed">Утратил силу</span>' : ''}
+                        <span class="law-icon">🖋️</span>
+                        <h3>Распоряжение №${d.number} от ${fmt(d.date_issued)}</h3>
+                        <p>«${d.title}»</p>
+                    `;
+                    a.addEventListener('click', e => {
+                        e.preventDefault();
+                        window.history.pushState({ pdf: d.filename, year: year }, '', `?pdf=${encodeURIComponent(d.filename)}`);
+                        route();
+                    });
+                    els.grid.appendChild(a);
+                });
+            } catch (err) {
+                els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+            }
+        }
+
+        async function loadPDF(filename) {
+            els.viewer.style.display = 'block';
+            els.grid.style.display = 'none';
+            els.loader.style.display = 'block';
+            els.container.style.display = 'none';
+            els.error.style.display = 'none';
+            els.frame.src = '';
+
+            if (els.intro) els.intro.style.display = 'none';
+
+            const order = (cache || []).find(d => d.filename === filename);
+            if (order) {
+                els.title.textContent = `Распоряжение Президента СФСРЮ №${order.number} от ${fmt(order.date_issued)} «${order.title}»`;
+            } else {
+                els.title.textContent = 'Просмотр документа';
+            }
+
+            const bucket = order?.bucket_name || DEFAULT_BUCKET;
+            const filePath = `${order?.bucket_path || DEFAULT_PATH}${filename}.pdf`;
+
+            try {
+                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 3600);
+                if (error || !data?.signedUrl) throw new Error(error?.message || 'Файл не найден');
+                const cleanUrl = data.signedUrl + '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH';
+                els.frame.src = cleanUrl;
+                els.download.href = data.signedUrl;
+                els.fallback.href = data.signedUrl;
+
+                els.frame.onload = () => { els.loader.style.display = 'none'; els.container.style.display = 'block'; };
+                setTimeout(() => { if (els.loader.style.display !== 'none') { els.loader.style.display = 'none'; els.container.style.display = 'block'; } }, 3000);
+            } catch (err) {
+                els.loader.style.display = 'none';
+                els.error.style.display = 'block';
+                els.error.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
+            }
+        }
+
+        function route() {
+            const params = new URLSearchParams(window.location.search);
+            const pdf = params.get('pdf');
+            
+            if (pdf) {
+                loadPDF(pdf);
+            } else {
+                els.viewer.style.display = 'none';
+                els.grid.style.display = 'flex';
+                if (els.intro) els.intro.style.display = 'block';
+                
+                const currentYear = els.yearFilter ? els.yearFilter.value : 2026;
+                els.title.textContent = `Распоряжения Президента СФСРЮ — ${currentYear} год`;
+                renderGrid(currentYear);
+            }
+        }
+
+        if (els.yearFilter) {
+            els.yearFilter.addEventListener('change', () => {
+                const selected = els.yearFilter.value;
+                els.title.textContent = `Распоряжения Президента СФСРЮ — ${selected} год`;
+                renderGrid(selected);
+            });
+        }
+
+        if (els.btnBack) {
+            els.btnBack.addEventListener('click', e => {
+                e.preventDefault();
+                window.history.pushState({}, '', window.location.pathname);
+                route();
+            });
+        }
+
+        window.addEventListener('popstate', route);
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await fetchAllOrders();
+                populateYearFilter();
+                route();
+            } catch (err) {
+                els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+            }
+        });
+    })();
+    </script>
 </body>
 </html>

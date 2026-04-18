@@ -86,15 +86,14 @@
             </div>
         </div>
     </header>
-    <div class="menu-overlay"></div>
 
     <div class="main-content">
         <div class="laws-intro">
-            <h1>Добавление нового указа Президента СФСРЮ</h1>
-            <div style="color:#777; font-size:0.9rem; margin-bottom:15px;">Админ-панель → Загрузка документов</div>
+            <h1>Добавление нового распоряжения</h1>
+            <div style="color:#777; font-size:0.9rem; margin-bottom:15px;">Админ-панель → Загрузка распоряжений</div>
         </div>
 
-        <form id="decreeForm" class="admin-form">
+        <form id="orderForm" class="admin-form">
             <div class="form-group">
                 <label for="pdfFile">Файл (PDF)</label>
                 <input type="file" id="pdfFile" accept=".pdf" required>
@@ -103,7 +102,7 @@
             <div class="form-row">
                 <div class="form-group">
                     <label for="number">Номер</label>
-                    <input type="text" id="number" placeholder="№055" required>
+                    <input type="text" id="number" placeholder="№001" required>
                 </div>
                 <div class="form-group">
                     <label for="date">Дата подписания</label>
@@ -113,7 +112,7 @@
 
             <div class="form-group">
                 <label for="title">Название</label>
-                <input type="text" id="title" placeholder="«О внесении изменений...»" required>
+                <input type="text" id="title" placeholder="«О поощрении...»" required>
             </div>
 
             <div class="form-row">
@@ -138,13 +137,13 @@
                 </div>
                 <div class="form-group">
                     <label for="bucketPath">Путь в бакете</label>
-                    <input type="text" id="bucketPath" value="de/" placeholder="de/" required>
+                    <input type="text" id="bucketPath" value="do/" placeholder="do/" required>
                 </div>
             </div>
 
             <div class="form-group checkbox-group">
                 <input type="checkbox" id="isActive" checked>
-                <label for="isActive" style="margin:0; color:#333; font-weight:500;">Указ действует?</label>
+                <label for="isActive" style="margin:0; color:#333; font-weight:500;">Распоряжение действует?</label>
             </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">📤 Загрузить и сохранить</button>
@@ -156,6 +155,7 @@
         © 2026 СФСРЮ. Все права защищены пролетариатом.<br>
         Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com" style="color:#666; text-decoration:none;">sfsr.ulsanna@gmail.com</a>
     </footer>
+
 <script>
 (function() {
     'use strict';
@@ -173,7 +173,7 @@
     });
 
     const els = {
-        form: document.getElementById('decreeForm'),
+        form: document.getElementById('orderForm'),
         file: document.getElementById('pdfFile'),
         number: document.getElementById('number'),
         date: document.getElementById('date'),
@@ -187,14 +187,13 @@
         msg: document.getElementById('statusMsg')
     };
 
-    // Автозаполнение года из даты
     els.date.addEventListener('change', () => {
         if (els.date.value) els.year.value = els.date.value.split('-')[0];
     });
 
     async function getNextSortOrder() {
         try {
-            const { data, error } = await sb.from('president_decrees')
+            const { data, error } = await sb.from('president_orders')
                 .select('sort_order')
                 .order('sort_order', { ascending: false })
                 .limit(1);
@@ -225,7 +224,6 @@
         els.msg.style.display = 'none';
 
         try {
-            // Формируем путь и имя файла
             const num = toAscii(els.number.value);
             const date = els.date.value.replace(/-/g, '');
             let p = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
@@ -237,17 +235,14 @@
             // 1. Загружаем PDF в Storage
             const { error: uploadError } = await sb.storage
                 .from(bucket)
-                .upload(fullPath, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
+                .upload(fullPath, file, { cacheControl: '3600', upsert: false });
             if (uploadError) throw new Error(`Ошибка загрузки файла: ${uploadError.message}`);
 
             // 2. Определяем sort_order
             const currentSort = parseInt(els.sortOrder.value) || await getNextSortOrder();
 
             // 3. Вставляем запись в таблицу
-            const { error: insertError } = await sb.from('president_decrees').insert({
+            const { error: insertError } = await sb.from('president_orders').insert({
                 number: els.number.value,
                 date_issued: els.date.value,
                 title: els.title.value,
@@ -256,17 +251,17 @@
                 is_active: els.active.checked,
                 bucket_name: bucket,
                 bucket_path: p,
-                filename: fileName.replace('.pdf', '')   // без расширения
+                filename: fileName.replace('.pdf', '')
             });
 
             if (insertError) throw new Error(`Ошибка БД: ${insertError.message}`);
 
-            showMsg('✅ Указ добавлен', 'success');
+            showMsg('✅ Распоряжение добавлено', 'success');
             els.form.reset();
             els.sortOrder.value = currentSort + 1;
             els.year.value = '';
             els.active.checked = true;
-            els.path.value = 'de/';
+            els.path.value = 'do/';
 
         } catch (err) {
             console.error(err);
@@ -277,7 +272,6 @@
         }
     });
 
-    // Инициализация: проставляем следующий sort_order
     (async function init() {
         els.sortOrder.value = await getNextSortOrder();
     })();
