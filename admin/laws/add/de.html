@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добавление указа — Админ-панель</title>
+    <title>Добавление законодательных актов — Админ-панель</title>
 <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
 <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -70,19 +70,19 @@
 
     <div class="main-content">
         <div class="laws-intro">
-            <h1>Добавление нового указа</h1>
+            <h1>Добавление нового законодательного акта</h1>
             <div style="color:#777; font-size:0.9rem; margin-bottom:15px;">Админ-панель → Загрузка документов</div>
         </div>
 
         <form id="decreeForm" class="admin-form">
             <div class="form-group">
-                <label for="pdfFile">Файл указа (PDF)</label>
+                <label for="pdfFile">Файл (PDF)</label>
                 <input type="file" id="pdfFile" accept=".pdf" required>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label for="number">Номер указа</label>
+                    <label for="number">Номер</label>
                     <input type="text" id="number" placeholder="№055" required>
                 </div>
                 <div class="form-group">
@@ -92,7 +92,7 @@
             </div>
 
             <div class="form-group">
-                <label for="title">Название указа</label>
+                <label for="title">Название</label>
                 <input type="text" id="title" placeholder="«О внесении изменений...»" required>
             </div>
 
@@ -124,7 +124,7 @@
 
             <div class="form-group checkbox-group">
                 <input type="checkbox" id="isActive" checked>
-                <label for="isActive" style="margin:0; color:#333; font-weight:500;">Указ действует (is_active)</label>
+                <label for="isActive" style="margin:0; color:#333; font-weight:500;">Указ действует?</label>
             </div>
 
             <button type="submit" class="submit-btn" id="submitBtn">📤 Загрузить и сохранить</button>
@@ -141,15 +141,16 @@
 (function() {
     'use strict';
 
-    // 🔧 ВСТАВЬТЕ СВОИ КЛЮЧИ SUPABASE
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
 
+    // Проверка загрузки CDN
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-        alert('❌ Ошибка: библиотека Supabase не загрузилась. Проверьте интернет или блокировщики.');
+        alert('❌ Supabase не загрузился. Проверьте интернет или блокировщики.');
         return;
     }
 
+    // 🔑 Правильная инициализация с указанием схемы
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         db: { schema: 'laws' }
     });
@@ -174,13 +175,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     });
 
     async function initSortOrder() {
-        try {
-            const { data, error } = await sb.from('president_decrees')
-                .select('sort_order')
-                .order('sort_order', { ascending: false })
-                .limit(1);
-            els.sortOrder.value = (!error && data && data.length > 0) ? data[0].sort_order + 1 : 1;
-        } catch (e) { els.sortOrder.value = 1; }
+        const { data } = await sb.from('president_decrees')
+            .select('sort_order')
+            .order('sort_order', { ascending: false })
+            .limit(1);
+        els.sortOrder.value = (data && data[0]) ? data[0].sort_order + 1 : 1;
     }
 
     function showMsg(text, type) {
@@ -192,34 +191,38 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     els.form.addEventListener('submit', async (e) => {
         e.preventDefault();
         els.btn.disabled = true;
-        els.btn.textContent = '⏳ Загрузка файла...';
+        els.btn.textContent = '⏳ Загрузка...';
         els.msg.style.display = 'none';
 
         try {
             const file = els.file.files[0];
-            if (!file || file.type !== 'application/pdf') throw new Error('Выберите корректный PDF файл');
+            if (!file || file.type !== 'application/pdf') throw new Error('Выберите PDF файл');
 
-            // Формируем строго ASCII-имя
+            // Чистое имя файла (ASCII)
             const numClean = els.number.value.replace(/[^a-zA-Z0-9-]/g, '');
             const dateStr = els.date.value.replace(/-/g, '');
-            let pathVal = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, ''); // очищаем путь
+            let pathVal = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
             if (!pathVal.endsWith('/')) pathVal += '/';
             
             const cleanFilename = `${dateStr}-${numClean}.pdf`;
             const fullPath = pathVal + cleanFilename;
 
-            // 🔑 ФИКС: создаём новый File с ASCII-именем, чтобы избежать ошибки Headers
+            // 🔑 Создаём новый File с чистым именем
             const fileToUpload = new File([file], cleanFilename, { type: 'application/pdf' });
 
             // 1. Загрузка в Storage
             const { error: uploadError } = await sb.storage
                 .from(els.bucket.value)
-                .upload(fullPath, fileToUpload, { upsert: true, contentType: 'application/pdf' });
+                .upload(fullPath, fileToUpload, { 
+                    upsert: true, 
+                    contentType: 'application/pdf',
+                    cacheControl: '3600'
+                });
             
-            if (uploadError) throw new Error('Ошибка загрузки файла: ' + uploadError.message);
+            if (uploadError) throw new Error('Storage: ' + uploadError.message);
 
             // 2. Запись в БД
-            const record = {
+            const { error: dbError } = await sb.from('president_decrees').insert({
                 filename: cleanFilename,
                 number: els.number.value,
                 date_issued: els.date.value,
@@ -229,12 +232,11 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                 sort_order: parseInt(els.sortOrder.value),
                 bucket_name: els.bucket.value,
                 bucket_path: pathVal
-            };
+            });
+            
+            if (dbError) throw new Error('DB: ' + dbError.message);
 
-            const { error: dbError } = await sb.from('president_decrees').insert(record);
-            if (dbError) throw new Error('Ошибка сохранения в БД: ' + dbError.message);
-
-            showMsg('✅ Указ успешно добавлен! Путь: ' + fullPath, 'success');
+            showMsg('✅ Указ добавлен: ' + fullPath, 'success');
             els.form.reset();
             els.sortOrder.value = parseInt(els.sortOrder.value) + 1;
             els.year.value = '';
@@ -244,14 +246,18 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
         } catch (err) {
             showMsg('❌ ' + err.message, 'error');
-            console.error('Admin Upload Error:', err);
+            console.error('Admin Error:', err);
         } finally {
             els.btn.disabled = false;
             els.btn.textContent = '📤 Загрузить и сохранить';
         }
     });
 
+    // Инициализация
     initSortOrder();
+
+    // 🔍 Экспортируем `sb` в глобальную область для отладки в консоли
+    window.sb = sb;
 })();
 </script>
 </body>
