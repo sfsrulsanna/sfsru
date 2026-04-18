@@ -140,16 +140,15 @@
 (function() {
     'use strict';
 
-const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+    const SUPABASE_ANON_KEY = 'ВАШ_ANON_PUBLIC_KEY_ЗДЕСЬ';
     const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-upload-decree`;
 
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-        alert('❌ Supabase не загрузился');
+        alert('❌ Supabase не загрузился. Проверьте интернет.');
         return;
     }
 
-    // 🔑 Клиент с указанием схемы laws
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         db: { schema: 'laws' }
     });
@@ -173,7 +172,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         if (els.date.value) els.year.value = els.date.value.split('-')[0];
     });
 
-    // 🔧 Исправленная функция: использует sb client с правильной схемой
     async function getNextSortOrder() {
         try {
             const { data, error } = await sb.from('president_decrees')
@@ -182,10 +180,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                 .limit(1);
             if (error) throw error;
             return (data?.[0]?.sort_order || 0) + 1;
-        } catch (e) {
-            console.warn('sort_order fallback:', e);
-            return 1;
-        }
+        } catch { return 1; }
     }
 
     function showMsg(text, type) {
@@ -231,6 +226,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             const base64 = await fileToBase64(file);
             const currentSort = parseInt(els.sortOrder.value) || await getNextSortOrder();
 
+            // 🔧 ИСПРАВЛЕНО: добавлено двоеточие после "metadata"
             const response = await fetch(EDGE_FUNCTION_URL, {
                 method: 'POST',
                 headers: {
@@ -243,7 +239,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                     fileName,
                     filePath: fullPath,
                     bucket,
-                    meta {
+                    metadata: {  // ← ДВОЕТОЧИЕ ЗДЕСЬ
                         number: els.number.value,
                         date_issued: els.date.value,
                         title: els.title.value,
@@ -276,7 +272,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
     (async function init() {
         els.sortOrder.value = await getNextSortOrder();
-        window.sb = sb; // для отладки
+        window.sb = sb;
     })();
 })();
 </script>
