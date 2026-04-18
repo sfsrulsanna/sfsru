@@ -145,7 +145,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
     const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-upload-decree`;
 
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-        alert('❌ Supabase не загрузился. Проверьте интернет.');
+        alert('❌ Supabase не загрузился');
         return;
     }
 
@@ -226,7 +226,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             const base64 = await fileToBase64(file);
             const currentSort = parseInt(els.sortOrder.value) || await getNextSortOrder();
 
-            // 🔧 ИСПРАВЛЕНО: добавлено двоеточие после "metadata"
             const response = await fetch(EDGE_FUNCTION_URL, {
                 method: 'POST',
                 headers: {
@@ -239,7 +238,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                     fileName,
                     filePath: fullPath,
                     bucket,
-                    metadata: {  // ← ДВОЕТОЧИЕ ЗДЕСЬ
+                    metadata: {  // 🔧 ИСПРАВЛЕНО: двоеточие после "metadata"
                         number: els.number.value,
                         date_issued: els.date.value,
                         title: els.title.value,
