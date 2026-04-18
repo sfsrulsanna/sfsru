@@ -90,18 +90,19 @@
             </div>
         </div>
 
-        <!-- Фильтр по году -->
-        <div class="year-filter-wrapper">
+        <!-- Фильтр по году (по центру, 85% ширины) -->
+        <div style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
             <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
-            <select id="year-filter"></select>
+            <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
         </div>
 
         <!-- Сетка карточек -->
         <div id="decrees-grid" class="decrees-grid"></div>
 
-        <!-- Просмотрщик PDF -->
-        <div id="pdf-viewer" style="display:none; max-width: 1000px; margin: 20px auto; padding: 0 15px;">
-            <div style="margin:15px 0; display:flex; gap:8px; flex-wrap:wrap;">
+        <!-- Просмотрщик PDF (85% ширины, по центру) -->
+        <div id="pdf-viewer" style="display:none; width: 85%; margin: 20px auto; padding: 0 15px; box-sizing: border-box;">
+            <!-- Кнопка "Назад" (по центру) -->
+            <div style="margin:15px 0; display:flex; justify-content: center; flex-wrap:wrap;">
                 <button id="btn-back" class="law-btn" style="padding:0.8rem 1.2rem; min-height:auto; font-size:0.95rem; width:auto; flex:none;">
                     ◀ Вернуться к списку указов
                 </button>
@@ -113,7 +114,8 @@
                 <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
             </div>
             
-            <div id="pdf-container" style="width:85%; min-height: 89vh; height: 89vh; border:1px solid #ccc; background:#f4f4f4; border-radius:12px; display:none; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+            <!-- Контейнер PDF (высота 89vh) -->
+            <div id="pdf-container" style="width:100%; height:89vh; border:1px solid #ccc; background:#f4f4f4; border-radius:12px; display:none; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
                 <iframe id="pdf-frame" src="" title="Просмотр указа" style="width:100%; height:100%; border:none;"></iframe>
             </div>
             
@@ -144,10 +146,12 @@
     <script>
     (function() {
         'use strict';
-const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-        const BUCKET_NAME = 'laws-files1';
-        const BUCKET_PATH = 'de/';
+
+		const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        // Дефолтные значения (используются если в БД колонки пустые)
+        const DEFAULT_BUCKET = 'laws-files1';
+        const DEFAULT_PATH = 'de/';
         const TABLE_NAME = 'president_decrees';
         const TABLE_SCHEMA = 'laws';
 
@@ -182,7 +186,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
         async function fetchAllDecrees() {
             if (cache) return cache;
-            // Загружаем ВСЕ указы без фильтрации
             const { data, error } = await supabase.from(TABLE_NAME).select('*').order('sort_order', { ascending: true });
             if (error) throw new Error('Ошибка БД: ' + error.message);
             if (!data || data.length === 0) throw new Error('Таблица пуста или RLS блокирует чтение.');
@@ -192,7 +195,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
         function populateYearFilter() {
             if (!els.yearFilter) return;
-            // Собираем уникальные года, сортируем по убыванию
             const years = [...new Set(cache.map(d => d.year))].sort((a, b) => b - a);
             const currentYear = new Date().getFullYear();
             els.yearFilter.innerHTML = years.map(y => 
@@ -215,7 +217,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                 list.forEach(d => {
                     const isRepealed = !d.is_active;
                     const a = document.createElement('a');
-                    // Если указ утратил силу, добавляем класс archived для прозрачности
                     a.className = 'law-btn' + (isRepealed ? ' archived' : '');
                     a.href = `?pdf=${encodeURIComponent(d.filename)}`;
                     a.innerHTML = `
@@ -227,7 +228,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                     
                     a.addEventListener('click', e => {
                         e.preventDefault();
-                        // Сохраняем год в истории для корректного возврата
                         window.history.pushState({ pdf: d.filename, year: year }, '', `?pdf=${encodeURIComponent(d.filename)}`);
                         route();
                     });
@@ -257,9 +257,12 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                 els.meta.textContent = '';
             }
 
-            const filePath = `${BUCKET_PATH}${filename}.pdf`;
+            // 🔑 НОВОЕ: Берём бакет и путь из БД, если их нет — используем дефолтные
+            const bucket = decree?.bucket_name || DEFAULT_BUCKET;
+            const filePath = `${decree?.bucket_path || DEFAULT_PATH}${filename}.pdf`;
+
             try {
-                const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(filePath, 3600);
+                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 3600);
                 if (error || !data?.signedUrl) throw new Error(error?.message || 'Файл не найден или нет доступа к бакету');
 
                 const cleanUrl = data.signedUrl + '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH';
@@ -283,7 +286,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             if (pdf) {
                 loadPDF(pdf);
             } else {
-                // Возврат к списку
                 els.viewer.style.display = 'none';
                 els.grid.style.display = 'flex';
                 if (els.intro) els.intro.style.display = 'block';
@@ -295,7 +297,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             }
         }
 
-        // Обработчик смены года
         if (els.yearFilter) {
             els.yearFilter.addEventListener('change', () => {
                 const selected = els.yearFilter.value;
@@ -304,7 +305,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             });
         }
 
-        // Кнопка "Назад"
         if (els.btnBack) {
             els.btnBack.addEventListener('click', e => {
                 e.preventDefault();
@@ -313,7 +313,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             });
         }
 
-        // Инициализация
         window.addEventListener('popstate', route);
         window.addEventListener('DOMContentLoaded', async () => {
             try {
