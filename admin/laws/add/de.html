@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление указа — Админ-панель</title>
+<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+<meta name="application-name" content="&nbsp;"/>
+<meta name="msapplication-TileColor" content="#FFFFFF" />
+<meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <link rel="stylesheet" href="../../../../css/style.css">
+    <link rel="stylesheet" href="../../../../css/laws.css">
+    <link rel="stylesheet" href="../../../../css/decrees.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
+            onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';"></script>
+    <style>
+        .admin-form {
+            max-width: 800px; margin: 0 auto; background: rgba(255, 250, 250, 0.7);
+            backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255, 180, 180, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); padding: 2rem; color: #333;
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #a00; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 10px;
+            background: rgba(255, 255, 255, 0.8); font-size: 1rem; transition: 0.2s; box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #c00; outline: none; box-shadow: 0 0 0 3px rgba(192,0,0,0.1); }
+        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .form-row .form-group { flex: 1; min-width: 200px; }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 10px; }
+        .checkbox-group input { width: auto; margin: 0; accent-color: #a00; }
+        .submit-btn {
+            width: 100%; padding: 1rem; background: #a00; color: #fff; border: none; border-radius: 10px;
+            font-size: 1.1rem; cursor: pointer; transition: 0.3s; margin-top: 1.5rem;
+        }
+        .submit-btn:hover { background: #c00; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(192,0,0,0.3); }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .msg { padding: 1rem; border-radius: 8px; margin-top: 1rem; display: none; text-align: center; }
+        .msg.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .msg.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        @media (max-width: 768px) { .admin-form { padding: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <nav>
+        <a href="../../../../index.html">Главная</a>
+        <a href="../../../../news.html">Новости</a>
+        <a href="../../../../wiki/">Википедия</a>
+        <a href="../../../../healthcare.html">Здравоохранение</a>
+        <a href="../../../../services.html">Услуги</a>
+        <a href="../../../../profile.html">Личный кабинет</a>
+    </nav>
+
+    <div class="main-content">
+        <div class="laws-intro">
+            <h1>Добавление нового указа</h1>
+            <div style="color:#777; font-size:0.9rem; margin-bottom:15px;">Админ-панель → Загрузка документов</div>
+        </div>
+
+        <form id="decreeForm" class="admin-form">
+            <div class="form-group">
+                <label for="pdfFile">Файл указа (PDF)</label>
+                <input type="file" id="pdfFile" accept=".pdf" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="number">Номер указа</label>
+                    <input type="text" id="number" placeholder="№055" required>
+                </div>
+                <div class="form-group">
+                    <label for="date">Дата подписания</label>
+                    <input type="date" id="date" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="title">Название указа</label>
+                <input type="text" id="title" placeholder="«О внесении изменений...»" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="year">Год</label>
+                    <input type="number" id="year" placeholder="2026" required>
+                </div>
+                <div class="form-group">
+                    <label for="sortOrder">Порядок (sort_order)</label>
+                    <input type="number" id="sortOrder" placeholder="Авто" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="bucketName">Бакет хранения</label>
+                    <select id="bucketName">
+                        <option value="laws-files1">laws-files1 (Основной)</option>
+                        <option value="laws-files2">laws-files2 (Архив/Доп)</option>
+                        <option value="laws-files3">laws-files3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="bucketPath">Путь в бакете</label>
+                    <input type="text" id="bucketPath" value="de/" placeholder="de/" required>
+                </div>
+            </div>
+
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="isActive" checked>
+                <label for="isActive" style="margin:0; color:#333; font-weight:500;">Указ действует (is_active)</label>
+            </div>
+
+            <button type="submit" class="submit-btn" id="submitBtn">📤 Загрузить и сохранить</button>
+            <div id="statusMsg" class="msg"></div>
+        </form>
+    </div>
+
+    <footer style="text-align:center; margin-top:40px; padding:20px 0; color:#666; font-size:0.85rem; border-top:1px solid #ddd;">
+        © 2026 СФСРЮ. Все права защищены пролетариатом.<br>
+        Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com" style="color:#666; text-decoration:none;">sfsr.ulsanna@gmail.com</a>
+    </footer>
+
+    <script>
+    (function() {
+        'use strict';
+
+        // 🔧 ВСТАВЬТЕ СВОИ КЛЮЧИ SUPABASE
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'ВАШ_ANON_PUBLIC_KEY_ЗДЕСЬ';
+
+        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+            alert('❌ Ошибка: библиотека Supabase не загрузилась. Проверьте интернет или блокировщики.');
+            return;
+        }
+
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            db: { schema: 'laws' }
+        });
+
+        const els = {
+            form: document.getElementById('decreeForm'),
+            file: document.getElementById('pdfFile'),
+            number: document.getElementById('number'),
+            date: document.getElementById('date'),
+            title: document.getElementById('title'),
+            year: document.getElementById('year'),
+            sortOrder: document.getElementById('sortOrder'),
+            bucket: document.getElementById('bucketName'),
+            path: document.getElementById('bucketPath'),
+            active: document.getElementById('isActive'),
+            btn: document.getElementById('submitBtn'),
+            msg: document.getElementById('statusMsg')
+        };
+
+        // Автозаполнение года при выборе даты
+        els.date.addEventListener('change', () => {
+            if (els.date.value) els.year.value = els.date.value.split('-')[0];
+        });
+
+        // Получаем следующий sort_order при загрузке
+        async function initSortOrder() {
+            try {
+                const { data, error } = await sb.from('president_decrees')
+                    .select('sort_order')
+                    .order('sort_order', { ascending: false })
+                    .limit(1);
+                
+                if (!error && data && data.length > 0) {
+                    els.sortOrder.value = data[0].sort_order + 1;
+                } else {
+                    els.sortOrder.value = 1;
+                }
+            } catch (e) {
+                console.warn('Не удалось загрузить sort_order, установлен 1');
+                els.sortOrder.value = 1;
+            }
+        }
+
+        function showMsg(text, type) {
+            els.msg.textContent = text;
+            els.msg.className = 'msg ' + type;
+            els.msg.style.display = 'block';
+        }
+
+        els.form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            els.btn.disabled = true;
+            els.btn.textContent = '⏳ Загрузка файла...';
+            els.msg.style.display = 'none';
+
+            try {
+                const file = els.file.files[0];
+                if (!file || file.type !== 'application/pdf') throw new Error('Выберите корректный PDF файл');
+
+                // Формируем имя файла: de-YYYYMMDD-NNN.pdf
+                const numClean = els.number.value.replace(/[^a-zA-Z0-9-]/g, '');
+                const dateStr = els.date.value.replace(/-/g, '');
+                let pathVal = els.path.value.trim();
+                if (!pathVal.endsWith('/')) pathVal += '/';
+                const fullPath = pathVal + `${dateStr}-${numClean}.pdf`;
+
+                // 1. Загрузка в Storage
+                const { error: uploadError } = await sb.storage
+                    .from(els.bucket.value)
+                    .upload(fullPath, file, { upsert: true });
+                
+                if (uploadError) throw new Error('Ошибка загрузки файла: ' + uploadError.message);
+
+                // 2. Запись в БД
+                const record = {
+                    filename: fullPath.split('/').pop(), // только имя файла
+                    number: els.number.value,
+                    date_issued: els.date.value,
+                    title: els.title.value,
+                    is_active: els.active.checked,
+                    year: parseInt(els.year.value),
+                    sort_order: parseInt(els.sortOrder.value),
+                    bucket_name: els.bucket.value,
+                    bucket_path: pathVal
+                };
+
+                const { error: dbError } = await sb.from('president_decrees').insert(record);
+                if (dbError) throw new Error('Ошибка сохранения в БД: ' + dbError.message);
+
+                showMsg('✅ Указ успешно добавлен! Файл: ' + fullPath, 'success');
+                els.form.reset();
+                els.sortOrder.value = parseInt(els.sortOrder.value) + 1;
+                els.year.value = '';
+                els.active.checked = true;
+                els.path.value = 'de/';
+                
+                // Возвращаем фокус на поле файла
+                els.file.focus();
+
+            } catch (err) {
+                showMsg('❌ ' + err.message, 'error');
+                console.error('Admin Upload Error:', err);
+            } finally {
+                els.btn.disabled = false;
+                els.btn.textContent = '📤 Загрузить и сохранить';
+            }
+        });
+
+        initSortOrder();
+    })();
+    </script>
+</body>
+</html>
