@@ -210,24 +210,30 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             // 🔑 Создаём новый File с чистым именем
             const fileToUpload = new File([file], cleanFilename, { type: 'application/pdf' });
 
-// 1. Загрузка в Storage (с явными опциями)
-const { error: uploadError } = await sb.storage
-    .from(els.bucket.value)
-    .upload(fullPath, fileToUpload, { 
-        upsert: true, 
-        contentType: 'application/pdf',
-        cacheControl: '3600',
-        // 🔑 Важно: передаём опции вторым объектом для новых версий SDK
-        fileOptions: {
-            contentType: 'application/pdf',
-            upsert: true
-        }
+// 🔑 Загрузка файла в Storage (минималистично и надёжно)
+async function uploadToStorage(bucket, path, file) {
+    // Создаём чистый объект File с ASCII-именем
+    const cleanFile = new File([file], path.split('/').pop(), { 
+        type: 'application/pdf',
+        lastModified: file.lastModified 
     });
 
-if (uploadError) {
-    console.error('Storage debug:', { fullPath, bucket: els.bucket.value, error: uploadError });
-    throw new Error('Storage: ' + uploadError.message);
+    const { data, error } = await sb.storage
+        .from(bucket)
+        .upload(path, cleanFile, {
+            upsert: true,
+            contentType: 'application/pdf',
+            cacheControl: '3600'
+        });
+
+    if (error) {
+        console.error('📁 Storage Error:', { bucket, path, error });
+        throw error;
+    }
+    return data;
 }
+
+
             
             if (uploadError) throw new Error('Storage: ' + uploadError.message);
 
@@ -246,22 +252,24 @@ if (uploadError) {
             
             if (dbError) throw new Error('DB: ' + dbError.message);
 
-            showMsg('✅ Указ добавлен: ' + fullPath, 'success');
-            els.form.reset();
-            els.sortOrder.value = parseInt(els.sortOrder.value) + 1;
-            els.year.value = '';
-            els.active.checked = true;
-            els.path.value = 'de/';
-            els.file.focus();
-
-        } catch (err) {
-            showMsg('❌ ' + err.message, 'error');
-            console.error('Admin Error:', err);
-        } finally {
-            els.btn.disabled = false;
-            els.btn.textContent = '📤 Загрузить и сохранить';
-        }
-    });
+// В обработчике формы замените блок загрузки на:
+try {
+    // ... подготовка переменных ...
+    const fullPath = pathVal + cleanFilename;
+    
+    // Загружаем файл
+    await uploadToStorage(els.bucket.value, fullPath, els.file.files[0]);
+    
+    // Если дошли сюда — файл загружен, сохраняем запись в БД
+    const { error: dbError } = await sb.from('president_decrees').insert({ /* ... */ });
+    if (dbError) throw new Error('DB: ' + dbError.message);
+    
+    showMsg('✅ Указ добавлен!', 'success');
+    // ... сброс формы ...
+    
+} catch (err) {
+    showMsg('❌ ' + err.message, 'error');
+}
 
     // Инициализация
     initSortOrder();
