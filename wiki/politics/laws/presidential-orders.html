@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Распоряжения Президента СФСРЮ</title>
-    <!-- все favicon и стили как у decrees, скопируйте из presidential-decrees.html -->
 <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
 <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
 <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -25,7 +24,6 @@
 <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
 <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
 <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-    <!-- ... (вставьте все favicon из вашего decrees.html) ... -->
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="../../../css/laws.css">
     <link rel="stylesheet" href="../../../css/decrees.css">
@@ -85,10 +83,10 @@
             </div>
         </div>
 
-<div id="yearFilterWrapper" style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
-    <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
-    <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
-</div>
+        <div id="yearFilterWrapper" style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
+            <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
+            <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
+        </div>
 
         <div id="orders-grid" class="decrees-grid"></div>
 
@@ -161,8 +159,8 @@
             download: document.getElementById('pdf-download'),
             fallback: document.getElementById('fallback-link'),
             intro: document.getElementById('laws-intro-text'),
-            yearFilter: document.getElementById('year-filter')
-			yearFilterWrapper: document.getElementById('yearFilterWrapper')  // ← добавьте эту строку
+            yearFilter: document.getElementById('year-filter'),
+            yearFilterWrapper: document.getElementById('yearFilterWrapper')
         };
 
         let cache = null;
@@ -180,7 +178,6 @@
         function populateYearFilter() {
             if (!els.yearFilter) return;
             const years = [...new Set(cache.map(d => d.year))].sort((a, b) => b - a);
-            const currentYear = new Date().getFullYear();
             els.yearFilter.innerHTML = years.map(y => 
                 `<option value="${y}" ${y === 2026 ? 'selected' : ''}>${y}</option>`
             ).join('');
@@ -231,7 +228,7 @@
             els.frame.src = '';
 
             if (els.intro) els.intro.style.display = 'none';
-			if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none'; // ← скрываем фильтр
+            if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none';
 
             const order = (cache || []).find(d => d.filename === filename);
             if (order) {
@@ -270,7 +267,7 @@
                 els.viewer.style.display = 'none';
                 els.grid.style.display = 'flex';
                 if (els.intro) els.intro.style.display = 'block';
-		        if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'flex'; // ← показываем фильтр
+                if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'flex';
                 
                 const currentYear = els.yearFilter ? els.yearFilter.value : 2026;
                 els.title.textContent = `Распоряжения Президента СФСРЮ — ${currentYear} год`;

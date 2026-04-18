@@ -26,7 +26,7 @@
 <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="../../../css/laws.css">
-	<link rel="stylesheet" href="../../../css/decrees.css">
+    <link rel="stylesheet" href="../../../css/decrees.css">
     <style>
         .year-filter-wrapper {
             max-width: 1000px; margin: 0 auto 20px; padding: 0 20px;
@@ -91,10 +91,10 @@
         </div>
 
         <!-- Фильтр по году (по центру, 85% ширины) -->
-<div id="yearFilterWrapper" style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
-    <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
-    <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
-</div>
+        <div id="yearFilterWrapper" style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
+            <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
+            <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
+        </div>
 
         <!-- Сетка карточек -->
         <div id="decrees-grid" class="decrees-grid"></div>
@@ -114,7 +114,6 @@
                 <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
             </div>
             
-            <!-- ✅ ИСПРАВЛЕНО: Размеры листа А4, белый фон, центрирование -->
             <div id="pdf-container" style="width: 100%; max-width: 794px; height: 1123px; margin: 0 auto; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); overflow: hidden;">
                 <iframe id="pdf-frame" src="" title="Просмотр указа" style="width:100%; height:100%; border:none;"></iframe>
             </div>
@@ -140,16 +139,15 @@
     </footer>
 
     <script src="../../../js/mob-menu.js"></script>
-<!-- Загрузка Supabase с fallback на случай блокировки CDN -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
-        onerror="this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
+            onerror="this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
     <script>
     (function() {
         'use strict';
 
-		const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-		const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-        // Дефолтные значения (используются если в БД колонки пустые)
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        
         const DEFAULT_BUCKET = 'laws-files1';
         const DEFAULT_PATH = 'de/';
         const TABLE_NAME = 'president_decrees';
@@ -178,8 +176,8 @@
             download: document.getElementById('pdf-download'),
             fallback: document.getElementById('fallback-link'),
             intro: document.getElementById('laws-intro-text'),
-            yearFilter: document.getElementById('year-filter')
-			yearFilterWrapper: document.getElementById('yearFilterWrapper')  // ← добавьте эту строку
+            yearFilter: document.getElementById('year-filter'),
+            yearFilterWrapper: document.getElementById('yearFilterWrapper')
         };
 
         let cache = null;
@@ -197,16 +195,16 @@
         function populateYearFilter() {
             if (!els.yearFilter) return;
             const years = [...new Set(cache.map(d => d.year))].sort((a, b) => b - a);
-            const currentYear = new Date().getFullYear();
             els.yearFilter.innerHTML = years.map(y => 
                 `<option value="${y}" ${y === 2026 ? 'selected' : ''}>${y}</option>`
             ).join('');
+            if (years.length && !years.includes(2026)) els.yearFilter.value = years[0];
         }
 
         function renderGrid(selectedYear) {
             els.grid.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка указов...</div>';
             try {
-                const year = parseInt(selectedYear) || 2026;
+                const year = parseInt(selectedYear);
                 const list = cache.filter(d => d.year === year);
                 els.grid.innerHTML = '';
                 
@@ -248,7 +246,7 @@
             els.frame.src = '';
 
             if (els.intro) els.intro.style.display = 'none';
-		    if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none'; // ← скрываем фильтр
+            if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none';
 
             const decree = (cache || []).find(d => d.filename === filename);
             if (decree) {
@@ -258,7 +256,6 @@
                 els.meta.textContent = '';
             }
 
-            // 🔑 НОВОЕ: Берём бакет и путь из БД, если их нет — используем дефолтные
             const bucket = decree?.bucket_name || DEFAULT_BUCKET;
             const filePath = `${decree?.bucket_path || DEFAULT_PATH}${filename}.pdf`;
 
@@ -290,7 +287,7 @@
                 els.viewer.style.display = 'none';
                 els.grid.style.display = 'flex';
                 if (els.intro) els.intro.style.display = 'block';
-			    if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'flex'; // ← показываем фильтр
+                if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'flex';
                 
                 const currentYear = els.yearFilter ? els.yearFilter.value : 2026;
                 els.title.textContent = `Указы Президента СФСРЮ — ${currentYear} год`;
