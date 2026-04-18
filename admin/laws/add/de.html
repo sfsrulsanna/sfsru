@@ -140,18 +140,22 @@
 (function() {
     'use strict';
 
+    // 🔧 ВСТАВЬТЕ СВОИ ДАННЫЕ
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
 
+    // Проверка загрузки CDN
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-        alert('❌ Supabase CDN не загрузился');
+        alert('❌ Supabase не загрузился. Проверьте интернет или отключите блокировщики.');
         return;
     }
 
+    // Инициализация клиента
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         db: { schema: 'laws' }
     });
 
+    // Элементы формы
     const els = {
         form: document.getElementById('decreeForm'),
         file: document.getElementById('pdfFile'),
@@ -167,91 +171,129 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         msg: document.getElementById('statusMsg')
     };
 
+    // Автозаполнение года из даты
     els.date.addEventListener('change', () => {
         if (els.date.value) els.year.value = els.date.value.split('-')[0];
     });
 
-    async function initSortOrder() {
-        const { data } = await sb.from('president_decrees')
-            .select('sort_order').order('sort_order', { ascending: false }).limit(1);
-        els.sortOrder.value = (data?.[0]?.sort_order || 0) + 1;
+    // Получение следующего sort_order
+    async function getNextSortOrder() {
+        try {
+            const { data } = await sb.from('president_decrees')
+                .select('sort_order')
+                .order('sort_order', { ascending: false })
+                .limit(1);
+            return (data?.[0]?.sort_order || 0) + 1;
+        } catch { return 1; }
     }
 
+    // Показать сообщение
     function showMsg(text, type) {
         els.msg.textContent = text;
         els.msg.className = 'msg ' + type;
         els.msg.style.display = 'block';
+        setTimeout(() => { els.msg.style.display = 'none'; }, 6000);
     }
 
-    // 🔑 Упрощённая загрузка: только путь + файл
-    async function uploadFile(bucket, path, file) {
-        // Создаём чистый File с ASCII-именем
-        const fileName = path.split('/').pop();
-        const cleanFile = new File([file], fileName, { type: 'application/pdf' });
+    // Очистка строки: только латиница, цифры, дефис, точка, подчёркивание
+    function toAscii(str) {
+        return str.replace(/[^a-zA-Z0-9-_.]/g, '').toLowerCase();
+    }
 
+    // Загрузка файла в Storage
+    async function uploadToStorage(bucket, filePath, file) {
+        const fileName = filePath.split('/').pop();
+        
+        // Создаём новый File с чистым именем и типом
+        const cleanFile = new File([file], fileName, {
+            type: 'application/pdf',
+            lastModified: file.lastModified
+        });
+
+        // Загружаем с минимальными опциями
         const { data, error } = await sb.storage
             .from(bucket)
-            .upload(path, cleanFile, { upsert: true, contentType: 'application/pdf' });
+            .upload(filePath, cleanFile, {
+                upsert: true,
+                contentType: 'application/pdf'
+            });
 
-        if (error) throw error;
+        if (error) throw new Error('Storage: ' + error.message);
         return data;
     }
 
+    // Обработчик отправки формы
     els.form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const file = els.file.files[0];
-        if (!file || file.type !== 'application/pdf') {
-            showMsg('❌ Выберите корректный PDF', 'error');
-            return;
-        }
+
+        const file = els.file.files?.[0];
+        if (!file) { showMsg('❌ Выберите PDF файл', 'error'); return; }
+        if (file.type !== 'application/pdf') { showMsg('❌ Только формат PDF', 'error'); return; }
 
         els.btn.disabled = true;
         els.btn.textContent = '⏳ Загрузка...';
         els.msg.style.display = 'none';
 
         try {
-            // Чистим путь и имя
-            const num = els.number.value.replace(/[^a-zA-Z0-9-]/g, '');
+            // 1. Формируем пути
+            const num = toAscii(els.number.value);
             const date = els.date.value.replace(/-/g, '');
             let p = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
-            if (!p.endsWith('/')) p += '/';
+            if (p && !p.endsWith('/')) p += '/';
+            
             const fileName = `${date}-${num}.pdf`;
             const fullPath = p + fileName;
+            const bucket = els.bucket.value;
 
-            // 1. Загружаем файл
-            await uploadFile(els.bucket.value, fullPath, file);
+            // 2. Загружаем файл
+            await uploadToStorage(bucket, fullPath, file);
 
-            // 2. Сохраняем запись в БД
-            await sb.from('president_decrees').insert({
+            // 3. Сохраняем запись в БД
+            const { error: dbError } = await sb.from('president_decrees').insert({
                 filename: fileName,
                 number: els.number.value,
                 date_issued: els.date.value,
                 title: els.title.value,
                 is_active: els.active.checked,
-                year: parseInt(els.year.value),
-                sort_order: parseInt(els.sortOrder.value),
-                bucket_name: els.bucket.value,
+                year: parseInt(els.year.value) || new Date(els.date.value).getFullYear(),
+                sort_order: parseInt(els.sortOrder.value) || await getNextSortOrder(),
+                bucket_name: bucket,
                 bucket_path: p
             });
 
+            if (dbError) {
+                // Откат: удаляем файл если запись не удалась
+                await sb.storage.from(bucket).remove([fullPath]);
+                throw new Error('БД: ' + dbError.message);
+            }
+
+            // Успех
             showMsg('✅ Указ добавлен: ' + fullPath, 'success');
+            
+            // Сброс формы
             els.form.reset();
-            els.sortOrder.value = parseInt(els.sortOrder.value) + 1;
+            els.sortOrder.value = (parseInt(els.sortOrder.value) || 0) + 1;
             els.year.value = '';
             els.active.checked = true;
             els.path.value = 'de/';
+            els.file.focus();
 
         } catch (err) {
-            console.error('Upload error:', err);
-            showMsg('❌ ' + (err.message || 'Неизвестная ошибка'), 'error');
+            console.error('Admin error:', err);
+            showMsg('❌ ' + err.message, 'error');
         } finally {
             els.btn.disabled = false;
             els.btn.textContent = '📤 Загрузить и сохранить';
         }
     });
 
-    initSortOrder();
-    window.sb = sb; // для отладки в консоли
+    // Инициализация
+    (async function init() {
+        els.sortOrder.value = await getNextSortOrder();
+        // Экспорт для отладки в консоли
+        window.sb = sb;
+    })();
+
 })();
 </script>
 </body>
