@@ -91,10 +91,10 @@
         </div>
 
         <!-- Фильтр по году (по центру, 85% ширины) -->
-        <div style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
-            <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
-            <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
-        </div>
+<div id="yearFilterWrapper" style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
+    <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
+    <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
+</div>
 
         <!-- Сетка карточек -->
         <div id="decrees-grid" class="decrees-grid"></div>
@@ -179,6 +179,7 @@
             fallback: document.getElementById('fallback-link'),
             intro: document.getElementById('laws-intro-text'),
             yearFilter: document.getElementById('year-filter')
+			yearFilterWrapper: document.getElementById('yearFilterWrapper')  // ← добавьте эту строку
         };
 
         let cache = null;
@@ -247,6 +248,7 @@
             els.frame.src = '';
 
             if (els.intro) els.intro.style.display = 'none';
+		    if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none'; // ← скрываем фильтр
 
             const decree = (cache || []).find(d => d.filename === filename);
             if (decree) {
@@ -288,6 +290,7 @@
                 els.viewer.style.display = 'none';
                 els.grid.style.display = 'flex';
                 if (els.intro) els.intro.style.display = 'block';
+			    if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'flex'; // ← показываем фильтр
                 
                 const currentYear = els.yearFilter ? els.yearFilter.value : 2026;
                 els.title.textContent = `Указы Президента СФСРЮ — ${currentYear} год`;
