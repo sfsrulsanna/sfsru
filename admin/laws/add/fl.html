@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Добавление Федерального закона — Админ-панель</title>
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../../css/index.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../../../../css/style.css">
+    <link rel="stylesheet" href="../../../../css/laws.css">
+    <link rel="stylesheet" href="../../../../css/decrees.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
+            onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';"></script>
+    <style>
+        .admin-form {
+            max-width: 800px; margin: 0 auto; background: rgba(255, 250, 250, 0.7);
+            backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255, 180, 180, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); padding: 2rem; color: #333;
+        }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #a00; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 10px;
+            background: rgba(255, 255, 255, 0.8); font-size: 1rem; transition: 0.2s; box-sizing: border-box;
+        }
+        .form-group input:focus, .form-group select:focus { border-color: #c00; outline: none; box-shadow: 0 0 0 3px rgba(192,0,0,0.1); }
+        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+        .form-row .form-group { flex: 1; min-width: 200px; }
+        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 10px; }
+        .checkbox-group input { width: auto; margin: 0; accent-color: #a00; }
+        .submit-btn {
+            width: 100%; padding: 1rem; background: #a00; color: #fff; border: none; border-radius: 10px;
+            font-size: 1.1rem; cursor: pointer; transition: 0.3s; margin-top: 1.5rem;
+        }
+        .submit-btn:hover { background: #c00; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(192,0,0,0.3); }
+        .submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .msg { padding: 1rem; border-radius: 8px; margin-top: 1rem; display: none; text-align: center; }
+        .msg.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .msg.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        @media (max-width: 768px) { .admin-form { padding: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ — Администратор</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная администратора</a></li>
+                    <li><a href="../../services/">Услуги</a></li>
+                    <li><a href="../../documents/">Документы</a></li>
+                    <li><a href="../../addresses/">Адреса</a></li>
+                    <li><a href="../index.html">Регистры</a></li>
+                    <li><a href="../../laws/">Законы</a></li>
+                    <li><a href="../../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-content">
+        <div class="laws-intro">
+            <h1>Добавление федерального закона / редакции</h1>
+            <div style="color:#777;">Админ-панель → Федеральные законы</div>
+        </div>
+
+        <!-- Форма для создания нового закона -->
+        <form id="lawForm" class="admin-form">
+            <h2>📘 Новый федеральный закон</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Номер закона</label>
+                    <input type="text" id="lawNumber" placeholder="001" required>
+                </div>
+                <div class="form-group">
+                    <label>Год</label>
+                    <input type="number" id="lawYear" placeholder="2026" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Название закона</label>
+                <input type="text" id="lawTitle" placeholder="«О чём-то важном»" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="lawActive" checked>
+                    <label>Закон действует?</label>
+                </div>
+                <div class="form-group">
+                    <label>Порядок сортировки</label>
+                    <input type="number" id="lawSortOrder" placeholder="Авто">
+                </div>
+            </div>
+            <button type="submit" id="createLawBtn" class="submit-btn">➕ Создать закон</button>
+        </form>
+
+        <hr>
+
+        <!-- Форма для добавления редакции к существующему закону -->
+        <form id="editionForm" class="admin-form">
+            <h2>📄 Добавить редакцию закона</h2>
+            <div class="form-group">
+                <label>Выберите закон</label>
+                <select id="selectLaw" required>
+                    <option value="">-- Сначала создайте закон --</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Дата подписания редакции</label>
+                <input type="date" id="editionDate" required>
+            </div>
+            <div class="form-group">
+                <label>PDF-файл (редакция)</label>
+                <input type="file" id="pdfFile" accept=".pdf" required>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Бакет хранения</label>
+                    <select id="bucketName">
+                        <option value="laws-files-fl1">laws-files-fl1 (Основной)</option>
+                        <option value="laws-files-fl2">laws-files-fl2 (Архив)</option>
+                        <option value="laws-files-fl3">laws-files-fl3</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Путь в бакете</label>
+                    <input type="text" id="bucketPath" value="fl/" placeholder="fl/" required>
+                </div>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="isCurrent" checked>
+                <label>Это текущая (действующая) редакция?</label>
+            </div>
+            <button type="submit" id="addEditionBtn" class="submit-btn">📤 Загрузить редакцию</button>
+            <div id="statusMsg" class="msg"></div>
+        </form>
+    </div>
+
+    <footer style="text-align:center; margin-top:40px; padding:20px; color:#666;">
+        © 2026 СФСРЮ. Все права защищены.
+    </footer>
+
+    <script>
+    (function() {
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        
+        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+            alert('❌ Supabase не загрузился');
+            return;
+        }
+        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
+
+        // Элементы
+        const lawForm = document.getElementById('lawForm');
+        const lawNumber = document.getElementById('lawNumber');
+        const lawYear = document.getElementById('lawYear');
+        const lawTitle = document.getElementById('lawTitle');
+        const lawActive = document.getElementById('lawActive');
+        const lawSortOrder = document.getElementById('lawSortOrder');
+        const createLawBtn = document.getElementById('createLawBtn');
+
+        const editionForm = document.getElementById('editionForm');
+        const selectLaw = document.getElementById('selectLaw');
+        const editionDate = document.getElementById('editionDate');
+        const pdfFile = document.getElementById('pdfFile');
+        const bucketName = document.getElementById('bucketName');
+        const bucketPath = document.getElementById('bucketPath');
+        const isCurrent = document.getElementById('isCurrent');
+        const addEditionBtn = document.getElementById('addEditionBtn');
+        const statusMsg = document.getElementById('statusMsg');
+
+        function showMsg(text, type) {
+            statusMsg.textContent = text;
+            statusMsg.className = 'msg ' + type;
+            statusMsg.style.display = 'block';
+            setTimeout(() => statusMsg.style.display = 'none', 6000);
+        }
+
+        // Загрузить список законов для выпадающего списка
+        async function loadLawsForSelect() {
+            const { data, error } = await sb.from('federal_laws').select('id, number, title, year').order('year', { ascending: false }).order('sort_order');
+            if (error) { console.error(error); return; }
+            selectLaw.innerHTML = '<option value="">-- Выберите закон --</option>';
+            data.forEach(law => {
+                const option = document.createElement('option');
+                option.value = law.id;
+                option.textContent = `${law.year} год, №${law.number} — «${law.title.substring(0, 50)}${law.title.length > 50 ? '…' : ''}»`;
+                selectLaw.appendChild(option);
+            });
+        }
+
+        // Получить следующий sort_order для законов
+        async function getNextLawSortOrder() {
+            const { data, error } = await sb.from('federal_laws').select('sort_order').order('sort_order', { ascending: false }).limit(1);
+            if (error || !data.length) return 1;
+            return (data[0].sort_order || 0) + 1;
+        }
+
+        // Создать новый закон
+        lawForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!lawNumber.value || !lawYear.value || !lawTitle.value) {
+                showMsg('❌ Заполните номер, год и название закона', 'error');
+                return;
+            }
+            createLawBtn.disabled = true;
+            createLawBtn.textContent = '⏳ Создание...';
+            try {
+                const sortOrder = lawSortOrder.value ? parseInt(lawSortOrder.value) : await getNextLawSortOrder();
+                const { error } = await sb.from('federal_laws').insert({
+                    number: lawNumber.value.trim(),
+                    title: lawTitle.value.trim(),
+                    year: parseInt(lawYear.value),
+                    is_active: lawActive.checked,
+                    sort_order: sortOrder
+                });
+                if (error) throw error;
+                showMsg('✅ Закон создан. Теперь можно добавить редакцию.', 'success');
+                lawForm.reset();
+                lawActive.checked = true;
+                await loadLawsForSelect();
+            } catch (err) {
+                showMsg('❌ ' + err.message, 'error');
+            } finally {
+                createLawBtn.disabled = false;
+                createLawBtn.textContent = '➕ Создать закон';
+            }
+        });
+
+        // Добавление редакции
+        editionForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const lawId = selectLaw.value;
+            if (!lawId) { showMsg('❌ Выберите закон', 'error'); return; }
+            const file = pdfFile.files[0];
+            if (!file) { showMsg('❌ Выберите PDF-файл', 'error'); return; }
+            if (file.type !== 'application/pdf') { showMsg('❌ Нужен PDF', 'error'); return; }
+            if (!editionDate.value) { showMsg('❌ Укажите дату подписания редакции', 'error'); return; }
+
+            addEditionBtn.disabled = true;
+            addEditionBtn.textContent = '⏳ Загрузка...';
+
+            try {
+                // Получаем номер закона (для имени файла)
+                const selectedOption = selectLaw.options[selectLaw.selectedIndex];
+                const lawNumberText = selectedOption.textContent.match(/№(\d+)/)?.[1] || '000';
+                const dateStr = editionDate.value.replace(/-/g, '');
+                const fileName = `fl-${dateStr}-${lawNumberText}.pdf`;
+                let path = bucketPath.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
+                if (path && !path.endsWith('/')) path += '/';
+                const fullPath = path + fileName;
+                const bucket = bucketName.value;
+
+                // Загружаем PDF
+                const { error: uploadError } = await sb.storage.from(bucket).upload(fullPath, file, { cacheControl: '3600', upsert: false });
+                if (uploadError) throw new Error(`Ошибка загрузки: ${uploadError.message}`);
+
+                // Если эта редакция помечена как текущая, снимаем флаг is_current с других редакций этого закона
+                if (isCurrent.checked) {
+                    const { error: updateError } = await sb.from('federal_law_editions')
+                        .update({ is_current: false })
+                        .eq('law_id', lawId);
+                    if (updateError) console.warn('Не удалось сбросить флаг у других редакций', updateError);
+                }
+
+                // Вставляем запись о редакции
+                const { error: insertError } = await sb.from('federal_law_editions').insert({
+                    law_id: lawId,
+                    date_issued: editionDate.value,
+                    file_name: fileName.replace('.pdf', ''),
+                    bucket_name: bucket,
+                    bucket_path: path,
+                    is_current: isCurrent.checked
+                });
+                if (insertError) throw insertError;
+
+                showMsg('✅ Редакция добавлена', 'success');
+                editionForm.reset();
+                bucketPath.value = 'fl/';
+                isCurrent.checked = true;
+                await loadLawsForSelect(); // обновим список, но он не меняется
+            } catch (err) {
+                showMsg('❌ ' + err.message, 'error');
+            } finally {
+                addEditionBtn.disabled = false;
+                addEditionBtn.textContent = '📤 Загрузить редакцию';
+            }
+        });
+
+        // Инициализация
+        loadLawsForSelect();
+    })();
+    </script>
+</body>
+</html>

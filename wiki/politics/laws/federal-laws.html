@@ -4,101 +4,261 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Федеральные законы СФСРЮ</title>
-<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
-<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
-<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
-<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
-<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
-<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
-<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
-<meta name="application-name" content="&nbsp;"/>
-<meta name="msapplication-TileColor" content="#FFFFFF" />
-<meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
-<meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
-<meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
-<meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
-<meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/laws.css">
+    <!-- Вставьте все favicon (скопируйте из presidential-decrees.html) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/laws.css">
+    <link rel="stylesheet" href="../../../css/decrees.css">
+    <style>
+        .year-filter-wrapper { max-width: 1000px; margin: 0 auto 20px; display: flex; justify-content: center; gap: 10px; }
+        #year-filter { padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; }
+        .law-btn.archived { opacity: 0.65; background: rgba(240,240,240,0.7) !important; }
+        .badge-repealed { position: absolute; top: 12px; right: 12px; background: #c00; color: #fff; font-size: 0.7rem; padding: 4px 8px; border-radius: 6px; z-index: 10; }
+        .editions-list { margin-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+        .edition-item { background: #f9f9f9; border-left: 4px solid #a00; padding: 10px 15px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+        .edition-item:hover { background: #f0f0f0; transform: translateX(5px); }
+        .current-edition { border-left-color: #0a0; background: #e8f5e9; }
+        .back-btn { margin: 20px 0; text-align: center; }
+        .hidden { display: none; }
+    </style>
 </head>
 <body>
-    <!-- Шапка -->
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">
-                <img src="../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ</h1>
-            </div>
-            
-            <!-- Кнопка гамбургер -->
-            <button class="menu-toggle" aria-label="Открыть меню">
-                <span class="menu-toggle-line"></span>
-                <span class="menu-toggle-line"></span>
-                <span class="menu-toggle-line"></span>
-            </button>
-            
-            <nav class="nav-menu">
-                <ul>
-                    <li><a href="../index.html">Главная</a></li>
-                    <li><a href="../news.html">Новости</a></li>
-                    <li><a href="../wiki/" class="active">Википедия</a></li>
-                    <li><a href="../healthcare.html">Здравоохранение</a></li>
-                    <li><a href="../services.html">Услуги</a></li>
-                    <li><a href="../profile.html">Личный кабинет</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
+    <header class="header">...</header> <!-- скопируйте шапку из presidential-decrees.html -->
 
-    <!-- Основной контент -->
-    <main class="main-content">
+    <div class="main-content">
         <div class="laws-intro">
-            <h1>Федеральные законы СФСРЮ</h1>
-            <p>
-                Федеральные законы Советской Федеративной Социалистической Республики Юльсанна —
-                высшие нормативные правовые акты, принимаемые по вопросам, связанным с исполнением на территории всей СФСРЮ.
-                Федеральные законы обязательны для исполнения на всей территории СФСРЮ и не должны противоречить Конституции СФСРЮ и Федеральным конституционным законам СФСРЮ.
-            </p>
-            <p>
-                Ниже представлены архивы Федеральных конституционных законов, сгруппированные по годам принятия.
-            </p>
-        </div>
-
-        <div class="laws-categories">
-            <div class="law-row">
-                <a href="../laws/federal-laws/2025/index.html" class="law-btn">
-                    <span class="law-icon">🏛️</span>
-                    <h3>2025 год</h3>
-                    <p>Федеральные законы, принятые в 2025 году</p>
-                </a>
-                <a href="../laws/federal-laws/2026/index.html" class="law-btn">
-                    <span class="law-icon">🏛️</span>
-                    <h3>2026 год</h3>
-                    <p>Федеральные законы, принятые в 2026 году</p>
-                </a>
-                <a href="../laws/federal-laws/2027/index.html" class="law-btn">
-                    <span class="law-icon">🏛️</span>
-                    <h3>2027 год</h3>
-                    <p>Федеральные законы, принятые в 2027 году</p>
-                </a>
+            <h1 id="page-title">Федеральные законы СФСРЮ — 2026 год</h1>
+            <div id="laws-intro-text">
+                <p>Федеральные законы являются основными нормативными актами, обязательными для исполнения на всей территории СФСРЮ.</p>
             </div>
         </div>
-    </main>
 
-    <!-- Подвал -->
-    <footer class="footer">
-        <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-    </footer>
+        <div id="yearFilterWrapper" style="width:85%; margin:0 auto 20px; display:flex; justify-content:center; gap:10px;">
+            <label for="year-filter">Год:</label>
+            <select id="year-filter"></select>
+        </div>
 
-    <script src="../../js/firebase-config.js"></script>
-    <script src="../../js/main.js"></script>
-    <script src="../../js/mob-menu.js"></script>
+        <div id="laws-grid" class="decrees-grid"></div>
+
+        <!-- Панель редакций (скрыта по умолчанию) -->
+        <div id="editions-panel" style="display:none;">
+            <div class="back-btn">
+                <button id="back-to-laws" class="law-btn">◀ Назад к списку законов</button>
+            </div>
+            <h2 id="selected-law-title"></h2>
+            <div id="editions-list" class="editions-list"></div>
+        </div>
+
+        <!-- Просмотрщик PDF -->
+        <div id="pdf-viewer" style="display:none; width:85%; margin:20px auto;">
+            <div class="back-btn">
+                <button id="btn-back-from-pdf" class="law-btn">◀ Вернуться к редакциям</button>
+            </div>
+            <div id="pdf-loader" style="text-align:center; padding:40px; display:none;">Загрузка...</div>
+            <div id="pdf-container" style="width:100%; max-width:794px; height:1123px; margin:0 auto; background:#fff; border:1px solid #ccc; display:none;">
+                <iframe id="pdf-frame" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+            <div id="pdf-error" style="color:#c00; display:none;"></div>
+            <p style="text-align:center;"><a id="fallback-link" href="#" target="_blank">Скачать PDF</a></p>
+        </div>
+    </div>
+
+    <footer class="footer">...</footer>
+
+    <script src="../../../js/mob-menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" onerror="this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'"></script>
+    <script>
+    (function() {
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
+
+        // Элементы DOM
+        const yearFilter = document.getElementById('year-filter');
+        const yearFilterWrapper = document.getElementById('yearFilterWrapper');
+        const lawsGrid = document.getElementById('laws-grid');
+        const editionsPanel = document.getElementById('editions-panel');
+        const selectedLawTitle = document.getElementById('selected-law-title');
+        const editionsList = document.getElementById('editions-list');
+        const backToLaws = document.getElementById('back-to-laws');
+        const pdfViewer = document.getElementById('pdf-viewer');
+        const pdfLoader = document.getElementById('pdf-loader');
+        const pdfContainer = document.getElementById('pdf-container');
+        const pdfFrame = document.getElementById('pdf-frame');
+        const pdfError = document.getElementById('pdf-error');
+        const fallbackLink = document.getElementById('fallback-link');
+        const btnBackFromPdf = document.getElementById('btn-back-from-pdf');
+
+        let allLaws = [];       // [{ id, number, title, year, is_active, sort_order }]
+        let editionsCache = {};  // { lawId: [edition] }
+        let currentLawId = null;
+        let currentEditionId = null;
+
+        const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
+
+        // Загрузка всех законов
+        async function fetchLaws() {
+            const { data, error } = await supabase.from('federal_laws').select('*').order('year', { ascending: false }).order('sort_order');
+            if (error) throw new Error('Ошибка загрузки законов: ' + error.message);
+            allLaws = data || [];
+        }
+
+        // Загрузка редакций для конкретного закона
+        async function fetchEditions(lawId) {
+            if (editionsCache[lawId]) return editionsCache[lawId];
+            const { data, error } = await supabase.from('federal_law_editions')
+                .select('*')
+                .eq('law_id', lawId)
+                .order('date_issued', { ascending: false });
+            if (error) throw new Error('Ошибка загрузки редакций');
+            editionsCache[lawId] = data || [];
+            return editionsCache[lawId];
+        }
+
+        // Заполнить выпадающий список годов
+        function populateYearFilter() {
+            const years = [...new Set(allLaws.map(l => l.year))].sort((a,b) => b - a);
+            yearFilter.innerHTML = years.map(y => `<option value="${y}" ${y === 2026 ? 'selected' : ''}>${y}</option>`).join('');
+        }
+
+        // Отобразить карточки законов за выбранный год
+        function renderLawsGrid(selectedYear) {
+            const filtered = allLaws.filter(l => l.year === parseInt(selectedYear));
+            if (!filtered.length) {
+                lawsGrid.innerHTML = `<p style="text-align:center;">Нет законов за ${selectedYear} год.</p>`;
+                return;
+            }
+            lawsGrid.innerHTML = '';
+            filtered.forEach(law => {
+                const isRepealed = !law.is_active;
+                const card = document.createElement('a');
+                card.className = 'law-btn' + (isRepealed ? ' archived' : '');
+                card.href = '#';
+                card.innerHTML = `
+                    ${isRepealed ? '<span class="badge-repealed">Утратил силу</span>' : ''}
+                    <span class="law-icon">⚖️</span>
+                    <h3>Федеральный закон №${law.number} от ${fmt(law.date_issued) || '—'}</h3>
+                    <p>«${law.title}»</p>
+                `;
+                card.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showEditions(law);
+                });
+                lawsGrid.appendChild(card);
+            });
+        }
+
+        // Показать редакции выбранного закона
+        async function showEditions(law) {
+            currentLawId = law.id;
+            const editions = await fetchEditions(law.id);
+            selectedLawTitle.textContent = `Федеральный закон №${law.number} «${law.title}» (${law.year} год)`;
+            editionsList.innerHTML = '';
+            if (!editions.length) {
+                editionsList.innerHTML = '<p>Нет загруженных редакций.</p>';
+            } else {
+                editions.forEach(ed => {
+                    const div = document.createElement('div');
+                    div.className = 'edition-item' + (ed.is_current ? ' current-edition' : '');
+                    div.innerHTML = `
+                        <strong>Редакция от ${fmt(ed.date_issued)}</strong>
+                        ${ed.is_current ? ' <span style="color:#0a0;">✓ действующая</span>' : ''}
+                        <br><small>Файл: ${ed.file_name}.pdf</small>
+                    `;
+                    div.addEventListener('click', () => loadPDF(ed));
+                    editionsList.appendChild(div);
+                });
+            }
+            lawsGrid.style.display = 'none';
+            yearFilterWrapper.style.display = 'none';
+            editionsPanel.style.display = 'block';
+            pdfViewer.style.display = 'none';
+        }
+
+        // Загрузить PDF выбранной редакции
+        async function loadPDF(edition) {
+            currentEditionId = edition.id;
+            pdfViewer.style.display = 'block';
+            editionsPanel.style.display = 'none';
+            pdfLoader.style.display = 'block';
+            pdfContainer.style.display = 'none';
+            pdfError.style.display = 'none';
+            pdfFrame.src = '';
+
+            const bucket = edition.bucket_name || 'laws-files-fl1';
+            const filePath = `${edition.bucket_path || 'fl/'}${edition.file_name}.pdf`;
+            try {
+                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 3600);
+                if (error || !data?.signedUrl) throw new Error(error?.message || 'Файл не найден');
+                const cleanUrl = data.signedUrl + '#toolbar=0&navpanes=0&view=FitH';
+                pdfFrame.src = cleanUrl;
+                fallbackLink.href = data.signedUrl;
+                pdfFrame.onload = () => { pdfLoader.style.display = 'none'; pdfContainer.style.display = 'block'; };
+                setTimeout(() => { if (pdfLoader.style.display !== 'none') { pdfLoader.style.display = 'none'; pdfContainer.style.display = 'block'; } }, 3000);
+            } catch (err) {
+                pdfLoader.style.display = 'none';
+                pdfError.style.display = 'block';
+                pdfError.textContent = `Ошибка: ${err.message}`;
+            }
+        }
+
+        // Вернуться к списку редакций из просмотрщика
+        function backToEditions() {
+            if (currentLawId) {
+                const law = allLaws.find(l => l.id === currentLawId);
+                if (law) showEditions(law);
+                else window.location.reload();
+            }
+        }
+
+        // Вернуться к списку законов (из редакций)
+        function backToLawsList() {
+            editionsPanel.style.display = 'none';
+            pdfViewer.style.display = 'none';
+            lawsGrid.style.display = 'flex';
+            yearFilterWrapper.style.display = 'flex';
+            const selectedYear = yearFilter.value;
+            renderLawsGrid(selectedYear);
+        }
+
+        // Обработчики
+        backToLaws.addEventListener('click', backToLawsList);
+        btnBackFromPdf.addEventListener('click', backToEditions);
+        yearFilter.addEventListener('change', () => {
+            const year = yearFilter.value;
+            document.getElementById('page-title').textContent = `Федеральные законы СФСРЮ — ${year} год`;
+            renderLawsGrid(year);
+        });
+
+        // Инициализация
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await fetchLaws();
+                populateYearFilter();
+                const initialYear = yearFilter.value;
+                document.getElementById('page-title').textContent = `Федеральные законы СФСРЮ — ${initialYear} год`;
+                renderLawsGrid(initialYear);
+            } catch (err) {
+                lawsGrid.innerHTML = `<div style="color:#c00;">⚠️ ${err.message}</div>`;
+            }
+        });
+    })();
+    </script>
 </body>
 </html>
