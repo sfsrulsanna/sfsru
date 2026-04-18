@@ -140,22 +140,10 @@
 (function() {
     'use strict';
 
-    // 🔧 ВСТАВЬТЕ СВОИ ДАННЫЕ
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+    const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-upload-decree`;
 
-    // Проверка загрузки CDN
-    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-        alert('❌ Supabase не загрузился. Проверьте интернет или отключите блокировщики.');
-        return;
-    }
-
-    // Инициализация клиента
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        db: { schema: 'laws' }
-    });
-
-    // Элементы формы
     const els = {
         form: document.getElementById('decreeForm'),
         file: document.getElementById('pdfFile'),
@@ -171,23 +159,20 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         msg: document.getElementById('statusMsg')
     };
 
-    // Автозаполнение года из даты
     els.date.addEventListener('change', () => {
         if (els.date.value) els.year.value = els.date.value.split('-')[0];
     });
 
-    // Получение следующего sort_order
     async function getNextSortOrder() {
         try {
-            const { data } = await sb.from('president_decrees')
-                .select('sort_order')
-                .order('sort_order', { ascending: false })
-                .limit(1);
+            const res = await fetch(`${SUPABASE_URL}/rest/v1/president_decrees?select=sort_order&order=sort_order.desc&limit=1`, {
+                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+            });
+            const data = await res.json();
             return (data?.[0]?.sort_order || 0) + 1;
         } catch { return 1; }
     }
 
-    // Показать сообщение
     function showMsg(text, type) {
         els.msg.textContent = text;
         els.msg.className = 'msg ' + type;
@@ -195,47 +180,32 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         setTimeout(() => { els.msg.style.display = 'none'; }, 6000);
     }
 
-    // Очистка строки: только латиница, цифры, дефис, точка, подчёркивание
     function toAscii(str) {
         return str.replace(/[^a-zA-Z0-9-_.]/g, '').toLowerCase();
     }
 
-    // Загрузка файла в Storage
-    async function uploadToStorage(bucket, filePath, file) {
-        const fileName = filePath.split('/').pop();
-        
-        // Создаём новый File с чистым именем и типом
-        const cleanFile = new File([file], fileName, {
-            type: 'application/pdf',
-            lastModified: file.lastModified
+    // Конвертация файла в base64
+    function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
         });
-
-        // Загружаем с минимальными опциями
-        const { data, error } = await sb.storage
-            .from(bucket)
-            .upload(filePath, cleanFile, {
-                upsert: true,
-                contentType: 'application/pdf'
-            });
-
-        if (error) throw new Error('Storage: ' + error.message);
-        return data;
     }
 
-    // Обработчик отправки формы
     els.form.addEventListener('submit', async (e) => {
         e.preventDefault();
-
         const file = els.file.files?.[0];
         if (!file) { showMsg('❌ Выберите PDF файл', 'error'); return; }
         if (file.type !== 'application/pdf') { showMsg('❌ Только формат PDF', 'error'); return; }
 
         els.btn.disabled = true;
-        els.btn.textContent = '⏳ Загрузка...';
+        els.btn.textContent = '⏳ Обработка...';
         els.msg.style.display = 'none';
 
         try {
-            // 1. Формируем пути
+            // Подготовка данных
             const num = toAscii(els.number.value);
             const date = els.date.value.replace(/-/g, '');
             let p = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
@@ -245,41 +215,46 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             const fullPath = p + fileName;
             const bucket = els.bucket.value;
 
-            // 2. Загружаем файл
-            await uploadToStorage(bucket, fullPath, file);
+            // Конвертация файла
+            const base64 = await fileToBase64(file);
 
-            // 3. Сохраняем запись в БД
-            const { error: dbError } = await sb.from('president_decrees').insert({
-                filename: fileName,
-                number: els.number.value,
-                date_issued: els.date.value,
-                title: els.title.value,
-                is_active: els.active.checked,
-                year: parseInt(els.year.value) || new Date(els.date.value).getFullYear(),
-                sort_order: parseInt(els.sortOrder.value) || await getNextSortOrder(),
-                bucket_name: bucket,
-                bucket_path: p
+            // Вызов Edge Function
+            const response = await fetch(EDGE_FUNCTION_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'apikey': SUPABASE_ANON_KEY,
+                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+                },
+                body: JSON.stringify({
+                    fileData: base64,
+                    fileName,
+                    filePath: fullPath,
+                    bucket,
+                    metadata: {
+                        number: els.number.value,
+                        date_issued: els.date.value,
+                        title: els.title.value,
+                        is_active: els.active.checked,
+                        year: parseInt(els.year.value) || new Date(els.date.value).getFullYear(),
+                        sort_order: parseInt(els.sortOrder.value) || await getNextSortOrder(),
+                        bucket_path: p
+                    }
+                })
             });
 
-            if (dbError) {
-                // Откат: удаляем файл если запись не удалась
-                await sb.storage.from(bucket).remove([fullPath]);
-                throw new Error('БД: ' + dbError.message);
-            }
+            const result = await response.json();
+            if (!response.ok) throw new Error(result.error || 'Ошибка сервера');
 
-            // Успех
             showMsg('✅ Указ добавлен: ' + fullPath, 'success');
-            
-            // Сброс формы
             els.form.reset();
             els.sortOrder.value = (parseInt(els.sortOrder.value) || 0) + 1;
             els.year.value = '';
             els.active.checked = true;
             els.path.value = 'de/';
-            els.file.focus();
 
         } catch (err) {
-            console.error('Admin error:', err);
+            console.error('Edge Function error:', err);
             showMsg('❌ ' + err.message, 'error');
         } finally {
             els.btn.disabled = false;
@@ -287,13 +262,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         }
     });
 
-    // Инициализация
     (async function init() {
         els.sortOrder.value = await getNextSortOrder();
-        // Экспорт для отладки в консоли
-        window.sb = sb;
     })();
-
 })();
 </script>
 </body>
