@@ -140,9 +140,8 @@
 (function() {
     'use strict';
 
-const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-    const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-upload-decree`;
+    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
 
     if (!window.supabase || typeof window.supabase.createClient !== 'function') {
         alert('❌ Supabase не загрузился');
@@ -168,6 +167,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         msg: document.getElementById('statusMsg')
     };
 
+    // Автозаполнение года из даты
     els.date.addEventListener('change', () => {
         if (els.date.value) els.year.value = els.date.value.split('-')[0];
     });
@@ -194,15 +194,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         return str.replace(/[^a-zA-Z0-9-_.]/g, '').toLowerCase();
     }
 
-    function fileToBase64(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.readAsDataURL(file);
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-        });
-    }
-
     els.form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const file = els.file.files?.[0];
@@ -210,50 +201,47 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         if (file.type !== 'application/pdf') { showMsg('❌ Только формат PDF', 'error'); return; }
 
         els.btn.disabled = true;
-        els.btn.textContent = '⏳ Обработка...';
+        els.btn.textContent = '⏳ Загрузка...';
         els.msg.style.display = 'none';
 
         try {
+            // Формируем путь и имя файла
             const num = toAscii(els.number.value);
             const date = els.date.value.replace(/-/g, '');
             let p = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
             if (p && !p.endsWith('/')) p += '/';
-            
             const fileName = `${date}-${num}.pdf`;
             const fullPath = p + fileName;
             const bucket = els.bucket.value;
 
-            const base64 = await fileToBase64(file);
+            // 1. Загружаем PDF в Storage
+            const { error: uploadError } = await sb.storage
+                .from(bucket)
+                .upload(fullPath, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+            if (uploadError) throw new Error(`Ошибка загрузки файла: ${uploadError.message}`);
+
+            // 2. Определяем sort_order
             const currentSort = parseInt(els.sortOrder.value) || await getNextSortOrder();
 
-            const response = await fetch(EDGE_FUNCTION_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'apikey': SUPABASE_ANON_KEY,
-                    'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-                },
-                body: JSON.stringify({
-                    fileData: base64,
-                    fileName,
-                    filePath: fullPath,
-                    bucket,
-                    metadata: {
-                        number: els.number.value,
-                        date_issued: els.date.value,
-                        title: els.title.value,
-                        is_active: els.active.checked,
-                        year: parseInt(els.year.value) || new Date(els.date.value).getFullYear(),
-                        sort_order: currentSort,
-                        bucket_path: p
-                    }
-                })
+            // 3. Вставляем запись в таблицу
+            const { error: insertError } = await sb.from('president_decrees').insert({
+                number: els.number.value,
+                date_issued: els.date.value,
+                title: els.title.value,
+                year: parseInt(els.year.value) || new Date(els.date.value).getFullYear(),
+                sort_order: currentSort,
+                is_active: els.active.checked,
+                bucket_name: bucket,
+                bucket_path: p,
+                filename: fileName.replace('.pdf', '')   // без расширения
             });
 
-            const result = await response.json();
-            if (!response.ok) throw new Error(result.error || `Ошибка ${response.status}`);
+            if (insertError) throw new Error(`Ошибка БД: ${insertError.message}`);
 
-            showMsg('✅ Указ добавлен: ' + fullPath, 'success');
+            showMsg('✅ Указ добавлен', 'success');
             els.form.reset();
             els.sortOrder.value = currentSort + 1;
             els.year.value = '';
@@ -261,7 +249,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             els.path.value = 'de/';
 
         } catch (err) {
-            console.error('Edge Function error:', err);
+            console.error(err);
             showMsg('❌ ' + err.message, 'error');
         } finally {
             els.btn.disabled = false;
@@ -269,9 +257,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         }
     });
 
+    // Инициализация: проставляем следующий sort_order
     (async function init() {
         els.sortOrder.value = await getNextSortOrder();
-        window.sb = sb;
     })();
 })();
 </script>
