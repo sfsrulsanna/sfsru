@@ -144,6 +144,16 @@ const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
     const EDGE_FUNCTION_URL = `${SUPABASE_URL}/functions/v1/admin-upload-decree`;
 
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        alert('❌ Supabase не загрузился');
+        return;
+    }
+
+    // 🔑 Клиент с указанием схемы laws
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        db: { schema: 'laws' }
+    });
+
     const els = {
         form: document.getElementById('decreeForm'),
         file: document.getElementById('pdfFile'),
@@ -163,14 +173,19 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         if (els.date.value) els.year.value = els.date.value.split('-')[0];
     });
 
+    // 🔧 Исправленная функция: использует sb client с правильной схемой
     async function getNextSortOrder() {
         try {
-            const res = await fetch(`${SUPABASE_URL}/rest/v1/president_decrees?select=sort_order&order=sort_order.desc&limit=1`, {
-                headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
-            });
-            const data = await res.json();
+            const { data, error } = await sb.from('president_decrees')
+                .select('sort_order')
+                .order('sort_order', { ascending: false })
+                .limit(1);
+            if (error) throw error;
             return (data?.[0]?.sort_order || 0) + 1;
-        } catch { return 1; }
+        } catch (e) {
+            console.warn('sort_order fallback:', e);
+            return 1;
+        }
     }
 
     function showMsg(text, type) {
@@ -184,7 +199,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         return str.replace(/[^a-zA-Z0-9-_.]/g, '').toLowerCase();
     }
 
-    // Конвертация файла в base64
     function fileToBase64(file) {
         return new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -205,7 +219,6 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
         els.msg.style.display = 'none';
 
         try {
-            // Подготовка данных
             const num = toAscii(els.number.value);
             const date = els.date.value.replace(/-/g, '');
             let p = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
@@ -215,10 +228,9 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
             const fullPath = p + fileName;
             const bucket = els.bucket.value;
 
-            // Конвертация файла
             const base64 = await fileToBase64(file);
+            const currentSort = parseInt(els.sortOrder.value) || await getNextSortOrder();
 
-            // Вызов Edge Function
             const response = await fetch(EDGE_FUNCTION_URL, {
                 method: 'POST',
                 headers: {
@@ -231,24 +243,24 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
                     fileName,
                     filePath: fullPath,
                     bucket,
-                    metadata: {
+                    meta {
                         number: els.number.value,
                         date_issued: els.date.value,
                         title: els.title.value,
                         is_active: els.active.checked,
                         year: parseInt(els.year.value) || new Date(els.date.value).getFullYear(),
-                        sort_order: parseInt(els.sortOrder.value) || await getNextSortOrder(),
+                        sort_order: currentSort,
                         bucket_path: p
                     }
                 })
             });
 
             const result = await response.json();
-            if (!response.ok) throw new Error(result.error || 'Ошибка сервера');
+            if (!response.ok) throw new Error(result.error || `Ошибка ${response.status}`);
 
             showMsg('✅ Указ добавлен: ' + fullPath, 'success');
             els.form.reset();
-            els.sortOrder.value = (parseInt(els.sortOrder.value) || 0) + 1;
+            els.sortOrder.value = currentSort + 1;
             els.year.value = '';
             els.active.checked = true;
             els.path.value = 'de/';
@@ -264,6 +276,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
     (async function init() {
         els.sortOrder.value = await getNextSortOrder();
+        window.sb = sb; // для отладки
     })();
 })();
 </script>
