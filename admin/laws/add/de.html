@@ -136,195 +136,123 @@
         © 2026 СФСРЮ. Все права защищены пролетариатом.<br>
         Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com" style="color:#666; text-decoration:none;">sfsr.ulsanna@gmail.com</a>
     </footer>
-    <script>
-    (function() {
-        'use strict';
+<script>
+(function() {
+    'use strict';
 
-        // 🔧 ВСТАВЬТЕ СВОИ КЛЮЧИ SUPABASE
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
 
-        // Проверка загрузки CDN
-        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-            alert('❌ Ошибка: библиотека Supabase не загрузилась. Проверьте интернет или блокировщики.');
+    if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+        alert('❌ Supabase CDN не загрузился');
+        return;
+    }
+
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        db: { schema: 'laws' }
+    });
+
+    const els = {
+        form: document.getElementById('decreeForm'),
+        file: document.getElementById('pdfFile'),
+        number: document.getElementById('number'),
+        date: document.getElementById('date'),
+        title: document.getElementById('title'),
+        year: document.getElementById('year'),
+        sortOrder: document.getElementById('sortOrder'),
+        bucket: document.getElementById('bucketName'),
+        path: document.getElementById('bucketPath'),
+        active: document.getElementById('isActive'),
+        btn: document.getElementById('submitBtn'),
+        msg: document.getElementById('statusMsg')
+    };
+
+    els.date.addEventListener('change', () => {
+        if (els.date.value) els.year.value = els.date.value.split('-')[0];
+    });
+
+    async function initSortOrder() {
+        const { data } = await sb.from('president_decrees')
+            .select('sort_order').order('sort_order', { ascending: false }).limit(1);
+        els.sortOrder.value = (data?.[0]?.sort_order || 0) + 1;
+    }
+
+    function showMsg(text, type) {
+        els.msg.textContent = text;
+        els.msg.className = 'msg ' + type;
+        els.msg.style.display = 'block';
+    }
+
+    // 🔑 Упрощённая загрузка: только путь + файл
+    async function uploadFile(bucket, path, file) {
+        // Создаём чистый File с ASCII-именем
+        const fileName = path.split('/').pop();
+        const cleanFile = new File([file], fileName, { type: 'application/pdf' });
+
+        const { data, error } = await sb.storage
+            .from(bucket)
+            .upload(path, cleanFile, { upsert: true, contentType: 'application/pdf' });
+
+        if (error) throw error;
+        return data;
+    }
+
+    els.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const file = els.file.files[0];
+        if (!file || file.type !== 'application/pdf') {
+            showMsg('❌ Выберите корректный PDF', 'error');
             return;
         }
 
-        // Инициализация клиента с указанием схемы
-        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            db: { schema: 'laws' }
-        });
+        els.btn.disabled = true;
+        els.btn.textContent = '⏳ Загрузка...';
+        els.msg.style.display = 'none';
 
-        // Элементы формы
-        const els = {
-            form: document.getElementById('decreeForm'),
-            file: document.getElementById('pdfFile'),
-            number: document.getElementById('number'),
-            date: document.getElementById('date'),
-            title: document.getElementById('title'),
-            year: document.getElementById('year'),
-            sortOrder: document.getElementById('sortOrder'),
-            bucket: document.getElementById('bucketName'),
-            path: document.getElementById('bucketPath'),
-            active: document.getElementById('isActive'),
-            btn: document.getElementById('submitBtn'),
-            msg: document.getElementById('statusMsg')
-        };
+        try {
+            // Чистим путь и имя
+            const num = els.number.value.replace(/[^a-zA-Z0-9-]/g, '');
+            const date = els.date.value.replace(/-/g, '');
+            let p = els.path.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
+            if (!p.endsWith('/')) p += '/';
+            const fileName = `${date}-${num}.pdf`;
+            const fullPath = p + fileName;
 
-        // Автозаполнение года при выборе даты
-        els.date.addEventListener('change', () => {
-            if (els.date.value) {
-                els.year.value = els.date.value.split('-')[0];
-            }
-        });
+            // 1. Загружаем файл
+            await uploadFile(els.bucket.value, fullPath, file);
 
-        // Получение следующего sort_order при загрузке
-        async function initSortOrder() {
-            try {
-                const { data, error } = await sb.from('president_decrees')
-                    .select('sort_order')
-                    .order('sort_order', { ascending: false })
-                    .limit(1);
-                
-                if (!error && data && data.length > 0) {
-                    els.sortOrder.value = data[0].sort_order + 1;
-                } else {
-                    els.sortOrder.value = 1;
-                }
-            } catch (e) {
-                console.warn('Не удалось загрузить sort_order, установлен 1');
-                els.sortOrder.value = 1;
-            }
+            // 2. Сохраняем запись в БД
+            await sb.from('president_decrees').insert({
+                filename: fileName,
+                number: els.number.value,
+                date_issued: els.date.value,
+                title: els.title.value,
+                is_active: els.active.checked,
+                year: parseInt(els.year.value),
+                sort_order: parseInt(els.sortOrder.value),
+                bucket_name: els.bucket.value,
+                bucket_path: p
+            });
+
+            showMsg('✅ Указ добавлен: ' + fullPath, 'success');
+            els.form.reset();
+            els.sortOrder.value = parseInt(els.sortOrder.value) + 1;
+            els.year.value = '';
+            els.active.checked = true;
+            els.path.value = 'de/';
+
+        } catch (err) {
+            console.error('Upload error:', err);
+            showMsg('❌ ' + (err.message || 'Неизвестная ошибка'), 'error');
+        } finally {
+            els.btn.disabled = false;
+            els.btn.textContent = '📤 Загрузить и сохранить';
         }
+    });
 
-        // Показ сообщения
-        function showMsg(text, type) {
-            els.msg.textContent = text;
-            els.msg.className = 'msg ' + type;
-            els.msg.style.display = 'block';
-            setTimeout(() => { els.msg.style.display = 'none'; }, 5000);
-        }
-
-        // Очистка строки от кириллицы и спецсимволов
-        function cleanString(str) {
-            return str.replace(/[^a-zA-Z0-9-_.]/g, '');
-        }
-
-        // Обработчик отправки формы
-        els.form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const file = els.file.files[0];
-            if (!file) {
-                showMsg('❌ Выберите PDF файл', 'error');
-                return;
-            }
-
-            if (file.type !== 'application/pdf') {
-                showMsg('❌ Файл должен быть в формате PDF', 'error');
-                return;
-            }
-
-            els.btn.disabled = true;
-            els.btn.textContent = '⏳ Загрузка...';
-            els.msg.style.display = 'none';
-
-            try {
-                // Формируем чистое имя файла
-                const numClean = cleanString(els.number.value);
-                const dateStr = els.date.value.replace(/-/g, '');
-                let pathVal = els.path.value.trim();
-                
-                // Убираем кириллицу из пути
-                pathVal = pathVal.replace(/[^a-zA-Z0-9/_.-]/g, '');
-                if (!pathVal.endsWith('/')) pathVal += '/';
-                
-                const cleanFilename = `${dateStr}-${numClean}.pdf`;
-                const fullPath = pathVal + cleanFilename;
-
-                console.log('📁 Загрузка файла:', {
-                    bucket: els.bucket.value,
-                    path: fullPath,
-                    originalName: file.name
-                });
-
-                // 🔑 Создаём новый File с чистым ASCII-именем
-                const fileToUpload = new File([file], cleanFilename, { 
-                    type: 'application/pdf',
-                    lastModified: file.lastModified 
-                });
-
-                // 1. Загрузка файла в Storage
-                const { data: uploadData, error: uploadError } = await sb.storage
-                    .from(els.bucket.value)
-                    .upload(fullPath, fileToUpload, {
-                        upsert: true,
-                        contentType: 'application/pdf',
-                        cacheControl: '3600'
-                    });
-
-                if (uploadError) {
-                    console.error('❌ Storage error:', uploadError);
-                    throw new Error('Ошибка загрузки файла: ' + uploadError.message);
-                }
-
-                console.log('✅ Файл загружен:', uploadData);
-
-                // 2. Запись метаданных в базу данных
-                const record = {
-                    filename: cleanFilename,
-                    number: els.number.value,
-                    date_issued: els.date.value,
-                    title: els.title.value,
-                    is_active: els.active.checked,
-                    year: parseInt(els.year.value),
-                    sort_order: parseInt(els.sortOrder.value),
-                    bucket_name: els.bucket.value,
-                    bucket_path: pathVal
-                };
-
-                console.log('💾 Запись в БД:', record);
-
-                const { data: dbData, error: dbError } = await sb
-                    .from('president_decrees')
-                    .insert(record);
-
-                if (dbError) {
-                    console.error('❌ Database error:', dbError);
-                    // Если запись не удалась — удаляем загруженный файл
-                    await sb.storage.from(els.bucket.value).remove([fullPath]);
-                    throw new Error('Ошибка сохранения в БД: ' + dbError.message);
-                }
-
-                console.log('✅ Запись создана:', dbData);
-
-                // Успех
-                showMsg('✅ Указ успешно добавлен! Файл: ' + fullPath, 'success');
-                
-                // Сброс формы
-                els.form.reset();
-                els.sortOrder.value = parseInt(els.sortOrder.value) + 1;
-                els.year.value = '';
-                els.active.checked = true;
-                els.path.value = 'de/';
-                els.file.focus();
-
-            } catch (err) {
-                console.error('Admin Upload Error:', err);
-                showMsg('❌ ' + err.message, 'error');
-            } finally {
-                els.btn.disabled = false;
-                els.btn.textContent = '📤 Загрузить и сохранить';
-            }
-        });
-
-        // Инициализация при загрузке
-        initSortOrder();
-
-        // Экспорт для отладки в консоли
-        window.sb = sb;
-        window.adminForm = els.form;
-    })();
-    </script>
+    initSortOrder();
+    window.sb = sb; // для отладки в консоли
+})();
+</script>
 </body>
 </html>
