@@ -114,7 +114,6 @@
         
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
 
-        // Элементы DOM
         const yearFilter = document.getElementById('year-filter');
         const yearFilterWrapper = document.getElementById('yearFilterWrapper');
         const lawsGrid = document.getElementById('laws-grid');
@@ -130,39 +129,32 @@
         const fallbackLink = document.getElementById('fallback-link');
         const btnBackFromPdf = document.getElementById('btn-back-from-pdf');
 
-        let allLaws = [];       // [{ id, number, title, year, is_active, sort_order }]
-        let editionsCache = {};  // { lawId: [edition] }
-        let currentLawId = null;
-        let currentEditionId = null;
+        let allLaws = [];
+        let currentLaw = null;
+        let additionalEditions = [];
 
         const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
 
-        // Загрузка всех законов
         async function fetchLaws() {
             const { data, error } = await supabase.from('federal_laws').select('*').order('year', { ascending: false }).order('sort_order');
             if (error) throw new Error('Ошибка загрузки законов: ' + error.message);
             allLaws = data || [];
         }
 
-        // Загрузка редакций для конкретного закона
-        async function fetchEditions(lawId) {
-            if (editionsCache[lawId]) return editionsCache[lawId];
+        async function fetchAdditionalEditions(lawId) {
             const { data, error } = await supabase.from('federal_law_editions')
                 .select('*')
                 .eq('law_id', lawId)
                 .order('date_issued', { ascending: false });
             if (error) throw new Error('Ошибка загрузки редакций');
-            editionsCache[lawId] = data || [];
-            return editionsCache[lawId];
+            return data || [];
         }
 
-        // Заполнить выпадающий список годов
         function populateYearFilter() {
             const years = [...new Set(allLaws.map(l => l.year))].sort((a,b) => b - a);
             yearFilter.innerHTML = years.map(y => `<option value="${y}" ${y === 2026 ? 'selected' : ''}>${y}</option>`).join('');
         }
 
-        // Отобразить карточки законов за выбранный год
         function renderLawsGrid(selectedYear) {
             const filtered = allLaws.filter(l => l.year === parseInt(selectedYear));
             if (!filtered.length) {
@@ -178,7 +170,7 @@
                 card.innerHTML = `
                     ${isRepealed ? '<span class="badge-repealed">Утратил силу</span>' : ''}
                     <span class="law-icon">⚖️</span>
-                    <h3>Федеральный закон №${law.number} от ${fmt(law.date_issued) || '—'}</h3>
+                    <h3>Федеральный закон №${law.number} от ${fmt(law.original_date)}</h3>
                     <p>«${law.title}»</p>
                 `;
                 card.addEventListener('click', (e) => {
@@ -189,20 +181,35 @@
             });
         }
 
-        // Показать редакции выбранного закона
         async function showEditions(law) {
-            currentLawId = law.id;
-            const editions = await fetchEditions(law.id);
+            currentLaw = law;
+            additionalEditions = await fetchAdditionalEditions(law.id);
             selectedLawTitle.textContent = `Федеральный закон №${law.number} «${law.title}» (${law.year} год)`;
             editionsList.innerHTML = '';
-            if (!editions.length) {
-                editionsList.innerHTML = '<p>Нет загруженных редакций.</p>';
+
+            // Сначала отображаем исходную редакцию
+            const originalDiv = document.createElement('div');
+            originalDiv.className = 'edition-item original-edition';
+            originalDiv.innerHTML = `
+                <strong>📜 Исходная редакция от ${fmt(law.original_date)}</strong>
+                <br><small>Оригинальный текст закона</small>
+            `;
+            originalDiv.addEventListener('click', () => loadPDF({
+                file_name: law.original_file_name,
+                bucket_name: law.original_bucket || 'laws-files-fl1',
+                bucket_path: law.original_bucket_path || 'fl/'
+            }));
+            editionsList.appendChild(originalDiv);
+
+            // Затем дополнительные редакции
+            if (additionalEditions.length === 0) {
+                editionsList.innerHTML += '<p style="margin-top:10px;">Нет дополнительных редакций.</p>';
             } else {
-                editions.forEach(ed => {
+                additionalEditions.forEach(ed => {
                     const div = document.createElement('div');
                     div.className = 'edition-item' + (ed.is_current ? ' current-edition' : '');
                     div.innerHTML = `
-                        <strong>Редакция от ${fmt(ed.date_issued)}</strong>
+                        <strong>🔄 Редакция от ${fmt(ed.date_issued)}</strong>
                         ${ed.is_current ? ' <span style="color:#0a0;">✓ действующая</span>' : ''}
                         <br><small>Файл: ${ed.file_name}.pdf</small>
                     `;
@@ -210,15 +217,14 @@
                     editionsList.appendChild(div);
                 });
             }
+
             lawsGrid.style.display = 'none';
             yearFilterWrapper.style.display = 'none';
             editionsPanel.style.display = 'block';
             pdfViewer.style.display = 'none';
         }
 
-        // Загрузить PDF выбранной редакции
         async function loadPDF(edition) {
-            currentEditionId = edition.id;
             pdfViewer.style.display = 'block';
             editionsPanel.style.display = 'none';
             pdfLoader.style.display = 'block';
@@ -243,16 +249,11 @@
             }
         }
 
-        // Вернуться к списку редакций из просмотрщика
         function backToEditions() {
-            if (currentLawId) {
-                const law = allLaws.find(l => l.id === currentLawId);
-                if (law) showEditions(law);
-                else window.location.reload();
-            }
+            if (currentLaw) showEditions(currentLaw);
+            else window.location.reload();
         }
 
-        // Вернуться к списку законов (из редакций)
         function backToLawsList() {
             editionsPanel.style.display = 'none';
             pdfViewer.style.display = 'none';
@@ -262,7 +263,6 @@
             renderLawsGrid(selectedYear);
         }
 
-        // Обработчики
         backToLaws.addEventListener('click', backToLawsList);
         btnBackFromPdf.addEventListener('click', backToEditions);
         yearFilter.addEventListener('change', () => {
@@ -271,7 +271,6 @@
             renderLawsGrid(year);
         });
 
-        // Инициализация
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 await fetchLaws();
