@@ -89,11 +89,11 @@
 
     <div class="main-content">
         <div class="laws-intro">
-            <h1>Добавление федерального закона / редакции</h1>
-            <div style="color:#777;">Админ-панель → Федеральные законы</div>
+            <h1>Управление федеральными законами и редакциями</h1>
+            <div style="color:#777;">Добавление / редактирование</div>
         </div>
 
-        <!-- Форма для создания нового закона -->
+        <!-- Форма создания нового закона (с исходной редакцией) -->
         <form id="lawForm" class="admin-form">
             <h2>📘 Новый федеральный закон</h2>
             <div class="form-row">
@@ -110,6 +110,14 @@
                 <label>Название закона</label>
                 <input type="text" id="lawTitle" placeholder="«О чём-то важном»" required>
             </div>
+            <div class="form-group">
+                <label>Дата исходной редакции</label>
+                <input type="date" id="originalDate" required>
+            </div>
+            <div class="form-group">
+                <label>PDF исходной редакции</label>
+                <input type="file" id="originalPdf" accept=".pdf" required>
+            </div>
             <div class="form-row">
                 <div class="form-group checkbox-group">
                     <input type="checkbox" id="lawActive" checked>
@@ -120,14 +128,14 @@
                     <input type="number" id="lawSortOrder" placeholder="Авто">
                 </div>
             </div>
-            <button type="submit" id="createLawBtn" class="submit-btn">➕ Создать закон</button>
+            <button type="submit" id="createLawBtn" class="submit-btn">➕ Создать закон с исходной редакцией</button>
         </form>
 
         <hr>
 
-        <!-- Форма для добавления редакции к существующему закону -->
+        <!-- Форма для добавления дополнительной редакции к существующему закону -->
         <form id="editionForm" class="admin-form">
-            <h2>📄 Добавить редакцию закона</h2>
+            <h2>📄 Добавить новую редакцию (изменение/поправку)</h2>
             <div class="form-group">
                 <label>Выберите закон</label>
                 <select id="selectLaw" required>
@@ -135,12 +143,12 @@
                 </select>
             </div>
             <div class="form-group">
-                <label>Дата подписания редакции</label>
+                <label>Дата подписания новой редакции</label>
                 <input type="date" id="editionDate" required>
             </div>
             <div class="form-group">
-                <label>PDF-файл (редакция)</label>
-                <input type="file" id="pdfFile" accept=".pdf" required>
+                <label>PDF-файл (новая редакция)</label>
+                <input type="file" id="editionPdf" accept=".pdf" required>
             </div>
             <div class="form-row">
                 <div class="form-group">
@@ -157,10 +165,10 @@
                 </div>
             </div>
             <div class="checkbox-group">
-                <input type="checkbox" id="isCurrent" checked>
-                <label>Это текущая (действующая) редакция?</label>
+                <input type="checkbox" id="isCurrent">
+                <label>Это текущая (действующая) редакция? (если да, то предыдущие перестанут быть текущими)</label>
             </div>
-            <button type="submit" id="addEditionBtn" class="submit-btn">📤 Загрузить редакцию</button>
+            <button type="submit" id="addEditionBtn" class="submit-btn">📤 Загрузить новую редакцию</button>
             <div id="statusMsg" class="msg"></div>
         </form>
     </div>
@@ -180,11 +188,12 @@
         }
         const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
 
-        // Элементы
         const lawForm = document.getElementById('lawForm');
         const lawNumber = document.getElementById('lawNumber');
         const lawYear = document.getElementById('lawYear');
         const lawTitle = document.getElementById('lawTitle');
+        const originalDate = document.getElementById('originalDate');
+        const originalPdf = document.getElementById('originalPdf');
         const lawActive = document.getElementById('lawActive');
         const lawSortOrder = document.getElementById('lawSortOrder');
         const createLawBtn = document.getElementById('createLawBtn');
@@ -192,7 +201,7 @@
         const editionForm = document.getElementById('editionForm');
         const selectLaw = document.getElementById('selectLaw');
         const editionDate = document.getElementById('editionDate');
-        const pdfFile = document.getElementById('pdfFile');
+        const editionPdf = document.getElementById('editionPdf');
         const bucketName = document.getElementById('bucketName');
         const bucketPath = document.getElementById('bucketPath');
         const isCurrent = document.getElementById('isCurrent');
@@ -206,7 +215,6 @@
             setTimeout(() => statusMsg.style.display = 'none', 6000);
         }
 
-        // Загрузить список законов для выпадающего списка
         async function loadLawsForSelect() {
             const { data, error } = await sb.from('federal_laws').select('id, number, title, year').order('year', { ascending: false }).order('sort_order');
             if (error) { console.error(error); return; }
@@ -219,33 +227,51 @@
             });
         }
 
-        // Получить следующий sort_order для законов
         async function getNextLawSortOrder() {
             const { data, error } = await sb.from('federal_laws').select('sort_order').order('sort_order', { ascending: false }).limit(1);
             if (error || !data.length) return 1;
             return (data[0].sort_order || 0) + 1;
         }
 
-        // Создать новый закон
+        // Создание закона с исходной редакцией
         lawForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            if (!lawNumber.value || !lawYear.value || !lawTitle.value) {
-                showMsg('❌ Заполните номер, год и название закона', 'error');
+            if (!lawNumber.value || !lawYear.value || !lawTitle.value || !originalDate.value || !originalPdf.files[0]) {
+                showMsg('❌ Заполните все поля, включая PDF исходной редакции', 'error');
                 return;
             }
+            const file = originalPdf.files[0];
+            if (file.type !== 'application/pdf') { showMsg('❌ Нужен PDF', 'error'); return; }
+
             createLawBtn.disabled = true;
             createLawBtn.textContent = '⏳ Создание...';
             try {
+                // Генерируем имя файла: fl-YYYYMMDD-номер.pdf
+                const dateStr = originalDate.value.replace(/-/g, '');
+                const fileName = `fl-${dateStr}-${lawNumber.value.trim()}.pdf`;
+                const bucket = 'laws-files-fl1';
+                const path = `fl/${fileName}`;
+                
+                // Загружаем PDF
+                const { error: uploadError } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
+                if (uploadError) throw new Error(`Ошибка загрузки PDF: ${uploadError.message}`);
+                
                 const sortOrder = lawSortOrder.value ? parseInt(lawSortOrder.value) : await getNextLawSortOrder();
-                const { error } = await sb.from('federal_laws').insert({
+                // Вставляем закон
+                const { error: insertError } = await sb.from('federal_laws').insert({
                     number: lawNumber.value.trim(),
                     title: lawTitle.value.trim(),
                     year: parseInt(lawYear.value),
                     is_active: lawActive.checked,
-                    sort_order: sortOrder
+                    sort_order: sortOrder,
+                    original_date: originalDate.value,
+                    original_file_name: fileName.replace('.pdf', ''),
+                    original_bucket: bucket,
+                    original_bucket_path: 'fl/'
                 });
-                if (error) throw error;
-                showMsg('✅ Закон создан. Теперь можно добавить редакцию.', 'success');
+                if (insertError) throw insertError;
+                
+                showMsg('✅ Закон и исходная редакция созданы', 'success');
                 lawForm.reset();
                 lawActive.checked = true;
                 await loadLawsForSelect();
@@ -253,25 +279,23 @@
                 showMsg('❌ ' + err.message, 'error');
             } finally {
                 createLawBtn.disabled = false;
-                createLawBtn.textContent = '➕ Создать закон';
+                createLawBtn.textContent = '➕ Создать закон с исходной редакцией';
             }
         });
 
-        // Добавление редакции
+        // Добавление дополнительной редакции
         editionForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const lawId = selectLaw.value;
             if (!lawId) { showMsg('❌ Выберите закон', 'error'); return; }
-            const file = pdfFile.files[0];
-            if (!file) { showMsg('❌ Выберите PDF-файл', 'error'); return; }
-            if (file.type !== 'application/pdf') { showMsg('❌ Нужен PDF', 'error'); return; }
-            if (!editionDate.value) { showMsg('❌ Укажите дату подписания редакции', 'error'); return; }
+            const file = editionPdf.files[0];
+            if (!file) { showMsg('❌ Выберите PDF', 'error'); return; }
+            if (!editionDate.value) { showMsg('❌ Укажите дату редакции', 'error'); return; }
 
             addEditionBtn.disabled = true;
             addEditionBtn.textContent = '⏳ Загрузка...';
-
             try {
-                // Получаем номер закона (для имени файла)
+                // Получаем номер закона для имени файла
                 const selectedOption = selectLaw.options[selectLaw.selectedIndex];
                 const lawNumberText = selectedOption.textContent.match(/№(\d+)/)?.[1] || '000';
                 const dateStr = editionDate.value.replace(/-/g, '');
@@ -281,19 +305,14 @@
                 const fullPath = path + fileName;
                 const bucket = bucketName.value;
 
-                // Загружаем PDF
                 const { error: uploadError } = await sb.storage.from(bucket).upload(fullPath, file, { cacheControl: '3600', upsert: false });
                 if (uploadError) throw new Error(`Ошибка загрузки: ${uploadError.message}`);
 
-                // Если эта редакция помечена как текущая, снимаем флаг is_current с других редакций этого закона
+                // Если новая редакция помечена как текущая, сбрасываем флаг у других редакций этого закона
                 if (isCurrent.checked) {
-                    const { error: updateError } = await sb.from('federal_law_editions')
-                        .update({ is_current: false })
-                        .eq('law_id', lawId);
-                    if (updateError) console.warn('Не удалось сбросить флаг у других редакций', updateError);
+                    await sb.from('federal_law_editions').update({ is_current: false }).eq('law_id', lawId);
                 }
 
-                // Вставляем запись о редакции
                 const { error: insertError } = await sb.from('federal_law_editions').insert({
                     law_id: lawId,
                     date_issued: editionDate.value,
@@ -304,20 +323,18 @@
                 });
                 if (insertError) throw insertError;
 
-                showMsg('✅ Редакция добавлена', 'success');
+                showMsg('✅ Дополнительная редакция добавлена', 'success');
                 editionForm.reset();
                 bucketPath.value = 'fl/';
-                isCurrent.checked = true;
-                await loadLawsForSelect(); // обновим список, но он не меняется
+                isCurrent.checked = false;
             } catch (err) {
                 showMsg('❌ ' + err.message, 'error');
             } finally {
                 addEditionBtn.disabled = false;
-                addEditionBtn.textContent = '📤 Загрузить редакцию';
+                addEditionBtn.textContent = '📤 Загрузить новую редакцию';
             }
         });
 
-        // Инициализация
         loadLawsForSelect();
     })();
     </script>
