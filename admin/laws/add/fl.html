@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Добавление Федерального закона — Админ-панель</title>
+    <title>Управление федеральными законами — Админ-панель</title>
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -29,32 +29,37 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
             onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';"></script>
     <style>
-        .admin-form {
-            max-width: 800px; margin: 0 auto; background: rgba(255, 250, 250, 0.7);
-            backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255, 180, 180, 0.3);
-            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08); padding: 2rem; color: #333;
-        }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #a00; }
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 10px;
-            background: rgba(255, 255, 255, 0.8); font-size: 1rem; transition: 0.2s; box-sizing: border-box;
-        }
-        .form-group input:focus, .form-group select:focus { border-color: #c00; outline: none; box-shadow: 0 0 0 3px rgba(192,0,0,0.1); }
-        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
-        .form-row .form-group { flex: 1; min-width: 200px; }
-        .checkbox-group { display: flex; align-items: center; gap: 0.5rem; margin-top: 10px; }
-        .checkbox-group input { width: auto; margin: 0; accent-color: #a00; }
-        .submit-btn {
-            width: 100%; padding: 1rem; background: #a00; color: #fff; border: none; border-radius: 10px;
-            font-size: 1.1rem; cursor: pointer; transition: 0.3s; margin-top: 1.5rem;
-        }
-        .submit-btn:hover { background: #c00; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(192,0,0,0.3); }
-        .submit-btn:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
-        .msg { padding: 1rem; border-radius: 8px; margin-top: 1rem; display: none; text-align: center; }
-        .msg.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .msg.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        @media (max-width: 768px) { .admin-form { padding: 1.5rem; } }
+        * { box-sizing: border-box; }
+        body { background: #f5f5f5; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+        .admin-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-weight: 600; color: #a00; }
+        input, select, textarea { padding: 10px 12px; border: 1px solid #ccc; border-radius: 12px; font-size: 0.95rem; }
+        button { background: #a00; color: white; border: none; border-radius: 12px; padding: 10px 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #c00; transform: scale(1.02); }
+        button.secondary { background: #2c3e66; }
+        button.danger { background: #6c2e2e; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { background: #f8f0f0; color: #a00; }
+        .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+        .badge { background: #e0e0e0; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        .badge.active { background: #c8e6c9; color: #2e7d32; }
+        .badge.inactive { background: #ffcdd2; color: #c62828; }
+        .search-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-bar input, .search-bar select { padding: 8px 12px; }
+        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; border-radius: 24px; max-width: 600px; width: 90%; padding: 24px; max-height: 90vh; overflow-y: auto; }
+        hr { margin: 20px 0; }
+        .file-info { font-size: 0.8rem; color: #555; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
+        .editions-list { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .edition-item { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .edition-actions button { margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; }
+        .current-badge { background: #2e7d32; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
     </style>
 </head>
 <body>
@@ -87,256 +92,302 @@
         </div>
     </header>
 
-    <div class="main-content">
-        <div class="laws-intro">
-            <h1>Управление федеральными законами и редакциями</h1>
-            <div style="color:#777;">Добавление / редактирование</div>
-        </div>
-
-        <!-- Форма создания нового закона (с исходной редакцией) -->
-        <form id="lawForm" class="admin-form">
-            <h2>📘 Новый федеральный закон</h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Номер закона</label>
-                    <input type="text" id="lawNumber" placeholder="001" required>
-                </div>
-                <div class="form-group">
-                    <label>Год</label>
-                    <input type="number" id="lawYear" placeholder="2026" required>
-                </div>
+<div class="admin-container">
+    <div class="card">
+        <h2>📘 Создать / редактировать федеральный закон (основные данные)</h2>
+        <form id="lawForm">
+            <div class="form-grid">
+                <div class="form-group"><label>Номер</label><input type="text" id="lawNumber" required></div>
+                <div class="form-group"><label>Название</label><input type="text" id="lawTitle" required></div>
+                <div class="form-group"><label>Год</label><input type="number" id="lawYear" required></div>
+                <div class="form-group"><label>Дата исходной редакции</label><input type="date" id="originalDate" required></div>
+                <div class="form-group"><label>PDF исходной редакции</label><input type="file" id="originalPdf" accept=".pdf"></div>
+                <div class="form-group"><label>Бакет для исходного PDF</label><select id="originalBucket"><option value="laws-files-fl1">laws-files-fl1</option><option value="laws-files-fl2">laws-files-fl2</option><option value="laws-files-fl3">laws-files-fl3</option></select></div>
+                <div class="form-group"><label><input type="checkbox" id="lawActive" checked> Закон действует</label></div>
+                <div class="form-group"><label>Порядок (sort_order)</label><input type="number" id="lawSortOrder"></div>
             </div>
-            <div class="form-group">
-                <label>Название закона</label>
-                <input type="text" id="lawTitle" placeholder="«О чём-то важном»" required>
+            <input type="hidden" id="editLawId">
+            <div style="display:flex; gap:12px; margin-top:20px;">
+                <button type="submit" id="saveLawBtn">💾 Сохранить закон</button>
+                <button type="button" id="cancelLawEdit" class="secondary" style="display:none;">Отменить</button>
             </div>
-            <div class="form-group">
-                <label>Дата исходной редакции</label>
-                <input type="date" id="originalDate" required>
-            </div>
-            <div class="form-group">
-                <label>PDF исходной редакции</label>
-                <input type="file" id="originalPdf" accept=".pdf" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group checkbox-group">
-                    <input type="checkbox" id="lawActive" checked>
-                    <label>Закон действует?</label>
-                </div>
-                <div class="form-group">
-                    <label>Порядок сортировки</label>
-                    <input type="number" id="lawSortOrder" placeholder="Авто">
-                </div>
-            </div>
-            <button type="submit" id="createLawBtn" class="submit-btn">➕ Создать закон с исходной редакцией</button>
-        </form>
-
-        <hr>
-
-        <!-- Форма для добавления дополнительной редакции к существующему закону -->
-        <form id="editionForm" class="admin-form">
-            <h2>📄 Добавить новую редакцию (изменение/поправку)</h2>
-            <div class="form-group">
-                <label>Выберите закон</label>
-                <select id="selectLaw" required>
-                    <option value="">-- Сначала создайте закон --</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Дата подписания новой редакции</label>
-                <input type="date" id="editionDate" required>
-            </div>
-            <div class="form-group">
-                <label>PDF-файл (новая редакция)</label>
-                <input type="file" id="editionPdf" accept=".pdf" required>
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Бакет хранения</label>
-                    <select id="bucketName">
-                        <option value="laws-files-fl1">laws-files-fl1 (Основной)</option>
-                        <option value="laws-files-fl2">laws-files-fl2 (Архив)</option>
-                        <option value="laws-files-fl3">laws-files-fl3</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Путь в бакете</label>
-                    <input type="text" id="bucketPath" value="fl/" placeholder="fl/" required>
-                </div>
-            </div>
-            <div class="checkbox-group">
-                <input type="checkbox" id="isCurrent">
-                <label>Это текущая (действующая) редакция? (если да, то предыдущие перестанут быть текущими)</label>
-            </div>
-            <button type="submit" id="addEditionBtn" class="submit-btn">📤 Загрузить новую редакцию</button>
-            <div id="statusMsg" class="msg"></div>
+            <div id="lawMsg"></div>
         </form>
     </div>
+
+    <div class="card">
+        <h2>📄 Управление редакциями закона</h2>
+        <div class="form-group"><label>Выберите закон</label><select id="selectLawForEditions"></select></div>
+        <div id="editionsPanel" style="margin-top:20px;">
+            <div id="editionsList"></div>
+            <hr>
+            <h3>Добавить новую редакцию</h3>
+            <div class="form-grid">
+                <div class="form-group"><label>Дата редакции</label><input type="date" id="editionDate"></div>
+                <div class="form-group"><label>PDF файл</label><input type="file" id="editionPdf" accept=".pdf"></div>
+                <div class="form-group"><label>Бакет</label><select id="editionBucket"><option value="laws-files-fl1">laws-files-fl1</option><option value="laws-files-fl2">laws-files-fl2</option><option value="laws-files-fl3">laws-files-fl3</option></select></div>
+                <div class="form-group"><label>Путь</label><input type="text" id="editionPath" value="fl/"></div>
+                <div class="form-group"><label><input type="checkbox" id="editionIsCurrent"> Сделать текущей редакцией</label></div>
+            </div>
+            <button id="addEditionBtn" class="secondary">➕ Добавить редакцию</button>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="search-bar"><input type="text" id="searchLaws" placeholder="Поиск законов..."><select id="yearFilterLaws"><option value="">Все годы</option></select><button id="refreshLawsBtn">Обновить</button></div>
+        <div class="table-wrapper"><table id="lawsTable"><thead><tr><th>№</th><th>Название</th><th>Год</th><th>Статус</th><th>Исходная редакция</th><th>Действия</th></tr></thead><tbody></tbody></table></div>
+    </div>
+</div>
 
     <footer style="text-align:center; margin-top:40px; padding:20px; color:#666;">
         © 2026 СФСРЮ. Все права защищены.
     </footer>
 
-    <script>
-    (function() {
-        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-        
-        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
-            alert('❌ Supabase не загрузился');
-            return;
+<script>
+(function(){
+    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
+    const LAWS_TABLE = 'federal_laws';
+    const EDITIONS_TABLE = 'federal_law_editions';
+
+    let allLaws = [];
+    let currentEditLawId = null;
+
+    // DOM
+    const lawForm = document.getElementById('lawForm');
+    const lawNumber = document.getElementById('lawNumber');
+    const lawTitle = document.getElementById('lawTitle');
+    const lawYear = document.getElementById('lawYear');
+    const originalDate = document.getElementById('originalDate');
+    const originalPdf = document.getElementById('originalPdf');
+    const originalBucket = document.getElementById('originalBucket');
+    const lawActive = document.getElementById('lawActive');
+    const lawSortOrder = document.getElementById('lawSortOrder');
+    const editLawId = document.getElementById('editLawId');
+    const saveLawBtn = document.getElementById('saveLawBtn');
+    const cancelLawEdit = document.getElementById('cancelLawEdit');
+    const lawMsg = document.getElementById('lawMsg');
+    const selectLawForEditions = document.getElementById('selectLawForEditions');
+    const editionsListDiv = document.getElementById('editionsList');
+    const editionDate = document.getElementById('editionDate');
+    const editionPdf = document.getElementById('editionPdf');
+    const editionBucket = document.getElementById('editionBucket');
+    const editionPath = document.getElementById('editionPath');
+    const editionIsCurrent = document.getElementById('editionIsCurrent');
+    const addEditionBtn = document.getElementById('addEditionBtn');
+    const searchLaws = document.getElementById('searchLaws');
+    const yearFilterLaws = document.getElementById('yearFilterLaws');
+    const refreshLawsBtn = document.getElementById('refreshLawsBtn');
+    const lawsTbody = document.querySelector('#lawsTable tbody');
+
+    function showLawMsg(msg, isError=true) { lawMsg.textContent = msg; lawMsg.style.color = isError?'#c00':'#0a0'; setTimeout(()=>lawMsg.textContent='',3000); }
+
+    async function loadLaws() {
+        const { data, error } = await sb.from(LAWS_TABLE).select('*').order('sort_order', {ascending:true});
+        if(error) { showLawMsg('Ошибка загрузки законов'); return; }
+        allLaws = data || [];
+        const years = [...new Set(allLaws.map(l=>l.year))].sort((a,b)=>b-a);
+        yearFilterLaws.innerHTML = '<option value="">Все годы</option>' + years.map(y=>`<option value="${y}">${y}</option>`).join('');
+        renderLawsTable();
+        // заполнить select для выбора закона (редакции)
+        selectLawForEditions.innerHTML = '<option value="">-- Выберите закон --</option>' + allLaws.map(l=>`<option value="${l.id}">${l.year} год №${l.number} — ${l.title.substring(0,50)}</option>`).join('');
+        if(selectLawForEditions.value) loadEditionsForLaw(selectLawForEditions.value);
+    }
+
+    function renderLawsTable() {
+        const term = searchLaws.value.toLowerCase();
+        const year = yearFilterLaws.value;
+        const filtered = allLaws.filter(l => (year==''||l.year==year) && (l.number.toLowerCase().includes(term)||l.title.toLowerCase().includes(term)));
+        lawsTbody.innerHTML = '';
+        for(let law of filtered) {
+            const row = lawsTbody.insertRow();
+            row.insertCell(0).textContent = law.number;
+            row.insertCell(1).textContent = law.title;
+            row.insertCell(2).textContent = law.year;
+            row.insertCell(3).innerHTML = `<span class="badge ${law.is_active?'active':'inactive'}">${law.is_active?'Действует':'Утратил силу'}</span>`;
+            row.insertCell(4).innerHTML = law.original_file_name ? `<a href="#" class="view-original" data-law='${JSON.stringify(law)}'>📄 Исходный PDF</a>` : '—';
+            const actions = row.insertCell(5);
+            actions.innerHTML = `<button class="edit-law-btn" data-id="${law.id}">✏️</button> <button class="delete-law-btn" data-id="${law.id}" data-filename="${law.original_file_name}" data-bucket="${law.original_bucket||'laws-files-fl1'}" data-path="${law.original_bucket_path||'fl/'}">🗑</button>`;
         }
-        const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
-
-        const lawForm = document.getElementById('lawForm');
-        const lawNumber = document.getElementById('lawNumber');
-        const lawYear = document.getElementById('lawYear');
-        const lawTitle = document.getElementById('lawTitle');
-        const originalDate = document.getElementById('originalDate');
-        const originalPdf = document.getElementById('originalPdf');
-        const lawActive = document.getElementById('lawActive');
-        const lawSortOrder = document.getElementById('lawSortOrder');
-        const createLawBtn = document.getElementById('createLawBtn');
-
-        const editionForm = document.getElementById('editionForm');
-        const selectLaw = document.getElementById('selectLaw');
-        const editionDate = document.getElementById('editionDate');
-        const editionPdf = document.getElementById('editionPdf');
-        const bucketName = document.getElementById('bucketName');
-        const bucketPath = document.getElementById('bucketPath');
-        const isCurrent = document.getElementById('isCurrent');
-        const addEditionBtn = document.getElementById('addEditionBtn');
-        const statusMsg = document.getElementById('statusMsg');
-
-        function showMsg(text, type) {
-            statusMsg.textContent = text;
-            statusMsg.className = 'msg ' + type;
-            statusMsg.style.display = 'block';
-            setTimeout(() => statusMsg.style.display = 'none', 6000);
-        }
-
-        async function loadLawsForSelect() {
-            const { data, error } = await sb.from('federal_laws').select('id, number, title, year').order('year', { ascending: false }).order('sort_order');
-            if (error) { console.error(error); return; }
-            selectLaw.innerHTML = '<option value="">-- Выберите закон --</option>';
-            data.forEach(law => {
-                const option = document.createElement('option');
-                option.value = law.id;
-                option.textContent = `${law.year} год, №${law.number} — «${law.title.substring(0, 50)}${law.title.length > 50 ? '…' : ''}»`;
-                selectLaw.appendChild(option);
-            });
-        }
-
-        async function getNextLawSortOrder() {
-            const { data, error } = await sb.from('federal_laws').select('sort_order').order('sort_order', { ascending: false }).limit(1);
-            if (error || !data.length) return 1;
-            return (data[0].sort_order || 0) + 1;
-        }
-
-        // Создание закона с исходной редакцией
-        lawForm.addEventListener('submit', async (e) => {
+        document.querySelectorAll('.edit-law-btn').forEach(btn=>btn.addEventListener('click',()=>editLaw(btn.dataset.id)));
+        document.querySelectorAll('.delete-law-btn').forEach(btn=>btn.addEventListener('click',()=>deleteLaw(btn.dataset.id, btn.dataset.filename, btn.dataset.bucket, btn.dataset.path)));
+        document.querySelectorAll('.view-original').forEach(link=>link.addEventListener('click',async(e)=>{
             e.preventDefault();
-            if (!lawNumber.value || !lawYear.value || !lawTitle.value || !originalDate.value || !originalPdf.files[0]) {
-                showMsg('❌ Заполните все поля, включая PDF исходной редакции', 'error');
-                return;
+            const law = JSON.parse(link.dataset.law);
+            const bucket = law.original_bucket || 'laws-files-fl1';
+            const path = law.original_bucket_path || 'fl/';
+            const {data,error}=await sb.storage.from(bucket).createSignedUrl(`${path}${law.original_file_name}.pdf`,60);
+            if(data?.signedUrl) window.open(data.signedUrl,'_blank');
+            else alert('Не удалось открыть PDF');
+        }));
+    }
+
+    async function editLaw(id) {
+        const law = allLaws.find(l=>l.id==id);
+        if(!law) return;
+        currentEditLawId = id;
+        editLawId.value = id;
+        lawNumber.value = law.number;
+        lawTitle.value = law.title;
+        lawYear.value = law.year;
+        originalDate.value = law.original_date;
+        originalBucket.value = law.original_bucket || 'laws-files-fl1';
+        lawActive.checked = law.is_active;
+        lawSortOrder.value = law.sort_order || '';
+        originalPdf.required = false;
+        originalPdf.value = '';
+        saveLawBtn.textContent = '✏️ Обновить закон';
+        cancelLawEdit.style.display = 'inline-block';
+        window.scrollTo({top:0});
+    }
+
+    function resetLawForm() {
+        lawForm.reset();
+        editLawId.value = '';
+        currentEditLawId = null;
+        originalPdf.required = true;
+        saveLawBtn.textContent = '💾 Сохранить закон';
+        cancelLawEdit.style.display = 'none';
+        lawActive.checked = true;
+        originalBucket.value = 'laws-files-fl1';
+    }
+    cancelLawEdit.addEventListener('click', resetLawForm);
+
+    async function deleteLaw(id, filename, bucket, path) {
+        if(!confirm('Удалить закон? Все его редакции и файлы будут удалены безвозвратно.')) return;
+        try {
+            if(filename) await sb.storage.from(bucket).remove([`${path}${filename}.pdf`]);
+            // удалить все редакции (файлы)
+            const { data: editions } = await sb.from(EDITIONS_TABLE).select('*').eq('law_id', id);
+            for(let ed of editions) {
+                const edBucket = ed.bucket_name || 'laws-files-fl1';
+                const edPath = ed.bucket_path || 'fl/';
+                await sb.storage.from(edBucket).remove([`${edPath}${ed.file_name}.pdf`]);
             }
-            const file = originalPdf.files[0];
-            if (file.type !== 'application/pdf') { showMsg('❌ Нужен PDF', 'error'); return; }
+            await sb.from(EDITIONS_TABLE).delete().eq('law_id', id);
+            await sb.from(LAWS_TABLE).delete().eq('id', id);
+            showLawMsg('Закон удалён', false);
+            loadLaws();
+            if(currentEditLawId == id) resetLawForm();
+            if(selectLawForEditions.value == id) { selectLawForEditions.value = ''; editionsListDiv.innerHTML = ''; }
+        } catch(err) { showLawMsg('Ошибка удаления: '+err.message); }
+    }
 
-            createLawBtn.disabled = true;
-            createLawBtn.textContent = '⏳ Создание...';
-            try {
-                // Генерируем имя файла: fl-YYYYMMDD-номер.pdf
-                const dateStr = originalDate.value.replace(/-/g, '');
-                const fileName = `fl-${dateStr}-${lawNumber.value.trim()}.pdf`;
-                const bucket = 'laws-files-fl1';
-                const path = `fl/${fileName}`;
-                
-                // Загружаем PDF
-                const { error: uploadError } = await sb.storage.from(bucket).upload(path, file, { cacheControl: '3600', upsert: false });
-                if (uploadError) throw new Error(`Ошибка загрузки PDF: ${uploadError.message}`);
-                
-                const sortOrder = lawSortOrder.value ? parseInt(lawSortOrder.value) : await getNextLawSortOrder();
-                // Вставляем закон
-                const { error: insertError } = await sb.from('federal_laws').insert({
-                    number: lawNumber.value.trim(),
-                    title: lawTitle.value.trim(),
-                    year: parseInt(lawYear.value),
-                    is_active: lawActive.checked,
-                    sort_order: sortOrder,
-                    original_date: originalDate.value,
-                    original_file_name: fileName.replace('.pdf', ''),
-                    original_bucket: bucket,
-                    original_bucket_path: 'fl/'
-                });
-                if (insertError) throw insertError;
-                
-                showMsg('✅ Закон и исходная редакция созданы', 'success');
-                lawForm.reset();
-                lawActive.checked = true;
-                await loadLawsForSelect();
-            } catch (err) {
-                showMsg('❌ ' + err.message, 'error');
-            } finally {
-                createLawBtn.disabled = false;
-                createLawBtn.textContent = '➕ Создать закон с исходной редакцией';
-            }
-        });
-
-        // Добавление дополнительной редакции
-        editionForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const lawId = selectLaw.value;
-            if (!lawId) { showMsg('❌ Выберите закон', 'error'); return; }
-            const file = editionPdf.files[0];
-            if (!file) { showMsg('❌ Выберите PDF', 'error'); return; }
-            if (!editionDate.value) { showMsg('❌ Укажите дату редакции', 'error'); return; }
-
-            addEditionBtn.disabled = true;
-            addEditionBtn.textContent = '⏳ Загрузка...';
-            try {
-                // Получаем номер закона для имени файла
-                const selectedOption = selectLaw.options[selectLaw.selectedIndex];
-                const lawNumberText = selectedOption.textContent.match(/№(\d+)/)?.[1] || '000';
-                const dateStr = editionDate.value.replace(/-/g, '');
-                const fileName = `fl-${dateStr}-${lawNumberText}.pdf`;
-                let path = bucketPath.value.trim().replace(/[^a-zA-Z0-9/_.-]/g, '');
-                if (path && !path.endsWith('/')) path += '/';
-                const fullPath = path + fileName;
-                const bucket = bucketName.value;
-
-                const { error: uploadError } = await sb.storage.from(bucket).upload(fullPath, file, { cacheControl: '3600', upsert: false });
-                if (uploadError) throw new Error(`Ошибка загрузки: ${uploadError.message}`);
-
-                // Если новая редакция помечена как текущая, сбрасываем флаг у других редакций этого закона
-                if (isCurrent.checked) {
-                    await sb.from('federal_law_editions').update({ is_current: false }).eq('law_id', lawId);
+    lawForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const number = lawNumber.value.trim();
+        const title = lawTitle.value.trim();
+        const year = parseInt(lawYear.value);
+        const origDate = originalDate.value;
+        const isActive = lawActive.checked;
+        let sortOrder = lawSortOrder.value ? parseInt(lawSortOrder.value) : null;
+        const bucket = originalBucket.value;
+        const file = originalPdf.files[0];
+        let fileName = null, filePath = null;
+        if(file) {
+            const datePart = origDate.replace(/-/g,'');
+            fileName = `fl-${datePart}-${number}`;
+            filePath = `fl/${fileName}.pdf`;
+        }
+        try {
+            if(currentEditLawId) {
+                const oldLaw = allLaws.find(l=>l.id==currentEditLawId);
+                const updates = { number, title, year, original_date: origDate, is_active: isActive, sort_order: sortOrder, original_bucket: bucket, original_bucket_path: 'fl/' };
+                if(file) {
+                    if(oldLaw.original_file_name) await sb.storage.from(oldLaw.original_bucket||'laws-files-fl1').remove([`${oldLaw.original_bucket_path||'fl/'}${oldLaw.original_file_name}.pdf`]);
+                    await sb.storage.from(bucket).upload(filePath, file, { upsert: true });
+                    updates.original_file_name = fileName;
+                } else {
+                    updates.original_file_name = oldLaw.original_file_name;
                 }
-
-                const { error: insertError } = await sb.from('federal_law_editions').insert({
-                    law_id: lawId,
-                    date_issued: editionDate.value,
-                    file_name: fileName.replace('.pdf', ''),
-                    bucket_name: bucket,
-                    bucket_path: path,
-                    is_current: isCurrent.checked
+                await sb.from(LAWS_TABLE).update(updates).eq('id', currentEditLawId);
+                showLawMsg('Закон обновлён', false);
+            } else {
+                if(!file) throw new Error('Загрузите PDF исходной редакции');
+                await sb.storage.from(bucket).upload(filePath, file);
+                if(!sortOrder) {
+                    const { data: max } = await sb.from(LAWS_TABLE).select('sort_order').order('sort_order',{ascending:false}).limit(1);
+                    sortOrder = (max && max[0]?.sort_order || 0) + 1;
+                }
+                await sb.from(LAWS_TABLE).insert({
+                    number, title, year, original_date: origDate, is_active: isActive, sort_order: sortOrder,
+                    original_bucket: bucket, original_bucket_path: 'fl/', original_file_name: fileName
                 });
-                if (insertError) throw insertError;
-
-                showMsg('✅ Дополнительная редакция добавлена', 'success');
-                editionForm.reset();
-                bucketPath.value = 'fl/';
-                isCurrent.checked = false;
-            } catch (err) {
-                showMsg('❌ ' + err.message, 'error');
-            } finally {
-                addEditionBtn.disabled = false;
-                addEditionBtn.textContent = '📤 Загрузить новую редакцию';
+                showLawMsg('Закон создан', false);
             }
-        });
+            resetLawForm();
+            loadLaws();
+        } catch(err) { showLawMsg('Ошибка: '+err.message); }
+    });
 
-        loadLawsForSelect();
-    })();
-    </script>
+    // Управление редакциями
+    async function loadEditionsForLaw(lawId) {
+        if(!lawId) { editionsListDiv.innerHTML = ''; return; }
+        const { data, error } = await sb.from(EDITIONS_TABLE).select('*').eq('law_id', lawId).order('date_issued', {ascending:false});
+        if(error) { editionsListDiv.innerHTML = '<p>Ошибка загрузки редакций</p>'; return; }
+        editionsListDiv.innerHTML = '';
+        for(let ed of data) {
+            const div = document.createElement('div');
+            div.className = 'edition-item';
+            div.innerHTML = `
+                <div><strong>📅 ${new Date(ed.date_issued).toLocaleDateString('ru-RU')}</strong> ${ed.is_current ? '<span class="current-badge">Действующая</span>' : ''}<br><small>${ed.file_name}.pdf</small></div>
+                <div class="edition-actions">
+                    <button class="set-current-btn" data-id="${ed.id}" data-law="${lawId}">⭐ Сделать текущей</button>
+                    <button class="delete-edition-btn" data-id="${ed.id}" data-filename="${ed.file_name}" data-bucket="${ed.bucket_name||'laws-files-fl1'}" data-path="${ed.bucket_path||'fl/'}">🗑 Удалить</button>
+                </div>
+            `;
+            editionsListDiv.appendChild(div);
+        }
+        document.querySelectorAll('.set-current-btn').forEach(btn=>btn.addEventListener('click',async()=>{
+            const edId = btn.dataset.id, law = btn.dataset.law;
+            await sb.from(EDITIONS_TABLE).update({ is_current: false }).eq('law_id', law);
+            await sb.from(EDITIONS_TABLE).update({ is_current: true }).eq('id', edId);
+            loadEditionsForLaw(law);
+        }));
+        document.querySelectorAll('.delete-edition-btn').forEach(btn=>btn.addEventListener('click',async()=>{
+            if(!confirm('Удалить редакцию?')) return;
+            const edId = btn.dataset.id, filename = btn.dataset.filename, bucket = btn.dataset.bucket, path = btn.dataset.path;
+            await sb.storage.from(bucket).remove([`${path}${filename}.pdf`]);
+            await sb.from(EDITIONS_TABLE).delete().eq('id', edId);
+            loadEditionsForLaw(selectLawForEditions.value);
+        }));
+    }
+
+    selectLawForEditions.addEventListener('change', () => {
+        loadEditionsForLaw(selectLawForEditions.value);
+    });
+
+    addEditionBtn.addEventListener('click', async () => {
+        const lawId = selectLawForEditions.value;
+        if(!lawId) { alert('Выберите закон'); return; }
+        const date = editionDate.value;
+        const file = editionPdf.files[0];
+        if(!date || !file) { alert('Заполните дату и выберите PDF'); return; }
+        const bucket = editionBucket.value;
+        let path = editionPath.value.trim().replace(/[^a-zA-Z0-9/_.-]/g,'');
+        if(path && !path.endsWith('/')) path += '/';
+        const law = allLaws.find(l=>l.id==lawId);
+        const fileName = `fl-${date.replace(/-/g,'')}-${law.number}`;
+        const fullPath = path + fileName + '.pdf';
+        try {
+            await sb.storage.from(bucket).upload(fullPath, file);
+            const isCurr = editionIsCurrent.checked;
+            if(isCurr) await sb.from(EDITIONS_TABLE).update({ is_current: false }).eq('law_id', lawId);
+            await sb.from(EDITIONS_TABLE).insert({
+                law_id: lawId, date_issued: date, file_name: fileName, bucket_name: bucket, bucket_path: path, is_current: isCurr
+            });
+            editionDate.value = ''; editionPdf.value = ''; editionIsCurrent.checked = false;
+            loadEditionsForLaw(lawId);
+            alert('Редакция добавлена');
+        } catch(err) { alert('Ошибка: '+err.message); }
+    });
+
+    refreshLawsBtn.addEventListener('click', loadLaws);
+    searchLaws.addEventListener('input', renderLawsTable);
+    yearFilterLaws.addEventListener('change', renderLawsTable);
+    loadLaws();
+})();
+</script>
 </body>
 </html>
