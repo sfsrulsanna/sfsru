@@ -52,13 +52,6 @@
       transition: all 0.2s;
     }
     .appeal-btn:hover { background: #ff9933; transform: scale(1.02); }
-    .appeal-form textarea {
-      width: 100%;
-      border: 1px solid #ffcece;
-      border-radius: 20px;
-      padding: 10px;
-      margin: 10px 0;
-    }
     .hidden { display: none; }
   </style>
 </head>
@@ -192,7 +185,7 @@
       document.getElementById('examsTable').innerHTML = '<p>Нет назначенных экзаменов.</p>';
       return;
     }
-    let html = '<table><thead><tr><th>№</th><th>Экзамен</th><th>ППЭ</th><th>Аудитория*</th><th>Место*</th></tr></thead><tbody>';
+    let html = '<table class="exams-table"><thead><tr><th>№</th><th>Экзамен</th><th>ППЭ</th><th>Аудитория*</th><th>Место*</th></tr></thead><tbody>';
     assignments.forEach((ex, idx) => {
       const examName = `${ex.subject}, ${new Date(ex.exam_date).toLocaleDateString('ru-RU')}, ${ex.exam_time}`;
       html += `<tr>
@@ -212,7 +205,9 @@
       document.getElementById('resultsTable').innerHTML = '<p>Результаты ещё не опубликованы.</p>';
       return;
     }
-    let html = '能able<thead><tr><th>#</th><th>Экзамен</th><th>Вариант</th><th>Балл</th><th>Отметка</th><th>Статус</th><th>Апелляция</th><th>Подробно</th></tr></thead><tbody>';
+    let html = '<table class="results-table"><thead><tr>' +
+      '<th>#</th><th>Экзамен</th><th>Вариант</th><th>Балл</th><th>Отметка</th><th>Статус</th><th>Апелляция</th><th>Подробно</th>' +
+      '</tr></thead><tbody>';
     results.forEach((res, idx) => {
       const examSubject = res.exam_assignments.subject;
       const examDate = new Date(res.exam_assignments.exam_date).toLocaleDateString('ru-RU');
@@ -251,14 +246,12 @@
         }]);
       if (error) throw error;
       
-      // Обновляем статус результата на 'appeal'
       await supabaseClient
         .from('resultats')
         .update({ status: 'appeal', appeal: 'подана' })
         .eq('id', resultId);
       
       alert('Апелляция успешно подана. Статус результата обновлён.');
-      // Закрываем модальное окно и перезагружаем данные
       document.getElementById('detailModal').style.display = 'none';
       loadData();
     } catch(err) {
@@ -300,7 +293,6 @@
       filesHtml += '</div></div>';
     }
     
-    // Кнопка апелляции (если статус active или appeal? Показываем для active)
     const showAppeal = result.status === 'active';
     const appealHtml = showAppeal ? `
       <div class="detail-block">
@@ -334,13 +326,9 @@
       const btn = document.getElementById('showAppealFormBtn');
       const container = document.getElementById('appealFormContainer');
       if (btn && container) {
-        btn.addEventListener('click', () => {
-          container.classList.toggle('hidden');
-        });
-        document.getElementById('submitAppealBtn')?.addEventListener('click', () => {
-          const reason = document.getElementById('appealReason').value;
-          submitAppeal(result.id, reason, document.getElementById('modalBody'));
-        });
+        btn.onclick = () => container.classList.toggle('hidden');
+        const submitBtn = document.getElementById('submitAppealBtn');
+        if (submitBtn) submitBtn.onclick = () => submitAppeal(result.id, document.getElementById('appealReason').value);
       }
     }
     
