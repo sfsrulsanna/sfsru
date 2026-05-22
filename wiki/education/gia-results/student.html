@@ -6,6 +6,48 @@
   <title>Кабинет участника ГИА — СФСРЮ</title>
   <link rel="stylesheet" href="../../../css/style.css">
   <link rel="stylesheet" href="gia-common.css">
+  <style>
+    /* Дополнительные правки для вертикального списка */
+    .info-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      background: #fffaf5;
+      padding: 1.2rem;
+      border-radius: 24px;
+      margin-bottom: 1.5rem;
+    }
+    .info-item {
+      font-size: 1rem;
+      border-bottom: 1px dashed #ffe0e0;
+      padding-bottom: 0.4rem;
+    }
+    .info-label {
+      font-weight: 700;
+      color: #a33;
+      display: inline-block;
+      width: 180px;
+    }
+    @media (max-width: 600px) {
+      .info-label { width: 140px; }
+    }
+    /* Таблица заданий в модальном окне */
+    .tasks-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.5rem 0;
+    }
+    .tasks-table th, .tasks-table td {
+      border: 1px solid #ffcece;
+      padding: 6px 8px;
+      text-align: center;
+      background: white;
+    }
+    .tasks-table th {
+      background: #ffe0e0;
+      font-weight: 600;
+    }
+  </style>
 </head>
 <body>
 <div class="gia-header">
@@ -20,7 +62,7 @@
 <main class="main-container">
   <div class="card">
     <h2>📋 Данные об участнике экзаменов</h2>
-    <div id="userInfo" class="info-grid"></div>
+    <div id="userInfo" class="info-vertical"></div>
     <h3>📅 Назначенные экзамены</h3>
     <div id="examsTable" class="table-wrapper"></div>
   </div>
@@ -45,10 +87,10 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // === НАСТРОЙКИ ===
+  // === НАСТРОЙКИ (замените при необходимости) ===
     const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-  // ==================
+  // =============================================
 
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     db: { schema: 'education_gia' }
@@ -58,6 +100,16 @@
     if (!filePath) return '#';
     const { data } = supabaseClient.storage.from('gia_files').getPublicUrl(filePath);
     return data.publicUrl;
+  }
+
+  function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
   }
 
   let currentUser = null;
@@ -108,7 +160,7 @@
       <div class="info-item"><span class="info-label">Образовательная организация:</span> ${user.educational_org || '—'}</div>
       <div class="info-item"><span class="info-label">Класс:</span> ${user.class_name || '—'}</div>
       <div class="info-item"><span class="info-label">ФИО:</span> ${user.full_name}</div>
-      <div class="info-item"><span class="info-label">Дата рождения:</span> ${user.birth_date}</div>
+      <div class="info-item"><span class="info-label">Дата рождения:</span> ${formatDate(user.birth_date)}</div>
       <div class="info-item"><span class="info-label">Тип ГИА:</span> ${user.gia_type}</div>
     `;
   }
@@ -129,7 +181,7 @@
         <td>${ex.place || 'н/д'}</td>
       </tr>`;
     });
-    html += '</tbody></table><p class="form-hint">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
+    html += '</tbody><tr><p class="form-hint" style="margin-top: 0.5rem;">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
     document.getElementById('examsTable').innerHTML = html;
   }
 
@@ -166,18 +218,52 @@
     const examDate = new Date(result.exam_assignments.exam_date).toLocaleDateString('ru-RU');
     const examSubject = result.exam_assignments.subject;
     
-    let shortHtml = '';
-    if (details.short_answers?.length) {
-      shortHtml = '<div class="detail-block"><strong>📝 Ответы на задания с кратким ответом:</strong><div class="task-list">' +
-        details.short_answers.map(a => `<div class="task-item">${a.num} [${a.score}]</div>`).join('') + '</div></div>';
+    // Таблица заданий (краткие ответы)
+    let tasksHtml = '';
+    if (details.short_answers && details.short_answers.length) {
+      tasksHtml = `
+        <div class="detail-block"><strong>📝 Ответы на задания (краткий ответ):</strong></div>
+        <table class="tasks-table">
+          <thead><tr><th>№ задания</th><th>Ответ</th><th>Балл</th></tr></thead>
+          <tbody>
+            ${details.short_answers.map(item => `
+              <tr>
+                <td>${item.num}</td>
+                <td>—</td>
+                <td>${item.score}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
     }
-    let typeBhtml = details.type_b ? `<div class="detail-block"><strong>📌 Задания типа B:</strong><br>${details.type_b} ${details.type_b_score || ''}</div>` : '';
-    let typeChtml = details.type_c ? `<div class="detail-block"><strong>📌 Задания типа C:</strong><br>${details.type_c} ${details.type_c_score || ''}</div>` : '';
     
+    // Блоки для заданий типа B и C (если есть)
+    let typeBhtml = '';
+    if (details.type_b) {
+      typeBhtml = `<div class="detail-block"><strong>📌 Задания типа B:</strong><br>${details.type_b} ${details.type_b_score || ''}</div>`;
+    }
+    let typeChtml = '';
+    if (details.type_c) {
+      typeChtml = `<div class="detail-block"><strong>📌 Задания типа C:</strong><br>${details.type_c} ${details.type_c_score || ''}</div>`;
+    }
+    
+    // Файлы бланков с красивыми подписями
     let filesHtml = '';
-    if (details.files?.length) {
-      filesHtml = '<div class="detail-block"><strong>📎 Бланки ответов:</strong><div class="file-list">' +
-        details.files.map(f => `<a href="${getFileUrl(f)}" target="_blank" download>📄 ${f.split('/').pop()}</a>`).join('') + '</div></div>';
+    if (details.files && details.files.length) {
+      const labels = [
+        'Скачать бланк ответов №1',
+        'Скачать бланк ответов №2 лист 1',
+        'Скачать бланк ответов №2 лист 2',
+        'Скачать дополнительный бланк С'
+      ];
+      filesHtml = '<div class="detail-block"><strong>📎 Бланки ответов:</strong><div class="file-list">';
+      details.files.forEach((filePath, idx) => {
+        const fileUrl = getFileUrl(filePath);
+        const label = labels[idx] || `Скачать файл ${idx+1}`;
+        filesHtml += `<a href="${fileUrl}" target="_blank" download>📄 ${label}</a>`;
+      });
+      filesHtml += '</div></div>';
     }
     
     document.getElementById('modalBody').innerHTML = `
@@ -188,11 +274,11 @@
       <div class="detail-block"><strong>Вариант:</strong> ${result.variant || '—'}</div>
       <div class="detail-block"><strong>Статус:</strong> ${result.status === 'active' ? 'Активный результат' : result.status}</div>
       <hr>
-      ${shortHtml}
+      ${tasksHtml}
       ${typeBhtml}
       ${typeChtml}
-      <div class="detail-block"><strong>🎯 Первичный балл:</strong> ${details.primary_score ?? result.score}</div>
-      <div class="detail-block"><strong>⭐ Отметка:</strong> ${result.grade}</div>
+      <div class="detail-block"><strong>🎯 Первичный балл:</strong> ${details.primary_score !== undefined ? details.primary_score : result.score}</div>
+      <div class="detail-block"><strong>⭐ Отметка (результат):</strong> ${result.grade}</div>
       <div class="detail-block"><strong>⚖️ Апелляция:</strong> ${result.appeal || 'нет'}</div>
       ${filesHtml}
     `;
