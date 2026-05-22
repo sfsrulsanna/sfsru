@@ -304,21 +304,6 @@ const appealHtml = showAppeal ? `
     </div>
   </div>
 ` : '';
-
-// Затем в конце showModal, после innerHTML, добавьте обработчики с анимацией:
-if (showAppeal) {
-  const triggerBtn = document.getElementById('showAppealFormBtn');
-  const container = document.getElementById('appealFormContainer');
-  if (triggerBtn && container) {
-    triggerBtn.onclick = () => {
-      container.classList.toggle('visible');
-    };
-    const submitBtn = document.getElementById('submitAppealBtn');
-    if (submitBtn) {
-      submitBtn.onclick = () => submitAppeal(result.id, document.getElementById('appealReason').value);
-    }
-  }
-}
     
     document.getElementById('modalBody').innerHTML = `
       <h3>🔍 Подробно об экзамене</h3>
@@ -338,15 +323,21 @@ if (showAppeal) {
       ${appealHtml}
     `;
     
-    if (showAppeal) {
-      const btn = document.getElementById('showAppealFormBtn');
-      const container = document.getElementById('appealFormContainer');
-      if (btn && container) {
-        btn.onclick = () => container.classList.toggle('hidden');
-        const submitBtn = document.getElementById('submitAppealBtn');
-        if (submitBtn) submitBtn.onclick = () => submitAppeal(result.id, document.getElementById('appealReason').value);
-      }
+
+// Затем в конце showModal, после innerHTML, добавьте обработчики с анимацией:
+if (showAppeal) {
+  const triggerBtn = document.getElementById('showAppealFormBtn');
+  const container = document.getElementById('appealFormContainer');
+  if (triggerBtn && container) {
+    triggerBtn.onclick = () => {
+      container.classList.toggle('visible');
+    };
+    const submitBtn = document.getElementById('submitAppealBtn');
+    if (submitBtn) {
+      submitBtn.onclick = () => submitAppeal(result.id, document.getElementById('appealReason').value);
     }
+  }
+}
     
     document.getElementById('detailModal').style.display = 'flex';
   }
