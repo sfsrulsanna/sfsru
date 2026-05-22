@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="../../../css/style.css">
   <link rel="stylesheet" href="gia-common.css">
   <style>
-    /* Дополнительные правки для вертикального списка */
     .info-vertical {
       display: flex;
       flex-direction: column;
@@ -28,10 +27,7 @@
       display: inline-block;
       width: 180px;
     }
-    @media (max-width: 600px) {
-      .info-label { width: 140px; }
-    }
-    /* Таблица заданий в модальном окне */
+    @media (max-width: 600px) { .info-label { width: 140px; } }
     .tasks-table {
       width: 100%;
       border-collapse: collapse;
@@ -43,10 +39,27 @@
       text-align: center;
       background: white;
     }
-    .tasks-table th {
-      background: #ffe0e0;
-      font-weight: 600;
+    .tasks-table th { background: #ffe0e0; font-weight: 600; }
+    .appeal-btn {
+      background: #ffaa44;
+      color: #552200;
+      border: none;
+      border-radius: 40px;
+      padding: 8px 20px;
+      margin-top: 1rem;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
     }
+    .appeal-btn:hover { background: #ff9933; transform: scale(1.02); }
+    .appeal-form textarea {
+      width: 100%;
+      border: 1px solid #ffcece;
+      border-radius: 20px;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    .hidden { display: none; }
   </style>
 </head>
 <body>
@@ -87,10 +100,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // === НАСТРОЙКИ (замените при необходимости) ===
     const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-  // =============================================
 
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     db: { schema: 'education_gia' }
@@ -110,6 +121,17 @@
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
     const year = date.getFullYear();
     return `${day}.${month}.${year}`;
+  }
+
+  function statusText(status) {
+    const map = {
+      'active': 'Активный результат',
+      'processing': 'Обработка не завершена',
+      'annulled': 'Результат аннулирован',
+      'hidden': 'Результат скрыт',
+      'appeal': 'Апелляция'
+    };
+    return map[status] || status;
   }
 
   let currentUser = null;
@@ -181,7 +203,7 @@
         <td>${ex.place || 'н/д'}</td>
       </tr>`;
     });
-    html += '</tbody><tr><p class="form-hint" style="margin-top: 0.5rem;">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
+    html += '</tbody></table><p class="form-hint" style="margin-top: 0.5rem;">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
     document.getElementById('examsTable').innerHTML = html;
   }
 
@@ -201,7 +223,7 @@
         <td>${res.variant || '—'}</td>
         <td>${res.score}</td>
         <td>${res.grade}</td>
-        <td>${res.status === 'active' ? '✅ Активный' : res.status}</td>
+        <td>${statusText(res.status)}</td>
         <td>${res.appeal || 'нет'}</td>
         <td><button class="details-btn" data-result='${JSON.stringify(res)}'>👁️ Просмотреть</button></td>
       </tr>`;
@@ -213,12 +235,43 @@
     });
   }
 
+  async function submitAppeal(resultId, reason, modalBodyDiv) {
+    if (!reason.trim()) {
+      alert('Пожалуйста, укажите причину апелляции.');
+      return;
+    }
+    try {
+      const { error } = await supabaseClient
+        .from('appeals')
+        .insert([{
+          result_id: resultId,
+          student_personal_code: personalCode,
+          reason: reason.trim(),
+          status: 'pending'
+        }]);
+      if (error) throw error;
+      
+      // Обновляем статус результата на 'appeal'
+      await supabaseClient
+        .from('resultats')
+        .update({ status: 'appeal', appeal: 'подана' })
+        .eq('id', resultId);
+      
+      alert('Апелляция успешно подана. Статус результата обновлён.');
+      // Закрываем модальное окно и перезагружаем данные
+      document.getElementById('detailModal').style.display = 'none';
+      loadData();
+    } catch(err) {
+      console.error(err);
+      alert('Ошибка при подаче апелляции. Попробуйте позже.');
+    }
+  }
+
   function showModal(result) {
     const details = result.details || {};
     const examDate = new Date(result.exam_assignments.exam_date).toLocaleDateString('ru-RU');
     const examSubject = result.exam_assignments.subject;
     
-    // Таблица заданий (краткие ответы)
     let tasksHtml = '';
     if (details.short_answers && details.short_answers.length) {
       tasksHtml = `
@@ -226,37 +279,18 @@
         <table class="tasks-table">
           <thead><tr><th>№ задания</th><th>Ответ</th><th>Балл</th></tr></thead>
           <tbody>
-            ${details.short_answers.map(item => `
-              <tr>
-                <td>${item.num}</td>
-                <td>—</td>
-                <td>${item.score}</td>
-              </tr>
-            `).join('')}
+            ${details.short_answers.map(item => `<tr><td>${item.num}</td><td>—</td><td>${item.score}</td></tr>`).join('')}
           </tbody>
         </table>
       `;
     }
     
-    // Блоки для заданий типа B и C (если есть)
-    let typeBhtml = '';
-    if (details.type_b) {
-      typeBhtml = `<div class="detail-block"><strong>📌 Задания типа B:</strong><br>${details.type_b} ${details.type_b_score || ''}</div>`;
-    }
-    let typeChtml = '';
-    if (details.type_c) {
-      typeChtml = `<div class="detail-block"><strong>📌 Задания типа C:</strong><br>${details.type_c} ${details.type_c_score || ''}</div>`;
-    }
+    let typeBhtml = details.type_b ? `<div class="detail-block"><strong>📌 Задания типа B:</strong><br>${details.type_b} ${details.type_b_score || ''}</div>` : '';
+    let typeChtml = details.type_c ? `<div class="detail-block"><strong>📌 Задания типа C:</strong><br>${details.type_c} ${details.type_c_score || ''}</div>` : '';
     
-    // Файлы бланков с красивыми подписями
     let filesHtml = '';
     if (details.files && details.files.length) {
-      const labels = [
-        'Скачать бланк ответов №1',
-        'Скачать бланк ответов №2 лист 1',
-        'Скачать бланк ответов №2 лист 2',
-        'Скачать дополнительный бланк С'
-      ];
+      const labels = ['Скачать бланк ответов №1', 'Скачать бланк ответов №2 лист 1', 'Скачать бланк ответов №2 лист 2', 'Скачать дополнительный бланк С'];
       filesHtml = '<div class="detail-block"><strong>📎 Бланки ответов:</strong><div class="file-list">';
       details.files.forEach((filePath, idx) => {
         const fileUrl = getFileUrl(filePath);
@@ -266,13 +300,25 @@
       filesHtml += '</div></div>';
     }
     
+    // Кнопка апелляции (если статус active или appeal? Показываем для active)
+    const showAppeal = result.status === 'active';
+    const appealHtml = showAppeal ? `
+      <div class="detail-block">
+        <button class="appeal-btn" id="showAppealFormBtn">⚖️ Подать апелляцию</button>
+        <div id="appealFormContainer" class="hidden">
+          <textarea id="appealReason" rows="3" placeholder="Укажите причину апелляции..."></textarea>
+          <button id="submitAppealBtn" class="appeal-btn" style="background:#44aa44;">Отправить апелляцию</button>
+        </div>
+      </div>
+    ` : '';
+    
     document.getElementById('modalBody').innerHTML = `
       <h3>🔍 Подробно об экзамене</h3>
       <div class="detail-block"><strong>Экзамен:</strong> ${examSubject}-${currentUser.gia_type}, ${examDate}</div>
       <div class="detail-block"><strong>ППЭ:</strong> ${details.ppe || result.exam_assignments.ppe_name || '—'}</div>
       <div class="detail-block"><strong>Аудитория:</strong> ${details.audience || result.exam_assignments.audience || '—'}</div>
       <div class="detail-block"><strong>Вариант:</strong> ${result.variant || '—'}</div>
-      <div class="detail-block"><strong>Статус:</strong> ${result.status === 'active' ? 'Активный результат' : result.status}</div>
+      <div class="detail-block"><strong>Статус:</strong> ${statusText(result.status)}</div>
       <hr>
       ${tasksHtml}
       ${typeBhtml}
@@ -281,7 +327,23 @@
       <div class="detail-block"><strong>⭐ Отметка (результат):</strong> ${result.grade}</div>
       <div class="detail-block"><strong>⚖️ Апелляция:</strong> ${result.appeal || 'нет'}</div>
       ${filesHtml}
+      ${appealHtml}
     `;
+    
+    if (showAppeal) {
+      const btn = document.getElementById('showAppealFormBtn');
+      const container = document.getElementById('appealFormContainer');
+      if (btn && container) {
+        btn.addEventListener('click', () => {
+          container.classList.toggle('hidden');
+        });
+        document.getElementById('submitAppealBtn')?.addEventListener('click', () => {
+          const reason = document.getElementById('appealReason').value;
+          submitAppeal(result.id, reason, document.getElementById('modalBody'));
+        });
+      }
+    }
+    
     document.getElementById('detailModal').style.display = 'flex';
   }
 
