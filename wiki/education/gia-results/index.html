@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Результаты ГИА — СФСРЮ</title>
+  <link rel="stylesheet" href="../../../css/style.css">
+  <style>
+    /* Дополнительные стили для страницы входа */
+    .gia-header {
+      background: linear-gradient(135deg, #ff6666, #cc0000);
+      padding: 1rem 0;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+    }
+    .gia-header .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .gia-header h1 {
+      color: white;
+      font-size: 1.8rem;
+      margin: 0;
+      letter-spacing: 1px;
+    }
+    .header-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+    .header-btn {
+      background: rgba(255, 255, 255, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 40px;
+      padding: 0.5rem 1.2rem;
+      color: white;
+      font-weight: 600;
+      transition: 0.2s;
+      text-decoration: none;
+    }
+    .header-btn:hover {
+      background: rgba(255, 255, 255, 0.45);
+      transform: translateY(-2px);
+    }
+    .login-container {
+      max-width: 500px;
+      margin: 3rem auto;
+      background: #fff;
+      border-radius: 32px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      padding: 2rem;
+      border: 1px solid #ffcccc;
+    }
+    .login-container h2 {
+      color: #a00;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #f0c0c0;
+      border-radius: 28px;
+      font-size: 1rem;
+      transition: 0.2s;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #cc5555;
+      box-shadow: 0 0 0 3px rgba(204, 85, 85, 0.2);
+    }
+    .form-hint {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 0.3rem;
+    }
+    .login-btn {
+      background: #c44;
+      color: white;
+      border: none;
+      border-radius: 40px;
+      padding: 12px;
+      width: 100%;
+      font-weight: bold;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .login-btn:hover {
+      background: #a33;
+    }
+    .error-message {
+      background: #ffe0e0;
+      color: #c00;
+      padding: 0.8rem;
+      border-radius: 20px;
+      margin-bottom: 1rem;
+      text-align: center;
+      display: none;
+    }
+    .footer {
+      margin-top: 2rem;
+    }
+    @media (max-width: 600px) {
+      .gia-header .container {
+        flex-direction: column;
+        text-align: center;
+      }
+      .login-container {
+        margin: 2rem 1rem;
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Упрощённая шапка: название + две кнопки -->
+  <div class="gia-header">
+    <div class="container">
+      <h1>Результаты ГИА</h1>
+      <div class="header-buttons">
+        <a href="../index.html" class="header-btn">← К образованию</a>
+        <a href="../../../index.html" class="header-btn">На главный портал</a>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div class="login-container">
+      <h2>Вход в систему</h2>
+      <div id="errorBox" class="error-message"></div>
+      <form id="loginForm">
+        <div class="form-group">
+          <label>Личный код</label>
+          <input type="text" id="personalCode" placeholder="XXXX-XXXX" autocomplete="off" required>
+          <div class="form-hint">Формат: 4 цифры, дефис, 4 цифры (например 1234-5678)</div>
+        </div>
+        <div class="form-group">
+          <label>Код регистрации ГИА</label>
+          <input type="text" id="giaCode" placeholder="XYYZZZZUU" autocomplete="off" required>
+          <div class="form-hint">9 символов: (0–3) + 2 цифры региона + 4 случайные цифры + 2 цифры года</div>
+        </div>
+        <button type="submit" class="login-btn">Войти</button>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 СФСРЮ. Все права защищены.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
+
+  <!-- Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ========== НАСТРОЙКИ SUPABASE (ЗАМЕНИТЕ НА СВОИ) ==========
+    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+    // ============================================================
+
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // Валидация форматов
+    function validatePersonalCode(code) {
+      return /^\d{4}-\d{4}$/.test(code);
+    }
+    function validateGiaCode(code) {
+      return /^[0-3]\d{2}\d{4}\d{2}$/.test(code);
+    }
+
+    // Извлечение роли из первого символа кода ГИА
+    function getRoleFromGiaCode(giaCode) {
+      const firstChar = giaCode[0];
+      switch(firstChar) {
+        case '0': return 'student';
+        case '1': return 'examiner';
+        case '2': return 'director';
+        case '3': return 'admin';
+        default: return null;
+      }
+    }
+
+    // Перенаправление в зависимости от роли
+    function redirectToRolePage(role, userData) {
+      // Сохраняем данные пользователя в sessionStorage для использования на целевой странице
+      sessionStorage.setItem('gia_user', JSON.stringify(userData));
+      switch(role) {
+        case 'student': window.location.href = './student.html'; break;
+        case 'examiner': window.location.href = './examiner.html'; break;
+        case 'director': window.location.href = './director.html'; break;
+        case 'admin': window.location.href = './admin.html'; break;
+        default: throw new Error('Неизвестная роль');
+      }
+    }
+
+    // Обработка входа
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorDiv = document.getElementById('errorBox');
+      errorDiv.style.display = 'none';
+      errorDiv.innerText = '';
+
+      const personalCode = document.getElementById('personalCode').value.trim();
+      const giaCode = document.getElementById('giaCode').value.trim();
+
+      // Проверка форматов
+      if (!validatePersonalCode(personalCode)) {
+        errorDiv.innerText = 'Неверный формат личного кода. Используйте XXXX-XXXX.';
+        errorDiv.style.display = 'block';
+        return;
+      }
+      if (!validateGiaCode(giaCode)) {
+        errorDiv.innerText = 'Неверный формат кода ГИА. Должно быть 9 цифр, первая 0–3.';
+        errorDiv.style.display = 'block';
+        return;
+      }
+
+      // Запрос к Supabase (таблица registered)
+      try {
+        const { data, error } = await supabase
+          .from('registered')
+          .select('*')
+          .eq('personal_code', personalCode)
+          .eq('gia_code', giaCode);
+
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+          errorDiv.innerText = 'Неверная пара "личный код — код ГИА". Доступ запрещён.';
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        const userRecord = data[0];
+        const role = getRoleFromGiaCode(giaCode);
+        if (!role) {
+          errorDiv.innerText = 'Ошибка определения роли пользователя.';
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        // Подготавливаем данные для сессии
+        const userSession = {
+          personal_code: userRecord.personal_code,
+          gia_code: userRecord.gia_code,
+          full_name: userRecord.full_name,
+          birth_date: userRecord.birth_date,
+          gia_type: userRecord.gia_type,
+          role: role,
+          result_ids: userRecord.result_ids || []
+        };
+        redirectToRolePage(role, userSession);
+      } catch (err) {
+        console.error(err);
+        errorDiv.innerText = 'Ошибка соединения с сервером. Попробуйте позже.';
+        errorDiv.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
