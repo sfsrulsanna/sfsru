@@ -293,16 +293,32 @@
       filesHtml += '</div></div>';
     }
     
-    const showAppeal = result.status === 'active';
-    const appealHtml = showAppeal ? `
-      <div class="detail-block">
-        <button class="appeal-btn" id="showAppealFormBtn">⚖️ Подать апелляцию</button>
-        <div id="appealFormContainer" class="hidden">
-          <textarea id="appealReason" rows="3" placeholder="Укажите причину апелляции..."></textarea>
-          <button id="submitAppealBtn" class="appeal-btn" style="background:#44aa44;">Отправить апелляцию</button>
-        </div>
-      </div>
-    ` : '';
+// Внутри showModal, после формирования filesHtml
+const showAppeal = result.status === 'active';
+const appealHtml = showAppeal ? `
+  <div class="detail-block">
+    <button class="appeal-trigger-btn" id="showAppealFormBtn">⚖️ Подать апелляцию</button>
+    <div id="appealFormContainer" class="appeal-form-container">
+      <textarea id="appealReason" class="appeal-textarea" rows="3" placeholder="Опишите причину несогласия с результатами..."></textarea>
+      <button id="submitAppealBtn" class="submit-appeal-btn">Отправить апелляцию</button>
+    </div>
+  </div>
+` : '';
+
+// Затем в конце showModal, после innerHTML, добавьте обработчики с анимацией:
+if (showAppeal) {
+  const triggerBtn = document.getElementById('showAppealFormBtn');
+  const container = document.getElementById('appealFormContainer');
+  if (triggerBtn && container) {
+    triggerBtn.onclick = () => {
+      container.classList.toggle('visible');
+    };
+    const submitBtn = document.getElementById('submitAppealBtn');
+    if (submitBtn) {
+      submitBtn.onclick = () => submitAppeal(result.id, document.getElementById('appealReason').value);
+    }
+  }
+}
     
     document.getElementById('modalBody').innerHTML = `
       <h3>🔍 Подробно об экзамене</h3>
