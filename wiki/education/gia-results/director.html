@@ -7,251 +7,75 @@
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="gia-common.css">
     <style>
-        .ppe-info-card {
-            background: #f8f9fa;
-            border-radius: 20px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid #e0e0e0;
-            color: #2c3e4e;
-        }
-        .action-btn {
-            background: #4a6fa5;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 6px 16px;
-            font-size: 0.85rem;
-            cursor: pointer;
-            transition: 0.2s;
-            min-width: 130px;
-            text-align: center;
-        }
-        .action-btn.edit {
-            background: #f5b042;
-            color: #2c2c2c;
-        }
-        .editable-field {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-        }
-        .editable-value {
-            background: #f0f0f0;
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-family: monospace;
-        }
-        .edit-icon {
-            cursor: pointer;
-            background: none;
-            border: none;
-            font-size: 1rem;
-        }
-        .inline-input {
-            width: 100px;
-            padding: 4px 8px;
-            border: 1px solid #c44;
-            border-radius: 20px;
-        }
+        .ppe-info-card { background: #f8f9fa; border-radius: 20px; padding: 1rem 1.5rem; margin-bottom: 2rem; border: 1px solid #e0e0e0; }
+        .action-btn { background: #4a6fa5; color: white; border: none; border-radius: 40px; padding: 6px 16px; min-width: 130px; cursor: pointer; }
+        .send-review-btn { background: #28a745; color: white; border: none; border-radius: 40px; padding: 6px 16px; margin-top: 0.5rem; cursor: pointer; }
+        .editable-field { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .inline-input { width: 100px; padding: 4px 8px; border-radius: 20px; }
+        .file-list { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .file-item { background: #e8e8e8; border-radius: 20px; padding: 0.2rem 0.6rem; }
     </style>
 </head>
 <body>
-<div class="gia-header">
-    <div class="container">
-        <h1>🏛 Панель руководителя ППЭ</h1>
-        <div class="header-buttons"><a href="./index.html" class="header-btn" id="logoutBtn">🚪 Выйти</a></div>
-    </div>
-</div>
+<div class="gia-header"><div class="container"><h1>🏛 Панель руководителя ППЭ</h1><div class="header-buttons"><a href="./index.html" class="header-btn" id="logoutBtn">🚪 Выйти</a></div></div></div>
 <main class="main-container">
     <div class="ppe-info-card" id="ppeInfo">Загрузка...</div>
-    <div class="card">
-        <h2>📝 Участники экзаменов в ППЭ</h2>
-        <div id="participantsList" class="table-wrapper"></div>
-    </div>
+    <div class="card"><h2>📝 Участники экзаменов в ППЭ</h2><div id="participantsList" class="table-wrapper"></div></div>
 </main>
-
-<div id="uploadModal" class="modal">
-    <div class="modal-content" style="max-width: 800px;">
-        <span class="close-modal">&times;</span>
-        <div id="uploadModalBody"></div>
-    </div>
-</div>
-
+<div id="uploadModal" class="modal"><div class="modal-content" style="max-width: 800px;"><span class="close-modal">&times;</span><div id="uploadModalBody"></div></div></div>
 <footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
     const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'education_gia' } });
-
-    (function checkDirector() {
-        const user = JSON.parse(sessionStorage.getItem('gia_user') || '{}');
-        if (user.role !== 'director') window.location.href = './index.html';
-    })();
+    (function checkDirector() { const user = JSON.parse(sessionStorage.getItem('gia_user') || '{}'); if (user.role !== 'director') window.location.href = './index.html'; })();
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
     let currentAssignments = [];
 
     async function loadDirectorData() {
-        try {
-            // 1. Получить ППЭ руководителя
-            const { data: examiner, error: examErr } = await supabaseClient
-                .from('examiners')
-                .select('ppe_id')
-                .eq('personal_code', currentUser.personal_code)
-                .eq('role', 'director')
-                .maybeSingle(); // вместо .single() чтобы не было ошибки, если нет данных
-            if (examErr) throw examErr;
-            if (!examiner || !examiner.ppe_id) {
-                document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ. Обратитесь к администратору.</p>';
-                document.getElementById('participantsList').innerHTML = '<p>Нет данных для отображения.</p>';
-                return;
-            }
-            // 2. Данные ППЭ
-            const { data: ppe } = await supabaseClient.from('ppe').select('*').eq('id', examiner.ppe_id).single();
-            document.getElementById('ppeInfo').innerHTML = `
-                <p><strong>Код ППЭ:</strong> ${ppe.code} &nbsp;|&nbsp;
-                <strong>Название:</strong> ${ppe.name} &nbsp;|&nbsp;
-                <strong>Адрес:</strong> ${ppe.address || 'не указан'}</p>
-                <p><strong>Типы ГИА:</strong> 9, 11, СПО, ВО, ГВЭ-9, ГВЭ-11, ГВЭ-СПО, ГВЭ-ВО</p>
-            `;
-
-            // 3. Загрузить назначения
-            const { data: assignments, error: assignErr } = await supabaseClient
-                .from('exam_assignments')
-                .select('*, registered(full_name, personal_code)')
-                .eq('ppe_id', ppe.id)
-                .order('exam_date');
-            if (assignErr) throw assignErr;
-
-            console.log('Назначения:', assignments); // отладка
-            currentAssignments = assignments || [];
-
-            if (!currentAssignments.length) {
-                document.getElementById('participantsList').innerHTML = '<p>Нет назначенных экзаменов в этом ППЭ.</p>';
-                return;
-            }
-
-            // 4. Группировка по участникам
-            const participantsMap = new Map();
-            currentAssignments.forEach(a => {
-                const code = a.registered.personal_code;
-                if (!participantsMap.has(code)) {
-                    participantsMap.set(code, {
-                        full_name: a.registered.full_name,
-                        exams: [],
-                        audience: a.audience || '',
-                        place: a.place || ''
-                    });
-                }
-                participantsMap.get(code).exams.push({ id: a.id, subject: a.subject, date: a.exam_date });
-            });
-
-            if (participantsMap.size === 0) {
-                document.getElementById('participantsList').innerHTML = '<p>Нет участников с экзаменами.</p>';
-                return;
-            }
-
-            // 5. Построение таблицы
-            let html = `<table><thead><tr><th>Участник</th><th>Экзамены</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
-            for (let [code, data] of participantsMap.entries()) {
-                const examsList = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString()})`).join('<br>');
-                const safeCode = code.replace(/-/g, '');
-                html += `<tr>
-                    <td><strong>${data.full_name}</strong><br><small>${code}</small></td>
-                    <td class="exam-list">${examsList}</td>
-                    <td id="room-cell-${safeCode}">
-                        <div class="editable-field">
-                            <span class="editable-value" data-field="audience" data-code="${code}">${data.audience || '?'}</span>
-                            <span> / </span>
-                            <span class="editable-value" data-field="place" data-code="${code}">${data.place || '?'}</span>
-                            <button class="edit-icon" data-code="${code}">✏️</button>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="action-btn upload" data-code="${code}">📤 Загрузить бланки</button>
-                    </td>
-                </tr>`;
-            }
-            html += `</tbody></table>`;
-            document.getElementById('participantsList').innerHTML = html;
-
-            // Привязать обработчики
-            document.querySelectorAll('.action-btn.upload').forEach(btn => {
-                btn.addEventListener('click', () => showUploadModal(btn.dataset.code));
-            });
-            document.querySelectorAll('.edit-icon').forEach(icon => {
-                icon.addEventListener('click', (e) => {
-                    const code = icon.dataset.code;
-                    enableInlineEditing(code);
-                });
-            });
-        } catch (err) {
-            console.error('Ошибка загрузки:', err);
-            document.getElementById('ppeInfo').innerHTML = '<p>Ошибка загрузки данных. Проверьте консоль.</p>';
-            document.getElementById('participantsList').innerHTML = '<p>Не удалось загрузить список.</p>';
+        const { data: examiner } = await supabaseClient.from('examiners').select('ppe_id').eq('personal_code', currentUser.personal_code).eq('role', 'director').single();
+        if (!examiner?.ppe_id) { document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ.</p>'; return; }
+        const { data: ppe } = await supabaseClient.from('ppe').select('*').eq('id', examiner.ppe_id).single();
+        document.getElementById('ppeInfo').innerHTML = `<p><strong>Код ППЭ:</strong> ${ppe.code} | <strong>Название:</strong> ${ppe.name} | <strong>Адрес:</strong> ${ppe.address || 'не указан'}</p><p><strong>Типы ГИА:</strong> 9, 11, СПО, ВО, ГВЭ</p>`;
+        const { data: assignments } = await supabaseClient.from('exam_assignments').select('*, registered(full_name, personal_code)').eq('ppe_id', ppe.id).order('exam_date');
+        currentAssignments = assignments || [];
+        if (!currentAssignments.length) { document.getElementById('participantsList').innerHTML = '<p>Нет назначенных экзаменов.</p>'; return; }
+        const participantsMap = new Map();
+        assignments.forEach(a => { const code = a.registered.personal_code; if (!participantsMap.has(code)) participantsMap.set(code, { full_name: a.registered.full_name, exams: [], audience: a.audience || '', place: a.place || '' }); participantsMap.get(code).exams.push({ id: a.id, subject: a.subject, date: a.exam_date }); });
+        let html = `<table><thead><tr><th>Участник</th><th>Экзамены</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
+        for (let [code, data] of participantsMap.entries()) {
+            const examsList = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString()})`).join('<br>');
+            html += `<tr><td><strong>${data.full_name}</strong><br><small>${code}</small></td><td>${examsList}</td>
+                <td id="room-cell-${code.replace(/-/g, '')}"><div class="editable-field"><span class="editable-value" data-field="audience">${data.audience || '?'}</span> / <span class="editable-value" data-field="place">${data.place || '?'}</span><button class="edit-icon" data-code="${code}">✏️</button></div></td>
+                <td><button class="action-btn upload" data-code="${code}">📤 Загрузить бланки</button></td></tr>`;
         }
+        html += `</tbody></td>`;
+        document.getElementById('participantsList').innerHTML = html;
+        document.querySelectorAll('.action-btn.upload').forEach(btn => btn.addEventListener('click', () => showUploadModal(btn.dataset.code)));
+        document.querySelectorAll('.edit-icon').forEach(icon => icon.addEventListener('click', () => enableInlineEditing(icon.dataset.code)));
     }
 
-    // Редактирование inline
-    function enableInlineEditing(personalCode) {
+    async function enableInlineEditing(personalCode) {
         const safeCode = personalCode.replace(/-/g, '');
         const container = document.getElementById(`room-cell-${safeCode}`);
-        if (!container) return;
         const editableDiv = container.querySelector('.editable-field');
         const audienceSpan = editableDiv.querySelector('.editable-value[data-field="audience"]');
         const placeSpan = editableDiv.querySelector('.editable-value[data-field="place"]');
         const currentAudience = audienceSpan.innerText === '?' ? '' : audienceSpan.innerText;
         const currentPlace = placeSpan.innerText === '?' ? '' : placeSpan.innerText;
-
-        const inputAudience = document.createElement('input');
-        inputAudience.type = 'text';
-        inputAudience.value = currentAudience;
-        inputAudience.placeholder = 'Аудитория';
-        inputAudience.className = 'inline-input';
-        const inputPlace = document.createElement('input');
-        inputPlace.type = 'text';
-        inputPlace.value = currentPlace;
-        inputPlace.placeholder = 'Место';
-        inputPlace.className = 'inline-input';
-        const saveBtn = document.createElement('button');
-        saveBtn.innerText = '✓';
-        saveBtn.className = 'action-btn edit';
-        saveBtn.style.padding = '2px 12px';
-        const cancelBtn = document.createElement('button');
-        cancelBtn.innerText = '✗';
-        cancelBtn.className = 'action-btn';
-        cancelBtn.style.padding = '2px 12px';
-        cancelBtn.style.background = '#aaa';
-
-        editableDiv.innerHTML = '';
-        editableDiv.appendChild(inputAudience);
-        editableDiv.appendChild(document.createTextNode(' / '));
-        editableDiv.appendChild(inputPlace);
-        editableDiv.appendChild(saveBtn);
-        editableDiv.appendChild(cancelBtn);
-
-        saveBtn.onclick = async () => {
-            const newAudience = inputAudience.value.trim() || null;
-            const newPlace = inputPlace.value.trim() || null;
-            const assignmentsToUpdate = currentAssignments.filter(a => a.registered.personal_code === personalCode);
-            for (const ass of assignmentsToUpdate) {
-                await supabaseClient.from('exam_assignments')
-                    .update({ audience: newAudience, place: newPlace })
-                    .eq('id', ass.id);
-            }
-            loadDirectorData(); // перезагрузить таблицу
-        };
+        const inputAudience = document.createElement('input'); inputAudience.type = 'text'; inputAudience.value = currentAudience; inputAudience.placeholder = 'Аудитория'; inputAudience.className = 'inline-input';
+        const inputPlace = document.createElement('input'); inputPlace.type = 'text'; inputPlace.value = currentPlace; inputPlace.placeholder = 'Место'; inputPlace.className = 'inline-input';
+        const saveBtn = document.createElement('button'); saveBtn.innerText = '✓'; saveBtn.className = 'action-btn'; saveBtn.style.padding = '2px 12px';
+        const cancelBtn = document.createElement('button'); cancelBtn.innerText = '✗'; cancelBtn.className = 'action-btn'; cancelBtn.style.background = '#aaa';
+        editableDiv.innerHTML = ''; editableDiv.appendChild(inputAudience); editableDiv.appendChild(document.createTextNode(' / ')); editableDiv.appendChild(inputPlace); editableDiv.appendChild(saveBtn); editableDiv.appendChild(cancelBtn);
+        saveBtn.onclick = async () => { const newAudience = inputAudience.value.trim() || null; const newPlace = inputPlace.value.trim() || null; const toUpdate = currentAssignments.filter(a => a.registered.personal_code === personalCode); for (const ass of toUpdate) await supabaseClient.from('exam_assignments').update({ audience: newAudience, place: newPlace }).eq('id', ass.id); loadDirectorData(); };
         cancelBtn.onclick = () => loadDirectorData();
     }
 
-    // Загрузка бланков (модальное окно) – сокращённо, но рабоче
     async function showUploadModal(personalCode) {
         const userAssignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
-        const modal = document.getElementById('uploadModal');
-        const modalBody = document.getElementById('uploadModalBody');
+        const modal = document.getElementById('uploadModal'); const modalBody = document.getElementById('uploadModalBody');
         let html = `<h3>📎 Загрузка бланков для ${userAssignments[0]?.registered.full_name}</h3>`;
         for (const ass of userAssignments) {
             const examDate = new Date(ass.exam_date).toLocaleDateString();
@@ -269,40 +93,37 @@
                     <div id="files-ans2-2-${ass.id}" class="file-list"></div>
                     <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="extra-c">📎 Дополнительный бланк C</div>
                     <div id="files-extra-${ass.id}" class="file-list"></div>
-                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="audio-d">🎤 Аудиозапись (тип D)</div>
+                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="audio-d">🎤 Аудиозапись</div>
                     <div id="files-audio-${ass.id}" class="file-list"></div>
+                    <button class="send-review-btn" data-assignment-id="${ass.id}">📨 Отправить на проверку</button>
                 </div>
             `;
         }
         modalBody.innerHTML = html;
         modal.style.display = 'flex';
         attachUploadHandlers();
+        document.querySelectorAll('.send-review-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const assignmentId = btn.dataset.assignmentId;
+                const { data: result } = await supabaseClient.from('resultats').select('id').eq('assignment_id', assignmentId).single();
+                if (result) {
+                    await supabaseClient.from('resultats').update({ status: 'processing' }).eq('id', result.id);
+                    alert('Экзамен отправлен на проверку эксперту');
+                } else alert('Ошибка: результат не найден');
+            });
+        });
     }
 
     function attachUploadHandlers() {
         document.querySelectorAll('.file-upload-area').forEach(area => {
-            const assignmentId = area.dataset.assignment;
-            const sheetType = area.dataset.sheetType;
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.multiple = (sheetType === 'extra-c' || sheetType === 'audio-d');
-            input.accept = sheetType === 'audio-d' ? 'audio/*' : '.pdf,.jpg,.jpeg,.png';
-            area.appendChild(input);
-            input.style.display = 'none';
+            const assignmentId = area.dataset.assignment, sheetType = area.dataset.sheetType;
+            const input = document.createElement('input'); input.type = 'file'; input.multiple = (sheetType === 'extra-c' || sheetType === 'audio-d'); input.accept = sheetType === 'audio-d' ? 'audio/*' : '.pdf,.jpg,.jpeg,.png';
+            area.appendChild(input); input.style.display = 'none';
             area.addEventListener('click', () => input.click());
-            input.addEventListener('change', async (e) => {
-                const files = Array.from(e.target.files);
-                for (const file of files) await uploadFile(assignmentId, sheetType, file);
-                input.value = '';
-            });
-            area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.background = '#e8f0fe'; });
+            input.addEventListener('change', async (e) => { for (const file of e.target.files) await uploadFile(assignmentId, sheetType, file); input.value = ''; });
+            area.addEventListener('dragover', e => { e.preventDefault(); area.style.background = '#e8f0fe'; });
             area.addEventListener('dragleave', () => { area.style.background = ''; });
-            area.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                area.style.background = '';
-                const files = Array.from(e.dataTransfer.files);
-                for (const file of files) await uploadFile(assignmentId, sheetType, file);
-            });
+            area.addEventListener('drop', async e => { e.preventDefault(); area.style.background = ''; for (const file of e.dataTransfer.files) await uploadFile(assignmentId, sheetType, file); });
             loadFilesForAssignment(assignmentId, sheetType);
         });
     }
@@ -314,28 +135,12 @@
         const filePath = `${folder}/${fileName}`;
         const { error: uploadErr } = await supabaseClient.storage.from('answer_sheets').upload(filePath, file);
         if (uploadErr) { alert('Ошибка загрузки: ' + uploadErr.message); return; }
-        const { error: dbErr } = await supabaseClient.from('answer_sheets').insert([{
-            assignment_id: assignmentId,
-            file_path: filePath,
-            file_name: file.name,
-            file_type: sheetType,
-            uploaded_by: currentUser.personal_code
-        }]);
-        if (dbErr) {
-            alert('Ошибка сохранения');
-            await supabaseClient.storage.from('answer_sheets').remove([filePath]);
-        } else {
-            alert(`Файл ${file.name} загружен`);
-            loadFilesForAssignment(assignmentId, sheetType);
-        }
+        const { error: dbErr } = await supabaseClient.from('answer_sheets').insert([{ assignment_id: assignmentId, file_path: filePath, file_name: file.name, file_type: sheetType, uploaded_by: currentUser.personal_code }]);
+        if (dbErr) { alert('Ошибка сохранения'); await supabaseClient.storage.from('answer_sheets').remove([filePath]); } else { alert(`Файл ${file.name} загружен`); loadFilesForAssignment(assignmentId, sheetType); }
     }
 
     async function loadFilesForAssignment(assignmentId, sheetType) {
-        const { data } = await supabaseClient
-            .from('answer_sheets')
-            .select('*')
-            .eq('assignment_id', assignmentId)
-            .eq('file_type', sheetType);
+        const { data } = await supabaseClient.from('answer_sheets').select('*').eq('assignment_id', assignmentId).eq('file_type', sheetType);
         const typeMap = { registration: 'reg', answer1: 'ans1', 'answer2-1': 'ans2-1', 'answer2-2': 'ans2-2', 'extra-c': 'extra', 'audio-d': 'audio' };
         const container = document.getElementById(`files-${typeMap[sheetType]}-${assignmentId}`);
         if (!container) return;
@@ -346,23 +151,11 @@
             html += `<div class="file-item"><a href="${url}" target="_blank">📄 ${f.file_name}</a><button class="delete-file" data-id="${f.id}" data-path="${f.file_path}">❌</button></div>`;
         }
         container.innerHTML = html;
-        document.querySelectorAll('.delete-file').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (!confirm('Удалить файл?')) return;
-                await supabaseClient.storage.from('answer_sheets').remove([btn.dataset.path]);
-                await supabaseClient.from('answer_sheets').delete().eq('id', btn.dataset.id);
-                loadFilesForAssignment(assignmentId, sheetType);
-            });
-        });
+        document.querySelectorAll('.delete-file').forEach(btn => btn.addEventListener('click', async () => { if (confirm('Удалить?')) { await supabaseClient.storage.from('answer_sheets').remove([btn.dataset.path]); await supabaseClient.from('answer_sheets').delete().eq('id', btn.dataset.id); loadFilesForAssignment(assignmentId, sheetType); } }));
     }
 
-    document.querySelector('.close-modal').addEventListener('click', () => {
-        document.getElementById('uploadModal').style.display = 'none';
-    });
-    window.addEventListener('click', (e) => {
-        if (e.target === document.getElementById('uploadModal')) document.getElementById('uploadModal').style.display = 'none';
-    });
+    document.querySelector('.close-modal').addEventListener('click', () => document.getElementById('uploadModal').style.display = 'none');
+    window.addEventListener('click', e => { if (e.target === document.getElementById('uploadModal')) document.getElementById('uploadModal').style.display = 'none'; });
     document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = './index.html'; };
     loadDirectorData();
 </script>
