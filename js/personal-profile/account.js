@@ -29,15 +29,11 @@ function showMessage(title, text, isError = false) {
   document.getElementById('messageTitle').textContent = title
   const msgDiv = document.getElementById('messageText')
   msgDiv.innerHTML = text
-  if (isError) {
-    msgDiv.style.color = '#b91c1c'
-  } else {
-    msgDiv.style.color = 'inherit'
-  }
+  msgDiv.style.color = isError ? '#b91c1c' : 'inherit'
   messageModal.style.display = 'flex'
 }
 
-function closeMessageModal() {
+window.closeMessageModal = function() {
   messageModal.style.display = 'none'
 }
 
@@ -58,7 +54,6 @@ async function loadAccountData() {
     currentUser = user
     userIdSpan.textContent = user.id
 
-    // Получаем данные из таблицы users
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('phone, email, account_type')
@@ -70,7 +65,6 @@ async function loadAccountData() {
     phoneSpan.textContent = profile?.phone || user.phone || '—'
     emailSpan.textContent = profile?.email || user.email || '—'
 
-    // Тип учётной записи из БД
     let accountType = profile?.account_type || 'simple'
     let helpText = ''
     if (accountType === 'simple') helpText = 'Упрощённая запись: требуется подтверждение email или телефона.'
@@ -105,7 +99,7 @@ copyUuidBtn.addEventListener('click', async () => {
 })
 
 // --- Изменение телефона ---
-function closePhoneModal() {
+window.closePhoneModal = function() {
   phoneModal.style.display = 'none'
   document.getElementById('newPhone').value = ''
   document.getElementById('phonePassword').value = ''
@@ -131,15 +125,13 @@ document.getElementById('submitPhoneBtn').addEventListener('click', async () => 
   }
 
   try {
-    // Сначала проверим пароль, попытавшись обновить любые данные (например, email)
-    // Лучше вызвать updateUser с пустыми данными, но с currentPassword. Если пароль неверен, будет ошибка.
+    // Проверяем пароль
     const { error: verifyError } = await supabase.auth.updateUser(
       { email: currentUser.email },
       { currentPassword: password }
     )
     if (verifyError) throw new Error('Неверный пароль')
 
-    // Обновляем телефон в таблице users
     const { error: updateError } = await supabase
       .from('users')
       .update({ phone: newPhone })
@@ -147,9 +139,8 @@ document.getElementById('submitPhoneBtn').addEventListener('click', async () => 
 
     if (updateError) throw updateError
 
-    // Обновляем отображение
     phoneSpan.textContent = newPhone
-    closePhoneModal()
+    window.closePhoneModal()
     showMessage('Успешно', 'Номер телефона обновлён.')
   } catch (err) {
     errorDiv.textContent = err.message
@@ -157,7 +148,7 @@ document.getElementById('submitPhoneBtn').addEventListener('click', async () => 
 })
 
 // --- Изменение email ---
-function closeEmailModal() {
+window.closeEmailModal = function() {
   emailModal.style.display = 'none'
   document.getElementById('newEmail').value = ''
   document.getElementById('emailPassword').value = ''
@@ -183,21 +174,19 @@ document.getElementById('submitEmailBtn').addEventListener('click', async () => 
   }
 
   try {
-    // Меняем email через Supabase Auth (требует текущий пароль)
     const { error: updateError } = await supabase.auth.updateUser(
       { email: newEmail },
       { currentPassword: password }
     )
     if (updateError) throw updateError
 
-    // Обновляем email в таблице users
     await supabase
       .from('users')
       .update({ email: newEmail })
       .eq('id', currentUser.id)
 
     emailSpan.textContent = newEmail
-    closeEmailModal()
+    window.closeEmailModal()
     showMessage('Успешно', 'Email обновлён. Проверьте новый почтовый ящик для подтверждения.')
   } catch (err) {
     errorDiv.textContent = err.message
@@ -205,7 +194,7 @@ document.getElementById('submitEmailBtn').addEventListener('click', async () => 
 })
 
 // --- Смена пароля ---
-function closePasswordModal() {
+window.closePasswordModal = function() {
   passwordModal.style.display = 'none'
   document.getElementById('currentPassword').value = ''
   document.getElementById('newPassword').value = ''
@@ -242,7 +231,7 @@ document.getElementById('submitPasswordBtn').addEventListener('click', async () 
       { currentPassword: current }
     )
     if (error) throw error
-    closePasswordModal()
+    window.closePasswordModal()
     showMessage('Пароль изменён', 'Пароль успешно изменён. Войдите заново с новым паролем.')
     await supabase.auth.signOut()
     setTimeout(() => { window.location.href = '../login.html' }, 2000)
@@ -252,7 +241,7 @@ document.getElementById('submitPasswordBtn').addEventListener('click', async () 
 })
 
 // --- Удаление аккаунта ---
-function closeConfirmDeleteModal() {
+window.closeConfirmDeleteModal = function() {
   confirmDeleteModal.style.display = 'none'
   document.getElementById('deletePassword').value = ''
   document.getElementById('deleteError').textContent = ''
@@ -272,21 +261,19 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async () =
   }
 
   try {
-    // Проверяем пароль, попытавшись обновить данные (например, email)
     const { error: verifyError } = await supabase.auth.updateUser(
       { email: currentUser.email },
       { currentPassword: password }
     )
     if (verifyError) throw new Error('Неверный пароль')
 
-    // Вызываем Edge Function для удаления
-    const { data, error: fnError } = await supabase.functions.invoke('delete-user', {
+    const { error: fnError } = await supabase.functions.invoke('delete-user', {
       body: { userId: currentUser.id }
     })
     if (fnError) throw fnError
 
     await supabase.auth.signOut()
-    closeConfirmDeleteModal()
+    window.closeConfirmDeleteModal()
     showMessage('Учётная запись удалена', 'Ваша учётная запись полностью удалена. Вы будете перенаправлены на главную страницу.')
     setTimeout(() => { window.location.href = '../index.html' }, 2000)
   } catch (err) {
@@ -296,11 +283,11 @@ document.getElementById('confirmDeleteBtn').addEventListener('click', async () =
 
 // Закрытие модалок по клику на оверлей
 window.onclick = function(event) {
-  if (event.target === passwordModal) closePasswordModal()
-  if (event.target === phoneModal) closePhoneModal()
-  if (event.target === emailModal) closeEmailModal()
-  if (event.target === confirmDeleteModal) closeConfirmDeleteModal()
-  if (event.target === messageModal) closeMessageModal()
+  if (event.target === passwordModal) window.closePasswordModal()
+  if (event.target === phoneModal) window.closePhoneModal()
+  if (event.target === emailModal) window.closeEmailModal()
+  if (event.target === confirmDeleteModal) window.closeConfirmDeleteModal()
+  if (event.target === messageModal) window.closeMessageModal()
 }
 
 loadAccountData()
