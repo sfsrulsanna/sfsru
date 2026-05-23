@@ -46,11 +46,14 @@
         let html = `<table><thead><tr><th>Участник</th><th>Экзамены</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
         for (let [code, data] of participantsMap.entries()) {
             const examsList = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString()})`).join('<br>');
-            html += `<tr><td><strong>${data.full_name}</strong><br><small>${code}</small></td><td>${examsList}</td>
+            html += `<tr>
+                <td><strong>${data.full_name}</strong><br><small>${code}</small></td>
+                <td class="exam-list">${examsList}</td>
                 <td id="room-cell-${code.replace(/-/g, '')}"><div class="editable-field"><span class="editable-value" data-field="audience">${data.audience || '?'}</span> / <span class="editable-value" data-field="place">${data.place || '?'}</span><button class="edit-icon" data-code="${code}">✏️</button></div></td>
-                <td><button class="action-btn upload" data-code="${code}">📤 Загрузить бланки</button></td></tr>`;
+                <td><button class="action-btn upload" data-code="${code}">📤 Загрузить бланки</button></td>
+            </tr>`;
         }
-        html += `</tbody></td>`;
+        html += `</tbody></table>`;
         document.getElementById('participantsList').innerHTML = html;
         document.querySelectorAll('.action-btn.upload').forEach(btn => btn.addEventListener('click', () => showUploadModal(btn.dataset.code)));
         document.querySelectorAll('.edit-icon').forEach(icon => icon.addEventListener('click', () => enableInlineEditing(icon.dataset.code)));
@@ -102,14 +105,42 @@
         modalBody.innerHTML = html;
         modal.style.display = 'flex';
         attachUploadHandlers();
+        // Исправленный обработчик отправки на проверку
         document.querySelectorAll('.send-review-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
-                const assignmentId = btn.dataset.assignmentId;
-                const { data: result } = await supabaseClient.from('resultats').select('id').eq('assignment_id', assignmentId).single();
-                if (result) {
-                    await supabaseClient.from('resultats').update({ status: 'processing' }).eq('id', result.id);
-                    alert('Экзамен отправлен на проверку эксперту');
-                } else alert('Ошибка: результат не найден');
+                const assignmentId = parseInt(btn.dataset.assignmentId);
+                // Проверяем, существует ли result
+                let { data: result, error } = await supabaseClient
+                    .from('resultats')
+                    .select('id')
+                    .eq('assignment_id', assignmentId)
+                    .maybeSingle();
+                if (error) {
+                    console.error(error);
+                    alert('Ошибка при поиске результата: ' + error.message);
+                    return;
+                }
+                let resultId = result?.id;
+                if (!resultId) {
+                    // Создаём новый результат
+                    const { data: newResult, error: insertError } = await supabaseClient
+                        .from('resultats')
+                        .insert([{ assignment_id: assignmentId, status: 'pending', details: {} }])
+                        .select()
+                        .single();
+                    if (insertError) {
+                        alert('Ошибка создания результата: ' + insertError.message);
+                        return;
+                    }
+                    resultId = newResult.id;
+                }
+                // Обновляем статус на processing
+                const { error: updateError } = await supabaseClient
+                    .from('resultats')
+                    .update({ status: 'processing' })
+                    .eq('id', resultId);
+                if (updateError) alert('Ошибка обновления: ' + updateError.message);
+                else alert('Экзамен отправлен на проверку эксперту');
             });
         });
     }
