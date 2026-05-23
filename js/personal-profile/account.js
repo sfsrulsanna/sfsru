@@ -1,293 +1,247 @@
 // js/personal-profile/account.js
-import { supabase } from '../supabase-config.js'
+import { supabase } from '../supabase-config.js';
 
-let currentUser = null
+console.log('account.js загружен');
+
+let currentUser = null;
 
 // Элементы DOM
-const loadingDiv = document.getElementById('loading')
-const accountDiv = document.getElementById('accountData')
-const phoneSpan = document.getElementById('phoneValue')
-const emailSpan = document.getElementById('emailValue')
-const accountTypeSpan = document.getElementById('accountTypeValue')
-const accountTypeHelp = document.getElementById('accountTypeHelp')
-const userIdSpan = document.getElementById('userIdValue')
-const copyUuidBtn = document.getElementById('copyUuidBtn')
-const editPhoneBtn = document.getElementById('editPhoneBtn')
-const editEmailBtn = document.getElementById('editEmailBtn')
-const changePasswordBtn = document.getElementById('changePasswordBtn')
-const deleteAccountBtn = document.getElementById('deleteAccountBtn')
+const loadingDiv = document.getElementById('loading');
+const accountDiv = document.getElementById('accountData');
+const phoneSpan = document.getElementById('phoneValue');
+const emailSpan = document.getElementById('emailValue');
+const accountTypeSpan = document.getElementById('accountTypeValue');
+const accountTypeHelp = document.getElementById('accountTypeHelp');
+const userIdSpan = document.getElementById('userIdValue');
 
-// Модальные окна
-const passwordModal = document.getElementById('passwordModal')
-const phoneModal = document.getElementById('phoneModal')
-const emailModal = document.getElementById('emailModal')
-const confirmDeleteModal = document.getElementById('confirmDeleteModal')
-const messageModal = document.getElementById('messageModal')
+// Все модальные окна
+const modals = {
+  password: document.getElementById('passwordModal'),
+  phone: document.getElementById('phoneModal'),
+  email: document.getElementById('emailModal'),
+  delete: document.getElementById('confirmDeleteModal'),
+  message: document.getElementById('messageModal')
+};
 
-// Функции для показа сообщений
+// Функция закрытия любого модального окна
+function closeModal(modal) {
+  if (!modal) return;
+  modal.style.display = 'none';
+  // Очищаем поля и ошибки внутри этого модального окна
+  const inputs = modal.querySelectorAll('input');
+  inputs.forEach(input => input.value = '');
+  const errors = modal.querySelectorAll('.error-message');
+  errors.forEach(err => err.textContent = '');
+}
+
+// Закрытие по клику на крестик (для всех модалок)
+document.querySelectorAll('.modal .close').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const modal = btn.closest('.modal');
+    if (modal) closeModal(modal);
+  });
+});
+
+// Закрытие по клику на фон (оверлей)
+window.addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal')) {
+    closeModal(e.target);
+  }
+});
+
+// Показать информационное сообщение
 function showMessage(title, text, isError = false) {
-  document.getElementById('messageTitle').textContent = title
-  const msgDiv = document.getElementById('messageText')
-  msgDiv.innerHTML = text
-  msgDiv.style.color = isError ? '#b91c1c' : 'inherit'
-  messageModal.style.display = 'flex'
+  const msgTitle = document.getElementById('messageTitle');
+  const msgText = document.getElementById('messageText');
+  if (msgTitle) msgTitle.textContent = title;
+  if (msgText) {
+    msgText.innerHTML = text;
+    msgText.style.color = isError ? '#b91c1c' : 'inherit';
+  }
+  if (modals.message) modals.message.style.display = 'flex';
 }
 
-window.closeMessageModal = function() {
-  messageModal.style.display = 'none'
-}
-
-// Вспомогательная функция для закрытия всех модалок
-function closeAllModals() {
-  passwordModal.style.display = 'none'
-  phoneModal.style.display = 'none'
-  emailModal.style.display = 'none'
-  confirmDeleteModal.style.display = 'none'
-}
-
-// Загрузка данных из таблицы users и auth
+// Загрузка данных пользователя
 async function loadAccountData() {
   try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser()
-    if (userError) throw userError
-    if (!user) throw new Error('Пользователь не авторизован')
-    currentUser = user
-    userIdSpan.textContent = user.id
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError) throw userError;
+    if (!user) throw new Error('Пользователь не авторизован');
+    currentUser = user;
+    userIdSpan.textContent = user.id;
 
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('phone, email, account_type')
       .eq('id', user.id)
-      .single()
+      .single();
 
-    if (profileError && profileError.code !== 'PGRST116') throw profileError
+    if (profileError && profileError.code !== 'PGRST116') throw profileError;
 
-    phoneSpan.textContent = profile?.phone || user.phone || '—'
-    emailSpan.textContent = profile?.email || user.email || '—'
+    phoneSpan.textContent = profile?.phone || user.phone || '—';
+    emailSpan.textContent = profile?.email || user.email || '—';
 
-    let accountType = profile?.account_type || 'simple'
-    let helpText = ''
-    if (accountType === 'simple') helpText = 'Упрощённая запись: требуется подтверждение email или телефона.'
-    else if (accountType === 'standard') helpText = 'Стандартная запись: один из контактов подтверждён.'
-    else if (accountType === 'verified') helpText = 'Подтверждённая запись: все контакты верифицированы.'
-    else helpText = 'Неизвестный тип'
+    const accountType = profile?.account_type || 'simple';
+    let typeText = '', helpText = '';
+    if (accountType === 'simple') {
+      typeText = 'Упрощённая';
+      helpText = 'Требуется подтверждение email или телефона.';
+    } else if (accountType === 'standard') {
+      typeText = 'Стандартная';
+      helpText = 'Один из контактов подтверждён.';
+    } else if (accountType === 'verified') {
+      typeText = 'Подтверждённая';
+      helpText = 'Все контакты верифицированы.';
+    }
+    accountTypeSpan.textContent = typeText;
+    accountTypeHelp.textContent = helpText;
 
-    accountTypeSpan.textContent = accountType === 'simple' ? 'Упрощённая' : (accountType === 'standard' ? 'Стандартная' : 'Подтверждённая')
-    accountTypeHelp.textContent = helpText
-
-    loadingDiv.style.display = 'none'
-    accountDiv.style.display = 'block'
+    loadingDiv.style.display = 'none';
+    accountDiv.style.display = 'block';
   } catch (err) {
-    console.error(err)
-    loadingDiv.textContent = 'Ошибка загрузки: ' + err.message
+    console.error(err);
+    loadingDiv.textContent = 'Ошибка загрузки: ' + err.message;
   }
 }
 
 // Копирование UUID
-copyUuidBtn.addEventListener('click', async () => {
-  const uuid = userIdSpan.textContent
+document.getElementById('copyUuidBtn')?.addEventListener('click', async () => {
+  const uuid = userIdSpan.textContent;
   if (uuid && uuid !== '—') {
     try {
-      await navigator.clipboard.writeText(uuid)
-      showMessage('Скопировано', 'UUID успешно скопирован в буфер обмена.')
-    } catch (err) {
-      showMessage('Ошибка', 'Не удалось скопировать UUID.', true)
+      await navigator.clipboard.writeText(uuid);
+      showMessage('Скопировано', 'UUID успешно скопирован.');
+    } catch {
+      showMessage('Ошибка', 'Не удалось скопировать UUID.', true);
     }
   } else {
-    showMessage('Ошибка', 'UUID не найден.', true)
+    showMessage('Ошибка', 'UUID не найден.', true);
   }
-})
+});
 
-// --- Изменение телефона ---
-window.closePhoneModal = function() {
-  phoneModal.style.display = 'none'
-  document.getElementById('newPhone').value = ''
-  document.getElementById('phonePassword').value = ''
-  document.getElementById('phoneError').textContent = ''
-}
-
-editPhoneBtn.addEventListener('click', () => {
-  phoneModal.style.display = 'flex'
-})
-
-document.getElementById('submitPhoneBtn').addEventListener('click', async () => {
-  const newPhone = document.getElementById('newPhone').value.trim()
-  const password = document.getElementById('phonePassword').value
-  const errorDiv = document.getElementById('phoneError')
-
-  if (!newPhone) {
-    errorDiv.textContent = 'Введите номер телефона.'
-    return
-  }
-  if (!password) {
-    errorDiv.textContent = 'Введите пароль для подтверждения.'
-    return
-  }
-
+// === Изменение телефона ===
+document.getElementById('editPhoneBtn')?.addEventListener('click', () => {
+  if (modals.phone) modals.phone.style.display = 'flex';
+});
+document.getElementById('submitPhoneBtn')?.addEventListener('click', async () => {
+  const newPhone = document.getElementById('newPhone')?.value.trim();
+  const password = document.getElementById('phonePassword')?.value;
+  const errorDiv = document.getElementById('phoneError');
+  if (!newPhone) { errorDiv.textContent = 'Введите номер телефона.'; return; }
+  if (!password) { errorDiv.textContent = 'Введите пароль.'; return; }
   try {
-    // Проверяем пароль
+    // Проверка пароля
     const { error: verifyError } = await supabase.auth.updateUser(
       { email: currentUser.email },
       { currentPassword: password }
-    )
-    if (verifyError) throw new Error('Неверный пароль')
-
+    );
+    if (verifyError) throw new Error('Неверный пароль');
+    // Обновление телефона
     const { error: updateError } = await supabase
       .from('users')
       .update({ phone: newPhone })
-      .eq('id', currentUser.id)
-
-    if (updateError) throw updateError
-
-    phoneSpan.textContent = newPhone
-    window.closePhoneModal()
-    showMessage('Успешно', 'Номер телефона обновлён.')
+      .eq('id', currentUser.id);
+    if (updateError) throw updateError;
+    phoneSpan.textContent = newPhone;
+    closeModal(modals.phone);
+    showMessage('Успешно', 'Номер телефона обновлён.');
   } catch (err) {
-    errorDiv.textContent = err.message
+    errorDiv.textContent = err.message;
   }
-})
+});
 
-// --- Изменение email ---
-window.closeEmailModal = function() {
-  emailModal.style.display = 'none'
-  document.getElementById('newEmail').value = ''
-  document.getElementById('emailPassword').value = ''
-  document.getElementById('emailError').textContent = ''
-}
-
-editEmailBtn.addEventListener('click', () => {
-  emailModal.style.display = 'flex'
-})
-
-document.getElementById('submitEmailBtn').addEventListener('click', async () => {
-  const newEmail = document.getElementById('newEmail').value.trim()
-  const password = document.getElementById('emailPassword').value
-  const errorDiv = document.getElementById('emailError')
-
-  if (!newEmail) {
-    errorDiv.textContent = 'Введите email.'
-    return
-  }
-  if (!password) {
-    errorDiv.textContent = 'Введите пароль для подтверждения.'
-    return
-  }
-
+// === Изменение email ===
+document.getElementById('editEmailBtn')?.addEventListener('click', () => {
+  if (modals.email) modals.email.style.display = 'flex';
+});
+document.getElementById('submitEmailBtn')?.addEventListener('click', async () => {
+  const newEmail = document.getElementById('newEmail')?.value.trim();
+  const password = document.getElementById('emailPassword')?.value;
+  const errorDiv = document.getElementById('emailError');
+  if (!newEmail) { errorDiv.textContent = 'Введите email.'; return; }
+  if (!password) { errorDiv.textContent = 'Введите пароль.'; return; }
   try {
     const { error: updateError } = await supabase.auth.updateUser(
       { email: newEmail },
       { currentPassword: password }
-    )
-    if (updateError) throw updateError
-
-    await supabase
-      .from('users')
-      .update({ email: newEmail })
-      .eq('id', currentUser.id)
-
-    emailSpan.textContent = newEmail
-    window.closeEmailModal()
-    showMessage('Успешно', 'Email обновлён. Проверьте новый почтовый ящик для подтверждения.')
+    );
+    if (updateError) throw updateError;
+    await supabase.from('users').update({ email: newEmail }).eq('id', currentUser.id);
+    emailSpan.textContent = newEmail;
+    closeModal(modals.email);
+    showMessage('Успешно', 'Email обновлён. Проверьте новый почтовый ящик для подтверждения.');
   } catch (err) {
-    errorDiv.textContent = err.message
+    errorDiv.textContent = err.message;
   }
-})
+});
 
-// --- Смена пароля ---
-window.closePasswordModal = function() {
-  passwordModal.style.display = 'none'
-  document.getElementById('currentPassword').value = ''
-  document.getElementById('newPassword').value = ''
-  document.getElementById('confirmPassword').value = ''
-  document.getElementById('passwordError').textContent = ''
-}
-
-changePasswordBtn.addEventListener('click', () => {
-  passwordModal.style.display = 'flex'
-})
-
-document.getElementById('submitPasswordBtn').addEventListener('click', async () => {
-  const current = document.getElementById('currentPassword').value
-  const newPwd = document.getElementById('newPassword').value
-  const confirm = document.getElementById('confirmPassword').value
-  const errorDiv = document.getElementById('passwordError')
-
+// === Смена пароля ===
+document.getElementById('changePasswordBtn')?.addEventListener('click', () => {
+  if (modals.password) modals.password.style.display = 'flex';
+});
+document.getElementById('submitPasswordBtn')?.addEventListener('click', async () => {
+  const current = document.getElementById('currentPassword')?.value;
+  const newPwd = document.getElementById('newPassword')?.value;
+  const confirm = document.getElementById('confirmPassword')?.value;
+  const errorDiv = document.getElementById('passwordError');
   if (!current || !newPwd || !confirm) {
-    errorDiv.textContent = 'Заполните все поля.'
-    return
+    errorDiv.textContent = 'Заполните все поля.';
+    return;
   }
   if (newPwd !== confirm) {
-    errorDiv.textContent = 'Новый пароль и подтверждение не совпадают.'
-    return
+    errorDiv.textContent = 'Новый пароль и подтверждение не совпадают.';
+    return;
   }
   if (newPwd.length < 6) {
-    errorDiv.textContent = 'Пароль должен содержать не менее 6 символов.'
-    return
+    errorDiv.textContent = 'Пароль должен содержать не менее 6 символов.';
+    return;
   }
-
   try {
     const { error } = await supabase.auth.updateUser(
       { password: newPwd },
       { currentPassword: current }
-    )
-    if (error) throw error
-    window.closePasswordModal()
-    showMessage('Пароль изменён', 'Пароль успешно изменён. Войдите заново с новым паролем.')
-    await supabase.auth.signOut()
-    setTimeout(() => { window.location.href = '../login.html' }, 2000)
+    );
+    if (error) throw error;
+    closeModal(modals.password);
+    showMessage('Пароль изменён', 'Пароль успешно изменён. Войдите заново с новым паролем.');
+    await supabase.auth.signOut();
+    setTimeout(() => { window.location.href = '../login.html'; }, 2000);
   } catch (err) {
-    errorDiv.textContent = err.message
+    errorDiv.textContent = err.message;
   }
-})
+});
 
-// --- Удаление аккаунта ---
-window.closeConfirmDeleteModal = function() {
-  confirmDeleteModal.style.display = 'none'
-  document.getElementById('deletePassword').value = ''
-  document.getElementById('deleteError').textContent = ''
-}
-
-deleteAccountBtn.addEventListener('click', () => {
-  confirmDeleteModal.style.display = 'flex'
-})
-
-document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-  const password = document.getElementById('deletePassword').value
-  const errorDiv = document.getElementById('deleteError')
-
+// === Удаление аккаунта ===
+document.getElementById('deleteAccountBtn')?.addEventListener('click', () => {
+  if (modals.delete) modals.delete.style.display = 'flex';
+});
+document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
+  const password = document.getElementById('deletePassword')?.value;
+  const errorDiv = document.getElementById('deleteError');
   if (!password) {
-    errorDiv.textContent = 'Введите пароль для удаления.'
-    return
+    errorDiv.textContent = 'Введите пароль для удаления.';
+    return;
   }
-
   try {
+    // Проверка пароля
     const { error: verifyError } = await supabase.auth.updateUser(
       { email: currentUser.email },
       { currentPassword: password }
-    )
-    if (verifyError) throw new Error('Неверный пароль')
-
+    );
+    if (verifyError) throw new Error('Неверный пароль');
+    // Вызов Edge Function для удаления
     const { error: fnError } = await supabase.functions.invoke('delete-user', {
       body: { userId: currentUser.id }
-    })
-    if (fnError) throw fnError
-
-    await supabase.auth.signOut()
-    window.closeConfirmDeleteModal()
-    showMessage('Учётная запись удалена', 'Ваша учётная запись полностью удалена. Вы будете перенаправлены на главную страницу.')
-    setTimeout(() => { window.location.href = '../index.html' }, 2000)
+    });
+    if (fnError) throw fnError;
+    await supabase.auth.signOut();
+    closeModal(modals.delete);
+    showMessage('Учётная запись удалена', 'Ваша учётная запись полностью удалена. Вы будете перенаправлены на главную страницу.');
+    setTimeout(() => { window.location.href = '../index.html'; }, 2000);
   } catch (err) {
-    errorDiv.textContent = err.message
+    errorDiv.textContent = err.message;
   }
-})
+});
 
-// Закрытие модалок по клику на оверлей
-window.onclick = function(event) {
-  if (event.target === passwordModal) window.closePasswordModal()
-  if (event.target === phoneModal) window.closePhoneModal()
-  if (event.target === emailModal) window.closeEmailModal()
-  if (event.target === confirmDeleteModal) window.closeConfirmDeleteModal()
-  if (event.target === messageModal) window.closeMessageModal()
-}
-
-loadAccountData()
+// Запуск
+loadAccountData();
