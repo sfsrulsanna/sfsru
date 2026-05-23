@@ -31,13 +31,16 @@
             margin-bottom: 0.5rem;
         }
         .exam-title { font-weight: bold; font-size: 1.2rem; color: #a33; }
-        .grade-badge {
-            background: #44aa44;
+        .btn {
+            background: #4a6fa5;
             color: white;
+            border: none;
             border-radius: 40px;
-            padding: 2px 12px;
-            font-weight: bold;
+            padding: 6px 16px;
+            cursor: pointer;
+            margin-left: 0.5rem;
         }
+        .btn-secondary { background: #6c757d; }
         .task-table {
             width: 100%;
             border-collapse: collapse;
@@ -55,16 +58,6 @@
             border-radius: 12px;
             padding: 4px;
         }
-        .save-btn, .view-files-btn {
-            background: #4a6fa5;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 6px 16px;
-            cursor: pointer;
-            margin-left: 0.5rem;
-        }
-        .view-files-btn { background: #6c757d; }
         .manual-grade {
             display: flex;
             align-items: center;
@@ -79,6 +72,12 @@
             font-weight: bold;
             background: #e9ecef;
             padding: 0.5rem;
+            border-radius: 16px;
+        }
+        .extra-info {
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #fff3cd;
             border-radius: 16px;
         }
     </style>
@@ -118,8 +117,8 @@
         if (user.role !== 'examiner') window.location.href = './index.html';
     })();
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
-    let gradingScales = {};  // кэш шкал
-    let taskMaxScores = {};  // кэш макс. баллов
+    let gradingScales = {};
+    let taskMaxScores = {};
 
     // Загрузка информации об эксперте
     async function loadExpertInfo() {
@@ -139,7 +138,6 @@
         `;
     }
 
-    // Загрузка шкал перевода
     async function loadScales() {
         const { data } = await supabaseClient.from('grading_scales').select('*');
         if (data) {
@@ -152,7 +150,6 @@
         }
     }
 
-    // Загрузка максимальных баллов за задания
     async function loadMaxScores() {
         const { data } = await supabaseClient.from('task_max_scores').select('*');
         if (data) {
@@ -189,8 +186,8 @@
                     <div class="exam-header">
                         <div class="exam-title">${assign.subject} (${new Date(assign.exam_date).toLocaleDateString()})</div>
                         <div>
-                            <button class="view-files-btn" data-assignment-id="${assign.id}">📂 Просмотреть бланки</button>
-                            <button class="save-btn score-btn" data-result-id="${res.id}" data-assignment-id="${assign.id}" data-subject="${assign.subject}">📝 Выставить баллы</button>
+                            <button class="btn btn-secondary view-files-btn" data-assignment-id="${assign.id}">📂 Просмотреть бланки</button>
+                            <button class="btn score-btn" data-result-id="${res.id}" data-assignment-id="${assign.id}" data-subject="${assign.subject}">📝 Выставить баллы</button>
                         </div>
                     </div>
                     <div><strong>Участник:</strong> ${student.full_name} (${student.personal_code})</div>
@@ -201,7 +198,6 @@
         }
         document.getElementById('examsList').innerHTML = html;
 
-        // Обработчики кнопок
         document.querySelectorAll('.view-files-btn').forEach(btn => {
             btn.addEventListener('click', () => viewFiles(btn.dataset.assignmentId));
         });
@@ -215,17 +211,22 @@
         });
     }
 
-    // Просмотр бланков (используем assignment_id из exam_assignments)
+    // Просмотр бланков по assignment_id (id из exam_assignments)
     async function viewFiles(assignmentId) {
         const { data: sheets, error } = await supabaseClient
             .from('answer_sheets')
             .select('*')
             .eq('assignment_id', assignmentId);
-        if (error || !sheets.length) {
-            alert('Нет загруженных бланков для этого экзамена.');
+        if (error) {
+            console.error(error);
+            alert('Ошибка загрузки бланков: ' + error.message);
             return;
         }
-        let html = `<h3>Бланки экзамена</h3>`;
+        if (!sheets || sheets.length === 0) {
+            alert('Бланки для этого экзамена не найдены. Убедитесь, что руководитель ППЭ загрузил их.');
+            return;
+        }
+        let html = `<h3>Бланки экзамена (assignment_id = ${assignmentId})</h3>`;
         const grouped = {};
         sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
         for (const [type, files] of Object.entries(grouped)) {
@@ -244,7 +245,6 @@
 
     // Модальное окно для выставления баллов
     async function showScoringModal(resultId, assignmentId, subject) {
-        // Получаем subject_code и grade_type из названия предмета (например "РУС-9")
         const parts = subject.split('-');
         const subjectCode = parts[0];
         const gradeType = parts[1];
@@ -260,7 +260,6 @@
         const scoresMap = {};
         if (existingScores) existingScores.forEach(s => { scoresMap[s.task_number] = s.score; });
 
-        // Строим таблицу
         let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Балл ученика</th></tr></thead><tbody>`;
         for (const tn of taskNumbers) {
             const maxScore = maxScoresMap[tn];
@@ -273,8 +272,12 @@
         }
         tasksHtml += `</tbody></table>`;
         
-        // Блок с итогами
+        // Дополнительные сведения (текстовое поле)
         tasksHtml += `
+            <div class="extra-info">
+                <label><strong>📝 Дополнительные сведения (заметки эксперта):</strong></label><br>
+                <textarea id="expertNotes" rows="3" style="width:100%; border-radius:16px; padding:8px;" placeholder="Комментарии к проверке..."></textarea>
+            </div>
             <div class="manual-grade">
                 <div class="score-summary">
                     <label>📊 Первичный балл (авто): <span id="primaryScoreDisplay">0</span></label>
@@ -284,7 +287,7 @@
                 <div>
                     <label>✏️ Скорректировать оценку: <input type="text" id="manualGradeInput" placeholder="2,3,4,5,зачет"></label>
                 </div>
-                <button id="saveScoresBtn" class="save-btn">💾 Сохранить результаты</button>
+                <button id="saveScoresBtn" class="btn">💾 Сохранить результаты</button>
             </div>
         `;
 
@@ -293,7 +296,6 @@
         modalBody.innerHTML = `<h3>Выставление баллов: ${subject}</h3>${tasksHtml}`;
         modal.style.display = 'flex';
 
-        // Функция пересчёта
         function updateTotals() {
             let total = 0;
             document.querySelectorAll('.task-input').forEach(inp => {
@@ -303,14 +305,13 @@
             });
             document.getElementById('primaryScoreDisplay').innerText = total;
             
-            // Перевод во вторичный балл и оценку по шкале
             const scaleKey = `${subjectCode}_${gradeType}`;
             const scales = gradingScales[scaleKey] || [];
             let secondary = total;
             let autoGrade = '—';
             for (const s of scales) {
                 if (total >= s.min && total <= s.max) {
-                    secondary = total;  // здесь можно настроить сложную формулу
+                    secondary = total; // можно задать формулу пересчёта
                     autoGrade = s.grade;
                     break;
                 }
@@ -322,13 +323,12 @@
         document.querySelectorAll('.task-input').forEach(inp => inp.addEventListener('input', updateTotals));
         updateTotals();
 
-        // Сохранение
         document.getElementById('saveScoresBtn').onclick = async () => {
             const totalPrimary = parseInt(document.getElementById('primaryScoreDisplay').innerText);
             const autoGrade = document.getElementById('autoGradeDisplay').innerText;
             const manualGrade = document.getElementById('manualGradeInput').value.trim();
             const finalGrade = manualGrade !== '' ? manualGrade : autoGrade;
-            const secondaryScore = parseInt(document.getElementById('secondaryScoreDisplay').innerText);
+            const expertNotes = document.getElementById('expertNotes').value;
 
             // Сохраняем баллы за задания
             const tasksData = [];
@@ -337,29 +337,30 @@
                 const score = parseInt(inp.value) || 0;
                 tasksData.push({ result_id: resultId, task_number: taskNum, score });
             });
-            // Удаляем старые и вставляем новые
             await supabaseClient.from('task_scores').delete().eq('result_id', resultId);
             const { error: taskErr } = await supabaseClient.from('task_scores').insert(tasksData);
-            if (taskErr) { alert('Ошибка сохранения баллов заданий'); console.error(taskErr); return; }
+            if (taskErr) { alert('Ошибка сохранения баллов заданий: ' + taskErr.message); return; }
 
-            // Обновляем resultats (score = первичный балл, grade = оценка)
+            // Сохраняем дополнительные сведения (в details JSONB)
+            const { data: currentResult } = await supabaseClient.from('resultats').select('details').eq('id', resultId).single();
+            const newDetails = { ...currentResult?.details, expert_notes: expertNotes };
             const { error: resErr } = await supabaseClient
                 .from('resultats')
                 .update({
                     score: totalPrimary,
                     grade: finalGrade,
                     status: 'active',
+                    details: newDetails,
                     updated_at: new Date()
                 })
                 .eq('id', resultId);
-            if (resErr) { alert('Ошибка сохранения результата'); console.error(resErr); return; }
+            if (resErr) { alert('Ошибка сохранения результата: ' + resErr.message); return; }
             alert('Результаты сохранены! Участник теперь видит свой балл.');
             modal.style.display = 'none';
             loadExams(); // обновить список
         };
     }
 
-    // Закрытие модального окна
     document.querySelector('.close-modal').addEventListener('click', () => {
         document.getElementById('scoreModal').style.display = 'none';
     });
@@ -368,7 +369,6 @@
     });
     document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = './index.html'; };
 
-    // Запуск
     (async () => {
         await loadExpertInfo();
         await loadScales();
