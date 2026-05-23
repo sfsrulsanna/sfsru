@@ -7,84 +7,27 @@
   <link rel="stylesheet" href="../../../css/style.css">
   <link rel="stylesheet" href="gia-common.css">
   <style>
-    .admin-tabs {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      margin-bottom: 1.5rem;
-    }
-    .tab-btn {
-      background: #f0e0e0;
-      border: none;
-      padding: 0.6rem 1.2rem;
-      border-radius: 40px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.2s;
-    }
-    .tab-btn.active {
-      background: #c44;
-      color: white;
-    }
-    .tab-content {
-      display: none;
-      animation: fadeIn 0.3s ease;
-    }
-    .tab-content.active {
-      display: block;
-    }
-    .form-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1rem;
-      margin-bottom: 1rem;
-    }
-    .form-group {
-      flex: 1;
-      min-width: 200px;
-    }
-    .form-group label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-    }
-    .form-group input, .form-group select, .form-group textarea {
-      width: 100%;
-      padding: 8px 12px;
-      border: 1px solid #ffcece;
-      border-radius: 20px;
-    }
-    button.submit-btn {
-      background: #44aa44;
-      color: white;
-      border: none;
-      border-radius: 40px;
-      padding: 8px 24px;
-      cursor: pointer;
-    }
-    .data-table {
-      margin-top: 1.5rem;
-      overflow-x: auto;
-    }
-    .success-msg {
-      background: #e0ffe0;
-      padding: 8px;
-      border-radius: 20px;
-      margin-top: 1rem;
-      display: none;
-    }
+    .admin-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+    .tab-btn { background: #f0e0e0; border: none; padding: 0.6rem 1.2rem; border-radius: 40px; cursor: pointer; font-weight: bold; }
+    .tab-btn.active { background: #c44; color: white; }
+    .tab-content { display: none; animation: fadeIn 0.3s ease; }
+    .tab-content.active { display: block; }
+    .form-row { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+    .form-group { flex: 1; min-width: 200px; }
+    .form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
+    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #ffcece; border-radius: 20px; }
+    button.submit-btn { background: #44aa44; color: white; border: none; border-radius: 40px; padding: 8px 24px; cursor: pointer; }
+    .data-table { margin-top: 1.5rem; overflow-x: auto; }
+    .success-msg { background: #e0ffe0; padding: 8px; border-radius: 20px; margin-top: 1rem; display: none; }
   </style>
 </head>
 <body>
 <div class="gia-header">
   <div class="container">
     <h1>⚙ Панель администратора ГИА</h1>
-    <div class="header-buttons">
-      <a href="./index.html" class="header-btn" id="logoutBtn">🚪 Выйти</a>
-    </div>
+    <div class="header-buttons"><a href="./index.html" class="header-btn" id="logoutBtn">🚪 Выйти</a></div>
   </div>
 </div>
-
 <main class="main-container">
   <div class="card">
     <div class="admin-tabs">
@@ -93,8 +36,6 @@
       <button class="tab-btn" data-tab="examiners">👩‍🏫 Эксперты</button>
       <button class="tab-btn" data-tab="registration">📝 Регистрация на экзамены</button>
     </div>
-
-    <!-- Вкладка ППЭ -->
     <div id="tab-ppe" class="tab-content active">
       <h3>Добавить ППЭ</h3>
       <div class="form-row">
@@ -105,8 +46,6 @@
       <button class="submit-btn" id="addPpeBtn">➕ Добавить ППЭ</button>
       <div id="ppeList" class="data-table"></div>
     </div>
-
-    <!-- Вкладка Участники (регистрация новых людей) -->
     <div id="tab-participants" class="tab-content">
       <h3>Регистрация нового участника/сотрудника</h3>
       <div class="form-row">
@@ -114,12 +53,7 @@
         <div class="form-group"><label>Код ГИА (9 цифр, первая 0-3)</label><input type="text" id="regGiaCode" placeholder="0123456789"></div>
         <div class="form-group"><label>ФИО</label><input type="text" id="regFullName" placeholder="Иванов Иван Иванович"></div>
         <div class="form-group"><label>Дата рождения</label><input type="date" id="regBirthDate"></div>
-        <div class="form-group"><label>Тип ГИА</label>
-          <select id="regGiaType">
-            <option>9</option><option>11</option><option>СПО</option><option>ВО</option>
-            <option>ГВЭ-9</option><option>ГВЭ-11</option><option>ГВЭ-СПО</option><option>ГВЭ-ВО</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Тип ГИА</label><select id="regGiaType"><option>9</option><option>11</option><option>СПО</option><option>ВО</option><option>ГВЭ-9</option><option>ГВЭ-11</option><option>ГВЭ-СПО</option><option>ГВЭ-ВО</option></select></div>
         <div class="form-group"><label>Муниципалитет</label><input type="text" id="regMunicipality" placeholder="Раменский г.о."></div>
         <div class="form-group"><label>ОО</label><input type="text" id="regEduOrg" placeholder="Школа №23"></div>
         <div class="form-group"><label>Класс</label><input type="text" id="regClass" placeholder="9-А"></div>
@@ -127,72 +61,45 @@
       <button class="submit-btn" id="addParticipantBtn">👤 Добавить участника</button>
       <div id="participantsList" class="data-table"></div>
     </div>
-
-    <!-- Вкладка Эксперты -->
     <div id="tab-examiners" class="tab-content">
       <h3>Назначить эксперта</h3>
       <div class="form-row">
         <div class="form-group"><label>Личный код эксперта (уже зарегистрирован)</label><input type="text" id="expPersonalCode" placeholder="5678-1234"></div>
-        <div class="form-group"><label>Роль</label>
-          <select id="expRole"><option>examiner</option><option>director</option><option>tech_admin</option></select>
-        </div>
+        <div class="form-group"><label>Роль</label><select id="expRole"><option>examiner</option><option>director</option><option>tech_admin</option></select></div>
         <div class="form-group"><label>ППЭ</label><select id="expPpeId"></select></div>
       </div>
       <button class="submit-btn" id="addExaminerBtn">👩‍🏫 Назначить</button>
       <div id="examinersList" class="data-table"></div>
     </div>
-
-    <!-- Вкладка Регистрация на экзамены -->
     <div id="tab-registration" class="tab-content">
       <h3>Зарегистрировать участника на экзамен</h3>
       <div class="form-row">
         <div class="form-group"><label>Участник (личный код)</label><input type="text" id="regExamPersonalCode" placeholder="1234-5678"></div>
-        <div class="form-group"><label>Предмет</label>
-          <select id="examSubject">
-            <option>Русский язык</option><option>Юльсанниский язык</option><option>Математика</option>
-            <option>География</option><option>Биология</option><option>Химия</option><option>Информатика</option>
-            <option>История</option><option>Обществознание</option><option>Физика</option><option>Литература</option>
-            <option>Английский язык</option><option>Немецкий язык</option><option>Китайский язык</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Предмет</label><select id="examSubject"><option>Русский язык</option><option>Юльсанниский язык</option><option>Математика</option><option>География</option><option>Биология</option><option>Химия</option><option>Информатика</option><option>История</option><option>Обществознание</option><option>Физика</option><option>Литература</option><option>Английский язык</option><option>Немецкий язык</option><option>Китайский язык</option></select></div>
         <div class="form-group"><label>Дата экзамена</label><input type="date" id="examDate"></div>
         <div class="form-group"><label>Время</label><input type="time" id="examTime" value="10:00"></div>
         <div class="form-group"><label>ППЭ</label><select id="examPpeId"></select></div>
         <div class="form-group"><label>Аудитория (опционально)</label><input type="text" id="examAudience" placeholder="0007"></div>
         <div class="form-group"><label>Место (опционально)</label><input type="text" id="examPlace" placeholder="Р:1 П:1"></div>
-        <div class="form-group"><label>Вид ГИА</label>
-          <select id="examGradeType">
-            <option>9</option><option>11</option><option>СПО</option><option>ВО</option>
-            <option>ГВЭ-9</option><option>ГВЭ-11</option><option>ГВЭ-СПО</option><option>ГВЭ-ВО</option>
-          </select>
-        </div>
+        <div class="form-group"><label>Вид ГИА</label><select id="examGradeType"><option>9</option><option>11</option><option>СПО</option><option>ВО</option><option>ГВЭ-9</option><option>ГВЭ-11</option><option>ГВЭ-СПО</option><option>ГВЭ-ВО</option></select></div>
       </div>
       <button class="submit-btn" id="registerExamBtn">📌 Зарегистрировать</button>
       <div id="registrationsList" class="data-table"></div>
     </div>
   </div>
 </main>
-
-<footer class="gia-footer">
-  <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-</footer>
-
+<footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // === НАСТРОЙКИ ===
     const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    db: { schema: 'education_gia' }
-  });
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'education_gia' } });
 
-  // Проверка авторизации (только admin)
   (function checkAdmin() {
     const user = JSON.parse(sessionStorage.getItem('gia_user') || '{}');
     if (user.role !== 'admin') window.location.href = './index.html';
   })();
 
-  // Переключение вкладок
   document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -210,32 +117,24 @@
     if (tab === 'registration') { await loadPpeSelects(); await loadRegistrationsList(); }
   }
 
-  // ========== УПРАВЛЕНИЕ ППЭ ==========
   async function loadPpeList() {
-    const { data, error } = await supabaseClient.from('ppe').select('*');
-    if (error) return;
-    const html = `<table><thead><tr><th>ID</th><th>Код</th><th>Название</th><th>Адрес</th></tr></thead><tbody>
-      ${data.map(p => `<tr><td>${p.id}</td><td>${p.code}</td><td>${p.name}</td><td>${p.address || ''}</td></tr>`).join('')}
-    </tbody></table>`;
+    const { data } = await supabaseClient.from('ppe').select('*');
+    const html = `<table class="data-table"><thead><tr><th>ID</th><th>Код</th><th>Название</th><th>Адрес</th></tr></thead><tbody>${data?.map(p => `<tr><td>${p.id}</td><td>${p.code}</td><td>${p.name}</td><td>${p.address || ''}</td></tr>`).join('')}</tbody></table>`;
     document.getElementById('ppeList').innerHTML = html;
   }
   document.getElementById('addPpeBtn').onclick = async () => {
     const code = document.getElementById('ppeCode').value.trim();
     const name = document.getElementById('ppeName').value.trim();
     const address = document.getElementById('ppeAddress').value.trim();
-    if (!code || !name) { alert('Код и название обязательны'); return; }
+    if (!code || !name) return alert('Код и название обязательны');
     await supabaseClient.from('ppe').insert([{ code, name, address }]);
     alert('ППЭ добавлен');
     loadPpeList();
   };
 
-  // ========== УЧАСТНИКИ ==========
   async function loadParticipantsList() {
-    const { data, error } = await supabaseClient.from('registered').select('*');
-    if (error) return;
-    const html = `<table><thead><tr><th>Личный код</th><th>ФИО</th><th>Тип ГИА</th><th>ОО</th></tr></thead><tbody>
-      ${data.map(p => `<tr><td>${p.personal_code}</td><td>${p.full_name}</td><td>${p.gia_type}</td><td>${p.educational_org || ''}</td></tr>`).join('')}
-    </tbody></table>`;
+    const { data } = await supabaseClient.from('registered').select('*');
+    const html = `<table class="data-table"><thead><tr><th>Личный код</th><th>ФИО</th><th>Тип ГИА</th><th>ОО</th></tr></thead><tbody>${data?.map(p => `<tr><td>${p.personal_code}</td><td>${p.full_name}</td><td>${p.gia_type}</td><td>${p.educational_org || ''}</td></tr>`).join('')}</tbody></table>`;
     document.getElementById('participantsList').innerHTML = html;
   }
   document.getElementById('addParticipantBtn').onclick = async () => {
@@ -247,13 +146,12 @@
     const municipality = document.getElementById('regMunicipality').value;
     const educational_org = document.getElementById('regEduOrg').value;
     const class_name = document.getElementById('regClass').value;
-    if (!personal_code || !gia_code || !full_name || !birth_date) { alert('Заполните обязательные поля'); return; }
+    if (!personal_code || !gia_code || !full_name || !birth_date) return alert('Заполните обязательные поля');
     const { error } = await supabaseClient.from('registered').insert([{ personal_code, gia_code, full_name, birth_date, gia_type, municipality, educational_org, class_name }]);
     if (error) alert('Ошибка: ' + error.message);
     else { alert('Участник добавлен'); loadParticipantsList(); }
   };
 
-  // ========== ЭКСПЕРТЫ ==========
   async function loadPpeSelects() {
     const { data } = await supabaseClient.from('ppe').select('id, name');
     const options = `<option value="">— без ППЭ —</option>${data?.map(p => `<option value="${p.id}">${p.name}</option>`).join('') || ''}`;
@@ -261,30 +159,23 @@
     document.getElementById('examPpeId').innerHTML = options;
   }
   async function loadExaminersList() {
-    const { data, error } = await supabaseClient.from('examiners').select('*, registered(full_name), ppe(name)');
-    if (error) return;
-    const html = `<table><thead><tr><th>Личный код</th><th>ФИО</th><th>Роль</th><th>ППЭ</th></tr></thead><tbody>
-      ${data.map(e => `<tr><td>${e.personal_code}</td><td>${e.registered?.full_name || ''}</td><td>${e.role}</td><td>${e.ppe?.name || ''}</td></tr>`).join('')}
-    </tbody></tr>`;
+    const { data } = await supabaseClient.from('examiners').select('*, registered(full_name), ppe(name)');
+    const html = `<table class="data-table"><thead><tr><th>Личный код</th><th>ФИО</th><th>Роль</th><th>ППЭ</th></tr></thead><tbody>${data?.map(e => `<tr><td>${e.personal_code}</td><td>${e.registered?.full_name || ''}</td><td>${e.role}</td><td>${e.ppe?.name || ''}</td></tr>`).join('')}</tbody></table>`;
     document.getElementById('examinersList').innerHTML = html;
   }
   document.getElementById('addExaminerBtn').onclick = async () => {
     const personal_code = document.getElementById('expPersonalCode').value.trim();
     const role = document.getElementById('expRole').value;
     const ppe_id = document.getElementById('expPpeId').value || null;
-    if (!personal_code) { alert('Введите личный код эксперта'); return; }
+    if (!personal_code) return alert('Введите личный код эксперта');
     const { error } = await supabaseClient.from('examiners').insert([{ personal_code, role, ppe_id }]);
     if (error) alert('Ошибка: ' + error.message);
     else { alert('Эксперт назначен'); loadExaminersList(); }
   };
 
-  // ========== РЕГИСТРАЦИЯ НА ЭКЗАМЕНЫ ==========
   async function loadRegistrationsList() {
-    const { data, error } = await supabaseClient.from('exam_assignments').select('*, registered(full_name), ppe(name)');
-    if (error) return;
-    const html = `能able<thead><tr><th>Участник</th><th>Предмет</th><th>Дата</th><th>ППЭ</th><th>Вид ГИА</th></tr></thead><tbody>
-      ${data.map(e => `<tr><td>${e.registered?.full_name || ''}</td><td>${e.subject}</td><td>${e.exam_date}</td><td>${e.ppe?.name || ''}</td><td>${e.grade_type || ''}</td></tr>`).join('')}
-    </tbody></table>`;
+    const { data } = await supabaseClient.from('exam_assignments').select('*, registered(full_name), ppe(name)');
+    const html = `<table class="data-table"><thead><tr><th>Участник</th><th>Предмет</th><th>Дата</th><th>ППЭ</th><th>Вид ГИА</th></tr></thead><tbody>${data?.map(e => `<tr><td>${e.registered?.full_name || ''}</td><td>${e.subject}</td><td>${e.exam_date}</td><td>${e.ppe?.name || ''}</td><td>${e.grade_type || ''}</td></tr>`).join('')}</tbody></table>`;
     document.getElementById('registrationsList').innerHTML = html;
   }
   document.getElementById('registerExamBtn').onclick = async () => {
@@ -296,24 +187,19 @@
     const audience = document.getElementById('examAudience').value || null;
     const place = document.getElementById('examPlace').value || null;
     const grade_type = document.getElementById('examGradeType').value;
-    if (!personal_code || !exam_date || !exam_time) { alert('Заполните личный код, дату и время'); return; }
-    // Проверяем существование участника
+    if (!personal_code || !exam_date || !exam_time) return alert('Заполните личный код, дату и время');
     const { data: user } = await supabaseClient.from('registered').select('personal_code').eq('personal_code', personal_code).single();
-    if (!user) { alert('Участник с таким личным кодом не найден'); return; }
-    const { error } = await supabaseClient.from('exam_assignments').insert([{
-      personal_code, subject, exam_date, exam_time, ppe_id, audience, place, grade_type, status: 'scheduled'
-    }]);
+    if (!user) return alert('Участник с таким личным кодом не найден');
+    const { error } = await supabaseClient.from('exam_assignments').insert([{ personal_code, subject, exam_date, exam_time, ppe_id, audience, place, grade_type, status: 'scheduled' }]);
     if (error) alert('Ошибка: ' + error.message);
     else { alert('Экзамен зарегистрирован'); loadRegistrationsList(); }
   };
 
-  // Загрузка начальных данных
   loadPpeList();
   loadParticipantsList();
   loadPpeSelects();
   loadExaminersList();
   loadRegistrationsList();
-
   document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = './index.html'; };
 </script>
 </body>
