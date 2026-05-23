@@ -7,80 +7,90 @@
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="gia-common.css">
     <style>
-        .ppe-info {
-            background: linear-gradient(145deg, #e8f0fe, #ffffff);
-            border-radius: 28px;
-            padding: 1.5rem;
+        /* Спокойный дизайн информации о ППЭ */
+        .ppe-info-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
             margin-bottom: 2rem;
-            border-left: 8px solid #c44;
+            border: 1px solid #e0e0e0;
+            color: #2c3e4e;
+            font-size: 0.95rem;
         }
-        .ppe-info p { margin: 0.3rem 0; }
-        .upload-btn {
+        .ppe-info-card p {
+            margin: 0.4rem 0;
+        }
+        .ppe-info-card strong {
+            color: #2c5f8a;
+        }
+        /* Кнопки единого стиля */
+        .action-btn {
             background: #4a6fa5;
             color: white;
             border: none;
             border-radius: 40px;
             padding: 6px 16px;
+            font-size: 0.85rem;
             cursor: pointer;
             transition: 0.2s;
-        }
-        .upload-btn:hover { background: #3a5a8c; transform: translateY(-2px); }
-        .edit-room-btn {
-            background: #ffaa44;
-            color: #442200;
-            border: none;
-            border-radius: 40px;
-            padding: 4px 12px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
-        .modal .sheet-type {
-            background: #f9f2f2;
-            padding: 1rem;
-            border-radius: 20px;
-            margin-bottom: 1rem;
-        }
-        .sheet-type h4 {
-            margin: 0 0 0.5rem;
-            color: #a33;
-        }
-        .file-upload-area {
-            border: 2px dashed #c44;
-            border-radius: 20px;
-            padding: 0.8rem;
+            display: inline-block;
             text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-            background: #fffaf0;
-            margin: 0.5rem 0;
+            min-width: 130px;
         }
-        .file-upload-area:hover { background: #fff0e0; }
-        .file-list {
-            margin-top: 0.6rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
+        .action-btn.upload {
+            background: #4a6fa5;
         }
-        .file-item {
-            background: #e8e8e8;
-            border-radius: 20px;
-            padding: 0.2rem 0.6rem;
-            font-size: 0.8rem;
+        .action-btn.edit {
+            background: #f5b042;
+            color: #2c2c2c;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(0.95);
+        }
+        /* Редактируемые поля в таблице */
+        .editable-field {
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
+            gap: 6px;
+            flex-wrap: wrap;
         }
-        .delete-file {
+        .editable-value {
+            background: #f0f0f0;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+        .edit-icon {
+            cursor: pointer;
             background: none;
             border: none;
-            color: red;
-            cursor: pointer;
-            font-weight: bold;
+            font-size: 1rem;
+            padding: 0 4px;
+            color: #5a6e7c;
         }
-        .room-info {
-            font-size: 0.8rem;
-            color: #666;
-            margin-top: 0.3rem;
+        .edit-icon:hover {
+            color: #2c5f8a;
+        }
+        .inline-input {
+            width: 100px;
+            padding: 4px 8px;
+            border: 1px solid #c44;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        /* Таблица фиксированной ширины */
+        .participants-table th, .participants-table td {
+            vertical-align: middle;
+        }
+        .participants-table .exam-list {
+            font-size: 0.85rem;
+            line-height: 1.3;
+        }
+        @media (max-width: 700px) {
+            .action-btn { min-width: 100px; padding: 4px 8px; font-size: 0.75rem; }
+            .editable-value { font-size: 0.7rem; }
         }
     </style>
 </head>
@@ -92,9 +102,8 @@
     </div>
 </div>
 <main class="main-container">
-    <div class="card">
-        <h2>📋 Информация о ППЭ</h2>
-        <div id="ppeInfo" class="ppe-info">Загрузка...</div>
+    <div class="ppe-info-card" id="ppeInfo">
+        Загрузка...
     </div>
     <div class="card">
         <h2>📝 Участники экзаменов в ППЭ</h2>
@@ -117,34 +126,35 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'education_gia' } });
 
+    // Проверка роли
     (function checkDirector() {
         const user = JSON.parse(sessionStorage.getItem('gia_user') || '{}');
         if (user.role !== 'director') window.location.href = './index.html';
     })();
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
-    let currentPPE = null;
     let currentAssignments = [];
 
     async function loadDirectorData() {
-        const { data: examiner } = await supabaseClient
+        // Получаем ППЭ руководителя
+        const { data: examiner, error: examErr } = await supabaseClient
             .from('examiners')
             .select('ppe_id')
             .eq('personal_code', currentUser.personal_code)
             .eq('role', 'director')
             .single();
-        if (!examiner || !examiner.ppe_id) {
+        if (examErr || !examiner || !examiner.ppe_id) {
             document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ. Обратитесь к администратору.</p>';
             return;
         }
         const { data: ppe } = await supabaseClient.from('ppe').select('*').eq('id', examiner.ppe_id).single();
-        currentPPE = ppe;
         document.getElementById('ppeInfo').innerHTML = `
-            <p><strong>Код ППЭ:</strong> ${ppe.code}</p>
-            <p><strong>Название:</strong> ${ppe.name}</p>
-            <p><strong>Адрес:</strong> ${ppe.address || 'не указан'}</p>
+            <p><strong>Код ППЭ:</strong> ${ppe.code} &nbsp;|&nbsp;
+            <strong>Название:</strong> ${ppe.name} &nbsp;|&nbsp;
+            <strong>Адрес:</strong> ${ppe.address || 'не указан'}</p>
             <p><strong>Типы ГИА:</strong> 9, 11, СПО, ВО, ГВЭ-9, ГВЭ-11, ГВЭ-СПО, ГВЭ-ВО</p>
         `;
 
+        // Загружаем назначения в этом ППЭ
         const { data: assignments } = await supabaseClient
             .from('exam_assignments')
             .select('*, registered(full_name, personal_code)')
@@ -155,46 +165,114 @@
             document.getElementById('participantsList').innerHTML = '<p>Нет назначенных экзаменов.</p>';
             return;
         }
+
+        // Группируем по участникам
         const participantsMap = new Map();
         assignments.forEach(a => {
             const code = a.registered.personal_code;
             if (!participantsMap.has(code)) {
-                participantsMap.set(code, { full_name: a.registered.full_name, exams: [], audience: a.audience, place: a.place });
+                participantsMap.set(code, {
+                    full_name: a.registered.full_name,
+                    exams: [],
+                    audience: a.audience || '',
+                    place: a.place || ''
+                });
             }
             participantsMap.get(code).exams.push({ id: a.id, subject: a.subject, date: a.exam_date });
         });
-        let html = `<td><thead><tr><th>Участник</th><th>Экзамены</th><th>Аудитория/Место</th><th>Действия</th></tr></thead><tbody>`;
+
+        let html = `<tr><thead><tr><th>Участник</th><th>Экзамены</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
         for (let [code, data] of participantsMap.entries()) {
-            const examsList = data.exams.map(e => `${e.subject} (${new Date(e.date).toLocaleDateString()})`).join('<br>');
-            const roomPlace = `${data.audience || '?'} / ${data.place || '?'}`;
+            const examsHtml = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString()})`).join('<br>');
             html += `<tr>
-                <td>${data.full_name}<br><small>${code}</small></td>
-                <td>${examsList}</td>
-                <td><span class="room-info">${roomPlace}</span><br>
-                    <button class="edit-room-btn" data-personal="${code}">✏️ Изменить</button>
+                <td><strong>${data.full_name}</strong><br><small>${code}</small></td>
+                <td class="exam-list">${examsHtml}</td>
+                <td id="room-cell-${code.replace(/-/g, '')}">
+                    <div class="editable-field">
+                        <span class="editable-value" data-field="audience" data-code="${code}">${data.audience || '?'}</span>
+                        <span> / </span>
+                        <span class="editable-value" data-field="place" data-code="${code}">${data.place || '?'}</span>
+                        <button class="edit-icon" data-code="${code}">✏️</button>
+                    </div>
                 </td>
-                <td><button class="upload-btn" data-personal="${code}">📤 Загрузить бланки</button></td>
-            </tr>`;
+                <td>
+                    <button class="action-btn upload" data-code="${code}">📤 Загрузить бланки</button>
+                </td>
+            </td>`;
         }
         html += `</tbody></table>`;
         document.getElementById('participantsList').innerHTML = html;
-        document.querySelectorAll('.upload-btn').forEach(btn => btn.addEventListener('click', () => showUploadModal(btn.dataset.personal)));
-        document.querySelectorAll('.edit-room-btn').forEach(btn => btn.addEventListener('click', () => editRoomPlace(btn.dataset.personal)));
+
+        // Обработчики для кнопок "Загрузить бланки"
+        document.querySelectorAll('.action-btn.upload').forEach(btn => {
+            btn.addEventListener('click', () => showUploadModal(btn.dataset.code));
+        });
+        // Обработчики для редактирования (карандаш)
+        document.querySelectorAll('.edit-icon').forEach(icon => {
+            icon.addEventListener('click', (e) => {
+                const code = icon.dataset.code;
+                enableInlineEditing(code);
+            });
+        });
     }
 
-    async function editRoomPlace(personalCode) {
-        const newAudience = prompt('Введите аудиторию (например, 0007)');
-        const newPlace = prompt('Введите место (например, Р:1 П:1)');
-        if (newAudience === null || newPlace === null) return;
-        const assignmentsToUpdate = currentAssignments.filter(a => a.registered.personal_code === personalCode);
-        for (const ass of assignmentsToUpdate) {
-            await supabaseClient.from('exam_assignments')
-                .update({ audience: newAudience, place: newPlace })
-                .eq('id', ass.id);
-        }
-        loadDirectorData();
+    // Редактирование аудитории и места inline (без всплывающего окна)
+    function enableInlineEditing(personalCode) {
+        const container = document.getElementById(`room-cell-${personalCode.replace(/-/g, '')}`);
+        if (!container) return;
+        const audienceSpan = container.querySelector('.editable-value[data-field="audience"]');
+        const placeSpan = container.querySelector('.editable-value[data-field="place"]');
+        const currentAudience = audienceSpan.innerText;
+        const currentPlace = placeSpan.innerText;
+
+        // Заменяем на поля ввода
+        const inputAudience = document.createElement('input');
+        inputAudience.type = 'text';
+        inputAudience.value = currentAudience === '?' ? '' : currentAudience;
+        inputAudience.placeholder = 'Аудитория';
+        inputAudience.className = 'inline-input';
+        const inputPlace = document.createElement('input');
+        inputPlace.type = 'text';
+        inputPlace.value = currentPlace === '?' ? '' : currentPlace;
+        inputPlace.placeholder = 'Место';
+        inputPlace.className = 'inline-input';
+        const saveBtn = document.createElement('button');
+        saveBtn.innerText = '✓';
+        saveBtn.className = 'action-btn edit';
+        saveBtn.style.padding = '2px 12px';
+        saveBtn.style.marginLeft = '8px';
+        const cancelBtn = document.createElement('button');
+        cancelBtn.innerText = '✗';
+        cancelBtn.className = 'action-btn';
+        cancelBtn.style.padding = '2px 12px';
+        cancelBtn.style.background = '#aaa';
+
+        const editableDiv = container.querySelector('.editable-field');
+        editableDiv.innerHTML = '';
+        editableDiv.appendChild(inputAudience);
+        editableDiv.appendChild(document.createTextNode(' / '));
+        editableDiv.appendChild(inputPlace);
+        editableDiv.appendChild(saveBtn);
+        editableDiv.appendChild(cancelBtn);
+
+        const saveChanges = async () => {
+            const newAudience = inputAudience.value.trim() || null;
+            const newPlace = inputPlace.value.trim() || null;
+            // Находим все назначения этого участника в ППЭ
+            const assignmentsToUpdate = currentAssignments.filter(a => a.registered.personal_code === personalCode);
+            for (const ass of assignmentsToUpdate) {
+                await supabaseClient.from('exam_assignments')
+                    .update({ audience: newAudience, place: newPlace })
+                    .eq('id', ass.id);
+            }
+            // Обновляем отображение
+            loadDirectorData(); // перезагружаем таблицу
+        };
+        saveBtn.onclick = saveChanges;
+        cancelBtn.onclick = () => loadDirectorData();
     }
 
+    // Загрузка бланков (модальное окно) – без изменений, но оставим
     async function showUploadModal(personalCode) {
         const userAssignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
         const modal = document.getElementById('uploadModal');
@@ -223,7 +301,10 @@
         }
         modalBody.innerHTML = html;
         modal.style.display = 'flex';
+        attachUploadHandlers();
+    }
 
+    function attachUploadHandlers() {
         document.querySelectorAll('.file-upload-area').forEach(area => {
             const assignmentId = area.dataset.assignment;
             const sheetType = area.dataset.sheetType;
@@ -236,9 +317,7 @@
             area.addEventListener('click', () => input.click());
             input.addEventListener('change', async (e) => {
                 const files = Array.from(e.target.files);
-                for (const file of files) {
-                    await uploadFile(assignmentId, sheetType, file);
-                }
+                for (const file of files) await uploadFile(assignmentId, sheetType, file);
                 input.value = '';
             });
             area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.background = '#e8f0fe'; });
@@ -247,9 +326,7 @@
                 e.preventDefault();
                 area.style.background = '';
                 const files = Array.from(e.dataTransfer.files);
-                for (const file of files) {
-                    await uploadFile(assignmentId, sheetType, file);
-                }
+                for (const file of files) await uploadFile(assignmentId, sheetType, file);
             });
             loadFilesForAssignment(assignmentId, sheetType);
         });
@@ -261,10 +338,7 @@
         const folder = `assignment_${assignmentId}/${sheetType}`;
         const filePath = `${folder}/${fileName}`;
         const { error: uploadErr } = await supabaseClient.storage.from('answer_sheets').upload(filePath, file);
-        if (uploadErr) {
-            alert('Ошибка загрузки файла: ' + uploadErr.message);
-            return;
-        }
+        if (uploadErr) { alert('Ошибка загрузки: ' + uploadErr.message); return; }
         const { error: dbErr } = await supabaseClient.from('answer_sheets').insert([{
             assignment_id: assignmentId,
             file_path: filePath,
@@ -283,34 +357,27 @@
     }
 
     async function loadFilesForAssignment(assignmentId, sheetType) {
-        const { data, error } = await supabaseClient
+        const { data } = await supabaseClient
             .from('answer_sheets')
             .select('*')
             .eq('assignment_id', assignmentId)
             .eq('file_type', sheetType);
-        if (error) return;
         const typeMap = { registration: 'reg', answer1: 'ans1', 'answer2-1': 'ans2-1', 'answer2-2': 'ans2-2', 'extra-c': 'extra', 'audio-d': 'audio' };
-        const containerId = `files-${typeMap[sheetType]}-${assignmentId}`;
-        const container = document.getElementById(containerId);
+        const container = document.getElementById(`files-${typeMap[sheetType]}-${assignmentId}`);
         if (!container) return;
-        if (!data.length) { container.innerHTML = '<span style="color:#999;">Нет загруженных файлов</span>'; return; }
+        if (!data?.length) { container.innerHTML = '<span style="color:#999;">Нет загруженных файлов</span>'; return; }
         let html = '';
         for (const f of data) {
             const url = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path).data.publicUrl;
-            html += `<div class="file-item">
-                        <a href="${url}" target="_blank">📄 ${f.file_name}</a>
-                        <button class="delete-file" data-id="${f.id}" data-path="${f.file_path}">❌</button>
-                     </div>`;
+            html += `<div class="file-item"><a href="${url}" target="_blank">📄 ${f.file_name}</a><button class="delete-file" data-id="${f.id}" data-path="${f.file_path}">❌</button></div>`;
         }
         container.innerHTML = html;
         document.querySelectorAll('.delete-file').forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!confirm('Удалить файл?')) return;
-                const id = btn.dataset.id;
-                const path = btn.dataset.path;
-                await supabaseClient.storage.from('answer_sheets').remove([path]);
-                await supabaseClient.from('answer_sheets').delete().eq('id', id);
+                await supabaseClient.storage.from('answer_sheets').remove([btn.dataset.path]);
+                await supabaseClient.from('answer_sheets').delete().eq('id', btn.dataset.id);
                 loadFilesForAssignment(assignmentId, sheetType);
             });
         });
