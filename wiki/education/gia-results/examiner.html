@@ -7,6 +7,13 @@
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="gia-common.css">
     <style>
+        .expert-info {
+            background: linear-gradient(145deg, #e8f0fe, #ffffff);
+            border-radius: 28px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            border-left: 8px solid #4a6fa5;
+        }
         .exam-card {
             background: white;
             border-radius: 24px;
@@ -15,9 +22,7 @@
             border: 1px solid #ffcece;
             transition: 0.2s;
         }
-        .exam-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
+        .exam-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .exam-header {
             display: flex;
             justify-content: space-between;
@@ -25,15 +30,7 @@
             flex-wrap: wrap;
             margin-bottom: 0.5rem;
         }
-        .exam-title {
-            font-weight: bold;
-            font-size: 1.2rem;
-            color: #a33;
-        }
-        .score-info {
-            font-size: 0.9rem;
-            color: #555;
-        }
+        .exam-title { font-weight: bold; font-size: 1.2rem; color: #a33; }
         .grade-badge {
             background: #44aa44;
             color: white;
@@ -52,34 +49,37 @@
             text-align: center;
         }
         .task-input {
-            width: 60px;
+            width: 70px;
             text-align: center;
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 4px;
         }
-        .save-btn {
+        .save-btn, .view-files-btn {
             background: #4a6fa5;
             color: white;
             border: none;
             border-radius: 40px;
-            padding: 8px 20px;
+            padding: 6px 16px;
             cursor: pointer;
+            margin-left: 0.5rem;
         }
-        .view-files-btn {
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 4px 12px;
-            cursor: pointer;
-            font-size: 0.8rem;
-        }
+        .view-files-btn { background: #6c757d; }
         .manual-grade {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding: 0.5rem;
+            background: #f8f9fa;
+            border-radius: 20px;
+        }
+        .score-summary {
+            font-weight: bold;
+            background: #e9ecef;
+            padding: 0.5rem;
+            border-radius: 16px;
         }
     </style>
 </head>
@@ -91,13 +91,13 @@
     </div>
 </div>
 <main class="main-container">
+    <div id="expertInfo" class="expert-info">Загрузка информации...</div>
     <div class="card">
         <h2>📋 Экзамены для проверки</h2>
         <div id="examsList"></div>
     </div>
 </main>
 
-<!-- Модальное окно для оценивания -->
 <div id="scoreModal" class="modal">
     <div class="modal-content" style="max-width: 95%; width: 1000px;">
         <span class="close-modal">&times;</span>
@@ -105,7 +105,7 @@
     </div>
 </div>
 
-<footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены.</p></footer>
+<footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -118,17 +118,28 @@
         if (user.role !== 'examiner') window.location.href = './index.html';
     })();
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
+    let gradingScales = {};  // кэш шкал
+    let taskMaxScores = {};  // кэш макс. баллов
 
-    // Кэш шкал и максимальных баллов
-    let gradingScales = {};
-    let taskMaxScores = {};
-
-    async function loadData() {
-        await loadScales();
-        await loadMaxScores();
-        await loadExams();
+    // Загрузка информации об эксперте
+    async function loadExpertInfo() {
+        const { data: expert, error } = await supabaseClient
+            .from('examiners')
+            .select('*, ppe(name)')
+            .eq('personal_code', currentUser.personal_code)
+            .single();
+        if (error) {
+            document.getElementById('expertInfo').innerHTML = '<p>Информация об эксперте не найдена</p>';
+            return;
+        }
+        document.getElementById('expertInfo').innerHTML = `
+            <p><strong>👤 ФИО:</strong> ${currentUser.full_name}</p>
+            <p><strong>📌 Роль:</strong> ${expert.role === 'examiner' ? 'Эксперт (проверяющий)' : expert.role}</p>
+            <p><strong>🏫 ППЭ:</strong> ${expert.ppe?.name || 'не привязан'}</p>
+        `;
     }
 
+    // Загрузка шкал перевода
     async function loadScales() {
         const { data } = await supabaseClient.from('grading_scales').select('*');
         if (data) {
@@ -141,6 +152,7 @@
         }
     }
 
+    // Загрузка максимальных баллов за задания
     async function loadMaxScores() {
         const { data } = await supabaseClient.from('task_max_scores').select('*');
         if (data) {
@@ -153,13 +165,12 @@
         }
     }
 
+    // Загрузка экзаменов со статусом 'processing'
     async function loadExams() {
-        // Эксперту показываем все экзамены со статусом 'completed' или 'processing', где ещё нет оценки
-        // Для простоты: все экзамены, где результат не имеет grade (или status active/processing)
         const { data: results, error } = await supabaseClient
             .from('resultats')
             .select('*, exam_assignments(subject, exam_date, ppe_name, audience, place, registered(full_name, personal_code))')
-            .in('status', ['active', 'processing'])
+            .eq('status', 'processing')
             .order('id', { ascending: false });
         if (error) {
             document.getElementById('examsList').innerHTML = '<p>Ошибка загрузки экзаменов</p>';
@@ -173,60 +184,48 @@
         for (const res of results) {
             const assign = res.exam_assignments;
             const student = assign.registered;
-            const subjectCode = assign.subject.split('-')[0];
-            const gradeType = assign.subject.split('-')[1] || assign.grade_type;
-            const hasScore = res.score !== null;
             html += `
-                <div class="exam-card" data-result-id="${res.id}">
+                <div class="exam-card" data-result-id="${res.id}" data-assignment-id="${assign.id}">
                     <div class="exam-header">
                         <div class="exam-title">${assign.subject} (${new Date(assign.exam_date).toLocaleDateString()})</div>
-                        <div class="score-info">
-                            <span>Участник: ${student.full_name} (${student.personal_code})</span>
-                            ${hasScore ? `<span class="grade-badge" style="margin-left:1rem;">Оценка: ${res.grade} (${res.score} баллов)</span>` : ''}
+                        <div>
+                            <button class="view-files-btn" data-assignment-id="${assign.id}">📂 Просмотреть бланки</button>
+                            <button class="save-btn score-btn" data-result-id="${res.id}" data-assignment-id="${assign.id}" data-subject="${assign.subject}">📝 Выставить баллы</button>
                         </div>
                     </div>
-                    <div class="exam-header">
-                        <div>ППЭ: ${assign.ppe_name || '—'} | Ауд: ${assign.audience || '?'} | Место: ${assign.place || '?'}</div>
-                        <button class="view-files-btn" data-result-id="${res.id}" data-student-code="${student.personal_code}" data-subject="${assign.subject}" data-date="${assign.exam_date}">📂 Просмотреть бланки</button>
-                        <button class="save-btn score-btn" data-result-id="${res.id}" data-subject-code="${subjectCode}" data-grade-type="${gradeType}" data-current-score="${res.score || ''}">${hasScore ? '✏️ Редактировать баллы' : '📝 Выставить баллы'}</button>
-                    </div>
+                    <div><strong>Участник:</strong> ${student.full_name} (${student.personal_code})</div>
+                    <div><strong>ППЭ:</strong> ${assign.ppe_name || '—'} | <strong>Ауд.:</strong> ${assign.audience || '?'} | <strong>Место:</strong> ${assign.place || '?'}</div>
+                    ${res.score ? `<div><strong>Текущий балл:</strong> ${res.score} | <strong>Оценка:</strong> ${res.grade}</div>` : ''}
                 </div>
             `;
         }
         document.getElementById('examsList').innerHTML = html;
 
-        // Обработчики
+        // Обработчики кнопок
+        document.querySelectorAll('.view-files-btn').forEach(btn => {
+            btn.addEventListener('click', () => viewFiles(btn.dataset.assignmentId));
+        });
         document.querySelectorAll('.score-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const resultId = btn.dataset.resultId;
-                const subjectCode = btn.dataset.subjectCode;
-                const gradeType = btn.dataset.gradeType;
-                const currentScore = btn.dataset.currentScore;
-                showScoringModal(resultId, subjectCode, gradeType, currentScore);
-            });
-        });
-        document.querySelectorAll('.view-files-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const resultId = btn.dataset.resultId;
-                const studentCode = btn.dataset.studentCode;
+                const assignmentId = btn.dataset.assignmentId;
                 const subject = btn.dataset.subject;
-                const examDate = btn.dataset.date;
-                viewFiles(resultId, studentCode, subject, examDate);
+                showScoringModal(resultId, assignmentId, subject);
             });
         });
     }
 
-    async function viewFiles(resultId, studentCode, subject, examDate) {
-        // Находим все бланки, связанные с этим результатом
+    // Просмотр бланков (используем assignment_id из exam_assignments)
+    async function viewFiles(assignmentId) {
         const { data: sheets, error } = await supabaseClient
             .from('answer_sheets')
             .select('*')
-            .eq('assignment_id', resultId);
+            .eq('assignment_id', assignmentId);
         if (error || !sheets.length) {
             alert('Нет загруженных бланков для этого экзамена.');
             return;
         }
-        let html = `<h3>Бланки: ${subject}, ${new Date(examDate).toLocaleDateString()}</h3>`;
+        let html = `<h3>Бланки экзамена</h3>`;
         const grouped = {};
         sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
         for (const [type, files] of Object.entries(grouped)) {
@@ -243,9 +242,16 @@
         modal.style.display = 'flex';
     }
 
-    async function showScoringModal(resultId, subjectCode, gradeType, currentScore) {
+    // Модальное окно для выставления баллов
+    async function showScoringModal(resultId, assignmentId, subject) {
+        // Получаем subject_code и grade_type из названия предмета (например "РУС-9")
+        const parts = subject.split('-');
+        const subjectCode = parts[0];
+        const gradeType = parts[1];
         const key = `${subjectCode}_${gradeType}`;
         const maxScoresMap = taskMaxScores[key] || {};
+        const taskNumbers = Object.keys(maxScoresMap).map(Number).sort((a,b)=>a-b);
+        
         // Загружаем уже сохранённые баллы за задания
         const { data: existingScores } = await supabaseClient
             .from('task_scores')
@@ -254,32 +260,40 @@
         const scoresMap = {};
         if (existingScores) existingScores.forEach(s => { scoresMap[s.task_number] = s.score; });
 
-        // Строим таблицу заданий
-        const taskNumbers = Object.keys(maxScoresMap).map(Number).sort((a,b)=>a-b);
+        // Строим таблицу
         let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Балл ученика</th></tr></thead><tbody>`;
         for (const tn of taskNumbers) {
             const maxScore = maxScoresMap[tn];
             const currentVal = scoresMap[tn] !== undefined ? scoresMap[tn] : '';
             tasksHtml += `<tr>
-                <td>${tn}</td><td>${maxScore}</td>
+                <td>${tn}</td>
+                <td>${maxScore}</td>
                 <td><input type="number" class="task-input" data-task="${tn}" value="${currentVal}" min="0" max="${maxScore}" step="1"></td>
             </tr>`;
         }
         tasksHtml += `</tbody></table>`;
-        tasksHtml += `<div class="manual-grade">
-            <label>Первичный балл (авто): <span id="primaryScoreDisplay">0</span></label>
-            <label>Вторичный балл (авто): <span id="secondaryScoreDisplay">0</span></label>
-            <label>Оценка (авто): <span id="autoGradeDisplay"></span></label>
-            <label>Скорректировать оценку: <input type="text" id="manualGradeInput" placeholder="2,3,4,5,зачет"></label>
-            <button id="saveScoresBtn" class="save-btn">💾 Сохранить результаты</button>
-        </div>`;
+        
+        // Блок с итогами
+        tasksHtml += `
+            <div class="manual-grade">
+                <div class="score-summary">
+                    <label>📊 Первичный балл (авто): <span id="primaryScoreDisplay">0</span></label>
+                    <label style="margin-left:1rem;">🎯 Вторичный балл (авто): <span id="secondaryScoreDisplay">0</span></label>
+                    <label style="margin-left:1rem;">⭐ Оценка (авто): <span id="autoGradeDisplay"></span></label>
+                </div>
+                <div>
+                    <label>✏️ Скорректировать оценку: <input type="text" id="manualGradeInput" placeholder="2,3,4,5,зачет"></label>
+                </div>
+                <button id="saveScoresBtn" class="save-btn">💾 Сохранить результаты</button>
+            </div>
+        `;
 
         const modal = document.getElementById('scoreModal');
         const modalBody = document.getElementById('scoreModalBody');
-        modalBody.innerHTML = `<h3>Выставление баллов по заданиям (${subjectCode}-${gradeType})</h3>${tasksHtml}`;
+        modalBody.innerHTML = `<h3>Выставление баллов: ${subject}</h3>${tasksHtml}`;
         modal.style.display = 'flex';
 
-        // Функция обновления первичного и вторичного баллов
+        // Функция пересчёта
         function updateTotals() {
             let total = 0;
             document.querySelectorAll('.task-input').forEach(inp => {
@@ -288,33 +302,33 @@
                 total += Math.min(val, max);
             });
             document.getElementById('primaryScoreDisplay').innerText = total;
-            // Перевод во вторичный по шкале
+            
+            // Перевод во вторичный балл и оценку по шкале
             const scaleKey = `${subjectCode}_${gradeType}`;
             const scales = gradingScales[scaleKey] || [];
             let secondary = total;
             let autoGrade = '—';
             for (const s of scales) {
                 if (total >= s.min && total <= s.max) {
-                    secondary = total; // В нашем случае вторичный = первичному, но для других предметов можно настроить
+                    secondary = total;  // здесь можно настроить сложную формулу
                     autoGrade = s.grade;
                     break;
                 }
             }
             document.getElementById('secondaryScoreDisplay').innerText = secondary;
             document.getElementById('autoGradeDisplay').innerText = autoGrade;
-            document.getElementById('manualGradeInput').placeholder = autoGrade;
         }
 
-        document.querySelectorAll('.task-input').forEach(inp => {
-            inp.addEventListener('input', updateTotals);
-        });
+        document.querySelectorAll('.task-input').forEach(inp => inp.addEventListener('input', updateTotals));
         updateTotals();
 
+        // Сохранение
         document.getElementById('saveScoresBtn').onclick = async () => {
             const totalPrimary = parseInt(document.getElementById('primaryScoreDisplay').innerText);
             const autoGrade = document.getElementById('autoGradeDisplay').innerText;
             const manualGrade = document.getElementById('manualGradeInput').value.trim();
             const finalGrade = manualGrade !== '' ? manualGrade : autoGrade;
+            const secondaryScore = parseInt(document.getElementById('secondaryScoreDisplay').innerText);
 
             // Сохраняем баллы за задания
             const tasksData = [];
@@ -328,7 +342,7 @@
             const { error: taskErr } = await supabaseClient.from('task_scores').insert(tasksData);
             if (taskErr) { alert('Ошибка сохранения баллов заданий'); console.error(taskErr); return; }
 
-            // Обновляем resultats
+            // Обновляем resultats (score = первичный балл, grade = оценка)
             const { error: resErr } = await supabaseClient
                 .from('resultats')
                 .update({
@@ -339,12 +353,13 @@
                 })
                 .eq('id', resultId);
             if (resErr) { alert('Ошибка сохранения результата'); console.error(resErr); return; }
-            alert('Результаты сохранены!');
+            alert('Результаты сохранены! Участник теперь видит свой балл.');
             modal.style.display = 'none';
             loadExams(); // обновить список
         };
     }
 
+    // Закрытие модального окна
     document.querySelector('.close-modal').addEventListener('click', () => {
         document.getElementById('scoreModal').style.display = 'none';
     });
@@ -352,7 +367,14 @@
         if (e.target === document.getElementById('scoreModal')) document.getElementById('scoreModal').style.display = 'none';
     });
     document.getElementById('logoutBtn').onclick = () => { sessionStorage.clear(); window.location.href = './index.html'; };
-    loadData();
+
+    // Запуск
+    (async () => {
+        await loadExpertInfo();
+        await loadScales();
+        await loadMaxScores();
+        await loadExams();
+    })();
 </script>
 </body>
 </html>
