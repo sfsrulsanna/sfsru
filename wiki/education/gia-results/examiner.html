@@ -120,7 +120,6 @@
     let gradingScales = {};
     let taskMaxScores = {};
 
-    // Загрузка информации об эксперте
     async function loadExpertInfo() {
         const { data: expert, error } = await supabaseClient
             .from('examiners')
@@ -162,14 +161,15 @@
         }
     }
 
-    // Загрузка экзаменов со статусом 'processing'
     async function loadExams() {
+        // ВАЖНО: запросим id из exam_assignments
         const { data: results, error } = await supabaseClient
             .from('resultats')
-            .select('*, exam_assignments(subject, exam_date, ppe_name, audience, place, registered(full_name, personal_code))')
+            .select(`*, exam_assignments(id, subject, exam_date, ppe_name, audience, place, registered(full_name, personal_code))`)
             .eq('status', 'processing')
             .order('id', { ascending: false });
         if (error) {
+            console.error(error);
             document.getElementById('examsList').innerHTML = '<p>Ошибка загрузки экзаменов</p>';
             return;
         }
@@ -180,6 +180,7 @@
         let html = '';
         for (const res of results) {
             const assign = res.exam_assignments;
+            if (!assign) continue;
             const student = assign.registered;
             html += `
                 <div class="exam-card" data-result-id="${res.id}" data-assignment-id="${assign.id}">
@@ -211,8 +212,11 @@
         });
     }
 
-    // Просмотр бланков по assignment_id (id из exam_assignments)
     async function viewFiles(assignmentId) {
+        if (!assignmentId) {
+            alert('Ошибка: идентификатор экзамена не определён');
+            return;
+        }
         const { data: sheets, error } = await supabaseClient
             .from('answer_sheets')
             .select('*')
@@ -226,7 +230,7 @@
             alert('Бланки для этого экзамена не найдены. Убедитесь, что руководитель ППЭ загрузил их.');
             return;
         }
-        let html = `<h3>Бланки экзамена (assignment_id = ${assignmentId})</h3>`;
+        let html = `<h3>Бланки экзамена (ID назначения: ${assignmentId})</h3>`;
         const grouped = {};
         sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
         for (const [type, files] of Object.entries(grouped)) {
@@ -243,7 +247,6 @@
         modal.style.display = 'flex';
     }
 
-    // Модальное окно для выставления баллов
     async function showScoringModal(resultId, assignmentId, subject) {
         const parts = subject.split('-');
         const subjectCode = parts[0];
@@ -252,7 +255,11 @@
         const maxScoresMap = taskMaxScores[key] || {};
         const taskNumbers = Object.keys(maxScoresMap).map(Number).sort((a,b)=>a-b);
         
-        // Загружаем уже сохранённые баллы за задания
+        if (taskNumbers.length === 0) {
+            alert(`Для предмета ${subject} не настроены максимальные баллы за задания. Обратитесь к администратору.`);
+            return;
+        }
+
         const { data: existingScores } = await supabaseClient
             .from('task_scores')
             .select('*')
@@ -260,7 +267,7 @@
         const scoresMap = {};
         if (existingScores) existingScores.forEach(s => { scoresMap[s.task_number] = s.score; });
 
-        let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Балл ученика</th></tr></thead><tbody>`;
+        let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Балл ученика</th><tr></thead><tbody>`;
         for (const tn of taskNumbers) {
             const maxScore = maxScoresMap[tn];
             const currentVal = scoresMap[tn] !== undefined ? scoresMap[tn] : '';
@@ -272,7 +279,6 @@
         }
         tasksHtml += `</tbody></table>`;
         
-        // Дополнительные сведения (текстовое поле)
         tasksHtml += `
             <div class="extra-info">
                 <label><strong>📝 Дополнительные сведения (заметки эксперта):</strong></label><br>
@@ -311,7 +317,7 @@
             let autoGrade = '—';
             for (const s of scales) {
                 if (total >= s.min && total <= s.max) {
-                    secondary = total; // можно задать формулу пересчёта
+                    secondary = total;
                     autoGrade = s.grade;
                     break;
                 }
@@ -330,7 +336,6 @@
             const finalGrade = manualGrade !== '' ? manualGrade : autoGrade;
             const expertNotes = document.getElementById('expertNotes').value;
 
-            // Сохраняем баллы за задания
             const tasksData = [];
             document.querySelectorAll('.task-input').forEach(inp => {
                 const taskNum = parseInt(inp.dataset.task);
@@ -341,7 +346,6 @@
             const { error: taskErr } = await supabaseClient.from('task_scores').insert(tasksData);
             if (taskErr) { alert('Ошибка сохранения баллов заданий: ' + taskErr.message); return; }
 
-            // Сохраняем дополнительные сведения (в details JSONB)
             const { data: currentResult } = await supabaseClient.from('resultats').select('details').eq('id', resultId).single();
             const newDetails = { ...currentResult?.details, expert_notes: expertNotes };
             const { error: resErr } = await supabaseClient
@@ -357,7 +361,7 @@
             if (resErr) { alert('Ошибка сохранения результата: ' + resErr.message); return; }
             alert('Результаты сохранены! Участник теперь видит свой балл.');
             modal.style.display = 'none';
-            loadExams(); // обновить список
+            loadExams();
         };
     }
 
