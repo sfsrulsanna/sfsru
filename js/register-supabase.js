@@ -364,7 +364,7 @@ async function handleSubmit(e) {
       phone: phone,
       email: email,
       contact_person: document.getElementById('contactPerson').value.trim(),
-      account_type: 'упрощённая'
+      account_type: 'Упрощённая'
     };
   }
 
