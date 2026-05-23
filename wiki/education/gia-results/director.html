@@ -13,30 +13,86 @@
             padding: 1rem;
             margin-bottom: 1.5rem;
         }
-        .upload-area {
-            border: 2px dashed #ffcece;
+        .exam-row {
+            border: 1px solid #ffe0e0;
             border-radius: 20px;
+            margin-bottom: 1rem;
             padding: 1rem;
-            text-align: center;
+            background: white;
+        }
+        .exam-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .room-inputs {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
             margin-top: 0.5rem;
+        }
+        .room-inputs input {
+            width: 120px;
+            padding: 4px 8px;
+            border: 1px solid #ffcece;
+            border-radius: 16px;
+        }
+        .save-room-btn {
+            background: #44aa44;
+            border: none;
+            border-radius: 20px;
+            padding: 4px 12px;
+            color: white;
+            cursor: pointer;
+        }
+        .sheet-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+        .sheet-btn {
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 40px;
+            padding: 6px 14px;
+            font-size: 0.8rem;
             cursor: pointer;
             transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
         }
-        .upload-area:hover { background: #fff5f5; }
-        .file-list { margin-top: 0.5rem; }
+        .sheet-btn:hover { background: #e0e0e0; transform: translateY(-2px); }
+        .sheet-btn.reg { background: #d4e0ff; }
+        .sheet-btn.ans1 { background: #d4f0d4; }
+        .sheet-btn.ans2 { background: #fff0c0; }
+        .sheet-btn.extra { background: #ffe0d0; }
+        .sheet-btn.audio { background: #e0d0ff; }
+        .file-list {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+        }
         .file-item {
             background: #f0f0f0;
             border-radius: 16px;
-            padding: 0.3rem 0.6rem;
-            margin: 0.2rem;
-            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.75rem;
         }
         .delete-file {
             background: none;
             border: none;
             color: red;
             cursor: pointer;
-            margin-left: 0.5rem;
+            margin-left: 0.3rem;
+        }
+        .modal-large .modal-content {
+            max-width: 95%;
+            width: auto;
         }
     </style>
 </head>
@@ -54,13 +110,13 @@
     </div>
 
     <div class="card">
-        <h2>📝 Список участников экзаменов в ППЭ</h2>
-        <div id="participantsList" class="table-wrapper"></div>
+        <h2>📝 Участники экзаменов в ППЭ</h2>
+        <div id="participantsList"></div>
     </div>
 </main>
 
-<!-- Модальное окно для загрузки бланков -->
-<div id="uploadModal" class="modal">
+<!-- Модальное окно загрузки бланков -->
+<div id="uploadModal" class="modal modal-large">
     <div class="modal-content">
         <span class="close-modal">&times;</span>
         <div id="uploadModalBody"></div>
@@ -75,17 +131,15 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
     const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'education_gia' } });
 
-    // Проверка роли (только director)
     (function checkDirector() {
         const user = JSON.parse(sessionStorage.getItem('gia_user') || '{}');
         if (user.role !== 'director') window.location.href = './index.html';
     })();
-
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
     let currentPPE = null;
 
     async function loadDirectorData() {
-        // Находим ППЭ, где currentUser является руководителем
+        // Найти ППЭ руководителя
         const { data: examinerData, error: examError } = await supabaseClient
             .from('examiners')
             .select('ppe_id')
@@ -93,16 +147,11 @@
             .eq('role', 'director')
             .single();
         if (examError || !examinerData || !examinerData.ppe_id) {
-            document.getElementById('ppeInfo').innerHTML = '<p>Вы не назначены руководителем ни одного ППЭ. Обратитесь к администратору.</p>';
+            document.getElementById('ppeInfo').innerHTML = '<p>Вы не назначены руководителем ППЭ. Обратитесь к администратору.</p>';
             return;
         }
         const ppeId = examinerData.ppe_id;
-        // Загружаем данные ППЭ
-        const { data: ppe, error: ppeError } = await supabaseClient
-            .from('ppe')
-            .select('*')
-            .eq('id', ppeId)
-            .single();
+        const { data: ppe, error: ppeError } = await supabaseClient.from('ppe').select('*').eq('id', ppeId).single();
         if (ppeError) {
             document.getElementById('ppeInfo').innerHTML = '<p>Ошибка загрузки ППЭ.</p>';
             return;
@@ -115,7 +164,7 @@
             <div><strong>Принимаемые типы ГИА:</strong> 9, 11, СПО, ВО, ГВЭ (все формы)</div>
         `;
 
-        // Загружаем список участников, у которых есть экзамены в этом ППЭ
+        // Загрузить назначения экзаменов в этом ППЭ с данными участников
         const { data: assignments, error: assignError } = await supabaseClient
             .from('exam_assignments')
             .select('*, registered(full_name, personal_code)')
@@ -129,101 +178,110 @@
             document.getElementById('participantsList').innerHTML = '<p>Нет назначенных экзаменов в этом ППЭ.</p>';
             return;
         }
-        // Группируем по участникам
+        // Группировка по участнику + экзамен
         const participantsMap = new Map();
         assignments.forEach(ass => {
             const code = ass.registered.personal_code;
-            if (!participantsMap.has(code)) {
-                participantsMap.set(code, {
+            const key = `${code}_${ass.id}`; // уникальный ключ для возможности отдельной настройки аудитории/места
+            if (!participantsMap.has(key)) {
+                participantsMap.set(key, {
+                    personal_code: code,
                     full_name: ass.registered.full_name,
-                    exams: []
+                    assignment_id: ass.id,
+                    subject: ass.subject,
+                    exam_date: ass.exam_date,
+                    audience: ass.audience || '',
+                    place: ass.place || ''
                 });
             }
-            participantsMap.get(code).exams.push({
-                id: ass.id,
-                subject: ass.subject,
-                exam_date: ass.exam_date,
-                status: ass.status
-            });
         });
-        let html = `<table><thead><tr><th>Участник</th><th>Экзамены</th><th>Действия</th></tr></thead><tbody>`;
-        for (let [code, data] of participantsMap.entries()) {
-            const examsList = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString('ru-RU')})`).join(', ');
-            html += `<tr>
-                <td>${data.full_name} (${code})</td>
-                <td>${examsList}</td>
-                <td><button class="upload-btn" data-personal-code="${code}">📤 Загрузить бланки</button></td>
-            </tr>`;
-        }
-        html += `</tbody></tr>`;
-        document.getElementById('participantsList').innerHTML = html;
-        // Добавляем обработчики на кнопки загрузки
-        document.querySelectorAll('.upload-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const personalCode = btn.dataset.personalCode;
-                showUploadModal(personalCode, assignments.filter(a => a.registered.personal_code === personalCode));
-            });
-        });
-    }
-
-    async function showUploadModal(personalCode, userAssignments) {
-        const modal = document.getElementById('uploadModal');
-        const modalBody = document.getElementById('uploadModalBody');
-        let examsHtml = '<h3>Выберите экзамен для загрузки бланков</h3>';
-        for (const ass of userAssignments) {
-            const examDate = new Date(ass.exam_date).toLocaleDateString('ru-RU');
-            examsHtml += `
-                <div class="exam-item" style="margin-bottom: 1rem; border:1px solid #ccc; padding:0.5rem; border-radius:16px;">
-                    <strong>${ass.subject}</strong> (${examDate})<br>
-                    <div class="upload-area" data-assignment-id="${ass.id}" data-personal-code="${personalCode}">
-                        📎 Нажмите или перетащите файлы для загрузки (PDF, JPG, PNG)
-                        <input type="file" multiple accept=".pdf,.jpg,.jpeg,.png" style="display:none;">
+        let html = `<div style="display:flex; flex-direction:column; gap:1rem;">`;
+        for (let [key, data] of participantsMap.entries()) {
+            const examDate = new Date(data.exam_date).toLocaleDateString('ru-RU');
+            html += `
+                <div class="exam-row" data-assignment-id="${data.assignment_id}">
+                    <div class="exam-header">
+                        <div><strong>${data.full_name}</strong> (${data.personal_code})<br>${data.subject}, ${examDate}</div>
+                        <div class="room-inputs">
+                            <input type="text" class="audience-input" placeholder="Аудитория" value="${escapeHtml(data.audience)}" style="width:100px">
+                            <input type="text" class="place-input" placeholder="Место" value="${escapeHtml(data.place)}" style="width:100px">
+                            <button class="save-room-btn" data-id="${data.assignment_id}">Сохранить</button>
+                        </div>
                     </div>
-                    <div id="files-${ass.id}" class="file-list"></div>
+                    <div class="sheet-buttons">
+                        <button class="sheet-btn reg" data-type="registration">📄 Бланк регистрации</button>
+                        <button class="sheet-btn ans1" data-type="answer1">📝 Бланк ответов №1</button>
+                        <button class="sheet-btn ans2" data-type="answer2_1">📑 Бланк ответов №2 (лист 1)</button>
+                        <button class="sheet-btn ans2" data-type="answer2_2">📑 Бланк ответов №2 (лист 2)</button>
+                        <button class="sheet-btn extra" data-type="extra_c">📎 Доп. бланк C</button>
+                        <button class="sheet-btn audio" data-type="type_d">🎤 Ответы типа D (аудио)</button>
+                    </div>
+                    <div id="files-${data.assignment_id}" class="file-list"></div>
                 </div>
             `;
         }
-        modalBody.innerHTML = examsHtml;
-        modal.style.display = 'flex';
+        html += `</div>`;
+        document.getElementById('participantsList').innerHTML = html;
 
-        // Настраиваем загрузку для каждого экзамена
-        document.querySelectorAll('.upload-area').forEach(area => {
-            const assignmentId = area.dataset.assignmentId;
-            const fileInput = area.querySelector('input[type="file"]');
-            area.addEventListener('click', () => fileInput.click());
-            fileInput.addEventListener('change', async (e) => {
-                const files = Array.from(e.target.files);
-                if (files.length === 0) return;
-                for (const file of files) {
-                    await uploadFile(assignmentId, file);
-                }
-                await loadFilesList(assignmentId);
-                e.target.value = '';
+        // Привязать сохранение аудитории/места
+        document.querySelectorAll('.save-room-btn').forEach(btn => {
+            btn.addEventListener('click', async (e) => {
+                const assignmentId = btn.dataset.id;
+                const row = document.querySelector(`.exam-row[data-assignment-id="${assignmentId}"]`);
+                const audience = row.querySelector('.audience-input').value;
+                const place = row.querySelector('.place-input').value;
+                const { error } = await supabaseClient
+                    .from('exam_assignments')
+                    .update({ audience, place })
+                    .eq('id', assignmentId);
+                if (error) alert('Ошибка сохранения: ' + error.message);
+                else alert('Данные сохранены');
             });
-            area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.background = '#e0e0e0'; });
-            area.addEventListener('dragleave', () => { area.style.background = ''; });
-            area.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                area.style.background = '';
-                const files = Array.from(e.dataTransfer.files);
-                for (const file of files) {
-                    await uploadFile(assignmentId, file);
-                }
-                await loadFilesList(assignmentId);
-            });
-            loadFilesList(assignmentId);
         });
+
+        // Привязать кнопки загрузки бланков
+        document.querySelectorAll('.sheet-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const assignmentId = btn.closest('.exam-row').dataset.assignmentId;
+                const sheetType = btn.dataset.type;
+                uploadSheet(assignmentId, sheetType);
+            });
+        });
+
+        // Загрузить списки файлов для каждого assignment
+        for (let [key, data] of participantsMap.entries()) {
+            await loadFilesList(data.assignment_id);
+        }
     }
 
-    async function uploadFile(assignmentId, file) {
+    function escapeHtml(str) { return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+    async function uploadSheet(assignmentId, sheetType) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.pdf,.jpg,.jpeg,.png,.mp3,.wav,.m4a';
+        input.multiple = (sheetType === 'type_d'); // для аудио можно несколько файлов
+        input.onchange = async (e) => {
+            const files = Array.from(e.target.files);
+            if (files.length === 0) return;
+            for (const file of files) {
+                await uploadFile(assignmentId, file, sheetType);
+            }
+            await loadFilesList(assignmentId);
+        };
+        input.click();
+    }
+
+    async function uploadFile(assignmentId, file, sheetType) {
         const fileExt = file.name.split('.').pop();
-        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-        const filePath = `answer_sheets/assignment_${assignmentId}/${fileName}`;
+        const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}_${safeName}`;
+        const filePath = `answer_sheets/assignment_${assignmentId}/${sheetType}/${fileName}`;
         const { error: uploadError } = await supabaseClient.storage
             .from('answer_sheets')
             .upload(filePath, file);
         if (uploadError) {
-            alert('Ошибка загрузки файла: ' + uploadError.message);
+            alert('Ошибка загрузки: ' + uploadError.message);
             return;
         }
         const { error: dbError } = await supabaseClient
@@ -233,13 +291,14 @@
                 file_path: filePath,
                 file_name: file.name,
                 file_type: file.type,
+                sheet_type: sheetType,
                 uploaded_by: currentUser.personal_code
             }]);
         if (dbError) {
             console.error(dbError);
-            alert('Ошибка сохранения информации о файле');
+            alert('Ошибка сохранения метаданных');
         } else {
-            alert(`Файл ${file.name} загружен`);
+            // alert(`Файл "${file.name}" загружен`);
         }
     }
 
@@ -251,16 +310,26 @@
         if (error) return;
         const container = document.getElementById(`files-${assignmentId}`);
         if (!container) return;
-        if (data.length === 0) {
+        if (!data.length) {
             container.innerHTML = '<span class="file-item">Нет загруженных бланков</span>';
             return;
         }
         let html = '';
         for (const file of data) {
             const publicUrl = supabaseClient.storage.from('answer_sheets').getPublicUrl(file.file_path).data.publicUrl;
+            let typeLabel = '';
+            switch (file.sheet_type) {
+                case 'registration': typeLabel = '📄 Регистрация'; break;
+                case 'answer1': typeLabel = '📝 №1'; break;
+                case 'answer2_1': typeLabel = '📑 №2 л.1'; break;
+                case 'answer2_2': typeLabel = '📑 №2 л.2'; break;
+                case 'extra_c': typeLabel = '📎 Доп. C'; break;
+                case 'type_d': typeLabel = '🎤 Аудио D'; break;
+                default: typeLabel = '📎 Файл';
+            }
             html += `<div class="file-item">
-                        <a href="${publicUrl}" target="_blank">📄 ${file.file_name}</a>
-                        <button class="delete-file" data-id="${file.id}">❌</button>
+                        ${typeLabel}: <a href="${publicUrl}" target="_blank">${escapeHtml(file.file_name)}</a>
+                        <button class="delete-file" data-id="${file.id}" data-path="${file.file_path}">❌</button>
                      </div>`;
         }
         container.innerHTML = html;
@@ -268,13 +337,11 @@
             btn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 const fileId = btn.dataset.id;
+                const filePath = btn.dataset.path;
                 if (confirm('Удалить файл?')) {
-                    const { data: fileData } = await supabaseClient.from('answer_sheets').select('file_path').eq('id', fileId).single();
-                    if (fileData) {
-                        await supabaseClient.storage.from('answer_sheets').remove([fileData.file_path]);
-                        await supabaseClient.from('answer_sheets').delete().eq('id', fileId);
-                        loadFilesList(assignmentId);
-                    }
+                    await supabaseClient.storage.from('answer_sheets').remove([filePath]);
+                    await supabaseClient.from('answer_sheets').delete().eq('id', fileId);
+                    loadFilesList(assignmentId);
                 }
             });
         });
