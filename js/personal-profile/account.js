@@ -1,7 +1,7 @@
 // js/personal-profile/account.js
 import { supabase } from '../supabase-config.js';
 
-console.log('account.js загружен (с использованием active-класса)');
+console.log('account.js загружен (с активными глобальными функциями)');
 
 let currentUser = null;
 
@@ -12,22 +12,30 @@ const emailModal = document.getElementById('emailModal');
 const confirmDeleteModal = document.getElementById('confirmDeleteModal');
 const messageModal = document.getElementById('messageModal');
 
-// Функция открытия модалки (добавляет класс active)
+// Функция открытия модалки
 function openModal(modal) {
   if (modal) modal.classList.add('active');
 }
 
-// Функция закрытия модалки (удаляет active и очищает поля)
+// Функция закрытия модалки (и очистка полей)
 function closeModal(modal) {
   if (!modal) return;
   modal.classList.remove('active');
+  // Очищаем все поля ввода внутри модалки
   const inputs = modal.querySelectorAll('input');
   inputs.forEach(input => input.value = '');
   const errors = modal.querySelectorAll('.error-message');
   errors.forEach(err => err.textContent = '');
 }
 
-// Закрытие по крестику
+// Глобальные функции для закрытия конкретных модалок (для inline onclick)
+window.closePasswordModal = () => closeModal(passwordModal);
+window.closePhoneModal = () => closeModal(phoneModal);
+window.closeEmailModal = () => closeModal(emailModal);
+window.closeConfirmDeleteModal = () => closeModal(confirmDeleteModal);
+window.closeMessageModal = () => closeModal(messageModal);
+
+// Закрытие по крестику (все .close внутри .modal)
 document.querySelectorAll('.modal .close').forEach(btn => {
   btn.addEventListener('click', (e) => {
     const modal = btn.closest('.modal');
