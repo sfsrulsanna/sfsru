@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Учётная запись — СФСРЮ</title>
 
-  <!-- Favicons (скопируйте из my-data.html) -->
+  <!-- Favicons (замените на свои пути) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
@@ -27,8 +27,50 @@
   <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
 
+  <!-- Общие стили и специфичные -->
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/account.css" />
+
+  <style>
+    /* Дополнительные стили для бейджей и кнопок, если не подтянулись */
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      margin-left: 0.5rem;
+    }
+    .status-verified {
+      background: rgba(40, 167, 69, 0.15);
+      color: #28a745;
+      border-color: #28a745;
+    }
+    .status-pending {
+      background: rgba(255, 193, 7, 0.15);
+      color: #856404;
+      border-color: #ffc107;
+    }
+    .status-rejected {
+      background: rgba(220, 53, 69, 0.15);
+      color: #dc3545;
+      border-color: #dc3545;
+    }
+    .btn-upgrade {
+      background: linear-gradient(135deg, #2c7da0, #1f5068);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      margin-left: 1rem;
+    }
+    .btn-upgrade:hover {
+      opacity: 0.9;
+    }
+  </style>
 </head>
 <body>
   <header class="header">
@@ -74,13 +116,13 @@
           <div class="field-row">
             <span class="label">Телефон:</span>
             <span class="value" id="phoneValue">—</span>
-			<span class="status-badge" id="phoneStatus"></span>
+            <span class="status-badge" id="phoneStatus"></span>
             <button class="btn-icon" id="editPhoneBtn" title="Изменить телефон">✏️</button>
           </div>
           <div class="field-row">
             <span class="label">Email:</span>
             <span class="value" id="emailValue">—</span>
-			<span class="status-badge" id="emailStatus"></span>
+            <span class="status-badge" id="emailStatus"></span>
             <button class="btn-icon" id="editEmailBtn" title="Изменить email">✏️</button>
           </div>
         </div>
@@ -89,10 +131,12 @@
         <div class="data-section">
           <div class="section-header">
             <h3>Тип учётной записи</h3>
+            <button id="upgradeAccountBtn" class="btn-upgrade" style="display: none;">Сделать стандартной</button>
           </div>
           <div class="field-row">
             <span class="label">Статус:</span>
-			<span class="status-badge" id="accountTypeBadge"></span>
+            <span class="value" id="accountTypeValue">—</span>
+            <span class="status-badge" id="accountTypeBadge"></span>
           </div>
           <div class="help-text" id="accountTypeHelp"></div>
         </div>
@@ -128,7 +172,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4>Смена пароля</h4>
-          <button class="close" onclick="closePasswordModal()">&times;</button>
+          <button class="close">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -146,7 +190,7 @@
           <div id="passwordError" class="error-message"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closePasswordModal()">Отмена</button>
+          <button class="btn btn-secondary">Отмена</button>
           <button class="btn btn-primary" id="submitPasswordBtn">Изменить пароль</button>
         </div>
       </div>
@@ -157,7 +201,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4>Изменение номера телефона</h4>
-          <button class="close" onclick="closePhoneModal()">&times;</button>
+          <button class="close">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -171,7 +215,7 @@
           <div id="phoneError" class="error-message"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closePhoneModal()">Отмена</button>
+          <button class="btn btn-secondary">Отмена</button>
           <button class="btn btn-primary" id="submitPhoneBtn">Сохранить</button>
         </div>
       </div>
@@ -182,7 +226,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4>Изменение email</h4>
-          <button class="close" onclick="closeEmailModal()">&times;</button>
+          <button class="close">&times;</button>
         </div>
         <div class="modal-body">
           <div class="form-group">
@@ -196,8 +240,32 @@
           <div id="emailError" class="error-message"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeEmailModal()">Отмена</button>
+          <button class="btn btn-secondary">Отмена</button>
           <button class="btn btn-primary" id="submitEmailBtn">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно подтверждения повышения -->
+    <div id="upgradeModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>Повышение типа учётной записи</h4>
+          <button class="close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Вы хотите повысить тип учётной записи до <strong>«Стандартная»</strong>.</p>
+          <p>Для этого необходимо, чтобы были подтверждены:</p>
+          <ul id="checklist">
+            <li id="checkPhone">📞 Телефон</li>
+            <li id="checkEmail">✉️ Email</li>
+            <li id="checkPassport">🪪 Паспорт</li>
+          </ul>
+          <div id="upgradeError" class="error-message"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary">Отмена</button>
+          <button class="btn btn-primary" id="confirmUpgradeBtn">Подтвердить повышение</button>
         </div>
       </div>
     </div>
@@ -207,7 +275,7 @@
       <div class="modal-content">
         <div class="modal-header">
           <h4>Подтверждение удаления</h4>
-          <button class="close" onclick="closeConfirmDeleteModal()">&times;</button>
+          <button class="close">&times;</button>
         </div>
         <div class="modal-body">
           <p>ВНИМАНИЕ! Удаление учётной записи приведёт к потере всех данных.</p>
@@ -219,26 +287,25 @@
           <div id="deleteError" class="error-message"></div>
         </div>
         <div class="modal-footer">
-          <button class="btn btn-secondary" onclick="closeConfirmDeleteModal()">Отмена</button>
+          <button class="btn btn-secondary">Отмена</button>
           <button class="btn btn-danger" id="confirmDeleteBtn">Удалить навсегда</button>
         </div>
       </div>
     </div>
 
-    <!-- Информационное модальное окно (сообщения) -->
+    <!-- Информационное модальное окно -->
     <div id="messageModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
           <h4 id="messageTitle">Сообщение</h4>
-          <button class="close" onclick="closeMessageModal()">&times;</button>
+          <button class="close">&times;</button>
         </div>
         <div class="modal-body" id="messageText"></div>
         <div class="modal-footer">
-          <button class="btn btn-primary" onclick="closeMessageModal()">Закрыть</button>
+          <button class="btn btn-primary">Закрыть</button>
         </div>
       </div>
     </div>
-
   </main>
 
   <footer class="footer">
@@ -253,8 +320,369 @@
       }
     }
   </script>
-  <script type="module" src="../js/supabase-config.js"></script>
-  <script type="module" src="../js/personal-profile/account.js"></script>
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js';
+
+    // --- DOM элементы ---
+    const loadingDiv = document.getElementById('loading');
+    const accountDiv = document.getElementById('accountData');
+    const phoneSpan = document.getElementById('phoneValue');
+    const emailSpan = document.getElementById('emailValue');
+    const accountTypeSpan = document.getElementById('accountTypeValue');
+    const accountTypeHelp = document.getElementById('accountTypeHelp');
+    const userIdSpan = document.getElementById('userIdValue');
+    const upgradeBtn = document.getElementById('upgradeAccountBtn');
+
+    const passwordModal = document.getElementById('passwordModal');
+    const phoneModal = document.getElementById('phoneModal');
+    const emailModal = document.getElementById('emailModal');
+    const upgradeModal = document.getElementById('upgradeModal');
+    const confirmDeleteModal = document.getElementById('confirmDeleteModal');
+    const messageModal = document.getElementById('messageModal');
+
+    let currentUser = null;
+    let currentProfile = null; // храним данные профиля
+
+    // --- Вспомогательные функции ---
+    function openModal(modal) {
+      if (modal) modal.classList.add('active');
+    }
+    function closeModal(modal) {
+      if (!modal) return;
+      modal.classList.remove('active');
+      const inputs = modal.querySelectorAll('input');
+      inputs.forEach(input => input.value = '');
+      const errors = modal.querySelectorAll('.error-message');
+      errors.forEach(err => err.textContent = '');
+    }
+    // Глобальные функции для inline не нужны, т.к. все обработчики через addEventListener
+    // Закрытие по крестикам и фону
+    document.querySelectorAll('.modal .close').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const modal = btn.closest('.modal');
+        if (modal) closeModal(modal);
+      });
+    });
+    document.querySelectorAll('.modal .btn-secondary').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const modal = btn.closest('.modal');
+        if (modal) closeModal(modal);
+      });
+    });
+    window.addEventListener('click', (e) => {
+      if (e.target.classList && e.target.classList.contains('modal')) {
+        closeModal(e.target);
+      }
+    });
+
+    function showMessage(title, text, isError = false) {
+      const msgTitle = document.getElementById('messageTitle');
+      const msgText = document.getElementById('messageText');
+      if (msgTitle) msgTitle.textContent = title;
+      if (msgText) {
+        msgText.innerHTML = text;
+        msgText.style.color = isError ? '#b91c1c' : 'inherit';
+      }
+      openModal(messageModal);
+    }
+
+    function updateStatusBadge(elementId, status) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      let text = '', className = '';
+      if (status === 'verified') {
+        text = '✅ Подтверждено';
+        className = 'status-badge status-verified';
+      } else if (status === 'oncheck') {
+        text = '⏳ На проверке';
+        className = 'status-badge status-pending';
+      } else if (status === 'rejected') {
+        text = '❌ Отклонено';
+        className = 'status-badge status-rejected';
+      } else {
+        text = '⚠️ Не подтверждено';
+        className = 'status-badge';
+      }
+      el.textContent = text;
+      el.className = className;
+    }
+
+    // --- Загрузка данных ---
+    async function loadAccountData() {
+      try {
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!user) throw new Error('Пользователь не авторизован');
+        currentUser = user;
+        userIdSpan.textContent = user.id;
+
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('phone, email, phone_status, email_status, account_type, personal_code')
+          .eq('id', user.id)
+          .single();
+        if (profileError && profileError.code !== 'PGRST116') throw profileError;
+        currentProfile = profile || {};
+
+        const phone = profile?.phone || user.phone || '—';
+        const email = profile?.email || user.email || '—';
+        phoneSpan.textContent = phone;
+        emailSpan.textContent = email;
+
+        const phoneStatus = profile?.phone_status || (user.phone ? 'not_verified' : 'none');
+        const emailStatus = profile?.email_status || (user.email_confirmed_at ? 'verified' : 'not_verified');
+        updateStatusBadge('phoneStatus', phoneStatus);
+        updateStatusBadge('emailStatus', emailStatus);
+
+        const accountType = profile?.account_type || 'Упрощённая';
+        accountTypeSpan.textContent = accountType;
+        // бейдж для типа
+        if (accountType === 'Упрощённая') {
+          document.getElementById('accountTypeBadge').textContent = '⚠️ Упрощённая';
+          document.getElementById('accountTypeBadge').className = 'status-badge';
+        } else if (accountType === 'Стандартная') {
+          updateStatusBadge('accountTypeBadge', 'oncheck');
+        } else if (accountType === 'Подтверждённая') {
+          updateStatusBadge('accountTypeBadge', 'verified');
+        }
+
+        let helpText = '';
+        if (accountType === 'Упрощённая') helpText = 'Требуется подтверждение email, телефона и паспорта для повышения.';
+        else if (accountType === 'Стандартная') helpText = 'Один из контактов подтверждён. Для получения "Подтверждённой" нужно верифицировать все данные.';
+        else if (accountType === 'Подтверждённая') helpText = 'Все контакты и документы верифицированы.';
+        accountTypeHelp.textContent = helpText;
+
+        // Показать кнопку повышения только если тип 'Упрощённая'
+        if (accountType === 'Упрощённая') {
+          upgradeBtn.style.display = 'inline-block';
+        } else {
+          upgradeBtn.style.display = 'none';
+        }
+
+        loadingDiv.style.display = 'none';
+        accountDiv.style.display = 'block';
+      } catch (err) {
+        console.error(err);
+        loadingDiv.textContent = 'Ошибка загрузки: ' + err.message;
+      }
+    }
+
+    // --- Проверка возможности повышения ---
+    async function checkUpgradeEligibility() {
+      // 1. Проверка телефона и email
+      const phoneOk = currentProfile?.phone_status === 'verified';
+      const emailOk = currentProfile?.email_status === 'verified';
+      
+      // 2. Проверка паспорта по личному коду
+      let passportOk = false;
+      const personalCode = currentProfile?.personal_code;
+      if (personalCode) {
+        const { data, error } = await supabase
+          .from('passport')
+          .select('status')
+          .eq('personal_code', personalCode)
+          .maybeSingle();
+        if (!error && data && data.status === 'verified') {
+          passportOk = true;
+        }
+      }
+      return { phoneOk, emailOk, passportOk, allOk: phoneOk && emailOk && passportOk };
+    }
+
+    // Обновление чек-листа в модалке
+    async function refreshUpgradeModal() {
+      const { phoneOk, emailOk, passportOk, allOk } = await checkUpgradeEligibility();
+      const phoneLi = document.getElementById('checkPhone');
+      const emailLi = document.getElementById('checkEmail');
+      const passportLi = document.getElementById('checkPassport');
+      phoneLi.style.color = phoneOk ? 'green' : 'red';
+      emailLi.style.color = emailOk ? 'green' : 'red';
+      passportLi.style.color = passportOk ? 'green' : 'red';
+      phoneLi.innerHTML = phoneOk ? '✅ Телефон подтверждён' : '❌ Телефон не подтверждён';
+      emailLi.innerHTML = emailOk ? '✅ Email подтверждён' : '❌ Email не подтверждён';
+      passportLi.innerHTML = passportOk ? '✅ Паспорт подтверждён' : '❌ Паспорт не подтверждён';
+      
+      const confirmBtn = document.getElementById('confirmUpgradeBtn');
+      confirmBtn.disabled = !allOk;
+      if (!allOk) {
+        document.getElementById('upgradeError').textContent = 'Для повышения необходимо выполнить все условия.';
+      } else {
+        document.getElementById('upgradeError').textContent = '';
+      }
+      return allOk;
+    }
+
+    // Повышение до стандартной
+    async function upgradeToStandard() {
+      const { allOk } = await checkUpgradeEligibility();
+      if (!allOk) {
+        showMessage('Ошибка', 'Не все условия выполнены.', true);
+        return false;
+      }
+      // Обновляем в БД
+      const { error } = await supabase
+        .from('users')
+        .update({ account_type: 'Стандартная' })
+        .eq('id', currentUser.id);
+      if (error) {
+        showMessage('Ошибка', 'Не удалось обновить тип учётной записи: ' + error.message, true);
+        return false;
+      }
+      // Обновляем локально и интерфейс
+      currentProfile.account_type = 'Стандартная';
+      accountTypeSpan.textContent = 'Стандартная';
+      updateStatusBadge('accountTypeBadge', 'oncheck');
+      accountTypeHelp.textContent = 'Стандартная запись: один из контактов подтверждён. Для получения "Подтверждённой" нужно верифицировать все данные.';
+      upgradeBtn.style.display = 'none';
+      showMessage('Успешно', 'Ваша учётная запись повышена до статуса "Стандартная".');
+      return true;
+    }
+
+    // --- Обработчики событий ---
+    // Копирование UUID
+    document.getElementById('copyUuidBtn')?.addEventListener('click', async () => {
+      const uuid = userIdSpan.textContent;
+      if (uuid && uuid !== '—') {
+        try {
+          await navigator.clipboard.writeText(uuid);
+          showMessage('Скопировано', 'UUID скопирован.');
+        } catch {
+          showMessage('Ошибка', 'Не удалось скопировать UUID.', true);
+        }
+      } else {
+        showMessage('Ошибка', 'UUID не найден.', true);
+      }
+    });
+
+    // Повышение: открыть модалку и обновить чек-лист
+    upgradeBtn?.addEventListener('click', async () => {
+      await refreshUpgradeModal();
+      openModal(upgradeModal);
+    });
+    document.getElementById('confirmUpgradeBtn')?.addEventListener('click', async () => {
+      const success = await upgradeToStandard();
+      if (success) closeModal(upgradeModal);
+    });
+
+    // Изменение телефона (аналогично предыдущему)
+    document.getElementById('editPhoneBtn')?.addEventListener('click', () => openModal(phoneModal));
+    document.getElementById('submitPhoneBtn')?.addEventListener('click', async () => {
+      const newPhone = document.getElementById('newPhone')?.value.trim();
+      const password = document.getElementById('phonePassword')?.value;
+      const errorDiv = document.getElementById('phoneError');
+      if (!newPhone) { errorDiv.textContent = 'Введите номер телефона.'; return; }
+      if (!password) { errorDiv.textContent = 'Введите пароль.'; return; }
+      try {
+        const { error: verifyError } = await supabase.auth.updateUser(
+          { email: currentUser.email },
+          { currentPassword: password }
+        );
+        if (verifyError) throw new Error('Неверный пароль');
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ phone: newPhone, phone_status: 'oncheck' })
+          .eq('id', currentUser.id);
+        if (updateError) throw updateError;
+        phoneSpan.textContent = newPhone;
+        updateStatusBadge('phoneStatus', 'oncheck');
+        closeModal(phoneModal);
+        showMessage('Успешно', 'Номер телефона обновлён, данные отправлены на проверку.');
+      } catch (err) {
+        errorDiv.textContent = err.message;
+      }
+    });
+
+    // Изменение email
+    document.getElementById('editEmailBtn')?.addEventListener('click', () => openModal(emailModal));
+    document.getElementById('submitEmailBtn')?.addEventListener('click', async () => {
+      const newEmail = document.getElementById('newEmail')?.value.trim();
+      const password = document.getElementById('emailPassword')?.value;
+      const errorDiv = document.getElementById('emailError');
+      if (!newEmail) { errorDiv.textContent = 'Введите email.'; return; }
+      if (!password) { errorDiv.textContent = 'Введите пароль.'; return; }
+      try {
+        const { error: updateError } = await supabase.auth.updateUser(
+          { email: newEmail },
+          { currentPassword: password }
+        );
+        if (updateError) throw updateError;
+        await supabase
+          .from('users')
+          .update({ email: newEmail, email_status: 'oncheck' })
+          .eq('id', currentUser.id);
+        emailSpan.textContent = newEmail;
+        updateStatusBadge('emailStatus', 'oncheck');
+        closeModal(emailModal);
+        showMessage('Успешно', 'Email обновлён, проверьте новый почтовый ящик для подтверждения.');
+      } catch (err) {
+        errorDiv.textContent = err.message;
+      }
+    });
+
+    // Смена пароля
+    document.getElementById('changePasswordBtn')?.addEventListener('click', () => openModal(passwordModal));
+    document.getElementById('submitPasswordBtn')?.addEventListener('click', async () => {
+      const current = document.getElementById('currentPassword')?.value;
+      const newPwd = document.getElementById('newPassword')?.value;
+      const confirm = document.getElementById('confirmPassword')?.value;
+      const errorDiv = document.getElementById('passwordError');
+      if (!current || !newPwd || !confirm) {
+        errorDiv.textContent = 'Заполните все поля.';
+        return;
+      }
+      if (newPwd !== confirm) {
+        errorDiv.textContent = 'Новый пароль и подтверждение не совпадают.';
+        return;
+      }
+      if (newPwd.length < 6) {
+        errorDiv.textContent = 'Пароль должен содержать не менее 6 символов.';
+        return;
+      }
+      try {
+        const { error } = await supabase.auth.updateUser(
+          { password: newPwd },
+          { currentPassword: current }
+        );
+        if (error) throw error;
+        closeModal(passwordModal);
+        showMessage('Пароль изменён', 'Пароль успешно изменён. Войдите заново.');
+        await supabase.auth.signOut();
+        setTimeout(() => { window.location.href = '../login.html'; }, 2000);
+      } catch (err) {
+        errorDiv.textContent = err.message;
+      }
+    });
+
+    // Удаление аккаунта
+    document.getElementById('deleteAccountBtn')?.addEventListener('click', () => openModal(confirmDeleteModal));
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
+      const password = document.getElementById('deletePassword')?.value;
+      const errorDiv = document.getElementById('deleteError');
+      if (!password) {
+        errorDiv.textContent = 'Введите пароль для удаления.';
+        return;
+      }
+      try {
+        const { error: verifyError } = await supabase.auth.updateUser(
+          { email: currentUser.email },
+          { currentPassword: password }
+        );
+        if (verifyError) throw new Error('Неверный пароль');
+        const { error: fnError } = await supabase.functions.invoke('delete-user', {
+          body: { userId: currentUser.id }
+        });
+        if (fnError) throw fnError;
+        await supabase.auth.signOut();
+        closeModal(confirmDeleteModal);
+        showMessage('Учётная запись удалена', 'Ваша учётная запись удалена. Перенаправление...');
+        setTimeout(() => { window.location.href = '../index.html'; }, 2000);
+      } catch (err) {
+        errorDiv.textContent = err.message;
+      }
+    });
+
+    loadAccountData();
+  </script>
   <script src="../js/mob-menu.js"></script>
 </body>
 </html>

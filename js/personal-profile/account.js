@@ -1,7 +1,7 @@
 // js/personal-profile/account.js
 import { supabase } from '../supabase-config.js';
 
-console.log('account.js загружен (финал)');
+console.log('account.js загружен (с повышением до стандартной)');
 
 let currentUser = null;
 
@@ -23,21 +23,18 @@ function closeModal(modal) {
   errors.forEach(err => err.textContent = '');
 }
 
-// Глобальные функции для inline onclick
 window.closePasswordModal = () => closeModal(passwordModal);
 window.closePhoneModal = () => closeModal(phoneModal);
 window.closeEmailModal = () => closeModal(emailModal);
 window.closeConfirmDeleteModal = () => closeModal(confirmDeleteModal);
 window.closeMessageModal = () => closeModal(messageModal);
 
-// Закрытие по крестику
 document.querySelectorAll('.modal .close').forEach(btn => {
   btn.addEventListener('click', (e) => {
     const modal = btn.closest('.modal');
     if (modal) closeModal(modal);
   });
 });
-// Закрытие по фону
 window.addEventListener('click', (e) => {
   if (e.target.classList && e.target.classList.contains('modal')) {
     closeModal(e.target);
@@ -55,7 +52,6 @@ function showMessage(title, text, isError = false) {
   openModal(messageModal);
 }
 
-// Универсальная функция для бейджей
 function updateStatusBadge(elementId, status) {
   const el = document.getElementById(elementId);
   if (!el) return;
@@ -80,6 +76,80 @@ function updateStatusBadge(elementId, status) {
   el.className = className;
 }
 
+// Проверка возможности повышения
+async function canUpgradeToStandard() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { can: false, missing: ['Пользователь не авторизован'] };
+  
+  const missing = [];
+  
+  // Проверка телефона и email
+  const { data: profile } = await supabase
+    .from('users')
+    .select('phone_status, email_status')
+    .eq('id', user.id)
+    .single();
+    
+  if (!profile || profile.phone_status !== 'verified') {
+    missing.push('номер телефона (не подтверждён)');
+  }
+  if (!profile || profile.email_status !== 'verified') {
+    missing.push('email (не подтверждён)');
+  }
+  
+  // Проверка паспорта по личному коду
+  const { data: userData } = await supabase
+    .from('users')
+    .select('personal_code')
+    .eq('id', user.id)
+    .single();
+    
+  if (userData && userData.personal_code) {
+    const { data: passport } = await supabase
+      .from('passport')
+      .select('status')
+      .eq('personal_code', userData.personal_code)
+      .maybeSingle();
+    if (!passport || passport.status !== 'verified') {
+      missing.push('паспортные данные (не подтверждены)');
+    }
+  } else {
+    missing.push('паспортные данные (личный код отсутствует)');
+  }
+  
+  return { can: missing.length === 0, missing };
+}
+
+// Повышение до стандартной
+async function upgradeToStandard() {
+  const { can, missing } = await canUpgradeToStandard();
+  if (!can) {
+    let message = 'Невозможно повысить тип учётной записи до «Стандартная».<br>Не выполнены условия:<br><ul>';
+    missing.forEach(item => message += `<li>${item}</li>`);
+    message += '</ul>';
+    showMessage('Повышение невозможно', message, true);
+    return;
+  }
+  
+  try {
+    const { error } = await supabase
+      .from('users')
+      .update({ account_type: 'Стандартная' })
+      .eq('id', currentUser.id);
+    if (error) throw error;
+    
+    document.getElementById('accountTypeValue').textContent = 'Стандартная';
+    updateStatusBadge('accountTypeBadge', 'Стандартная');
+    document.getElementById('accountTypeHelp').textContent = 'Один из контактов подтверждён.';
+    const upgradeBtn = document.getElementById('upgradeToStandardBtn');
+    if (upgradeBtn) upgradeBtn.style.display = 'none';
+    
+    showMessage('Успешно', 'Тип учётной записи повышен до «Стандартная».');
+  } catch (err) {
+    showMessage('Ошибка', err.message, true);
+  }
+}
+
 async function loadAccountData() {
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -88,7 +158,6 @@ async function loadAccountData() {
     currentUser = user;
     document.getElementById('userIdValue').textContent = user.id;
 
-    // Запрашиваем все нужные поля
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('phone, email, phone_status, email_status, account_type')
@@ -97,29 +166,35 @@ async function loadAccountData() {
 
     if (profileError && profileError.code !== 'PGRST116') throw profileError;
 
-    // Телефон и email
     const phone = profile?.phone || user.phone || '—';
     const email = profile?.email || user.email || '—';
     document.getElementById('phoneValue').textContent = phone;
     document.getElementById('emailValue').textContent = email;
 
-    // Статусы телефона и email (если нет, то считаем не подтверждённым)
     const phoneStatus = profile?.phone_status || (user.phone ? 'not_verified' : 'none');
     const emailStatus = profile?.email_status || (user.email_confirmed_at ? 'verified' : 'not_verified');
     updateStatusBadge('phoneStatus', phoneStatus);
     updateStatusBadge('emailStatus', emailStatus);
 
-    // Тип учётной записи из БД (русская строка)
     const accountType = profile?.account_type || 'Упрощённая';
     document.getElementById('accountTypeValue').textContent = accountType;
-    // Бейдж для типа на основе строки
     updateStatusBadge('accountTypeBadge', accountType);
 
     let helpText = '';
-    if (accountType === 'Упрощённая') helpText = 'Требуется подтверждение email или телефона.';
+    if (accountType === 'Упрощённая') helpText = 'Требуется подтверждение email и телефона, а также верификация паспорта.';
     else if (accountType === 'Стандартная') helpText = 'Один из контактов подтверждён.';
     else if (accountType === 'Подтверждённая') helpText = 'Все контакты верифицированы.';
     document.getElementById('accountTypeHelp').textContent = helpText;
+
+    // Показать кнопку повышения, если тип "Упрощённая"
+    const upgradeRow = document.getElementById('upgradeButtonRow');
+    if (accountType === 'Упрощённая') {
+      if (upgradeRow) upgradeRow.style.display = 'flex';
+      const upgradeBtn = document.getElementById('upgradeToStandardBtn');
+      if (upgradeBtn) upgradeBtn.onclick = upgradeToStandard;
+    } else {
+      if (upgradeRow) upgradeRow.style.display = 'none';
+    }
 
     document.getElementById('loading').style.display = 'none';
     document.getElementById('accountData').style.display = 'block';
