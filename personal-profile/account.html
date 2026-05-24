@@ -341,9 +341,8 @@
     const messageModal = document.getElementById('messageModal');
 
     let currentUser = null;
-    let currentProfile = null; // храним данные профиля
+    let currentProfile = null;
 
-    // --- Вспомогательные функции ---
     function openModal(modal) {
       if (modal) modal.classList.add('active');
     }
@@ -355,15 +354,7 @@
       const errors = modal.querySelectorAll('.error-message');
       errors.forEach(err => err.textContent = '');
     }
-    // Глобальные функции для inline не нужны, т.к. все обработчики через addEventListener
-    // Закрытие по крестикам и фону
-    document.querySelectorAll('.modal .close').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const modal = btn.closest('.modal');
-        if (modal) closeModal(modal);
-      });
-    });
-    document.querySelectorAll('.modal .btn-secondary').forEach(btn => {
+    document.querySelectorAll('.modal .close, .modal .btn-secondary').forEach(btn => {
       btn.addEventListener('click', (e) => {
         const modal = btn.closest('.modal');
         if (modal) closeModal(modal);
@@ -407,7 +398,6 @@
       el.className = className;
     }
 
-    // --- Загрузка данных ---
     async function loadAccountData() {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -436,7 +426,6 @@
 
         const accountType = profile?.account_type || 'Упрощённая';
         accountTypeSpan.textContent = accountType;
-        // бейдж для типа
         if (accountType === 'Упрощённая') {
           document.getElementById('accountTypeBadge').textContent = '⚠️ Упрощённая';
           document.getElementById('accountTypeBadge').className = 'status-badge';
@@ -452,12 +441,7 @@
         else if (accountType === 'Подтверждённая') helpText = 'Все контакты и документы верифицированы.';
         accountTypeHelp.textContent = helpText;
 
-        // Показать кнопку повышения только если тип 'Упрощённая'
-        if (accountType === 'Упрощённая') {
-          upgradeBtn.style.display = 'inline-block';
-        } else {
-          upgradeBtn.style.display = 'none';
-        }
+        upgradeBtn.style.display = (accountType === 'Упрощённая') ? 'inline-block' : 'none';
 
         loadingDiv.style.display = 'none';
         accountDiv.style.display = 'block';
@@ -467,29 +451,22 @@
       }
     }
 
-    // --- Проверка возможности повышения ---
     async function checkUpgradeEligibility() {
-      // 1. Проверка телефона и email
       const phoneOk = currentProfile?.phone_status === 'verified';
       const emailOk = currentProfile?.email_status === 'verified';
-      
-      // 2. Проверка паспорта по личному коду
       let passportOk = false;
       const personalCode = currentProfile?.personal_code;
       if (personalCode) {
         const { data, error } = await supabase
-          .from('passport')
+          .from('documents.passport')
           .select('status')
           .eq('personal_code', personalCode)
           .maybeSingle();
-        if (!error && data && data.status === 'verified') {
-          passportOk = true;
-        }
+        if (!error && data && data.status === 'verified') passportOk = true;
       }
       return { phoneOk, emailOk, passportOk, allOk: phoneOk && emailOk && passportOk };
     }
 
-    // Обновление чек-листа в модалке
     async function refreshUpgradeModal() {
       const { phoneOk, emailOk, passportOk, allOk } = await checkUpgradeEligibility();
       const phoneLi = document.getElementById('checkPhone');
@@ -504,22 +481,16 @@
       
       const confirmBtn = document.getElementById('confirmUpgradeBtn');
       confirmBtn.disabled = !allOk;
-      if (!allOk) {
-        document.getElementById('upgradeError').textContent = 'Для повышения необходимо выполнить все условия.';
-      } else {
-        document.getElementById('upgradeError').textContent = '';
-      }
+      document.getElementById('upgradeError').textContent = allOk ? '' : 'Для повышения необходимо выполнить все условия.';
       return allOk;
     }
 
-    // Повышение до стандартной
     async function upgradeToStandard() {
       const { allOk } = await checkUpgradeEligibility();
       if (!allOk) {
         showMessage('Ошибка', 'Не все условия выполнены.', true);
         return false;
       }
-      // Обновляем в БД
       const { error } = await supabase
         .from('users')
         .update({ account_type: 'Стандартная' })
@@ -528,7 +499,6 @@
         showMessage('Ошибка', 'Не удалось обновить тип учётной записи: ' + error.message, true);
         return false;
       }
-      // Обновляем локально и интерфейс
       currentProfile.account_type = 'Стандартная';
       accountTypeSpan.textContent = 'Стандартная';
       updateStatusBadge('accountTypeBadge', 'oncheck');
@@ -538,8 +508,7 @@
       return true;
     }
 
-    // --- Обработчики событий ---
-    // Копирование UUID
+    // --- Обработчики ---
     document.getElementById('copyUuidBtn')?.addEventListener('click', async () => {
       const uuid = userIdSpan.textContent;
       if (uuid && uuid !== '—') {
@@ -554,7 +523,6 @@
       }
     });
 
-    // Повышение: открыть модалку и обновить чек-лист
     upgradeBtn?.addEventListener('click', async () => {
       await refreshUpgradeModal();
       openModal(upgradeModal);
@@ -564,7 +532,6 @@
       if (success) closeModal(upgradeModal);
     });
 
-    // Изменение телефона (аналогично предыдущему)
     document.getElementById('editPhoneBtn')?.addEventListener('click', () => openModal(phoneModal));
     document.getElementById('submitPhoneBtn')?.addEventListener('click', async () => {
       const newPhone = document.getElementById('newPhone')?.value.trim();
@@ -592,7 +559,6 @@
       }
     });
 
-    // Изменение email
     document.getElementById('editEmailBtn')?.addEventListener('click', () => openModal(emailModal));
     document.getElementById('submitEmailBtn')?.addEventListener('click', async () => {
       const newEmail = document.getElementById('newEmail')?.value.trim();
@@ -619,7 +585,6 @@
       }
     });
 
-    // Смена пароля
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openModal(passwordModal));
     document.getElementById('submitPasswordBtn')?.addEventListener('click', async () => {
       const current = document.getElementById('currentPassword')?.value;
@@ -653,7 +618,6 @@
       }
     });
 
-    // Удаление аккаунта
     document.getElementById('deleteAccountBtn')?.addEventListener('click', () => openModal(confirmDeleteModal));
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
       const password = document.getElementById('deletePassword')?.value;
