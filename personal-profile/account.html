@@ -323,7 +323,7 @@
   <script type="module">
     import { supabase } from '../js/supabase-config.js';
 
-    // --- DOM элементы ---
+    // --- DOM элементы (как ранее) ---
     const loadingDiv = document.getElementById('loading');
     const accountDiv = document.getElementById('accountData');
     const phoneSpan = document.getElementById('phoneValue');
@@ -343,37 +343,24 @@
     let currentUser = null;
     let currentProfile = null;
 
-    function openModal(modal) {
-      if (modal) modal.classList.add('active');
-    }
+    // --- Вспомогательные функции (openModal, closeModal, showMessage, updateStatusBadge) ---
+    function openModal(modal) { if (modal) modal.classList.add('active'); }
     function closeModal(modal) {
       if (!modal) return;
       modal.classList.remove('active');
-      const inputs = modal.querySelectorAll('input');
-      inputs.forEach(input => input.value = '');
-      const errors = modal.querySelectorAll('.error-message');
-      errors.forEach(err => err.textContent = '');
+      modal.querySelectorAll('input').forEach(i => i.value = '');
+      modal.querySelectorAll('.error-message').forEach(e => e.textContent = '');
     }
     document.querySelectorAll('.modal .close, .modal .btn-secondary').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        const modal = btn.closest('.modal');
-        if (modal) closeModal(modal);
-      });
+      btn.addEventListener('click', (e) => { const m = btn.closest('.modal'); if (m) closeModal(m); });
     });
-    window.addEventListener('click', (e) => {
-      if (e.target.classList && e.target.classList.contains('modal')) {
-        closeModal(e.target);
-      }
-    });
+    window.addEventListener('click', (e) => { if (e.target.classList?.contains('modal')) closeModal(e.target); });
 
     function showMessage(title, text, isError = false) {
-      const msgTitle = document.getElementById('messageTitle');
-      const msgText = document.getElementById('messageText');
-      if (msgTitle) msgTitle.textContent = title;
-      if (msgText) {
-        msgText.innerHTML = text;
-        msgText.style.color = isError ? '#b91c1c' : 'inherit';
-      }
+      document.getElementById('messageTitle').textContent = title;
+      const msgDiv = document.getElementById('messageText');
+      msgDiv.innerHTML = text;
+      msgDiv.style.color = isError ? '#b91c1c' : 'inherit';
       openModal(messageModal);
     }
 
@@ -381,23 +368,48 @@
       const el = document.getElementById(elementId);
       if (!el) return;
       let text = '', className = '';
-      if (status === 'verified') {
-        text = '✅ Подтверждено';
-        className = 'status-badge status-verified';
-      } else if (status === 'oncheck') {
-        text = '⏳ На проверке';
-        className = 'status-badge status-pending';
-      } else if (status === 'rejected') {
-        text = '❌ Отклонено';
-        className = 'status-badge status-rejected';
-      } else {
-        text = '⚠️ Не подтверждено';
-        className = 'status-badge';
-      }
+      if (status === 'verified') { text = '✅ Подтверждено'; className = 'status-badge status-verified'; }
+      else if (status === 'oncheck') { text = '⏳ На проверке'; className = 'status-badge status-pending'; }
+      else if (status === 'rejected') { text = '❌ Отклонено'; className = 'status-badge status-rejected'; }
+      else { text = '⚠️ Не подтверждено'; className = 'status-badge'; }
       el.textContent = text;
       el.className = className;
     }
 
+    // --- Получение personal_code (как в foreign-agent.js) ---
+    async function getPersonalCode(user) {
+      // сначала из метаданных
+      let personalCode = user.user_metadata?.personal_code || user.app_metadata?.personal_code;
+      if (personalCode) return personalCode;
+
+      // затем из таблицы users
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('personal_code')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (!error && userData?.personal_code) return userData.personal_code;
+      return null;
+    }
+
+    // --- Проверка паспорта (полностью как в foreign-agent.js) ---
+    async function isPassportVerified(personalCode) {
+      if (!personalCode) return false;
+      const { data: passport, error } = await supabase
+        .schema('documents')
+        .from('passport')
+        .select('status')
+        .eq('personal_code', personalCode)
+        .eq('status', 'verified')
+        .maybeSingle();
+      if (error) {
+        console.error('Ошибка при проверке паспорта:', error);
+        return false;
+      }
+      return !!passport;
+    }
+
+    // --- Загрузка данных пользователя ---
     async function loadAccountData() {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -414,17 +426,22 @@
         if (profileError && profileError.code !== 'PGRST116') throw profileError;
         currentProfile = profile || {};
 
-        const phone = profile?.phone || user.phone || '—';
-        const email = profile?.email || user.email || '—';
+        // Если в профиле нет personal_code, пробуем получить через getPersonalCode
+        if (!currentProfile.personal_code) {
+          currentProfile.personal_code = await getPersonalCode(user);
+        }
+
+        const phone = currentProfile?.phone || user.phone || '—';
+        const email = currentProfile?.email || user.email || '—';
         phoneSpan.textContent = phone;
         emailSpan.textContent = email;
 
-        const phoneStatus = profile?.phone_status || (user.phone ? 'not_verified' : 'none');
-        const emailStatus = profile?.email_status || (user.email_confirmed_at ? 'verified' : 'not_verified');
+        const phoneStatus = currentProfile?.phone_status || (user.phone ? 'not_verified' : 'none');
+        const emailStatus = currentProfile?.email_status || (user.email_confirmed_at ? 'verified' : 'not_verified');
         updateStatusBadge('phoneStatus', phoneStatus);
         updateStatusBadge('emailStatus', emailStatus);
 
-        const accountType = profile?.account_type || 'Упрощённая';
+        const accountType = currentProfile?.account_type || 'Упрощённая';
         accountTypeSpan.textContent = accountType;
         if (accountType === 'Упрощённая') {
           document.getElementById('accountTypeBadge').textContent = '⚠️ Упрощённая';
@@ -451,19 +468,11 @@
       }
     }
 
+    // --- Проверка условий для повышения (с паспортом как в foreign-agent.js) ---
     async function checkUpgradeEligibility() {
       const phoneOk = currentProfile?.phone_status === 'verified';
       const emailOk = currentProfile?.email_status === 'verified';
-      let passportOk = false;
-      const personalCode = currentProfile?.personal_code;
-      if (personalCode) {
-        const { data, error } = await supabase
-          .from('documents.passport')
-          .select('status')
-          .eq('personal_code', personalCode)
-          .maybeSingle();
-        if (!error && data && data.status === 'verified') passportOk = true;
-      }
+      const passportOk = await isPassportVerified(currentProfile?.personal_code);
       return { phoneOk, emailOk, passportOk, allOk: phoneOk && emailOk && passportOk };
     }
 
@@ -496,7 +505,7 @@
         .update({ account_type: 'Стандартная' })
         .eq('id', currentUser.id);
       if (error) {
-        showMessage('Ошибка', 'Не удалось обновить тип учётной записи: ' + error.message, true);
+        showMessage('Ошибка', 'Не удалось обновить тип: ' + error.message, true);
         return false;
       }
       currentProfile.account_type = 'Стандартная';
@@ -508,29 +517,17 @@
       return true;
     }
 
-    // --- Обработчики ---
+    // --- Обработчики событий (копирование, редактирование телефона/email, пароль, удаление) ---
     document.getElementById('copyUuidBtn')?.addEventListener('click', async () => {
       const uuid = userIdSpan.textContent;
       if (uuid && uuid !== '—') {
-        try {
-          await navigator.clipboard.writeText(uuid);
-          showMessage('Скопировано', 'UUID скопирован.');
-        } catch {
-          showMessage('Ошибка', 'Не удалось скопировать UUID.', true);
-        }
-      } else {
-        showMessage('Ошибка', 'UUID не найден.', true);
-      }
+        try { await navigator.clipboard.writeText(uuid); showMessage('Скопировано', 'UUID скопирован.'); }
+        catch { showMessage('Ошибка', 'Не удалось скопировать UUID.', true); }
+      } else { showMessage('Ошибка', 'UUID не найден.', true); }
     });
 
-    upgradeBtn?.addEventListener('click', async () => {
-      await refreshUpgradeModal();
-      openModal(upgradeModal);
-    });
-    document.getElementById('confirmUpgradeBtn')?.addEventListener('click', async () => {
-      const success = await upgradeToStandard();
-      if (success) closeModal(upgradeModal);
-    });
+    upgradeBtn?.addEventListener('click', async () => { await refreshUpgradeModal(); openModal(upgradeModal); });
+    document.getElementById('confirmUpgradeBtn')?.addEventListener('click', async () => { if (await upgradeToStandard()) closeModal(upgradeModal); });
 
     document.getElementById('editPhoneBtn')?.addEventListener('click', () => openModal(phoneModal));
     document.getElementById('submitPhoneBtn')?.addEventListener('click', async () => {
@@ -540,23 +537,15 @@
       if (!newPhone) { errorDiv.textContent = 'Введите номер телефона.'; return; }
       if (!password) { errorDiv.textContent = 'Введите пароль.'; return; }
       try {
-        const { error: verifyError } = await supabase.auth.updateUser(
-          { email: currentUser.email },
-          { currentPassword: password }
-        );
+        const { error: verifyError } = await supabase.auth.updateUser({ email: currentUser.email }, { currentPassword: password });
         if (verifyError) throw new Error('Неверный пароль');
-        const { error: updateError } = await supabase
-          .from('users')
-          .update({ phone: newPhone, phone_status: 'oncheck' })
-          .eq('id', currentUser.id);
+        const { error: updateError } = await supabase.from('users').update({ phone: newPhone, phone_status: 'oncheck' }).eq('id', currentUser.id);
         if (updateError) throw updateError;
         phoneSpan.textContent = newPhone;
         updateStatusBadge('phoneStatus', 'oncheck');
         closeModal(phoneModal);
         showMessage('Успешно', 'Номер телефона обновлён, данные отправлены на проверку.');
-      } catch (err) {
-        errorDiv.textContent = err.message;
-      }
+      } catch (err) { errorDiv.textContent = err.message; }
     });
 
     document.getElementById('editEmailBtn')?.addEventListener('click', () => openModal(emailModal));
@@ -567,22 +556,14 @@
       if (!newEmail) { errorDiv.textContent = 'Введите email.'; return; }
       if (!password) { errorDiv.textContent = 'Введите пароль.'; return; }
       try {
-        const { error: updateError } = await supabase.auth.updateUser(
-          { email: newEmail },
-          { currentPassword: password }
-        );
+        const { error: updateError } = await supabase.auth.updateUser({ email: newEmail }, { currentPassword: password });
         if (updateError) throw updateError;
-        await supabase
-          .from('users')
-          .update({ email: newEmail, email_status: 'oncheck' })
-          .eq('id', currentUser.id);
+        await supabase.from('users').update({ email: newEmail, email_status: 'oncheck' }).eq('id', currentUser.id);
         emailSpan.textContent = newEmail;
         updateStatusBadge('emailStatus', 'oncheck');
         closeModal(emailModal);
         showMessage('Успешно', 'Email обновлён, проверьте новый почтовый ящик для подтверждения.');
-      } catch (err) {
-        errorDiv.textContent = err.message;
-      }
+      } catch (err) { errorDiv.textContent = err.message; }
     });
 
     document.getElementById('changePasswordBtn')?.addEventListener('click', () => openModal(passwordModal));
@@ -591,58 +572,34 @@
       const newPwd = document.getElementById('newPassword')?.value;
       const confirm = document.getElementById('confirmPassword')?.value;
       const errorDiv = document.getElementById('passwordError');
-      if (!current || !newPwd || !confirm) {
-        errorDiv.textContent = 'Заполните все поля.';
-        return;
-      }
-      if (newPwd !== confirm) {
-        errorDiv.textContent = 'Новый пароль и подтверждение не совпадают.';
-        return;
-      }
-      if (newPwd.length < 6) {
-        errorDiv.textContent = 'Пароль должен содержать не менее 6 символов.';
-        return;
-      }
+      if (!current || !newPwd || !confirm) { errorDiv.textContent = 'Заполните все поля.'; return; }
+      if (newPwd !== confirm) { errorDiv.textContent = 'Пароли не совпадают.'; return; }
+      if (newPwd.length < 6) { errorDiv.textContent = 'Минимум 6 символов.'; return; }
       try {
-        const { error } = await supabase.auth.updateUser(
-          { password: newPwd },
-          { currentPassword: current }
-        );
+        const { error } = await supabase.auth.updateUser({ password: newPwd }, { currentPassword: current });
         if (error) throw error;
         closeModal(passwordModal);
         showMessage('Пароль изменён', 'Пароль успешно изменён. Войдите заново.');
         await supabase.auth.signOut();
         setTimeout(() => { window.location.href = '../login.html'; }, 2000);
-      } catch (err) {
-        errorDiv.textContent = err.message;
-      }
+      } catch (err) { errorDiv.textContent = err.message; }
     });
 
     document.getElementById('deleteAccountBtn')?.addEventListener('click', () => openModal(confirmDeleteModal));
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', async () => {
       const password = document.getElementById('deletePassword')?.value;
       const errorDiv = document.getElementById('deleteError');
-      if (!password) {
-        errorDiv.textContent = 'Введите пароль для удаления.';
-        return;
-      }
+      if (!password) { errorDiv.textContent = 'Введите пароль.'; return; }
       try {
-        const { error: verifyError } = await supabase.auth.updateUser(
-          { email: currentUser.email },
-          { currentPassword: password }
-        );
+        const { error: verifyError } = await supabase.auth.updateUser({ email: currentUser.email }, { currentPassword: password });
         if (verifyError) throw new Error('Неверный пароль');
-        const { error: fnError } = await supabase.functions.invoke('delete-user', {
-          body: { userId: currentUser.id }
-        });
+        const { error: fnError } = await supabase.functions.invoke('delete-user', { body: { userId: currentUser.id } });
         if (fnError) throw fnError;
         await supabase.auth.signOut();
         closeModal(confirmDeleteModal);
         showMessage('Учётная запись удалена', 'Ваша учётная запись удалена. Перенаправление...');
         setTimeout(() => { window.location.href = '../index.html'; }, 2000);
-      } catch (err) {
-        errorDiv.textContent = err.message;
-      }
+      } catch (err) { errorDiv.textContent = err.message; }
     });
 
     loadAccountData();
