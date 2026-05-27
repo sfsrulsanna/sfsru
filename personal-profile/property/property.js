@@ -1,5 +1,5 @@
 // property.js
-import { supabase } from '../supabase-config.js';
+import { supabase } from '../../js/supabase-config.js';
 
 let currentUserPersonalCode = null;
 let currentTab = 'real_estate';
