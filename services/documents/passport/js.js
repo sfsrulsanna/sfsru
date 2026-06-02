@@ -139,12 +139,12 @@ function getNextStep(step) {
             else if (formData.reason === 'first_14') {
                 return 6;
             }
-            // Иначе сразу на контакты (шаг 7)
+            // Иначе сразу на адреса (шаг 7)
             else {
                 return 7;
             }
         case 5:
-            // После новых данных: если причина name_changed, то нужен шаг 6, иначе сразу на контакты
+            // После новых данных: если причина name_changed, то нужен шаг 6, иначе сразу на адреса
             if (formData.reason === 'name_changed') {
                 return 6;
             } else {
@@ -155,6 +155,7 @@ function getNextStep(step) {
         case 8: return 9;
         case 9: return 10;
         case 10: return 11;
+        case 11: return 12;
         default: return step + 1;
     }
 }
@@ -185,12 +186,13 @@ function getPrevStep(step) {
         case 9: return 8;
         case 10: return 9;
         case 11: return 10;
+        case 12: return 11;
         default: return step - 1;
     }
 }
 
 function goToStep(step) {
-    if (step < 1 || step > 11) return;
+    if (step < 1 || step > 12) return;
     
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
     const targetStep = document.querySelector(`.step-content[data-step="${step}"]`);
@@ -287,7 +289,7 @@ if (step === 6) {
         }
     }
 
-    if (step === 10) {
+    if (step === 9) {
         prepareSummary();
     }
 }
