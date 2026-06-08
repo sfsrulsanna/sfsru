@@ -7,74 +7,20 @@
   <link rel="stylesheet" href="../../../css/style.css">
   <link rel="stylesheet" href="gia-common.css">
   <style>
-    .info-vertical {
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      background: #fffaf5;
-      padding: 1.2rem;
-      border-radius: 24px;
-      margin-bottom: 1.5rem;
-    }
-    .info-item {
-      border-bottom: 1px dashed #ffe0e0;
-      padding-bottom: 0.4rem;
-    }
-    .info-label {
-      font-weight: 700;
-      color: #a33;
-      display: inline-block;
-      width: 180px;
-    }
-    .tasks-table, .results-table, .exams-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin: 1rem 0;
-      font-size: 0.85rem;
-    }
-    .tasks-table th, .tasks-table td,
-    .results-table th, .results-table td,
-    .exams-table th, .exams-table td {
-      border: 1px solid #ffcece;
-      padding: 8px 6px;
-      text-align: center;
-      background: white;
-    }
-    .tasks-table th, .results-table th, .exams-table th {
-      background: #ffe0e0;
-      font-weight: 600;
-    }
-    .type-block {
-      margin: 1rem 0;
-      padding: 0.75rem;
-      background: #fef7e0;
-      border-radius: 20px;
-    }
-    .file-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.8rem;
-      margin-top: 0.5rem;
-    }
-    .file-list a {
-      background: #e0e0ff;
-      padding: 5px 12px;
-      border-radius: 30px;
-      text-decoration: none;
-      color: #225;
-      font-weight: 500;
-    }
-    .appeal-btn {
-      background: #ffaa44;
-      color: #552200;
-      border: none;
-      border-radius: 40px;
-      padding: 6px 16px;
-      cursor: pointer;
-      margin-top: 1rem;
-    }
+    .info-vertical { display: flex; flex-direction: column; gap: 0.75rem; background: #fffaf5; padding: 1.2rem; border-radius: 24px; margin-bottom: 1.5rem; }
+    .info-item { border-bottom: 1px dashed #ffe0e0; padding-bottom: 0.4rem; }
+    .info-label { font-weight: 700; color: #a33; display: inline-block; width: 180px; }
+    .tasks-table, .results-table, .exams-table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }
+    .tasks-table th, .tasks-table td, .results-table th, .results-table td, .exams-table th, .exams-table td { border: 1px solid #ffcece; padding: 8px 6px; text-align: center; background: white; }
+    .tasks-table th, .results-table th, .exams-table th { background: #ffe0e0; font-weight: 600; }
+    .type-block { margin: 1rem 0; padding: 0.75rem; background: #fef7e0; border-radius: 20px; }
+    .file-list { display: flex; flex-wrap: wrap; gap: 0.8rem; margin-top: 0.5rem; }
+    .file-list a { background: #e0e0ff; padding: 5px 12px; border-radius: 30px; text-decoration: none; color: #225; font-weight: 500; }
+    .appeal-btn { background: #ffaa44; color: #552200; border: none; border-radius: 40px; padding: 6px 16px; cursor: pointer; margin-top: 1rem; }
     hr { margin: 1rem 0; }
     .modal-content { max-width: 950px; }
+    .appeal-form textarea { width: 100%; border-radius: 16px; border: 1px solid #ccc; padding: 8px; margin: 10px 0; }
+    .appeal-form button { margin-right: 8px; }
   </style>
 </head>
 <body>
@@ -105,6 +51,20 @@
   </div>
 </div>
 
+<!-- Модальное окно для апелляции -->
+<div id="appealModal" class="modal">
+  <div class="modal-content" style="max-width: 500px;">
+    <span class="close-modal" id="closeAppealModal">&times;</span>
+    <h3>📝 Подача апелляции</h3>
+    <div class="appeal-form">
+      <label><strong>Причина апелляции:</strong></label>
+      <textarea id="appealReason" rows="4" placeholder="Опишите причину несогласия с результатами..."></textarea>
+      <button id="submitAppealBtn" class="appeal-btn" style="background:#44aa44;">Отправить</button>
+      <button id="cancelAppealBtn" class="appeal-btn" style="background:#aaa;">Отмена</button>
+    </div>
+  </div>
+</div>
+
 <footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -112,6 +72,20 @@
   const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'education_gia' } });
+
+  // Глобальные данные
+  let currentUser = null;
+  let currentAppealResultId = null;
+  let currentAppealStatus = null;
+
+  try {
+    currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
+    if (!currentUser || currentUser.role !== 'student') window.location.href = './index.html';
+  } catch(e) { window.location.href = './index.html'; }
+  const personalCode = currentUser.personal_code;
+
+  // Кэш максимальных баллов для заданий (чтобы показывать "X из Y")
+  let maxScoresCache = {};
 
   // ========== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ==========
   function formatDate(dateStr) {
@@ -139,18 +113,36 @@
     return data.publicUrl;
   }
 
-  // ========== ГЛОБАЛЬНЫЕ ДАННЫЕ ==========
-  let currentUser = null;
-  try {
-    currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
-    if (!currentUser || currentUser.role !== 'student') window.location.href = './index.html';
-  } catch(e) { window.location.href = './index.html'; }
-  const personalCode = currentUser.personal_code;
+  // Загружаем максимальные баллы для всех заданий (subject_code + grade_type)
+  async function loadMaxScores() {
+    const { data } = await supabaseClient.from('task_max_scores').select('subject_code, grade_type, task_number, max_score');
+    if (data) {
+      data.forEach(item => {
+        const key = `${item.subject_code}_${item.grade_type}_${item.task_number}`;
+        maxScoresCache[key] = item.max_score;
+      });
+    }
+  }
 
-  // ========== ОСНОВНАЯ ЗАГРУЗКА ==========
+  // Получить максимальный балл для задания
+  function getMaxScore(subjectCode, gradeType, taskNumber) {
+    const key = `${subjectCode}_${gradeType}_${taskNumber}`;
+    return maxScoresCache[key] || 0;
+  }
+
+  // Форматирование балла "полученный / максимальный"
+  function formatScore(scoreStr, maxScore) {
+    if (!scoreStr) return '—';
+    if (typeof scoreStr === 'string' && scoreStr.includes('/')) return scoreStr; // уже в формате
+    const numeric = parseInt(scoreStr);
+    if (isNaN(numeric)) return scoreStr;
+    return `${numeric} / ${maxScore}`;
+  }
+
+  // ========== ЗАГРУЗКА ОСНОВНЫХ ДАННЫХ ==========
   async function loadData() {
     try {
-      // 1. Данные участника
+      // 1. Информация об участнике
       const { data: user, error: uErr } = await supabaseClient
         .from('registered')
         .select('full_name, municipality, educational_org, class_name, birth_date, gia_type')
@@ -172,7 +164,7 @@
         .eq('personal_code', personalCode)
         .order('exam_date', { ascending: true });
       if (aErr) throw aErr;
-      let examsHtml = '<table class="exams-table"><thead><tr><th>№</th><th>Экзамен</th><th>ППЭ</th><th>Аудитория*</th><th>Место*</th></tr></thead><tbody>';
+      let examsHtml = '<table class="exams-table"><thead><tr><th>№</th><th>Экзамен</th><th>ППЭ</th><th>Аудитория*</th><th>Место*</th></table></thead><tbody>';
       if (assignments.length) {
         assignments.forEach((ex, idx) => {
           examsHtml += `<tr>
@@ -204,7 +196,7 @@
         return;
       }
 
-      // Соберём вторичные баллы из exam_details
+      // Получаем вторичные баллы из exam_details
       const resultIds = results.map(r => r.id);
       let secMap = {};
       if (resultIds.length) {
@@ -231,11 +223,16 @@
           <td><button class="details-btn" data-result-id="${res.id}" data-assignment-id="${res.assignment_id}">👁️ Просмотреть</button></td>
         </tr>`;
       });
-      resHtml += '</tbody></table>';
+      resHtml += '</tbody><tr>';
       document.getElementById('resultsTable').innerHTML = resHtml;
 
+      // Навешиваем события на кнопки деталей
       document.querySelectorAll('.details-btn').forEach(btn => {
-        btn.addEventListener('click', () => showModal(btn.dataset.resultId, btn.dataset.assignmentId));
+        btn.addEventListener('click', () => {
+          const resultId = parseInt(btn.dataset.resultId);
+          const assignmentId = parseInt(btn.dataset.assignmentId);
+          showModal(resultId, assignmentId);
+        });
       });
     } catch (err) {
       console.error(err);
@@ -243,34 +240,7 @@
     }
   }
 
-  // ========== АПЕЛЛЯЦИЯ ==========
-  async function submitAppeal(resultId, currentStatus) {
-    if (currentStatus === 'appeal') {
-      alert('Апелляция уже подана.');
-      return;
-    }
-    const reason = prompt('Укажите причину апелляции:');
-    if (!reason?.trim()) return;
-    const { error: insErr } = await supabaseClient.from('appeals').insert([{
-      result_id: resultId,
-      student_personal_code: personalCode,
-      reason: reason.trim(),
-      status: 'pending'
-    }]);
-    if (insErr) {
-      alert('Ошибка подачи апелляции: ' + insErr.message);
-      return;
-    }
-    const { error: updErr } = await supabaseClient
-      .from('resultats')
-      .update({ status: 'appeal', appeal: 'подана' })
-      .eq('id', resultId);
-    if (updErr) alert('Ошибка обновления статуса: ' + updErr.message);
-    else alert('Апелляция подана. Статус обновлён.');
-    loadData(); // перезагрузить таблицу
-  }
-
-  // ========== МОДАЛЬНОЕ ОКНО С ДЕТАЛЯМИ ==========
+  // ========== ПОКАЗ ДЕТАЛЕЙ ЭКЗАМЕНА ==========
   async function showModal(resultId, assignmentId) {
     // Загружаем детали из exam_details
     const { data: details, error: dErr } = await supabaseClient
@@ -290,6 +260,11 @@
       .single();
     if (aErr) return;
 
+    // Определяем subject_code и grade_type из предмета (формат "КОД-ТИП", например "МАБ-9")
+    const subjectParts = assign.subject.split('-');
+    const subjectCode = subjectParts[0];
+    const gradeType = subjectParts[1] || '9';
+
     // Получаем текущий статус для кнопки апелляции
     const { data: resStatus } = await supabaseClient
       .from('resultats')
@@ -298,7 +273,7 @@
       .single();
     const canAppeal = resStatus?.status === 'active';
 
-    // Таблица кратких ответов
+    // Таблица кратких ответов (с номерами заданий и баллами "X из Y")
     let shortHtml = '';
     if (details.short_answers && details.short_answers.length) {
       shortHtml = `
@@ -306,14 +281,36 @@
         <table class="tasks-table">
           <thead><tr><th>Задание</th><th>Ответ</th><th>Балл</th></tr></thead>
           <tbody>
-            ${details.short_answers.map(item => `
-              <tr><td>${item.num} ${item.type ? `(${item.type})` : ''}</td><td>${item.answer ?? '—'}</td><td>${item.score || ''}</td></tr>
-            `).join('')}
-          </tbody>
-        </table>
       `;
+      for (const item of details.short_answers) {
+        // Определяем номер задания: используем num или task_number
+        const taskNum = item.num || item.task_number;
+        if (!taskNum) continue;
+        const maxScore = getMaxScore(subjectCode, gradeType, parseInt(taskNum));
+        let scoreDisplay = '—';
+        if (item.score) {
+          // Если score уже в формате "X из Y" – оставляем, иначе форматируем
+          if (typeof item.score === 'string' && item.score.includes('/')) {
+            scoreDisplay = item.score;
+          } else {
+            const numericScore = parseInt(item.score);
+            if (!isNaN(numericScore)) {
+              scoreDisplay = `${numericScore} / ${maxScore}`;
+            } else {
+              scoreDisplay = item.score;
+            }
+          }
+        }
+        shortHtml += `<tr>
+          <td>${taskNum} ${item.type ? `(${item.type})` : ''}</td>
+          <td>${item.answer ?? '—'}</td>
+          <td>${scoreDisplay}</td>
+        </tr>`;
+      }
+      shortHtml += `</tbody></table>`;
     }
 
+    // Блоки B, C, D
     let typeBhtml = details.type_b ? `<div class="type-block"><strong>📌 Задания типа B</strong><br>${details.type_b} ${details.type_b_score || ''}</div>` : '';
     let typeChtml = details.type_c ? `<div class="type-block"><strong>📌 Задания типа C</strong><br>${details.type_c} ${details.type_c_score || ''}</div>` : '';
     let typeDhtml = '';
@@ -321,7 +318,7 @@
       typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${details.type_d_score}</div>`;
     }
 
-    // Бланки (из поля files, которое может быть массивом путей в storage)
+    // Бланки (files)
     let filesHtml = '';
     if (details.files && Array.isArray(details.files) && details.files.length) {
       const labels = ['Бланк ответов №1', 'Бланк ответов №2 лист 1', 'Бланк ответов №2 лист 2', 'Дополнительный бланк C'];
@@ -335,7 +332,7 @@
     }
 
     const appealButton = canAppeal
-      ? `<button class="appeal-btn" id="appealBtn">⚖️ Подать апелляцию</button>`
+      ? `<button class="appeal-btn" id="openAppealFromModal" data-result-id="${resultId}" data-status="${resStatus.status}">⚖️ Подать апелляцию</button>`
       : '';
 
     const modalHtml = `
@@ -359,17 +356,78 @@
     const modal = document.getElementById('detailModal');
     document.getElementById('modalBody').innerHTML = modalHtml;
     modal.style.display = 'flex';
-    if (document.getElementById('appealBtn')) {
-      document.getElementById('appealBtn').onclick = () => submitAppeal(resultId, resStatus?.status);
+
+    // Кнопка апелляции внутри модального окна
+    const openAppealBtn = document.getElementById('openAppealFromModal');
+    if (openAppealBtn) {
+      openAppealBtn.addEventListener('click', () => {
+        const resultIdAttr = parseInt(openAppealBtn.dataset.resultId);
+        const statusAttr = openAppealBtn.dataset.status;
+        showAppealModal(resultIdAttr, statusAttr);
+      });
     }
   }
 
-  // Закрытие модалки
-  document.querySelector('.close-modal').addEventListener('click', () => {
-    document.getElementById('detailModal').style.display = 'none';
+  // ========== МОДАЛЬНОЕ ОКНО АПЕЛЛЯЦИИ (БЕЗ PROMPT) ==========
+  function showAppealModal(resultId, currentStatus) {
+    if (currentStatus === 'appeal') {
+      alert('Апелляция уже подана.');
+      return;
+    }
+    currentAppealResultId = resultId;
+    currentAppealStatus = currentStatus;
+    const modal = document.getElementById('appealModal');
+    const textarea = document.getElementById('appealReason');
+    textarea.value = '';
+    modal.style.display = 'flex';
+  }
+
+  async function submitAppealFromModal() {
+    const reason = document.getElementById('appealReason').value.trim();
+    if (!reason) {
+      alert('Пожалуйста, укажите причину апелляции.');
+      return;
+    }
+    const resultId = currentAppealResultId;
+    const { error: insErr } = await supabaseClient.from('appeals').insert([{
+      result_id: resultId,
+      student_personal_code: personalCode,
+      reason: reason,
+      status: 'pending'
+    }]);
+    if (insErr) {
+      alert('Ошибка подачи апелляции: ' + insErr.message);
+      return;
+    }
+    const { error: updErr } = await supabaseClient
+      .from('resultats')
+      .update({ status: 'appeal', appeal: 'подана' })
+      .eq('id', resultId);
+    if (updErr) alert('Ошибка обновления статуса: ' + updErr.message);
+    else alert('Апелляция подана. Статус обновлён.');
+    document.getElementById('appealModal').style.display = 'none';
+    loadData(); // перезагрузить таблицу
+  }
+
+  // Закрытие модалок
+  document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('detailModal').style.display = 'none';
+      document.getElementById('appealModal').style.display = 'none';
+    });
   });
   window.addEventListener('click', (e) => {
     if (e.target === document.getElementById('detailModal')) document.getElementById('detailModal').style.display = 'none';
+    if (e.target === document.getElementById('appealModal')) document.getElementById('appealModal').style.display = 'none';
+  });
+  document.getElementById('closeAppealModal')?.addEventListener('click', () => {
+    document.getElementById('appealModal').style.display = 'none';
+  });
+  document.getElementById('cancelAppealBtn')?.addEventListener('click', () => {
+    document.getElementById('appealModal').style.display = 'none';
+  });
+  document.getElementById('submitAppealBtn')?.addEventListener('click', () => {
+    submitAppealFromModal();
   });
   document.getElementById('logoutBtn').addEventListener('click', (e) => {
     e.preventDefault();
@@ -377,7 +435,11 @@
     window.location.href = './index.html';
   });
 
-  loadData();
+  // Инициализация
+  (async () => {
+    await loadMaxScores();
+    await loadData();
+  })();
 </script>
 </body>
 </html>
