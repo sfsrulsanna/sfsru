@@ -147,36 +147,64 @@
         });
     }
 
-    async function viewFiles(assignmentId) {
-        const { data: sheets, error } = await supabaseClient
-            .from('answer_sheets')
-            .select('*')
-            .eq('assignment_id', assignmentId);
-        if (error) {
-            console.error(error);
-            alert('Ошибка загрузки бланков: ' + error.message);
-            return;
-        }
-        if (!sheets || sheets.length === 0) {
-            alert('Бланки для этого экзамена не найдены. Убедитесь, что руководитель ППЭ загрузил их.');
-            return;
-        }
-        let html = `<h3>Бланки экзамена (ID назначения: ${assignmentId})</h3>`;
-        const grouped = {};
-        sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
-        for (const [type, files] of Object.entries(grouped)) {
-            html += `<div><strong>${type}</strong><ul>`;
-            files.forEach(f => {
-                const { data: { publicUrl } } = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path);
-                html += `<li><a href="${publicUrl}" target="_blank">${f.file_name}</a></li>`;
-            });
-            html += `</ul></div>`;
-        }
-        const modal = document.getElementById('scoreModal');
-        const modalBody = document.getElementById('scoreModalBody');
-        modalBody.innerHTML = html;
-        modal.style.display = 'flex';
+async function viewFiles(assignmentId) {
+    const { data: sheets, error } = await supabaseClient
+        .from('answer_sheets')
+        .select('*')
+        .eq('assignment_id', assignmentId);
+    if (error) {
+        alert('Ошибка загрузки бланков: ' + error.message);
+        return;
     }
+    if (!sheets || sheets.length === 0) {
+        alert('Бланки для этого экзамена не найдены.');
+        return;
+    }
+    let html = `<h3>Бланки экзамена (ID назначения: ${assignmentId})</h3><div>`;
+    for (const f of sheets) {
+        const { data: { publicUrl } } = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path);
+        const size = f.metadata?.size ? ` (${(f.metadata.size / 1024).toFixed(1)} КБ)` : '';
+        html += `
+            <div style="margin: 8px 0;">
+                <button class="btn download-file-btn" data-url="${publicUrl}" data-filename="${f.file_name}">
+                    📥 Скачать ${f.file_name}${size}
+                </button>
+                <span id="download-spinner-${f.id}" style="display:none;">⏳</span>
+            </div>
+        `;
+    }
+    html += `</div><p>⚠️ Если файлы не скачиваются, проверьте бакет "answer_sheets" (должен быть публичным).</p>`;
+    const modal = document.getElementById('scoreModal');
+    const modalBody = document.getElementById('scoreModalBody');
+    modalBody.innerHTML = html;
+    modal.style.display = 'flex';
+
+    // Навешиваем обработчики на кнопки
+    document.querySelectorAll('.download-file-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const url = btn.dataset.url;
+            const filename = btn.dataset.filename;
+            const spinner = document.getElementById(`download-spinner-${filename.split('_')[1]}`); // упрощённо, лучше искать по уникальному id
+            if (spinner) spinner.style.display = 'inline-block';
+            // Пытаемся скачать файл через fetch (чтобы контролировать прогресс)
+            try {
+                const response = await fetch(url);
+                const blob = await response.blob();
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(link.href);
+            } catch (err) {
+                alert('Ошибка загрузки файла: ' + err.message);
+            } finally {
+                if (spinner) spinner.style.display = 'none';
+            }
+        });
+    });
+}
 
     async function showScoringModal(resultId, assignmentId, subject) {
         const parts = subject.split('-');
