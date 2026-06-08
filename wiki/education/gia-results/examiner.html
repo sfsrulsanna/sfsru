@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>РџР°РЅРµР»СЊ СЌРєСЃРїРµСЂС‚Р° Р“РРђ вЂ” РЎР¤РЎР Р®</title>
+    <title>Панель эксперта ГИА — СФСРЮ</title>
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="gia-common.css">
     <style>
@@ -22,14 +22,14 @@
 <body>
 <div class="gia-header">
     <div class="container">
-        <h1>рџ‘©вЂЌрџЏ« РџР°РЅРµР»СЊ СЌРєСЃРїРµСЂС‚Р° Р“РРђ</h1>
-        <div class="header-buttons"><a href="./index.html" class="header-btn" id="logoutBtn">рџљЄ Р’С‹Р№С‚Рё</a></div>
+        <h1>👩‍🏫 Панель эксперта ГИА</h1>
+        <div class="header-buttons"><a href="./index.html" class="header-btn" id="logoutBtn">🚪 Выйти</a></div>
     </div>
 </div>
 <main class="main-container">
-    <div id="expertInfo" class="expert-info">Р—Р°РіСЂСѓР·РєР°...</div>
+    <div id="expertInfo" class="expert-info">Загрузка...</div>
     <div class="card">
-        <h2>рџ“‹ Р­РєР·Р°РјРµРЅС‹ РґР»СЏ РїСЂРѕРІРµСЂРєРё</h2>
+        <h2>📋 Экзамены для проверки</h2>
         <div id="examsList"></div>
     </div>
 </main>
@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<footer class="gia-footer"><p>В© 2026 РЎР¤РЎР Р®. Р’СЃРµ РїСЂР°РІР° Р·Р°С‰РёС‰РµРЅС‹ РїСЂРѕР»РµС‚Р°СЂРёР°С‚РѕРј.</p></footer>
+<footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -64,13 +64,13 @@
             .eq('personal_code', currentUser.personal_code)
             .single();
         if (error) {
-            document.getElementById('expertInfo').innerHTML = '<p>РРЅС„РѕСЂРјР°С†РёСЏ РѕР± СЌРєСЃРїРµСЂС‚Рµ РЅРµ РЅР°Р№РґРµРЅР°</p>';
+            document.getElementById('expertInfo').innerHTML = '<p>Информация об эксперте не найдена</p>';
             return;
         }
         document.getElementById('expertInfo').innerHTML = `
-            <p><strong>рџ‘¤ Р¤РРћ:</strong> ${currentUser.full_name}</p>
-            <p><strong>рџ“Њ Р РѕР»СЊ:</strong> Р­РєСЃРїРµСЂС‚</p>
-            <p><strong>рџЏ« РџРџР­:</strong> ${expert.ppe?.name || 'РЅРµ РїСЂРёРІСЏР·Р°РЅ'}</p>
+            <p><strong>👤 ФИО:</strong> ${currentUser.full_name}</p>
+            <p><strong>📌 Роль:</strong> Эксперт</p>
+            <p><strong>🏫 ППЭ:</strong> ${expert.ppe?.name || 'не привязан'}</p>
         `;
     }
 
@@ -105,44 +105,37 @@
             .eq('status', 'processing')
             .order('id', { ascending: false });
         if (error) {
-            document.getElementById('examsList').innerHTML = '<p>РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё СЌРєР·Р°РјРµРЅРѕРІ</p>';
+            document.getElementById('examsList').innerHTML = '<p>Ошибка загрузки экзаменов</p>';
             return;
         }
         if (!results.length) {
-            document.getElementById('examsList').innerHTML = '<p>РќРµС‚ СЌРєР·Р°РјРµРЅРѕРІ, РѕР¶РёРґР°СЋС‰РёС… РїСЂРѕРІРµСЂРєРё.</p>';
+            document.getElementById('examsList').innerHTML = '<p>Нет экзаменов, ожидающих проверки.</p>';
             return;
         }
         let html = '';
         for (const res of results) {
             const assign = res.exam_assignments;
             const student = assign.registered;
-            const assignmentId = assign.id; // СЌС‚Рѕ exam_assignments.id
+            const assignmentId = assign.id;
             html += `
                 <div class="exam-card" data-result-id="${res.id}" data-assignment-id="${assignmentId}">
                     <div class="exam-header">
                         <div class="exam-title">${assign.subject} (${new Date(assign.exam_date).toLocaleDateString()})</div>
                         <div>
-                            <button class="btn btn-secondary view-files-btn" data-assignment-id="${assignmentId}">рџ“‚ РџСЂРѕСЃРјРѕС‚СЂРµС‚СЊ Р±Р»Р°РЅРєРё</button>
-                            <button class="btn score-btn" data-result-id="${res.id}" data-assignment-id="${assignmentId}" data-subject="${assign.subject}">рџ“ќ Р’С‹СЃС‚Р°РІРёС‚СЊ Р±Р°Р»Р»С‹</button>
+                            <button class="btn btn-secondary view-files-btn" data-assignment-id="${assignmentId}">📂 Просмотреть бланки</button>
+                            <button class="btn score-btn" data-result-id="${res.id}" data-assignment-id="${assignmentId}" data-subject="${assign.subject}">📝 Выставить баллы</button>
                         </div>
                     </div>
-                    <div><strong>РЈС‡Р°СЃС‚РЅРёРє:</strong> ${student.full_name} (${student.personal_code})</div>
-                    <div><strong>РџРџР­:</strong> ${assign.ppe_name || 'вЂ”'} | <strong>РђСѓРґ.:</strong> ${assign.audience || '?'} | <strong>РњРµСЃС‚Рѕ:</strong> ${assign.place || '?'}</div>
-                    ${res.score ? `<div><strong>РўРµРєСѓС‰РёР№ Р±Р°Р»Р»:</strong> ${res.score} | <strong>РћС†РµРЅРєР°:</strong> ${res.grade}</div>` : ''}
+                    <div><strong>Участник:</strong> ${student.full_name} (${student.personal_code})</div>
+                    <div><strong>ППЭ:</strong> ${assign.ppe_name || '—'} | <strong>Ауд.:</strong> ${assign.audience || '?'} | <strong>Место:</strong> ${assign.place || '?'}</div>
+                    ${res.score ? `<div><strong>Текущий балл:</strong> ${res.score} | <strong>Оценка:</strong> ${res.grade}</div>` : ''}
                 </div>
             `;
         }
         document.getElementById('examsList').innerHTML = html;
 
         document.querySelectorAll('.view-files-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const assignmentId = btn.dataset.assignmentId;
-                if (!assignmentId) {
-                    alert('РћС€РёР±РєР°: РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂ СЌРєР·Р°РјРµРЅР° РЅРµ РЅР°Р№РґРµРЅ');
-                    return;
-                }
-                viewFiles(assignmentId);
-            });
+            btn.addEventListener('click', () => viewFiles(btn.dataset.assignmentId));
         });
         document.querySelectorAll('.score-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -154,37 +147,36 @@
         });
     }
 
-async function viewFiles(assignmentId) {
-    const { data: sheets, error } = await supabaseClient
-        .from('answer_sheets')
-        .select('*')
-        .eq('assignment_id', assignmentId);
-    if (error) {
-        console.error(error);
-        alert('Ошибка загрузки бланков: ' + error.message);
-        return;
-    }
-    if (!sheets || sheets.length === 0) {
-        alert('Бланки для этого экзамена не найдены. Убедитесь, что руководитель ППЭ загрузил их.');
-        return;
-    }
-    let html = `<h3>Бланки экзамена (ID назначения: ${assignmentId})</h3>`;
-    const grouped = {};
-    sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
-    for (const [type, files] of Object.entries(grouped)) {
-        html += `<div><strong>${type}</strong><ul>`;
-        for (const f of files) {
-            // Генерируем публичный URL – если бакета нет, всё равно получим ссылку, но она не будет работать
-            const { data: { publicUrl } } = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path);
-            html += `<li><a href="${publicUrl}" target="_blank">${f.file_name}</a> (проверьте доступность бакета)</li>`;
+    async function viewFiles(assignmentId) {
+        const { data: sheets, error } = await supabaseClient
+            .from('answer_sheets')
+            .select('*')
+            .eq('assignment_id', assignmentId);
+        if (error) {
+            console.error(error);
+            alert('Ошибка загрузки бланков: ' + error.message);
+            return;
         }
-        html += `</ul></div>`;
+        if (!sheets || sheets.length === 0) {
+            alert('Бланки для этого экзамена не найдены. Убедитесь, что руководитель ППЭ загрузил их.');
+            return;
+        }
+        let html = `<h3>Бланки экзамена (ID назначения: ${assignmentId})</h3>`;
+        const grouped = {};
+        sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
+        for (const [type, files] of Object.entries(grouped)) {
+            html += `<div><strong>${type}</strong><ul>`;
+            files.forEach(f => {
+                const { data: { publicUrl } } = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path);
+                html += `<li><a href="${publicUrl}" target="_blank">${f.file_name}</a></li>`;
+            });
+            html += `</ul></div>`;
+        }
+        const modal = document.getElementById('scoreModal');
+        const modalBody = document.getElementById('scoreModalBody');
+        modalBody.innerHTML = html;
+        modal.style.display = 'flex';
     }
-    const modal = document.getElementById('scoreModal');
-    const modalBody = document.getElementById('scoreModalBody');
-    modalBody.innerHTML = html;
-    modal.style.display = 'flex';
-}
 
     async function showScoringModal(resultId, assignmentId, subject) {
         const parts = subject.split('-');
@@ -201,7 +193,7 @@ async function viewFiles(assignmentId) {
         const scoresMap = {};
         if (existingScores) existingScores.forEach(s => { scoresMap[s.task_number] = s.score; });
 
-        let tasksHtml = `<table class="task-table"><thead><tr><th>в„–</th><th>РњР°РєСЃ. Р±Р°Р»Р»</th><th>Р‘Р°Р»Р» СѓС‡РµРЅРёРєР°</th></tr></thead><tbody>`;
+        let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Балл ученика</th></tr></thead><tbody>`;
         for (const tn of taskNumbers) {
             const maxScore = maxScoresMap[tn];
             const currentVal = scoresMap[tn] !== undefined ? scoresMap[tn] : '';
@@ -213,20 +205,20 @@ async function viewFiles(assignmentId) {
         }
         tasksHtml += `</tbody></table>
             <div class="extra-info">
-                <label><strong>рџ“ќ Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ СЃРІРµРґРµРЅРёСЏ (Р·Р°РјРµС‚РєРё СЌРєСЃРїРµСЂС‚Р°):</strong></label><br>
+                <label><strong>📝 Дополнительные сведения (заметки эксперта):</strong></label><br>
                 <textarea id="expertNotes" rows="2" style="width:100%; border-radius:16px; padding:8px;"></textarea>
             </div>
             <div class="manual-grade">
-                <div><strong>РџРµСЂРІРёС‡РЅС‹Р№ Р±Р°Р»Р»:</strong> <span id="primaryScoreDisplay">0</span></div>
-                <div><strong>Р’С‚РѕСЂРёС‡РЅС‹Р№ Р±Р°Р»Р»:</strong> <span id="secondaryScoreDisplay">0</span></div>
-                <div><strong>РћС†РµРЅРєР° (Р°РІС‚Рѕ):</strong> <span id="autoGradeDisplay"></span></div>
-                <div><label>РЎРєРѕСЂСЂРµРєС‚РёСЂРѕРІР°С‚СЊ РѕС†РµРЅРєСѓ: <input type="text" id="manualGradeInput" placeholder="2,3,4,5"></label></div>
-                <button id="saveScoresBtn" class="btn">рџ’ѕ РЎРѕС…СЂР°РЅРёС‚СЊ</button>
+                <div><strong>Первичный балл:</strong> <span id="primaryScoreDisplay">0</span></div>
+                <div><strong>Вторичный балл:</strong> <span id="secondaryScoreDisplay">0</span></div>
+                <div><strong>Оценка (авто):</strong> <span id="autoGradeDisplay"></span></div>
+                <div><label>Скорректировать оценку: <input type="text" id="manualGradeInput" placeholder="2,3,4,5"></label></div>
+                <button id="saveScoresBtn" class="btn">💾 Сохранить</button>
             </div>
         `;
         const modal = document.getElementById('scoreModal');
         const modalBody = document.getElementById('scoreModalBody');
-        modalBody.innerHTML = `<h3>Р’С‹СЃС‚Р°РІР»РµРЅРёРµ Р±Р°Р»Р»РѕРІ: ${subject}</h3>${tasksHtml}`;
+        modalBody.innerHTML = `<h3>Выставление баллов: ${subject}</h3>${tasksHtml}`;
         modal.style.display = 'flex';
 
         function updateTotals() {
@@ -240,7 +232,7 @@ async function viewFiles(assignmentId) {
             const scaleKey = `${subjectCode}_${gradeType}`;
             const scales = gradingScales[scaleKey] || [];
             let secondary = total;
-            let autoGrade = 'вЂ”';
+            let autoGrade = '—';
             for (const s of scales) {
                 if (total >= s.min && total <= s.max) {
                     secondary = total;
@@ -267,12 +259,12 @@ async function viewFiles(assignmentId) {
             });
             await supabaseClient.from('task_scores').delete().eq('result_id', resultId);
             const { error: taskErr } = await supabaseClient.from('task_scores').insert(tasksData);
-            if (taskErr) { alert('РћС€РёР±РєР° СЃРѕС…СЂР°РЅРµРЅРёСЏ Р±Р°Р»Р»РѕРІ Р·Р°РґР°РЅРёР№'); return; }
+            if (taskErr) { alert('Ошибка сохранения баллов заданий: ' + taskErr.message); return; }
 
             const { data: currentResult } = await supabaseClient.from('resultats').select('details').eq('id', resultId).single();
             const newDetails = { ...currentResult?.details, expert_notes: expertNotes };
             await supabaseClient.from('resultats').update({ score: totalPrimary, grade: finalGrade, status: 'active', details: newDetails }).eq('id', resultId);
-            alert('Р РµР·СѓР»СЊС‚Р°С‚С‹ СЃРѕС…СЂР°РЅРµРЅС‹!');
+            alert('Результаты сохранены!');
             modal.style.display = 'none';
             loadExams();
         };
