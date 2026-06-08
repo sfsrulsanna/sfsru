@@ -154,44 +154,37 @@
         });
     }
 
-    async function viewFiles(assignmentId) {
-        // РџСЂРѕРІРµСЂСЏРµРј, С‡С‚Рѕ Р±Р°РєРµС‚ СЃСѓС‰РµСЃС‚РІСѓРµС‚
-        const { data: buckets, error: bucketError } = await supabaseClient.storage.listBuckets();
-        const bucketExists = buckets?.some(b => b.id === 'answer_sheets');
-        if (!bucketExists) {
-            alert('Р‘Р°РєРµС‚ "answer_sheets" РЅРµ РЅР°Р№РґРµРЅ. РћР±СЂР°С‚РёС‚РµСЃСЊ Рє Р°РґРјРёРЅРёСЃС‚СЂР°С‚РѕСЂСѓ.');
-            return;
-        }
-
-        const { data: sheets, error } = await supabaseClient
-            .from('answer_sheets')
-            .select('*')
-            .eq('assignment_id', assignmentId);
-        if (error) {
-            console.error(error);
-            alert('РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё Р±Р»Р°РЅРєРѕРІ: ' + error.message);
-            return;
-        }
-        if (!sheets || sheets.length === 0) {
-            alert('Р‘Р»Р°РЅРєРё РґР»СЏ СЌС‚РѕРіРѕ СЌРєР·Р°РјРµРЅР° РЅРµ РЅР°Р№РґРµРЅС‹.');
-            return;
-        }
-        let html = `<h3>Р‘Р»Р°РЅРєРё СЌРєР·Р°РјРµРЅР° (ID РЅР°Р·РЅР°С‡РµРЅРёСЏ: ${assignmentId})</h3>`;
-        const grouped = {};
-        sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
-        for (const [type, files] of Object.entries(grouped)) {
-            html += `<div><strong>${type}</strong><ul>`;
-            files.forEach(f => {
-                const { data: { publicUrl } } = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path);
-                html += `<li><a href="${publicUrl}" target="_blank">${f.file_name}</a></li>`;
-            });
-            html += `</ul></div>`;
-        }
-        const modal = document.getElementById('scoreModal');
-        const modalBody = document.getElementById('scoreModalBody');
-        modalBody.innerHTML = html;
-        modal.style.display = 'flex';
+async function viewFiles(assignmentId) {
+    const { data: sheets, error } = await supabaseClient
+        .from('answer_sheets')
+        .select('*')
+        .eq('assignment_id', assignmentId);
+    if (error) {
+        console.error(error);
+        alert('Ошибка загрузки бланков: ' + error.message);
+        return;
     }
+    if (!sheets || sheets.length === 0) {
+        alert('Бланки для этого экзамена не найдены. Убедитесь, что руководитель ППЭ загрузил их.');
+        return;
+    }
+    let html = `<h3>Бланки экзамена (ID назначения: ${assignmentId})</h3>`;
+    const grouped = {};
+    sheets.forEach(s => { if (!grouped[s.file_type]) grouped[s.file_type] = []; grouped[s.file_type].push(s); });
+    for (const [type, files] of Object.entries(grouped)) {
+        html += `<div><strong>${type}</strong><ul>`;
+        for (const f of files) {
+            // Генерируем публичный URL – если бакета нет, всё равно получим ссылку, но она не будет работать
+            const { data: { publicUrl } } = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path);
+            html += `<li><a href="${publicUrl}" target="_blank">${f.file_name}</a> (проверьте доступность бакета)</li>`;
+        }
+        html += `</ul></div>`;
+    }
+    const modal = document.getElementById('scoreModal');
+    const modalBody = document.getElementById('scoreModalBody');
+    modalBody.innerHTML = html;
+    modal.style.display = 'flex';
+}
 
     async function showScoringModal(resultId, assignmentId, subject) {
         const parts = subject.split('-');
