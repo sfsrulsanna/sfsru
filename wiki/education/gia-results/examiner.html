@@ -26,6 +26,7 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
+            margin-bottom: 0.5rem;
         }
         .btn {
             background: #4a6fa5;
@@ -46,19 +47,24 @@
             border: 1px solid #ffcece;
             padding: 6px 8px;
             text-align: center;
+            vertical-align: middle;
         }
-        .task-input {
-            width: 70px;
+        .task-input, .answer-input {
+            width: 80px;
             text-align: center;
             border: 1px solid #ccc;
             border-radius: 12px;
             padding: 4px;
         }
-        .extra-info {
-            margin-top: 1rem;
-            background: #fff3cd;
-            border-radius: 16px;
+        .answer-input { width: 120px; }
+        .info-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-bottom: 0.5rem;
+            background: #f0f4f8;
             padding: 0.5rem;
+            border-radius: 16px;
         }
         .grade-section {
             margin-top: 1rem;
@@ -122,7 +128,7 @@
     })();
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
     let gradingScales = {};
-    let taskMaxScores = {};
+    let taskMaxScores = {};      // { subjectCode_gradeType: { taskNumber: { max, type } } }
     let currentAssignments = [];
 
     async function loadExpertInfo() {
@@ -161,7 +167,7 @@
             data.forEach(t => {
                 const key = `${t.subject_code}_${t.grade_type}`;
                 if (!taskMaxScores[key]) taskMaxScores[key] = {};
-                taskMaxScores[key][t.task_number] = t.max_score;
+                taskMaxScores[key][t.task_number] = { max: t.max_score, type: t.task_type || 'short_answer' };
             });
         }
     }
@@ -215,6 +221,7 @@
         });
     }
 
+    // Просмотр бланков с подписями
     async function viewFiles(assignmentId) {
         const { data: sheets, error } = await supabaseClient
             .from('answer_sheets')
@@ -228,10 +235,19 @@
             alert('Бланки для этого экзамена не найдены.');
             return;
         }
-        let html = `<h3>Бланки экзамена (ID назначения: ${assignmentId})</h3><div>`;
+        let html = `<h3>Бланки экзамена</h3><div class="file-list">`;
+        const labels = {
+            registration: '📄 Бланк регистрации',
+            answer1: '📝 Бланк ответов №1',
+            'answer2-1': '📑 Бланк ответов №2 (лист 1)',
+            'answer2-2': '📑 Бланк ответов №2 (лист 2)',
+            'extra-c': '📎 Дополнительный бланк C',
+            'audio-d': '🎤 Аудиозапись (тип D)'
+        };
         for (const f of sheets) {
             const { data: { publicUrl } } = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path);
-            html += `<div style="margin: 5px 0;"><a href="${publicUrl}" target="_blank">📄 ${f.file_name}</a></div>`;
+            const label = labels[f.file_type] || `📄 ${f.file_name}`;
+            html += `<div class="file-item"><a href="${publicUrl}" target="_blank">${label}</a></div>`;
         }
         html += `</div>`;
         const modal = document.getElementById('scoreModal');
@@ -241,43 +257,49 @@
     }
 
     async function showScoringModal(resultId, assignmentId, subject) {
-        // Загружаем детали экзамена (если есть)
-        let details = {};
-        let existingShortAnswers = [];
+        // Получаем данные экзамена (только для чтения)
+        const { data: assign } = await supabaseClient
+            .from('exam_assignments')
+            .select('subject, exam_date, ppe_name, audience, place, registered(full_name)')
+            .eq('id', assignmentId)
+            .single();
+        if (!assign) return;
+
+        // Получаем уже сохранённые детали (ответы, баллы за части и т.д.)
+        let examDetails = {};
+        let existingShortAnswers = []; // массив { task_number, answer, score }
         let existingTypeB = '', existingTypeBScore = '';
         let existingTypeC = '', existingTypeCScore = '';
         let existingTypeDScore = '';
-        let existingFiles = [];
         let existingVariant = '';
-        let existingPpe = '';
-        let existingAudience = '';
+        let existingFiles = [];
 
-        const { data: examDetails } = await supabaseClient
+        const { data: details } = await supabaseClient
             .from('exam_details')
             .select('*')
             .eq('result_id', resultId)
             .maybeSingle();
-        if (examDetails) {
-            existingShortAnswers = examDetails.short_answers || [];
-            existingTypeB = examDetails.type_b || '';
-            existingTypeBScore = examDetails.type_b_score || '';
-            existingTypeC = examDetails.type_c || '';
-            existingTypeCScore = examDetails.type_c_score || '';
-            existingTypeDScore = examDetails.type_d_score || '';
-            existingFiles = examDetails.files || [];
-            existingVariant = examDetails.variant || '';
-            existingPpe = examDetails.ppe_name || '';
-            existingAudience = examDetails.audience || '';
+        if (details) {
+            existingShortAnswers = details.short_answers || [];
+            existingTypeB = details.type_b || '';
+            existingTypeBScore = details.type_b_score || '';
+            existingTypeC = details.type_c || '';
+            existingTypeCScore = details.type_c_score || '';
+            existingTypeDScore = details.type_d_score || '';
+            existingVariant = details.variant || '';
+            existingFiles = details.files || [];
+            examDetails = details;
         }
 
+        // Парсим предмет и тип
         const parts = subject.split('-');
         const subjectCode = parts[0];
         const gradeType = parts[1];
         const key = `${subjectCode}_${gradeType}`;
-        const maxScoresMap = taskMaxScores[key] || {};
-        const taskNumbers = Object.keys(maxScoresMap).map(Number).sort((a,b)=>a-b);
+        const tasksMap = taskMaxScores[key] || {};
+        const taskNumbers = Object.keys(tasksMap).map(Number).sort((a,b)=>a-b);
 
-        // Загружаем ранее сохранённые баллы (из task_scores)
+        // Загружаем ранее сохранённые баллы за задания (из task_scores)
         const { data: existingScores } = await supabaseClient
             .from('task_scores')
             .select('*')
@@ -285,50 +307,66 @@
         const scoresMap = {};
         if (existingScores) existingScores.forEach(s => { scoresMap[s.task_number] = s.score; });
 
-        // Таблица заданий
-        let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Балл ученика</th></tr></thead><tbody>`;
+        // Строим таблицу заданий
+        let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Тип</th><th>Ответ участника</th><th>Балл</th></tr></thead><tbody>`;
         for (const tn of taskNumbers) {
-            const maxScore = maxScoresMap[tn];
-            const currentVal = scoresMap[tn] !== undefined ? scoresMap[tn] : '';
+            const taskInfo = tasksMap[tn];
+            const maxScore = taskInfo.max;
+            const taskType = taskInfo.type;
+            const currentScore = scoresMap[tn] !== undefined ? scoresMap[tn] : '';
+            // Ищем существующий ответ участника для этого задания (только для short_answer)
+            let currentAnswer = '';
+            if (taskType === 'short_answer') {
+                const found = existingShortAnswers.find(a => a.task_number == tn);
+                currentAnswer = found ? (found.answer || '') : '';
+            }
             tasksHtml += `<tr>
                 <td>${tn}</td>
                 <td>${maxScore}</td>
-                <td><input type="number" class="task-input" data-task="${tn}" value="${currentVal}" min="0" max="${maxScore}" step="1"></td>
+                <td>${taskType === 'short_answer' ? 'Краткий ответ' : 'Развёрнутый (C/D)'}</td>`;
+            if (taskType === 'short_answer') {
+                tasksHtml += `<td><input type="text" class="answer-input" data-task="${tn}" value="${escapeHtml(currentAnswer)}" placeholder="ответ участника"></td>`;
+            } else {
+                tasksHtml += `<td>—</td>`;
+            }
+            tasksHtml += `<td><input type="number" class="task-input" data-task="${tn}" value="${currentScore}" min="0" max="${maxScore}" step="1"></td>
             </tr>`;
         }
         tasksHtml += `</tbody></table>`;
 
-        // Дополнительные сведения (вариант, ППЭ, аудитория, баллы за части B/C/D, файлы)
-        tasksHtml += `
-            <div class="extra-info">
-                <label><strong>📌 Вариант:</strong></label>
-                <input type="text" id="variantInput" value="${existingVariant}" style="width:100px; margin-left:0.5rem;">
-                <label style="margin-left:1rem;"><strong>🏫 ППЭ:</strong></label>
-                <input type="text" id="ppeInput" value="${existingPpe}" style="width:200px;">
-                <label style="margin-left:1rem;"><strong>🏢 Аудитория:</strong></label>
-                <input type="text" id="audienceInput" value="${existingAudience}" style="width:100px;">
-                <hr>
-                <label><strong>📝 Задания типа B (строка):</strong></label>
-                <input type="text" id="typeBInput" value="${existingTypeB}" style="width:250px;">
-                <label><strong>Балл за B:</strong></label>
-                <input type="text" id="typeBScoreInput" value="${existingTypeBScore}" style="width:80px;">
-                <hr>
-                <label><strong>📝 Задания типа C (строка):</strong></label>
-                <input type="text" id="typeCInput" value="${existingTypeC}" style="width:250px;">
-                <label><strong>Балл за C:</strong></label>
-                <input type="text" id="typeCScoreInput" value="${existingTypeCScore}" style="width:80px;">
-                <hr>
-                <label><strong>🎤 Балл за устную часть (D):</strong></label>
-                <input type="text" id="typeDScoreInput" value="${existingTypeDScore}" style="width:80px;">
-                <hr>
-                <label><strong>📎 Бланки (пути в storage, через запятую):</strong></label>
-                <input type="text" id="filesInput" value="${existingFiles.join(', ')}" style="width:100%;">
-                <div class="file-list" id="previewFiles"></div>
+        // Информационная строка (данные экзамена, только для чтения)
+        const infoHtml = `
+            <div class="info-row">
+                <div><strong>📌 Вариант:</strong> ${existingVariant || 'не указан'}</div>
+                <div><strong>🏫 ППЭ:</strong> ${assign.ppe_name || '—'}</div>
+                <div><strong>🏢 Аудитория:</strong> ${assign.audience || '?'}</div>
+                <div><strong>📍 Место:</strong> ${assign.place || '?'}</div>
             </div>
         `;
 
-        // Блок пересчёта баллов и оценки
-        tasksHtml += `
+        // Блок для баллов за части B, C, D (только если они есть в задании)
+        let extraBlocks = '';
+        if (taskNumbers.some(t => tasksMap[t].type !== 'short_answer')) {
+            extraBlocks = `
+                <div class="extra-info">
+                    <label><strong>📝 Задания типа B (строка, если есть):</strong></label>
+                    <input type="text" id="typeBInput" value="${escapeHtml(existingTypeB)}" style="width:250px;">
+                    <label><strong>Балл за B:</strong></label>
+                    <input type="text" id="typeBScoreInput" value="${escapeHtml(existingTypeBScore)}" style="width:80px;">
+                    <hr>
+                    <label><strong>📝 Задания типа C (строка, если есть):</strong></label>
+                    <input type="text" id="typeCInput" value="${escapeHtml(existingTypeC)}" style="width:250px;">
+                    <label><strong>Балл за C:</strong></label>
+                    <input type="text" id="typeCScoreInput" value="${escapeHtml(existingTypeCScore)}" style="width:80px;">
+                    <hr>
+                    <label><strong>🎤 Балл за устную часть (D):</strong></label>
+                    <input type="text" id="typeDScoreInput" value="${escapeHtml(existingTypeDScore)}" style="width:80px;">
+                </div>
+            `;
+        }
+
+        // Блок с итоговыми баллами и оценкой
+        const gradeSection = `
             <div class="grade-section">
                 <div><strong>📊 Первичный балл (авто):</strong> <span id="primaryScoreDisplay">0</span></div>
                 <div><strong>🎯 Вторичный балл (авто):</strong> <span id="secondaryScoreDisplay">0</span></div>
@@ -338,9 +376,19 @@
             </div>
         `;
 
+        const modalHtml = `
+            <h3>Выставление баллов: ${subject}</h3>
+            <div><strong>Участник:</strong> ${assign.registered.full_name}</div>
+            <div><strong>Дата экзамена:</strong> ${new Date(assign.exam_date).toLocaleDateString()}</div>
+            ${infoHtml}
+            ${tasksHtml}
+            ${extraBlocks}
+            ${gradeSection}
+        `;
+
         const modal = document.getElementById('scoreModal');
         const modalBody = document.getElementById('scoreModalBody');
-        modalBody.innerHTML = `<h3>Выставление баллов: ${subject}</h3>${tasksHtml}`;
+        modalBody.innerHTML = modalHtml;
         modal.style.display = 'flex';
 
         // Функция обновления первичного балла и оценки
@@ -358,7 +406,7 @@
             let autoGrade = '—';
             for (const s of scales) {
                 if (total >= s.min && total <= s.max) {
-                    secondary = total; // пример, можно сделать другую формулу
+                    secondary = total;
                     autoGrade = s.grade;
                     break;
                 }
@@ -370,48 +418,47 @@
         document.querySelectorAll('.task-input').forEach(inp => inp.addEventListener('input', updateTotals));
         updateTotals();
 
-        // Сохранение всех данных
+        // Сохранение
         document.getElementById('saveScoresBtn').onclick = async () => {
             const totalPrimary = parseInt(document.getElementById('primaryScoreDisplay').innerText);
             const autoGrade = document.getElementById('autoGradeDisplay').innerText;
             const manualGrade = document.getElementById('manualGradeInput').value.trim();
             const finalGrade = manualGrade !== '' ? manualGrade : autoGrade;
 
-            // Собираем баллы по заданиям
+            // Собираем баллы за задания и ответы на краткие ответы
             const tasksData = [];
+            const shortAnswersData = []; // для exam_details
             document.querySelectorAll('.task-input').forEach(inp => {
-                tasksData.push({ result_id: resultId, task_number: parseInt(inp.dataset.task), score: parseInt(inp.value) || 0 });
+                const taskNum = parseInt(inp.dataset.task);
+                const score = parseInt(inp.value) || 0;
+                tasksData.push({ result_id: resultId, task_number: taskNum, score });
             });
-            // Удаляем старые и вставляем новые
+            document.querySelectorAll('.answer-input').forEach(inp => {
+                const taskNum = parseInt(inp.dataset.task);
+                const answer = inp.value.trim();
+                if (answer) {
+                    shortAnswersData.push({ task_number: taskNum, answer: answer, score: null });
+                }
+            });
+
+            // Сохраняем баллы заданий
             await supabaseClient.from('task_scores').delete().eq('result_id', resultId);
             const { error: taskErr } = await supabaseClient.from('task_scores').insert(tasksData);
             if (taskErr) { alert('Ошибка сохранения баллов заданий: ' + taskErr.message); return; }
 
-            // Получаем ответы с кратким ответом (их должен был ввести руководитель ППЭ или они уже есть)
-            // Для простоты пока оставляем существующие short_answers, но можно добавить форму.
-            const shortAnswers = existingShortAnswers; // можно расширить.
+            // Собираем остальные данные для exam_details
+            const typeB = document.getElementById('typeBInput')?.value || '';
+            const typeBScore = document.getElementById('typeBScoreInput')?.value || '';
+            const typeC = document.getElementById('typeCInput')?.value || '';
+            const typeCScore = document.getElementById('typeCScoreInput')?.value || '';
+            const typeDScore = document.getElementById('typeDScoreInput')?.value || '';
 
-            // Данные для exam_details
-            const variant = document.getElementById('variantInput').value;
-            const ppeName = document.getElementById('ppeInput').value;
-            const audience = document.getElementById('audienceInput').value;
-            const typeB = document.getElementById('typeBInput').value;
-            const typeBScore = document.getElementById('typeBScoreInput').value;
-            const typeC = document.getElementById('typeCInput').value;
-            const typeCScore = document.getElementById('typeCScoreInput').value;
-            const typeDScore = document.getElementById('typeDScoreInput').value;
-            const filesStr = document.getElementById('filesInput').value;
-            const filesArr = filesStr.split(',').map(s => s.trim()).filter(s => s);
-
-            // Сохраняем или обновляем exam_details
+            // Обновляем exam_details
             const { error: detailsErr } = await supabaseClient
                 .from('exam_details')
                 .upsert({
                     result_id: resultId,
-                    variant: variant || null,
-                    ppe_name: ppeName || null,
-                    audience: audience || null,
-                    short_answers: shortAnswers,
+                    short_answers: shortAnswersData,
                     type_b: typeB || null,
                     type_b_score: typeBScore || null,
                     type_c: typeC || null,
@@ -420,21 +467,15 @@
                     primary_score: totalPrimary,
                     secondary_score: parseInt(document.getElementById('secondaryScoreDisplay').innerText) || totalPrimary,
                     grade: finalGrade,
-                    files: filesArr,
                     updated_at: new Date()
                 }, { onConflict: 'result_id' });
 
             if (detailsErr) { alert('Ошибка сохранения деталей экзамена: ' + detailsErr.message); return; }
 
-            // Обновляем основную таблицу resultats
+            // Обновляем resultats
             const { error: resErr } = await supabaseClient
                 .from('resultats')
-                .update({
-                    score: totalPrimary,
-                    grade: finalGrade,
-                    status: 'active',
-                    updated_at: new Date()
-                })
+                .update({ score: totalPrimary, grade: finalGrade, status: 'active', updated_at: new Date() })
                 .eq('id', resultId);
             if (resErr) { alert('Ошибка обновления результата: ' + resErr.message); return; }
 
@@ -442,6 +483,16 @@
             modal.style.display = 'none';
             loadExams(); // обновить список
         };
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
 
     document.querySelector('.close-modal').addEventListener('click', () => {
