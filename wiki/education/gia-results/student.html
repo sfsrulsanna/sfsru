@@ -72,6 +72,15 @@
       background: #c4c4ff;
       transform: translateX(4px);
     }
+    .appeal-btn {
+      background: #ffaa44;
+      color: #552200;
+      border: none;
+      border-radius: 40px;
+      padding: 6px 16px;
+      cursor: pointer;
+      margin-top: 1rem;
+    }
     hr { margin: 1rem 0; border: none; height: 1px; background: linear-gradient(to right, #ffaaaa, transparent); }
   </style>
 </head>
@@ -130,6 +139,11 @@
     return `${day}.${month}.${year}`;
   }
 
+  function formatValue(value) {
+    if (value === null || value === undefined || value === 'null' || value === '') return '—';
+    return value;
+  }
+
   function statusText(status) {
     const map = {
       'active': 'Активный результат',
@@ -170,7 +184,7 @@
       if (assignments.length) {
         const { data: results, error: resErr } = await supabaseClient
           .from('resultats')
-          .select('*, exam_assignments!inner(subject, exam_date, ppe_name, audience)')
+          .select('*, exam_assignments!inner(subject, exam_date, ppe_name, audience, place)')
           .in('assignment_id', assignments.map(a => a.id));
         if (resErr) throw resErr;
         renderResultsTable(results);
@@ -185,9 +199,9 @@
 
   function renderUserInfo(user) {
     document.getElementById('userInfo').innerHTML = `
-      <div class="info-item"><span class="info-label">Муниципалитет:</span> ${user.municipality || '—'}</div>
-      <div class="info-item"><span class="info-label">Образовательная организация:</span> ${user.educational_org || '—'}</div>
-      <div class="info-item"><span class="info-label">Класс:</span> ${user.class_name || '—'}</div>
+      <div class="info-item"><span class="info-label">Муниципалитет:</span> ${formatValue(user.municipality)}</div>
+      <div class="info-item"><span class="info-label">Образовательная организация:</span> ${formatValue(user.educational_org)}</div>
+      <div class="info-item"><span class="info-label">Класс:</span> ${formatValue(user.class_name)}</div>
       <div class="info-item"><span class="info-label">ФИО:</span> ${user.full_name}</div>
       <div class="info-item"><span class="info-label">Дата рождения:</span> ${formatDate(user.birth_date)}</div>
       <div class="info-item"><span class="info-label">Тип ГИА:</span> ${user.gia_type}</div>
@@ -201,16 +215,16 @@
     }
     let html = '<table class="exams-table"><thead><tr><th>№</th><th>Экзамен</th><th>ППЭ</th><th>Аудитория*</th><th>Место*</th></tr></thead><tbody>';
     assignments.forEach((ex, idx) => {
-      const examName = `${ex.subject}, ${new Date(ex.exam_date).toLocaleDateString('ru-RU')}, ${ex.exam_time}`;
+      const examName = `${ex.subject}, ${formatDate(ex.exam_date)}, ${ex.exam_time}`;
       html += `<tr>
         <td>${idx+1}</td>
         <td>${examName}</td>
-        <td>${ex.ppe_name || 'н/д'}</td>
-        <td>${ex.audience || 'н/д'}</td>
-        <td>${ex.place || 'н/д'}</td>
+        <td>${formatValue(ex.ppe_name)}</td>
+        <td>${formatValue(ex.audience)}</td>
+        <td>${formatValue(ex.place)}</td>
       </tr>`;
     });
-    html += '</tbody></table><p class="form-hint">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
+    html += '</tbody></td><p class="form-hint">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
     document.getElementById('examsTable').innerHTML = html;
   }
 
@@ -219,57 +233,87 @@
       document.getElementById('resultsTable').innerHTML = '<p>Результаты ещё не опубликованы.</p>';
       return;
     }
-    let html = '<table class="results-table"><thead><tr><th>#</th><th>Экзамен</th><th>Вариант</th><th>Балл</th><th>Отметка</th><th>Статус</th><th>Апелляция</th><th>Подробно</th></tr></thead><tbody>';
-    results.forEach((res, idx) => {
+    let html = '<table class="results-table"><thead><tr><th>#</th><th>Экзамен</th><th>Вариант</th><th>Первичный балл</th><th>Вторичный балл</th><th>Отметка</th><th>Статус</th><th>Апелляция</th><th>Подробно</th></tr></thead><tbody>';
+    for (const res of results) {
       const examSubject = res.exam_assignments.subject;
-      const examDate = new Date(res.exam_assignments.exam_date).toLocaleDateString('ru-RU');
+      const examDate = formatDate(res.exam_assignments.exam_date);
       const examFull = `${examSubject}, ${examDate}`;
       html += `<tr>
-        <td>${idx+1}</td>
+        <td>${results.indexOf(res)+1}</td>
         <td>${examFull}</td>
         <td>${res.variant || '—'}</td>
-        <td>${res.score}</td>
-        <td>${res.grade}</td>
+        <td>${res.score !== null ? res.score : '—'}</td>
+        <td><span class="secondary-badge" data-result-id="${res.id}">—</span></td>
+        <td>${res.grade || '—'}</td>
         <td>${statusText(res.status)}</td>
         <td>${res.appeal || 'нет'}</td>
         <td><button class="details-btn" data-result-id="${res.id}" data-assignment-id="${res.assignment_id}">👁️ Просмотреть</button></td>
       </tr>`;
-    });
+    }
     html += '</tbody></table>';
     document.getElementById('resultsTable').innerHTML = html;
+    
+    // Загружаем вторичные баллы для каждого результата
+    for (const res of results) {
+      const { data: details } = await supabaseClient
+        .from('exam_details')
+        .select('secondary_score')
+        .eq('result_id', res.id)
+        .maybeSingle();
+      const span = document.querySelector(`.secondary-badge[data-result-id="${res.id}"]`);
+      if (span) span.innerText = (details?.secondary_score !== null && details?.secondary_score !== undefined) ? details.secondary_score : '—';
+    }
+
     document.querySelectorAll('.details-btn').forEach(btn => {
       btn.addEventListener('click', () => showModal(btn.dataset.resultId, btn.dataset.assignmentId));
     });
   }
 
+  async function submitAppeal(resultId) {
+    const reason = prompt('Укажите причину апелляции:');
+    if (!reason || !reason.trim()) return;
+    const { error } = await supabaseClient.from('appeals').insert([{
+      result_id: resultId,
+      student_personal_code: personalCode,
+      reason: reason.trim(),
+      status: 'pending'
+    }]);
+    if (error) {
+      alert('Ошибка подачи апелляции: ' + error.message);
+    } else {
+      await supabaseClient.from('resultats').update({ status: 'appeal', appeal: 'подана' }).eq('id', resultId);
+      alert('Апелляция подана. Статус результата обновлён.');
+      loadData(); // обновить таблицу
+    }
+  }
+
   async function showModal(resultId, assignmentId) {
-    // Загружаем данные из exam_details
+    // Загружаем детали экзамена
     const { data: details, error } = await supabaseClient
       .from('exam_details')
       .select('*')
       .eq('result_id', resultId)
-      .single();
-
+      .maybeSingle();
     if (error || !details) {
       alert('Детали экзамена не найдены');
       return;
     }
 
-    // Загружаем основную информацию об экзамене
+    // Загружаем основную информацию об экзамене (ППЭ, аудитория, место)
     const { data: assignment } = await supabaseClient
       .from('exam_assignments')
-      .select('subject, exam_date')
+      .select('subject, exam_date, ppe_name, audience, place')
       .eq('id', assignmentId)
       .single();
 
-    const examDate = new Date(assignment.exam_date).toLocaleDateString('ru-RU');
+    const examDate = formatDate(assignment.exam_date);
     const examSubject = assignment.subject;
 
-    // Таблица кратких ответов
+    // Таблица кратких ответов (если есть)
     let shortAnswersHtml = '';
     if (details.short_answers && details.short_answers.length) {
       shortAnswersHtml = `
-        <div class="detail-block"><strong>📝 Ответы на задания с кратким ответом</strong></div>
+        <div><strong>📝 Ответы на задания с кратким ответом</strong></div>
         <table class="tasks-table">
           <thead><tr><th>Задание</th><th>Ответ</th><th>Балл</th></tr></thead>
           <tbody>
@@ -297,13 +341,14 @@
       typeChtml = `<div class="type-block"><strong>📌 Задания типа C</strong><br>${details.type_c} ${details.type_c_score || ''}</div>`;
     }
 
-    // Блок заданий типа D (устная часть)
+    // Блок заданий типа D – скрываем, если значение "0" или 0
     let typeDhtml = '';
-    if (details.type_d_score) {
-      typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${details.type_d_score}</div>`;
+    const typeDScore = details.type_d_score;
+    if (typeDScore && typeDScore !== '0' && typeDScore !== 0) {
+      typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${typeDScore}</div>`;
     }
 
-    // Файлы бланков
+    // Файлы бланков (из storage)
     let filesHtml = '';
     if (details.files && details.files.length) {
       const labels = ['Бланк ответов №1', 'Бланк ответов №2 лист 1', 'Бланк ответов №2 лист 2', 'Дополнительный бланк C'];
@@ -316,25 +361,37 @@
       filesHtml += '</div></div>';
     }
 
+    // Кнопка апелляции (только если статус активный)
+    const appealButton = (details.status !== 'appeal' && details.status !== 'processing') 
+      ? `<button class="appeal-btn" id="appealBtn">⚖️ Подать апелляцию</button>`
+      : '';
+
     const modalHtml = `
       <h3>🔍 Подробно об экзамене</h3>
-      <div class="detail-block"><strong>Экзамен:</strong> ${examSubject}, ${examDate}</div>
-      <div class="detail-block"><strong>ППЭ:</strong> ${details.ppe_name || assignment.ppe_name || '—'}</div>
-      <div class="detail-block"><strong>Аудитория:</strong> ${details.audience || assignment.audience || '—'}</div>
-      <div class="detail-block"><strong>Вариант:</strong> ${details.variant || '—'}</div>
+      <div><strong>Экзамен:</strong> ${examSubject}, ${examDate}</div>
+      <div><strong>ППЭ:</strong> ${formatValue(assignment.ppe_name)}</div>
+      <div><strong>Аудитория:</strong> ${formatValue(assignment.audience)}</div>
+      <div><strong>Место:</strong> ${formatValue(assignment.place)}</div>
+      <div><strong>Вариант:</strong> ${formatValue(details.variant)}</div>
       <hr>
       ${shortAnswersHtml}
       ${typeBhtml}
       ${typeChtml}
       ${typeDhtml}
-      <div class="detail-block"><strong>🎯 Первичный балл:</strong> ${details.primary_score ?? '—'}</div>
-      <div class="detail-block"><strong>⭐ Отметка (результат):</strong> ${details.grade}</div>
+      <div><strong>🎯 Первичный балл:</strong> ${details.primary_score ?? '—'}</div>
+      <div><strong>🎯 Вторичный балл:</strong> ${details.secondary_score ?? '—'}</div>
+      <div><strong>⭐ Отметка (результат):</strong> ${details.grade || '—'}</div>
       ${filesHtml}
+      ${appealButton}
     `;
 
     const modal = document.getElementById('detailModal');
     document.getElementById('modalBody').innerHTML = modalHtml;
     modal.style.display = 'flex';
+
+    if (document.getElementById('appealBtn')) {
+      document.getElementById('appealBtn').onclick = () => submitAppeal(resultId);
+    }
   }
 
   document.querySelector('.close-modal').addEventListener('click', () => {
