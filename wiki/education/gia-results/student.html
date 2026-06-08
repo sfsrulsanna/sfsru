@@ -109,7 +109,13 @@
     }
     hr { margin: 1rem 0; }
     .modal-content { max-width: 950px; }
-    .appeal-form textarea { width: 100%; border-radius: 16px; border: 1px solid #ccc; padding: 8px; margin: 10px 0; }
+    .appeal-form textarea {
+      width: 100%;
+      border-radius: 16px;
+      border: 1px solid #ccc;
+      padding: 8px;
+      margin: 10px 0;
+    }
   </style>
 </head>
 <body>
@@ -219,6 +225,7 @@
 
   async function loadData() {
     try {
+      // 1. Информация об участнике
       const { data: user, error: uErr } = await supabaseClient
         .from('registered')
         .select('full_name, municipality, educational_org, class_name, birth_date, gia_type')
@@ -233,6 +240,7 @@
         <div class="info-item"><span class="info-label">Тип ГИА:</span> ${user.gia_type}</div>
       `;
 
+      // 2. Назначенные экзамены
       const { data: assignments, error: aErr } = await supabaseClient
         .from('exam_assignments')
         .select('*')
@@ -256,6 +264,7 @@
       examsHtml += '</tbody></table>';
       document.getElementById('examsTable').innerHTML = examsHtml;
 
+      // 3. Результаты экзаменов
       if (!assignments.length) {
         document.getElementById('resultsTable').innerHTML = '<p>Нет результатов</p>';
         return;
@@ -270,6 +279,7 @@
         return;
       }
 
+      // Вторичные баллы
       const resultIds = results.map(r => r.id);
       let secMap = {};
       if (resultIds.length) {
@@ -311,6 +321,7 @@
   }
 
   async function showModal(resultId, assignmentId) {
+    // Загружаем детали из exam_details
     const { data: details, error: dErr } = await supabaseClient
       .from('exam_details')
       .select('*')
@@ -320,6 +331,7 @@
       alert('Детали экзамена не найдены');
       return;
     }
+    // Основная информация об экзамене
     const { data: assign, error: aErr } = await supabaseClient
       .from('exam_assignments')
       .select('subject, exam_date, ppe_name, audience, place')
@@ -331,6 +343,7 @@
     const subjectCode = subjectParts[0];
     const gradeType = subjectParts[1] || '9';
 
+    // Статус для апелляции
     const { data: resStatus } = await supabaseClient
       .from('resultats')
       .select('status')
@@ -338,15 +351,17 @@
       .single();
     const canAppeal = resStatus?.status === 'active';
 
+    // Информационная таблица (ППЭ, аудитория, место, вариант)
     const infoTable = `
       <table class="info-table">
         <tr><td>ППЭ</td><td>${formatValue(assign.ppe_name)}</td></tr>
         <tr><td>Аудитория</td><td>${formatValue(assign.audience)}</td></tr>
         <tr><td>Место</td><td>${formatValue(assign.place)}</td></tr>
         <tr><td>Вариант</td><td>${formatValue(details.variant)}</td></tr>
-      </table>
+      能得到
     `;
 
+    // Таблица кратких ответов
     let shortHtml = '';
     if (details.short_answers && details.short_answers.length) {
       let rows = '';
@@ -368,7 +383,7 @@
           <td>${taskNum} ${item.type ? `(${item.type})` : ''}</td>
           <td>${item.answer ?? '—'}</td>
           <td>${scoreDisplay}</td>
-        </tr>`;
+        <tr>`;
       }
       if (rows) {
         shortHtml = `
@@ -378,30 +393,45 @@
       }
     }
 
+    // Блоки B, C, D
     let typeBhtml = details.type_b ? `<div class="type-block"><strong>📌 Задания типа B</strong><br>${details.type_b} ${details.type_b_score || ''}</div>` : '';
     let typeChtml = details.type_c ? `<div class="type-block"><strong>📌 Задания типа C</strong><br>${details.type_c} ${details.type_c_score || ''}</div>` : '';
     let typeDhtml = '';
-    if (details.type_d_score && details.type_d_score !== '0' && details.type_d_score !== 0) {
-      typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${details.type_d_score}</div>`;
+    const dScore = details.type_d_score;
+    if (dScore && dScore !== '0' && dScore !== 0) {
+      typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${dScore}</div>`;
     }
 
+    // Таблица с баллами
     const scoreTable = `
       <div><strong>📊 Результаты</strong></div>
       <table class="info-table" style="margin-top:0;">
         <tr><td>Первичный балл</td><td>${details.primary_score ?? '—'}</td></tr>
         <tr><td>Вторичный балл</td><td>${details.secondary_score ?? '—'}</td></tr>
         <tr><td>Оценка</td><td>${details.grade || '—'}</td></tr>
-      </table>
+      能得到
     `;
 
+    // Бланки – берём из answer_sheets по assignment_id (как у эксперта)
     let filesHtml = '';
-    if (details.files && Array.isArray(details.files) && details.files.length) {
-      const labels = ['Бланк ответов №1', 'Бланк ответов №2 лист 1', 'Бланк ответов №2 лист 2', 'Дополнительный бланк C'];
+    const { data: sheets, error: sheetsErr } = await supabaseClient
+      .from('answer_sheets')
+      .select('file_path, file_type')
+      .eq('assignment_id', assignmentId);
+    if (!sheetsErr && sheets && sheets.length) {
+      const labels = {
+        registration: '📄 Бланк регистрации',
+        answer1: '📝 Бланк ответов №1',
+        'answer2-1': '📑 Бланк ответов №2 (лист 1)',
+        'answer2-2': '📑 Бланк ответов №2 (лист 2)',
+        'extra-c': '📎 Дополнительный бланк C',
+        'audio-d': '🎤 Аудиозапись'
+      };
       filesHtml = '<div><strong>📎 Бланки:</strong><div class="file-list">';
-      details.files.forEach((path, idx) => {
-        const url = getFileUrl(path);
-        const label = labels[idx] || `Файл ${idx+1}`;
-        filesHtml += `<a href="${url}" target="_blank" download>📄 ${label}</a>`;
+      sheets.forEach(sheet => {
+        const url = getFileUrl(sheet.file_path);
+        const label = labels[sheet.file_type] || `📄 ${sheet.file_path.split('/').pop()}`;
+        filesHtml += `<a href="${url}" target="_blank" download>${label}</a>`;
       });
       filesHtml += '</div></div>';
     }
