@@ -19,6 +19,7 @@
         .file-upload-area { border: 2px dashed #c44; border-radius: 20px; padding: 0.8rem; text-align: center; cursor: pointer; margin: 0.5rem 0; background: #fffaf0; }
         .file-upload-area:hover { background: #fff0e0; }
         .sheet-type { background: #f9f2f2; padding: 1rem; border-radius: 20px; margin-bottom: 1rem; }
+        .variant-value { font-family: monospace; background: #f0f0f0; padding: 2px 8px; border-radius: 20px; }
     </style>
 </head>
 <body>
@@ -67,7 +68,7 @@
                 .eq('role', 'director')
                 .single();
             if (!examiner?.ppe_id) {
-                document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ. Обратитесь к администратору.</p>';
+                document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ.</p>';
                 return;
             }
             const { data: ppe } = await supabaseClient.from('ppe').select('*').eq('id', examiner.ppe_id).single();
@@ -83,12 +84,25 @@
                 .order('exam_date');
             currentAssignments = assignments || [];
             if (!currentAssignments.length) {
-                document.getElementById('participantsList').innerHTML = '<p>Нет назначенных экзаменов в этом ППЭ.</p>';
+                document.getElementById('participantsList').innerHTML = '<p>Нет назначенных экзаменов.</p>';
                 return;
             }
 
+            // Получаем варианты из exam_details
+            const resultIds = [];
+            for (const a of currentAssignments) {
+                const { data: res } = await supabaseClient.from('resultats').select('id').eq('assignment_id', a.id).single();
+                if (res) resultIds.push(res.id);
+            }
+            let variantMap = {};
+            if (resultIds.length) {
+                const { data: details } = await supabaseClient.from('exam_details').select('result_id, variant').in('result_id', resultIds);
+                if (details) details.forEach(d => { variantMap[d.result_id] = d.variant; });
+            }
+
+            // Группировка по участникам
             const participantsMap = new Map();
-            assignments.forEach(a => {
+            for (const a of assignments) {
                 const code = a.registered.personal_code;
                 if (!participantsMap.has(code)) {
                     participantsMap.set(code, {
@@ -98,12 +112,16 @@
                         place: a.place || ''
                     });
                 }
-                participantsMap.get(code).exams.push({ id: a.id, subject: a.subject, date: a.exam_date });
-            });
+                // Находим result_id
+                const { data: res } = await supabaseClient.from('resultats').select('id').eq('assignment_id', a.id).single();
+                const resultId = res?.id;
+                const variant = resultId ? variantMap[resultId] : '';
+                participantsMap.get(code).exams.push({ id: a.id, subject: a.subject, date: a.exam_date, variant });
+            }
 
-            let html = `<table><thead><tr><th>Участник</th><th>Экзамены</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
+            let html = `</td><thead><tr><th>Участник</th><th>Экзамены (вариант)</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
             for (let [code, data] of participantsMap.entries()) {
-                const examsList = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString()})`).join('<br>');
+                const examsList = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString()}) — вар. ${e.variant || '?'}`).join('<br>');
                 const safeCode = code.replace(/-/g, '');
                 html += `<tr>
                     <td><strong>${data.full_name}</strong><br><small>${code}</small></td>
@@ -114,6 +132,10 @@
                             <span class="editable-value" data-field="place">${data.place || '?'}</span>
                             <button class="edit-icon" data-code="${code}">✏️</button>
                         </div>
+                        <div class="editable-field" style="margin-top:0.5rem;">
+                            <span class="variant-value" data-field="variant">${data.exams[0]?.variant || '?'}</span>
+                            <button class="edit-variant-icon" data-code="${code}">✏️ вар.</button>
+                        </div>
                     </td>
                     <td><button class="action-btn upload" data-code="${code}">📤 Загрузить бланки</button></td>
                 </tr>`;
@@ -122,14 +144,15 @@
             document.getElementById('participantsList').innerHTML = html;
 
             document.querySelectorAll('.action-btn.upload').forEach(btn => btn.addEventListener('click', () => showUploadModal(btn.dataset.code)));
-            document.querySelectorAll('.edit-icon').forEach(icon => icon.addEventListener('click', () => enableInlineEditing(icon.dataset.code)));
+            document.querySelectorAll('.edit-icon').forEach(icon => icon.addEventListener('click', () => enableInlineEditing(icon.dataset.code, 'room')));
+            document.querySelectorAll('.edit-variant-icon').forEach(icon => icon.addEventListener('click', () => enableVariantEditing(icon.dataset.code)));
         } catch (err) {
             console.error(err);
             document.getElementById('ppeInfo').innerHTML = '<p>Ошибка загрузки данных</p>';
         }
     }
 
-    async function enableInlineEditing(personalCode) {
+    async function enableInlineEditing(personalCode, type) {
         const safeCode = personalCode.replace(/-/g, '');
         const container = document.getElementById(`room-cell-${safeCode}`);
         const editableDiv = container.querySelector('.editable-field');
@@ -176,6 +199,25 @@
         cancelBtn.onclick = () => loadDirectorData();
     }
 
+    async function enableVariantEditing(personalCode) {
+        // Находим все назначения участника
+        const assignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
+        if (!assignments.length) return;
+        // Для простоты редактируем вариант для первого экзамена (или можно выбрать конкретный)
+        const firstAssign = assignments[0];
+        const { data: result } = await supabaseClient.from('resultats').select('id').eq('assignment_id', firstAssign.id).single();
+        if (!result) return;
+        const { data: detail } = await supabaseClient.from('exam_details').select('variant').eq('result_id', result.id).maybeSingle();
+        const currentVariant = detail?.variant || '';
+        const newVariant = prompt('Введите номер варианта:', currentVariant);
+        if (newVariant === null) return;
+        await supabaseClient.from('exam_details').upsert({
+            result_id: result.id,
+            variant: newVariant.trim() || null
+        }, { onConflict: 'result_id' });
+        loadDirectorData();
+    }
+
     async function showUploadModal(personalCode) {
         const userAssignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
         const modal = document.getElementById('uploadModal');
@@ -187,7 +229,7 @@
                 <div class="sheet-type">
                     <h4>${ass.subject} (${examDate})</h4>
                     <div><strong>Аудитория:</strong> ${ass.audience || 'не указана'} | <strong>Место:</strong> ${ass.place || 'не указано'}</div>
-                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="registration">📄 Бланк регистрации (при наличии)</div>
+                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="registration">📄 Бланк регистрации</div>
                     <div id="files-reg-${ass.id}" class="file-list"></div>
                     <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="answer1">📝 Бланк ответов №1</div>
                     <div id="files-ans1-${ass.id}" class="file-list"></div>
@@ -195,9 +237,9 @@
                     <div id="files-ans2-1-${ass.id}" class="file-list"></div>
                     <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="answer2-2">📑 Бланк ответов №2 (лист 2)</div>
                     <div id="files-ans2-2-${ass.id}" class="file-list"></div>
-                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="extra-c">📎 Дополнительный бланк C (не ограничено)</div>
+                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="extra-c">📎 Дополнительный бланк C</div>
                     <div id="files-extra-${ass.id}" class="file-list"></div>
-                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="audio-d">🎤 Аудиозапись (тип D, не ограничено)</div>
+                    <div class="file-upload-area" data-assignment="${ass.id}" data-sheet-type="audio-d">🎤 Аудиозапись</div>
                     <div id="files-audio-${ass.id}" class="file-list"></div>
                     <button class="send-review-btn" data-assignment-id="${ass.id}">📨 Отправить на проверку</button>
                 </div>
@@ -207,51 +249,22 @@
         modal.style.display = 'flex';
         attachUploadHandlers();
 
-        // Обработчики для кнопок отправки на проверку
         document.querySelectorAll('.send-review-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const assignmentId = parseInt(btn.dataset.assignmentId);
-                // Используем maybeSingle() чтобы избежать 406 ошибки
-                const { data: result, error } = await supabaseClient
+                const { data: result } = await supabaseClient
                     .from('resultats')
                     .select('id, status')
                     .eq('assignment_id', assignmentId)
                     .maybeSingle();
-
-                if (error) {
-                    console.error('Ошибка поиска результата:', error);
-                    alert('Ошибка при поиске результата: ' + error.message);
-                    return;
-                }
-
                 if (result) {
-                    // Обновляем статус
-                    const { error: updateErr } = await supabaseClient
-                        .from('resultats')
-                        .update({ status: 'processing' })
-                        .eq('id', result.id);
-                    if (updateErr) {
-                        alert('Ошибка обновления статуса: ' + updateErr.message);
-                    } else {
-                        alert('✅ Экзамен отправлен на проверку эксперту');
-                        // Опционально: скрыть кнопку или изменить её вид
-                        btn.disabled = true;
-                        btn.textContent = '✓ Отправлено';
-                        btn.style.background = '#6c757d';
-                    }
+                    await supabaseClient.from('resultats').update({ status: 'processing' }).eq('id', result.id);
+                    alert('✅ Экзамен отправлен на проверку эксперту');
+                    btn.disabled = true;
+                    btn.textContent = '✓ Отправлено';
+                    btn.style.background = '#6c757d';
                 } else {
-                    // Создаём новый результат (если по какой-то причине триггер не сработал)
-                    const { error: insertErr } = await supabaseClient
-                        .from('resultats')
-                        .insert({ assignment_id: assignmentId, status: 'processing', details: {} });
-                    if (insertErr) {
-                        alert('Ошибка создания результата: ' + insertErr.message);
-                    } else {
-                        alert('✅ Экзамен отправлен на проверку эксперту');
-                        btn.disabled = true;
-                        btn.textContent = '✓ Отправлено';
-                        btn.style.background = '#6c757d';
-                    }
+                    alert('Ошибка: результат не найден');
                 }
             });
         });
@@ -273,9 +286,9 @@
                 for (const file of files) await uploadFile(assignmentId, sheetType, file);
                 input.value = '';
             });
-            area.addEventListener('dragover', (e) => { e.preventDefault(); area.style.background = '#e8f0fe'; });
+            area.addEventListener('dragover', e => { e.preventDefault(); area.style.background = '#e8f0fe'; });
             area.addEventListener('dragleave', () => { area.style.background = ''; });
-            area.addEventListener('drop', async (e) => {
+            area.addEventListener('drop', async e => {
                 e.preventDefault();
                 area.style.background = '';
                 const files = Array.from(e.dataTransfer.files);
@@ -317,11 +330,11 @@
         const typeMap = { registration: 'reg', answer1: 'ans1', 'answer2-1': 'ans2-1', 'answer2-2': 'ans2-2', 'extra-c': 'extra', 'audio-d': 'audio' };
         const container = document.getElementById(`files-${typeMap[sheetType]}-${assignmentId}`);
         if (!container) return;
-        if (!data?.length) { container.innerHTML = '<span style="color:#999;">Нет загруженных файлов</span>'; return; }
+        if (!data?.length) { container.innerHTML = '<span style="color:#999;">Нет файлов</span>'; return; }
         let html = '';
         for (const f of data) {
             const url = supabaseClient.storage.from('answer_sheets').getPublicUrl(f.file_path).data.publicUrl;
-            html += `<div class="file-item"><a href="${url}" target="_blank">📄 ${f.file_name}</a><button class="delete-file" data-id="${f.id}" data-path="${f.file_path}">❌</button></div>`;
+            html += `<div class="file-item"><a href="${url}" download>📄 ${f.file_name}</a><button class="delete-file" data-id="${f.id}" data-path="${f.file_path}">❌</button></div>`;
         }
         container.innerHTML = html;
         document.querySelectorAll('.delete-file').forEach(btn => {
