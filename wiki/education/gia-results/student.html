@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Кабинет участника ГИА — СФСРЮ</title>
+  <title>Личный кабинет участника ГИА — СФСРЮ</title>
   <link rel="stylesheet" href="../../../css/style.css">
   <link rel="stylesheet" href="gia-common.css">
   <style>
@@ -31,28 +31,53 @@
     .tasks-table {
       width: 100%;
       border-collapse: collapse;
-      margin: 0.5rem 0;
+      margin: 1rem 0;
+      font-size: 0.85rem;
     }
     .tasks-table th, .tasks-table td {
       border: 1px solid #ffcece;
-      padding: 6px 8px;
+      padding: 8px 6px;
       text-align: center;
       background: white;
     }
-    .tasks-table th { background: #ffe0e0; font-weight: 600; }
-    .appeal-btn {
-      background: #ffaa44;
-      color: #552200;
-      border: none;
-      border-radius: 40px;
-      padding: 8px 20px;
-      margin-top: 1rem;
-      cursor: pointer;
-      font-weight: bold;
-      transition: all 0.2s;
+    .tasks-table th {
+      background: #ffe0e0;
+      font-weight: 600;
     }
-    .appeal-btn:hover { background: #ff9933; transform: scale(1.02); }
-    .hidden { display: none; }
+    .type-block {
+      margin: 1rem 0;
+      padding: 0.5rem;
+      background: #fef7e0;
+      border-radius: 20px;
+    }
+    .type-block strong {
+      color: #a33;
+    }
+    .file-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+    .file-list a {
+      background: #e0e0ff;
+      padding: 5px 12px;
+      border-radius: 30px;
+      text-decoration: none;
+      color: #225;
+      font-weight: 500;
+      transition: 0.2s;
+    }
+    .file-list a:hover {
+      background: #c4c4ff;
+      transform: translateX(4px);
+    }
+    hr {
+      margin: 1rem 0;
+      border: none;
+      height: 1px;
+      background: linear-gradient(to right, #ffaaaa, transparent);
+    }
   </style>
 </head>
 <body>
@@ -79,23 +104,22 @@
   </div>
 </main>
 
-<footer class="gia-footer">
-  <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-  <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-</footer>
-
 <div id="detailModal" class="modal">
-  <div class="modal-content">
+  <div class="modal-content" style="max-width: 900px;">
     <span class="close-modal">&times;</span>
     <div id="modalBody"></div>
   </div>
 </div>
 
+<footer class="gia-footer">
+  <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+  <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-
+  const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
   const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     db: { schema: 'education_gia' }
   });
@@ -196,7 +220,7 @@
         <td>${ex.place || 'н/д'}</td>
       </tr>`;
     });
-    html += '</tbody></table><p class="form-hint" style="margin-top: 0.5rem;">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
+    html += '</tbody></table><p class="form-hint">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
     document.getElementById('examsTable').innerHTML = html;
   }
 
@@ -205,13 +229,11 @@
       document.getElementById('resultsTable').innerHTML = '<p>Результаты ещё не опубликованы.</p>';
       return;
     }
-    let html = '<table class="results-table"><thead><tr>' +
-      '<th>#</th><th>Экзамен</th><th>Вариант</th><th>Балл</th><th>Отметка</th><th>Статус</th><th>Апелляция</th><th>Подробно</th>' +
-      '</tr></thead><tbody>';
+    let html = '<table class="results-table"><thead><tr><th>#</th><th>Экзамен</th><th>Вариант</th><th>Балл</th><th>Отметка</th><th>Статус</th><th>Апелляция</th><th>Подробно</th></tr></thead><tbody>';
     results.forEach((res, idx) => {
       const examSubject = res.exam_assignments.subject;
       const examDate = new Date(res.exam_assignments.exam_date).toLocaleDateString('ru-RU');
-      const examFull = `${examSubject}-${currentUser.gia_type}, ${examDate}`;
+      const examFull = `${examSubject}, ${examDate}`;
       html += `<tr>
         <td>${idx+1}</td>
         <td>${examFull}</td>
@@ -230,118 +252,107 @@
     });
   }
 
-  async function submitAppeal(resultId, reason, modalBodyDiv) {
-    if (!reason.trim()) {
-      alert('Пожалуйста, укажите причину апелляции.');
-      return;
-    }
-    try {
-      const { error } = await supabaseClient
-        .from('appeals')
-        .insert([{
-          result_id: resultId,
-          student_personal_code: personalCode,
-          reason: reason.trim(),
-          status: 'pending'
-        }]);
-      if (error) throw error;
-      
-      await supabaseClient
-        .from('resultats')
-        .update({ status: 'appeal', appeal: 'подана' })
-        .eq('id', resultId);
-      
-      alert('Апелляция успешно подана. Статус результата обновлён.');
-      document.getElementById('detailModal').style.display = 'none';
-      loadData();
-    } catch(err) {
-      console.error(err);
-      alert('Ошибка при подаче апелляции. Попробуйте позже.');
-    }
-  }
-
   function showModal(result) {
     const details = result.details || {};
     const examDate = new Date(result.exam_assignments.exam_date).toLocaleDateString('ru-RU');
     const examSubject = result.exam_assignments.subject;
     
-    let tasksHtml = '';
+    // Таблица кратких ответов
+    let shortAnswersHtml = '';
     if (details.short_answers && details.short_answers.length) {
-      tasksHtml = `
-        <div class="detail-block"><strong>📝 Ответы на задания (краткий ответ):</strong></div>
+      shortAnswersHtml = `
+        <div class="detail-block"><strong>📝 Ответы на задания с кратким ответом</strong></div>
         <table class="tasks-table">
-          <thead><tr><th>№ задания</th><th>Ответ</th><th>Балл</th></tr></thead>
+          <thead><tr><th>Задание</th><th>Ответ</th><th>Балл</th></tr></thead>
           <tbody>
-            ${details.short_answers.map(item => `<tr><td>${item.num}</td><td>—</td><td>${item.score}</td></tr>`).join('')}
+            ${details.short_answers.map(item => `
+              <tr>
+                <td>${item.num} ${item.type ? `(${item.type})` : ''}</td>
+                <td>${item.answer !== undefined ? item.answer : '—'}</td>
+                <td>${item.score || ''}</td>
+              </tr>
+            `).join('')}
           </tbody>
         </table>
       `;
     }
     
-    let typeBhtml = details.type_b ? `<div class="detail-block"><strong>📌 Задания типа B:</strong><br>${details.type_b} ${details.type_b_score || ''}</div>` : '';
-    let typeChtml = details.type_c ? `<div class="detail-block"><strong>📌 Задания типа C:</strong><br>${details.type_c} ${details.type_c_score || ''}</div>` : '';
+    // Блок заданий типа B
+    let typeBhtml = '';
+    if (details.type_b !== undefined) {
+      typeBhtml = `
+        <div class="type-block">
+          <strong>📌 Задания типа B</strong><br>
+          ${details.type_b} ${details.type_b_score ? details.type_b_score : ''}
+        </div>
+      `;
+    }
     
+    // Блок заданий типа C
+    let typeChtml = '';
+    if (details.type_c !== undefined) {
+      typeChtml = `
+        <div class="type-block">
+          <strong>📌 Задания типа C</strong><br>
+          ${details.type_c} ${details.type_c_score ? details.type_c_score : ''}
+        </div>
+      `;
+    }
+    
+    // Блок заданий типа D (устная часть)
+    let typeDhtml = '';
+    if (details.type_d_score !== undefined) {
+      typeDhtml = `
+        <div class="type-block">
+          <strong>🎤 Задания типа D (устная часть)</strong><br>
+          ${details.type_d_score}
+        </div>
+      `;
+    }
+    
+    // Файлы бланков с красивыми подписями
     let filesHtml = '';
     if (details.files && details.files.length) {
-      const labels = ['Скачать бланк ответов №1', 'Скачать бланк ответов №2 лист 1', 'Скачать бланк ответов №2 лист 2', 'Скачать дополнительный бланк С'];
-      filesHtml = '<div class="detail-block"><strong>📎 Бланки ответов:</strong><div class="file-list">';
+      const labels = [
+        'Бланк ответов №1',
+        'Бланк ответов №2 лист 1',
+        'Бланк ответов №2 лист 2',
+        'Дополнительный бланк C'
+      ];
+      filesHtml = '<div class="detail-block"><strong>📎 Бланки:</strong><div class="file-list">';
       details.files.forEach((filePath, idx) => {
         const fileUrl = getFileUrl(filePath);
-        const label = labels[idx] || `Скачать файл ${idx+1}`;
+        const label = labels[idx] || `Файл ${idx+1}`;
         filesHtml += `<a href="${fileUrl}" target="_blank" download>📄 ${label}</a>`;
       });
       filesHtml += '</div></div>';
     }
     
-// Внутри showModal, после формирования filesHtml
-const showAppeal = result.status === 'active';
-const appealHtml = showAppeal ? `
-  <div class="detail-block">
-    <button class="appeal-trigger-btn" id="showAppealFormBtn">⚖️ Подать апелляцию</button>
-    <div id="appealFormContainer" class="appeal-form-container">
-      <textarea id="appealReason" class="appeal-textarea" rows="3" placeholder="Опишите причину несогласия с результатами..."></textarea>
-      <button id="submitAppealBtn" class="submit-appeal-btn">Отправить апелляцию</button>
-    </div>
-  </div>
-` : '';
-    
-    document.getElementById('modalBody').innerHTML = `
+    // Основная информация
+    const modalHtml = `
       <h3>🔍 Подробно об экзамене</h3>
-      <div class="detail-block"><strong>Экзамен:</strong> ${examSubject}-${currentUser.gia_type}, ${examDate}</div>
+      <div class="detail-block"><strong>Экзамен:</strong> ${examSubject}, ${examDate}</div>
       <div class="detail-block"><strong>ППЭ:</strong> ${details.ppe || result.exam_assignments.ppe_name || '—'}</div>
       <div class="detail-block"><strong>Аудитория:</strong> ${details.audience || result.exam_assignments.audience || '—'}</div>
       <div class="detail-block"><strong>Вариант:</strong> ${result.variant || '—'}</div>
       <div class="detail-block"><strong>Статус:</strong> ${statusText(result.status)}</div>
       <hr>
-      ${tasksHtml}
+      ${shortAnswersHtml}
       ${typeBhtml}
       ${typeChtml}
+      ${typeDhtml}
       <div class="detail-block"><strong>🎯 Первичный балл:</strong> ${details.primary_score !== undefined ? details.primary_score : result.score}</div>
       <div class="detail-block"><strong>⭐ Отметка (результат):</strong> ${result.grade}</div>
       <div class="detail-block"><strong>⚖️ Апелляция:</strong> ${result.appeal || 'нет'}</div>
       ${filesHtml}
-      ${appealHtml}
     `;
     
-
-// Затем в конце showModal, после innerHTML, добавьте обработчики с анимацией:
-if (showAppeal) {
-  const triggerBtn = document.getElementById('showAppealFormBtn');
-  const container = document.getElementById('appealFormContainer');
-  if (triggerBtn && container) {
-    triggerBtn.onclick = () => {
-      container.classList.toggle('visible');
-    };
-    const submitBtn = document.getElementById('submitAppealBtn');
-    if (submitBtn) {
-      submitBtn.onclick = () => submitAppeal(result.id, document.getElementById('appealReason').value);
-    }
-  }
-}
-    
-    document.getElementById('detailModal').style.display = 'flex';
+    const modal = document.getElementById('detailModal');
+    document.getElementById('modalBody').innerHTML = modalHtml;
+    modal.style.display = 'flex';
   }
 
+  // Закрытие модального окна
   document.querySelector('.close-modal').addEventListener('click', () => {
     document.getElementById('detailModal').style.display = 'none';
   });
