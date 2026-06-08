@@ -7,13 +7,52 @@
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="gia-common.css">
     <style>
-        .ppe-info-card { background: #f8f9fa; border-radius: 20px; padding: 1rem 1.5rem; margin-bottom: 2rem; border: 1px solid #e0e0e0; }
-        .action-btn { background: #4a6fa5; color: white; border: none; border-radius: 40px; padding: 6px 16px; min-width: 130px; cursor: pointer; transition: 0.2s; }
-        .action-btn:hover { transform: translateY(-2px); filter: brightness(0.95); }
-        .send-review-btn { background: #28a745; color: white; border: none; border-radius: 40px; padding: 6px 16px; margin-top: 0.5rem; cursor: pointer; }
-        .file-upload-area { border: 2px dashed #c44; border-radius: 20px; padding: 0.8rem; text-align: center; cursor: pointer; margin: 0.5rem 0; background: #fffaf0; }
+        .ppe-info-card {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid #e0e0e0;
+        }
+        .action-btn {
+            background: #4a6fa5;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 6px 16px;
+            min-width: 130px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .action-btn:hover {
+            transform: translateY(-2px);
+            filter: brightness(0.95);
+        }
+        .send-review-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 40px;
+            padding: 6px 16px;
+            margin-top: 0.5rem;
+            cursor: pointer;
+        }
+        .file-upload-area {
+            border: 2px dashed #c44;
+            border-radius: 20px;
+            padding: 0.8rem;
+            text-align: center;
+            cursor: pointer;
+            margin: 0.5rem 0;
+            background: #fffaf0;
+        }
         .file-upload-area:hover { background: #fff0e0; }
-        .sheet-type { background: #f9f2f2; padding: 1rem; border-radius: 20px; margin-bottom: 1rem; }
+        .sheet-type {
+            background: #f9f2f2;
+            padding: 1rem;
+            border-radius: 20px;
+            margin-bottom: 1rem;
+        }
         [contenteditable="true"] {
             background: #fff8e7;
             border-radius: 12px;
@@ -22,15 +61,45 @@
             display: inline-block;
             cursor: text;
         }
-        [contenteditable="true"]:hover { background: #fff0c0; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { border: 1px solid #ffcece; padding: 8px; vertical-align: top; }
-        th { background: #ffe0e0; }
-        .exam-item { margin-bottom: 6px; }
-        .file-list { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-        .file-item { background: #e8e8e8; border-radius: 20px; padding: 0.2rem 0.6rem; display: inline-flex; align-items: center; gap: 0.3rem; }
-        .delete-file { background: none; border: none; color: red; cursor: pointer; font-weight: bold; }
-        .modal .file-list { margin-top: 0; }
+        [contenteditable="true"]:hover {
+            background: #fff0c0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ffcece;
+            padding: 8px;
+            vertical-align: top;
+        }
+        th {
+            background: #ffe0e0;
+        }
+        .exam-item {
+            margin-bottom: 6px;
+        }
+        .file-list {
+            margin-top: 0.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .file-item {
+            background: #e8e8e8;
+            border-radius: 20px;
+            padding: 0.2rem 0.6rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        .delete-file {
+            background: none;
+            border: none;
+            color: red;
+            cursor: pointer;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -55,7 +124,9 @@
     </div>
 </div>
 
-<footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
+<footer class="gia-footer">
+    <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -86,7 +157,7 @@
                 .eq('role', 'director')
                 .single();
             if (!examiner?.ppe_id) {
-                document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ. Обратитесь к администратору.</p>';
+                document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ.</p>';
                 return;
             }
             const { data: ppe } = await supabaseClient.from('ppe').select('*').eq('id', examiner.ppe_id).single();
@@ -106,26 +177,16 @@
                 return;
             }
 
-            // Получаем result_id и variant для каждого назначения
-            const assignmentIds = currentAssignments.map(a => a.id);
-            let resultsData = [];
+            // Получаем result_id и варианты
+            const resultIds = [];
+            for (const a of assignments) {
+                const { data: res } = await supabaseClient.from('resultats').select('id').eq('assignment_id', a.id).maybeSingle();
+                if (res) resultIds.push(res.id);
+            }
             let variantMap = {};
-            if (assignmentIds.length) {
-                const { data: results } = await supabaseClient
-                    .from('resultats')
-                    .select('id, assignment_id')
-                    .in('assignment_id', assignmentIds);
-                if (results) {
-                    resultsData = results;
-                    const resultIds = results.map(r => r.id);
-                    if (resultIds.length) {
-                        const { data: details } = await supabaseClient
-                            .from('exam_details')
-                            .select('result_id, variant')
-                            .in('result_id', resultIds);
-                        if (details) details.forEach(d => { variantMap[d.result_id] = d.variant; });
-                    }
-                }
+            if (resultIds.length) {
+                const { data: details } = await supabaseClient.from('exam_details').select('result_id, variant').in('result_id', resultIds);
+                if (details) details.forEach(d => { variantMap[d.result_id] = d.variant; });
             }
 
             // Группировка по участникам
@@ -140,29 +201,29 @@
                         place: a.place || ''
                     });
                 }
-                const result = resultsData.find(r => r.assignment_id === a.id);
-                const resultId = result?.id;
+                const { data: res } = await supabaseClient.from('resultats').select('id').eq('assignment_id', a.id).maybeSingle();
+                const resultId = res?.id;
                 const variant = resultId ? (variantMap[resultId] || '') : '';
                 participantsMap.get(code).exams.push({
                     id: a.id,
                     subject: a.subject,
                     date: a.exam_date,
                     variant: variant,
-                    resultId: resultId || null
+                    resultId: resultId
                 });
             }
 
-            let html = `<table><thead><tr><th>Участник</th><th>Экзамены (предмет, дата, вариант)</th><th>Аудитория / Место</th><th>Действия</th></table></thead><tbody>`;
+            // Построение таблицы
+            let html = `<table><thead><tr><th>Участник</th><th>Экзамены (предмет, дата, вариант)</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
             for (let [code, data] of participantsMap.entries()) {
                 const examsHtml = data.exams.map(exam => {
                     const formattedDate = formatDate(exam.date);
                     return `<div class="exam-item">
                         ${exam.subject} (${formattedDate}) — вар. 
-                        <span class="editable-variant" contenteditable="true" 
-                              data-assignment-id="${exam.id}" 
-                              data-result-id="${exam.resultId || ''}">${exam.variant || '?'}</span>
+                        <span class="editable-variant" contenteditable="true" data-result-id="${exam.resultId || ''}" data-assignment-id="${exam.id}" data-pcode="${code}">${exam.variant || '?'}</span>
                     </div>`;
                 }).join('');
+
                 const safeCode = code.replace(/-/g, '');
                 html += `<tr>
                     <td><strong>${data.full_name}</strong><br><small>${code}</small></td>
@@ -177,30 +238,35 @@
             html += `</tbody></table>`;
             document.getElementById('participantsList').innerHTML = html;
 
-            // Редактирование аудитории и места
+            // Обработчики для аудитории и места
             document.querySelectorAll('.editable-audience, .editable-place').forEach(el => {
                 el.addEventListener('blur', async (e) => {
                     const pcode = e.target.dataset.pcode;
                     const field = e.target.dataset.field;
-                    const newValue = e.target.innerText.trim();
-                    if (newValue === '?') return;
+                    let newValue = e.target.innerText.trim();
+                    if (newValue === '?' || newValue === '') {
+                        newValue = null;
+                    }
                     const toUpdate = currentAssignments.filter(a => a.registered.personal_code === pcode);
                     for (const ass of toUpdate) {
-                        await supabaseClient.from('exam_assignments').update({ [field]: newValue || null }).eq('id', ass.id);
+                        await supabaseClient.from('exam_assignments').update({ [field]: newValue }).eq('id', ass.id);
                     }
                 });
             });
 
-            // Редактирование варианта с автоматическим созданием resultats и exam_details
+            // Обработчики для варианта (создаёт resultats, если нужно)
             document.querySelectorAll('.editable-variant').forEach(el => {
                 el.addEventListener('blur', async (e) => {
                     let resultId = e.target.dataset.resultId;
                     const assignmentId = e.target.dataset.assignmentId;
-                    const newVariant = e.target.innerText.trim();
+                    let newVariant = e.target.innerText.trim();
+                    if (newVariant === '?' || newVariant === '') {
+                        newVariant = null;
+                    }
                     if (!assignmentId) return;
 
+                    // Если нет resultId, создаём запись в resultats
                     if (!resultId || resultId === 'null' || resultId === 'undefined') {
-                        // Создаём запись в resultats
                         const { data: newResult, error: insertErr } = await supabaseClient
                             .from('resultats')
                             .insert({ assignment_id: parseInt(assignmentId), status: 'pending', details: {} })
@@ -208,24 +274,26 @@
                             .single();
                         if (insertErr) {
                             console.error('Ошибка создания resultats:', insertErr);
-                            alert('Не удалось создать запись результата. Обратитесь к администратору.');
+                            alert('Не удалось создать запись результата.');
                             return;
                         }
                         resultId = newResult.id;
                         e.target.dataset.resultId = resultId;
                     }
+
                     // Сохраняем вариант
                     const { error: upsertErr } = await supabaseClient.from('exam_details').upsert({
                         result_id: parseInt(resultId),
-                        variant: newVariant || null
+                        variant: newVariant
                     }, { onConflict: 'result_id' });
                     if (upsertErr) {
                         console.error('Ошибка сохранения варианта:', upsertErr);
-                        alert('Не удалось сохранить вариант');
+                        alert('Не удалось сохранить вариант.');
                     }
                 });
             });
 
+            // Кнопки загрузки бланков
             document.querySelectorAll('.action-btn.upload').forEach(btn => btn.addEventListener('click', () => showUploadModal(btn.dataset.code)));
         } catch (err) {
             console.error(err);
@@ -233,7 +301,7 @@
         }
     }
 
-    // Загрузка бланков и отправка на проверку
+    // Функция показа модального окна загрузки бланков (без изменений, кроме отправки на проверку)
     async function showUploadModal(personalCode) {
         const userAssignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
         const modal = document.getElementById('uploadModal');
@@ -265,6 +333,7 @@
         modal.style.display = 'flex';
         attachUploadHandlers();
 
+        // Обработчик отправки на проверку (создаёт resultats при отсутствии)
         document.querySelectorAll('.send-review-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const assignmentId = parseInt(btn.dataset.assignmentId);
@@ -273,24 +342,13 @@
                     .select('id')
                     .eq('assignment_id', assignmentId)
                     .maybeSingle();
+
                 if (error) {
                     alert('Ошибка при поиске результата: ' + error.message);
                     return;
                 }
-                if (!result) {
-                    // Создаём результат
-                    const { data: newResult, error: insertErr } = await supabaseClient
-                        .from('resultats')
-                        .insert({ assignment_id: assignmentId, status: 'processing', details: {} })
-                        .select('id')
-                        .single();
-                    if (insertErr) {
-                        alert('Ошибка создания результата: ' + insertErr.message);
-                        return;
-                    }
-                    result = newResult;
-                } else {
-                    // Обновляем статус
+
+                if (result) {
                     const { error: updateErr } = await supabaseClient
                         .from('resultats')
                         .update({ status: 'processing' })
@@ -299,7 +357,16 @@
                         alert('Ошибка обновления статуса: ' + updateErr.message);
                         return;
                     }
+                } else {
+                    const { error: insertErr } = await supabaseClient
+                        .from('resultats')
+                        .insert({ assignment_id: assignmentId, status: 'processing', details: {} });
+                    if (insertErr) {
+                        alert('Ошибка создания результата: ' + insertErr.message);
+                        return;
+                    }
                 }
+
                 alert('✅ Экзамен отправлен на проверку эксперту');
                 btn.disabled = true;
                 btn.textContent = '✓ Отправлено';
