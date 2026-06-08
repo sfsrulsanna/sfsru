@@ -90,6 +90,12 @@
             align-items: center;
             gap: 0.3rem;
         }
+        .extra-info {
+            margin-top: 1rem;
+            background: #fff3cd;
+            border-radius: 16px;
+            padding: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -128,8 +134,7 @@
     })();
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
     let gradingScales = {};
-    let taskMaxScores = {};      // { subjectCode_gradeType: { taskNumber: { max, type } } }
-    let currentAssignments = [];
+    let taskMaxScores = {};
 
     async function loadExpertInfo() {
         const { data: expert, error } = await supabaseClient
@@ -221,7 +226,6 @@
         });
     }
 
-    // Просмотр бланков с подписями
     async function viewFiles(assignmentId) {
         const { data: sheets, error } = await supabaseClient
             .from('answer_sheets')
@@ -257,7 +261,6 @@
     }
 
     async function showScoringModal(resultId, assignmentId, subject) {
-        // Получаем данные экзамена (только для чтения)
         const { data: assign } = await supabaseClient
             .from('exam_assignments')
             .select('subject, exam_date, ppe_name, audience, place, registered(full_name)')
@@ -265,14 +268,14 @@
             .single();
         if (!assign) return;
 
-        // Получаем уже сохранённые детали (ответы, баллы за части и т.д.)
+        // Загружаем существующие детали
         let examDetails = {};
-        let existingShortAnswers = []; // массив { task_number, answer, score }
+        let existingShortAnswers = [];
         let existingTypeB = '', existingTypeBScore = '';
         let existingTypeC = '', existingTypeCScore = '';
         let existingTypeDScore = '';
         let existingVariant = '';
-        let existingFiles = [];
+        let existingExpertNotes = '';
 
         const { data: details } = await supabaseClient
             .from('exam_details')
@@ -287,11 +290,10 @@
             existingTypeCScore = details.type_c_score || '';
             existingTypeDScore = details.type_d_score || '';
             existingVariant = details.variant || '';
-            existingFiles = details.files || [];
+            existingExpertNotes = details.expert_notes || '';
             examDetails = details;
         }
 
-        // Парсим предмет и тип
         const parts = subject.split('-');
         const subjectCode = parts[0];
         const gradeType = parts[1];
@@ -299,7 +301,6 @@
         const tasksMap = taskMaxScores[key] || {};
         const taskNumbers = Object.keys(tasksMap).map(Number).sort((a,b)=>a-b);
 
-        // Загружаем ранее сохранённые баллы за задания (из task_scores)
         const { data: existingScores } = await supabaseClient
             .from('task_scores')
             .select('*')
@@ -307,14 +308,12 @@
         const scoresMap = {};
         if (existingScores) existingScores.forEach(s => { scoresMap[s.task_number] = s.score; });
 
-        // Строим таблицу заданий
         let tasksHtml = `<table class="task-table"><thead><tr><th>№</th><th>Макс. балл</th><th>Тип</th><th>Ответ участника</th><th>Балл</th></tr></thead><tbody>`;
         for (const tn of taskNumbers) {
             const taskInfo = tasksMap[tn];
             const maxScore = taskInfo.max;
             const taskType = taskInfo.type;
             const currentScore = scoresMap[tn] !== undefined ? scoresMap[tn] : '';
-            // Ищем существующий ответ участника для этого задания (только для short_answer)
             let currentAnswer = '';
             if (taskType === 'short_answer') {
                 const found = existingShortAnswers.find(a => a.task_number == tn);
@@ -334,7 +333,6 @@
         }
         tasksHtml += `</tbody></table>`;
 
-        // Информационная строка (данные экзамена, только для чтения)
         const infoHtml = `
             <div class="info-row">
                 <div><strong>📌 Вариант:</strong> ${existingVariant || 'не указан'}</div>
@@ -344,7 +342,6 @@
             </div>
         `;
 
-        // Блок для баллов за части B, C, D (только если они есть в задании)
         let extraBlocks = '';
         if (taskNumbers.some(t => tasksMap[t].type !== 'short_answer')) {
             extraBlocks = `
@@ -365,7 +362,13 @@
             `;
         }
 
-        // Блок с итоговыми баллами и оценкой
+        const expertNotesField = `
+            <div class="extra-info" style="margin-top: 1rem;">
+                <label><strong>📝 Дополнительная информация от эксперта:</strong></label><br>
+                <textarea id="expertNotes" rows="3" style="width:100%; border-radius:16px; padding:8px; margin-top:0.5rem;">${escapeHtml(existingExpertNotes)}</textarea>
+            </div>
+        `;
+
         const gradeSection = `
             <div class="grade-section">
                 <div><strong>📊 Первичный балл (авто):</strong> <span id="primaryScoreDisplay">0</span></div>
@@ -383,6 +386,7 @@
             ${infoHtml}
             ${tasksHtml}
             ${extraBlocks}
+            ${expertNotesField}
             ${gradeSection}
         `;
 
@@ -391,7 +395,6 @@
         modalBody.innerHTML = modalHtml;
         modal.style.display = 'flex';
 
-        // Функция обновления первичного балла и оценки
         function updateTotals() {
             let total = 0;
             document.querySelectorAll('.task-input').forEach(inp => {
@@ -418,16 +421,15 @@
         document.querySelectorAll('.task-input').forEach(inp => inp.addEventListener('input', updateTotals));
         updateTotals();
 
-        // Сохранение
         document.getElementById('saveScoresBtn').onclick = async () => {
             const totalPrimary = parseInt(document.getElementById('primaryScoreDisplay').innerText);
             const autoGrade = document.getElementById('autoGradeDisplay').innerText;
             const manualGrade = document.getElementById('manualGradeInput').value.trim();
             const finalGrade = manualGrade !== '' ? manualGrade : autoGrade;
+            const expertNotes = document.getElementById('expertNotes')?.value || '';
 
-            // Собираем баллы за задания и ответы на краткие ответы
             const tasksData = [];
-            const shortAnswersData = []; // для exam_details
+            const shortAnswersData = [];
             document.querySelectorAll('.task-input').forEach(inp => {
                 const taskNum = parseInt(inp.dataset.task);
                 const score = parseInt(inp.value) || 0;
@@ -441,19 +443,18 @@
                 }
             });
 
-            // Сохраняем баллы заданий
             await supabaseClient.from('task_scores').delete().eq('result_id', resultId);
             const { error: taskErr } = await supabaseClient.from('task_scores').insert(tasksData);
             if (taskErr) { alert('Ошибка сохранения баллов заданий: ' + taskErr.message); return; }
 
-            // Собираем остальные данные для exam_details
             const typeB = document.getElementById('typeBInput')?.value || '';
             const typeBScore = document.getElementById('typeBScoreInput')?.value || '';
             const typeC = document.getElementById('typeCInput')?.value || '';
             const typeCScore = document.getElementById('typeCScoreInput')?.value || '';
             const typeDScore = document.getElementById('typeDScoreInput')?.value || '';
 
-            // Обновляем exam_details
+            const secondaryScore = parseInt(document.getElementById('secondaryScoreDisplay').innerText) || totalPrimary;
+
             const { error: detailsErr } = await supabaseClient
                 .from('exam_details')
                 .upsert({
@@ -465,14 +466,14 @@
                     type_c_score: typeCScore || null,
                     type_d_score: typeDScore || null,
                     primary_score: totalPrimary,
-                    secondary_score: parseInt(document.getElementById('secondaryScoreDisplay').innerText) || totalPrimary,
+                    secondary_score: secondaryScore,
                     grade: finalGrade,
+                    expert_notes: expertNotes,
                     updated_at: new Date()
                 }, { onConflict: 'result_id' });
 
             if (detailsErr) { alert('Ошибка сохранения деталей экзамена: ' + detailsErr.message); return; }
 
-            // Обновляем resultats
             const { error: resErr } = await supabaseClient
                 .from('resultats')
                 .update({ score: totalPrimary, grade: finalGrade, status: 'active', updated_at: new Date() })
@@ -481,7 +482,7 @@
 
             alert('Результаты успешно сохранены!');
             modal.style.display = 'none';
-            loadExams(); // обновить список
+            loadExams();
         };
     }
 
