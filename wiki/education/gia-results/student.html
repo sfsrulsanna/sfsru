@@ -40,18 +40,12 @@
       text-align: center;
       background: white;
     }
-    .tasks-table th {
-      background: #ffe0e0;
-      font-weight: 600;
-    }
+    .tasks-table th { background: #ffe0e0; font-weight: 600; }
     .type-block {
       margin: 1rem 0;
       padding: 0.75rem;
       background: #fef7e0;
       border-radius: 20px;
-    }
-    .type-block strong {
-      color: #a33;
     }
     .file-list {
       display: flex;
@@ -68,10 +62,7 @@
       font-weight: 500;
       transition: 0.2s;
     }
-    .file-list a:hover {
-      background: #c4c4ff;
-      transform: translateX(4px);
-    }
+    .file-list a:hover { background: #c4c4ff; transform: translateX(4px); }
     .appeal-btn {
       background: #ffaa44;
       color: #552200;
@@ -99,7 +90,6 @@
     <h3>📅 Назначенные экзамены</h3>
     <div id="examsTable" class="table-wrapper"></div>
   </div>
-
   <div class="card">
     <h2>📊 Результаты экзаменов</h2>
     <div id="resultsTable" class="table-wrapper"></div>
@@ -113,9 +103,7 @@
   </div>
 </div>
 
-<footer class="gia-footer">
-  <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-</footer>
+<footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -133,15 +121,14 @@
     if (!dateStr) return '—';
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
-    const day = date.getDate().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2,'0');
+    const month = (date.getMonth()+1).toString().padStart(2,'0');
     const year = date.getFullYear();
     return `${day}.${month}.${year}`;
   }
 
-  function formatValue(value) {
-    if (value === null || value === undefined || value === 'null' || value === '') return '—';
-    return value;
+  function formatValue(v) {
+    return (v === null || v === undefined || v === 'null' || v === '') ? '—' : v;
   }
 
   function statusText(status) {
@@ -160,7 +147,6 @@
     currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
     if (!currentUser || currentUser.role !== 'student') window.location.href = './index.html';
   } catch(e) { window.location.href = './index.html'; }
-
   const personalCode = currentUser.personal_code;
 
   async function loadData() {
@@ -168,8 +154,7 @@
       const { data: userData, error: userErr } = await supabaseClient
         .from('registered')
         .select('full_name, municipality, educational_org, class_name, birth_date, gia_type')
-        .eq('personal_code', personalCode)
-        .single();
+        .eq('personal_code', personalCode).single();
       if (userErr) throw userErr;
       renderUserInfo(userData);
 
@@ -187,13 +172,13 @@
           .select('*, exam_assignments!inner(subject, exam_date, ppe_name, audience, place)')
           .in('assignment_id', assignments.map(a => a.id));
         if (resErr) throw resErr;
-        renderResultsTable(results);
+        await renderResultsTable(results);
       } else {
         document.getElementById('resultsTable').innerHTML = '<p>Нет данных о результатах.</p>';
       }
     } catch(err) {
       console.error(err);
-      document.getElementById('examsTable').innerHTML = '<p style="color:red;">Ошибка загрузки. Проверьте подключение к базе.</p>';
+      document.getElementById('examsTable').innerHTML = '<p style="color:red;">Ошибка загрузки.</p>';
     }
   }
 
@@ -224,22 +209,23 @@
         <td>${formatValue(ex.place)}</td>
       </tr>`;
     });
-    html += '</tbody></td><p class="form-hint">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
+    html += '</tbody></table><p class="form-hint">* Данные об аудитории и месте уточняются на входе в ППЭ.</p>';
     document.getElementById('examsTable').innerHTML = html;
   }
 
-  function renderResultsTable(results) {
+  async function renderResultsTable(results) {
     if (!results.length) {
       document.getElementById('resultsTable').innerHTML = '<p>Результаты ещё не опубликованы.</p>';
       return;
     }
     let html = '<table class="results-table"><thead><tr><th>#</th><th>Экзамен</th><th>Вариант</th><th>Первичный балл</th><th>Вторичный балл</th><th>Отметка</th><th>Статус</th><th>Апелляция</th><th>Подробно</th></tr></thead><tbody>';
-    for (const res of results) {
+    for (let i=0; i<results.length; i++) {
+      const res = results[i];
       const examSubject = res.exam_assignments.subject;
       const examDate = formatDate(res.exam_assignments.exam_date);
       const examFull = `${examSubject}, ${examDate}`;
       html += `<tr>
-        <td>${results.indexOf(res)+1}</td>
+        <td>${i+1}</td>
         <td>${examFull}</td>
         <td>${res.variant || '—'}</td>
         <td>${res.score !== null ? res.score : '—'}</td>
@@ -252,8 +238,8 @@
     }
     html += '</tbody></table>';
     document.getElementById('resultsTable').innerHTML = html;
-    
-    // Загружаем вторичные баллы для каждого результата
+
+    // Загружаем вторичные баллы
     for (const res of results) {
       const { data: details } = await supabaseClient
         .from('exam_details')
@@ -261,9 +247,8 @@
         .eq('result_id', res.id)
         .maybeSingle();
       const span = document.querySelector(`.secondary-badge[data-result-id="${res.id}"]`);
-      if (span) span.innerText = (details?.secondary_score !== null && details?.secondary_score !== undefined) ? details.secondary_score : '—';
+      if (span) span.innerText = details?.secondary_score ?? '—';
     }
-
     document.querySelectorAll('.details-btn').forEach(btn => {
       btn.addEventListener('click', () => showModal(btn.dataset.resultId, btn.dataset.assignmentId));
     });
@@ -271,7 +256,7 @@
 
   async function submitAppeal(resultId) {
     const reason = prompt('Укажите причину апелляции:');
-    if (!reason || !reason.trim()) return;
+    if (!reason?.trim()) return;
     const { error } = await supabaseClient.from('appeals').insert([{
       result_id: resultId,
       student_personal_code: personalCode,
@@ -282,13 +267,12 @@
       alert('Ошибка подачи апелляции: ' + error.message);
     } else {
       await supabaseClient.from('resultats').update({ status: 'appeal', appeal: 'подана' }).eq('id', resultId);
-      alert('Апелляция подана. Статус результата обновлён.');
-      loadData(); // обновить таблицу
+      alert('Апелляция подана.');
+      loadData();
     }
   }
 
   async function showModal(resultId, assignmentId) {
-    // Загружаем детали экзамена
     const { data: details, error } = await supabaseClient
       .from('exam_details')
       .select('*')
@@ -298,8 +282,6 @@
       alert('Детали экзамена не найдены');
       return;
     }
-
-    // Загружаем основную информацию об экзамене (ППЭ, аудитория, место)
     const { data: assignment } = await supabaseClient
       .from('exam_assignments')
       .select('subject, exam_date, ppe_name, audience, place')
@@ -309,60 +291,39 @@
     const examDate = formatDate(assignment.exam_date);
     const examSubject = assignment.subject;
 
-    // Таблица кратких ответов (если есть)
-    let shortAnswersHtml = '';
-    if (details.short_answers && details.short_answers.length) {
-      shortAnswersHtml = `
+    let shortHtml = '';
+    if (details.short_answers?.length) {
+      shortHtml = `
         <div><strong>📝 Ответы на задания с кратким ответом</strong></div>
         <table class="tasks-table">
           <thead><tr><th>Задание</th><th>Ответ</th><th>Балл</th></tr></thead>
           <tbody>
             ${details.short_answers.map(item => `
-              <tr>
-                <td>${item.num} ${item.type ? `(${item.type})` : ''}</td>
-                <td>${item.answer !== undefined ? item.answer : '—'}</td>
-                <td>${item.score || ''}</td>
-              </tr>
+              <tr><td>${item.num} ${item.type ? `(${item.type})` : ''}</td><td>${item.answer ?? '—'}</td><td>${item.score || ''}</td></tr>
             `).join('')}
           </tbody>
         </table>
       `;
     }
-
-    // Блок заданий типа B
-    let typeBhtml = '';
-    if (details.type_b) {
-      typeBhtml = `<div class="type-block"><strong>📌 Задания типа B</strong><br>${details.type_b} ${details.type_b_score || ''}</div>`;
-    }
-
-    // Блок заданий типа C
-    let typeChtml = '';
-    if (details.type_c) {
-      typeChtml = `<div class="type-block"><strong>📌 Задания типа C</strong><br>${details.type_c} ${details.type_c_score || ''}</div>`;
-    }
-
-    // Блок заданий типа D – скрываем, если значение "0" или 0
+    let typeBhtml = details.type_b ? `<div class="type-block"><strong>📌 Задания типа B</strong><br>${details.type_b} ${details.type_b_score || ''}</div>` : '';
+    let typeChtml = details.type_c ? `<div class="type-block"><strong>📌 Задания типа C</strong><br>${details.type_c} ${details.type_c_score || ''}</div>` : '';
     let typeDhtml = '';
-    const typeDScore = details.type_d_score;
-    if (typeDScore && typeDScore !== '0' && typeDScore !== 0) {
-      typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${typeDScore}</div>`;
+    const dScore = details.type_d_score;
+    if (dScore && dScore !== '0' && dScore !== 0) {
+      typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${dScore}</div>`;
     }
-
-    // Файлы бланков (из storage)
     let filesHtml = '';
-    if (details.files && details.files.length) {
+    if (details.files?.length) {
       const labels = ['Бланк ответов №1', 'Бланк ответов №2 лист 1', 'Бланк ответов №2 лист 2', 'Дополнительный бланк C'];
       filesHtml = '<div class="detail-block"><strong>📎 Бланки:</strong><div class="file-list">';
-      details.files.forEach((filePath, idx) => {
-        const fileUrl = getFileUrl(filePath);
+      details.files.forEach((fp, idx) => {
+        const url = getFileUrl(fp);
         const label = labels[idx] || `Файл ${idx+1}`;
-        filesHtml += `<a href="${fileUrl}" target="_blank" download>📄 ${label}</a>`;
+        filesHtml += `<a href="${url}" target="_blank" download>📄 ${label}</a>`;
       });
       filesHtml += '</div></div>';
     }
-
-    // Кнопка апелляции (только если статус активный)
-    const appealButton = (details.status !== 'appeal' && details.status !== 'processing') 
+    const appealBtn = (details.status !== 'appeal' && details.status !== 'processing')
       ? `<button class="appeal-btn" id="appealBtn">⚖️ Подать апелляцию</button>`
       : '';
 
@@ -374,7 +335,7 @@
       <div><strong>Место:</strong> ${formatValue(assignment.place)}</div>
       <div><strong>Вариант:</strong> ${formatValue(details.variant)}</div>
       <hr>
-      ${shortAnswersHtml}
+      ${shortHtml}
       ${typeBhtml}
       ${typeChtml}
       ${typeDhtml}
@@ -382,13 +343,11 @@
       <div><strong>🎯 Вторичный балл:</strong> ${details.secondary_score ?? '—'}</div>
       <div><strong>⭐ Отметка (результат):</strong> ${details.grade || '—'}</div>
       ${filesHtml}
-      ${appealButton}
+      ${appealBtn}
     `;
-
     const modal = document.getElementById('detailModal');
     document.getElementById('modalBody').innerHTML = modalHtml;
     modal.style.display = 'flex';
-
     if (document.getElementById('appealBtn')) {
       document.getElementById('appealBtn').onclick = () => submitAppeal(resultId);
     }
@@ -398,15 +357,13 @@
     document.getElementById('detailModal').style.display = 'none';
   });
   window.addEventListener('click', (e) => {
-    if (e.target === document.getElementById('detailModal')) 
-      document.getElementById('detailModal').style.display = 'none';
+    if (e.target === document.getElementById('detailModal')) document.getElementById('detailModal').style.display = 'none';
   });
   document.getElementById('logoutBtn').addEventListener('click', (e) => {
     e.preventDefault();
     sessionStorage.clear();
     window.location.href = './index.html';
   });
-
   loadData();
 </script>
 </body>
