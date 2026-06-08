@@ -22,13 +22,15 @@
             display: inline-block;
             cursor: text;
         }
-        [contenteditable="true"]:hover {
-            background: #fff0c0;
-        }
+        [contenteditable="true"]:hover { background: #fff0c0; }
         table { width: 100%; border-collapse: collapse; }
         th, td { border: 1px solid #ffcece; padding: 8px; vertical-align: top; }
         th { background: #ffe0e0; }
         .exam-item { margin-bottom: 6px; }
+        .file-list { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .file-item { background: #e8e8e8; border-radius: 20px; padding: 0.2rem 0.6rem; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .delete-file { background: none; border: none; color: red; cursor: pointer; font-weight: bold; }
+        .modal .file-list { margin-top: 0; }
     </style>
 </head>
 <body>
@@ -84,7 +86,7 @@
                 .eq('role', 'director')
                 .single();
             if (!examiner?.ppe_id) {
-                document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ.</p>';
+                document.getElementById('ppeInfo').innerHTML = '<p>❌ Вы не назначены руководителем ППЭ. Обратитесь к администратору.</p>';
                 return;
             }
             const { data: ppe } = await supabaseClient.from('ppe').select('*').eq('id', examiner.ppe_id).single();
@@ -104,16 +106,26 @@
                 return;
             }
 
-            // Получаем варианты из exam_details
-            const resultIds = [];
-            for (const a of currentAssignments) {
-                const { data: res } = await supabaseClient.from('resultats').select('id').eq('assignment_id', a.id).maybeSingle();
-                if (res) resultIds.push(res.id);
-            }
+            // Получаем result_id и variant для каждого назначения
+            const assignmentIds = currentAssignments.map(a => a.id);
+            let resultsData = [];
             let variantMap = {};
-            if (resultIds.length) {
-                const { data: details } = await supabaseClient.from('exam_details').select('result_id, variant').in('result_id', resultIds);
-                if (details) details.forEach(d => { variantMap[d.result_id] = d.variant; });
+            if (assignmentIds.length) {
+                const { data: results } = await supabaseClient
+                    .from('resultats')
+                    .select('id, assignment_id')
+                    .in('assignment_id', assignmentIds);
+                if (results) {
+                    resultsData = results;
+                    const resultIds = results.map(r => r.id);
+                    if (resultIds.length) {
+                        const { data: details } = await supabaseClient
+                            .from('exam_details')
+                            .select('result_id, variant')
+                            .in('result_id', resultIds);
+                        if (details) details.forEach(d => { variantMap[d.result_id] = d.variant; });
+                    }
+                }
             }
 
             // Группировка по участникам
@@ -128,29 +140,29 @@
                         place: a.place || ''
                     });
                 }
-                const { data: res } = await supabaseClient.from('resultats').select('id').eq('assignment_id', a.id).maybeSingle();
-                const resultId = res?.id;
+                const result = resultsData.find(r => r.assignment_id === a.id);
+                const resultId = result?.id;
                 const variant = resultId ? (variantMap[resultId] || '') : '';
                 participantsMap.get(code).exams.push({
                     id: a.id,
                     subject: a.subject,
                     date: a.exam_date,
                     variant: variant,
-                    resultId: resultId
+                    resultId: resultId || null
                 });
             }
 
-            let html = `<table><thead><tr><th>Участник</th><th>Экзамены (предмет, дата, вариант)</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
+            let html = `<table><thead><tr><th>Участник</th><th>Экзамены (предмет, дата, вариант)</th><th>Аудитория / Место</th><th>Действия</th></table></thead><tbody>`;
             for (let [code, data] of participantsMap.entries()) {
-                // Формируем список экзаменов с редактируемым вариантом
                 const examsHtml = data.exams.map(exam => {
                     const formattedDate = formatDate(exam.date);
                     return `<div class="exam-item">
                         ${exam.subject} (${formattedDate}) — вар. 
-                        <span class="editable-variant" contenteditable="true" data-result-id="${exam.resultId}" data-assignment-id="${exam.id}" data-pcode="${code}">${exam.variant || '?'}</span>
+                        <span class="editable-variant" contenteditable="true" 
+                              data-assignment-id="${exam.id}" 
+                              data-result-id="${exam.resultId || ''}">${exam.variant || '?'}</span>
                     </div>`;
                 }).join('');
-
                 const safeCode = code.replace(/-/g, '');
                 html += `<tr>
                     <td><strong>${data.full_name}</strong><br><small>${code}</small></td>
@@ -165,7 +177,7 @@
             html += `</tbody></table>`;
             document.getElementById('participantsList').innerHTML = html;
 
-            // Навешиваем события на редактируемые поля
+            // Редактирование аудитории и места
             document.querySelectorAll('.editable-audience, .editable-place').forEach(el => {
                 el.addEventListener('blur', async (e) => {
                     const pcode = e.target.dataset.pcode;
@@ -179,15 +191,38 @@
                 });
             });
 
+            // Редактирование варианта с автоматическим созданием resultats и exam_details
             document.querySelectorAll('.editable-variant').forEach(el => {
                 el.addEventListener('blur', async (e) => {
-                    const resultId = e.target.dataset.resultId;
+                    let resultId = e.target.dataset.resultId;
+                    const assignmentId = e.target.dataset.assignmentId;
                     const newVariant = e.target.innerText.trim();
-                    if (!resultId) return;
-                    await supabaseClient.from('exam_details').upsert({
+                    if (!assignmentId) return;
+
+                    if (!resultId || resultId === 'null' || resultId === 'undefined') {
+                        // Создаём запись в resultats
+                        const { data: newResult, error: insertErr } = await supabaseClient
+                            .from('resultats')
+                            .insert({ assignment_id: parseInt(assignmentId), status: 'pending', details: {} })
+                            .select('id')
+                            .single();
+                        if (insertErr) {
+                            console.error('Ошибка создания resultats:', insertErr);
+                            alert('Не удалось создать запись результата. Обратитесь к администратору.');
+                            return;
+                        }
+                        resultId = newResult.id;
+                        e.target.dataset.resultId = resultId;
+                    }
+                    // Сохраняем вариант
+                    const { error: upsertErr } = await supabaseClient.from('exam_details').upsert({
                         result_id: parseInt(resultId),
                         variant: newVariant || null
                     }, { onConflict: 'result_id' });
+                    if (upsertErr) {
+                        console.error('Ошибка сохранения варианта:', upsertErr);
+                        alert('Не удалось сохранить вариант');
+                    }
                 });
             });
 
@@ -198,7 +233,7 @@
         }
     }
 
-    // Функции загрузки бланков и отправки на проверку (без изменений)
+    // Загрузка бланков и отправка на проверку
     async function showUploadModal(personalCode) {
         const userAssignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
         const modal = document.getElementById('uploadModal');
@@ -233,16 +268,42 @@
         document.querySelectorAll('.send-review-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const assignmentId = parseInt(btn.dataset.assignmentId);
-                const { data: result } = await supabaseClient.from('resultats').select('id').eq('assignment_id', assignmentId).maybeSingle();
-                if (result) {
-                    await supabaseClient.from('resultats').update({ status: 'processing' }).eq('id', result.id);
-                    alert('✅ Экзамен отправлен на проверку эксперту');
-                    btn.disabled = true;
-                    btn.textContent = '✓ Отправлено';
-                    btn.style.background = '#6c757d';
-                } else {
-                    alert('Ошибка: результат не найден');
+                let { data: result, error } = await supabaseClient
+                    .from('resultats')
+                    .select('id')
+                    .eq('assignment_id', assignmentId)
+                    .maybeSingle();
+                if (error) {
+                    alert('Ошибка при поиске результата: ' + error.message);
+                    return;
                 }
+                if (!result) {
+                    // Создаём результат
+                    const { data: newResult, error: insertErr } = await supabaseClient
+                        .from('resultats')
+                        .insert({ assignment_id: assignmentId, status: 'processing', details: {} })
+                        .select('id')
+                        .single();
+                    if (insertErr) {
+                        alert('Ошибка создания результата: ' + insertErr.message);
+                        return;
+                    }
+                    result = newResult;
+                } else {
+                    // Обновляем статус
+                    const { error: updateErr } = await supabaseClient
+                        .from('resultats')
+                        .update({ status: 'processing' })
+                        .eq('id', result.id);
+                    if (updateErr) {
+                        alert('Ошибка обновления статуса: ' + updateErr.message);
+                        return;
+                    }
+                }
+                alert('✅ Экзамен отправлен на проверку эксперту');
+                btn.disabled = true;
+                btn.textContent = '✓ Отправлено';
+                btn.style.background = '#6c757d';
             });
         });
     }
