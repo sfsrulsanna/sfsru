@@ -46,7 +46,7 @@
     }
     .type-block {
       margin: 1rem 0;
-      padding: 0.5rem;
+      padding: 0.75rem;
       background: #fef7e0;
       border-radius: 20px;
     }
@@ -72,21 +72,14 @@
       background: #c4c4ff;
       transform: translateX(4px);
     }
-    hr {
-      margin: 1rem 0;
-      border: none;
-      height: 1px;
-      background: linear-gradient(to right, #ffaaaa, transparent);
-    }
+    hr { margin: 1rem 0; border: none; height: 1px; background: linear-gradient(to right, #ffaaaa, transparent); }
   </style>
 </head>
 <body>
 <div class="gia-header">
   <div class="container">
     <h1>📘 Личный кабинет участника ГИА</h1>
-    <div class="header-buttons">
-      <a href="./index.html" class="header-btn" id="logoutBtn">🚪 Выйти</a>
-    </div>
+    <div class="header-buttons"><a href="./index.html" class="header-btn" id="logoutBtn">🚪 Выйти</a></div>
   </div>
 </div>
 
@@ -105,7 +98,7 @@
 </main>
 
 <div id="detailModal" class="modal">
-  <div class="modal-content" style="max-width: 900px;">
+  <div class="modal-content" style="max-width: 950px;">
     <span class="close-modal">&times;</span>
     <div id="modalBody"></div>
   </div>
@@ -113,16 +106,13 @@
 
 <footer class="gia-footer">
   <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-  <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    db: { schema: 'education_gia' }
-  });
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'education_gia' } });
 
   function getFileUrl(filePath) {
     if (!filePath) return '#';
@@ -242,21 +232,39 @@
         <td>${res.grade}</td>
         <td>${statusText(res.status)}</td>
         <td>${res.appeal || 'нет'}</td>
-        <td><button class="details-btn" data-result='${JSON.stringify(res)}'>👁️ Просмотреть</button></td>
+        <td><button class="details-btn" data-result-id="${res.id}" data-assignment-id="${res.assignment_id}">👁️ Просмотреть</button></td>
       </tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('resultsTable').innerHTML = html;
     document.querySelectorAll('.details-btn').forEach(btn => {
-      btn.addEventListener('click', () => showModal(JSON.parse(btn.dataset.result)));
+      btn.addEventListener('click', () => showModal(btn.dataset.resultId, btn.dataset.assignmentId));
     });
   }
 
-  function showModal(result) {
-    const details = result.details || {};
-    const examDate = new Date(result.exam_assignments.exam_date).toLocaleDateString('ru-RU');
-    const examSubject = result.exam_assignments.subject;
-    
+  async function showModal(resultId, assignmentId) {
+    // Загружаем данные из exam_details
+    const { data: details, error } = await supabaseClient
+      .from('exam_details')
+      .select('*')
+      .eq('result_id', resultId)
+      .single();
+
+    if (error || !details) {
+      alert('Детали экзамена не найдены');
+      return;
+    }
+
+    // Загружаем основную информацию об экзамене
+    const { data: assignment } = await supabaseClient
+      .from('exam_assignments')
+      .select('subject, exam_date')
+      .eq('id', assignmentId)
+      .single();
+
+    const examDate = new Date(assignment.exam_date).toLocaleDateString('ru-RU');
+    const examSubject = assignment.subject;
+
     // Таблица кратких ответов
     let shortAnswersHtml = '';
     if (details.short_answers && details.short_answers.length) {
@@ -276,49 +284,29 @@
         </table>
       `;
     }
-    
+
     // Блок заданий типа B
     let typeBhtml = '';
-    if (details.type_b !== undefined) {
-      typeBhtml = `
-        <div class="type-block">
-          <strong>📌 Задания типа B</strong><br>
-          ${details.type_b} ${details.type_b_score ? details.type_b_score : ''}
-        </div>
-      `;
+    if (details.type_b) {
+      typeBhtml = `<div class="type-block"><strong>📌 Задания типа B</strong><br>${details.type_b} ${details.type_b_score || ''}</div>`;
     }
-    
+
     // Блок заданий типа C
     let typeChtml = '';
-    if (details.type_c !== undefined) {
-      typeChtml = `
-        <div class="type-block">
-          <strong>📌 Задания типа C</strong><br>
-          ${details.type_c} ${details.type_c_score ? details.type_c_score : ''}
-        </div>
-      `;
+    if (details.type_c) {
+      typeChtml = `<div class="type-block"><strong>📌 Задания типа C</strong><br>${details.type_c} ${details.type_c_score || ''}</div>`;
     }
-    
+
     // Блок заданий типа D (устная часть)
     let typeDhtml = '';
-    if (details.type_d_score !== undefined) {
-      typeDhtml = `
-        <div class="type-block">
-          <strong>🎤 Задания типа D (устная часть)</strong><br>
-          ${details.type_d_score}
-        </div>
-      `;
+    if (details.type_d_score) {
+      typeDhtml = `<div class="type-block"><strong>🎤 Задания типа D (устная часть)</strong><br>${details.type_d_score}</div>`;
     }
-    
-    // Файлы бланков с красивыми подписями
+
+    // Файлы бланков
     let filesHtml = '';
     if (details.files && details.files.length) {
-      const labels = [
-        'Бланк ответов №1',
-        'Бланк ответов №2 лист 1',
-        'Бланк ответов №2 лист 2',
-        'Дополнительный бланк C'
-      ];
+      const labels = ['Бланк ответов №1', 'Бланк ответов №2 лист 1', 'Бланк ответов №2 лист 2', 'Дополнительный бланк C'];
       filesHtml = '<div class="detail-block"><strong>📎 Бланки:</strong><div class="file-list">';
       details.files.forEach((filePath, idx) => {
         const fileUrl = getFileUrl(filePath);
@@ -327,32 +315,28 @@
       });
       filesHtml += '</div></div>';
     }
-    
-    // Основная информация
+
     const modalHtml = `
       <h3>🔍 Подробно об экзамене</h3>
       <div class="detail-block"><strong>Экзамен:</strong> ${examSubject}, ${examDate}</div>
-      <div class="detail-block"><strong>ППЭ:</strong> ${details.ppe || result.exam_assignments.ppe_name || '—'}</div>
-      <div class="detail-block"><strong>Аудитория:</strong> ${details.audience || result.exam_assignments.audience || '—'}</div>
-      <div class="detail-block"><strong>Вариант:</strong> ${result.variant || '—'}</div>
-      <div class="detail-block"><strong>Статус:</strong> ${statusText(result.status)}</div>
+      <div class="detail-block"><strong>ППЭ:</strong> ${details.ppe_name || assignment.ppe_name || '—'}</div>
+      <div class="detail-block"><strong>Аудитория:</strong> ${details.audience || assignment.audience || '—'}</div>
+      <div class="detail-block"><strong>Вариант:</strong> ${details.variant || '—'}</div>
       <hr>
       ${shortAnswersHtml}
       ${typeBhtml}
       ${typeChtml}
       ${typeDhtml}
-      <div class="detail-block"><strong>🎯 Первичный балл:</strong> ${details.primary_score !== undefined ? details.primary_score : result.score}</div>
-      <div class="detail-block"><strong>⭐ Отметка (результат):</strong> ${result.grade}</div>
-      <div class="detail-block"><strong>⚖️ Апелляция:</strong> ${result.appeal || 'нет'}</div>
+      <div class="detail-block"><strong>🎯 Первичный балл:</strong> ${details.primary_score ?? '—'}</div>
+      <div class="detail-block"><strong>⭐ Отметка (результат):</strong> ${details.grade}</div>
       ${filesHtml}
     `;
-    
+
     const modal = document.getElementById('detailModal');
     document.getElementById('modalBody').innerHTML = modalHtml;
     modal.style.display = 'flex';
   }
 
-  // Закрытие модального окна
   document.querySelector('.close-modal').addEventListener('click', () => {
     document.getElementById('detailModal').style.display = 'none';
   });
