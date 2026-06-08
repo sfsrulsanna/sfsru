@@ -20,6 +20,9 @@
         .file-upload-area:hover { background: #fff0e0; }
         .sheet-type { background: #f9f2f2; padding: 1rem; border-radius: 20px; margin-bottom: 1rem; }
         .variant-value { font-family: monospace; background: #f0f0f0; padding: 2px 8px; border-radius: 20px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ffcece; padding: 8px; text-align: left; vertical-align: top; }
+        th { background: #ffe0e0; }
     </style>
 </head>
 <body>
@@ -58,6 +61,14 @@
     })();
     let currentUser = JSON.parse(sessionStorage.getItem('gia_user'));
     let currentAssignments = [];
+
+    // Форматирование даты из YYYY-MM-DD
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        const parts = dateStr.split('-');
+        if (parts.length === 3) return `${parts[2]}.${parts[1]}.${parts[0]}`;
+        return dateStr;
+    }
 
     async function loadDirectorData() {
         try {
@@ -112,28 +123,36 @@
                         place: a.place || ''
                     });
                 }
-                // Находим result_id
                 const { data: res } = await supabaseClient.from('resultats').select('id').eq('assignment_id', a.id).single();
                 const resultId = res?.id;
-                const variant = resultId ? variantMap[resultId] : '';
-                participantsMap.get(code).exams.push({ id: a.id, subject: a.subject, date: a.exam_date, variant });
+                const variant = resultId ? (variantMap[resultId] || '') : '';
+                participantsMap.get(code).exams.push({
+                    id: a.id,
+                    subject: a.subject,
+                    date: a.exam_date,
+                    variant: variant
+                });
             }
 
-            let html = `</td><thead><tr><th>Участник</th><th>Экзамены (вариант)</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
+            // Построение таблицы
+            let html = `<table><thead><tr><th>Участник</th><th>Экзамены (предмет, дата, вариант)</th><th>Аудитория / Место</th><th>Действия</th></tr></thead><tbody>`;
             for (let [code, data] of participantsMap.entries()) {
-                const examsList = data.exams.map(e => `${e.subject} (${new Date(e.exam_date).toLocaleDateString()}) — вар. ${e.variant || '?'}`).join('<br>');
+                const examsList = data.exams.map(e => {
+                    const formattedDate = formatDate(e.date);
+                    return `${e.subject} (${formattedDate}) — вар. ${e.variant || '?'}`;
+                }).join('<br>');
                 const safeCode = code.replace(/-/g, '');
                 html += `<tr>
                     <td><strong>${data.full_name}</strong><br><small>${code}</small></td>
                     <td class="exam-list">${examsList}</td>
-                    <td id="room-cell-${safeCode}">
+                    <td>
                         <div class="editable-field">
                             <span class="editable-value" data-field="audience">${data.audience || '?'}</span> / 
                             <span class="editable-value" data-field="place">${data.place || '?'}</span>
                             <button class="edit-icon" data-code="${code}">✏️</button>
                         </div>
                         <div class="editable-field" style="margin-top:0.5rem;">
-                            <span class="variant-value" data-field="variant">${data.exams[0]?.variant || '?'}</span>
+                            <span class="variant-value">${data.exams[0]?.variant || '?'}</span>
                             <button class="edit-variant-icon" data-code="${code}">✏️ вар.</button>
                         </div>
                     </td>
@@ -144,7 +163,7 @@
             document.getElementById('participantsList').innerHTML = html;
 
             document.querySelectorAll('.action-btn.upload').forEach(btn => btn.addEventListener('click', () => showUploadModal(btn.dataset.code)));
-            document.querySelectorAll('.edit-icon').forEach(icon => icon.addEventListener('click', () => enableInlineEditing(icon.dataset.code, 'room')));
+            document.querySelectorAll('.edit-icon').forEach(icon => icon.addEventListener('click', () => enableInlineEditing(icon.dataset.code)));
             document.querySelectorAll('.edit-variant-icon').forEach(icon => icon.addEventListener('click', () => enableVariantEditing(icon.dataset.code)));
         } catch (err) {
             console.error(err);
@@ -152,12 +171,13 @@
         }
     }
 
-    async function enableInlineEditing(personalCode, type) {
+    // Редактирование аудитории и места (без изменений)
+    async function enableInlineEditing(personalCode) {
         const safeCode = personalCode.replace(/-/g, '');
-        const container = document.getElementById(`room-cell-${safeCode}`);
-        const editableDiv = container.querySelector('.editable-field');
-        const audienceSpan = editableDiv.querySelector('.editable-value[data-field="audience"]');
-        const placeSpan = editableDiv.querySelector('.editable-value[data-field="place"]');
+        const row = document.querySelector(`#participantsList tr:has(button[data-code="${personalCode}"])`);
+        if (!row) return;
+        const audienceSpan = row.querySelector('.editable-value[data-field="audience"]');
+        const placeSpan = row.querySelector('.editable-value[data-field="place"]');
         const currentAudience = audienceSpan.innerText === '?' ? '' : audienceSpan.innerText;
         const currentPlace = placeSpan.innerText === '?' ? '' : placeSpan.innerText;
 
@@ -180,12 +200,13 @@
         cancelBtn.className = 'action-btn';
         cancelBtn.style.background = '#aaa';
 
-        editableDiv.innerHTML = '';
-        editableDiv.appendChild(inputAudience);
-        editableDiv.appendChild(document.createTextNode(' / '));
-        editableDiv.appendChild(inputPlace);
-        editableDiv.appendChild(saveBtn);
-        editableDiv.appendChild(cancelBtn);
+        const container = row.querySelector('.editable-field');
+        container.innerHTML = '';
+        container.appendChild(inputAudience);
+        container.appendChild(document.createTextNode(' / '));
+        container.appendChild(inputPlace);
+        container.appendChild(saveBtn);
+        container.appendChild(cancelBtn);
 
         saveBtn.onclick = async () => {
             const newAudience = inputAudience.value.trim() || null;
@@ -199,11 +220,10 @@
         cancelBtn.onclick = () => loadDirectorData();
     }
 
+    // Редактирование варианта (через диалог, как раньше)
     async function enableVariantEditing(personalCode) {
-        // Находим все назначения участника
         const assignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
         if (!assignments.length) return;
-        // Для простоты редактируем вариант для первого экзамена (или можно выбрать конкретный)
         const firstAssign = assignments[0];
         const { data: result } = await supabaseClient.from('resultats').select('id').eq('assignment_id', firstAssign.id).single();
         if (!result) return;
@@ -218,13 +238,14 @@
         loadDirectorData();
     }
 
+    // Остальной код загрузки бланков и отправки на проверку – без изменений
     async function showUploadModal(personalCode) {
         const userAssignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
         const modal = document.getElementById('uploadModal');
         const modalBody = document.getElementById('uploadModalBody');
         let html = `<h3>📎 Загрузка бланков для ${userAssignments[0]?.registered.full_name}</h3>`;
         for (const ass of userAssignments) {
-            const examDate = new Date(ass.exam_date).toLocaleDateString();
+            const examDate = formatDate(ass.exam_date);
             html += `
                 <div class="sheet-type">
                     <h4>${ass.subject} (${examDate})</h4>
@@ -254,7 +275,7 @@
                 const assignmentId = parseInt(btn.dataset.assignmentId);
                 const { data: result } = await supabaseClient
                     .from('resultats')
-                    .select('id, status')
+                    .select('id')
                     .eq('assignment_id', assignmentId)
                     .maybeSingle();
                 if (result) {
