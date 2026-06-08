@@ -7,99 +7,22 @@
     <link rel="stylesheet" href="../../../css/style.css">
     <link rel="stylesheet" href="gia-common.css">
     <style>
-        .ppe-info-card {
-            background: #f8f9fa;
-            border-radius: 20px;
-            padding: 1rem 1.5rem;
-            margin-bottom: 2rem;
-            border: 1px solid #e0e0e0;
-        }
-        .action-btn {
-            background: #4a6fa5;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 6px 16px;
-            min-width: 130px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        .action-btn:hover {
-            transform: translateY(-2px);
-            filter: brightness(0.95);
-        }
-        .send-review-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            border-radius: 40px;
-            padding: 6px 16px;
-            margin-top: 0.5rem;
-            cursor: pointer;
-        }
-        .file-upload-area {
-            border: 2px dashed #c44;
-            border-radius: 20px;
-            padding: 0.8rem;
-            text-align: center;
-            cursor: pointer;
-            margin: 0.5rem 0;
-            background: #fffaf0;
-        }
+        .ppe-info-card { background: #f8f9fa; border-radius: 20px; padding: 1rem 1.5rem; margin-bottom: 2rem; border: 1px solid #e0e0e0; }
+        .action-btn { background: #4a6fa5; color: white; border: none; border-radius: 40px; padding: 6px 16px; min-width: 130px; cursor: pointer; transition: 0.2s; }
+        .action-btn:hover { transform: translateY(-2px); filter: brightness(0.95); }
+        .send-review-btn { background: #28a745; color: white; border: none; border-radius: 40px; padding: 6px 16px; margin-top: 0.5rem; cursor: pointer; }
+        .file-upload-area { border: 2px dashed #c44; border-radius: 20px; padding: 0.8rem; text-align: center; cursor: pointer; margin: 0.5rem 0; background: #fffaf0; }
         .file-upload-area:hover { background: #fff0e0; }
-        .sheet-type {
-            background: #f9f2f2;
-            padding: 1rem;
-            border-radius: 20px;
-            margin-bottom: 1rem;
-        }
-        [contenteditable="true"] {
-            background: #fff8e7;
-            border-radius: 12px;
-            padding: 2px 6px;
-            min-width: 50px;
-            display: inline-block;
-            cursor: text;
-        }
-        [contenteditable="true"]:hover {
-            background: #fff0c0;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid #ffcece;
-            padding: 8px;
-            vertical-align: top;
-        }
-        th {
-            background: #ffe0e0;
-        }
-        .exam-item {
-            margin-bottom: 6px;
-        }
-        .file-list {
-            margin-top: 0.5rem;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-        .file-item {
-            background: #e8e8e8;
-            border-radius: 20px;
-            padding: 0.2rem 0.6rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        .delete-file {
-            background: none;
-            border: none;
-            color: red;
-            cursor: pointer;
-            font-weight: bold;
-        }
+        .sheet-type { background: #f9f2f2; padding: 1rem; border-radius: 20px; margin-bottom: 1rem; }
+        [contenteditable="true"] { background: #fff8e7; border-radius: 12px; padding: 2px 6px; min-width: 50px; display: inline-block; cursor: text; }
+        [contenteditable="true"]:hover { background: #fff0c0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ffcece; padding: 8px; vertical-align: top; }
+        th { background: #ffe0e0; }
+        .exam-item { margin-bottom: 6px; }
+        .file-list { margin-top: 0.5rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .file-item { background: #e8e8e8; border-radius: 20px; padding: 0.2rem 0.6rem; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .delete-file { background: none; border: none; color: red; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -124,9 +47,7 @@
     </div>
 </div>
 
-<footer class="gia-footer">
-    <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-</footer>
+<footer class="gia-footer"><p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p></footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -244,9 +165,7 @@
                     const pcode = e.target.dataset.pcode;
                     const field = e.target.dataset.field;
                     let newValue = e.target.innerText.trim();
-                    if (newValue === '?' || newValue === '') {
-                        newValue = null;
-                    }
+                    if (newValue === '?' || newValue === '') newValue = null;
                     const toUpdate = currentAssignments.filter(a => a.registered.personal_code === pcode);
                     for (const ass of toUpdate) {
                         await supabaseClient.from('exam_assignments').update({ [field]: newValue }).eq('id', ass.id);
@@ -254,15 +173,13 @@
                 });
             });
 
-            // Обработчики для варианта (создаёт resultats, если нужно)
+            // Обработчики для варианта (создаёт resultats и exam_details)
             document.querySelectorAll('.editable-variant').forEach(el => {
                 el.addEventListener('blur', async (e) => {
                     let resultId = e.target.dataset.resultId;
                     const assignmentId = e.target.dataset.assignmentId;
                     let newVariant = e.target.innerText.trim();
-                    if (newVariant === '?' || newVariant === '') {
-                        newVariant = null;
-                    }
+                    if (newVariant === '?' || newVariant === '') newVariant = null;
                     if (!assignmentId) return;
 
                     // Если нет resultId, создаём запись в resultats
@@ -281,14 +198,24 @@
                         e.target.dataset.resultId = resultId;
                     }
 
-                    // Сохраняем вариант
-                    const { error: upsertErr } = await supabaseClient.from('exam_details').upsert({
-                        result_id: parseInt(resultId),
-                        variant: newVariant
-                    }, { onConflict: 'result_id' });
-                    if (upsertErr) {
-                        console.error('Ошибка сохранения варианта:', upsertErr);
-                        alert('Не удалось сохранить вариант.');
+                    // Сохраняем вариант в exam_details (с проверкой существования)
+                    const { data: existingDetail } = await supabaseClient
+                        .from('exam_details')
+                        .select('id')
+                        .eq('result_id', parseInt(resultId))
+                        .maybeSingle();
+
+                    if (existingDetail) {
+                        const { error: updateErr } = await supabaseClient
+                            .from('exam_details')
+                            .update({ variant: newVariant })
+                            .eq('result_id', parseInt(resultId));
+                        if (updateErr) console.error('Ошибка обновления варианта:', updateErr);
+                    } else {
+                        const { error: insertErr } = await supabaseClient
+                            .from('exam_details')
+                            .insert({ result_id: parseInt(resultId), variant: newVariant });
+                        if (insertErr) console.error('Ошибка вставки варианта:', insertErr);
                     }
                 });
             });
@@ -301,7 +228,6 @@
         }
     }
 
-    // Функция показа модального окна загрузки бланков (без изменений, кроме отправки на проверку)
     async function showUploadModal(personalCode) {
         const userAssignments = currentAssignments.filter(a => a.registered.personal_code === personalCode);
         const modal = document.getElementById('uploadModal');
@@ -333,7 +259,6 @@
         modal.style.display = 'flex';
         attachUploadHandlers();
 
-        // Обработчик отправки на проверку (создаёт resultats при отсутствии)
         document.querySelectorAll('.send-review-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const assignmentId = parseInt(btn.dataset.assignmentId);
