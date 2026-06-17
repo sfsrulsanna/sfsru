@@ -1,18 +1,18 @@
 import { supabase } from '../../js/supabase-config.js';
 
-// DOM элементы
+// DOM элементы (без изменений)
 const loadingDiv = document.getElementById('loading');
 const addressesDiv = document.getElementById('addressesData');
 const currentContainer = document.getElementById('currentAddressesContainer');
 const archivedContainer = document.getElementById('archivedAddressesContainer');
 const addBtn = document.getElementById('addAddressBtn');
 
-// Модальные окна
+// Модальные окна (без изменений)
 const addressModal = document.getElementById('addressModal');
 const confirmDeleteModal = document.getElementById('confirmDeleteModal');
 const messageModal = document.getElementById('messageModal');
 
-// Поля модалки адреса
+// Поля модалки (без изменений)
 const editIdInput = document.getElementById('editAddressId');
 const addressType = document.getElementById('addressType');
 const addressText = document.getElementById('addressText');
@@ -24,12 +24,10 @@ const modalSaveBtn = document.getElementById('modalSaveBtn');
 const modalCancelBtn = document.getElementById('modalCancelBtn');
 const addressError = document.getElementById('addressError');
 
-// Удаление
 const deleteIdInput = document.getElementById('deleteAddressId');
 const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
 const deleteCancelBtn = document.getElementById('deleteCancelBtn');
 
-// Сообщение
 const messageTitle = document.getElementById('messageTitle');
 const messageText = document.getElementById('messageText');
 const messageCloseBtn = document.getElementById('messageCloseBtn');
@@ -38,9 +36,26 @@ let currentUser = null;
 let currentPersonalCode = null;
 let addresses = [];
 
-// --- Вспомогательные функции ---
+// --- Вспомогательные функции (без изменений) ---
 function openModal(modal) { if (modal) modal.classList.add('active'); }
-function closeModal(modal) { if (modal) modal.classList.remove('active'); }
+function closeModal(modal) {
+  if (modal) {
+    modal.classList.remove('active');
+    const errors = modal.querySelectorAll('.error-message');
+    errors.forEach(err => err.textContent = '');
+  }
+}
+document.querySelectorAll('.modal .close, .modal .btn-secondary, #messageCloseBtn').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    const modal = btn.closest('.modal');
+    if (modal) closeModal(modal);
+  });
+});
+window.addEventListener('click', (e) => {
+  if (e.target.classList && e.target.classList.contains('modal')) {
+    closeModal(e.target);
+  }
+});
 
 function showMessage(title, text, isError = false) {
   messageTitle.textContent = title;
@@ -49,23 +64,10 @@ function showMessage(title, text, isError = false) {
   openModal(messageModal);
 }
 
-// Закрытие модалок по кнопкам и клику вне
-document.querySelectorAll('.modal .close, .modal .btn-secondary, #messageCloseBtn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const modal = btn.closest('.modal');
-    if (modal) closeModal(modal);
-  });
-});
-window.addEventListener('click', (e) => {
-  if (e.target.classList?.contains('modal')) closeModal(e.target);
-});
-
-// --- Получение personal_code ---
+// --- Получение personal_code (без изменений) ---
 async function getPersonalCode(user) {
-  // сначала из метаданных
   let pc = user.user_metadata?.personal_code || user.app_metadata?.personal_code;
   if (pc) return pc;
-  // затем из таблицы users
   const { data, error } = await supabase
     .from('users')
     .select('personal_code')
@@ -75,7 +77,7 @@ async function getPersonalCode(user) {
   return null;
 }
 
-// --- Загрузка адресов ---
+// --- Загрузка адресов (используем схему addresses) ---
 async function loadAddresses() {
   try {
     const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -87,7 +89,6 @@ async function loadAddresses() {
     if (!pc) throw new Error('Личный код не найден');
     currentPersonalCode = pc;
 
-    // Запрос адресов из схемы addresses
     const { data, error } = await supabase
       .schema('addresses')
       .from('addresses')
@@ -107,7 +108,7 @@ async function loadAddresses() {
   }
 }
 
-// --- Отрисовка адресов ---
+// --- Отрисовка адресов (без изменений в логике, только схема не влияет) ---
 function renderAddresses() {
   const current = addresses.filter(a => a.status === 'active');
   const archived = addresses.filter(a => a.status === 'archived');
@@ -119,7 +120,7 @@ function renderAddresses() {
     currentContainer.innerHTML = '<div class="empty-message">Нет текущих адресов. Добавьте новый.</div>';
   } else {
     current.forEach(addr => {
-      currentContainer.appendChild(createAddressCard(addr));
+      currentContainer.appendChild(createAddressCard(addr, false));
     });
   }
 
@@ -132,7 +133,7 @@ function renderAddresses() {
   }
 }
 
-function createAddressCard(addr, isArchived = false) {
+function createAddressCard(addr, isArchived) {
   const card = document.createElement('div');
   card.className = `address-card ${isArchived ? 'archived' : ''}`;
   card.dataset.id = addr.id;
@@ -154,22 +155,38 @@ function createAddressCard(addr, isArchived = false) {
     }
   }
 
+  let badgeHtml = '';
+  if (isArchived) {
+    badgeHtml = `<span class="verification-badge badge-archived">Архивный</span>`;
+  } else {
+    const status = addr.verification_status || 'oncheck';
+    const statusMap = {
+      verified: { label: 'Подтверждено', class: 'badge-verified' },
+      oncheck: { label: 'На проверке', class: 'badge-oncheck' },
+      rejected: { label: 'Отклонено', class: 'badge-rejected' }
+    };
+    const info = statusMap[status] || statusMap.oncheck;
+    badgeHtml = `<span class="verification-badge ${info.class}">${info.label}</span>`;
+  }
+
   card.innerHTML = `
     <div class="address-info">
-      <div class="address-type">${typeLabel}</div>
+      <div class="address-type">
+        ${typeLabel}
+        ${badgeHtml}
+      </div>
       <div class="address-text">${addr.address}</div>
       ${datesHtml ? `<div class="address-dates">${datesHtml}</div>` : ''}
     </div>
     <div class="address-actions">
-      <button class="btn-icon edit-address" title="Редактировать">✏️</button>
+      ${!isArchived ? `<button class="btn-icon edit-address" title="Редактировать">✏️</button>` : ''}
       ${!isArchived ? `<button class="btn-icon archive-address" title="Архивировать">📦</button>` : ''}
-      <button class="btn-icon delete-address" title="Удалить">🗑️</button>
+      <button class="btn-icon danger delete-address" title="Удалить">🗑️</button>
     </div>
   `;
 
-  // Обработчики
-  card.querySelector('.edit-address').addEventListener('click', () => openEditModal(addr));
   if (!isArchived) {
+    card.querySelector('.edit-address').addEventListener('click', () => openEditModal(addr));
     card.querySelector('.archive-address').addEventListener('click', () => archiveAddress(addr.id));
   }
   card.querySelector('.delete-address').addEventListener('click', () => openDeleteModal(addr.id));
@@ -187,7 +204,6 @@ function openEditModal(addr = null) {
     addressText.value = addr.address;
     startDate.value = addr.start_date || '';
     endDate.value = addr.end_date || '';
-    // Показываем/скрываем поле даты окончания в зависимости от типа
     toggleEndDate(addr.type);
   } else {
     modalTitle.textContent = 'Добавить адрес';
@@ -201,7 +217,6 @@ function openEditModal(addr = null) {
   openModal(addressModal);
 }
 
-// Показывать поле окончания только для временной регистрации
 function toggleEndDate(type) {
   if (type === 'temporary') {
     endDateGroup.style.display = 'block';
@@ -212,7 +227,7 @@ function toggleEndDate(type) {
 }
 addressType.addEventListener('change', (e) => toggleEndDate(e.target.value));
 
-// Сохранение адреса
+// Сохранение адреса (используем схему addresses)
 async function saveAddress() {
   const id = editIdInput.value;
   const type = addressType.value;
@@ -239,23 +254,28 @@ async function saveAddress() {
     address,
     start_date: start,
     end_date: end || null,
-    status: 'active'
+    status: 'active',
+    verification_status: 'oncheck'
   };
 
   try {
     let result;
     if (id) {
-      // Обновление
+      const updatePayload = {
+        type,
+        address,
+        start_date: start,
+        end_date: end || null
+      };
       const { error } = await supabase
         .schema('addresses')
         .from('addresses')
-        .update(payload)
+        .update(updatePayload)
         .eq('id', id)
         .eq('personal_code', currentPersonalCode);
       if (error) throw error;
       result = { id, ...payload };
     } else {
-      // Вставка
       const { data, error } = await supabase
         .schema('addresses')
         .from('addresses')
@@ -266,10 +286,9 @@ async function saveAddress() {
       result = { id: data.id, ...payload };
     }
 
-    // Обновляем локальный массив
     if (id) {
       const idx = addresses.findIndex(a => a.id === id);
-      if (idx !== -1) addresses[idx] = result;
+      if (idx !== -1) addresses[idx] = { ...addresses[idx], ...result };
     } else {
       addresses.unshift(result);
     }
@@ -285,7 +304,7 @@ async function saveAddress() {
 modalSaveBtn.addEventListener('click', saveAddress);
 modalCancelBtn.addEventListener('click', () => closeModal(addressModal));
 
-// --- Архивирование ---
+// --- Архивирование (схема addresses) ---
 async function archiveAddress(id) {
   if (!confirm('Архивировать этот адрес?')) return;
   try {
@@ -305,7 +324,7 @@ async function archiveAddress(id) {
   }
 }
 
-// --- Удаление ---
+// --- Удаление (схема addresses) ---
 function openDeleteModal(id) {
   deleteIdInput.value = id;
   openModal(confirmDeleteModal);
@@ -333,7 +352,7 @@ confirmDeleteBtn.addEventListener('click', async () => {
 
 deleteCancelBtn.addEventListener('click', () => closeModal(confirmDeleteModal));
 
-// --- Добавление нового адреса ---
+// --- Добавление ---
 addBtn.addEventListener('click', () => openEditModal(null));
 
 // --- Инициализация ---

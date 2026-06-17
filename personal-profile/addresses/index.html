@@ -30,60 +30,106 @@
   <!-- Общие стили -->
   <link rel="stylesheet" href="../../css/style.css" />
   <link rel="stylesheet" href="../../css/personal-profile/account.css" />
-  <!-- Дополнительные стили для адресов -->
   <style>
-    /* Специфичные стили для страницы адресов */
+    /* Специфичные стили для адресов */
     .address-card {
-      background: #f8f9fa;
-      border-radius: 8px;
+      background: white;
+      border-radius: 12px;
       padding: 1.2rem 1.5rem;
       margin-bottom: 1rem;
-      border-left: 4px solid #7b091a;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      border: 1px solid #eee;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       flex-wrap: wrap;
+      transition: all 0.3s ease;
+      animation: cardFadeIn 0.4s ease-out;
+    }
+    .address-card:hover {
+      box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+      transform: translateY(-2px);
+    }
+    .address-card.archived {
+      opacity: 0.7;
+      border-left: 4px solid #6c757d;
     }
     .address-card .address-info {
       flex: 1;
+      min-width: 200px;
     }
     .address-card .address-type {
       font-weight: 600;
       color: #7b091a;
       margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .address-card .address-text {
       font-size: 1rem;
       margin-bottom: 0.25rem;
+      color: #333;
     }
     .address-card .address-dates {
       font-size: 0.9rem;
       color: #6c757d;
+      margin-top: 0.2rem;
     }
     .address-card .address-actions {
       display: flex;
       gap: 0.5rem;
       align-items: center;
+      margin-top: 0.5rem;
     }
     .address-card .btn-icon {
       background: none;
       border: none;
       cursor: pointer;
-      font-size: 1.2rem;
-      padding: 0.2rem 0.4rem;
-      border-radius: 4px;
+      font-size: 1.1rem;
+      padding: 0.3rem 0.5rem;
+      border-radius: 6px;
       transition: background 0.2s;
+      color: #495057;
     }
     .address-card .btn-icon:hover {
+      background: #f1f3f5;
+    }
+    .address-card .btn-icon.danger:hover {
+      background: #f8d7da;
+      color: #b91c1c;
+    }
+    .address-card .verification-badge {
+      display: inline-block;
+      padding: 0.2rem 0.6rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      margin-left: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+    .badge-verified {
+      background: rgba(40, 167, 69, 0.15);
+      color: #28a745;
+      border: 1px solid #28a745;
+    }
+    .badge-oncheck {
+      background: rgba(255, 193, 7, 0.15);
+      color: #856404;
+      border: 1px solid #ffc107;
+    }
+    .badge-rejected {
+      background: rgba(220, 53, 69, 0.15);
+      color: #dc3545;
+      border: 1px solid #dc3545;
+    }
+    .badge-archived {
       background: #e9ecef;
-    }
-    .address-card.archived {
-      border-left-color: #6c757d;
-      opacity: 0.7;
-    }
-    .address-card.archived .address-type {
       color: #6c757d;
+      border: 1px solid #ced4da;
     }
+
     .section-header {
       display: flex;
       justify-content: space-between;
@@ -93,25 +139,37 @@
     }
     .section-header h3 {
       margin: 0;
+      font-size: 1.3rem;
+      color: #333;
     }
     .empty-message {
       color: #6c757d;
       font-style: italic;
       padding: 1rem 0;
+      text-align: center;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border: 1px dashed #dee2e6;
     }
     .btn-add {
       background: #28a745;
       color: white;
       border: none;
-      padding: 0.4rem 1rem;
-      border-radius: 6px;
+      padding: 0.5rem 1.2rem;
+      border-radius: 30px;
       cursor: pointer;
       font-weight: 500;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
     }
     .btn-add:hover {
       background: #218838;
+      box-shadow: 0 4px 10px rgba(40,167,69,0.3);
     }
-    /* Модальные окна (используем те же стили, что в account.html) */
+
+    /* Модальные окна с анимацией */
     .modal {
       display: none;
       position: fixed;
@@ -120,59 +178,144 @@
       align-items: center;
       justify-content: center;
       z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
     }
     .modal.active {
       display: flex;
+      opacity: 1;
+      visibility: visible;
     }
     .modal-content {
       background: white;
       max-width: 500px;
       width: 90%;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      border-radius: 16px;
+      padding: 0;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      transform: scale(0.9) translateY(-20px);
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+    }
+    .modal.active .modal-content {
+      transform: scale(1) translateY(0);
+      opacity: 1;
     }
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid #dee2e6;
-      padding-bottom: 0.75rem;
-      margin-bottom: 1rem;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
     }
-    .modal-header h4 { margin: 0; }
+    .modal-header h4 {
+      margin: 0;
+      color: #333;
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
     .modal-header .close {
       background: none;
       border: none;
       font-size: 1.5rem;
       cursor: pointer;
+      color: #999;
+      transition: 0.2s;
+      padding: 0 0.5rem;
     }
-    .modal-body .form-group {
-      margin-bottom: 1rem;
+    .modal-header .close:hover {
+      color: #333;
+      transform: rotate(90deg);
     }
-    .modal-body label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 0.3rem;
-    }
-    .modal-body .form-control {
-      width: 100%;
-      padding: 0.5rem 0.75rem;
-      border: 1px solid #ced4da;
-      border-radius: 6px;
+    .modal-body {
+      padding: 1.5rem;
     }
     .modal-footer {
       display: flex;
       justify-content: flex-end;
       gap: 0.5rem;
-      margin-top: 1.5rem;
-      border-top: 1px solid #dee2e6;
-      padding-top: 1rem;
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #e5e7eb;
+      background: #fafafa;
+      border-radius: 0 0 16px 16px;
+    }
+    .form-group {
+      margin-bottom: 1.2rem;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+      color: #333;
+    }
+    .form-control {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      border: 1px solid #ced4da;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+    .form-control:focus {
+      border-color: #7b091a;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(123,9,26,0.1);
     }
     .error-message {
       color: #dc3545;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       margin-top: 0.5rem;
+    }
+
+    /* Кнопки */
+    .btn {
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover {
+      background: #5a6268;
+    }
+    .btn-primary {
+      background: #7b091a;
+      color: white;
+    }
+    .btn-primary:hover {
+      background: #5f0614;
+    }
+    .btn-danger {
+      background: #b91c1c;
+      color: white;
+    }
+    .btn-danger:hover {
+      background: #991b1b;
+    }
+
+    /* Анимация карточек */
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Адаптив */
+    @media (max-width: 576px) {
+      .address-card {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .address-card .address-actions {
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+      }
     }
   </style>
 </head>
@@ -217,21 +360,17 @@
           <h3>Текущие адреса</h3>
           <button class="btn-add" id="addAddressBtn">+ Добавить адрес</button>
         </div>
-        <div id="currentAddressesContainer">
-          <!-- Сюда будут вставлены карточки текущих адресов -->
-        </div>
+        <div id="currentAddressesContainer"></div>
 
         <!-- Архивные адреса -->
         <div class="section-header" style="margin-top: 2rem;">
           <h3>Архивные адреса</h3>
         </div>
-        <div id="archivedAddressesContainer">
-          <!-- Сюда будут вставлены карточки архивных адресов -->
-        </div>
+        <div id="archivedAddressesContainer"></div>
       </div>
     </div>
 
-    <!-- Модальное окно добавления/редактирования адреса -->
+    <!-- Модальное окно добавления/редактирования -->
     <div id="addressModal" class="modal">
       <div class="modal-content">
         <div class="modal-header">
