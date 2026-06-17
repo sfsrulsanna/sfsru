@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Мои адреса — СФСРЮ</title>
+
+  <!-- Favicons (скопируйте из account.html) -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
+
+  <!-- Общие стили -->
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="../../css/personal-profile/account.css" />
+  <!-- Дополнительные стили для адресов -->
+  <style>
+    /* Специфичные стили для страницы адресов */
+    .address-card {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1.2rem 1.5rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid #7b091a;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+    .address-card .address-info {
+      flex: 1;
+    }
+    .address-card .address-type {
+      font-weight: 600;
+      color: #7b091a;
+      margin-bottom: 0.25rem;
+    }
+    .address-card .address-text {
+      font-size: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .address-card .address-dates {
+      font-size: 0.9rem;
+      color: #6c757d;
+    }
+    .address-card .address-actions {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .address-card .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.2rem;
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .address-card .btn-icon:hover {
+      background: #e9ecef;
+    }
+    .address-card.archived {
+      border-left-color: #6c757d;
+      opacity: 0.7;
+    }
+    .address-card.archived .address-type {
+      color: #6c757d;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .section-header h3 {
+      margin: 0;
+    }
+    .empty-message {
+      color: #6c757d;
+      font-style: italic;
+      padding: 1rem 0;
+    }
+    .btn-add {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 0.4rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .btn-add:hover {
+      background: #218838;
+    }
+    /* Модальные окна (используем те же стили, что в account.html) */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.active {
+      display: flex;
+    }
+    .modal-content {
+      background: white;
+      max-width: 500px;
+      width: 90%;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #dee2e6;
+      padding-bottom: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    .modal-header h4 { margin: 0; }
+    .modal-header .close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+    }
+    .modal-body .form-group {
+      margin-bottom: 1rem;
+    }
+    .modal-body label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 0.3rem;
+    }
+    .modal-body .form-control {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #ced4da;
+      border-radius: 6px;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      border-top: 1px solid #dee2e6;
+      padding-top: 1rem;
+    }
+    .error-message {
+      color: #dc3545;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../../index.html">Главная</a></li>
+          <li><a href="../../news.html">Новости</a></li>
+          <li><a href="../../wiki/">Википедия</a></li>
+          <li><a href="../../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../../services.html">Услуги</a></li>
+          <li><a href="../../profile.html" class="active">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="menu-overlay"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h2>Мои адреса</h2>
+        <p>Управление адресами регистрации и проживания</p>
+      </div>
+
+      <div id="loading" class="loading">Загрузка адресов...</div>
+
+      <div id="addressesData" style="display: none;">
+        <!-- Текущие адреса -->
+        <div class="section-header">
+          <h3>Текущие адреса</h3>
+          <button class="btn-add" id="addAddressBtn">+ Добавить адрес</button>
+        </div>
+        <div id="currentAddressesContainer">
+          <!-- Сюда будут вставлены карточки текущих адресов -->
+        </div>
+
+        <!-- Архивные адреса -->
+        <div class="section-header" style="margin-top: 2rem;">
+          <h3>Архивные адреса</h3>
+        </div>
+        <div id="archivedAddressesContainer">
+          <!-- Сюда будут вставлены карточки архивных адресов -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно добавления/редактирования адреса -->
+    <div id="addressModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 id="modalTitle">Добавить адрес</h4>
+          <button class="close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editAddressId" />
+          <div class="form-group">
+            <label for="addressType">Тип адреса</label>
+            <select id="addressType" class="form-control">
+              <option value="registration">Постоянная регистрация</option>
+              <option value="temporary">Временная регистрация</option>
+              <option value="actual">Фактическое проживание</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="addressText">Адрес</label>
+            <input type="text" id="addressText" class="form-control" placeholder="Например: г. Поповск, ул. Ленина, д. 1, кв. 5" />
+          </div>
+          <div class="form-group">
+            <label for="startDate">Дата начала</label>
+            <input type="date" id="startDate" class="form-control" />
+          </div>
+          <div class="form-group" id="endDateGroup">
+            <label for="endDate">Дата окончания (для временной регистрации)</label>
+            <input type="date" id="endDate" class="form-control" />
+          </div>
+          <div id="addressError" class="error-message"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="modalCancelBtn">Отмена</button>
+          <button class="btn btn-primary" id="modalSaveBtn">Сохранить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Модальное окно подтверждения удаления -->
+    <div id="confirmDeleteModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4>Подтверждение удаления</h4>
+          <button class="close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Вы уверены, что хотите удалить этот адрес? Это действие необратимо.</p>
+          <input type="hidden" id="deleteAddressId" />
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" id="deleteCancelBtn">Отмена</button>
+          <button class="btn btn-danger" id="confirmDeleteBtn">Удалить</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Информационное модальное окно -->
+    <div id="messageModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h4 id="messageTitle">Сообщение</h4>
+          <button class="close">&times;</button>
+        </div>
+        <div class="modal-body" id="messageText"></div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="messageCloseBtn">Закрыть</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+      }
+    }
+  </script>
+  <script type="module" src="addresses.js"></script>
+  <script src="../../js/mob-menu.js"></script>
+</body>
+</html>
