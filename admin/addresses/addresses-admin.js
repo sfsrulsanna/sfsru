@@ -1,28 +1,33 @@
 import { supabase } from '../../js/supabase-config.js';
 import { requireAdmin } from '../certificates/js/certificates-common.js';
 
+let currentAddressId = null;
+let sortField = 'personal_code';
+let sortDirection = 'asc';
 let allAddresses = [];
-let sortField = 'created_at';
-let sortDirection = 'desc';
-let filterType = '';
-let filterStatus = '';
-let filterVerification = '';
 let searchTerm = '';
+let typeFilter = '';
+let statusFilter = '';
+let verificationFilter = '';
+let usersMap = {}; // для подстановки ФИО по personal_code
 
-// DOM элементы
-const loadingDiv = document.getElementById('loading');
-const tableContainer = document.getElementById('tableContainer');
-const tbody = document.getElementById('tableBody');
-const filterTypeEl = document.getElementById('filterType');
-const filterStatusEl = document.getElementById('filterStatus');
-const filterVerificationEl = document.getElementById('filterVerification');
-const searchInput = document.getElementById('searchInput');
-const refreshBtn = document.getElementById('refreshBtn');
-
-// Загрузка всех адресов (админ видит все)
+// Загрузка адресов
 async function loadAddresses() {
-    loadingDiv.style.display = 'block';
+    const loading = document.getElementById('loading');
+    const tableContainer = document.getElementById('tableContainer');
+    loading.style.display = 'block';
     tableContainer.style.display = 'none';
+
+    // Загружаем всех пользователей для отображения ФИО
+    const { data: users, error: usersError } = await supabase
+        .from('users')
+        .select('personal_code, surname, name, patronymic');
+    if (!usersError && users) {
+        usersMap = {};
+        users.forEach(u => {
+            usersMap[u.personal_code] = `${u.surname} ${u.name} ${u.patronymic || ''}`.trim();
+        });
+    }
 
     const { data, error } = await supabase
         .schema('addresses')
@@ -32,127 +37,121 @@ async function loadAddresses() {
 
     if (error) {
         console.error('Ошибка загрузки:', error);
-        tbody.innerHTML = `<tr><td colspan="9" class="error">Ошибка: ${error.message}</td></tr>`;
-        loadingDiv.style.display = 'none';
+        document.getElementById('tableBody').innerHTML = 
+            '<tr><td colspan="9" class="error">Ошибка: ' + error.message + '</td></tr>';
+        loading.style.display = 'none';
         tableContainer.style.display = 'block';
         return;
     }
 
     allAddresses = data || [];
     applyFiltersAndSort();
-    loadingDiv.style.display = 'none';
+    loading.style.display = 'none';
     tableContainer.style.display = 'block';
 }
 
-// Фильтрация, поиск и сортировка
 function applyFiltersAndSort() {
-    let filtered = [...allAddresses];
+    let filtered = allAddresses;
 
-    // Фильтр по типу
-    if (filterType) {
-        filtered = filtered.filter(a => a.type === filterType);
-    }
-    // Фильтр по статусу
-    if (filterStatus) {
-        filtered = filtered.filter(a => a.status === filterStatus);
-    }
-    // Фильтр по верификации
-    if (filterVerification) {
-        filtered = filtered.filter(a => a.verification_status === filterVerification);
-    }
-    // Поиск по личному коду или адресу
+    // Поиск
     if (searchTerm) {
         const term = searchTerm.toLowerCase();
-        filtered = filtered.filter(a =>
-            (a.personal_code && a.personal_code.toLowerCase().includes(term)) ||
-            (a.address && a.address.toLowerCase().includes(term))
-        );
+        filtered = filtered.filter(addr => {
+            const fullName = usersMap[addr.personal_code] || '';
+            return addr.address.toLowerCase().includes(term) ||
+                   addr.personal_code.toLowerCase().includes(term) ||
+                   fullName.toLowerCase().includes(term);
+        });
     }
+
+    // Фильтры
+    if (typeFilter) filtered = filtered.filter(addr => addr.type === typeFilter);
+    if (statusFilter) filtered = filtered.filter(addr => addr.status === statusFilter);
+    if (verificationFilter) filtered = filtered.filter(addr => addr.verification_status === verificationFilter);
 
     // Сортировка
     filtered.sort((a, b) => {
-        let aVal = a[sortField] || '';
-        let bVal = b[sortField] || '';
-        if (sortField === 'id') {
-            aVal = a.id;
-            bVal = b.id;
-        }
-        if (sortField === 'type') {
-            const map = { registration: 0, temporary: 1, actual: 2 };
-            aVal = map[a.type] ?? 3;
-            bVal = map[b.type] ?? 3;
-        }
-        if (sortField === 'status') {
-            const map = { active: 0, archived: 1 };
-            aVal = map[a.status] ?? 2;
-            bVal = map[b.status] ?? 2;
-        }
-        if (sortField === 'verification_status') {
-            const map = { verified: 0, oncheck: 1, rejected: 2 };
-            aVal = map[a.verification_status] ?? 3;
-            bVal = map[b.verification_status] ?? 3;
-        }
-        if (typeof aVal === 'string') {
-            return sortDirection === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        let aVal, bVal;
+        if (sortField === 'full_name') {
+            aVal = usersMap[a.personal_code] || '';
+            bVal = usersMap[b.personal_code] || '';
+        } else if (sortField === 'type') {
+            const typeMap = { registration: 'Постоянная', temporary: 'Временная', actual: 'Фактическое' };
+            aVal = typeMap[a.type] || a.type;
+            bVal = typeMap[b.type] || b.type;
         } else {
-            return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
+            aVal = a[sortField] || '';
+            bVal = b[sortField] || '';
         }
+        if (sortDirection === 'asc') return aVal.localeCompare(bVal);
+        else return bVal.localeCompare(aVal);
     });
 
     renderTable(filtered);
 }
 
+function getVerificationBadge(status) {
+    const map = {
+        verified: { label: 'Подтверждено', class: 'badge-verified' },
+        oncheck: { label: 'На проверке', class: 'badge-oncheck' },
+        rejected: { label: 'Отклонено', class: 'badge-rejected' }
+    };
+    const info = map[status] || map.oncheck;
+    return `<span class="status-badge ${info.class}">${info.label}</span>`;
+}
+
+function getStatusBadge(status) {
+    if (status === 'active') return `<span class="status-badge badge-oncheck">Активный</span>`;
+    if (status === 'archived') return `<span class="status-badge badge-archived">Архивный</span>`;
+    return status;
+}
+
+function formatDate(dateStr) {
+    if (!dateStr) return '—';
+    try {
+        const d = new Date(dateStr);
+        return `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+    } catch { return dateStr; }
+}
+
 function renderTable(addresses) {
+    const tbody = document.getElementById('tableBody');
     if (addresses.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="empty-row">Нет адресов</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="no-data">Нет адресов</td></tr>';
         return;
     }
 
     let rows = '';
     for (const addr of addresses) {
+        const fullName = usersMap[addr.personal_code] || '—';
         const typeMap = {
-            registration: 'Постоянная',
-            temporary: 'Временная',
-            actual: 'Фактическое'
+            registration: 'Постоянная регистрация',
+            temporary: 'Временная регистрация',
+            actual: 'Фактическое проживание'
         };
         const typeLabel = typeMap[addr.type] || addr.type;
-        const typeClass = `type-${addr.type}`;
-
-        const statusLabel = addr.status === 'active' ? 'Активный' : 'Архивный';
-        const statusClass = addr.status === 'active' ? 'badge-active' : 'badge-archived';
-
-        const verificationMap = {
-            verified: 'Подтверждено',
-            oncheck: 'На проверке',
-            rejected: 'Отклонено'
-        };
-        const verificationLabel = verificationMap[addr.verification_status] || addr.verification_status || '—';
-        const verificationClass = addr.verification_status ? `badge-${addr.verification_status}` : '';
-
-        const startDate = addr.start_date ? formatDate(addr.start_date) : '—';
-        const endDate = addr.end_date ? formatDate(addr.end_date) : '—';
+        const isArchived = addr.status === 'archived';
 
         rows += `
             <tr>
-                <td>${addr.id}</td>
-                <td><strong>${escapeHTML(addr.personal_code)}</strong></td>
-                <td><span class="type-badge ${typeClass}">${typeLabel}</span></td>
+                <td>${escapeHTML(addr.personal_code)}</td>
+                <td>${escapeHTML(fullName)}</td>
+                <td>${escapeHTML(typeLabel)}</td>
                 <td>${escapeHTML(addr.address)}</td>
-                <td>${startDate}</td>
-                <td>${endDate}</td>
-                <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
-                <td><span class="status-badge ${verificationClass}">${verificationLabel}</span></td>
+                <td>${formatDate(addr.start_date)}</td>
+                <td>${formatDate(addr.end_date)}</td>
+                <td>${getStatusBadge(addr.status)}</td>
+                <td>${isArchived ? '—' : getVerificationBadge(addr.verification_status)}</td>
                 <td>
-                    <button class="btn-edit" data-id="${addr.id}">✏️</button>
-                    ${addr.status === 'active' ? `<button class="btn-archive" data-id="${addr.id}">📦</button>` : ''}
-                    <button class="btn-delete" data-id="${addr.id}">🗑️</button>
+                    <button class="btn-edit" data-id="${addr.id}">Редактировать</button>
+                    ${!isArchived ? `<button class="btn-archive" data-id="${addr.id}">Архивировать</button>` : ''}
+                    <button class="btn-delete" data-id="${addr.id}">Удалить</button>
                 </td>
             </tr>
         `;
     }
     tbody.innerHTML = rows;
 
-    // Обработчики кнопок
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', () => editAddress(btn.dataset.id));
     });
@@ -164,28 +163,7 @@ function renderTable(addresses) {
     });
 }
 
-// Форматирование даты
-function formatDate(dateStr) {
-    if (!dateStr) return '—';
-    try {
-        const d = new Date(dateStr);
-        return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}.${d.getFullYear()}`;
-    } catch {
-        return dateStr;
-    }
-}
-
-function escapeHTML(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
-}
-
-// --- Сортировка по заголовкам ---
+// Сортировка
 document.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
         const field = th.dataset.sort;
@@ -196,47 +174,71 @@ document.querySelectorAll('th[data-sort]').forEach(th => {
             sortDirection = 'asc';
         }
         document.querySelectorAll('th i').forEach(i => i.className = 'fas fa-sort');
-        const icon = th.querySelector('i');
-        icon.className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
+        th.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
         applyFiltersAndSort();
     });
 });
 
-// --- Фильтры и поиск ---
-filterTypeEl.addEventListener('change', () => {
-    filterType = filterTypeEl.value;
+// Фильтры и поиск
+document.getElementById('searchInput').addEventListener('input', (e) => {
+    searchTerm = e.target.value;
     applyFiltersAndSort();
 });
-filterStatusEl.addEventListener('change', () => {
-    filterStatus = filterStatusEl.value;
+document.getElementById('typeFilter').addEventListener('change', (e) => {
+    typeFilter = e.target.value;
     applyFiltersAndSort();
 });
-filterVerificationEl.addEventListener('change', () => {
-    filterVerification = filterVerificationEl.value;
+document.getElementById('statusFilter').addEventListener('change', (e) => {
+    statusFilter = e.target.value;
     applyFiltersAndSort();
 });
-searchInput.addEventListener('input', () => {
-    searchTerm = searchInput.value;
+document.getElementById('verificationFilter').addEventListener('change', (e) => {
+    verificationFilter = e.target.value;
     applyFiltersAndSort();
 });
-refreshBtn.addEventListener('click', loadAddresses);
 
-// --- Редактирование адреса ---
-let currentAddressId = null;
-
+// --- Модальное окно ---
 function openEditModal(address = null) {
     currentAddressId = address?.id || null;
     const title = currentAddressId ? 'Редактирование адреса' : 'Добавление адреса';
     document.getElementById('modalTitle').textContent = title;
 
+    // Загружаем список personal_code для выбора
+    const { data: users, error } = supabase
+        .from('users')
+        .select('personal_code, surname, name, patronymic')
+        .order('personal_code');
+    // Но так как это асинхронно, сделаем внутри
+
+    // Для простоты сделаем select динамически через fetch
+    fetchPersonalCodes(address);
+}
+
+async function fetchPersonalCodes(address) {
+    const { data: users, error } = await supabase
+        .from('users')
+        .select('personal_code, surname, name, patronymic')
+        .order('personal_code');
+
+    let options = '';
+    if (users) {
+        users.forEach(u => {
+            const full = `${u.surname} ${u.name} ${u.patronymic || ''}`.trim();
+            const selected = (address && address.personal_code === u.personal_code) ? 'selected' : '';
+            options += `<option value="${u.personal_code}" ${selected}>${u.personal_code} — ${full}</option>`;
+        });
+    }
+
     const html = `
         <div class="form-group">
             <label>Личный код *</label>
-            <input type="text" id="editPersonalCode" class="form-input" value="${escapeHTML(address?.personal_code || '')}" required>
+            <select id="personal_code" class="form-input" required>
+                ${options}
+            </select>
         </div>
         <div class="form-group">
-            <label>Тип *</label>
-            <select id="editType" class="form-input">
+            <label>Тип адреса *</label>
+            <select id="type" class="form-input" required>
                 <option value="registration" ${address?.type === 'registration' ? 'selected' : ''}>Постоянная регистрация</option>
                 <option value="temporary" ${address?.type === 'temporary' ? 'selected' : ''}>Временная регистрация</option>
                 <option value="actual" ${address?.type === 'actual' ? 'selected' : ''}>Фактическое проживание</option>
@@ -244,77 +246,72 @@ function openEditModal(address = null) {
         </div>
         <div class="form-group">
             <label>Адрес *</label>
-            <input type="text" id="editAddress" class="form-input" value="${escapeHTML(address?.address || '')}" required>
+            <input type="text" id="address" class="form-input" value="${escapeHTML(address?.address || '')}" required>
         </div>
         <div class="form-group">
             <label>Дата начала</label>
-            <input type="date" id="editStartDate" class="form-input" value="${address?.start_date || ''}">
+            <input type="date" id="start_date" class="form-input" value="${address?.start_date || ''}">
         </div>
         <div class="form-group">
-            <label>Дата окончания</label>
-            <input type="date" id="editEndDate" class="form-input" value="${address?.end_date || ''}">
+            <label>Дата окончания (только для временной регистрации)</label>
+            <input type="date" id="end_date" class="form-input" value="${address?.end_date || ''}">
         </div>
         <div class="form-group">
-            <label>Статус</label>
-            <select id="editStatus" class="form-input">
+            <label>Статус (active / archived)</label>
+            <select id="status" class="form-input">
                 <option value="active" ${address?.status === 'active' ? 'selected' : ''}>Активный</option>
                 <option value="archived" ${address?.status === 'archived' ? 'selected' : ''}>Архивный</option>
             </select>
         </div>
         <div class="form-group">
             <label>Статус верификации</label>
-            <select id="editVerification" class="form-input">
+            <select id="verification_status" class="form-input">
                 <option value="verified" ${address?.verification_status === 'verified' ? 'selected' : ''}>Подтверждено</option>
                 <option value="oncheck" ${address?.verification_status === 'oncheck' ? 'selected' : ''}>На проверке</option>
                 <option value="rejected" ${address?.verification_status === 'rejected' ? 'selected' : ''}>Отклонено</option>
             </select>
         </div>
     `;
+
     document.getElementById('editModalBody').innerHTML = html;
     document.getElementById('editModal').classList.add('active');
 }
 
-window.closeEditModal = () => {
-    document.getElementById('editModal').classList.remove('active');
-};
+document.getElementById('addBtn').addEventListener('click', () => openEditModal(null));
 
-async function editAddress(id) {
-    const { data, error } = await supabase
-        .schema('addresses')
-        .from('addresses')
-        .select('*')
-        .eq('id', id)
-        .single();
-    if (error || !data) {
-        alert('Ошибка загрузки адреса');
+function closeEditModal() {
+    document.getElementById('editModal').classList.remove('active');
+}
+window.closeEditModal = closeEditModal;
+
+// --- Сохранение адреса ---
+async function saveAddress() {
+    const personal_code = document.getElementById('personal_code').value;
+    const type = document.getElementById('type').value;
+    const address = document.getElementById('address').value.trim();
+    const start_date = document.getElementById('start_date').value || null;
+    let end_date = document.getElementById('end_date').value || null;
+    const status = document.getElementById('status').value;
+    const verification_status = document.getElementById('verification_status').value;
+
+    if (!personal_code || !type || !address) {
+        alert('Заполните обязательные поля: личный код, тип, адрес');
         return;
     }
-    openEditModal(data);
-}
 
-// Сохранение (обновление)
-document.getElementById('saveAddressBtn').addEventListener('click', async () => {
-    const personalCode = document.getElementById('editPersonalCode')?.value.trim();
-    const type = document.getElementById('editType')?.value;
-    const address = document.getElementById('editAddress')?.value.trim();
-    const startDate = document.getElementById('editStartDate')?.value || null;
-    const endDate = document.getElementById('editEndDate')?.value || null;
-    const status = document.getElementById('editStatus')?.value;
-    const verification = document.getElementById('editVerification')?.value;
-
-    if (!personalCode || !address || !type) {
-        alert('Заполните обязательные поля: личный код, адрес, тип');
-        return;
+    // Если статус архивный, но end_date не указан, ставим сегодня
+    if (status === 'archived' && !end_date) {
+        end_date = new Date().toISOString().split('T')[0];
     }
 
     const payload = {
-        personal_code: personalCode,
+        personal_code,
         type,
         address,
-        start_date: startDate,
-        end_date: endDate,
+        start_date,
+        end_date,
         status,
-        verification_status: verification
+        verification_status
     };
 
     let result;
@@ -325,11 +322,10 @@ document.getElementById('saveAddressBtn').addEventListener('click', async () => 
             .update(payload)
             .eq('id', currentAddressId);
     } else {
-        // Добавление (для админа — можно добавить любой адрес)
         result = await supabase
             .schema('addresses')
             .from('addresses')
-            .insert(payload);
+            .insert([payload]);
     }
 
     if (result.error) {
@@ -339,13 +335,15 @@ document.getElementById('saveAddressBtn').addEventListener('click', async () => 
         closeEditModal();
         loadAddresses();
     }
-});
+}
 
-// --- Архивация (при архивации ставим дату окончания = сегодня) ---
+document.getElementById('saveAddressBtn').addEventListener('click', saveAddress);
+
+// --- Архивирование ---
 async function archiveAddress(id) {
-    if (!confirm('Архивировать этот адрес? Будет установлена дата окончания — сегодня.')) return;
+    if (!confirm('Архивировать этот адрес? Дата окончания будет установлена на сегодня.')) return;
 
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().split('T')[0];
     const { error } = await supabase
         .schema('addresses')
         .from('addresses')
@@ -353,7 +351,7 @@ async function archiveAddress(id) {
         .eq('id', id);
 
     if (error) {
-        alert('Ошибка архивации: ' + error.message);
+        alert('Ошибка архивирования: ' + error.message);
     } else {
         loadAddresses();
     }
@@ -361,7 +359,7 @@ async function archiveAddress(id) {
 
 // --- Удаление ---
 async function deleteAddress(id) {
-    if (!confirm('Вы уверены, что хотите удалить этот адрес? Действие необратимо.')) return;
+    if (!confirm('Вы уверены, что хотите удалить этот адрес? Это действие необратимо.')) return;
 
     const { error } = await supabase
         .schema('addresses')
@@ -374,6 +372,17 @@ async function deleteAddress(id) {
     } else {
         loadAddresses();
     }
+}
+
+// --- Вспомогательные ---
+function escapeHTML(str) {
+    if (!str) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 
 // --- Инициализация ---
