@@ -14,7 +14,9 @@ let formData = {
     reasonDetails: null,
     newData: {},
     phone: '',
-    email: ''
+    email: '',
+    registrationAddress: '',
+    actualAddress: ''
 };
 let hasActiveApp = false;
 let isLostReason = false;
@@ -97,7 +99,7 @@ function renderMvdList() {
         radio.value = mvd.id;
         radio.id = `mvd-${mvd.id}`;
         radio.classList.add('mvd-radio');
-        
+
         const card = document.createElement('div');
         card.className = 'mvd-card';
         card.setAttribute('data-id', mvd.id);
@@ -106,74 +108,71 @@ function renderMvdList() {
             <p>${mvd.address}</p>
             <small>${mvd.working_hours || ''}</small>
         `;
-        
+
         card.addEventListener('click', () => {
             document.querySelectorAll('.mvd-card').forEach(el => el.classList.remove('selected'));
             card.classList.add('selected');
             radio.checked = true;
             selectedMvdId = mvd.id;
         });
-        
+
         container.appendChild(radio);
         container.appendChild(card);
     });
 }
 
-function updateSteps() {
-    // Можно реализовать индикаторы шагов
-}
-
 function getNextStep(step) {
     switch (step) {
-        case 1: return 2;
-        case 2: return 3;
+        case 1:
+            return 2;
+        case 2:
+            return 3;
         case 3:
-            if (isLostReason) return 3; // нельзя перейти дальше
-            return 4;
+            return isLostReason ? 3 : 4;
         case 4:
-            // После профиля: если причина требует новых данных, то шаг 5
             if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
                 return 5;
-            }
-            // Если причина требует свидетельства (first_14), то шаг 6
-            else if (formData.reason === 'first_14') {
-                return 6;
-            }
-            // Иначе сразу на контакты (шаг 7)
-            else {
-                return 7;
-            }
-        case 5:
-            // После новых данных: если причина name_changed, то нужен шаг 6, иначе сразу на контакты
-            if (formData.reason === 'name_changed') {
+            } else if (formData.reason === 'first_14') {
                 return 6;
             } else {
                 return 7;
             }
-        case 6: return 7;
-        case 7: return 8;
-        case 8: return 9;
-        case 9: return 10;
-        case 10: return 11;
-        default: return step + 1;
+        case 5:
+            return formData.reason === 'name_changed' ? 6 : 7;
+        case 6:
+            return 7;
+        case 7:
+            return 8;
+        case 8:
+            return 9;
+        case 9:
+            return 10;
+        case 10:
+            return 11;
+        case 11:
+            return 12;
+        default:
+            return step + 1;
     }
 }
 
 function getPrevStep(step) {
     switch (step) {
-        case 2: return 1;
-        case 3: return 2;
-        case 4: return 3;
-        case 5: return 4;
+        case 2:
+            return 1;
+        case 3:
+            return 2;
+        case 4:
+            return 3;
+        case 5:
+            return 4;
         case 6:
-            // С шага 6 назад: если были новые данные (name_changed, appearance, error), то на шаг 5, иначе на шаг 4
             if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
                 return 5;
             } else {
                 return 4;
             }
         case 7:
-            // С шага 7: если причина требовала свидетельства, то на шаг 6, если новых данных, то на шаг 5, иначе на шаг 4
             if (formData.reason === 'name_changed' || formData.reason === 'first_14') {
                 return 6;
             } else if (['name_changed', 'appearance', 'error'].includes(formData.reason)) {
@@ -181,51 +180,52 @@ function getPrevStep(step) {
             } else {
                 return 4;
             }
-        case 8: return 7;
-        case 9: return 8;
-        case 10: return 9;
-        case 11: return 10;
-        default: return step - 1;
+        case 8:
+            return 7;
+        case 9:
+            return 8;
+        case 10:
+            return 9;
+        case 11:
+            return 10;
+        case 12:
+            return 11;
+        default:
+            return step - 1;
     }
 }
 
 function goToStep(step) {
-    if (step < 1 || step > 11) return;
-    
+    if (step < 1 || step > 12) return;
+
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
     const targetStep = document.querySelector(`.step-content[data-step="${step}"]`);
     if (targetStep) targetStep.classList.remove('hidden');
     currentStep = step;
-    updateSteps();
 
-if (step === 3) {
-    const normalContent = document.getElementById('step3NormalContent');
-    const lostBlock = document.getElementById('lostMessage');
-    const nextBtn = document.getElementById('step3NextBtn');
-    if (isLostReason) {
-        normalContent.classList.add('hidden');
-        lostBlock.classList.remove('hidden');
-        nextBtn.disabled = true;
-    } else {
-        normalContent.classList.remove('hidden');
-        lostBlock.classList.add('hidden');
-        nextBtn.disabled = false;
+    if (step === 3) {
+        const normalContent = document.getElementById('step3NormalContent');
+        const lostBlock = document.getElementById('lostMessage');
+        const nextBtn = document.getElementById('step3NextBtn');
+        if (isLostReason) {
+            normalContent.classList.add('hidden');
+            lostBlock.classList.remove('hidden');
+            nextBtn.disabled = true;
+        } else {
+            normalContent.classList.remove('hidden');
+            lostBlock.classList.add('hidden');
+            nextBtn.disabled = false;
+        }
+
+        let price = 300;
+        if (formData.reason === 'lost' || formData.reason === 'damaged') {
+            price = 1500;
+        } else if (formData.reason === 'citizenship') {
+            price = 0;
+        }
+        const priceSpan = document.getElementById('priceDisplay');
+        priceSpan.textContent = price === 0 ? 'Бесплатно' : price + ' ₽';
     }
-    
-    // Установка цены в зависимости от причины
-    let price = 300;
-    if (formData.reason === 'lost' || formData.reason === 'damaged') {
-        price = 1500;
-    } else if (formData.reason === 'citizenship') {
-        price = 0;
-    }
-    const priceSpan = document.getElementById('priceDisplay');
-    if (price === 0) {
-        priceSpan.textContent = 'Бесплатно';
-    } else {
-        priceSpan.textContent = price + ' ₽';
-    }
-}
 
     if (step === 4) {
         renderProfileData();
@@ -239,55 +239,54 @@ if (step === 3) {
         document.getElementById('newBirthPlace').value = formData.newData.birth_place || '';
     }
 
-if (step === 6) {
-    // Управление отображением блоков в зависимости от причины
-    const birthStatic = document.getElementById('birthCertificateStatic');
-    const typeSelector = document.getElementById('certificateTypeSelector');
-    
-    if (formData.reason === 'first_14') {
-        // Для первичного получения – показываем статику, скрываем селект
-        birthStatic.classList.remove('hidden');
-        typeSelector.classList.add('hidden');
-        // Заголовок можно оставить общим или изменить
-    } else {
-        // Для name_changed – показываем селект, скрываем статику
-        birthStatic.classList.add('hidden');
-        typeSelector.classList.remove('hidden');
-    }
+    if (step === 6) {
+        const birthStatic = document.getElementById('birthCertificateStatic');
+        const typeSelector = document.getElementById('certificateTypeSelector');
 
-    // Заполняем поля, если уже были введены
-    if (formData.reasonDetails) {
-        document.getElementById('certificateNumber').value = formData.reasonDetails.number || '';
-        document.getElementById('certificateDate').value = formData.reasonDetails.date || '';
-        document.getElementById('certificateIssuedBy').value = formData.reasonDetails.issuedBy || '';
-        if (formData.reason === 'name_changed') {
-            document.getElementById('certificateType').value = formData.reasonDetails.type || 'marriage';
+        if (formData.reason === 'first_14') {
+            birthStatic.classList.remove('hidden');
+            typeSelector.classList.add('hidden');
+        } else {
+            birthStatic.classList.add('hidden');
+            typeSelector.classList.remove('hidden');
         }
-    } else {
-        // Очистка полей при первом входе
-        document.getElementById('certificateNumber').value = '';
-        document.getElementById('certificateDate').value = '';
-        document.getElementById('certificateIssuedBy').value = '';
-        if (formData.reason === 'name_changed') {
-            document.getElementById('certificateType').value = 'marriage';
+
+        if (formData.reasonDetails) {
+            document.getElementById('certificateNumber').value = formData.reasonDetails.number || '';
+            document.getElementById('certificateDate').value = formData.reasonDetails.date || '';
+            document.getElementById('certificateIssuedBy').value = formData.reasonDetails.issuedBy || '';
+            if (formData.reason === 'name_changed') {
+                document.getElementById('certificateType').value = formData.reasonDetails.type || 'marriage';
+            }
+        } else {
+            document.getElementById('certificateNumber').value = '';
+            document.getElementById('certificateDate').value = '';
+            document.getElementById('certificateIssuedBy').value = '';
+            if (formData.reason === 'name_changed') {
+                document.getElementById('certificateType').value = 'marriage';
+            }
         }
     }
-}
 
     if (step === 7) {
+        document.getElementById('registration_address').value = formData.registrationAddress || '';
+        document.getElementById('actual_address').value = formData.actualAddress || '';
+    }
+
+    if (step === 8) {
         document.getElementById('phone').value = formData.phone;
         document.getElementById('email').value = formData.email;
     }
 
-    if (step === 8) {
-        const step8Next = document.getElementById('step8NextBtn');
-        step8Next.disabled = !photoPath;
+    if (step === 9) {
+        const nextBtn = document.getElementById('step9NextBtn');
+        nextBtn.disabled = !photoPath;
         if (photoPath) {
             document.getElementById('fileList').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> Фото загружено';
         }
     }
 
-    if (step === 10) {
+    if (step === 11) {
         prepareSummary();
     }
 }
@@ -323,35 +322,44 @@ async function validateStep(step) {
             }
             break;
         }
-case 6: {
-    const certNumber = document.getElementById('certificateNumber').value.trim();
-    const certDate = document.getElementById('certificateDate').value;
-    const certIssued = document.getElementById('certificateIssuedBy').value.trim();
-    
-    if (!certNumber || !certDate || !certIssued) {
-        showError('Заполните все поля свидетельства');
-        return false;
-    }
-    
-    // Сохраняем данные в зависимости от причины
-    if (formData.reason === 'first_14') {
-        formData.reasonDetails = {
-            type: 'birth_certificate',
-            number: certNumber,
-            date: certDate,
-            issuedBy: certIssued
-        };
-    } else if (formData.reason === 'name_changed') {
-        formData.reasonDetails = {
-            type: document.getElementById('certificateType').value,
-            number: certNumber,
-            date: certDate,
-            issuedBy: certIssued
-        };
-    }
-    break;
-}
+        case 6: {
+            const certNumber = document.getElementById('certificateNumber').value.trim();
+            const certDate = document.getElementById('certificateDate').value;
+            const certIssued = document.getElementById('certificateIssuedBy').value.trim();
+
+            if (!certNumber || !certDate || !certIssued) {
+                showError('Заполните все поля свидетельства');
+                return false;
+            }
+
+            if (formData.reason === 'first_14') {
+                formData.reasonDetails = {
+                    type: 'birth_certificate',
+                    number: certNumber,
+                    date: certDate,
+                    issuedBy: certIssued
+                };
+            } else if (formData.reason === 'name_changed') {
+                formData.reasonDetails = {
+                    type: document.getElementById('certificateType').value,
+                    number: certNumber,
+                    date: certDate,
+                    issuedBy: certIssued
+                };
+            }
+            break;
+        }
         case 7: {
+            const regAddr = document.getElementById('registration_address').value.trim();
+            if (!regAddr) {
+                showError('Введите адрес постоянной регистрации');
+                return false;
+            }
+            formData.registrationAddress = regAddr;
+            formData.actualAddress = document.getElementById('actual_address').value.trim() || regAddr;
+            break;
+        }
+        case 8: {
             const phone = document.getElementById('phone').value.trim();
             const email = document.getElementById('email').value.trim();
             if (!phone || !email) {
@@ -362,14 +370,14 @@ case 6: {
             formData.email = email;
             break;
         }
-        case 8: {
+        case 9: {
             if (!photoPath) {
                 showError('Сначала загрузите фото');
                 return false;
             }
             break;
         }
-        case 9: {
+        case 10: {
             if (!selectedMvdId) {
                 showError('Выберите отделение МВД');
                 return false;
@@ -453,22 +461,31 @@ function prepareSummary() {
     const reasonText = document.querySelector('input[name="reason"]:checked')?.parentElement?.textContent?.trim() || formData.reason;
     html += `<tr><th>Причина</th><td>${reasonText}</td></tr>`;
     if (formData.reasonDetails) {
-        html += `<tr><th>Данные свидетельства</th><td>${formData.reasonDetails.type}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}</td></tr>`;
+        let typeLabel = formData.reasonDetails.type;
+        if (typeLabel === 'birth_certificate') typeLabel = 'Свидетельство о рождении';
+        else if (typeLabel === 'marriage') typeLabel = 'Свидетельство о браке';
+        else if (typeLabel === 'divorce') typeLabel = 'Свидетельство о разводе';
+        else if (typeLabel === 'name_change') typeLabel = 'Свидетельство о перемене имени';
+        html += `<tr><th>Данные свидетельства</th><td>${typeLabel}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}</td></tr>`;
     }
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code}</td></tr>`;
     html += `<tr><th>ФИО (текущее)</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
 
     if (Object.values(formData.newData).some(v => v)) {
         html += `<tr><th>Новые данные</th><td>`;
-        if (formData.newData.surname || formData.newData.name || formData.newData.patronymic) 
+        if (formData.newData.surname || formData.newData.name || formData.newData.patronymic)
             html += `ФИО: ${formData.newData.surname} ${formData.newData.name} ${formData.newData.patronymic}<br>`;
-        if (formData.newData.birth_date) 
+        if (formData.newData.birth_date)
             html += `Дата рождения: ${new Date(formData.newData.birth_date).toLocaleDateString('ru-RU')}<br>`;
-        if (formData.newData.birth_place) 
+        if (formData.newData.birth_place)
             html += `Место рождения: ${formData.newData.birth_place}`;
         html += `</td></tr>`;
     }
 
+    html += `<tr><th>Адрес регистрации</th><td>${formData.registrationAddress}</td></tr>`;
+    if (formData.actualAddress && formData.actualAddress !== formData.registrationAddress) {
+        html += `<tr><th>Фактический адрес</th><td>${formData.actualAddress}</td></tr>`;
+    }
     html += `<tr><th>Телефон</th><td>${formData.phone}</td></tr>`;
     html += `<tr><th>Email</th><td>${formData.email}</td></tr>`;
     const mvdName = mvdList.find(m => m.id === selectedMvdId)?.name || '—';
@@ -500,12 +517,13 @@ async function generatePDF() {
         ['ФИО', `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`],
         ['Дата рождения', new Date(userProfile.date_of_birth).toLocaleDateString('ru-RU')],
         ['Место рождения', userProfile.place_of_birth || '—'],
+        ['Адрес регистрации', formData.registrationAddress],
+        ['Фактический адрес', formData.actualAddress || formData.registrationAddress],
         ['Телефон', formData.phone],
         ['Email', formData.email],
         ['Отделение МВД', mvdList.find(m => m.id === selectedMvdId)?.name || '—'],
     ];
 
-    // Данные свидетельства (если есть)
     if (formData.reasonDetails) {
         let certTypeText = '';
         if (formData.reasonDetails.type === 'birth_certificate') {
@@ -522,14 +540,13 @@ async function generatePDF() {
         data.push(['Данные свидетельства', `${certTypeText}, №${formData.reasonDetails.number} от ${formData.reasonDetails.date}, ${formData.reasonDetails.issuedBy}`]);
     }
 
-    // Новые данные (если есть)
     if (Object.values(formData.newData).some(v => v)) {
         let newDataStr = '';
-        if (formData.newData.surname || formData.newData.name || formData.newData.patronymic) 
+        if (formData.newData.surname || formData.newData.name || formData.newData.patronymic)
             newDataStr += `ФИО: ${formData.newData.surname} ${formData.newData.name} ${formData.newData.patronymic}\n`;
-        if (formData.newData.birth_date) 
+        if (formData.newData.birth_date)
             newDataStr += `Дата рождения: ${new Date(formData.newData.birth_date).toLocaleDateString('ru-RU')}\n`;
-        if (formData.newData.birth_place) 
+        if (formData.newData.birth_place)
             newDataStr += `Место рождения: ${formData.newData.birth_place}`;
         if (newDataStr) data.push(['Новые данные', newDataStr]);
     }
@@ -539,7 +556,7 @@ async function generatePDF() {
         head: [data[0]],
         body: data.slice(1),
         theme: 'grid',
-        styles: { fontSize: 10, font: 'PT Sans' }, // замените на 'PT Sans' если подключили
+        styles: { fontSize: 10 },
         headStyles: { fillColor: [123, 9, 26] }
     });
 
@@ -581,6 +598,8 @@ async function submitApplication() {
             gender: userProfile.gender
         },
         new_personal_data: formData.newData,
+        registration_address: formData.registrationAddress,
+        actual_address: formData.actualAddress || formData.registrationAddress,
         phone: formData.phone,
         email: formData.email,
         mvd_id: selectedMvdId,
@@ -634,6 +653,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     } else {
         activeWarning.classList.add('hidden');
         formContainer.classList.remove('hidden');
+        formContainer.classList.add('loaded');
     }
 
     try {
@@ -667,18 +687,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    // Автозагрузка при выборе файла
     fileInput.addEventListener('change', async () => {
         if (!fileInput.files.length) return;
-        const step8Next = document.getElementById('step8NextBtn');
-        step8Next.disabled = true;
+        const nextBtn = document.getElementById('step9NextBtn');
+        nextBtn.disabled = true;
         const success = await uploadPhoto(fileInput.files[0]);
         if (success) {
-            step8Next.disabled = false;
+            nextBtn.disabled = false;
         }
     });
 
-    // Выделение выбранной причины
     document.querySelectorAll('input[name="reason"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             document.querySelectorAll('.radio-group label').forEach(label => label.classList.remove('selected'));
@@ -694,27 +712,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         isLostReason = (checkedRadio.value === 'lost');
     }
 
-    // Обработчики навигации
     document.querySelectorAll('.next-step').forEach(btn => {
         btn.addEventListener('click', async () => {
             if (await validateStep(currentStep)) {
                 if (currentStep === 3 && isLostReason) return;
-                
-if (currentStep === 3) {
-    let price = 300;
-    if (formData.reason === 'lost' || formData.reason === 'damaged') {
-        price = 1500;
-    } else if (formData.reason === 'citizenship') {
-        price = 0;
-    }
-    const priceSpan = document.getElementById('priceDisplay');
-    if (price === 0) {
-        priceSpan.textContent = 'Бесплатно';
-    } else {
-        priceSpan.textContent = price + ' ₽';
-    }
-}
-                
                 const next = getNextStep(currentStep);
                 goToStep(next);
             }
@@ -728,22 +729,21 @@ if (currentStep === 3) {
         });
     });
 
-    // Отправка заявления
     document.getElementById('submitApplication').addEventListener('click', async () => {
         const btn = document.getElementById('submitApplication');
         btn.disabled = true;
         btn.textContent = 'Отправка...';
-        
+
         await generatePDF();
         const success = await submitApplication();
-        
+
         btn.disabled = false;
         btn.textContent = 'Отправить заявление';
-        
+
         if (success) {
             document.getElementById('applicationNumber').textContent = applicationNumber;
             document.getElementById('gotoServiceLink').href = `../../../personal-profile/services/service-view.html?id=${applicationNumber}`;
-            goToStep(11);
+            goToStep(12);
         }
     });
 
