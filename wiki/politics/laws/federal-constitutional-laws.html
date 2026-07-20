@@ -1,9 +1,9 @@
-<!-- federal-constitutional-laws.html — Публичная страница ФКЗ с приложениями (ИСПРАВЛЕННАЯ) -->
+<!-- federal-constitutional-laws.html — Публичная страница ФКЗ с приложениями (полностью рабочая) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Федеральные конституционные законы СФСРЮ</title>
     <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
@@ -19,31 +19,49 @@
     <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
     <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
-    <meta name="application-name" content="&nbsp;"/>
+    <meta name="application-name" content="&nbsp;" />
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
-    <link rel="stylesheet" href="../../../css/style.css">
-    <link rel="stylesheet" href="../../../css/laws.css">
-    <link rel="stylesheet" href="../../../css/decrees.css">
+    <link rel="stylesheet" href="../../../css/style.css" />
+    <link rel="stylesheet" href="../../../css/laws.css" />
+    <link rel="stylesheet" href="../../../css/decrees.css" />
     <style>
         .year-filter-wrapper {
-            max-width: 1000px; margin: 0 auto 20px; padding: 0 20px;
-            display: flex; align-items: center; gap: 10px; justify-content: center;
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            justify-content: center;
         }
         #year-filter {
-            padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px;
-            background: #fff; font-size: 0.95rem; cursor: pointer;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: #fff;
+            font-size: 0.95rem;
+            cursor: pointer;
         }
         .law-btn.archived {
             opacity: 0.65;
             background: rgba(240, 240, 240, 0.7) !important;
         }
         .badge-repealed {
-            position: absolute; top: 12px; right: 12px;
-            background: #c00; color: #fff; font-size: 0.7rem; font-weight: 700;
-            padding: 4px 8px; border-radius: 6px; z-index: 10;
-            pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: #c00;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            z-index: 10;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
         }
         .editions-selector {
             margin: 15px 0;
@@ -63,7 +81,7 @@
             background: #f9f9f9;
             border-radius: 16px;
             max-width: 794px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         }
         .appendixes-block h3 {
             margin-top: 0;
@@ -125,11 +143,10 @@
     </style>
 </head>
 <body>
-    <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
-                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
                 <h1>СФСРЮ</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
@@ -150,7 +167,6 @@
         </div>
     </header>
 
-    <!-- Основной контент -->
     <div class="main-content">
         <div class="laws-intro">
             <h1 id="page-title">Федеральные конституционные законы СФСРЮ — 2026 год</h1>
@@ -160,13 +176,11 @@
             </div>
         </div>
 
-        <!-- Фильтр по году -->
         <div id="yearFilterWrapper" style="width: 85%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; gap: 10px; padding: 0 15px; box-sizing: border-box;">
             <label for="year-filter" style="color:#555; font-size:0.95rem;">Год:</label>
             <select id="year-filter" style="padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px; background: #fff; font-size: 0.95rem; cursor: pointer;"></select>
         </div>
 
-        <!-- Сетка карточек -->
         <div id="laws-grid" class="decrees-grid"></div>
 
         <!-- Просмотрщик PDF -->
@@ -206,7 +220,6 @@
         </div>
     </div>
 
-    <!-- Подвал -->
     <footer class="footer">
         <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
@@ -222,7 +235,7 @@
 
         const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-        
+
         const DEFAULT_BUCKET = 'laws-files-fcl1';
         const DEFAULT_PATH = 'fcl/';
         const DEFAULT_APPENDIX_PATH = 'fcl/appendixes/';
@@ -241,6 +254,7 @@
             db: { schema: TABLE_SCHEMA }
         });
 
+        // DOM-элементы
         const els = {
             grid: document.getElementById('laws-grid'),
             viewer: document.getElementById('pdf-viewer'),
@@ -305,7 +319,7 @@
             if (!els.yearFilter) return;
             const years = [...new Set(allLaws.map(l => l.year))].sort((a, b) => b - a);
             const currentYear = new Date().getFullYear();
-            els.yearFilter.innerHTML = years.map(y => 
+            els.yearFilter.innerHTML = years.map(y =>
                 `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`
             ).join('');
             if (years.length && !years.includes(currentYear)) els.yearFilter.value = years[0];
@@ -317,7 +331,7 @@
                 const year = parseInt(selectedYear);
                 const list = allLaws.filter(l => l.year === year);
                 els.grid.innerHTML = '';
-                
+
                 if (!list.length) {
                     els.grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">В ${year} году федеральные конституционные законы не найдены.</p>`;
                     return;
@@ -354,7 +368,7 @@
                 return;
             }
             currentLaw = law;
-            
+
             // Загружаем редакции
             const extraEditions = await fetchEditionsForLaw(law.id);
             const editionsList = [];
@@ -378,13 +392,13 @@
                     title: `Редакция от ${fmt(ed.date_issued)}` + (ed.is_current ? ' (действующая)' : '')
                 });
             }
-            editionsList.sort((a,b) => new Date(b.date_issued) - new Date(a.date_issued));
+            editionsList.sort((a, b) => new Date(b.date_issued) - new Date(a.date_issued));
             currentEditions = editionsList;
-            
+
             let currentEdition = editionsList.find(e => e.is_current === true);
             if (!currentEdition) currentEdition = editionsList.find(e => e.id === 'original');
             currentEditionId = currentEdition.id;
-            
+
             els.editionSelect.innerHTML = '';
             for (let ed of editionsList) {
                 const option = document.createElement('option');
@@ -394,23 +408,18 @@
                 els.editionSelect.appendChild(option);
             }
             els.editionsSelector.style.display = editionsList.length > 1 ? 'block' : 'none';
-            
+
             // Загружаем приложения
             const apps = await fetchAppendixesForLaw(law.id);
             currentAppendixes = apps;
-            
+
             els.title.textContent = `Федеральный конституционный закон №${law.number} «${law.title}» (${law.year} год)`;
             await loadPDFForEdition(currentEdition);
-            
-            // Показываем приложения после загрузки PDF или сразу, если PDF уже загружен?
-            // Мы вызовем renderAppendixes внутри loadPDFForEdition после отображения PDF.
-            // Но показываем блок приложений после того, как PDF загружен.
-            // Для этого передадим колбэк или вызовем после.
         }
 
         function renderAppendixes(apps) {
             if (!els.appendixеsList) {
-                console.error('Элемент appendixes-list не найден');
+                console.error('Элемент #appendixes-list не найден');
                 return;
             }
             const container = els.appendixеsList;
@@ -434,7 +443,7 @@
                 `;
                 container.appendChild(div);
             });
-            // Обработчики для кнопок скачивания приложений
+            // Обработчики для кнопок скачивания
             container.querySelectorAll('.appendix-download').forEach(btn => {
                 btn.addEventListener('click', async function() {
                     const bucket = this.dataset.bucket;
@@ -467,10 +476,10 @@
             if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none';
             // Скрываем блок приложений до загрузки
             if (els.appendixеsBlock) els.appendixеsBlock.style.display = 'none';
-            
+
             const bucket = edition.bucket_name;
             const filePath = `${edition.bucket_path}${edition.file_name}.pdf`;
-            
+
             try {
                 const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 3600);
                 if (error || !data?.signedUrl) throw new Error(error?.message || 'Файл не найден');
@@ -478,20 +487,21 @@
                 els.frame.src = cleanUrl;
                 els.download.href = data.signedUrl;
                 els.fallback.href = data.signedUrl;
-                
-                els.frame.onload = () => { 
-                    els.loader.style.display = 'none'; 
+
+                els.frame.onload = function() {
+                    els.loader.style.display = 'none';
                     els.container.style.display = 'block';
                     // После загрузки PDF показываем приложения
                     renderAppendixes(currentAppendixes);
                 };
-                setTimeout(() => { 
-                    if (els.loader.style.display !== 'none') { 
-                        els.loader.style.display = 'none'; 
+                // Таймаут на случай, если onload не сработает
+                setTimeout(function() {
+                    if (els.loader.style.display !== 'none') {
+                        els.loader.style.display = 'none';
                         els.container.style.display = 'block';
                         renderAppendixes(currentAppendixes);
-                    } 
-                }, 3000);
+                    }
+                }, 5000);
             } catch (err) {
                 els.loader.style.display = 'none';
                 els.error.style.display = 'block';
@@ -500,7 +510,7 @@
                 renderAppendixes(currentAppendixes);
             }
         }
-        
+
         function onEditionChange() {
             const selectedId = els.editionSelect.value;
             const edition = currentEditions.find(e => e.id == selectedId);
@@ -509,11 +519,11 @@
                 loadPDFForEdition(edition);
             }
         }
-        
+
         function route() {
             const params = new URLSearchParams(window.location.search);
             const lawId = params.get('law');
-            
+
             if (lawId) {
                 loadLaw(lawId);
             } else {
@@ -521,41 +531,46 @@
                 els.grid.style.display = 'flex';
                 if (els.intro) els.intro.style.display = 'block';
                 if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'flex';
-                
+
                 const currentYear = els.yearFilter ? els.yearFilter.value : 2026;
                 els.title.textContent = `Федеральные конституционные законы СФСРЮ — ${currentYear} год`;
                 renderGrid(currentYear);
             }
         }
 
+        // События
         if (els.yearFilter) {
-            els.yearFilter.addEventListener('change', () => {
-                const selected = els.yearFilter.value;
+            els.yearFilter.addEventListener('change', function() {
+                const selected = this.value;
                 els.title.textContent = `Федеральные конституционные законы СФСРЮ — ${selected} год`;
                 renderGrid(selected);
             });
         }
 
         if (els.btnBack) {
-            els.btnBack.addEventListener('click', e => {
+            els.btnBack.addEventListener('click', function(e) {
                 e.preventDefault();
                 window.history.pushState({}, '', window.location.pathname);
                 route();
             });
         }
-        
+
         if (els.editionSelect) {
             els.editionSelect.addEventListener('change', onEditionChange);
         }
 
         window.addEventListener('popstate', route);
-        window.addEventListener('DOMContentLoaded', async () => {
+
+        // Инициализация
+        window.addEventListener('DOMContentLoaded', async function() {
             try {
                 await fetchAllLaws();
                 populateYearFilter();
                 route();
             } catch (err) {
-                els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+                if (els.grid) {
+                    els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+                }
             }
         });
     })();
