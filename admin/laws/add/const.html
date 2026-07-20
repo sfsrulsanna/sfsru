@@ -1,4 +1,4 @@
-<!-- admin-constitution.html — полностью исправленная версия с проверкой ошибок, как в fl.html -->
+<!-- admin-constitution.html — полностью исправленная версия с безопасными именами файлов (только латиница и цифры) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -209,10 +209,12 @@
             setTimeout(() => constitutionMsg.textContent = '', 3000);
         }
 
-        function generateUniqueFilename(prefix, extension = 'pdf') {
+        // Генерируем имя файла ТОЛЬКО из латиницы, цифр и дефисов
+        function generateSafeFilename(prefix, extension = 'pdf') {
             const ts = Date.now();
             const rand = Math.random().toString(36).substring(2, 8);
-            return `${prefix}-${ts}-${rand}.${extension}`;
+            const safePrefix = prefix.replace(/[^a-zA-Z0-9-]/g, '');
+            return `${safePrefix}-${ts}-${rand}.${extension}`;
         }
 
         function normalizePath(p) {
@@ -348,15 +350,16 @@
                     const old = allConstitutions.find(c => c.id == currentEditConstitutionId);
                     const updates = { title, year, original_date: origDate, is_active: isActive, sort_order: sortOrder, original_bucket: bucket, original_bucket_path: path };
                     if (file) {
-                        const newName = 'constitution-original-' + generateUniqueFilename(Date.now() + '-' + title.replace(/\s/g,''), 'pdf').replace('.pdf', '');
-                        const fullPath = path + newName + '.pdf';
+                        // Безопасное имя файла — только латиница, цифры, дефис
+                        const safeName = generateSafeFilename('constitution-original', 'pdf').replace('.pdf', '');
+                        const fullPath = path + safeName + '.pdf';
                         if (old.original_file_name) {
                             await supabase.storage.from(old.original_bucket || DEFAULT_BUCKET)
                                 .remove([normalizePath(old.original_bucket_path || DEFAULT_PATH) + old.original_file_name + '.pdf']);
                         }
                         const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
                         if (uploadError) throw new Error('Ошибка загрузки PDF: ' + uploadError.message);
-                        updates.original_file_name = newName;
+                        updates.original_file_name = safeName;
                     } else {
                         updates.original_file_name = old.original_file_name;
                     }
@@ -365,8 +368,8 @@
                     showConstitutionMsg('Конституция обновлена', false);
                 } else {
                     if (!file) throw new Error('Загрузите PDF исходной редакции');
-                    const newName = 'constitution-original-' + generateUniqueFilename(Date.now() + '-' + title.replace(/\s/g,''), 'pdf').replace('.pdf', '');
-                    const fullPath = path + newName + '.pdf';
+                    const safeName = generateSafeFilename('constitution-original', 'pdf').replace('.pdf', '');
+                    const fullPath = path + safeName + '.pdf';
                     const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
                     if (uploadError) throw new Error('Ошибка загрузки PDF в бакет: ' + uploadError.message);
 
@@ -379,7 +382,7 @@
                         title, year, original_date: origDate,
                         is_active: isActive, sort_order: sortOrder,
                         original_bucket: bucket, original_bucket_path: path,
-                        original_file_name: newName
+                        original_file_name: safeName
                     });
                     if (insertError) throw new Error('Ошибка создания записи в БД: ' + insertError.message);
                     showConstitutionMsg('Конституция создана', false);
@@ -449,9 +452,8 @@
             let path = normalizePath(editionPath.value.trim() || DEFAULT_PATH);
             const constObj = allConstitutions.find(c => c.id == constId);
             if (!constObj) { alert('Конституция не найдена'); return; }
-            const prefix = `constitution-edition-${constId}-${date.replace(/-/g, '')}`;
-            const uniqueName = generateUniqueFilename(prefix, 'pdf').replace('.pdf', '');
-            const fullPath = path + uniqueName + '.pdf';
+            const safeName = generateSafeFilename('constitution-edition', 'pdf').replace('.pdf', '');
+            const fullPath = path + safeName + '.pdf';
             try {
                 const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
                 if (uploadError) throw new Error('Ошибка загрузки PDF: ' + uploadError.message);
@@ -463,7 +465,7 @@
                 const { error: insertError } = await supabase.from(EDITIONS_TABLE).insert({
                     constitution_id: constId,
                     date_adopted: date,
-                    file_name: uniqueName,
+                    file_name: safeName,
                     bucket_name: bucket,
                     bucket_path: path,
                     is_current: isCurr
