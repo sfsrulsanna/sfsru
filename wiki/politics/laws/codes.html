@@ -1,112 +1,187 @@
+<!-- codes.html — Публичная страница кодексов СФСРЮ -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Кодексы СФСРЮ</title>
-<link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
-<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
-<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
-<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
-<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
-<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
-<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
-<link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
-<meta name="application-name" content="&nbsp;"/>
-<meta name="msapplication-TileColor" content="#FFFFFF" />
-<meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
-<meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
-<meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
-<meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
-<meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
-    <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/laws.css">
+    <!-- favicons (скопированы из предыдущих страниц) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../../css/style.css">
+    <link rel="stylesheet" href="../../../css/laws.css">
+    <link rel="stylesheet" href="../../../css/decrees.css">
+    <style>
+        /* Дополнительные стили для фильтра статуса */
+        .status-filter-wrapper {
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .status-filter-wrapper .filter-btn {
+            padding: 8px 24px;
+            border: 2px solid #a00;
+            border-radius: 30px;
+            background: transparent;
+            color: #a00;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+        .status-filter-wrapper .filter-btn:hover {
+            background: #a00;
+            color: #fff;
+        }
+        .status-filter-wrapper .filter-btn.active {
+            background: #a00;
+            color: #fff;
+        }
+        .law-btn.archived {
+            opacity: 0.65;
+            background: rgba(240, 240, 240, 0.7) !important;
+        }
+        .badge-repealed {
+            position: absolute; top: 12px; right: 12px;
+            background: #c00; color: #fff; font-size: 0.7rem; font-weight: 700;
+            padding: 4px 8px; border-radius: 6px; z-index: 10;
+            pointer-events: none; text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .editions-selector {
+            margin: 15px 0;
+            text-align: center;
+        }
+        .editions-selector select {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: #fff;
+            font-size: 0.9rem;
+            margin-left: 10px;
+        }
+        /* Поиск */
+        .search-wrapper {
+            max-width: 1000px;
+            margin: 0 auto 20px;
+            padding: 0 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .search-wrapper input {
+            width: 100%;
+            max-width: 500px;
+            padding: 10px 16px;
+            border: 1px solid #ccc;
+            border-radius: 30px;
+            font-size: 0.95rem;
+            outline: none;
+        }
+        .search-wrapper input:focus {
+            border-color: #a00;
+            box-shadow: 0 0 0 2px rgba(170,0,0,0.2);
+        }
+    </style>
 </head>
 <body>
     <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
-                <img src="../images/gerb.png" alt="Герб СФСРЮ">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
                 <h1>СФСРЮ</h1>
             </div>
-            
-            <!-- Кнопка гамбургер -->
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
                 <span class="menu-toggle-line"></span>
                 <span class="menu-toggle-line"></span>
             </button>
-            
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная</a></li>
-                    <li><a href="../news.html">Новости</a></li>
-                    <li><a href="../wiki/" class="active">Википедия</a></li>
-                    <li><a href="../healthcare.html">Здравоохранение</a></li>
-                    <li><a href="../services.html">Услуги</a></li>
-                    <li><a href="../profile.html">Личный кабинет</a></li>
+                    <li><a href="../../../index.html">Главная</a></li>
+                    <li><a href="../../../news.html">Новости</a></li>
+                    <li><a href="../../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../../services.html">Услуги</a></li>
+                    <li><a href="../../../profile.html">Личный кабинет</a></li>
                 </ul>
             </nav>
         </div>
     </header>
 
     <!-- Основной контент -->
-    <main class="main-content">
+    <div class="main-content">
         <div class="laws-intro">
-            <h1>Кодексы СФСРЮ</h1>
-            <p>
-                Кодексы Советской Федеративной Социалистической Республики Юльсанна —
-                систематизированные законодательные акты, объединяющие нормы права, регулирующие целые отрасли.
-                Ниже представлены основные кодексы, действующие на территории республики.
+            <h1 id="page-title">Кодексы СФСРЮ</h1>
+            <div id="meta-info" style="color:#777; font-size:0.9rem; margin-bottom:15px;"></div>
+            <div id="codes-intro-text">
+                <p>Кодексы являются систематизированными законодательными актами, объединяющими нормы, регулирующие определённые сферы общественных отношений.</p>
+            </div>
+        </div>
+
+        <!-- Поиск -->
+        <div class="search-wrapper">
+            <input type="text" id="search-codes" placeholder="Поиск кодексов по номеру или названию...">
+        </div>
+
+        <!-- Фильтр по статусу -->
+        <div class="status-filter-wrapper">
+            <button class="filter-btn active" data-status="all">Все</button>
+            <button class="filter-btn" data-status="active">Действующие</button>
+            <button class="filter-btn" data-status="inactive">Утратили силу</button>
+        </div>
+
+        <!-- Сетка карточек -->
+        <div id="codes-grid" class="decrees-grid"></div>
+
+        <!-- Просмотрщик PDF -->
+        <div id="pdf-viewer" style="display:none; width: 85%; margin: 20px auto; padding: 0 15px; box-sizing: border-box;">
+            <div style="margin:15px 0; display:flex; justify-content: center; flex-wrap:wrap; gap:10px;">
+                <button id="btn-back" class="law-btn" style="padding:0.8rem 1.2rem; min-height:auto; font-size:0.95rem; width:auto; flex:none;">
+                    ◀ Вернуться к списку кодексов
+                </button>
+                <div class="editions-selector" id="editionsSelector" style="display:none;">
+                    <label>Редакция:</label>
+                    <select id="edition-select"></select>
+                </div>
+            </div>
+            <div id="pdf-loader" class="loader" style="text-align:center; padding:40px; display:none;">
+                <div class="spinner" style="border:4px solid #f3f3f3; border-top:4px solid #a00; border-radius:50%; width:32px; height:32px; animation:spin 1s linear infinite; margin:0 auto 10px;"></div>
+                Загрузка документа...
+                <style>@keyframes spin{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}</style>
+            </div>
+            <div id="pdf-container" style="width: 100%; max-width: 794px; height: 1123px; margin: 0 auto; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: none; box-shadow: 0 4px 12px rgba(0,0,0,0.15); overflow: hidden;">
+                <iframe id="pdf-frame" src="" title="Просмотр кодекса" style="width:100%; height:100%; border:none;"></iframe>
+            </div>
+            <div id="pdf-error" class="error-msg" style="color:#c00; background:#ffebee; padding:12px 16px; border-radius:8px; margin:12px 0; display:none; border-left:4px solid #c00;"></div>
+            <p style="margin-top:15px; color:#666; font-size:0.9rem; text-align:center;">
+                Если PDF не отображается в браузере, <a id="fallback-link" href="#" target="_blank" style="color:#0056b3; font-weight:500;">скачайте файл напрямую</a>
             </p>
-        </div>
-
-        <div class="laws-categories">
-            <!-- Первая строка: первые три кодекса -->
-            <div class="law-row">
-                <a href="codes/criminal.html" class="law-btn">
-                    <span class="law-icon">⚖️</span>
-                    <h3>Уголовный кодекс</h3>
-                    <p>Уголовный кодекс СФСРЮ</p>
-                </a>
-                <a href="codes/civil.html" class="law-btn">
-                    <span class="law-icon">📄</span>
-                    <h3>Гражданский кодекс</h3>
-                    <p>Гражданский кодекс СФСРЮ</p>
-                </a>
-                <a href="codes/family.html" class="law-btn">
-                    <span class="law-icon">👪</span>
-                    <h3>Семейный кодекс</h3>
-                    <p>Семейный кодекс СФСРЮ</p>
-                </a>
-            </div>
-
-            <!-- Вторая строка: следующие три кодекса -->
-            <div class="law-row">
-                <a href="codes/labor.html" class="law-btn">
-                    <span class="law-icon">💼</span>
-                    <h3>Трудовой кодекс</h3>
-                    <p>Трудовой кодекс СФСРЮ</p>
-                </a>
-                <a href="codes/tax.html" class="law-btn">
-                    <span class="law-icon">💰</span>
-                    <h3>Налоговый кодекс</h3>
-                    <p>Налоговый кодекс СФСРЮ</p>
-                </a>
-                <a href="codes/administrative.html" class="law-btn">
-                    <span class="law-icon">🚔</span>
-                    <h3>Кодекс об административных правонарушениях</h3>
-                    <p>КоАП СФСРЮ</p>
+            <div style="text-align:center; margin-top:10px;">
+                <a id="pdf-download" href="#" target="_blank" class="law-btn" style="display:inline-flex; padding:0.7rem 1.4rem; min-height:auto; width:auto; flex:none; font-size:0.95rem;">
+                    ⬇️ Скачать PDF
                 </a>
             </div>
         </div>
-    </main>
+    </div>
 
     <!-- Подвал -->
     <footer class="footer">
@@ -114,8 +189,296 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <script src="../../js/firebase-config.js"></script>
-    <script src="../../js/main.js"></script>
-    <script src="../../js/mob-menu.js"></script>
+    <script src="../../../js/mob-menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
+            onerror="this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'">
+    </script>
+    <script>
+    (function() {
+        'use strict';
+
+        // ------ Конфигурация ------
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        
+        const DEFAULT_BUCKET = 'codes-files-c1';
+        const DEFAULT_PATH = 'codes/';
+        const CODES_TABLE = 'codes';
+        const EDITIONS_TABLE = 'code_editions';
+        const TABLE_SCHEMA = 'laws';
+
+        if (!window.supabase || typeof window.supabase.createClient !== 'function') {
+            const g = document.getElementById('codes-grid');
+            if (g) g.innerHTML = '<p style="color:#c00;text-align:center;">⚠️ Библиотека Supabase не загрузилась.</p>';
+            return;
+        }
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            db: { schema: TABLE_SCHEMA }
+        });
+
+        const els = {
+            grid: document.getElementById('codes-grid'),
+            viewer: document.getElementById('pdf-viewer'),
+            loader: document.getElementById('pdf-loader'),
+            container: document.getElementById('pdf-container'),
+            frame: document.getElementById('pdf-frame'),
+            error: document.getElementById('pdf-error'),
+            title: document.getElementById('page-title'),
+            meta: document.getElementById('meta-info'),
+            btnBack: document.getElementById('btn-back'),
+            download: document.getElementById('pdf-download'),
+            fallback: document.getElementById('fallback-link'),
+            intro: document.getElementById('codes-intro-text'),
+            search: document.getElementById('search-codes'),
+            editionsSelector: document.getElementById('editionsSelector'),
+            editionSelect: document.getElementById('edition-select'),
+            filterBtns: document.querySelectorAll('.filter-btn')
+        };
+
+        let allCodes = [];
+        let editionsMap = {};
+        let currentCode = null;
+        let currentEditions = [];
+        let currentEditionId = null;
+
+        // Текущий фильтр
+        let currentStatusFilter = 'all'; // 'all', 'active', 'inactive'
+        let searchTerm = '';
+
+        const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
+
+        // ------ Загрузка данных ------
+        async function fetchAllCodes() {
+            const { data, error } = await supabase.from(CODES_TABLE).select('*').order('sort_order', { ascending: true });
+            if (error) throw new Error('Ошибка БД: ' + error.message);
+            allCodes = data || [];
+            return allCodes;
+        }
+
+        async function fetchEditionsForCode(codeId) {
+            if (editionsMap[codeId]) return editionsMap[codeId];
+            const { data, error } = await supabase.from(EDITIONS_TABLE)
+                .select('*')
+                .eq('code_id', codeId)
+                .order('date_issued', { ascending: false });
+            if (error) throw new Error('Ошибка загрузки редакций: ' + error.message);
+            editionsMap[codeId] = data || [];
+            return editionsMap[codeId];
+        }
+
+        // ------ Фильтрация и рендеринг ------
+        function getFilteredCodes() {
+            let filtered = allCodes;
+            // Фильтр по статусу
+            if (currentStatusFilter === 'active') {
+                filtered = filtered.filter(c => c.is_active === true);
+            } else if (currentStatusFilter === 'inactive') {
+                filtered = filtered.filter(c => c.is_active === false);
+            }
+            // Поиск
+            if (searchTerm.trim()) {
+                const s = searchTerm.trim().toLowerCase();
+                filtered = filtered.filter(c =>
+                    c.number.toLowerCase().includes(s) ||
+                    c.title.toLowerCase().includes(s)
+                );
+            }
+            return filtered;
+        }
+
+        function renderGrid() {
+            els.grid.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка кодексов...</div>';
+            try {
+                const list = getFilteredCodes();
+                els.grid.innerHTML = '';
+                
+                if (!list.length) {
+                    els.grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">Кодексы не найдены.</p>`;
+                    return;
+                }
+
+                list.forEach(code => {
+                    const isRepealed = !code.is_active;
+                    const a = document.createElement('a');
+                    a.className = 'law-btn' + (isRepealed ? ' archived' : '');
+                    a.href = `?code=${encodeURIComponent(code.id)}`;
+                    a.innerHTML = `
+                        ${isRepealed ? '<span class="badge-repealed">Утратил силу</span>' : ''}
+                        <span class="law-icon">📜</span>
+                        <h3>Кодекс №${code.number} от ${fmt(code.original_date)}</h3>
+                        <p>«${code.title}»</p>
+                    `;
+                    a.addEventListener('click', e => {
+                        e.preventDefault();
+                        window.history.pushState({ codeId: code.id }, '', `?code=${code.id}`);
+                        route();
+                    });
+                    els.grid.appendChild(a);
+                });
+            } catch (err) {
+                els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+            }
+        }
+
+        // ------ Просмотр кодекса ------
+        async function loadCode(codeId) {
+            const code = allCodes.find(c => c.id == codeId);
+            if (!code) {
+                els.error.textContent = 'Кодекс не найден';
+                els.error.style.display = 'block';
+                return;
+            }
+            currentCode = code;
+            
+            const extraEditions = await fetchEditionsForCode(code.id);
+            const editionsList = [];
+            // Исходная редакция
+            editionsList.push({
+                id: 'original',
+                date_issued: code.original_date,
+                file_name: code.original_file_name,
+                bucket_name: code.original_bucket || DEFAULT_BUCKET,
+                bucket_path: code.original_bucket_path || DEFAULT_PATH,
+                is_current: false,
+                title: 'Исходная редакция'
+            });
+            // Дополнительные
+            for (let ed of extraEditions) {
+                editionsList.push({
+                    id: ed.id,
+                    date_issued: ed.date_issued,
+                    file_name: ed.file_name,
+                    bucket_name: ed.bucket_name || DEFAULT_BUCKET,
+                    bucket_path: ed.bucket_path || DEFAULT_PATH,
+                    is_current: ed.is_current,
+                    title: `Редакция от ${fmt(ed.date_issued)}` + (ed.is_current ? ' (действующая)' : '')
+                });
+            }
+            editionsList.sort((a,b) => new Date(b.date_issued) - new Date(a.date_issued));
+            currentEditions = editionsList;
+            
+            let currentEdition = editionsList.find(e => e.is_current === true);
+            if (!currentEdition) currentEdition = editionsList.find(e => e.id === 'original');
+            currentEditionId = currentEdition.id;
+            
+            els.editionSelect.innerHTML = '';
+            for (let ed of editionsList) {
+                const option = document.createElement('option');
+                option.value = ed.id;
+                option.textContent = ed.title;
+                if (ed.id === currentEditionId) option.selected = true;
+                els.editionSelect.appendChild(option);
+            }
+            els.editionsSelector.style.display = editionsList.length > 1 ? 'block' : 'none';
+            
+            els.title.textContent = `Кодекс №${code.number} «${code.title}»`;
+            await loadPDFForEdition(currentEdition);
+        }
+
+        async function loadPDFForEdition(edition) {
+            els.viewer.style.display = 'block';
+            els.grid.style.display = 'none';
+            els.loader.style.display = 'block';
+            els.container.style.display = 'none';
+            els.error.style.display = 'none';
+            els.frame.src = '';
+            if (els.intro) els.intro.style.display = 'none';
+            
+            const bucket = edition.bucket_name;
+            const filePath = `${edition.bucket_path}${edition.file_name}.pdf`;
+            
+            try {
+                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(filePath, 3600);
+                if (error || !data?.signedUrl) throw new Error(error?.message || 'Файл не найден');
+                const cleanUrl = data.signedUrl + '#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&view=FitH';
+                els.frame.src = cleanUrl;
+                els.download.href = data.signedUrl;
+                els.fallback.href = data.signedUrl;
+                
+                els.frame.onload = () => { els.loader.style.display = 'none'; els.container.style.display = 'block'; };
+                setTimeout(() => { if (els.loader.style.display !== 'none') { els.loader.style.display = 'none'; els.container.style.display = 'block'; } }, 3000);
+            } catch (err) {
+                els.loader.style.display = 'none';
+                els.error.style.display = 'block';
+                els.error.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
+            }
+        }
+
+        function onEditionChange() {
+            const selectedId = els.editionSelect.value;
+            const edition = currentEditions.find(e => e.id == selectedId);
+            if (edition) {
+                currentEditionId = selectedId;
+                loadPDFForEdition(edition);
+            }
+        }
+
+        // ------ Маршрутизация ------
+        function route() {
+            const params = new URLSearchParams(window.location.search);
+            const codeId = params.get('code');
+            
+            if (codeId) {
+                loadCode(codeId);
+            } else {
+                els.viewer.style.display = 'none';
+                els.grid.style.display = 'flex';
+                if (els.intro) els.intro.style.display = 'block';
+                els.title.textContent = 'Кодексы СФСРЮ';
+                renderGrid();
+            }
+        }
+
+        // ------ События ------
+        // Фильтр по статусу
+        els.filterBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                els.filterBtns.forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentStatusFilter = this.dataset.status;
+                // Обновляем URL без параметров (возврат к списку)
+                if (window.location.search.includes('code=')) {
+                    window.history.pushState({}, '', window.location.pathname);
+                }
+                renderGrid();
+            });
+        });
+
+        // Поиск
+        els.search.addEventListener('input', function() {
+            searchTerm = this.value;
+            if (window.location.search.includes('code=')) {
+                window.history.pushState({}, '', window.location.pathname);
+            }
+            renderGrid();
+        });
+
+        // Кнопка "Назад"
+        els.btnBack.addEventListener('click', e => {
+            e.preventDefault();
+            window.history.pushState({}, '', window.location.pathname);
+            route();
+        });
+
+        // Смена редакции
+        els.editionSelect.addEventListener('change', onEditionChange);
+
+        // Обработка истории
+        window.addEventListener('popstate', route);
+
+        // ------ Инициализация ------
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await fetchAllCodes();
+                // Устанавливаем активный фильтр "Все"
+                document.querySelector('.filter-btn[data-status="all"]')?.classList.add('active');
+                route();
+            } catch (err) {
+                els.grid.innerHTML = `<div class="error-msg" style="color:#c00;background:#ffebee;padding:15px;border-radius:8px;text-align:center;">⚠️ ${err.message}</div>`;
+            }
+        });
+    })();
+    </script>
 </body>
 </html>
