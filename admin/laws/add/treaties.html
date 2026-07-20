@@ -1,0 +1,619 @@
+<!-- admin-treaties.html — Админ-панель для международных договоров -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Управление международными договорами — Админ-панель</title>
+    <!-- favicons -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;" />
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../../css/index.css" />
+    <link rel="stylesheet" href="../../css/admin.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../../../../css/style.css" />
+    <link rel="stylesheet" href="../../../../css/laws.css" />
+    <link rel="stylesheet" href="../../../../css/decrees.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
+            onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';">
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #f5f5f5; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+        .admin-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-weight: 600; color: #a00; }
+        input, select, textarea { padding: 10px 12px; border: 1px solid #ccc; border-radius: 12px; font-size: 0.95rem; }
+        button { background: #a00; color: white; border: none; border-radius: 12px; padding: 10px 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #c00; transform: scale(1.02); }
+        button.secondary { background: #2c3e66; }
+        button.danger { background: #6c2e2e; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { background: #f8f0f0; color: #a00; }
+        .badge { background: #e0e0e0; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        .badge.active { background: #c8e6c9; color: #2e7d32; }
+        .badge.inactive { background: #ffcdd2; color: #c62828; }
+        .search-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-bar input, .search-bar select { padding: 8px 12px; }
+        .editions-list, .appendixes-list { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .edition-item, .appendix-item { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .edition-actions button, .appendix-actions button { margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; }
+        .current-badge { background: #2e7d32; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
+                <h1>СФСРЮ — Администратор</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная администратора</a></li>
+                    <li><a href="../../services/">Услуги</a></li>
+                    <li><a href="../../documents/">Документы</a></li>
+                    <li><a href="../../addresses/">Адреса</a></li>
+                    <li><a href="../index.html">Регистры</a></li>
+                    <li><a href="../../laws/">Законы</a></li>
+                    <li><a href="../../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <!-- Карточка создания/редактирования договора -->
+        <div class="card">
+            <h2>📜 Создать / редактировать международный договор</h2>
+            <form id="treatyForm">
+                <div class="form-grid">
+                    <div class="form-group"><label>Название договора</label><input type="text" id="treatyTitle" required /></div>
+                    <div class="form-group"><label>Год</label><input type="number" id="treatyYear" required /></div>
+                    <div class="form-group"><label>Дата подписания</label><input type="date" id="originalDate" required /></div>
+                    <div class="form-group"><label>PDF исходной редакции</label><input type="file" id="originalPdf" accept=".pdf" /></div>
+                    <div class="form-group"><label>Бакет</label>
+                        <select id="originalBucket">
+                            <option value="treaties-files">treaties-files</option>
+                            <option value="treaties-files2">treaties-files2</option>
+                            <option value="treaties-files3">treaties-files3</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label><input type="checkbox" id="treatyActive" checked /> Действует</label></div>
+                    <div class="form-group"><label>Порядок (sort_order)</label><input type="number" id="treatySortOrder" /></div>
+                </div>
+                <input type="hidden" id="editTreatyId" />
+                <div style="display:flex; gap:12px; margin-top:20px;">
+                    <button type="submit" id="saveTreatyBtn">💾 Сохранить договор</button>
+                    <button type="button" id="cancelTreatyEdit" class="secondary" style="display:none;">Отменить</button>
+                </div>
+                <div id="treatyMsg"></div>
+            </form>
+        </div>
+
+        <!-- Управление редакциями -->
+        <div class="card">
+            <h2>📄 Управление редакциями договора</h2>
+            <div class="form-group"><label>Выберите договор</label><select id="selectTreatyForEditions"></select></div>
+            <div id="editionsPanel" style="margin-top:20px;">
+                <div id="editionsList"></div>
+                <hr />
+                <h3>Добавить новую редакцию</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>Дата принятия</label><input type="date" id="editionDate" /></div>
+                    <div class="form-group"><label>PDF файл</label><input type="file" id="editionPdf" accept=".pdf" /></div>
+                    <div class="form-group"><label>Бакет</label>
+                        <select id="editionBucket">
+                            <option value="treaties-files">treaties-files</option>
+                            <option value="treaties-files2">treaties-files2</option>
+                            <option value="treaties-files3">treaties-files3</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Путь</label><input type="text" id="editionPath" value="treaties/" /></div>
+                    <div class="form-group"><label><input type="checkbox" id="editionIsCurrent" /> Сделать текущей</label></div>
+                </div>
+                <button id="addEditionBtn" class="secondary">➕ Добавить редакцию</button>
+            </div>
+        </div>
+
+        <!-- Управление приложениями -->
+        <div class="card">
+            <h2>📎 Управление приложениями к договору</h2>
+            <div class="form-group"><label>Выберите договор</label><select id="selectTreatyForAppendixes"></select></div>
+            <div id="appendixesPanel" style="margin-top:20px;">
+                <div id="appendixesList"></div>
+                <hr />
+                <h3>Добавить новое приложение</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>Название приложения</label><input type="text" id="appendixTitle" /></div>
+                    <div class="form-group"><label>Дата</label><input type="date" id="appendixDate" /></div>
+                    <div class="form-group"><label>PDF файл</label><input type="file" id="appendixPdf" accept=".pdf" /></div>
+                    <div class="form-group"><label>Бакет</label>
+                        <select id="appendixBucket">
+                            <option value="treaties-files">treaties-files</option>
+                            <option value="treaties-files2">treaties-files2</option>
+                            <option value="treaties-files3">treaties-files3</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Путь</label><input type="text" id="appendixPath" value="treaties/appendixes/" /></div>
+                    <div class="form-group"><label>Порядок (sort_order)</label><input type="number" id="appendixSortOrder" /></div>
+                </div>
+                <button id="addAppendixBtn" class="secondary">➕ Добавить приложение</button>
+            </div>
+        </div>
+
+        <!-- Список договоров -->
+        <div class="card">
+            <div class="search-bar">
+                <input type="text" id="searchTreaties" placeholder="Поиск по названию..." />
+                <select id="yearFilterTreaties"><option value="">Все годы</option></select>
+                <button id="refreshTreatiesBtn">Обновить</button>
+            </div>
+            <div class="table-wrapper">
+                <table id="treatiesTable">
+                    <thead><tr><th>Название</th><th>Год</th><th>Статус</th><th>Исходная редакция</th><th>Действия</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align:center; margin-top:40px; padding:20px; color:#666;">
+        © 2026 СФСРЮ. Все права защищены.
+    </footer>
+
+    <script>
+    (function() {
+        'use strict';
+
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
+        const TREATIES_TABLE = 'treaties';
+        const EDITIONS_TABLE = 'treaty_editions';
+        const APPENDIXES_TABLE = 'treaty_appendixes';
+        const DEFAULT_BUCKET = 'treaties-files';
+        const DEFAULT_PATH = 'treaties/';
+        const DEFAULT_APPENDIX_PATH = 'treaties/appendixes/';
+
+        let allTreaties = [];
+        let currentEditTreatyId = null;
+
+        const $ = id => document.getElementById(id);
+        const treatyForm = $('treatyForm');
+        const treatyTitle = $('treatyTitle');
+        const treatyYear = $('treatyYear');
+        const originalDate = $('originalDate');
+        const originalPdf = $('originalPdf');
+        const originalBucket = $('originalBucket');
+        const treatyActive = $('treatyActive');
+        const treatySortOrder = $('treatySortOrder');
+        const editTreatyId = $('editTreatyId');
+        const saveTreatyBtn = $('saveTreatyBtn');
+        const cancelTreatyEdit = $('cancelTreatyEdit');
+        const treatyMsg = $('treatyMsg');
+        const selectTreatyForEditions = $('selectTreatyForEditions');
+        const editionsListDiv = $('editionsList');
+        const editionDate = $('editionDate');
+        const editionPdf = $('editionPdf');
+        const editionBucket = $('editionBucket');
+        const editionPath = $('editionPath');
+        const editionIsCurrent = $('editionIsCurrent');
+        const addEditionBtn = $('addEditionBtn');
+        const selectTreatyForAppendixes = $('selectTreatyForAppendixes');
+        const appendixesListDiv = $('appendixesList');
+        const appendixTitle = $('appendixTitle');
+        const appendixDate = $('appendixDate');
+        const appendixPdf = $('appendixPdf');
+        const appendixBucket = $('appendixBucket');
+        const appendixPath = $('appendixPath');
+        const appendixSortOrder = $('appendixSortOrder');
+        const addAppendixBtn = $('addAppendixBtn');
+        const searchTreaties = $('searchTreaties');
+        const yearFilterTreaties = $('yearFilterTreaties');
+        const refreshTreatiesBtn = $('refreshTreatiesBtn');
+        const treatiesTbody = document.querySelector('#treatiesTable tbody');
+
+        function showTreatyMsg(msg, isError = true) {
+            treatyMsg.textContent = msg;
+            treatyMsg.style.color = isError ? '#c00' : '#0a0';
+            setTimeout(() => treatyMsg.textContent = '', 3000);
+        }
+
+        function generateSafeFilename(prefix, extension = 'pdf') {
+            const ts = Date.now();
+            const rand = Math.random().toString(36).substring(2, 8);
+            return `${prefix}-${ts}-${rand}.${extension}`;
+        }
+
+        function normalizePath(p) {
+            p = (p || '').trim();
+            if (!p) return '';
+            if (!p.endsWith('/')) p += '/';
+            return p;
+        }
+
+        async function loadTreaties() {
+            const { data, error } = await supabase.from(TREATIES_TABLE).select('*').order('sort_order', { ascending: true });
+            if (error) { showTreatyMsg('Ошибка загрузки договоров: ' + error.message); return; }
+            allTreaties = data || [];
+            const years = [...new Set(allTreaties.map(t => t.year))].sort((a,b) => b - a);
+            yearFilterTreaties.innerHTML = '<option value="">Все годы</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+            const currentSelectedEditions = selectTreatyForEditions.value;
+            selectTreatyForEditions.innerHTML = '<option value="">-- Выберите договор --</option>' +
+                allTreaties.map(t => `<option value="${t.id}">${t.title} (${t.year})</option>`).join('');
+            if (currentSelectedEditions && allTreaties.some(t => t.id == currentSelectedEditions)) {
+                selectTreatyForEditions.value = currentSelectedEditions;
+            }
+            const currentSelectedAppendixes = selectTreatyForAppendixes.value;
+            selectTreatyForAppendixes.innerHTML = '<option value="">-- Выберите договор --</option>' +
+                allTreaties.map(t => `<option value="${t.id}">${t.title} (${t.year})</option>`).join('');
+            if (currentSelectedAppendixes && allTreaties.some(t => t.id == currentSelectedAppendixes)) {
+                selectTreatyForAppendixes.value = currentSelectedAppendixes;
+            }
+            renderTreatiesTable();
+            if (selectTreatyForEditions.value) loadEditionsForTreaty(selectTreatyForEditions.value);
+            if (selectTreatyForAppendixes.value) loadAppendixesForTreaty(selectTreatyForAppendixes.value);
+        }
+
+        function renderTreatiesTable() {
+            const term = searchTreaties.value.toLowerCase();
+            const year = yearFilterTreaties.value;
+            const filtered = allTreaties.filter(t =>
+                (year === '' || t.year == year) &&
+                (t.title.toLowerCase().includes(term))
+            );
+            treatiesTbody.innerHTML = '';
+            filtered.forEach(t => {
+                const tr = treatiesTbody.insertRow();
+                tr.insertCell(0).textContent = t.title;
+                tr.insertCell(1).textContent = t.year;
+                tr.insertCell(2).innerHTML = `<span class="badge ${t.is_active ? 'active' : 'inactive'}">${t.is_active ? 'Действует' : 'Утратил силу'}</span>`;
+                tr.insertCell(3).innerHTML = t.original_file_name ?
+                    `<a href="#" class="view-original" data-treaty='${JSON.stringify(t)}'>📄 Исходный PDF</a>` :
+                    '—';
+                const actions = tr.insertCell(4);
+                actions.innerHTML = `
+                    <button class="edit-treaty-btn" data-id="${t.id}">✏️</button>
+                    <button class="delete-treaty-btn" data-id="${t.id}" data-filename="${t.original_file_name || ''}" data-bucket="${t.original_bucket || DEFAULT_BUCKET}" data-path="${t.original_bucket_path || DEFAULT_PATH}">🗑</button>
+                `;
+            });
+            document.querySelectorAll('.edit-treaty-btn').forEach(btn => btn.addEventListener('click', () => editTreaty(btn.dataset.id)));
+            document.querySelectorAll('.delete-treaty-btn').forEach(btn => btn.addEventListener('click', () => deleteTreaty(btn.dataset.id, btn.dataset.filename, btn.dataset.bucket, btn.dataset.path)));
+            document.querySelectorAll('.view-original').forEach(link => link.addEventListener('click', async (e) => {
+                e.preventDefault();
+                const t = JSON.parse(link.dataset.treaty);
+                const bucket = t.original_bucket || DEFAULT_BUCKET;
+                const path = normalizePath(t.original_bucket_path || DEFAULT_PATH);
+                const file = t.original_file_name;
+                if (!file) { alert('Нет файла'); return; }
+                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path + file + '.pdf', 60);
+                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                else alert('Не удалось открыть PDF: ' + (error?.message || 'неизвестная ошибка'));
+            }));
+        }
+
+        async function editTreaty(id) {
+            const t = allTreaties.find(t => t.id == id);
+            if (!t) return;
+            currentEditTreatyId = id;
+            editTreatyId.value = id;
+            treatyTitle.value = t.title;
+            treatyYear.value = t.year;
+            originalDate.value = t.original_date;
+            originalBucket.value = t.original_bucket || DEFAULT_BUCKET;
+            treatyActive.checked = t.is_active;
+            treatySortOrder.value = t.sort_order || '';
+            originalPdf.required = false;
+            originalPdf.value = '';
+            saveTreatyBtn.textContent = '✏️ Обновить договор';
+            cancelTreatyEdit.style.display = 'inline-block';
+            window.scrollTo({ top: 0 });
+        }
+
+        function resetTreatyForm() {
+            treatyForm.reset();
+            editTreatyId.value = '';
+            currentEditTreatyId = null;
+            originalPdf.required = true;
+            saveTreatyBtn.textContent = '💾 Сохранить договор';
+            cancelTreatyEdit.style.display = 'none';
+            treatyActive.checked = true;
+            originalBucket.value = DEFAULT_BUCKET;
+        }
+        cancelTreatyEdit.addEventListener('click', resetTreatyForm);
+
+        async function deleteTreaty(id, filename, bucket, path) {
+            if (!confirm('Удалить договор? Все его редакции, приложения и файлы будут удалены.')) return;
+            try {
+                if (filename) {
+                    await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                }
+                const { data: editions } = await supabase.from(EDITIONS_TABLE).select('*').eq('treaty_id', id);
+                for (const ed of editions) {
+                    const edBucket = ed.bucket_name || DEFAULT_BUCKET;
+                    const edPath = normalizePath(ed.bucket_path || DEFAULT_PATH);
+                    if (ed.file_name) {
+                        await supabase.storage.from(edBucket).remove([edPath + ed.file_name + '.pdf']);
+                    }
+                }
+                await supabase.from(EDITIONS_TABLE).delete().eq('treaty_id', id);
+                const { data: appendixes } = await supabase.from(APPENDIXES_TABLE).select('*').eq('treaty_id', id);
+                for (const app of appendixes) {
+                    const appBucket = app.bucket_name || DEFAULT_BUCKET;
+                    const appPath = normalizePath(app.bucket_path || DEFAULT_APPENDIX_PATH);
+                    if (app.file_name) {
+                        await supabase.storage.from(appBucket).remove([appPath + app.file_name + '.pdf']);
+                    }
+                }
+                await supabase.from(APPENDIXES_TABLE).delete().eq('treaty_id', id);
+                const { error } = await supabase.from(TREATIES_TABLE).delete().eq('id', id);
+                if (error) throw error;
+                showTreatyMsg('Договор удалён', false);
+                loadTreaties();
+                if (currentEditTreatyId == id) resetTreatyForm();
+                if (selectTreatyForEditions.value == id) { selectTreatyForEditions.value = ''; editionsListDiv.innerHTML = ''; }
+                if (selectTreatyForAppendixes.value == id) { selectTreatyForAppendixes.value = ''; appendixesListDiv.innerHTML = ''; }
+            } catch (err) {
+                showTreatyMsg('Ошибка удаления: ' + err.message);
+            }
+        }
+
+        treatyForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = treatyTitle.value.trim();
+            const year = parseInt(treatyYear.value);
+            const origDate = originalDate.value;
+            const isActive = treatyActive.checked;
+            let sortOrder = treatySortOrder.value ? parseInt(treatySortOrder.value) : null;
+            const bucket = originalBucket.value;
+            const file = originalPdf.files[0];
+            const path = normalizePath(DEFAULT_PATH);
+
+            try {
+                if (currentEditTreatyId) {
+                    const old = allTreaties.find(t => t.id == currentEditTreatyId);
+                    const updates = { title, year, original_date: origDate, is_active: isActive, sort_order: sortOrder, original_bucket: bucket, original_bucket_path: path };
+                    if (file) {
+                        const safeName = generateSafeFilename('treaty-original', 'pdf').replace('.pdf', '');
+                        const fullPath = path + safeName + '.pdf';
+                        if (old.original_file_name) {
+                            await supabase.storage.from(old.original_bucket || DEFAULT_BUCKET)
+                                .remove([normalizePath(old.original_bucket_path || DEFAULT_PATH) + old.original_file_name + '.pdf']);
+                        }
+                        const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
+                        if (uploadError) throw new Error('Ошибка загрузки PDF: ' + uploadError.message);
+                        updates.original_file_name = safeName;
+                    } else {
+                        updates.original_file_name = old.original_file_name;
+                    }
+                    const { error: updateError } = await supabase.from(TREATIES_TABLE).update(updates).eq('id', currentEditTreatyId);
+                    if (updateError) throw new Error('Ошибка обновления: ' + updateError.message);
+                    showTreatyMsg('Договор обновлён', false);
+                } else {
+                    if (!file) throw new Error('Загрузите PDF исходной редакции');
+                    const safeName = generateSafeFilename('treaty-original', 'pdf').replace('.pdf', '');
+                    const fullPath = path + safeName + '.pdf';
+                    const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
+                    if (uploadError) throw new Error('Ошибка загрузки PDF в бакет: ' + uploadError.message);
+                    if (!sortOrder) {
+                        const { data: max, error: maxError } = await supabase.from(TREATIES_TABLE).select('sort_order').order('sort_order', { ascending: false }).limit(1);
+                        if (maxError) throw new Error('Ошибка получения sort_order: ' + maxError.message);
+                        sortOrder = (max && max[0]?.sort_order || 0) + 1;
+                    }
+                    const { error: insertError } = await supabase.from(TREATIES_TABLE).insert({
+                        title, year, original_date: origDate,
+                        is_active: isActive, sort_order: sortOrder,
+                        original_bucket: bucket, original_bucket_path: path,
+                        original_file_name: safeName
+                    });
+                    if (insertError) throw new Error('Ошибка создания записи в БД: ' + insertError.message);
+                    showTreatyMsg('Договор создан', false);
+                }
+                resetTreatyForm();
+                loadTreaties();
+            } catch (err) {
+                showTreatyMsg('Ошибка: ' + err.message);
+                console.error(err);
+            }
+        });
+
+        // Редакции
+        async function loadEditionsForTreaty(treatyId) {
+            if (!treatyId) { editionsListDiv.innerHTML = ''; return; }
+            const { data, error } = await supabase.from(EDITIONS_TABLE).select('*').eq('treaty_id', treatyId).order('sort_order', { ascending: true });
+            if (error) { editionsListDiv.innerHTML = '<p>Ошибка загрузки редакций</p>'; return; }
+            editionsListDiv.innerHTML = '';
+            data.forEach(ed => {
+                const div = document.createElement('div');
+                div.className = 'edition-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>📅 ${new Date(ed.date_adopted).toLocaleDateString('ru-RU')}</strong>
+                        ${ed.is_current ? '<span class="current-badge">Действующая</span>' : ''}
+                        <br /><small>${ed.file_name}.pdf</small>
+                    </div>
+                    <div class="edition-actions">
+                        <button class="set-current-btn" data-id="${ed.id}" data-treaty="${treatyId}">⭐ Сделать текущей</button>
+                        <button class="delete-edition-btn" data-id="${ed.id}" data-filename="${ed.file_name}" data-bucket="${ed.bucket_name || DEFAULT_BUCKET}" data-path="${ed.bucket_path || DEFAULT_PATH}">🗑 Удалить</button>
+                    </div>
+                `;
+                editionsListDiv.appendChild(div);
+            });
+            document.querySelectorAll('.set-current-btn').forEach(btn => btn.addEventListener('click', async () => {
+                const edId = btn.dataset.id, treaty = btn.dataset.treaty;
+                try {
+                    await supabase.from(EDITIONS_TABLE).update({ is_current: false }).eq('treaty_id', treaty);
+                    await supabase.from(EDITIONS_TABLE).update({ is_current: true }).eq('id', edId);
+                    loadEditionsForTreaty(treaty);
+                } catch (err) { alert('Ошибка: ' + err.message); }
+            }));
+            document.querySelectorAll('.delete-edition-btn').forEach(btn => btn.addEventListener('click', async () => {
+                if (!confirm('Удалить редакцию?')) return;
+                const edId = btn.dataset.id, filename = btn.dataset.filename, bucket = btn.dataset.bucket, path = btn.dataset.path;
+                try {
+                    if (filename) {
+                        await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                    }
+                    await supabase.from(EDITIONS_TABLE).delete().eq('id', edId);
+                    loadEditionsForTreaty(selectTreatyForEditions.value);
+                } catch (err) { alert('Ошибка: ' + err.message); }
+            }));
+        }
+
+        selectTreatyForEditions.addEventListener('change', () => {
+            loadEditionsForTreaty(selectTreatyForEditions.value);
+        });
+
+        addEditionBtn.addEventListener('click', async () => {
+            const treatyId = selectTreatyForEditions.value;
+            if (!treatyId) { alert('Выберите договор'); return; }
+            const date = editionDate.value;
+            const file = editionPdf.files[0];
+            if (!date || !file) { alert('Заполните дату и выберите PDF'); return; }
+            const bucket = editionBucket.value;
+            let path = normalizePath(editionPath.value.trim() || DEFAULT_PATH);
+            const treaty = allTreaties.find(t => t.id == treatyId);
+            if (!treaty) { alert('Договор не найден'); return; }
+            const safeName = generateSafeFilename('treaty-edition', 'pdf').replace('.pdf', '');
+            const fullPath = path + safeName + '.pdf';
+            try {
+                const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
+                if (uploadError) throw new Error('Ошибка загрузки PDF: ' + uploadError.message);
+                const isCurr = editionIsCurrent.checked;
+                if (isCurr) {
+                    await supabase.from(EDITIONS_TABLE).update({ is_current: false }).eq('treaty_id', treatyId);
+                }
+                const { error: insertError } = await supabase.from(EDITIONS_TABLE).insert({
+                    treaty_id: treatyId,
+                    date_adopted: date,
+                    file_name: safeName,
+                    bucket_name: bucket,
+                    bucket_path: path,
+                    is_current: isCurr
+                });
+                if (insertError) throw new Error('Ошибка записи редакции: ' + insertError.message);
+                editionDate.value = ''; editionPdf.value = ''; editionIsCurrent.checked = false;
+                loadEditionsForTreaty(treatyId);
+                alert('Редакция добавлена');
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+                console.error(err);
+            }
+        });
+
+        // Приложения
+        async function loadAppendixesForTreaty(treatyId) {
+            if (!treatyId) { appendixesListDiv.innerHTML = ''; return; }
+            const { data, error } = await supabase.from(APPENDIXES_TABLE).select('*').eq('treaty_id', treatyId).order('sort_order', { ascending: true });
+            if (error) { appendixesListDiv.innerHTML = '<p>Ошибка загрузки приложений</p>'; return; }
+            appendixesListDiv.innerHTML = '';
+            data.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'appendix-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>📎 ${app.title}</strong>
+                        <br /><small>от ${new Date(app.date_issued).toLocaleDateString('ru-RU')}</small>
+                        <br /><small>${app.file_name}.pdf</small>
+                    </div>
+                    <div class="appendix-actions">
+                        <button class="delete-appendix-btn" data-id="${app.id}" data-filename="${app.file_name}" data-bucket="${app.bucket_name || DEFAULT_BUCKET}" data-path="${app.bucket_path || DEFAULT_APPENDIX_PATH}">🗑 Удалить</button>
+                    </div>
+                `;
+                appendixesListDiv.appendChild(div);
+            });
+            document.querySelectorAll('.delete-appendix-btn').forEach(btn => btn.addEventListener('click', async () => {
+                if (!confirm('Удалить приложение?')) return;
+                const appId = btn.dataset.id, filename = btn.dataset.filename, bucket = btn.dataset.bucket, path = btn.dataset.path;
+                try {
+                    if (filename) {
+                        await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                    }
+                    await supabase.from(APPENDIXES_TABLE).delete().eq('id', appId);
+                    loadAppendixesForTreaty(selectTreatyForAppendixes.value);
+                } catch (err) { alert('Ошибка: ' + err.message); }
+            }));
+        }
+
+        selectTreatyForAppendixes.addEventListener('change', () => {
+            loadAppendixesForTreaty(selectTreatyForAppendixes.value);
+        });
+
+        addAppendixBtn.addEventListener('click', async () => {
+            const treatyId = selectTreatyForAppendixes.value;
+            if (!treatyId) { alert('Выберите договор'); return; }
+            const title = appendixTitle.value.trim();
+            const date = appendixDate.value;
+            const file = appendixPdf.files[0];
+            if (!title || !date || !file) { alert('Заполните название, дату и выберите PDF'); return; }
+            const bucket = appendixBucket.value;
+            let path = normalizePath(appendixPath.value.trim() || DEFAULT_APPENDIX_PATH);
+            const treaty = allTreaties.find(t => t.id == treatyId);
+            if (!treaty) { alert('Договор не найден'); return; }
+            const safeName = generateSafeFilename('treaty-appendix', 'pdf').replace('.pdf', '');
+            const fullPath = path + safeName + '.pdf';
+            let sortOrder = appendixSortOrder.value ? parseInt(appendixSortOrder.value) : null;
+            if (!sortOrder) {
+                const { data: max } = await supabase.from(APPENDIXES_TABLE).select('sort_order').eq('treaty_id', treatyId).order('sort_order', { ascending: false }).limit(1);
+                sortOrder = (max && max[0]?.sort_order || 0) + 1;
+            }
+            try {
+                const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
+                if (uploadError) throw new Error('Ошибка загрузки PDF: ' + uploadError.message);
+                const { error: insertError } = await supabase.from(APPENDIXES_TABLE).insert({
+                    treaty_id: treatyId,
+                    title: title,
+                    date_issued: date,
+                    file_name: safeName,
+                    bucket_name: bucket,
+                    bucket_path: path,
+                    sort_order: sortOrder
+                });
+                if (insertError) throw new Error('Ошибка записи приложения: ' + insertError.message);
+                appendixTitle.value = ''; appendixDate.value = ''; appendixPdf.value = ''; appendixSortOrder.value = '';
+                loadAppendixesForTreaty(treatyId);
+                alert('Приложение добавлено');
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+                console.error(err);
+            }
+        });
+
+        refreshTreatiesBtn.addEventListener('click', loadTreaties);
+        searchTreaties.addEventListener('input', renderTreatiesTable);
+        yearFilterTreaties.addEventListener('change', renderTreatiesTable);
+
+        loadTreaties();
+    })();
+    </script>
+</body>
+</html>
