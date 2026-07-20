@@ -1,0 +1,241 @@
+<!-- admin-constitution.html — Админ-панель для управления редакциями Конституции -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Управление Конституцией — Админ-панель</title>
+    <!-- favicons (скопированы из fl.html) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;" />
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../../css/index.css" />
+    <link rel="stylesheet" href="../../css/admin.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../../../../css/style.css" />
+    <link rel="stylesheet" href="../../../../css/laws.css" />
+    <link rel="stylesheet" href="../../../../css/decrees.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
+            onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';">
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #f5f5f5; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+        .admin-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-weight: 600; color: #a00; }
+        input, select, textarea { padding: 10px 12px; border: 1px solid #ccc; border-radius: 12px; font-size: 0.95rem; }
+        button { background: #a00; color: white; border: none; border-radius: 12px; padding: 10px 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #c00; transform: scale(1.02); }
+        button.secondary { background: #2c3e66; }
+        button.danger { background: #6c2e2e; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { background: #f8f0f0; color: #a00; }
+        .badge { background: #e0e0e0; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        .badge.current { background: #c8e6c9; color: #2e7d32; }
+        .edition-item { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .edition-actions button { margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; }
+        .current-badge { background: #2e7d32; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
+                <h1>СФСРЮ — Администратор</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная администратора</a></li>
+                    <li><a href="../../services/">Услуги</a></li>
+                    <li><a href="../../documents/">Документы</a></li>
+                    <li><a href="../../addresses/">Адреса</a></li>
+                    <li><a href="../index.html">Регистры</a></li>
+                    <li><a href="../../laws/">Законы</a></li>
+                    <li><a href="../../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <div class="card">
+            <h2>📜 Управление редакциями Конституции СФСРЮ</h2>
+            <div id="editionsList"></div>
+            <hr />
+            <h3>Добавить новую редакцию</h3>
+            <div class="form-grid">
+                <div class="form-group"><label>Дата принятия</label><input type="date" id="editionDate" /></div>
+                <div class="form-group"><label>PDF файл</label><input type="file" id="editionPdf" accept=".pdf" /></div>
+                <div class="form-group"><label>Бакет</label>
+                    <select id="editionBucket">
+                        <option value="constitution-files">constitution-files</option>
+                        <option value="constitution-files2">constitution-files2</option>
+                        <option value="constitution-files3">constitution-files3</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>Путь</label><input type="text" id="editionPath" value="constitution/" /></div>
+                <div class="form-group"><label><input type="checkbox" id="editionIsCurrent" /> Сделать текущей редакцией</label></div>
+                <div class="form-group"><label>Порядок (sort_order)</label><input type="number" id="editionSortOrder" /></div>
+            </div>
+            <button id="addEditionBtn" class="secondary">➕ Добавить редакцию</button>
+            <div id="msg" style="margin-top:10px;"></div>
+        </div>
+    </div>
+
+    <footer style="text-align:center; margin-top:40px; padding:20px; color:#666;">
+        © 2026 СФСРЮ. Все права защищены.
+    </footer>
+
+    <script>
+    (function() {
+        'use strict';
+
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
+        const EDITIONS_TABLE = 'constitution_editions';
+        const DEFAULT_BUCKET = 'constitution-files';
+        const DEFAULT_PATH = 'constitution/';
+
+        const $ = id => document.getElementById(id);
+        const editionsListDiv = $('editionsList');
+        const editionDate = $('editionDate');
+        const editionPdf = $('editionPdf');
+        const editionBucket = $('editionBucket');
+        const editionPath = $('editionPath');
+        const editionIsCurrent = $('editionIsCurrent');
+        const editionSortOrder = $('editionSortOrder');
+        const addEditionBtn = $('addEditionBtn');
+        const msg = $('msg');
+
+        function showMsg(text, isError = true) {
+            msg.textContent = text;
+            msg.style.color = isError ? '#c00' : '#0a0';
+            setTimeout(() => msg.textContent = '', 4000);
+        }
+
+        function generateUniqueFilename(prefix, extension = 'pdf') {
+            const ts = Date.now();
+            const rand = Math.random().toString(36).substring(2, 8);
+            return `${prefix}-${ts}-${rand}.${extension}`;
+        }
+
+        function normalizePath(p) {
+            p = (p || '').trim();
+            if (!p) return '';
+            if (!p.endsWith('/')) p += '/';
+            return p;
+        }
+
+        async function loadEditions() {
+            const { data, error } = await supabase.from(EDITIONS_TABLE).select('*').order('sort_order', { ascending: true });
+            if (error) { showMsg('Ошибка загрузки: ' + error.message); return; }
+            editionsListDiv.innerHTML = '';
+            if (!data || data.length === 0) {
+                editionsListDiv.innerHTML = '<p style="color:#888;">Редакции Конституции не добавлены.</p>';
+                return;
+            }
+            data.forEach(ed => {
+                const div = document.createElement('div');
+                div.className = 'edition-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>📅 ${new Date(ed.date_adopted).toLocaleDateString('ru-RU')}</strong>
+                        ${ed.is_current ? '<span class="current-badge">Действующая</span>' : ''}
+                        <br /><small>${ed.file_name}.pdf</small>
+                    </div>
+                    <div class="edition-actions">
+                        <button class="set-current-btn" data-id="${ed.id}">⭐ Сделать текущей</button>
+                        <button class="delete-edition-btn" data-id="${ed.id}" data-filename="${ed.file_name}" data-bucket="${ed.bucket_name || DEFAULT_BUCKET}" data-path="${ed.bucket_path || DEFAULT_PATH}">🗑 Удалить</button>
+                    </div>
+                `;
+                editionsListDiv.appendChild(div);
+            });
+            // События
+            document.querySelectorAll('.set-current-btn').forEach(btn => btn.addEventListener('click', async () => {
+                const id = btn.dataset.id;
+                await supabase.from(EDITIONS_TABLE).update({ is_current: false }).neq('id', id);
+                await supabase.from(EDITIONS_TABLE).update({ is_current: true }).eq('id', id);
+                loadEditions();
+            }));
+            document.querySelectorAll('.delete-edition-btn').forEach(btn => btn.addEventListener('click', async () => {
+                if (!confirm('Удалить редакцию?')) return;
+                const id = btn.dataset.id, filename = btn.dataset.filename, bucket = btn.dataset.bucket, path = btn.dataset.path;
+                if (filename) {
+                    await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                }
+                await supabase.from(EDITIONS_TABLE).delete().eq('id', id);
+                loadEditions();
+            }));
+        }
+
+        addEditionBtn.addEventListener('click', async () => {
+            const date = editionDate.value;
+            const file = editionPdf.files[0];
+            if (!date || !file) { alert('Заполните дату и выберите PDF'); return; }
+            const bucket = editionBucket.value;
+            let path = normalizePath(editionPath.value.trim() || DEFAULT_PATH);
+            const prefix = `constitution-${date.replace(/-/g, '')}`;
+            const uniqueName = generateUniqueFilename(prefix, 'pdf').replace('.pdf', '');
+            const fullPath = path + uniqueName + '.pdf';
+            let sortOrder = editionSortOrder.value ? parseInt(editionSortOrder.value) : null;
+            if (!sortOrder) {
+                const { data: max } = await supabase.from(EDITIONS_TABLE).select('sort_order').order('sort_order', { ascending: false }).limit(1);
+                sortOrder = (max && max[0]?.sort_order || 0) + 1;
+            }
+            const isCurr = editionIsCurrent.checked;
+            try {
+                await supabase.storage.from(bucket).upload(fullPath, file);
+                if (isCurr) {
+                    await supabase.from(EDITIONS_TABLE).update({ is_current: false }).neq('id', '');
+                }
+                await supabase.from(EDITIONS_TABLE).insert({
+                    date_adopted: date,
+                    file_name: uniqueName,
+                    bucket_name: bucket,
+                    bucket_path: path,
+                    is_current: isCurr,
+                    sort_order: sortOrder
+                });
+                editionDate.value = ''; editionPdf.value = ''; editionIsCurrent.checked = false; editionSortOrder.value = '';
+                loadEditions();
+                showMsg('Редакция добавлена', false);
+            } catch (err) {
+                showMsg('Ошибка: ' + err.message);
+            }
+        });
+
+        loadEditions();
+    })();
+    </script>
+</body>
+</html>
