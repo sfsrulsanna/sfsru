@@ -1,4 +1,4 @@
-<!-- federal-constitutional-laws.html — окончательная версия: по умолчанию закон, приложения выбираются отдельно -->
+<!-- federal-constitutional-laws.html — селект редакций всегда виден -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -153,9 +153,9 @@
                 </button>
             </div>
 
-            <!-- Два селекта -->
+            <!-- Два селекта: редакции всегда видны, приложения только если есть -->
             <div class="selectors-row">
-                <div class="selector-group" id="editionsSelectorGroup" style="display:none;">
+                <div class="selector-group" id="editionsSelectorGroup">
                     <label>Редакция:</label>
                     <select id="edition-select"></select>
                 </div>
@@ -249,7 +249,7 @@
         let currentAppendixes = [];
         let currentEditionId = null;
         let currentAppendixId = null;
-        let isAppendixActive = false; // флаг, что сейчас показано приложение
+        let isAppendixActive = false;
 
         const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
 
@@ -402,7 +402,7 @@
             editionsList.sort((a, b) => new Date(b.date_issued) - new Date(a.date_issued));
             currentEditions = editionsList;
 
-            // Заполняем селект редакций
+            // Заполняем селект редакций (всегда)
             els.editionSelect.innerHTML = '';
             for (let ed of editionsList) {
                 const option = document.createElement('option');
@@ -414,7 +414,8 @@
             if (!currentEdition) currentEdition = editionsList.find(e => e.id === 'original');
             currentEditionId = currentEdition.id;
             els.editionSelect.value = currentEditionId;
-            els.editionsSelectorGroup.style.display = editionsList.length > 1 ? 'flex' : 'none';
+            // Группа редакций всегда видна (убрали условие скрытия)
+            els.editionsSelectorGroup.style.display = 'flex';
 
             // Приложения
             const apps = await fetchAppendixesForLaw(law.id);
@@ -422,6 +423,12 @@
 
             els.appendixSelect.innerHTML = '';
             if (apps && apps.length > 0) {
+                // Добавляем пустой пункт, чтобы можно было вернуться к закону
+                const emptyOption = document.createElement('option');
+                emptyOption.value = '';
+                emptyOption.textContent = '— Выберите приложение —';
+                els.appendixSelect.appendChild(emptyOption);
+
                 apps.forEach(app => {
                     const option = document.createElement('option');
                     option.value = app.id;
@@ -429,9 +436,7 @@
                     els.appendixSelect.appendChild(option);
                 });
                 els.appendixesSelectorGroup.style.display = 'flex';
-                // НЕ выбираем приложение автоматически, оставляем пустой выбор (или первый, но без загрузки)
-                // Устанавливаем значение '' (пусто), чтобы не было авто-выбора
-                els.appendixSelect.value = '';
+                els.appendixSelect.value = ''; // ничего не выбрано
                 currentAppendixId = null;
                 isAppendixActive = false;
             } else {
@@ -464,7 +469,7 @@
             if (doc) {
                 currentEditionId = id;
                 isAppendixActive = false;
-                // Сбрасываем выбор приложения, чтобы не было конфликта
+                // Сбрасываем выбор приложения
                 if (els.appendixSelect) els.appendixSelect.value = '';
                 loadPDF(doc);
             }
