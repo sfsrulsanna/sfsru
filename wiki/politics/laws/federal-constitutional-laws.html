@@ -1,4 +1,4 @@
-<!-- federal-constitutional-laws.html — исправленная версия с автоматическим открытием первого приложения -->
+<!-- federal-constitutional-laws.html — окончательная версия: по умолчанию закон, приложения выбираются отдельно -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -249,6 +249,7 @@
         let currentAppendixes = [];
         let currentEditionId = null;
         let currentAppendixId = null;
+        let isAppendixActive = false; // флаг, что сейчас показано приложение
 
         const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
 
@@ -326,7 +327,6 @@
             }
         }
 
-        // Загрузка PDF по документу (редакция или приложение)
         async function loadPDF(doc) {
             if (!doc || !doc.file_name) {
                 els.error.textContent = 'Документ не имеет файла';
@@ -429,11 +429,15 @@
                     els.appendixSelect.appendChild(option);
                 });
                 els.appendixesSelectorGroup.style.display = 'flex';
-                currentAppendixId = apps[0].id;
-                els.appendixSelect.value = currentAppendixId;
+                // НЕ выбираем приложение автоматически, оставляем пустой выбор (или первый, но без загрузки)
+                // Устанавливаем значение '' (пусто), чтобы не было авто-выбора
+                els.appendixSelect.value = '';
+                currentAppendixId = null;
+                isAppendixActive = false;
             } else {
                 els.appendixesSelectorGroup.style.display = 'none';
                 currentAppendixId = null;
+                isAppendixActive = false;
             }
 
             els.title.textContent = `Федеральный конституционный закон №${law.number} «${law.title}» (${law.year} год)`;
@@ -444,16 +448,12 @@
             if (els.intro) els.intro.style.display = 'none';
             if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none';
 
-            // --- ОСНОВНОЕ ИЗМЕНЕНИЕ: если есть приложения, загружаем первое приложение, иначе редакцию ---
-            if (apps && apps.length > 0) {
-                await loadPDF(apps[0]);  // загружаем первое приложение
+            // Загружаем редакцию (сам закон)
+            const editionDoc = currentEditions.find(e => e.id === currentEditionId);
+            if (editionDoc) {
+                await loadPDF(editionDoc);
             } else {
-                const editionDoc = currentEditions.find(e => e.id === currentEditionId);
-                if (editionDoc) {
-                    await loadPDF(editionDoc);
-                } else {
-                    await loadPDF(currentEditions[0]);
-                }
+                await loadPDF(currentEditions[0]);
             }
         }
 
@@ -463,15 +463,28 @@
             const doc = currentEditions.find(e => e.id == id);
             if (doc) {
                 currentEditionId = id;
+                isAppendixActive = false;
+                // Сбрасываем выбор приложения, чтобы не было конфликта
+                if (els.appendixSelect) els.appendixSelect.value = '';
                 loadPDF(doc);
             }
         });
 
         els.appendixSelect.addEventListener('change', function() {
             const id = this.value;
+            if (!id) {
+                // Если выбрано пустое значение, возвращаемся к закону
+                const editionDoc = currentEditions.find(e => e.id === currentEditionId);
+                if (editionDoc) {
+                    isAppendixActive = false;
+                    loadPDF(editionDoc);
+                }
+                return;
+            }
             const doc = currentAppendixes.find(a => a.id == id);
             if (doc) {
                 currentAppendixId = id;
+                isAppendixActive = true;
                 loadPDF(doc);
             }
         });
