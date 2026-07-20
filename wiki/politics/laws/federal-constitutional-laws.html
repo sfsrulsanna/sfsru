@@ -1,4 +1,4 @@
-<!-- federal-constitutional-laws.html — с двумя селектами: редакции и приложения (работает переключение) -->
+<!-- federal-constitutional-laws.html — исправленная версия с автоматическим открытием первого приложения -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -339,7 +339,6 @@
             els.loader.style.display = 'block';
             els.container.style.display = 'none';
             els.error.style.display = 'none';
-            // Принудительно очищаем iframe, чтобы перезагрузить
             els.frame.src = '';
 
             try {
@@ -354,7 +353,6 @@
                     els.loader.style.display = 'none';
                     els.container.style.display = 'block';
                 };
-                // Таймаут на случай, если onload не сработает
                 setTimeout(function() {
                     if (els.loader.style.display !== 'none') {
                         els.loader.style.display = 'none';
@@ -412,7 +410,6 @@
                 option.textContent = ed.title;
                 els.editionSelect.appendChild(option);
             }
-            // Выбираем текущую (действующую) или исходную
             let currentEdition = editionsList.find(e => e.is_current === true);
             if (!currentEdition) currentEdition = editionsList.find(e => e.id === 'original');
             currentEditionId = currentEdition.id;
@@ -432,7 +429,6 @@
                     els.appendixSelect.appendChild(option);
                 });
                 els.appendixesSelectorGroup.style.display = 'flex';
-                // По умолчанию выбираем первое приложение, но не загружаем его, показываем редакцию
                 currentAppendixId = apps[0].id;
                 els.appendixSelect.value = currentAppendixId;
             } else {
@@ -448,12 +444,16 @@
             if (els.intro) els.intro.style.display = 'none';
             if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none';
 
-            // Загружаем PDF текущей редакции
-            const editionDoc = currentEditions.find(e => e.id === currentEditionId);
-            if (editionDoc) {
-                await loadPDF(editionDoc);
+            // --- ОСНОВНОЕ ИЗМЕНЕНИЕ: если есть приложения, загружаем первое приложение, иначе редакцию ---
+            if (apps && apps.length > 0) {
+                await loadPDF(apps[0]);  // загружаем первое приложение
             } else {
-                await loadPDF(currentEditions[0]);
+                const editionDoc = currentEditions.find(e => e.id === currentEditionId);
+                if (editionDoc) {
+                    await loadPDF(editionDoc);
+                } else {
+                    await loadPDF(currentEditions[0]);
+                }
             }
         }
 
