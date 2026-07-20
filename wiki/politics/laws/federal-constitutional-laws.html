@@ -1,4 +1,4 @@
-<!-- federal-constitutional-laws.html — полностью исправленная версия -->
+<!-- federal-constitutional-laws.html — полностью исправленная версия с корректными именами -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -254,7 +254,7 @@
             db: { schema: TABLE_SCHEMA }
         });
 
-        // DOM-элементы (все ID написаны латиницей)
+        // DOM-элементы — все имена только латиница, без опечаток
         const els = {
             grid: document.getElementById('laws-grid'),
             viewer: document.getElementById('pdf-viewer'),
@@ -418,15 +418,17 @@
         }
 
         function renderAppendixes(apps) {
-            if (!els.appendixеsList) { // здесь была опечатка — исправлено
+            // Используем прямой доступ к элементу, чтобы избежать ошибок в имени свойства
+            const container = document.getElementById('appendixes-list');
+            if (!container) {
                 console.error('Элемент #appendixes-list не найден');
                 return;
             }
-            const container = els.appendixеsList;
             container.innerHTML = '';
             if (!apps || apps.length === 0) {
                 container.innerHTML = '<div class="appendix-empty">Приложения к данному закону отсутствуют.</div>';
-                if (els.appendixеsBlock) els.appendixеsBlock.style.display = 'block';
+                const block = document.getElementById('appendixes-block');
+                if (block) block.style.display = 'block';
                 return;
             }
             apps.forEach(app => {
@@ -462,7 +464,8 @@
                     }
                 });
             });
-            if (els.appendixеsBlock) els.appendixеsBlock.style.display = 'block';
+            const block = document.getElementById('appendixes-block');
+            if (block) block.style.display = 'block';
         }
 
         async function loadPDFForEdition(edition) {
@@ -475,7 +478,8 @@
             if (els.intro) els.intro.style.display = 'none';
             if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none';
             // Скрываем блок приложений до загрузки
-            if (els.appendixеsBlock) els.appendixеsBlock.style.display = 'none';
+            const block = document.getElementById('appendixes-block');
+            if (block) block.style.display = 'none';
 
             const bucket = edition.bucket_name;
             const filePath = `${edition.bucket_path}${edition.file_name}.pdf`;
