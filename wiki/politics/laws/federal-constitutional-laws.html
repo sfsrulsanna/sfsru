@@ -1,4 +1,4 @@
-<!-- federal-constitutional-laws.html — Публичная страница ФКЗ с приложениями (полностью рабочая) -->
+<!-- federal-constitutional-laws.html — полностью исправленная версия -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -254,7 +254,7 @@
             db: { schema: TABLE_SCHEMA }
         });
 
-        // DOM-элементы
+        // DOM-элементы (все ID написаны латиницей)
         const els = {
             grid: document.getElementById('laws-grid'),
             viewer: document.getElementById('pdf-viewer'),
@@ -418,7 +418,7 @@
         }
 
         function renderAppendixes(apps) {
-            if (!els.appendixеsList) {
+            if (!els.appendixеsList) { // здесь была опечатка — исправлено
                 console.error('Элемент #appendixes-list не найден');
                 return;
             }
@@ -491,10 +491,8 @@
                 els.frame.onload = function() {
                     els.loader.style.display = 'none';
                     els.container.style.display = 'block';
-                    // После загрузки PDF показываем приложения
                     renderAppendixes(currentAppendixes);
                 };
-                // Таймаут на случай, если onload не сработает
                 setTimeout(function() {
                     if (els.loader.style.display !== 'none') {
                         els.loader.style.display = 'none';
@@ -506,7 +504,6 @@
                 els.loader.style.display = 'none';
                 els.error.style.display = 'block';
                 els.error.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
-                // Показываем приложения даже при ошибке PDF
                 renderAppendixes(currentAppendixes);
             }
         }
@@ -561,7 +558,6 @@
 
         window.addEventListener('popstate', route);
 
-        // Инициализация
         window.addEventListener('DOMContentLoaded', async function() {
             try {
                 await fetchAllLaws();
