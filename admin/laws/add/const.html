@@ -1,11 +1,11 @@
-<!-- admin-constitution.html — Админ-панель для управления конституциями и их редакциями -->
+<!-- admin-constitution.html — исправленная и улучшенная версия -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Управление Конституциями — Админ-панель</title>
-    <!-- favicons (скопированы из fl.html) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -57,6 +57,7 @@
         .edition-item { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
         .edition-actions button { margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; }
         .current-badge { background: #2e7d32; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        .error-detail { color: #c00; background: #ffebee; padding: 8px 12px; border-radius: 8px; margin: 6px 0; border-left: 3px solid #c00; font-size: 0.9rem; }
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
     </style>
 </head>
@@ -99,7 +100,7 @@
                     <div class="form-group"><label>Название</label><input type="text" id="constitutionTitle" required placeholder="Конституция СФСРЮ" /></div>
                     <div class="form-group"><label>Год</label><input type="number" id="constitutionYear" required /></div>
                     <div class="form-group"><label>Дата исходной редакции</label><input type="date" id="originalDate" required /></div>
-                    <div class="form-group"><label>PDF исходной редакции</label><input type="file" id="originalPdf" accept=".pdf" /></div>
+                    <div class="form-group"><label>PDF исходной редакции</label><input type="file" id="originalPdf" accept=".pdf" required /></div>
                     <div class="form-group"><label>Бакет для исходного PDF</label>
                         <select id="originalBucket">
                             <option value="constitution-files">constitution-files</option>
@@ -115,7 +116,7 @@
                     <button type="submit" id="saveConstitutionBtn">💾 Сохранить конституцию</button>
                     <button type="button" id="cancelConstitutionEdit" class="secondary" style="display:none;">Отменить</button>
                 </div>
-                <div id="constitutionMsg"></div>
+                <div id="constitutionMsg" style="margin-top:10px;"></div>
             </form>
         </div>
 
@@ -204,10 +205,9 @@
         const refreshConstitutionsBtn = $('refreshConstitutionsBtn');
         const constitutionsTbody = document.querySelector('#constitutionsTable tbody');
 
-        function showConstitutionMsg(msg, isError = true) {
-            constitutionMsg.textContent = msg;
+        function showConstitutionMsg(msg, isError = true, detail = '') {
+            constitutionMsg.innerHTML = msg + (detail ? `<div class="error-detail">${detail}</div>` : '');
             constitutionMsg.style.color = isError ? '#c00' : '#0a0';
-            setTimeout(() => constitutionMsg.textContent = '', 3000);
         }
 
         function generateUniqueFilename(prefix, extension = 'pdf') {
@@ -226,21 +226,43 @@
         let allConstitutions = [];
         let currentEditConstitutionId = null;
 
-        async function loadConstitutions() {
-            const { data, error } = await supabase.from(CONSTITUTIONS_TABLE).select('*').order('sort_order', { ascending: true });
-            if (error) { showConstitutionMsg('Ошибка загрузки: ' + error.message); return; }
-            allConstitutions = data || [];
-            const years = [...new Set(allConstitutions.map(c => c.year))].sort((a,b) => b - a);
-            yearFilterConstitutions.innerHTML = '<option value="">Все годы</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
-            // Заполняем селект для редакций
-            const currentSelected = selectConstitutionForEditions.value;
-            selectConstitutionForEditions.innerHTML = '<option value="">-- Выберите конституцию --</option>' +
-                allConstitutions.map(c => `<option value="${c.id}">${c.title} (${c.year})</option>`).join('');
-            if (currentSelected && allConstitutions.some(c => c.id == currentSelected)) {
-                selectConstitutionForEditions.value = currentSelected;
+        // Проверка существования бакета
+        async function ensureBucketExists(bucketName) {
+            try {
+                const { data, error } = await supabase.storage.getBucket(bucketName);
+                if (error) {
+                    console.warn('Бакет не найден, пробуем создать:', bucketName);
+                    const { error: createError } = await supabase.storage.createBucket(bucketName, { public: false });
+                    if (createError) {
+                        throw new Error(`Не удалось создать бакет: ${createError.message}`);
+                    }
+                    console.log('Бакет создан:', bucketName);
+                }
+                return true;
+            } catch (err) {
+                throw new Error(`Ошибка с бакетом ${bucketName}: ${err.message}`);
             }
-            renderConstitutionsTable();
-            if (selectConstitutionForEditions.value) loadEditionsForConstitution(selectConstitutionForEditions.value);
+        }
+
+        async function loadConstitutions() {
+            try {
+                const { data, error } = await supabase.from(CONSTITUTIONS_TABLE).select('*').order('sort_order', { ascending: true });
+                if (error) throw error;
+                allConstitutions = data || [];
+                const years = [...new Set(allConstitutions.map(c => c.year))].sort((a,b) => b - a);
+                yearFilterConstitutions.innerHTML = '<option value="">Все годы</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
+                const currentSelected = selectConstitutionForEditions.value;
+                selectConstitutionForEditions.innerHTML = '<option value="">-- Выберите конституцию --</option>' +
+                    allConstitutions.map(c => `<option value="${c.id}">${c.title} (${c.year})</option>`).join('');
+                if (currentSelected && allConstitutions.some(c => c.id == currentSelected)) {
+                    selectConstitutionForEditions.value = currentSelected;
+                }
+                renderConstitutionsTable();
+                if (selectConstitutionForEditions.value) loadEditionsForConstitution(selectConstitutionForEditions.value);
+            } catch (err) {
+                showConstitutionMsg('Ошибка загрузки конституций: ' + err.message, true);
+                console.error(err);
+            }
         }
 
         function renderConstitutionsTable() {
@@ -274,9 +296,11 @@
                 const path = normalizePath(c.original_bucket_path || DEFAULT_PATH);
                 const file = c.original_file_name;
                 if (!file) { alert('Нет файла'); return; }
-                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path + file + '.pdf', 60);
-                if (data?.signedUrl) window.open(data.signedUrl, '_blank');
-                else alert('Не удалось открыть PDF: ' + (error?.message || 'неизвестная ошибка'));
+                try {
+                    const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path + file + '.pdf', 60);
+                    if (data?.signedUrl) window.open(data.signedUrl, '_blank');
+                    else alert('Не удалось открыть PDF: ' + (error?.message || 'неизвестная ошибка'));
+                } catch (err) { alert('Ошибка: ' + err.message); }
             }));
         }
 
@@ -307,13 +331,16 @@
             cancelConstitutionEdit.style.display = 'none';
             constitutionActive.checked = true;
             originalBucket.value = DEFAULT_BUCKET;
+            constitutionMsg.innerHTML = '';
         }
         cancelConstitutionEdit.addEventListener('click', resetConstitutionForm);
 
         async function deleteConstitution(id, filename, bucket, path) {
             if (!confirm('Удалить конституцию? Все её редакции и файлы будут удалены.')) return;
             try {
-                if (filename) await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                if (filename) {
+                    await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                }
                 const { data: editions } = await supabase.from(EDITIONS_TABLE).select('*').eq('constitution_id', id);
                 for (const ed of editions) {
                     const edBucket = ed.bucket_name || DEFAULT_BUCKET;
@@ -321,12 +348,16 @@
                     if (ed.file_name) await supabase.storage.from(edBucket).remove([edPath + ed.file_name + '.pdf']);
                 }
                 await supabase.from(EDITIONS_TABLE).delete().eq('constitution_id', id);
-                await supabase.from(CONSTITUTIONS_TABLE).delete().eq('id', id);
+                const { error } = await supabase.from(CONSTITUTIONS_TABLE).delete().eq('id', id);
+                if (error) throw error;
                 showConstitutionMsg('Конституция удалена', false);
                 loadConstitutions();
                 if (currentEditConstitutionId == id) resetConstitutionForm();
                 if (selectConstitutionForEditions.value == id) { selectConstitutionForEditions.value = ''; editionsListDiv.innerHTML = ''; }
-            } catch (err) { showConstitutionMsg('Ошибка удаления: ' + err.message); }
+            } catch (err) {
+                showConstitutionMsg('Ошибка удаления: ' + err.message, true);
+                console.error(err);
+            }
         }
 
         constitutionForm.addEventListener('submit', async (e) => {
@@ -341,81 +372,115 @@
             let fileName = null;
             const path = normalizePath(DEFAULT_PATH);
 
+            // Валидация
+            if (!title) { showConstitutionMsg('Введите название', true); return; }
+            if (!year) { showConstitutionMsg('Введите год', true); return; }
+            if (!origDate) { showConstitutionMsg('Укажите дату исходной редакции', true); return; }
+            if (!file && !currentEditConstitutionId) { showConstitutionMsg('Загрузите PDF исходной редакции', true); return; }
+
             try {
+                // Проверяем/создаём бакет
+                await ensureBucketExists(bucket);
+
                 if (currentEditConstitutionId) {
                     const old = allConstitutions.find(c => c.id == currentEditConstitutionId);
                     const updates = { title, year, original_date: origDate, is_active: isActive, sort_order: sortOrder, original_bucket: bucket, original_bucket_path: path };
                     if (file) {
                         const newName = 'constitution-original-' + generateUniqueFilename(Date.now() + '-' + title.replace(/\s/g,''), 'pdf').replace('.pdf', '');
                         const fullPath = path + newName + '.pdf';
+                        // Удаляем старый файл
                         if (old.original_file_name) {
-                            await supabase.storage.from(old.original_bucket || DEFAULT_BUCKET)
-                                .remove([normalizePath(old.original_bucket_path || DEFAULT_PATH) + old.original_file_name + '.pdf']);
+                            try {
+                                await supabase.storage.from(old.original_bucket || DEFAULT_BUCKET)
+                                    .remove([normalizePath(old.original_bucket_path || DEFAULT_PATH) + old.original_file_name + '.pdf']);
+                            } catch (e) { console.warn('Не удалось удалить старый файл:', e); }
                         }
-                        await supabase.storage.from(bucket).upload(fullPath, file);
+                        // Загружаем новый
+                        const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
+                        if (uploadError) throw new Error('Ошибка загрузки PDF: ' + uploadError.message);
                         updates.original_file_name = newName;
                     } else {
                         updates.original_file_name = old.original_file_name;
                     }
-                    await supabase.from(CONSTITUTIONS_TABLE).update(updates).eq('id', currentEditConstitutionId);
+                    const { error: updateError } = await supabase.from(CONSTITUTIONS_TABLE).update(updates).eq('id', currentEditConstitutionId);
+                    if (updateError) throw new Error('Ошибка обновления записи: ' + updateError.message);
                     showConstitutionMsg('Конституция обновлена', false);
                 } else {
-                    if (!file) throw new Error('Загрузите PDF исходной редакции');
+                    // Создание новой
                     const newName = 'constitution-original-' + generateUniqueFilename(Date.now() + '-' + title.replace(/\s/g,''), 'pdf').replace('.pdf', '');
                     const fullPath = path + newName + '.pdf';
-                    await supabase.storage.from(bucket).upload(fullPath, file);
+                    const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
+                    if (uploadError) throw new Error('Ошибка загрузки PDF в бакет: ' + uploadError.message);
+
                     if (!sortOrder) {
                         const { data: max } = await supabase.from(CONSTITUTIONS_TABLE).select('sort_order').order('sort_order', { ascending: false }).limit(1);
                         sortOrder = (max && max[0]?.sort_order || 0) + 1;
                     }
-                    await supabase.from(CONSTITUTIONS_TABLE).insert({
+                    const { error: insertError } = await supabase.from(CONSTITUTIONS_TABLE).insert({
                         title, year, original_date: origDate,
                         is_active: isActive, sort_order: sortOrder,
                         original_bucket: bucket, original_bucket_path: path,
                         original_file_name: newName
                     });
+                    if (insertError) throw new Error('Ошибка создания записи в БД: ' + insertError.message);
                     showConstitutionMsg('Конституция создана', false);
                 }
                 resetConstitutionForm();
                 loadConstitutions();
-            } catch (err) { showConstitutionMsg('Ошибка: ' + err.message); }
+            } catch (err) {
+                showConstitutionMsg('Ошибка: ' + err.message, true);
+                console.error(err);
+            }
         });
 
         // Редакции
         async function loadEditionsForConstitution(constitutionId) {
             if (!constitutionId) { editionsListDiv.innerHTML = ''; return; }
-            const { data, error } = await supabase.from(EDITIONS_TABLE).select('*').eq('constitution_id', constitutionId).order('sort_order', { ascending: true });
-            if (error) { editionsListDiv.innerHTML = '<p>Ошибка загрузки редакций</p>'; return; }
-            editionsListDiv.innerHTML = '';
-            data.forEach(ed => {
-                const div = document.createElement('div');
-                div.className = 'edition-item';
-                div.innerHTML = `
-                    <div>
-                        <strong>📅 ${new Date(ed.date_adopted).toLocaleDateString('ru-RU')}</strong>
-                        ${ed.is_current ? '<span class="current-badge">Действующая</span>' : ''}
-                        <br /><small>${ed.file_name}.pdf</small>
-                    </div>
-                    <div class="edition-actions">
-                        <button class="set-current-btn" data-id="${ed.id}" data-constitution="${constitutionId}">⭐ Сделать текущей</button>
-                        <button class="delete-edition-btn" data-id="${ed.id}" data-filename="${ed.file_name}" data-bucket="${ed.bucket_name || DEFAULT_BUCKET}" data-path="${ed.bucket_path || DEFAULT_PATH}">🗑 Удалить</button>
-                    </div>
-                `;
-                editionsListDiv.appendChild(div);
-            });
-            document.querySelectorAll('.set-current-btn').forEach(btn => btn.addEventListener('click', async () => {
-                const edId = btn.dataset.id, constId = btn.dataset.constitution;
-                await supabase.from(EDITIONS_TABLE).update({ is_current: false }).eq('constitution_id', constId);
-                await supabase.from(EDITIONS_TABLE).update({ is_current: true }).eq('id', edId);
-                loadEditionsForConstitution(constId);
-            }));
-            document.querySelectorAll('.delete-edition-btn').forEach(btn => btn.addEventListener('click', async () => {
-                if (!confirm('Удалить редакцию?')) return;
-                const edId = btn.dataset.id, filename = btn.dataset.filename, bucket = btn.dataset.bucket, path = btn.dataset.path;
-                if (filename) await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
-                await supabase.from(EDITIONS_TABLE).delete().eq('id', edId);
-                loadEditionsForConstitution(selectConstitutionForEditions.value);
-            }));
+            try {
+                const { data, error } = await supabase.from(EDITIONS_TABLE).select('*').eq('constitution_id', constitutionId).order('sort_order', { ascending: true });
+                if (error) throw error;
+                editionsListDiv.innerHTML = '';
+                if (!data || data.length === 0) {
+                    editionsListDiv.innerHTML = '<p style="color:#888;">Редакции отсутствуют.</p>';
+                    return;
+                }
+                data.forEach(ed => {
+                    const div = document.createElement('div');
+                    div.className = 'edition-item';
+                    div.innerHTML = `
+                        <div>
+                            <strong>📅 ${new Date(ed.date_adopted).toLocaleDateString('ru-RU')}</strong>
+                            ${ed.is_current ? '<span class="current-badge">Действующая</span>' : ''}
+                            <br /><small>${ed.file_name}.pdf</small>
+                        </div>
+                        <div class="edition-actions">
+                            <button class="set-current-btn" data-id="${ed.id}" data-constitution="${constitutionId}">⭐ Сделать текущей</button>
+                            <button class="delete-edition-btn" data-id="${ed.id}" data-filename="${ed.file_name}" data-bucket="${ed.bucket_name || DEFAULT_BUCKET}" data-path="${ed.bucket_path || DEFAULT_PATH}">🗑 Удалить</button>
+                        </div>
+                    `;
+                    editionsListDiv.appendChild(div);
+                });
+                document.querySelectorAll('.set-current-btn').forEach(btn => btn.addEventListener('click', async () => {
+                    const edId = btn.dataset.id, constId = btn.dataset.constitution;
+                    try {
+                        await supabase.from(EDITIONS_TABLE).update({ is_current: false }).eq('constitution_id', constId);
+                        await supabase.from(EDITIONS_TABLE).update({ is_current: true }).eq('id', edId);
+                        loadEditionsForConstitution(constId);
+                    } catch (err) { alert('Ошибка: ' + err.message); }
+                }));
+                document.querySelectorAll('.delete-edition-btn').forEach(btn => btn.addEventListener('click', async () => {
+                    if (!confirm('Удалить редакцию?')) return;
+                    const edId = btn.dataset.id, filename = btn.dataset.filename, bucket = btn.dataset.bucket, path = btn.dataset.path;
+                    try {
+                        if (filename) await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                        await supabase.from(EDITIONS_TABLE).delete().eq('id', edId);
+                        loadEditionsForConstitution(selectConstitutionForEditions.value);
+                    } catch (err) { alert('Ошибка: ' + err.message); }
+                }));
+            } catch (err) {
+                editionsListDiv.innerHTML = '<p style="color:#c00;">Ошибка загрузки редакций: ' + err.message + '</p>';
+                console.error(err);
+            }
         }
 
         selectConstitutionForEditions.addEventListener('change', () => {
@@ -432,21 +497,27 @@
             let path = normalizePath(editionPath.value.trim() || DEFAULT_PATH);
             const constObj = allConstitutions.find(c => c.id == constId);
             if (!constObj) { alert('Конституция не найдена'); return; }
-            const prefix = `constitution-edition-${constId}-${date.replace(/-/g, '')}`;
-            const uniqueName = generateUniqueFilename(prefix, 'pdf').replace('.pdf', '');
-            const fullPath = path + uniqueName + '.pdf';
-            let sortOrder = editionSortOrder.value ? parseInt(editionSortOrder.value) : null;
-            if (!sortOrder) {
-                const { data: max } = await supabase.from(EDITIONS_TABLE).select('sort_order').eq('constitution_id', constId).order('sort_order', { ascending: false }).limit(1);
-                sortOrder = (max && max[0]?.sort_order || 0) + 1;
-            }
-            const isCurr = editionIsCurrent.checked;
+
             try {
-                await supabase.storage.from(bucket).upload(fullPath, file);
+                await ensureBucketExists(bucket);
+                const prefix = `constitution-edition-${constId}-${date.replace(/-/g, '')}`;
+                const uniqueName = generateUniqueFilename(prefix, 'pdf').replace('.pdf', '');
+                const fullPath = path + uniqueName + '.pdf';
+                let sortOrder = editionSortOrder.value ? parseInt(editionSortOrder.value) : null;
+                if (!sortOrder) {
+                    const { data: max } = await supabase.from(EDITIONS_TABLE).select('sort_order').eq('constitution_id', constId).order('sort_order', { ascending: false }).limit(1);
+                    sortOrder = (max && max[0]?.sort_order || 0) + 1;
+                }
+                const isCurr = editionIsCurrent.checked;
+
+                // Загружаем файл
+                const { error: uploadError } = await supabase.storage.from(bucket).upload(fullPath, file);
+                if (uploadError) throw new Error('Ошибка загрузки PDF: ' + uploadError.message);
+
                 if (isCurr) {
                     await supabase.from(EDITIONS_TABLE).update({ is_current: false }).eq('constitution_id', constId);
                 }
-                await supabase.from(EDITIONS_TABLE).insert({
+                const { error: insertError } = await supabase.from(EDITIONS_TABLE).insert({
                     constitution_id: constId,
                     date_adopted: date,
                     file_name: uniqueName,
@@ -455,10 +526,15 @@
                     is_current: isCurr,
                     sort_order: sortOrder
                 });
+                if (insertError) throw new Error('Ошибка записи редакции: ' + insertError.message);
+
                 editionDate.value = ''; editionPdf.value = ''; editionIsCurrent.checked = false; editionSortOrder.value = '';
                 loadEditionsForConstitution(constId);
                 alert('Редакция добавлена');
-            } catch (err) { alert('Ошибка: ' + err.message); }
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+                console.error(err);
+            }
         });
 
         refreshConstitutionsBtn.addEventListener('click', loadConstitutions);
