@@ -1,11 +1,11 @@
-<!-- codes.html — Публичная страница кодексов СФСРЮ -->
+<!-- codes.html — Публичная страница кодексов СФСРЮ (исправленная) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Кодексы СФСРЮ</title>
-    <!-- favicons (скопированы из предыдущих страниц) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -26,7 +26,6 @@
     <link rel="stylesheet" href="../../../css/laws.css">
     <link rel="stylesheet" href="../../../css/decrees.css">
     <style>
-        /* Дополнительные стили для фильтра статуса */
         .status-filter-wrapper {
             max-width: 1000px;
             margin: 0 auto 20px;
@@ -78,7 +77,6 @@
             font-size: 0.9rem;
             margin-left: 10px;
         }
-        /* Поиск */
         .search-wrapper {
             max-width: 1000px;
             margin: 0 auto 20px;
@@ -99,10 +97,18 @@
             border-color: #a00;
             box-shadow: 0 0 0 2px rgba(170,0,0,0.2);
         }
+        /* Дополнительный стиль для карточек: заголовок и подзаголовок */
+        .law-btn h3 {
+            font-size: 1.2rem;
+            margin: 0.5rem 0 0.3rem;
+        }
+        .law-btn p {
+            font-size: 0.9rem;
+            color: #444;
+        }
     </style>
 </head>
 <body>
-    <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -127,7 +133,6 @@
         </div>
     </header>
 
-    <!-- Основной контент -->
     <div class="main-content">
         <div class="laws-intro">
             <h1 id="page-title">Кодексы СФСРЮ</h1>
@@ -137,22 +142,18 @@
             </div>
         </div>
 
-        <!-- Поиск -->
         <div class="search-wrapper">
             <input type="text" id="search-codes" placeholder="Поиск кодексов по номеру или названию...">
         </div>
 
-        <!-- Фильтр по статусу -->
         <div class="status-filter-wrapper">
             <button class="filter-btn active" data-status="all">Все</button>
             <button class="filter-btn" data-status="active">Действующие</button>
             <button class="filter-btn" data-status="inactive">Утратили силу</button>
         </div>
 
-        <!-- Сетка карточек -->
         <div id="codes-grid" class="decrees-grid"></div>
 
-        <!-- Просмотрщик PDF -->
         <div id="pdf-viewer" style="display:none; width: 85%; margin: 20px auto; padding: 0 15px; box-sizing: border-box;">
             <div style="margin:15px 0; display:flex; justify-content: center; flex-wrap:wrap; gap:10px;">
                 <button id="btn-back" class="law-btn" style="padding:0.8rem 1.2rem; min-height:auto; font-size:0.95rem; width:auto; flex:none;">
@@ -183,7 +184,6 @@
         </div>
     </div>
 
-    <!-- Подвал -->
     <footer class="footer">
         <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
@@ -197,7 +197,6 @@
     (function() {
         'use strict';
 
-        // ------ Конфигурация ------
         const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
         
@@ -241,14 +240,11 @@
         let currentCode = null;
         let currentEditions = [];
         let currentEditionId = null;
-
-        // Текущий фильтр
-        let currentStatusFilter = 'all'; // 'all', 'active', 'inactive'
+        let currentStatusFilter = 'all';
         let searchTerm = '';
 
         const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
 
-        // ------ Загрузка данных ------
         async function fetchAllCodes() {
             const { data, error } = await supabase.from(CODES_TABLE).select('*').order('sort_order', { ascending: true });
             if (error) throw new Error('Ошибка БД: ' + error.message);
@@ -267,16 +263,13 @@
             return editionsMap[codeId];
         }
 
-        // ------ Фильтрация и рендеринг ------
         function getFilteredCodes() {
             let filtered = allCodes;
-            // Фильтр по статусу
             if (currentStatusFilter === 'active') {
                 filtered = filtered.filter(c => c.is_active === true);
             } else if (currentStatusFilter === 'inactive') {
                 filtered = filtered.filter(c => c.is_active === false);
             }
-            // Поиск
             if (searchTerm.trim()) {
                 const s = searchTerm.trim().toLowerCase();
                 filtered = filtered.filter(c =>
@@ -292,22 +285,21 @@
             try {
                 const list = getFilteredCodes();
                 els.grid.innerHTML = '';
-                
                 if (!list.length) {
                     els.grid.innerHTML = `<p style="text-align:center;color:#666;padding:2rem;">Кодексы не найдены.</p>`;
                     return;
                 }
-
                 list.forEach(code => {
                     const isRepealed = !code.is_active;
                     const a = document.createElement('a');
                     a.className = 'law-btn' + (isRepealed ? ' archived' : '');
                     a.href = `?code=${encodeURIComponent(code.id)}`;
+                    // Изменённый шаблон: название кодекса, ниже — "Федеральный закон №... от ..."
                     a.innerHTML = `
                         ${isRepealed ? '<span class="badge-repealed">Утратил силу</span>' : ''}
                         <span class="law-icon">📜</span>
-                        <h3>Кодекс №${code.number} от ${fmt(code.original_date)}</h3>
-                        <p>«${code.title}»</p>
+                        <h3>${code.title}</h3>
+                        <p>Федеральный закон №${code.number} от ${fmt(code.original_date)}</p>
                     `;
                     a.addEventListener('click', e => {
                         e.preventDefault();
@@ -321,7 +313,6 @@
             }
         }
 
-        // ------ Просмотр кодекса ------
         async function loadCode(codeId) {
             const code = allCodes.find(c => c.id == codeId);
             if (!code) {
@@ -333,7 +324,6 @@
             
             const extraEditions = await fetchEditionsForCode(code.id);
             const editionsList = [];
-            // Исходная редакция
             editionsList.push({
                 id: 'original',
                 date_issued: code.original_date,
@@ -343,7 +333,6 @@
                 is_current: false,
                 title: 'Исходная редакция'
             });
-            // Дополнительные
             for (let ed of extraEditions) {
                 editionsList.push({
                     id: ed.id,
@@ -372,7 +361,8 @@
             }
             els.editionsSelector.style.display = editionsList.length > 1 ? 'block' : 'none';
             
-            els.title.textContent = `Кодекс №${code.number} «${code.title}»`;
+            // Заголовок страницы: только название кодекса
+            els.title.textContent = `${code.title}`;
             await loadPDFForEdition(currentEdition);
         }
 
@@ -414,11 +404,9 @@
             }
         }
 
-        // ------ Маршрутизация ------
         function route() {
             const params = new URLSearchParams(window.location.search);
             const codeId = params.get('code');
-            
             if (codeId) {
                 loadCode(codeId);
             } else {
@@ -430,14 +418,11 @@
             }
         }
 
-        // ------ События ------
-        // Фильтр по статусу
         els.filterBtns.forEach(btn => {
             btn.addEventListener('click', function() {
                 els.filterBtns.forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentStatusFilter = this.dataset.status;
-                // Обновляем URL без параметров (возврат к списку)
                 if (window.location.search.includes('code=')) {
                     window.history.pushState({}, '', window.location.pathname);
                 }
@@ -445,7 +430,6 @@
             });
         });
 
-        // Поиск
         els.search.addEventListener('input', function() {
             searchTerm = this.value;
             if (window.location.search.includes('code=')) {
@@ -454,24 +438,18 @@
             renderGrid();
         });
 
-        // Кнопка "Назад"
         els.btnBack.addEventListener('click', e => {
             e.preventDefault();
             window.history.pushState({}, '', window.location.pathname);
             route();
         });
 
-        // Смена редакции
         els.editionSelect.addEventListener('change', onEditionChange);
-
-        // Обработка истории
         window.addEventListener('popstate', route);
 
-        // ------ Инициализация ------
         window.addEventListener('DOMContentLoaded', async () => {
             try {
                 await fetchAllCodes();
-                // Устанавливаем активный фильтр "Все"
                 document.querySelector('.filter-btn[data-status="all"]')?.classList.add('active');
                 route();
             } catch (err) {
