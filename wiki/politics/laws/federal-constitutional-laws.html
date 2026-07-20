@@ -1,11 +1,11 @@
-<!-- federal-constitutional-laws.html — Публичная страница Федеральных конституционных законов -->
+<!-- federal-constitutional-laws.html — Публичная страница ФКЗ с приложениями -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Федеральные конституционные законы СФСРЮ</title>
-    <!-- favicons (аналогично federal-laws.html) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -28,7 +28,7 @@
     <style>
         .year-filter-wrapper {
             max-width: 1000px; margin: 0 auto 20px; padding: 0 20px;
-            display: flex; align-items: center; gap: 10px;
+            display: flex; align-items: center; gap: 10px; justify-content: center;
         }
         #year-filter {
             padding: 8px 12px; border: 1px solid #ccc; border-radius: 8px;
@@ -56,6 +56,71 @@
             background: #fff;
             font-size: 0.9rem;
             margin-left: 10px;
+        }
+        .appendixes-block {
+            margin: 25px auto 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 16px;
+            max-width: 794px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .appendixes-block h3 {
+            margin-top: 0;
+            color: #a00;
+            font-size: 1.2rem;
+            border-bottom: 2px solid #a00;
+            padding-bottom: 8px;
+            display: inline-block;
+        }
+        .appendix-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .appendix-item:last-child {
+            border-bottom: none;
+        }
+        .appendix-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .appendix-title {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        .appendix-date {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        .appendix-download {
+            background: #2c3e66;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 6px 14px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+        .appendix-download:hover {
+            background: #1a2a4a;
+            transform: scale(1.02);
+        }
+        .appendix-empty {
+            color: #888;
+            font-style: italic;
+            padding: 10px 0;
+        }
+        @media (max-width: 600px) {
+            .appendix-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
         }
     </style>
 </head>
@@ -132,6 +197,12 @@
                     ⬇️ Скачать PDF
                 </a>
             </div>
+
+            <!-- Блок приложений -->
+            <div id="appendixes-block" class="appendixes-block" style="display:none;">
+                <h3>📎 Приложения к закону</h3>
+                <div id="appendixes-list"></div>
+            </div>
         </div>
     </div>
 
@@ -154,8 +225,10 @@
         
         const DEFAULT_BUCKET = 'laws-files-fcl1';
         const DEFAULT_PATH = 'fcl/';
+        const DEFAULT_APPENDIX_PATH = 'fcl/appendixes/';
         const LAWS_TABLE = 'federal_constitutional_laws';
         const EDITIONS_TABLE = 'federal_constitutional_law_editions';
+        const APPENDIXES_TABLE = 'federal_constitutional_law_appendixes';
         const TABLE_SCHEMA = 'laws';
 
         if (!window.supabase || typeof window.supabase.createClient !== 'function') {
@@ -184,13 +257,17 @@
             yearFilter: document.getElementById('year-filter'),
             yearFilterWrapper: document.getElementById('yearFilterWrapper'),
             editionsSelector: document.getElementById('editionsSelector'),
-            editionSelect: document.getElementById('edition-select')
+            editionSelect: document.getElementById('edition-select'),
+            appendixesBlock: document.getElementById('appendixes-block'),
+            appendixesList: document.getElementById('appendixes-list')
         };
 
         let allLaws = [];
         let editionsMap = {};
+        let appendixesMap = {};
         let currentLaw = null;
         let currentEditions = [];
+        let currentAppendixes = [];
         let currentEditionId = null;
 
         const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU') : '';
@@ -211,6 +288,17 @@
             if (error) throw new Error('Ошибка загрузки редакций: ' + error.message);
             editionsMap[lawId] = data || [];
             return editionsMap[lawId];
+        }
+
+        async function fetchAppendixesForLaw(lawId) {
+            if (appendixesMap[lawId]) return appendixesMap[lawId];
+            const { data, error } = await supabase.from(APPENDIXES_TABLE)
+                .select('*')
+                .eq('law_id', lawId)
+                .order('sort_order', { ascending: true });
+            if (error) throw new Error('Ошибка загрузки приложений: ' + error.message);
+            appendixesMap[lawId] = data || [];
+            return appendixesMap[lawId];
         }
 
         function populateYearFilter() {
@@ -267,9 +355,9 @@
             }
             currentLaw = law;
             
+            // Загружаем редакции
             const extraEditions = await fetchEditionsForLaw(law.id);
             const editionsList = [];
-            // Исходная редакция
             editionsList.push({
                 id: 'original',
                 date_issued: law.original_date,
@@ -279,7 +367,6 @@
                 is_current: false,
                 title: 'Исходная редакция'
             });
-            // Дополнительные
             for (let ed of extraEditions) {
                 editionsList.push({
                     id: ed.id,
@@ -308,10 +395,59 @@
             }
             els.editionsSelector.style.display = editionsList.length > 1 ? 'block' : 'none';
             
+            // Загружаем приложения
+            const apps = await fetchAppendixesForLaw(law.id);
+            currentAppendixes = apps;
+            renderAppendixes(apps);
+            
             els.title.textContent = `Федеральный конституционный закон №${law.number} «${law.title}» (${law.year} год)`;
             await loadPDFForEdition(currentEdition);
         }
-        
+
+        function renderAppendixes(apps) {
+            const container = els.appendixеsList;
+            container.innerHTML = '';
+            if (!apps || apps.length === 0) {
+                container.innerHTML = '<div class="appendix-empty">Приложения к данному закону отсутствуют.</div>';
+                els.appendixеsBlock.style.display = 'block';
+                return;
+            }
+            apps.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'appendix-item';
+                div.innerHTML = `
+                    <div class="appendix-info">
+                        <span class="appendix-title">${app.title}</span>
+                        <span class="appendix-date">от ${fmt(app.date_issued)}</span>
+                    </div>
+                    <button class="appendix-download" data-bucket="${app.bucket_name || DEFAULT_BUCKET}" data-path="${app.bucket_path || DEFAULT_APPENDIX_PATH}" data-file="${app.file_name}">
+                        ⬇ Скачать
+                    </button>
+                `;
+                container.appendChild(div);
+            });
+            // Обработчики для кнопок скачивания приложений
+            container.querySelectorAll('.appendix-download').forEach(btn => {
+                btn.addEventListener('click', async function() {
+                    const bucket = this.dataset.bucket;
+                    const path = this.dataset.path;
+                    const file = this.dataset.file;
+                    if (!file) return;
+                    try {
+                        const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path + file + '.pdf', 60);
+                        if (data?.signedUrl) {
+                            window.open(data.signedUrl, '_blank');
+                        } else {
+                            alert('Не удалось получить ссылку на приложение');
+                        }
+                    } catch (err) {
+                        alert('Ошибка: ' + err.message);
+                    }
+                });
+            });
+            els.appendixеsBlock.style.display = 'block';
+        }
+
         async function loadPDFForEdition(edition) {
             els.viewer.style.display = 'block';
             els.grid.style.display = 'none';
@@ -321,6 +457,8 @@
             els.frame.src = '';
             if (els.intro) els.intro.style.display = 'none';
             if (els.yearFilterWrapper) els.yearFilterWrapper.style.display = 'none';
+            // Скрываем блок приложений до загрузки
+            els.appendixеsBlock.style.display = 'none';
             
             const bucket = edition.bucket_name;
             const filePath = `${edition.bucket_path}${edition.file_name}.pdf`;
@@ -333,12 +471,30 @@
                 els.download.href = data.signedUrl;
                 els.fallback.href = data.signedUrl;
                 
-                els.frame.onload = () => { els.loader.style.display = 'none'; els.container.style.display = 'block'; };
-                setTimeout(() => { if (els.loader.style.display !== 'none') { els.loader.style.display = 'none'; els.container.style.display = 'block'; } }, 3000);
+                els.frame.onload = () => { 
+                    els.loader.style.display = 'none'; 
+                    els.container.style.display = 'block';
+                    // После загрузки PDF показываем приложения
+                    if (currentAppendixes && currentAppendixes.length > 0) {
+                        els.appendixеsBlock.style.display = 'block';
+                    } else {
+                        // если нет приложений, показываем блок с сообщением
+                        renderAppendixes(currentAppendixes); // отобразит "отсутствуют"
+                    }
+                };
+                setTimeout(() => { 
+                    if (els.loader.style.display !== 'none') { 
+                        els.loader.style.display = 'none'; 
+                        els.container.style.display = 'block';
+                        if (currentAppendixes) renderAppendixes(currentAppendixes);
+                    } 
+                }, 3000);
             } catch (err) {
                 els.loader.style.display = 'none';
                 els.error.style.display = 'block';
                 els.error.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
+                // Показываем приложения даже при ошибке PDF
+                if (currentAppendixes) renderAppendixes(currentAppendixes);
             }
         }
         

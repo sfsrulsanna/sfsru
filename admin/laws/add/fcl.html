@@ -1,11 +1,11 @@
-<!-- admin-fcl.html — Админ-панель для Федеральных конституционных законов -->
+<!-- admin-fcl.html — Админ-панель для ФКЗ с управлением приложениями -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Управление федеральными конституционными законами — Админ-панель</title>
-    <!-- favicons (скопированы из fl.html) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -54,15 +54,11 @@
         .badge.inactive { background: #ffcdd2; color: #c62828; }
         .search-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
         .search-bar input, .search-bar select { padding: 8px 12px; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
-        .modal-content { background: white; border-radius: 24px; max-width: 600px; width: 90%; padding: 24px; max-height: 90vh; overflow-y: auto; }
-        hr { margin: 20px 0; }
-        .file-info { font-size: 0.8rem; color: #555; }
-        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
-        .editions-list { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
-        .edition-item { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
-        .edition-actions button { margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; }
+        .editions-list, .appendixes-list { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; }
+        .edition-item, .appendix-item { background: #f9f9f9; border-radius: 12px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+        .edition-actions button, .appendix-actions button { margin-left: 8px; padding: 4px 8px; font-size: 0.75rem; }
         .current-badge { background: #2e7d32; color: white; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
     </style>
 </head>
 <body>
@@ -150,6 +146,32 @@
             </div>
         </div>
 
+        <!-- Новая карточка: Управление приложениями -->
+        <div class="card">
+            <h2>📎 Управление приложениями к конституционному закону</h2>
+            <div class="form-group"><label>Выберите закон</label><select id="selectLawForAppendixes"></select></div>
+            <div id="appendixesPanel" style="margin-top:20px;">
+                <div id="appendixesList"></div>
+                <hr />
+                <h3>Добавить новое приложение</h3>
+                <div class="form-grid">
+                    <div class="form-group"><label>Название приложения</label><input type="text" id="appendixTitle" placeholder="Например: Перечень документов" /></div>
+                    <div class="form-group"><label>Дата утверждения</label><input type="date" id="appendixDate" /></div>
+                    <div class="form-group"><label>PDF файл</label><input type="file" id="appendixPdf" accept=".pdf" /></div>
+                    <div class="form-group"><label>Бакет</label>
+                        <select id="appendixBucket">
+                            <option value="laws-files-fcl1">laws-files-fcl1</option>
+                            <option value="laws-files-fcl2">laws-files-fcl2</option>
+                            <option value="laws-files-fcl3">laws-files-fcl3</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Путь</label><input type="text" id="appendixPath" value="fcl/appendixes/" /></div>
+                    <div class="form-group"><label>Порядок (sort_order)</label><input type="number" id="appendixSortOrder" /></div>
+                </div>
+                <button id="addAppendixBtn" class="secondary">➕ Добавить приложение</button>
+            </div>
+        </div>
+
         <!-- Карточка списка законов -->
         <div class="card">
             <div class="search-bar">
@@ -180,8 +202,10 @@
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'laws' } });
         const LAWS_TABLE = 'federal_constitutional_laws';
         const EDITIONS_TABLE = 'federal_constitutional_law_editions';
+        const APPENDIXES_TABLE = 'federal_constitutional_law_appendixes';
         const DEFAULT_BUCKET = 'laws-files-fcl1';
         const DEFAULT_PATH = 'fcl/';
+        const DEFAULT_APPENDIX_PATH = 'fcl/appendixes/';
 
         // ------ DOM-ссылки ------
         const $ = id => document.getElementById(id);
@@ -206,6 +230,15 @@
         const editionPath = $('editionPath');
         const editionIsCurrent = $('editionIsCurrent');
         const addEditionBtn = $('addEditionBtn');
+        const selectLawForAppendixes = $('selectLawForAppendixes');
+        const appendixesListDiv = $('appendixesList');
+        const appendixTitle = $('appendixTitle');
+        const appendixDate = $('appendixDate');
+        const appendixPdf = $('appendixPdf');
+        const appendixBucket = $('appendixBucket');
+        const appendixPath = $('appendixPath');
+        const appendixSortOrder = $('appendixSortOrder');
+        const addAppendixBtn = $('addAppendixBtn');
         const searchLaws = $('searchLaws');
         const yearFilterLaws = $('yearFilterLaws');
         const refreshLawsBtn = $('refreshLawsBtn');
@@ -241,14 +274,22 @@
             allLaws = data || [];
             const years = [...new Set(allLaws.map(l => l.year))].sort((a,b) => b - a);
             yearFilterLaws.innerHTML = '<option value="">Все годы</option>' + years.map(y => `<option value="${y}">${y}</option>`).join('');
-            const currentSelected = selectLawForEditions.value;
+            // Заполняем селекты для редакций и приложений
+            const currentSelectedEditions = selectLawForEditions.value;
             selectLawForEditions.innerHTML = '<option value="">-- Выберите закон --</option>' +
                 allLaws.map(l => `<option value="${l.id}">${l.year} год №${l.number} — ${l.title.substring(0,50)}</option>`).join('');
-            if (currentSelected && allLaws.some(l => l.id == currentSelected)) {
-                selectLawForEditions.value = currentSelected;
+            if (currentSelectedEditions && allLaws.some(l => l.id == currentSelectedEditions)) {
+                selectLawForEditions.value = currentSelectedEditions;
+            }
+            const currentSelectedAppendixes = selectLawForAppendixes.value;
+            selectLawForAppendixes.innerHTML = '<option value="">-- Выберите закон --</option>' +
+                allLaws.map(l => `<option value="${l.id}">${l.year} год №${l.number} — ${l.title.substring(0,50)}</option>`).join('');
+            if (currentSelectedAppendixes && allLaws.some(l => l.id == currentSelectedAppendixes)) {
+                selectLawForAppendixes.value = currentSelectedAppendixes;
             }
             renderLawsTable();
             if (selectLawForEditions.value) loadEditionsForLaw(selectLawForEditions.value);
+            if (selectLawForAppendixes.value) loadAppendixesForLaw(selectLawForAppendixes.value);
         }
 
         function renderLawsTable() {
@@ -321,11 +362,12 @@
         cancelLawEdit.addEventListener('click', resetLawForm);
 
         async function deleteLaw(id, filename, bucket, path) {
-            if (!confirm('Удалить закон? Все его редакции и файлы будут удалены безвозвратно.')) return;
+            if (!confirm('Удалить закон? Все его редакции, приложения и файлы будут удалены безвозвратно.')) return;
             try {
                 if (filename) {
                     await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
                 }
+                // Удалить редакции
                 const { data: editions } = await supabase.from(EDITIONS_TABLE).select('*').eq('law_id', id);
                 for (const ed of editions) {
                     const edBucket = ed.bucket_name || DEFAULT_BUCKET;
@@ -335,11 +377,23 @@
                     }
                 }
                 await supabase.from(EDITIONS_TABLE).delete().eq('law_id', id);
+                // Удалить приложения
+                const { data: appendixes } = await supabase.from(APPENDIXES_TABLE).select('*').eq('law_id', id);
+                for (const app of appendixes) {
+                    const appBucket = app.bucket_name || DEFAULT_BUCKET;
+                    const appPath = normalizePath(app.bucket_path || DEFAULT_APPENDIX_PATH);
+                    if (app.file_name) {
+                        await supabase.storage.from(appBucket).remove([appPath + app.file_name + '.pdf']);
+                    }
+                }
+                await supabase.from(APPENDIXES_TABLE).delete().eq('law_id', id);
+                // Удалить сам закон
                 await supabase.from(LAWS_TABLE).delete().eq('id', id);
                 showLawMsg('Закон удалён', false);
                 loadLaws();
                 if (currentEditLawId == id) resetLawForm();
                 if (selectLawForEditions.value == id) { selectLawForEditions.value = ''; editionsListDiv.innerHTML = ''; }
+                if (selectLawForAppendixes.value == id) { selectLawForAppendixes.value = ''; appendixesListDiv.innerHTML = ''; }
             } catch (err) {
                 showLawMsg('Ошибка удаления: ' + err.message);
             }
@@ -406,6 +460,7 @@
             }
         });
 
+        // ------ Редакции ------
         async function loadEditionsForLaw(lawId) {
             if (!lawId) { editionsListDiv.innerHTML = ''; return; }
             const { data, error } = await supabase.from(EDITIONS_TABLE).select('*').eq('law_id', lawId).order('date_issued', { ascending: false });
@@ -487,6 +542,87 @@
             }
         });
 
+        // ------ Приложения ------
+        async function loadAppendixesForLaw(lawId) {
+            if (!lawId) { appendixesListDiv.innerHTML = ''; return; }
+            const { data, error } = await supabase.from(APPENDIXES_TABLE).select('*').eq('law_id', lawId).order('sort_order', { ascending: true });
+            if (error) { appendixesListDiv.innerHTML = '<p>Ошибка загрузки приложений</p>'; return; }
+            appendixesListDiv.innerHTML = '';
+            data.forEach(app => {
+                const div = document.createElement('div');
+                div.className = 'appendix-item';
+                div.innerHTML = `
+                    <div>
+                        <strong>📎 ${app.title}</strong>
+                        <br /><small>от ${new Date(app.date_issued).toLocaleDateString('ru-RU')}</small>
+                        <br /><small>${app.file_name}.pdf</small>
+                    </div>
+                    <div class="appendix-actions">
+                        <button class="delete-appendix-btn" data-id="${app.id}" data-filename="${app.file_name}" data-bucket="${app.bucket_name || DEFAULT_BUCKET}" data-path="${app.bucket_path || DEFAULT_APPENDIX_PATH}">🗑 Удалить</button>
+                    </div>
+                `;
+                appendixesListDiv.appendChild(div);
+            });
+            document.querySelectorAll('.delete-appendix-btn').forEach(btn => btn.addEventListener('click', async () => {
+                if (!confirm('Удалить приложение?')) return;
+                const appId = btn.dataset.id, filename = btn.dataset.filename, bucket = btn.dataset.bucket, path = btn.dataset.path;
+                if (filename) {
+                    await supabase.storage.from(bucket).remove([normalizePath(path) + filename + '.pdf']);
+                }
+                await supabase.from(APPENDIXES_TABLE).delete().eq('id', appId);
+                loadAppendixesForLaw(selectLawForAppendixes.value);
+            }));
+        }
+
+        selectLawForAppendixes.addEventListener('change', () => {
+            loadAppendixesForLaw(selectLawForAppendixes.value);
+        });
+
+        addAppendixBtn.addEventListener('click', async () => {
+            const lawId = selectLawForAppendixes.value;
+            if (!lawId) { alert('Выберите закон'); return; }
+            const title = appendixTitle.value.trim();
+            const date = appendixDate.value;
+            const file = appendixPdf.files[0];
+            if (!title || !date || !file) { alert('Заполните название, дату и выберите PDF'); return; }
+            const bucket = appendixBucket.value;
+            let path = normalizePath(appendixPath.value.trim() || DEFAULT_APPENDIX_PATH);
+            const law = allLaws.find(l => l.id == lawId);
+            if (!law) { alert('Закон не найден'); return; }
+
+            const prefix = `fcl-appendix-${law.id}-${date.replace(/-/g, '')}`;
+            const uniqueName = generateUniqueFilename(prefix, 'pdf').replace('.pdf', '');
+            const fullPath = path + uniqueName + '.pdf';
+
+            let sortOrder = appendixSortOrder.value ? parseInt(appendixSortOrder.value) : null;
+            if (!sortOrder) {
+                const { data: max } = await supabase.from(APPENDIXES_TABLE).select('sort_order').eq('law_id', lawId).order('sort_order', { ascending: false }).limit(1);
+                sortOrder = (max && max[0]?.sort_order || 0) + 1;
+            }
+
+            try {
+                await supabase.storage.from(bucket).upload(fullPath, file);
+                await supabase.from(APPENDIXES_TABLE).insert({
+                    law_id: lawId,
+                    title: title,
+                    date_issued: date,
+                    file_name: uniqueName,
+                    bucket_name: bucket,
+                    bucket_path: path,
+                    sort_order: sortOrder
+                });
+                appendixTitle.value = '';
+                appendixDate.value = '';
+                appendixPdf.value = '';
+                appendixSortOrder.value = '';
+                loadAppendixesForLaw(lawId);
+                alert('Приложение добавлено');
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        });
+
+        // ------ Обновление списка ------
         refreshLawsBtn.addEventListener('click', loadLaws);
         searchLaws.addEventListener('input', renderLawsTable);
         yearFilterLaws.addEventListener('change', renderLawsTable);
