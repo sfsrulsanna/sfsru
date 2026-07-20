@@ -1,4 +1,4 @@
-<!-- federal-constitutional-laws.html — с двумя выпадающими списками: редакции и приложения -->
+<!-- federal-constitutional-laws.html — с двумя селектами: редакции и приложения (работает переключение) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -96,70 +96,7 @@
         .selector-group select:focus {
             border-color: #a00;
         }
-        .appendixes-block {
-            margin: 25px auto 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 16px;
-            max-width: 794px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        }
-        .appendixes-block h3 {
-            margin-top: 0;
-            color: #a00;
-            font-size: 1.2rem;
-            border-bottom: 2px solid #a00;
-            padding-bottom: 8px;
-            display: inline-block;
-        }
-        .appendix-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #eee;
-        }
-        .appendix-item:last-child {
-            border-bottom: none;
-        }
-        .appendix-info {
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .appendix-title {
-            font-weight: 600;
-            font-size: 1rem;
-        }
-        .appendix-date {
-            font-size: 0.85rem;
-            color: #666;
-        }
-        .appendix-download {
-            background: #2c3e66;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            padding: 6px 14px;
-            cursor: pointer;
-            font-size: 0.85rem;
-            transition: 0.2s;
-        }
-        .appendix-download:hover {
-            background: #1a2a4a;
-            transform: scale(1.02);
-        }
-        .appendix-empty {
-            color: #888;
-            font-style: italic;
-            padding: 10px 0;
-        }
         @media (max-width: 600px) {
-            .appendix-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 8px;
-            }
             .selector-group {
                 width: 100%;
                 justify-content: center;
@@ -216,7 +153,7 @@
                 </button>
             </div>
 
-            <!-- Два селекта: редакции и приложения -->
+            <!-- Два селекта -->
             <div class="selectors-row">
                 <div class="selector-group" id="editionsSelectorGroup" style="display:none;">
                     <label>Редакция:</label>
@@ -282,7 +219,7 @@
             db: { schema: TABLE_SCHEMA }
         });
 
-        // DOM элементы
+        // DOM
         const els = {
             grid: document.getElementById('laws-grid'),
             viewer: document.getElementById('pdf-viewer'),
@@ -389,19 +326,20 @@
             }
         }
 
-        // Функция загрузки PDF по данным документа (edition или appendix)
+        // Загрузка PDF по документу (редакция или приложение)
         async function loadPDF(doc) {
             if (!doc || !doc.file_name) {
                 els.error.textContent = 'Документ не имеет файла';
                 els.error.style.display = 'block';
                 return;
             }
-            const bucket = doc.bucket_name;
-            const filePath = `${doc.bucket_path}${doc.file_name}.pdf`;
+            const bucket = doc.bucket_name || DEFAULT_BUCKET;
+            const filePath = (doc.bucket_path || DEFAULT_PATH) + doc.file_name + '.pdf';
 
             els.loader.style.display = 'block';
             els.container.style.display = 'none';
             els.error.style.display = 'none';
+            // Принудительно очищаем iframe, чтобы перезагрузить
             els.frame.src = '';
 
             try {
@@ -416,6 +354,7 @@
                     els.loader.style.display = 'none';
                     els.container.style.display = 'block';
                 };
+                // Таймаут на случай, если onload не сработает
                 setTimeout(function() {
                     if (els.loader.style.display !== 'none') {
                         els.loader.style.display = 'none';
@@ -426,6 +365,7 @@
                 els.loader.style.display = 'none';
                 els.error.style.display = 'block';
                 els.error.textContent = `⚠️ Ошибка загрузки: ${err.message}`;
+                console.error('Ошибка загрузки PDF:', err);
             }
         }
 
@@ -438,7 +378,7 @@
             }
             currentLaw = law;
 
-            // Загружаем редакции
+            // Редакции
             const extraEditions = await fetchEditionsForLaw(law.id);
             const editionsList = [];
             editionsList.push({
@@ -479,11 +419,10 @@
             els.editionSelect.value = currentEditionId;
             els.editionsSelectorGroup.style.display = editionsList.length > 1 ? 'flex' : 'none';
 
-            // Загружаем приложения
+            // Приложения
             const apps = await fetchAppendixesForLaw(law.id);
             currentAppendixes = apps;
 
-            // Заполняем селект приложений
             els.appendixSelect.innerHTML = '';
             if (apps && apps.length > 0) {
                 apps.forEach(app => {
@@ -493,7 +432,7 @@
                     els.appendixSelect.appendChild(option);
                 });
                 els.appendixesSelectorGroup.style.display = 'flex';
-                // По умолчанию выбираем первое приложение
+                // По умолчанию выбираем первое приложение, но не загружаем его, показываем редакцию
                 currentAppendixId = apps[0].id;
                 els.appendixSelect.value = currentAppendixId;
             } else {
@@ -514,7 +453,6 @@
             if (editionDoc) {
                 await loadPDF(editionDoc);
             } else {
-                // fallback
                 await loadPDF(currentEditions[0]);
             }
         }
