@@ -20,12 +20,14 @@ const editType = document.getElementById('editType');
 const userIdInput = document.getElementById('userId');
 const addressType = document.getElementById('addressType');
 const addressInput = document.getElementById('address');
+const regionSelect = document.getElementById('regionId'); // <-- новое поле
 const statusSelect = document.getElementById('status');
 const dateFields = document.getElementById('dateFields');
 const userSuggestions = document.getElementById('userSuggestions');
 
 let allAddresses = [];
 let allUsers = [];
+let allRegions = []; // <-- массив регионов {id, name}
 let currentFilter = '';
 
 async function checkAdmin() {
@@ -60,6 +62,20 @@ async function loadUsers() {
     return data || [];
 }
 
+// Загрузка регионов из addresses.regions
+async function loadRegions() {
+    const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from('regions')
+        .select('id, name')
+        .order('name');
+    if (error) {
+        console.error('Ошибка загрузки регионов:', error);
+        return [];
+    }
+    return data || [];
+}
+
 async function loadAddresses() {
     const { data, error } = await supabase
         .schema(SCHEMA)
@@ -75,6 +91,13 @@ async function loadAddresses() {
 function getUserEmail(userId) {
     const user = allUsers.find(u => u.id === userId);
     return user ? user.email : userId;
+}
+
+// Получение названия региона по id
+function getRegionName(regionId) {
+    if (!regionId) return '—';
+    const region = allRegions.find(r => r.id === regionId);
+    return region ? region.name : 'Неизвестный регион';
 }
 
 function renderTable(addresses) {
@@ -120,6 +143,9 @@ function renderTable(addresses) {
             archived: 'Архивный'
         }[statusClass] || statusClass;
 
+        // Добавляем столбец с регионом
+        const regionName = getRegionName(addr.region_id);
+
         tr.innerHTML = `
             <td>${addr.id.substring(0, 8)}</td>
             <td>${getUserEmail(addr.user_id)}</td>
@@ -128,6 +154,7 @@ function renderTable(addresses) {
             <td>${regDate}</td>
             <td>${startDate}</td>
             <td>${endDate}</td>
+            <td>${regionName}</td>
             <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
             <td class="actions">
                 <button class="btn btn-edit" data-id="${addr.id}" data-type="${addr.type}">Редактировать</button>
@@ -154,11 +181,6 @@ function renderTable(addresses) {
 }
 
 function openAddModal() {
-    console.log('Кнопка "Добавить адрес" нажата');
-    if (!modal) {
-        console.error('Элемент modal не найден');
-        return;
-    }
     modalTitle.textContent = 'Добавление адреса';
     addressForm.reset();
     editId.value = '';
@@ -166,9 +188,9 @@ function openAddModal() {
     userIdInput.value = '';
     userSuggestions.style.display = 'none';
     dateFields.innerHTML = '';
+    regionSelect.value = ''; // сброс
     generateDateFields('permanent');
     modal.classList.add('active');
-    console.log('Модалке добавлен класс active, сейчас классы:', modal.className);
 }
 
 async function openEditModal(id, type) {
@@ -182,6 +204,7 @@ async function openEditModal(id, type) {
     addressType.value = type;
     addressInput.value = addr.address || '';
     statusSelect.value = addr.status || 'pending';
+    regionSelect.value = addr.region_id || ''; // устанавливаем регион
     generateDateFields(type, addr);
     modal.classList.add('active');
 }
@@ -254,11 +277,13 @@ async function saveAddress(event) {
     const type = addressType.value;
     const address = addressInput.value.trim();
     const status = statusSelect.value;
+    const regionId = regionSelect.value ? parseInt(regionSelect.value) : null; // если выбрано, иначе null
 
     const payload = {
         user_id: userId,
         address,
         status,
+        region_id: regionId,
     };
 
     if (type === 'permanent') {
@@ -334,7 +359,12 @@ async function loadData() {
     noDataEl.style.display = 'none';
 
     allUsers = await loadUsers();
+    allRegions = await loadRegions(); // загружаем регионы
     allAddresses = await loadAddresses();
+
+    // Заполняем селект регионов
+    regionSelect.innerHTML = '<option value="">Не указан</option>' +
+        allRegions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
 
     let filtered = allAddresses;
     const filterText = currentFilter.trim().toLowerCase();

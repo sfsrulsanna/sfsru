@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Голосование — СФСРЮ</title>
+    <style>
+        /* (копируем базовые стили из index.html, плюс добавим для страницы деталей) */
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:#f8f9fa; color:#222; min-height:100vh; display:flex; flex-direction:column; line-height:1.6; }
+        a { text-decoration:none; color:inherit; }
+        ul { list-style:none; }
+        .header { background:linear-gradient(135deg,#ff6666,#cc0000); padding:1rem 0; position:sticky; top:0; z-index:100; box-shadow:0 4px 16px rgba(0,0,0,0.15); border-bottom:1px solid rgba(255,180,180,0.3); }
+        .header-container { max-width:1200px; margin:0 auto; display:flex; flex-direction:column; align-items:center; gap:1.2rem; padding:0 2rem; }
+        .logo { display:flex; align-items:center; gap:12px; }
+        .logo img { height:52px; width:auto; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .logo h1 { font-size:1.7rem; font-weight:800; color:white; letter-spacing:0.5px; text-shadow:0 0 6px rgba(0,0,0,0.2); }
+        .nav-menu ul { display:flex; gap:1rem; flex-wrap:wrap; justify-content:center; }
+        .nav-menu a { padding:0.6rem 1.2rem; border-radius:50px; background:rgba(255,255,255,0.25); border:1px solid rgba(255,255,255,0.3); font-weight:600; font-size:0.95rem; color:white; transition:all 0.3s; }
+        .nav-menu a:hover { background:rgba(255,255,255,0.45); transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.25); }
+        .main-content { flex:1; padding:2.5rem 1.5rem; }
+        .container { max-width:800px; margin:0 auto; }
+        .page-header { margin-bottom:2rem; }
+        .page-header h2 { font-size:2rem; color:#7b0000; }
+        .page-header .sub { color:#666; margin-top:0.3rem; }
+        .detail-card { background:white; border-radius:16px; padding:1.5rem; box-shadow:0 6px 16px rgba(0,0,0,0.08); border:1px solid #eee; margin-bottom:2rem; }
+        .detail-card .title { font-size:1.8rem; font-weight:700; color:#7b0000; margin-bottom:0.5rem; }
+        .detail-card .meta { display:flex; flex-wrap:wrap; gap:1.5rem; color:#555; font-size:0.95rem; margin-bottom:1rem; }
+        .detail-card .meta span { display:inline-block; }
+        .detail-card .description { font-size:1.05rem; margin-bottom:1.5rem; color:#333; }
+        .options { margin:1.5rem 0; }
+        .option-item { display:flex; align-items:center; gap:1rem; padding:0.8rem 1rem; border:1px solid #eee; border-radius:8px; margin-bottom:0.5rem; transition:background 0.2s; }
+        .option-item:hover { background:#f5f5f5; }
+        .option-item input[type="radio"] { width:20px; height:20px; flex-shrink:0; }
+        .option-item .option-text { flex:1; font-weight:500; }
+        .option-item .option-percent { font-size:0.9rem; color:#555; background:#f0f0f0; padding:0.2rem 0.6rem; border-radius:20px; }
+        .btn-vote { display:inline-block; padding:0.8rem 2.5rem; background:linear-gradient(135deg,#7b0000,#c41e3a); color:white; border:none; border-radius:50px; font-size:1.1rem; font-weight:600; cursor:pointer; transition:opacity 0.2s; }
+        .btn-vote:hover { opacity:0.85; }
+        .btn-vote:disabled { opacity:0.5; cursor:not-allowed; }
+        .already-voted { margin-top:1rem; padding:0.8rem 1rem; background:#e9ecef; border-radius:8px; color:#555; font-weight:500; }
+        .error-message { padding:0.8rem 1rem; background:#f8d7da; border-radius:8px; color:#721c24; margin-bottom:1rem; }
+        .loading { text-align:center; padding:3rem; color:#666; }
+        .footer { background:linear-gradient(135deg,#ff6666,#cc0000); padding:1.8rem; text-align:center; margin-top:auto; font-size:0.95rem; color:white; border-top:1px solid rgba(255,180,180,0.3); }
+        .footer a { color:#ffdddd; text-decoration:underline; }
+        .footer a:hover { color:#ffffff; }
+        @media (max-width:768px) { /* адаптив как на других страницах */ }
+    </style>
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo"><img src="/images/gerb.png" alt="Герб СФСРЮ" /><h1>СФСРЮ</h1></div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="/index.html">Главная</a></li>
+                    <li><a href="/news.html">Новости</a></li>
+                    <li><a href="/wiki/">Википедия</a></li>
+                    <li><a href="/healthcare.html">Здравоохранение</a></li>
+                    <li><a href="/services.html">Услуги</a></li>
+                    <li><a href="/profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main class="main-content">
+        <div class="container">
+            <div id="loading" class="loading">Загрузка данных...</div>
+            <div id="detailContent" style="display:none;"></div>
+        </div>
+    </main>
+    <footer class="footer">
+        <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+    <script type="module">
+        import { createClient } from '@supabase/supabase-js';
+
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'ваш-аннон-ключ';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Получаем ID из URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const voteId = urlParams.get('id');
+        if (!voteId) {
+            document.getElementById('loading').textContent = 'Не указан идентификатор голосования';
+            return;
+        }
+
+        // Элементы
+        const loadingEl = document.getElementById('loading');
+        const contentEl = document.getElementById('detailContent');
+
+        // Форматирование даты
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch { return dateStr; }
+        }
+
+        // Определение типа голосования по ID (таблица)
+        async function getVoteType(voteId) {
+            // Пытаемся найти в каждой из 4 таблиц
+            const tables = ['federal_elections', 'regional_elections', 'federal_referendums', 'regional_referendums'];
+            const typeMap = {
+                'federal_elections': 'federal_election',
+                'regional_elections': 'regional_election',
+                'federal_referendums': 'federal_referendum',
+                'regional_referendums': 'regional_referendum'
+            };
+            for (const table of tables) {
+                const { data, error } = await supabase
+                    .schema('votes')
+                    .from(table)
+                    .select('*')
+                    .eq('id', voteId)
+                    .maybeSingle();
+                if (!error && data) {
+                    return { type: typeMap[table], data };
+                }
+            }
+            return null;
+        }
+
+        // Загрузка вариантов (кандидатов или вопросов)
+        async function loadOptions(voteId, voteType) {
+            const { data, error } = await supabase
+                .schema('votes')
+                .from('options')
+                .select('*')
+                .eq('vote_id', voteId)
+                .eq('vote_type', voteType);
+            if (error) {
+                console.error('Ошибка загрузки вариантов:', error);
+                return [];
+            }
+            return data || [];
+        }
+
+        // Проверка, голосовал ли пользователь
+        async function hasUserVoted(userId, voteId) {
+            const { data, error } = await supabase
+                .schema('votes')
+                .from('user_votes')
+                .select('id')
+                .eq('user_id', userId)
+                .eq('vote_id', voteId)
+                .maybeSingle();
+            if (error) {
+                console.error('Ошибка проверки голоса:', error);
+                return false;
+            }
+            return !!data;
+        }
+
+        // Получение процентов для каждого варианта
+        async function getOptionPercentages(voteId, options) {
+            // Получаем все голоса за это голосование
+            const { data: votes, error } = await supabase
+                .schema('votes')
+                .from('user_votes')
+                .select('option_id')
+                .eq('vote_id', voteId);
+            if (error) {
+                console.error('Ошибка подсчёта голосов:', error);
+                return {};
+            }
+            const total = votes.length;
+            if (total === 0) {
+                // Если голосов нет, возвращаем 0 для всех
+                const empty = {};
+                options.forEach(opt => empty[opt.id] = 0);
+                return empty;
+            }
+            const counts = {};
+            options.forEach(opt => counts[opt.id] = 0);
+            votes.forEach(v => {
+                if (counts[v.option_id] !== undefined) counts[v.option_id]++;
+            });
+            const percentages = {};
+            options.forEach(opt => {
+                percentages[opt.id] = Math.round((counts[opt.id] / total) * 100);
+            });
+            return percentages;
+        }
+
+        // Отображение страницы
+        async function renderDetail() {
+            try {
+                // 1. Получаем информацию о голосовании
+                const voteInfo = await getVoteType(voteId);
+                if (!voteInfo) {
+                    loadingEl.textContent = 'Голосование не найдено';
+                    return;
+                }
+                const { type, data: vote } = voteInfo;
+
+                // 2. Проверка региона (авторизован ли пользователь и есть ли регион)
+                let userRegion = null;
+                let userAccountType = null;
+                let userId = null;
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (userError || !user) {
+                    // Не авторизован – показываем ошибку
+                    loadingEl.textContent = 'Для голосования необходимо авторизоваться';
+                    return;
+                }
+                userId = user.id;
+
+                // Получаем тип учётки из public.users
+                const { data: userData, error: userDataError } = await supabase
+                    .from('users')
+                    .select('account_type')
+                    .eq('id', userId)
+                    .single();
+                if (userDataError) {
+                    console.error('Ошибка получения типа учётки:', userDataError);
+                } else {
+                    userAccountType = userData?.account_type;
+                }
+
+                // Проверка: учётная запись должна быть подтверждённой
+                if (userAccountType !== 'Подтверждённая') {
+                    loadingEl.textContent = 'Ваша учётная запись не подтверждена. Для голосования необходимо обратиться в МФЦ или отделение МВД.';
+                    return;
+                }
+
+                // Получаем регион пользователя из адресов
+                const { data: permData, error: permError } = await supabase
+                    .schema('addresses')
+                    .from('permanent_registration')
+                    .select('region_id')
+                    .eq('user_id', userId)
+                    .maybeSingle();
+                if (!permError && permData && permData.region_id) {
+                    const { data: regionData, error: regionError } = await supabase
+                        .schema('addresses')
+                        .from('regions')
+                        .select('name')
+                        .eq('id', permData.region_id)
+                        .single();
+                    if (!regionError && regionData) {
+                        userRegion = regionData.name;
+                    }
+                }
+
+                // Проверка региона: если голосование не общее, то регион пользователя должен совпадать
+                const territory = vote.territory;
+                if (territory !== 'Вся территория СФСРЮ' && userRegion !== territory) {
+                    loadingEl.textContent = 'Вы не можете участвовать в этом голосовании, так как оно проводится только для региона ' + territory;
+                    return;
+                }
+
+                // 3. Загружаем варианты
+                const options = await loadOptions(voteId, type);
+                if (options.length === 0) {
+                    loadingEl.textContent = 'Варианты для голосования не найдены';
+                    return;
+                }
+
+                // 4. Проверяем, голосовал ли пользователь
+                const hasVoted = await hasUserVoted(userId, voteId);
+
+                // 5. Получаем проценты
+                const percentages = await getOptionPercentages(voteId, options);
+
+                // Строим HTML
+                let html = `
+                    <div class="page-header">
+                        <h2>${vote.title}</h2>
+                        <div class="sub">${vote.description || ''}</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="title">${vote.title}</div>
+                        <div class="meta">
+                            <span>🗓️ Начало: ${formatDate(vote.start_date)}</span>
+                            <span>🗓️ Окончание: ${formatDate(vote.end_date)}</span>
+                            <span>📍 Регион: ${vote.territory}</span>
+                        </div>
+                        <div class="description">${vote.description || ''}</div>
+                        <div class="options">
+                            ${options.map(opt => `
+                                <div class="option-item">
+                                    <input type="radio" name="voteOption" value="${opt.id}" ${hasVoted ? 'disabled' : ''}>
+                                    <span class="option-text">${opt.text}</span>
+                                    <span class="option-percent">${percentages[opt.id] || 0}%</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                        ${hasVoted ? `
+                            <div class="already-voted">Вы уже проголосовали в этом голосовании.</div>
+                            <button class="btn-vote" disabled>Проголосовать</button>
+                        ` : `
+                            <button class="btn-vote" id="voteBtn">Проголосовать</button>
+                        `}
+                    </div>
+                `;
+                contentEl.innerHTML = html;
+                contentEl.style.display = 'block';
+                loadingEl.style.display = 'none';
+
+                // Если кнопка доступна, добавляем обработчик
+                const voteBtn = document.getElementById('voteBtn');
+                if (voteBtn && !hasVoted) {
+                    voteBtn.addEventListener('click', async () => {
+                        const selected = document.querySelector('input[name="voteOption"]:checked');
+                        if (!selected) {
+                            alert('Выберите один из вариантов');
+                            return;
+                        }
+                        const optionId = selected.value;
+                        // Отправляем голос
+                        const { error: insertError } = await supabase
+                            .schema('votes')
+                            .from('user_votes')
+                            .insert([{ user_id: userId, vote_id: voteId, option_id: optionId }]);
+                        if (insertError) {
+                            alert('Ошибка при голосовании: ' + insertError.message);
+                            return;
+                        }
+                        alert('Ваш голос учтён!');
+                        // Перезагружаем страницу, чтобы обновить состояние
+                        window.location.reload();
+                    });
+                }
+
+            } catch (err) {
+                console.error('Ошибка:', err);
+                loadingEl.textContent = 'Произошла ошибка. Попробуйте позже.';
+            }
+        }
+
+        renderDetail();
+    </script>
+</body>
+</html>
