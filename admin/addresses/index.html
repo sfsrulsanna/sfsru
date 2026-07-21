@@ -33,128 +33,131 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-    <!-- Шапка (общая, но можно адаптировать) -->
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">
-                <img src="../../images/gerb.png" alt="Герб" />
-                <h1>СФСРЮ</h1>
-            </div>
-            <nav class="nav-menu">
-                <ul>
-                    <li><a href="../../index.html">Главная</a></li>
-                    <li><a href="../../admin/">Админ-панель</a></li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <main class="main-content">
-        <div class="container">
-            <div class="page-header">
-                <h2>Управление адресами</h2>
-                <p>Добавление, редактирование и удаление адресов пользователей</p>
-            </div>
-
-            <!-- Фильтр по пользователю -->
-            <div class="filter-bar">
-                <input type="text" id="userFilter" placeholder="Фильтр по email пользователя" />
-                <button id="applyFilter" class="btn btn-primary">Применить</button>
-                <button id="resetFilter" class="btn btn-secondary">Сбросить</button>
-                <button id="addNewBtn" class="btn btn-success">+ Добавить адрес</button>
-            </div>
-
-            <!-- Таблица адресов -->
-            <div id="loading" class="loading">Загрузка данных...</div>
-            <div id="tableWrapper" style="display: none;">
-                <table class="address-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Пользователь</th>
-                            <th>Тип</th>
-                            <th>Адрес</th>
-                            <th>Дата регистрации</th>
-                            <th>Дата начала</th>
-                            <th>Дата конца</th>
-                            <th>Статус</th>
-                            <th>Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                </table>
-            </div>
-            <div id="noData" style="display: none;" class="no-data">Нет адресов для отображения</div>
-        </div>
-    </main>
-
-    <!-- Модальное окно для добавления/редактирования -->
-    <div id="modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h4 id="modalTitle">Добавление адреса</h4>
-                <button class="close" id="closeModalBtn">&times;</button>
-            </div>
-            <div class="modal-body">
-                <form id="addressForm">
-                    <input type="hidden" id="editId" />
-                    <input type="hidden" id="editType" />
-
-                    <div class="form-group">
-                        <label for="userId">Пользователь (email)</label>
-                        <input type="text" id="userId" placeholder="Введите email для поиска" required />
-                        <div id="userSuggestions" class="suggestions"></div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="addressType">Тип адреса</label>
-                        <select id="addressType" required>
-                            <option value="permanent">Постоянная регистрация</option>
-                            <option value="temporary">Временная регистрация</option>
-                            <option value="actual">Фактическое место жительства</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="address">Адрес</label>
-                        <input type="text" id="address" placeholder="Введите адрес" required />
-                    </div>
-
-                    <div id="dateFields">
-                        <!-- Динамически добавляются поля дат в зависимости от типа -->
-                    </div>
-
-                    <div class="form-group">
-                        <label for="status">Статус</label>
-                        <select id="status" required>
-                            <option value="verified">Подтверждено</option>
-                            <option value="pending">На проверке</option>
-                            <option value="rejected">Отклонено</option>
-                            <option value="archived">Архивный</option>
-                        </select>
-                    </div>
-
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" id="cancelModalBtn">Отмена</button>
-                        <button type="submit" class="btn btn-primary" id="saveBtn">Сохранить</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб" />
+        <h1>СФСРЮ — Администратор</h1>
+      </div>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../../index.html">Главная администратора</a></li>
+          <li><a href="../addresses/">Адреса</a></li>
+          <li><a href="../votes/">Голосования</a></li>
+        </ul>
+      </nav>
     </div>
+  </header>
 
-    <footer class="footer">
-        <p>&copy; 2026 СФСРЮ. Все права защищены.</p>
-    </footer>
+  <main class="main-content">
+    <div class="container">
+      <div class="page-header">
+        <h2>Управление адресами</h2>
+        <p>Добавление, редактирование и удаление адресов пользователей</p>
+      </div>
 
-    <script type="importmap">
-        {
-            "imports": {
-                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-            }
-        }
-    </script>
-    <script type="module" src="../../js/supabase-config.js"></script>
-    <script type="module" src="addresses.js"></script>
+      <div class="filter-bar">
+        <input type="text" id="userFilter" placeholder="Фильтр по email пользователя" />
+        <button id="applyFilter" class="btn btn-primary">Применить</button>
+        <button id="resetFilter" class="btn btn-secondary">Сбросить</button>
+        <button id="addNewBtn" class="btn btn-success">+ Добавить адрес</button>
+      </div>
+
+      <div id="loading" class="loading">Загрузка данных...</div>
+      <div id="tableWrapper" style="display: none;">
+        <table class="address-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Пользователь</th>
+              <th>Тип</th>
+              <th>Адрес</th>
+              <th>Дата регистрации</th>
+              <th>Дата начала</th>
+              <th>Дата конца</th>
+              <th>Регион</th>
+              <th>Статус</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+      <div id="noData" style="display: none;" class="no-data">Нет адресов для отображения</div>
+    </div>
+  </main>
+
+  <!-- Модальное окно -->
+  <div id="modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 id="modalTitle">Добавление адреса</h4>
+        <button class="close" id="closeModalBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="addressForm">
+          <input type="hidden" id="editId" />
+          <input type="hidden" id="editType" />
+
+          <div class="form-group">
+            <label for="userId">Пользователь (email)</label>
+            <input type="text" id="userId" placeholder="Введите email для поиска" required />
+            <div id="userSuggestions" class="suggestions"></div>
+          </div>
+
+          <div class="form-group">
+            <label for="addressType">Тип адреса</label>
+            <select id="addressType" required>
+              <option value="permanent">Постоянная регистрация</option>
+              <option value="temporary">Временная регистрация</option>
+              <option value="actual">Фактическое место жительства</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="address">Адрес</label>
+            <input type="text" id="address" placeholder="Введите адрес" required />
+          </div>
+
+          <!-- ПОЛЕ ВЫБОРА РЕГИОНА (ОБЯЗАТЕЛЬНО) -->
+          <div class="form-group">
+            <label for="regionId">Регион (для фильтрации голосований)</label>
+            <select id="regionId" class="form-input">
+              <!-- заполняется из JS -->
+            </select>
+          </div>
+
+          <div id="dateFields">
+            <!-- Динамически добавляются поля дат в зависимости от типа -->
+          </div>
+
+          <div class="form-group">
+            <label for="status">Статус</label>
+            <select id="status" required>
+              <option value="verified">Подтверждено</option>
+              <option value="pending">На проверке</option>
+              <option value="rejected">Отклонено</option>
+              <option value="archived">Архивный</option>
+            </select>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelModalBtn">Отмена</button>
+            <button type="submit" class="btn btn-primary" id="saveBtn">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+  </footer>
+
+  <script type="importmap">
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+  </script>
+  <script type="module" src="../../js/supabase-config.js"></script>
+  <script type="module" src="addresses.js"></script>
 </body>
 </html>
