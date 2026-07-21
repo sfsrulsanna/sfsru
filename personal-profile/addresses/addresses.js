@@ -1,4 +1,4 @@
-import { supabase } from '../../supabase-config.js';
+import { supabase } from '../../js/supabase-config.js';
 
 // Элементы DOM
 const loadingEl = document.getElementById('loading');
