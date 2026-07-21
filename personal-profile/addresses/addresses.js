@@ -1,293 +1,195 @@
-import { supabase } from '../../js/supabase-config.js';
+import { supabase } from '../supabase-config.js';
 
-// DOM элементы
-const loadingDiv = document.getElementById('loading');
-const addressesDiv = document.getElementById('addressesData');
-const currentContainer = document.getElementById('currentAddressesContainer');
-const archivedContainer = document.getElementById('archivedAddressesContainer');
-const addBtn = document.getElementById('addAddressBtn');
+// Элементы DOM
+const loadingEl = document.getElementById('loading');
+const currentContainer = document.getElementById('currentAddresses');
+const archivedContainer = document.getElementById('archivedAddresses');
+const noDataEl = document.getElementById('noData');
+const tabBtns = document.querySelectorAll('.tab-btn');
 
-const addressModal = document.getElementById('addressModal');
-const messageModal = document.getElementById('messageModal');
+// ID текущего пользователя (получаем из сессии)
+let currentUserId = null;
 
-const editIdInput = document.getElementById('editAddressId');
-const addressType = document.getElementById('addressType');
-const addressText = document.getElementById('addressText');
-const startDate = document.getElementById('startDate');
-const endDate = document.getElementById('endDate');
-const endDateGroup = document.getElementById('endDateGroup');
-const modalTitle = document.getElementById('modalTitle');
-const modalSaveBtn = document.getElementById('modalSaveBtn');
-const modalCancelBtn = document.getElementById('modalCancelBtn');
-const addressError = document.getElementById('addressError');
+// Статусы для отображения
+const STATUS_META = {
+  verified: { label: 'Подтверждено', class: 'verified' },
+  pending:  { label: 'На проверке', class: 'pending' },
+  rejected: { label: 'Отклонено', class: 'rejected' },
+  archived: { label: 'Архивный', class: 'archived' },
+};
 
-const messageTitle = document.getElementById('messageTitle');
-const messageText = document.getElementById('messageText');
-const messageCloseBtn = document.getElementById('messageCloseBtn');
-
-let currentUser = null;
-let currentPersonalCode = null;
-let addresses = [];
-
-function openModal(modal) { if (modal) modal.classList.add('active'); }
-function closeModal(modal) {
-  if (modal) {
-    modal.classList.remove('active');
-    const errors = modal.querySelectorAll('.error-message');
-    errors.forEach(err => err.textContent = '');
-  }
+// Получить метаданные статуса (или default)
+function getStatusMeta(status) {
+  return STATUS_META[status] || { label: status || 'Неизвестно', class: '' };
 }
 
-document.querySelectorAll('.modal .close, .modal .btn-secondary, #messageCloseBtn').forEach(btn => {
-  btn.addEventListener('click', (e) => {
-    const modal = btn.closest('.modal');
-    if (modal) closeModal(modal);
-  });
-});
-window.addEventListener('click', (e) => {
-  if (e.target.classList && e.target.classList.contains('modal')) {
-    closeModal(e.target);
-  }
-});
-
-function showMessage(title, text, isError = false) {
-  messageTitle.textContent = title;
-  messageText.innerHTML = text;
-  messageText.style.color = isError ? '#b91c1c' : 'inherit';
-  openModal(messageModal);
-}
-
-async function getPersonalCode(user) {
-  let pc = user.user_metadata?.personal_code || user.app_metadata?.personal_code;
-  if (pc) return pc;
-  const { data, error } = await supabase
-    .from('users')
-    .select('personal_code')
-    .eq('id', user.id)
-    .maybeSingle();
-  if (!error && data?.personal_code) return data.personal_code;
-  return null;
-}
-
-async function loadAddresses() {
-  try {
-    const { data: { user }, error: userError } = await supabase.auth.getUser();
-    if (userError) throw userError;
-    if (!user) throw new Error('Пользователь не авторизован');
-    currentUser = user;
-
-    const pc = await getPersonalCode(user);
-    if (!pc) throw new Error('Личный код не найден');
-    currentPersonalCode = pc;
-
-    const { data, error } = await supabase
-      .schema('addresses')
-      .from('addresses')
-      .select('*')
-      .eq('personal_code', pc)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    addresses = data || [];
-    renderAddresses();
-
-    loadingDiv.style.display = 'none';
-    addressesDiv.style.display = 'block';
-  } catch (err) {
-    console.error(err);
-    loadingDiv.textContent = 'Ошибка загрузки: ' + err.message;
-  }
-}
-
-function renderAddresses() {
-  const current = addresses.filter(a => a.status === 'active');
-  const archived = addresses.filter(a => a.status === 'archived');
-
-  currentContainer.innerHTML = '';
-  archivedContainer.innerHTML = '';
-
-  if (current.length === 0) {
-    currentContainer.innerHTML = '<div class="empty-message">Нет текущих адресов. Добавьте новый.</div>';
-  } else {
-    current.forEach(addr => {
-      currentContainer.appendChild(createAddressCard(addr, false));
-    });
-  }
-
-  if (archived.length === 0) {
-    archivedContainer.innerHTML = '<div class="empty-message">Нет архивных адресов.</div>';
-  } else {
-    archived.forEach(addr => {
-      archivedContainer.appendChild(createAddressCard(addr, true));
-    });
-  }
-}
-
-function createAddressCard(addr, isArchived) {
+// Рендер одной карточки
+function renderAddressCard(address, isArchived = false) {
   const card = document.createElement('div');
   card.className = `address-card ${isArchived ? 'archived' : ''}`;
-  card.dataset.id = addr.id;
 
-  const typeMap = {
-    registration: 'Постоянная регистрация',
-    temporary: 'Временная регистрация',
-    actual: 'Фактическое проживание'
-  };
-  const typeLabel = typeMap[addr.type] || addr.type;
-
+  // Заголовок в зависимости от таблицы (типа адреса)
+  let title = '';
   let datesHtml = '';
-  if (addr.start_date) {
-    const start = new Date(addr.start_date).toLocaleDateString('ru-RU');
-    datesHtml += `с ${start}`;
-    if (addr.end_date) {
-      const end = new Date(addr.end_date).toLocaleDateString('ru-RU');
-      datesHtml += ` по ${end}`;
-    }
-  }
 
-  let badgeHtml = '';
-  if (isArchived) {
-    badgeHtml = `<span class="verification-badge badge-archived">Архивный</span>`;
+  // Определяем тип по наличию полей
+  if (address.registration_date !== undefined) {
+    title = 'Постоянная регистрация по месту жительства';
+    datesHtml = `<span>Дата регистрации: ${formatDate(address.registration_date)}</span>`;
+  } else if (address.start_date !== undefined && address.end_date !== undefined) {
+    title = 'Временная регистрация по месту пребывания';
+    datesHtml = `
+      <span>Начало: ${formatDate(address.start_date)}</span>
+      <span>Конец: ${formatDate(address.end_date)}</span>
+    `;
   } else {
-    const status = addr.verification_status || 'oncheck';
-    const statusMap = {
-      verified: { label: 'Подтверждено', class: 'badge-verified' },
-      oncheck: { label: 'На проверке', class: 'badge-oncheck' },
-      rejected: { label: 'Отклонено', class: 'badge-rejected' }
-    };
-    const info = statusMap[status] || statusMap.oncheck;
-    badgeHtml = `<span class="verification-badge ${info.class}">${info.label}</span>`;
+    title = 'Фактическое место жительства';
+    datesHtml = ''; // только адрес
   }
 
-  card.innerHTML = `
-    <div class="address-info">
-      <div class="address-type">
-        ${typeLabel}
-        ${badgeHtml}
-      </div>
-      <div class="address-text">${addr.address}</div>
-      ${datesHtml ? `<div class="address-dates">${datesHtml}</div>` : ''}
-    </div>
-    <div class="address-actions">
-      ${!isArchived ? `<button class="btn-icon edit-address" title="Редактировать">✏️</button>` : ''}
-    </div>
-  `;
+  // Статус
+  const statusMeta = getStatusMeta(address.status);
+  const statusPill = document.createElement('div');
+  statusPill.className = `status-pill ${statusMeta.class}`;
+  statusPill.textContent = statusMeta.label;
 
-  if (!isArchived) {
-    card.querySelector('.edit-address').addEventListener('click', () => openEditModal(addr));
-  }
+  // Адрес
+  const addressText = document.createElement('div');
+  addressText.className = 'card-address';
+  addressText.textContent = address.address || 'Адрес не указан';
+
+  // Блок дат
+  const datesBlock = document.createElement('div');
+  datesBlock.className = 'card-dates';
+  datesBlock.innerHTML = datesHtml;
+
+  // Сборка карточки
+  const titleEl = document.createElement('h3');
+  titleEl.className = 'card-title';
+  titleEl.textContent = title;
+
+  card.appendChild(statusPill);
+  card.appendChild(titleEl);
+  card.appendChild(addressText);
+  if (datesHtml) card.appendChild(datesBlock);
 
   return card;
 }
 
-function openEditModal(addr = null) {
-  addressError.textContent = '';
-  if (addr) {
-    modalTitle.textContent = 'Редактировать адрес';
-    editIdInput.value = addr.id;
-    addressType.value = addr.type;
-    addressText.value = addr.address;
-    startDate.value = addr.start_date || '';
-    endDate.value = addr.end_date || '';
-    toggleEndDate(addr.type);
-  } else {
-    modalTitle.textContent = 'Добавить адрес';
-    editIdInput.value = '';
-    addressType.value = 'registration';
-    addressText.value = '';
-    startDate.value = '';
-    endDate.value = '';
-    toggleEndDate('registration');
-  }
-  openModal(addressModal);
-}
-
-function toggleEndDate(type) {
-  if (type === 'temporary') {
-    endDateGroup.style.display = 'block';
-  } else {
-    endDateGroup.style.display = 'none';
-    endDate.value = '';
-  }
-}
-addressType.addEventListener('change', (e) => toggleEndDate(e.target.value));
-
-async function saveAddress() {
-  const id = editIdInput.value;
-  const type = addressType.value;
-  const address = addressText.value.trim();
-  const start = startDate.value;
-  const end = endDate.value;
-
-  if (!address) {
-    addressError.textContent = 'Введите адрес.';
-    return;
-  }
-  if (!start) {
-    addressError.textContent = 'Укажите дату начала.';
-    return;
-  }
-  if (type === 'temporary' && !end) {
-    addressError.textContent = 'Для временной регистрации укажите дату окончания.';
-    return;
-  }
-
-  const payload = {
-    personal_code: currentPersonalCode,
-    type,
-    address,
-    start_date: start,
-    end_date: end || null,
-    status: 'active',
-    verification_status: 'oncheck'
-  };
-
+// Форматирование даты
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
   try {
-    let result;
-    if (id) {
-      const updatePayload = {
-        type,
-        address,
-        start_date: start,
-        end_date: end || null
-      };
-      const { error } = await supabase
-        .schema('addresses')
-        .from('addresses')
-        .update(updatePayload)
-        .eq('id', id)
-        .eq('personal_code', currentPersonalCode);
-      if (error) throw error;
-      result = { id, ...payload };
-    } else {
-      const { data, error } = await supabase
-        .schema('addresses')
-        .from('addresses')
-        .insert(payload)
-        .select('id')
-        .single();
-      if (error) throw error;
-      result = { id: data.id, ...payload };
-    }
-
-    if (id) {
-      const idx = addresses.findIndex(a => a.id === id);
-      if (idx !== -1) addresses[idx] = { ...addresses[idx], ...result };
-    } else {
-      addresses.unshift(result);
-    }
-
-    closeModal(addressModal);
-    renderAddresses();
-    showMessage('Успешно', 'Адрес сохранён.');
-  } catch (err) {
-    addressError.textContent = 'Ошибка: ' + err.message;
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  } catch {
+    return dateStr;
   }
 }
 
-modalSaveBtn.addEventListener('click', saveAddress);
-modalCancelBtn.addEventListener('click', () => closeModal(addressModal));
+// Загрузка данных из трёх таблиц
+async function loadAddresses() {
+  try {
+    // Получаем текущего пользователя
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+    if (userError || !user) {
+      throw new Error('Пользователь не авторизован');
+    }
+    currentUserId = user.id;
 
-addBtn.addEventListener('click', () => openEditModal(null));
+    // Запросы к трём таблицам в схеме "addresses"
+    const tables = [
+      'permanent_registration',
+      'temporary_registration',
+      'actual_residence'
+    ];
 
+    const allResults = await Promise.all(
+      tables.map(table =>
+        supabase
+          .from(table)
+          .select('*')
+          .eq('user_id', currentUserId)
+      )
+    );
+
+    // Объединяем все записи, добавляя признак таблицы (для определения типа)
+    let allAddresses = [];
+    allResults.forEach((result, idx) => {
+      if (result.error) {
+        console.warn(`Ошибка загрузки ${tables[idx]}:`, result.error);
+        return;
+      }
+      const records = result.data.map(rec => ({
+        ...rec,
+        _table: tables[idx], // сохраняем имя таблицы
+      }));
+      allAddresses = allAddresses.concat(records);
+    });
+
+    // Разделяем на текущие (не архивные) и архивные
+    const current = allAddresses.filter(a => a.status !== 'archived');
+    const archived = allAddresses.filter(a => a.status === 'archived');
+
+    // Рендерим
+    renderAddresses(currentContainer, current, false);
+    renderAddresses(archivedContainer, archived, true);
+
+    // Показываем соответствующие контейнеры
+    loadingEl.style.display = 'none';
+    if (current.length === 0 && archived.length === 0) {
+      noDataEl.style.display = 'block';
+      currentContainer.style.display = 'none';
+      archivedContainer.style.display = 'none';
+    } else {
+      noDataEl.style.display = 'none';
+      currentContainer.style.display = 'block';
+      archivedContainer.style.display = 'block';
+    }
+
+    // По умолчанию показываем вкладку "Текущие"
+    switchTab('current');
+
+  } catch (err) {
+    console.error('Ошибка загрузки адресов:', err);
+    loadingEl.textContent = 'Ошибка загрузки данных. Попробуйте позже.';
+  }
+}
+
+// Рендер списка карточек
+function renderAddresses(container, addresses, isArchived) {
+  container.innerHTML = '';
+  if (!addresses || addresses.length === 0) {
+    const msg = document.createElement('div');
+    msg.className = 'no-data';
+    msg.textContent = 'Нет адресов';
+    container.appendChild(msg);
+    return;
+  }
+  addresses.forEach(addr => {
+    const card = renderAddressCard(addr, isArchived);
+    container.appendChild(card);
+  });
+}
+
+// Переключение вкладок
+function switchTab(tabId) {
+  const isCurrent = tabId === 'current';
+  currentContainer.style.display = isCurrent ? 'block' : 'none';
+  archivedContainer.style.display = isCurrent ? 'none' : 'block';
+
+  // Обновляем активную кнопку
+  tabBtns.forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tabId);
+  });
+}
+
+// Обработчики вкладок
+tabBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    switchTab(btn.dataset.tab);
+  });
+});
+
+// Запуск
 loadAddresses();
