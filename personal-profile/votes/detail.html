@@ -5,21 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Голосование — СФСРЮ</title>
   <style>
-    /* ===== Базовые стили (те же) ===== */
     * { margin:0; padding:0; box-sizing:border-box; }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f8f9fa;
-      color: #222;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      line-height: 1.6;
-    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.6; }
     a { text-decoration: none; color: inherit; }
     ul { list-style: none; }
 
-    /* Шапка (копия) */
     .header {
       background: linear-gradient(135deg, #ff6666, #cc0000);
       padding: 1rem 0;
@@ -56,7 +46,6 @@
     .main-content { flex: 1; padding: 2.5rem 1.5rem; }
     .container { max-width: 800px; margin: 0 auto; }
 
-    /* Кнопка "назад" (таблетка) */
     .back-pill {
       display: inline-block;
       padding: 0.4rem 1.2rem;
@@ -100,7 +89,6 @@
       border-left: 4px solid #7b0000;
     }
 
-    /* Кандидаты (выборы) */
     .candidate-list {
       display: flex;
       flex-direction: column;
@@ -144,10 +132,9 @@
       margin-left: 1rem;
     }
     .candidate-item input[type="radio"] {
-      display: none; /* скрываем стандартную радиокнопку */
+      display: none;
     }
 
-    /* Референдум: вопросы с ДА/НЕТ */
     .referendum-question {
       margin: 1.5rem 0;
       padding: 1rem;
@@ -261,7 +248,6 @@
   </style>
 </head>
 <body>
-  <!-- Шапка (такая же) -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -298,7 +284,6 @@
         <div class="vote-meta" id="voteMeta"></div>
         <div class="vote-description" id="voteDescription"></div>
 
-        <!-- Контейнер для кандидатов (выборы) или вопросов (референдум) -->
         <div id="optionsContainer"></div>
 
         <div class="vote-actions" id="voteActions">
@@ -322,7 +307,6 @@
   <script type="module">
     import { supabase } from '../../js/supabase-config.js';
 
-    // DOM-элементы
     const loadingEl = document.getElementById('loading');
     const voteDetailEl = document.getElementById('voteDetail');
     const voteTitleEl = document.getElementById('voteTitle');
@@ -335,6 +319,8 @@
 
     const urlParams = new URLSearchParams(window.location.search);
     const voteId = urlParams.get('id');
+
+    const PHOTO_BUCKET = 'votes_photo_private';
 
     function formatDate(dateStr) {
       if (!dateStr) return '—';
@@ -351,7 +337,6 @@
       errorMessageEl.textContent = msg;
     }
 
-    // Проверка региона (как ранее)
     async function checkRegion(userId, territory) {
       if (territory === 'Вся территория СФСРЮ') return true;
       const { data: permData } = await supabase
@@ -379,7 +364,6 @@
       return data?.account_type || 'Не подтверждена';
     }
 
-    // Блокировка интерфейса после голосования
     function disableVoting() {
       document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
       document.querySelectorAll('.candidate-item, .referendum-option').forEach(el => el.style.cursor = 'default');
@@ -392,7 +376,6 @@
         const { data: { user }, error: userError } = await supabase.auth.getUser();
         if (userError || !user) { showError('Необходимо авторизоваться'); return; }
 
-        // Определяем тип голосования
         const tables = [
           { name: 'federal_elections', type: 'federal_election' },
           { name: 'regional_elections', type: 'regional_election' },
@@ -411,13 +394,11 @@
         }
         if (!voteData) { showError('Голосование не найдено'); return; }
 
-        // Проверки
         const regionOk = await checkRegion(user.id, voteData.territory);
         if (!regionOk) { showError('Ваш регион не соответствует'); return; }
         const accType = await checkAccountType(user.id);
         if (accType !== 'Подтверждённая') { showError('Учётная запись не подтверждена'); return; }
 
-        // Загружаем варианты
         const { data: options, error: optErr } = await supabase
           .schema('votes')
           .from('options')
@@ -426,17 +407,17 @@
           .eq('vote_type', voteType);
         if (optErr) { showError('Ошибка загрузки вариантов'); return; }
 
-        // Проверка, голосовал ли уже
-        const { data: userVote } = await supabase
+        // Голоса пользователя
+        const { data: userVotes } = await supabase
           .schema('votes')
           .from('user_votes')
           .select('option_id')
           .eq('user_id', user.id)
-          .eq('vote_id', voteId)
-          .maybeSingle();
-        const hasVoted = !!userVote;
+          .eq('vote_id', voteId);
+        const hasVoted = userVotes && userVotes.length > 0;
+        const userOptionIds = hasVoted ? userVotes.map(v => v.option_id) : [];
 
-        // Статистика голосов
+        // Статистика
         const { data: allVotes } = await supabase
           .schema('votes')
           .from('user_votes')
@@ -445,6 +426,19 @@
         const total = allVotes?.length || 0;
         const counts = {};
         allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
+
+        // Signed URL для фото
+        const optionsWithPhoto = await Promise.all(options.map(async (opt) => {
+          let photoUrl = null;
+          if (opt.photo_url) {
+            const { data, error } = await supabase
+              .storage
+              .from(PHOTO_BUCKET)
+              .createSignedUrl(opt.photo_url, 60);
+            if (!error && data) photoUrl = data.signedUrl;
+          }
+          return { ...opt, photoUrl };
+        }));
 
         // --- Отрисовка ---
         voteTitleEl.textContent = voteData.title;
@@ -456,33 +450,36 @@
         `;
         voteDescriptionEl.textContent = voteData.description || 'Описание отсутствует';
 
-        // Очищаем контейнер
         optionsContainer.innerHTML = '';
 
         const isElection = voteType.includes('election');
         const isReferendum = voteType.includes('referendum');
 
+        // Переменная для хранения выбранных option_id (для референдума – несколько)
+        const selectedOptions = [];
+
         if (isElection) {
-          // Выборы – кандидаты
           const list = document.createElement('div');
           list.className = 'candidate-list';
-          options.forEach(opt => {
+          optionsWithPhoto.forEach(opt => {
             const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
             const div = document.createElement('div');
             div.className = 'candidate-item';
-            if (hasVoted && userVote.option_id === opt.id) div.classList.add('selected');
+            const isSelected = hasVoted && userOptionIds.includes(opt.id);
+            if (isSelected) div.classList.add('selected');
             if (hasVoted || voteData.status !== 'active') div.style.cursor = 'default';
 
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
-            if (hasVoted && userVote.option_id === opt.id) radio.checked = true;
+            if (isSelected) radio.checked = true;
             if (hasVoted || voteData.status !== 'active') radio.disabled = true;
 
             const img = document.createElement('img');
-            img.src = opt.photo_url ? supabase.storage.from('votes_photo').getPublicUrl(opt.photo_url).data.publicUrl : '/images/default-avatar.png';
+            img.src = opt.photoUrl || '/images/default-avatar.png';
             img.alt = opt.text;
+            img.onerror = () => { img.src = '/images/default-avatar.png'; };
 
             const info = document.createElement('div');
             info.className = 'candidate-info';
@@ -505,24 +502,34 @@
             div.appendChild(percentSpan);
             list.appendChild(div);
 
-            // Клик по кандидату
             div.addEventListener('click', () => {
               if (radio.disabled) return;
               document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
               div.classList.add('selected');
               radio.checked = true;
+              // Для выборов – один вариант
+              selectedOptions.length = 0;
+              selectedOptions.push(opt.id);
               voteBtn.disabled = false;
             });
           });
           optionsContainer.appendChild(list);
+          // Если уже был выбран, активируем кнопку (но если hasVoted, она заблокирована)
+          if (hasVoted && userOptionIds.length > 0) {
+            // кнопка заблокирована
+          } else if (!hasVoted && voteData.status === 'active') {
+            // кнопка активируется только при выборе
+          }
         } else if (isReferendum) {
-          // Референдум – группируем по question_text
+          // Группируем по вопросу
           const groups = {};
-          options.forEach(opt => {
+          optionsWithPhoto.forEach(opt => {
             const q = opt.question_text || 'Без вопроса';
             if (!groups[q]) groups[q] = [];
             groups[q].push(opt);
           });
+
+          let questionIndex = 0;
           for (const [question, opts] of Object.entries(groups)) {
             const block = document.createElement('div');
             block.className = 'referendum-question';
@@ -533,23 +540,30 @@
 
             const optsDiv = document.createElement('div');
             optsDiv.className = 'referendum-options';
+            const groupName = `vote_question_${questionIndex}`;
+            let hasSelectedInGroup = false;
+
             opts.forEach(opt => {
               const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
               const div = document.createElement('div');
               div.className = 'referendum-option';
-              if (hasVoted && userVote.option_id === opt.id) div.classList.add('selected');
+              const isSelected = hasVoted && userOptionIds.includes(opt.id);
+              if (isSelected) {
+                div.classList.add('selected');
+                hasSelectedInGroup = true;
+              }
               if (hasVoted || voteData.status !== 'active') div.style.cursor = 'default';
 
               const radio = document.createElement('input');
               radio.type = 'radio';
-              radio.name = `voteOption_${opt.id}`; // уникальное имя для каждой группы
+              radio.name = groupName; // одинаковое имя для группы
               radio.value = opt.id;
-              if (hasVoted && userVote.option_id === opt.id) radio.checked = true;
+              if (isSelected) radio.checked = true;
               if (hasVoted || voteData.status !== 'active') radio.disabled = true;
 
               const answerSpan = document.createElement('div');
               answerSpan.className = 'answer-text';
-              answerSpan.textContent = opt.text; // "ДА" или "НЕТ"
+              answerSpan.textContent = opt.text;
 
               const percentSpan = document.createElement('div');
               percentSpan.className = 'answer-percent';
@@ -562,17 +576,41 @@
 
               div.addEventListener('click', () => {
                 if (radio.disabled) return;
-                // Снимаем выделение с других ответов в этом же вопросе
+                // Снимаем выделение с других в этой группе
                 optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
                 div.classList.add('selected');
                 radio.checked = true;
-                // Проверяем, выбраны ли все вопросы? Для простоты разрешаем голосовать после выбора любого ответа.
-                // В реальности нужно, чтобы на каждый вопрос был дан ответ. Но для упрощения – голосуем за один вариант.
-                voteBtn.disabled = false;
+                // Обновляем selectedOptions: удаляем старый для этого вопроса, добавляем новый
+                const existingIndex = selectedOptions.findIndex(id => {
+                  const optObj = optionsWithPhoto.find(o => o.id === id);
+                  return optObj && optObj.question_text === question;
+                });
+                if (existingIndex !== -1) selectedOptions.splice(existingIndex, 1);
+                selectedOptions.push(opt.id);
+                // Проверяем, все ли вопросы заполнены
+                const totalQuestions = Object.keys(groups).length;
+                const answeredQuestions = new Set();
+                selectedOptions.forEach(id => {
+                  const opt = optionsWithPhoto.find(o => o.id === id);
+                  if (opt && opt.question_text) answeredQuestions.add(opt.question_text);
+                });
+                if (answeredQuestions.size === totalQuestions) {
+                  voteBtn.disabled = false;
+                } else {
+                  voteBtn.disabled = true;
+                }
               });
             });
             block.appendChild(optsDiv);
             optionsContainer.appendChild(block);
+            questionIndex++;
+          }
+
+          // Если уже были выбраны все вопросы (hasVoted), то кнопка заблокирована
+          if (hasVoted) {
+            // кнопка заблокирована
+          } else if (voteData.status === 'active') {
+            // кнопка активируется только когда все вопросы заполнены
           }
         }
 
@@ -589,15 +627,40 @@
 
         // Обработчик голосования
         voteBtn.onclick = async () => {
-          const selected = document.querySelector('input[name="voteOption"]:checked') ||
-                           document.querySelector('input[type="radio"]:checked');
-          if (!selected) { alert('Выберите вариант'); return; }
-          const optionId = selected.value;
+          // Собираем все выбранные option_id
+          let optionsToVote = [];
+          if (isElection) {
+            const selectedRadio = document.querySelector('input[name="voteOption"]:checked');
+            if (!selectedRadio) { alert('Выберите кандидата'); return; }
+            optionsToVote = [selectedRadio.value];
+          } else if (isReferendum) {
+            // Собираем все выбранные радио по группам
+            const radios = document.querySelectorAll('.referendum-question input[type="radio"]:checked');
+            if (radios.length === 0) { alert('Выберите ответы на все вопросы'); return; }
+            const totalQuestions = document.querySelectorAll('.referendum-question').length;
+            if (radios.length !== totalQuestions) {
+              alert('Ответьте на все вопросы');
+              return;
+            }
+            optionsToVote = Array.from(radios).map(r => r.value);
+          }
+
+          // Вставляем все голоса
+          const inserts = optionsToVote.map(optionId => ({
+            user_id: user.id,
+            vote_id: voteId,
+            option_id: optionId
+          }));
+
           const { error } = await supabase
             .schema('votes')
             .from('user_votes')
-            .insert([{ user_id: user.id, vote_id: voteId, option_id: optionId }]);
-          if (error) { alert('Ошибка: ' + error.message); return; }
+            .insert(inserts);
+
+          if (error) {
+            alert('Ошибка: ' + error.message);
+            return;
+          }
           alert('Голос учтён!');
           disableVoting();
           setTimeout(() => window.location.reload(), 1000);
@@ -614,7 +677,6 @@
     if (voteId) loadVote();
     else showError('Не указан идентификатор');
 
-    // Мобильное меню
     document.querySelector('.menu-toggle')?.addEventListener('click', function() {
       document.querySelector('.nav-menu').classList.toggle('active');
       document.querySelector('.menu-overlay').classList.toggle('active');
