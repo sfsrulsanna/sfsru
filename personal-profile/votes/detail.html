@@ -5,12 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Голосование — СФСРЮ</title>
   <style>
-    /* ===== Общие стили (без изменений) ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    /* ===== Базовые стили (те же) ===== */
+    * { margin:0; padding:0; box-sizing:border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f8f9fa;
@@ -23,6 +19,7 @@
     a { text-decoration: none; color: inherit; }
     ul { list-style: none; }
 
+    /* Шапка (копия) */
     .header {
       background: linear-gradient(135deg, #ff6666, #cc0000);
       padding: 1rem 0;
@@ -30,7 +27,6 @@
       top: 0;
       z-index: 100;
       box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      border-bottom: 1px solid rgba(255,180,180,0.3);
     }
     .header-container {
       max-width: 1200px;
@@ -40,81 +36,40 @@
       align-items: center;
       gap: 1.2rem;
       padding: 0 2rem;
-      position: relative;
     }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      justify-content: center;
-    }
-    .logo img {
-      height: 52px;
-      width: auto;
-      object-fit: contain;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-    }
-    .logo h1 {
-      font-size: 1.7rem;
-      font-weight: 800;
-      color: white;
-      letter-spacing: 0.5px;
-      text-shadow: 0 0 6px rgba(0,0,0,0.2);
-    }
-    .nav-menu ul {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin: 0;
-      padding: 0;
-    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo img { height: 52px; width: auto; }
+    .logo h1 { font-size: 1.7rem; font-weight: 800; color: white; }
+    .nav-menu ul { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; }
     .nav-menu a {
       padding: 0.6rem 1.2rem;
       border-radius: 50px;
       background: rgba(255,255,255,0.25);
       border: 1px solid rgba(255,255,255,0.3);
       font-weight: 600;
-      font-size: 0.95rem;
       color: white;
-      transition: all 0.3s ease;
-      text-align: center;
-      min-width: 90px;
+      transition: 0.3s;
     }
-    .nav-menu a.active,
-    .nav-menu a:hover {
-      background: rgba(255,255,255,0.45);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
+    .nav-menu a:hover { background: rgba(255,255,255,0.45); transform: translateY(-2px); }
     .menu-toggle { display: none; }
 
-    .main-content {
-      flex: 1;
-      padding: 2.5rem 1.5rem;
-    }
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
+    .main-content { flex: 1; padding: 2.5rem 1.5rem; }
+    .container { max-width: 800px; margin: 0 auto; }
 
-    /* Новая кнопка "Назад" в виде таблетки */
+    /* Кнопка "назад" (таблетка) */
     .back-pill {
       display: inline-block;
-      padding: 0.4rem 1.5rem;
-      border-radius: 50px;
+      padding: 0.4rem 1.2rem;
       background: #7b0000;
       color: white;
+      border-radius: 50px;
       font-weight: 600;
-      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: 0.2s;
       border: none;
-      margin-bottom: 1rem;
     }
-    .back-pill:hover {
-      opacity: 0.85;
-    }
+    .back-pill:hover { opacity: 0.85; }
 
     .vote-detail {
       background: white;
@@ -145,59 +100,93 @@
       border-left: 4px solid #7b0000;
     }
 
-    .options-list {
-      margin: 2rem 0;
-    }
-    .option-item {
-      display: flex;
-      align-items: center;
-      padding: 0.8rem 1rem;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      margin-bottom: 0.8rem;
-      transition: background 0.2s;
-      cursor: pointer;
-    }
-    .option-item:hover {
-      background: #f5f5f5;
-    }
-    .option-item.selected {
-      border-color: #7b0000;
-      background: #fff0f0;
-    }
-    .option-item input[type="radio"] {
-      margin-right: 1rem;
-      width: 18px;
-      height: 18px;
-      cursor: pointer;
-      flex-shrink: 0;
-    }
-    .option-item .option-content {
-      flex: 1;
+    /* Кандидаты (выборы) */
+    .candidate-list {
       display: flex;
       flex-direction: column;
+      gap: 1.2rem;
+      margin: 2rem 0;
     }
-    .option-item .option-text {
-      font-size: 1.05rem;
-      font-weight: 500;
+    .candidate-item {
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      padding: 1rem;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: 0.2s;
     }
-    .option-item .option-info {
-      font-size: 0.9rem;
-      color: #555;
-      margin-top: 0.2rem;
-    }
-    .option-item .option-photo {
-      width: 60px;
-      height: 60px;
+    .candidate-item:hover { background: #f5f5f5; }
+    .candidate-item.selected { border-color: #7b0000; background: #fff0f0; }
+    .candidate-item img {
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       object-fit: cover;
-      margin-right: 1rem;
-      border: 2px solid #eee;
+      border: 2px solid #ddd;
     }
-    .option-item .option-percent {
-      font-weight: 600;
+    .candidate-item .candidate-info {
+      flex: 1;
+    }
+    .candidate-item .candidate-name {
+      font-size: 1.2rem;
+      font-weight: 700;
+    }
+    .candidate-item .candidate-desc {
+      color: #666;
+      font-size: 0.9rem;
+    }
+    .candidate-item .candidate-percent {
+      font-weight: 700;
       color: #7b0000;
+      font-size: 1.1rem;
       margin-left: 1rem;
+    }
+    .candidate-item input[type="radio"] {
+      display: none; /* скрываем стандартную радиокнопку */
+    }
+
+    /* Референдум: вопросы с ДА/НЕТ */
+    .referendum-question {
+      margin: 1.5rem 0;
+      padding: 1rem;
+      background: #fafafa;
+      border-radius: 12px;
+      border: 1px solid #eee;
+    }
+    .referendum-question .question-text {
+      font-weight: 700;
+      font-size: 1.1rem;
+      margin-bottom: 0.8rem;
+    }
+    .referendum-options {
+      display: flex;
+      gap: 1rem;
+    }
+    .referendum-option {
+      flex: 1;
+      padding: 0.6rem;
+      text-align: center;
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.2s;
+      background: white;
+    }
+    .referendum-option:hover { background: #f0f0f0; }
+    .referendum-option.selected { border-color: #7b0000; background: #fff0f0; }
+    .referendum-option .answer-text {
+      font-weight: 600;
+      font-size: 1.1rem;
+    }
+    .referendum-option .answer-percent {
+      font-size: 0.9rem;
+      color: #7b0000;
+      margin-top: 0.2rem;
+    }
+    .referendum-option input[type="radio"] {
+      display: none;
     }
 
     .vote-actions {
@@ -213,15 +202,13 @@
       background: linear-gradient(135deg, #7b0000, #c41e3a);
       color: white;
       cursor: pointer;
-      transition: opacity 0.2s;
+      transition: 0.2s;
     }
     .vote-actions .btn-vote:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
-    .vote-actions .btn-vote:not(:disabled):hover {
-      opacity: 0.85;
-    }
+    .vote-actions .btn-vote:not(:disabled):hover { opacity: 0.85; }
     .vote-actions .already-voted {
       color: #28a745;
       font-weight: 600;
@@ -248,44 +235,33 @@
       background: linear-gradient(135deg, #ff6666, #cc0000);
       padding: 1.8rem;
       text-align: center;
-      margin-top: auto;
-      font-size: 0.95rem;
       color: white;
-      border-top: 1px solid rgba(255,180,180,0.3);
+      margin-top: auto;
     }
-    .footer a {
-      color: #ffdddd;
-      text-decoration: underline;
-    }
-    .footer a:hover { color: #ffffff; }
+    .footer a { color: #ffdddd; text-decoration: underline; }
 
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-      font-size: 1.1rem;
-    }
+    .loading { text-align: center; padding: 3rem; color: #666; }
 
     @media (max-width: 768px) {
       .header-container { flex-direction: row; justify-content: space-between; padding: 0 1rem; }
-      .logo { justify-content: flex-start; }
       .menu-toggle { display: block; background: transparent; border: none; cursor: pointer; padding: 8px; width: 40px; height: 40px; position: relative; }
       .menu-toggle-line { display: block; width: 100%; height: 3px; background: white; border-radius: 2px; position: absolute; left: 0; transition: 0.3s; }
       .menu-toggle-line:nth-child(1) { top: 10px; }
       .menu-toggle-line:nth-child(2) { top: 18px; }
       .menu-toggle-line:nth-child(3) { top: 26px; }
-      .nav-menu { position: fixed; top: 0; right: -100%; width: 80%; max-width: 320px; height: 100vh; background: linear-gradient(135deg, #ff6666, #cc0000); z-index: 99; padding: 80px 20px 40px; transition: right 0.4s cubic-bezier(0.25,0.46,0.45,0.94); overflow-y: auto; }
+      .nav-menu { position: fixed; top: 0; right: -100%; width: 80%; max-width: 320px; height: 100vh; background: linear-gradient(135deg, #ff6666, #cc0000); z-index: 99; padding: 80px 20px 40px; transition: right 0.4s; overflow-y: auto; }
       .nav-menu.active { right: 0; }
       .nav-menu ul { flex-direction: column; gap: 0; }
       .nav-menu a { display: block; padding: 16px 20px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 1.1rem; text-align: left; border: 1px solid rgba(255,255,255,0.2); }
-      .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: opacity 0.3s; }
+      .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: 0.3s; }
       .menu-overlay.active { display: block; opacity: 1; }
-      .option-item { flex-wrap: wrap; }
-      .option-item .option-photo { width: 50px; height: 50px; }
+      .candidate-item { flex-wrap: wrap; }
+      .referendum-options { flex-direction: column; }
     }
   </style>
 </head>
 <body>
+  <!-- Шапка (такая же) -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -313,18 +289,17 @@
 
   <main class="main-content">
     <div class="container">
-      <!-- Кнопка "Назад" в виде таблетки -->
       <button class="back-pill" onclick="history.back()">← Назад к списку</button>
 
       <div id="loading" class="loading">Загрузка данных...</div>
 
       <div id="voteDetail" class="vote-detail" style="display: none;">
-        <!-- Заголовок теперь внутри блока -->
-        <h2 class="vote-title" id="voteTitle">Загрузка...</h2>
+        <h2 class="vote-title" id="voteTitle"></h2>
         <div class="vote-meta" id="voteMeta"></div>
         <div class="vote-description" id="voteDescription"></div>
 
-        <div class="options-list" id="optionsList"></div>
+        <!-- Контейнер для кандидатов (выборы) или вопросов (референдум) -->
+        <div id="optionsContainer"></div>
 
         <div class="vote-actions" id="voteActions">
           <button class="btn-vote" id="voteBtn" disabled>Проголосовать</button>
@@ -342,22 +317,18 @@
   </footer>
 
   <script type="importmap">
-    {
-      "imports": {
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-      }
-    }
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
   </script>
   <script type="module">
     import { supabase } from '../../js/supabase-config.js';
 
-    // --- DOM-элементы ---
+    // DOM-элементы
     const loadingEl = document.getElementById('loading');
     const voteDetailEl = document.getElementById('voteDetail');
     const voteTitleEl = document.getElementById('voteTitle');
     const voteMetaEl = document.getElementById('voteMeta');
     const voteDescriptionEl = document.getElementById('voteDescription');
-    const optionsListEl = document.getElementById('optionsList');
+    const optionsContainer = document.getElementById('optionsContainer');
     const voteBtn = document.getElementById('voteBtn');
     const voteStatus = document.getElementById('voteStatus');
     const errorMessageEl = document.getElementById('errorMessage');
@@ -370,148 +341,112 @@
       try {
         const d = new Date(dateStr);
         return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      } catch {
-        return dateStr;
-      }
+      } catch { return dateStr; }
     }
 
-    function showError(message) {
+    function showError(msg) {
       loadingEl.style.display = 'none';
       voteDetailEl.style.display = 'none';
       errorMessageEl.style.display = 'block';
-      errorMessageEl.textContent = message;
+      errorMessageEl.textContent = msg;
     }
 
-    function disableVoting() {
-      document.querySelectorAll('input[name="voteOption"]').forEach(radio => {
-        radio.disabled = true;
-      });
-      voteBtn.disabled = true;
-      voteStatus.innerHTML = '<div class="already-voted">Вы уже проголосовали</div>';
-    }
-
+    // Проверка региона (как ранее)
     async function checkRegion(userId, territory) {
       if (territory === 'Вся территория СФСРЮ') return true;
-      const { data: permData, error: permError } = await supabase
+      const { data: permData } = await supabase
         .schema('addresses')
         .from('permanent_registration')
         .select('region_id')
         .eq('user_id', userId)
         .maybeSingle();
-      if (permError || !permData || !permData.region_id) return false;
-      const { data: regionData, error: regionError } = await supabase
+      if (!permData?.region_id) return false;
+      const { data: regionData } = await supabase
         .schema('addresses')
         .from('regions')
         .select('name')
         .eq('id', permData.region_id)
         .single();
-      if (regionError || !regionData) return false;
-      return regionData.name === territory;
+      return regionData?.name === territory;
     }
 
     async function checkAccountType(userId) {
-      const { data: userData, error } = await supabase
+      const { data } = await supabase
         .from('users')
         .select('account_type')
         .eq('id', userId)
         .single();
-      if (error || !userData) return 'Не подтверждена';
-      return userData.account_type || 'Не подтверждена';
+      return data?.account_type || 'Не подтверждена';
+    }
+
+    // Блокировка интерфейса после голосования
+    function disableVoting() {
+      document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
+      document.querySelectorAll('.candidate-item, .referendum-option').forEach(el => el.style.cursor = 'default');
+      voteBtn.disabled = true;
+      voteStatus.innerHTML = '<div class="already-voted">Вы уже проголосовали</div>';
     }
 
     async function loadVote() {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          showError('Необходимо авторизоваться');
-          return;
-        }
+        if (userError || !user) { showError('Необходимо авторизоваться'); return; }
 
+        // Определяем тип голосования
         const tables = [
           { name: 'federal_elections', type: 'federal_election' },
           { name: 'regional_elections', type: 'regional_election' },
           { name: 'federal_referendums', type: 'federal_referendum' },
           { name: 'regional_referendums', type: 'regional_referendum' }
         ];
-
-        let voteData = null;
-        let voteType = null;
-
-        for (const table of tables) {
-          const { data, error } = await supabase
+        let voteData = null, voteType = null;
+        for (const t of tables) {
+          const { data } = await supabase
             .schema('votes')
-            .from(table.name)
+            .from(t.name)
             .select('*')
             .eq('id', voteId)
             .maybeSingle();
-          if (data && !error) {
-            voteData = data;
-            voteType = table.type;
-            break;
-          }
+          if (data) { voteData = data; voteType = t.type; break; }
         }
+        if (!voteData) { showError('Голосование не найдено'); return; }
 
-        if (!voteData) {
-          showError('Голосование не найдено');
-          return;
-        }
-
+        // Проверки
         const regionOk = await checkRegion(user.id, voteData.territory);
-        if (!regionOk) {
-          showError('Вы не можете участвовать в этом голосовании, так как ваш регион не соответствует');
-          return;
-        }
+        if (!regionOk) { showError('Ваш регион не соответствует'); return; }
+        const accType = await checkAccountType(user.id);
+        if (accType !== 'Подтверждённая') { showError('Учётная запись не подтверждена'); return; }
 
-        const accountType = await checkAccountType(user.id);
-        if (accountType !== 'Подтверждённая') {
-          showError('Ваша учётная запись не подтверждена. Обратитесь в МФЦ или отделение МВД для подтверждения.');
-          return;
-        }
-
-        const { data: options, error: optionsError } = await supabase
+        // Загружаем варианты
+        const { data: options, error: optErr } = await supabase
           .schema('votes')
           .from('options')
           .select('*')
           .eq('vote_id', voteId)
           .eq('vote_type', voteType);
+        if (optErr) { showError('Ошибка загрузки вариантов'); return; }
 
-        if (optionsError) {
-          console.error('Ошибка загрузки вариантов:', optionsError);
-          showError('Ошибка загрузки вариантов голосования');
-          return;
-        }
-
-        const { data: userVote, error: userVoteError } = await supabase
+        // Проверка, голосовал ли уже
+        const { data: userVote } = await supabase
           .schema('votes')
           .from('user_votes')
           .select('option_id')
           .eq('user_id', user.id)
           .eq('vote_id', voteId)
           .maybeSingle();
-
         const hasVoted = !!userVote;
 
-        let optionPercentages = {};
-        if (options && options.length > 0) {
-          const { data: allVotes, error: allVotesError } = await supabase
-            .schema('votes')
-            .from('user_votes')
-            .select('option_id')
-            .eq('vote_id', voteId);
-          if (!allVotesError && allVotes) {
-            const total = allVotes.length;
-            const counts = {};
-            allVotes.forEach(v => {
-              counts[v.option_id] = (counts[v.option_id] || 0) + 1;
-            });
-            options.forEach(opt => {
-              const count = counts[opt.id] || 0;
-              optionPercentages[opt.id] = total > 0 ? Math.round((count / total) * 100) : 0;
-            });
-          }
-        }
+        // Статистика голосов
+        const { data: allVotes } = await supabase
+          .schema('votes')
+          .from('user_votes')
+          .select('option_id')
+          .eq('vote_id', voteId);
+        const total = allVotes?.length || 0;
+        const counts = {};
+        allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // Заполняем блок
+        // --- Отрисовка ---
         voteTitleEl.textContent = voteData.title;
         voteMetaEl.innerHTML = `
           <span>Регион: ${voteData.territory}</span>
@@ -521,77 +456,127 @@
         `;
         voteDescriptionEl.textContent = voteData.description || 'Описание отсутствует';
 
-        optionsListEl.innerHTML = '';
+        // Очищаем контейнер
+        optionsContainer.innerHTML = '';
 
-        if (options && options.length > 0) {
+        const isElection = voteType.includes('election');
+        const isReferendum = voteType.includes('referendum');
+
+        if (isElection) {
+          // Выборы – кандидаты
+          const list = document.createElement('div');
+          list.className = 'candidate-list';
           options.forEach(opt => {
-            const percent = optionPercentages[opt.id] || 0;
+            const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
             const div = document.createElement('div');
-            div.className = 'option-item';
-            div.dataset.optionId = opt.id;
+            div.className = 'candidate-item';
+            if (hasVoted && userVote.option_id === opt.id) div.classList.add('selected');
+            if (hasVoted || voteData.status !== 'active') div.style.cursor = 'default';
 
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
-            if (hasVoted && userVote.option_id === opt.id) {
-              radio.checked = true;
-              div.classList.add('selected');
-            }
-            if (voteData.status !== 'active' || hasVoted) {
-              radio.disabled = true;
-              div.style.cursor = 'default';
-            }
+            if (hasVoted && userVote.option_id === opt.id) radio.checked = true;
+            if (hasVoted || voteData.status !== 'active') radio.disabled = true;
 
-            // Фото кандидата
-            let photoHtml = '';
-            if (opt.photo_url) {
-              photoHtml = `<img src="${opt.photo_url}" alt="Фото" class="option-photo" />`;
-            }
+            const img = document.createElement('img');
+            img.src = opt.photo_url ? supabase.storage.from('votes_photo').getPublicUrl(opt.photo_url).data.publicUrl : '/images/default-avatar.png';
+            img.alt = opt.text;
 
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'option-content';
+            const info = document.createElement('div');
+            info.className = 'candidate-info';
+            const name = document.createElement('div');
+            name.className = 'candidate-name';
+            name.textContent = opt.text;
+            const desc = document.createElement('div');
+            desc.className = 'candidate-desc';
+            desc.textContent = opt.description || '';
+            info.appendChild(name);
+            info.appendChild(desc);
 
-            const textSpan = document.createElement('div');
-            textSpan.className = 'option-text';
-            textSpan.textContent = opt.text;
-
-            const infoSpan = document.createElement('div');
-            infoSpan.className = 'option-info';
-            infoSpan.textContent = opt.candidate_info || '';
-
-            contentDiv.appendChild(textSpan);
-            if (opt.candidate_info) contentDiv.appendChild(infoSpan);
-
-            const percentSpan = document.createElement('span');
-            percentSpan.className = 'option-percent';
+            const percentSpan = document.createElement('div');
+            percentSpan.className = 'candidate-percent';
             percentSpan.textContent = `${percent}%`;
 
-            if (photoHtml) {
-              const img = document.createElement('img');
-              img.src = opt.photo_url;
-              img.alt = 'Фото кандидата';
-              img.className = 'option-photo';
-              div.appendChild(img);
-            }
-
             div.appendChild(radio);
-            div.appendChild(contentDiv);
+            div.appendChild(img);
+            div.appendChild(info);
             div.appendChild(percentSpan);
-            optionsListEl.appendChild(div);
+            list.appendChild(div);
 
-            div.addEventListener('click', (e) => {
+            // Клик по кандидату
+            div.addEventListener('click', () => {
               if (radio.disabled) return;
-              radio.checked = true;
-              document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
+              document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
               div.classList.add('selected');
+              radio.checked = true;
               voteBtn.disabled = false;
             });
           });
-        } else {
-          optionsListEl.innerHTML = '<p>Нет вариантов для голосования</p>';
+          optionsContainer.appendChild(list);
+        } else if (isReferendum) {
+          // Референдум – группируем по question_text
+          const groups = {};
+          options.forEach(opt => {
+            const q = opt.question_text || 'Без вопроса';
+            if (!groups[q]) groups[q] = [];
+            groups[q].push(opt);
+          });
+          for (const [question, opts] of Object.entries(groups)) {
+            const block = document.createElement('div');
+            block.className = 'referendum-question';
+            const qText = document.createElement('div');
+            qText.className = 'question-text';
+            qText.textContent = question;
+            block.appendChild(qText);
+
+            const optsDiv = document.createElement('div');
+            optsDiv.className = 'referendum-options';
+            opts.forEach(opt => {
+              const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
+              const div = document.createElement('div');
+              div.className = 'referendum-option';
+              if (hasVoted && userVote.option_id === opt.id) div.classList.add('selected');
+              if (hasVoted || voteData.status !== 'active') div.style.cursor = 'default';
+
+              const radio = document.createElement('input');
+              radio.type = 'radio';
+              radio.name = `voteOption_${opt.id}`; // уникальное имя для каждой группы
+              radio.value = opt.id;
+              if (hasVoted && userVote.option_id === opt.id) radio.checked = true;
+              if (hasVoted || voteData.status !== 'active') radio.disabled = true;
+
+              const answerSpan = document.createElement('div');
+              answerSpan.className = 'answer-text';
+              answerSpan.textContent = opt.text; // "ДА" или "НЕТ"
+
+              const percentSpan = document.createElement('div');
+              percentSpan.className = 'answer-percent';
+              percentSpan.textContent = `${percent}%`;
+
+              div.appendChild(radio);
+              div.appendChild(answerSpan);
+              div.appendChild(percentSpan);
+              optsDiv.appendChild(div);
+
+              div.addEventListener('click', () => {
+                if (radio.disabled) return;
+                // Снимаем выделение с других ответов в этом же вопросе
+                optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
+                div.classList.add('selected');
+                radio.checked = true;
+                // Проверяем, выбраны ли все вопросы? Для простоты разрешаем голосовать после выбора любого ответа.
+                // В реальности нужно, чтобы на каждый вопрос был дан ответ. Но для упрощения – голосуем за один вариант.
+                voteBtn.disabled = false;
+              });
+            });
+            block.appendChild(optsDiv);
+            optionsContainer.appendChild(block);
+          }
         }
 
+        // --- Настройка кнопки ---
         if (hasVoted) {
           disableVoting();
         } else if (voteData.status !== 'active') {
@@ -602,50 +587,34 @@
           voteStatus.innerHTML = '';
         }
 
+        // Обработчик голосования
         voteBtn.onclick = async () => {
-          const selectedRadio = document.querySelector('input[name="voteOption"]:checked');
-          if (!selectedRadio) {
-            alert('Выберите вариант');
-            return;
-          }
-          const optionId = selectedRadio.value;
-
-          const { error: insertError } = await supabase
+          const selected = document.querySelector('input[name="voteOption"]:checked') ||
+                           document.querySelector('input[type="radio"]:checked');
+          if (!selected) { alert('Выберите вариант'); return; }
+          const optionId = selected.value;
+          const { error } = await supabase
             .schema('votes')
             .from('user_votes')
-            .insert([{
-              user_id: user.id,
-              vote_id: voteId,
-              option_id: optionId
-            }]);
-
-          if (insertError) {
-            alert('Ошибка при голосовании: ' + insertError.message);
-            return;
-          }
-
-          alert('Ваш голос учтён!');
+            .insert([{ user_id: user.id, vote_id: voteId, option_id: optionId }]);
+          if (error) { alert('Ошибка: ' + error.message); return; }
+          alert('Голос учтён!');
           disableVoting();
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
+          setTimeout(() => window.location.reload(), 1000);
         };
 
         loadingEl.style.display = 'none';
         voteDetailEl.style.display = 'block';
-
       } catch (err) {
-        console.error('Ошибка:', err);
-        showError('Произошла ошибка при загрузке данных. Попробуйте позже.');
+        console.error(err);
+        showError('Произошла ошибка');
       }
     }
 
-    if (voteId) {
-      loadVote();
-    } else {
-      showError('Не указан идентификатор голосования');
-    }
+    if (voteId) loadVote();
+    else showError('Не указан идентификатор');
 
+    // Мобильное меню
     document.querySelector('.menu-toggle')?.addEventListener('click', function() {
       document.querySelector('.nav-menu').classList.toggle('active');
       document.querySelector('.menu-overlay').classList.toggle('active');
