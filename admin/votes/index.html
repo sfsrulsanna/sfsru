@@ -143,6 +143,27 @@
     .add-option-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
     .add-option-form .form-group label { font-weight: 500; font-size: 0.9rem; }
 
+    /* Лог загрузки */
+    .upload-log {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 0.8rem;
+      margin-top: 0.8rem;
+      max-height: 150px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: #333;
+    }
+    .upload-log .log-entry {
+      padding: 0.2rem 0;
+      border-bottom: 1px solid #eee;
+    }
+    .upload-log .log-entry.success { color: #28a745; }
+    .upload-log .log-entry.error { color: #dc3545; }
+    .upload-log .log-entry.info { color: #007bff; }
+
     @media (max-width: 768px) {
       .header-container { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       .page-header { flex-direction: column; align-items: stretch; }
@@ -261,18 +282,22 @@
             <div class="options-list" id="optionsList"></div>
             <div class="add-option-form" id="addOptionForm">
               <div class="form-group">
-                <label for="newOptionText">Текст (имя кандидата / вопрос)</label>
+                <label for="newOptionText" id="newOptionLabel">Текст (имя кандидата / вопрос)</label>
                 <input type="text" id="newOptionText" placeholder="Например: Иванов Иван" />
               </div>
-              <div class="form-group">
+              <div class="form-group" id="descGroup">
                 <label for="newOptionDesc">Краткое описание</label>
                 <input type="text" id="newOptionDesc" placeholder="Должность, партия" />
               </div>
-              <div class="form-group">
+              <div class="form-group" id="photoGroup">
                 <label for="newOptionPhoto">Фото кандидата</label>
                 <input type="file" id="newOptionPhoto" accept="image/*" />
               </div>
               <button type="button" class="btn btn-success" id="addOptionBtn">+ Добавить</button>
+            </div>
+            <!-- Блок лога загрузки -->
+            <div class="upload-log" id="uploadLog">
+              <div class="log-entry info">Лог загрузки фото...</div>
             </div>
           </div>
 
@@ -348,6 +373,10 @@
     const manualOptionId = document.getElementById('manualOptionId');
     const addManualVoteBtn = document.getElementById('addManualVoteBtn');
     const adminEmail = document.getElementById('adminEmail');
+    const newOptionLabel = document.getElementById('newOptionLabel');
+    const descGroup = document.getElementById('descGroup');
+    const photoGroup = document.getElementById('photoGroup');
+    const uploadLog = document.getElementById('uploadLog');
 
     const SCHEMA_VOTES = 'votes';
     const PHOTO_BUCKET = 'votes_photo';
@@ -355,6 +384,17 @@
     let currentVoteType = null;
     let allOptions = [];
     let allVotesData = [];
+
+    // --- Логгирование ---
+    function addLog(message, type = 'info') {
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      uploadLog.appendChild(entry);
+      uploadLog.scrollTop = uploadLog.scrollHeight;
+      // Также дублируем в консоль
+      console.log(`[${type}]`, message);
+    }
 
     // --- Проверка администратора ---
     async function checkAdmin() {
@@ -443,7 +483,6 @@
     // --- Удаление голосования ---
     async function deleteVote(id, type) {
       const tableName = getTableName(type);
-      // Удаляем варианты и голоса
       await supabase.schema(SCHEMA_VOTES).from('options').delete().eq('vote_id', id).eq('vote_type', type);
       await supabase.schema(SCHEMA_VOTES).from('user_votes').delete().eq('vote_id', id);
       const { error } = await supabase.schema(SCHEMA_VOTES).from(tableName).delete().eq('id', id);
@@ -451,7 +490,6 @@
       await loadAndRender();
     }
 
-    // --- Вспомогательные функции ---
     function getTableName(type) {
       const map = {
         federal_election: 'federal_elections',
@@ -473,7 +511,11 @@
       statisticsBlock.style.display = 'none';
       manualOptionId.innerHTML = '';
       newOptionPhoto.value = '';
+      uploadLog.innerHTML = '<div class="log-entry info">Лог загрузки фото...</div>';
       modalTitle.textContent = 'Создание голосования';
+      descGroup.style.display = 'block';
+      photoGroup.style.display = 'block';
+      newOptionLabel.textContent = 'Текст (имя кандидата / вопрос)';
     }
 
     // --- Открытие модалки для создания ---
@@ -507,8 +549,10 @@
         voteStart.value = vote.start_date.slice(0, 16);
         voteEnd.value = vote.end_date.slice(0, 16);
         voteStatus.value = vote.status;
+        uploadLog.innerHTML = '<div class="log-entry info">Лог загрузки фото...</div>';
 
-        // Загружаем варианты
+        updateFormFields(type);
+
         const { data: options, error: optError } = await supabase
           .schema(SCHEMA_VOTES)
           .from('options')
@@ -528,78 +572,158 @@
       }
     }
 
-    // --- Рендер вариантов с фото ---
+    function updateFormFields(type) {
+      const isReferendum = type && type.includes('referendum');
+      if (isReferendum) {
+        descGroup.style.display = 'none';
+        photoGroup.style.display = 'none';
+        newOptionLabel.textContent = 'Вопрос для референдума';
+        newOptionText.placeholder = 'Например: Поддерживаете ли вы...';
+      } else {
+        descGroup.style.display = 'block';
+        photoGroup.style.display = 'block';
+        newOptionLabel.textContent = 'Текст (имя кандидата / вопрос)';
+        newOptionText.placeholder = 'Например: Иванов Иван';
+      }
+    }
+
+    // --- Рендер вариантов ---
     function renderOptions() {
       optionsList.innerHTML = '';
-      allOptions.forEach(opt => {
-        const div = document.createElement('div');
-        div.className = 'option-item-admin';
-        let photoHtml = '';
-        if (opt.photo_url) {
-          const publicUrl = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(opt.photo_url).data.publicUrl;
-          photoHtml = `<img src="${publicUrl}" class="option-photo" alt="Фото" />`;
-        }
-        div.innerHTML = `
-          <div style="display:flex; align-items:center; gap:10px; flex:1;">
-            ${photoHtml}
-            <span class="option-text">${opt.text}</span>
-            ${opt.description ? `<small style="color:#555;">${opt.description}</small>` : ''}
-          </div>
-          <div class="option-actions">
-            <button class="btn btn-danger btn-sm delete-option" data-id="${opt.id}">×</button>
-          </div>
-        `;
-        optionsList.appendChild(div);
-      });
+      const isReferendum = currentVoteType && currentVoteType.includes('referendum');
 
-      document.querySelectorAll('.delete-option').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          if (!confirm('Удалить вариант?')) return;
-          await deleteOption(btn.dataset.id);
+      if (isReferendum) {
+        const groups = {};
+        allOptions.forEach(opt => {
+          const q = opt.question_text || 'Без вопроса';
+          if (!groups[q]) groups[q] = [];
+          groups[q].push(opt);
         });
-      });
+        for (const [question, opts] of Object.entries(groups)) {
+          const div = document.createElement('div');
+          div.style.background = '#f0f0f0';
+          div.style.borderRadius = '8px';
+          div.style.padding = '0.5rem 1rem';
+          div.style.marginBottom = '0.5rem';
+          div.innerHTML = `
+            <strong>${question}</strong>
+            <div style="display:flex; gap:1rem; margin-top:0.3rem;">
+              ${opts.map(opt => `
+                <span>${opt.text} 
+                  <button class="btn btn-danger btn-sm delete-option" data-id="${opt.id}" style="margin-left:0.5rem;">×</button>
+                </span>
+              `).join('')}
+            </div>
+          `;
+          optionsList.appendChild(div);
+        }
+        document.querySelectorAll('.delete-option').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('Удалить вариант?')) return;
+            await deleteOption(btn.dataset.id);
+          });
+        });
+      } else {
+        allOptions.forEach(opt => {
+          const div = document.createElement('div');
+          div.className = 'option-item-admin';
+          let photoHtml = '';
+          if (opt.photo_url) {
+            const publicUrl = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(opt.photo_url).data.publicUrl;
+            photoHtml = `<img src="${publicUrl}" class="option-photo" alt="Фото" />`;
+          }
+          div.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px; flex:1;">
+              ${photoHtml}
+              <span class="option-text">${opt.text}</span>
+              ${opt.description ? `<small style="color:#555;">${opt.description}</small>` : ''}
+            </div>
+            <div class="option-actions">
+              <button class="btn btn-danger btn-sm delete-option" data-id="${opt.id}">×</button>
+            </div>
+          `;
+          optionsList.appendChild(div);
+        });
+        document.querySelectorAll('.delete-option').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('Удалить вариант?')) return;
+            await deleteOption(btn.dataset.id);
+          });
+        });
+      }
 
-      // Обновляем select для ручного добавления голосов
       manualOptionId.innerHTML = '';
       allOptions.forEach(opt => {
         const option = document.createElement('option');
         option.value = opt.id;
-        option.textContent = opt.text;
+        option.textContent = opt.text + (opt.question_text ? ` (${opt.question_text})` : '');
         manualOptionId.appendChild(option);
       });
     }
 
-    // --- Добавление варианта с фото ---
+    // --- Добавление варианта с логом загрузки фото ---
     async function addOption() {
       const text = newOptionText.value.trim();
-      if (!text) { alert('Введите текст'); return; }
-      if (!currentVoteId || !currentVoteType) { alert('Сначала сохраните голосование'); return; }
+      if (!text) {
+        addLog('Ошибка: не введён текст', 'error');
+        alert('Введите текст');
+        return;
+      }
+      if (!currentVoteId || !currentVoteType) {
+        addLog('Ошибка: сначала сохраните голосование', 'error');
+        alert('Сначала сохраните голосование');
+        return;
+      }
 
+      const isReferendum = currentVoteType.includes('referendum');
       const description = newOptionDesc.value.trim();
       const photoFile = newOptionPhoto.files[0];
 
+      addLog(`Начинаем добавление варианта "${text}" (тип: ${isReferendum ? 'референдум' : 'выборы'})`, 'info');
+
       try {
         let photoName = null;
-        if (photoFile) {
+        if (photoFile && !isReferendum) {
+          addLog(`Загрузка фото: ${photoFile.name} (${Math.round(photoFile.size/1024)} КБ)`, 'info');
           const ext = photoFile.name.split('.').pop();
           photoName = `candidate-${currentVoteId}-${Date.now()}.${ext}`;
           const { error: uploadError } = await supabase.storage
             .from(PHOTO_BUCKET)
             .upload(photoName, photoFile, { cacheControl: '3600', upsert: false });
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            addLog(`Ошибка загрузки фото: ${uploadError.message}`, 'error');
+            throw new Error(`Ошибка загрузки фото: ${uploadError.message}`);
+          }
+          addLog(`Фото загружено: ${photoName}`, 'success');
+        } else if (isReferendum && photoFile) {
+          addLog('Для референдума фото не требуется, игнорируем', 'info');
         }
 
-        const { error: insertError } = await supabase
-          .schema(SCHEMA_VOTES)
-          .from('options')
-          .insert([{
-            vote_id: currentVoteId,
-            vote_type: currentVoteType,
-            text: text,
-            description: description,
-            photo_url: photoName
-          }]);
-        if (insertError) throw insertError;
+        if (isReferendum) {
+          const optionsToInsert = [
+            { vote_id: currentVoteId, vote_type: currentVoteType, text: 'ДА', question_text: text },
+            { vote_id: currentVoteId, vote_type: currentVoteType, text: 'НЕТ', question_text: text }
+          ];
+          const { error } = await supabase
+            .schema(SCHEMA_VOTES)
+            .from('options')
+            .insert(optionsToInsert);
+          if (error) throw error;
+          addLog(`Добавлены варианты ДА/НЕТ для вопроса "${text}"`, 'success');
+        } else {
+          const { error } = await supabase
+            .schema(SCHEMA_VOTES)
+            .from('options')
+            .insert([{
+              vote_id: currentVoteId,
+              vote_type: currentVoteType,
+              text: text,
+              description: description,
+              photo_url: photoName
+            }]);
+          if (error) throw error;
+          addLog(`Кандидат "${text}" добавлен${photoName ? ' с фото' : ''}`, 'success');
+        }
 
         newOptionText.value = '';
         newOptionDesc.value = '';
@@ -617,6 +741,7 @@
           await loadStatistics(currentVoteId);
         }
       } catch (err) {
+        addLog(`Ошибка: ${err.message}`, 'error');
         alert('Ошибка: ' + err.message);
       }
     }
@@ -625,17 +750,27 @@
     async function deleteOption(optionId) {
       const opt = allOptions.find(o => o.id === optionId);
       if (opt && opt.photo_url) {
-        await supabase.storage.from(PHOTO_BUCKET).remove([opt.photo_url]);
+        try {
+          await supabase.storage.from(PHOTO_BUCKET).remove([opt.photo_url]);
+          addLog(`Удалено фото ${opt.photo_url}`, 'info');
+        } catch (e) {
+          addLog(`Ошибка удаления фото: ${e.message}`, 'error');
+        }
       }
       const { error } = await supabase
         .schema(SCHEMA_VOTES)
         .from('options')
         .delete()
         .eq('id', optionId);
-      if (error) { alert('Ошибка удаления: ' + error.message); return; }
+      if (error) {
+        addLog(`Ошибка удаления варианта: ${error.message}`, 'error');
+        alert('Ошибка удаления: ' + error.message);
+        return;
+      }
       allOptions = allOptions.filter(o => o.id !== optionId);
       renderOptions();
       await loadStatistics(currentVoteId);
+      addLog(`Вариант удалён`, 'info');
     }
 
     // --- Статистика ---
@@ -659,7 +794,7 @@
         div.style.display = 'flex';
         div.style.justifyContent = 'space-between';
         div.style.padding = '0.2rem 0';
-        div.innerHTML = `<span>${opt.text}</span><span>${count} (${percent}%)</span>`;
+        div.innerHTML = `<span>${opt.text}${opt.question_text ? ` (${opt.question_text})` : ''}</span><span>${count} (${percent}%)</span>`;
         statisticsList.appendChild(div);
       });
       statisticsBlock.style.display = 'block';
@@ -694,7 +829,11 @@
           .insert([payload])
           .select();
       }
-      if (result.error) { alert('Ошибка: ' + result.error.message); return; }
+      if (result.error) {
+        addLog(`Ошибка сохранения: ${result.error.message}`, 'error');
+        alert('Ошибка: ' + result.error.message);
+        return;
+      }
 
       if (!id && result.data && result.data.length > 0) {
         currentVoteId = result.data[0].id;
@@ -702,7 +841,9 @@
         editVoteId.value = currentVoteId;
         editVoteType.value = type;
         modalTitle.textContent = 'Редактирование голосования';
-        // теперь можно добавлять варианты
+        addLog(`Голосование создано с ID ${currentVoteId}`, 'success');
+      } else {
+        addLog(`Голосование обновлено`, 'success');
       }
       alert('Сохранено!');
       await loadAndRender();
@@ -718,7 +859,12 @@
         .schema(SCHEMA_VOTES)
         .from('user_votes')
         .insert([{ user_id: userId, vote_id: currentVoteId, option_id: optionId }]);
-      if (error) { alert('Ошибка: ' + error.message); return; }
+      if (error) {
+        addLog(`Ошибка добавления голоса: ${error.message}`, 'error');
+        alert('Ошибка: ' + error.message);
+        return;
+      }
+      addLog(`Голос пользователя ${userId} добавлен за вариант ${optionId}`, 'success');
       alert('Голос добавлен');
       await loadStatistics(currentVoteId);
     }
@@ -745,6 +891,10 @@
 
       await loadAndRender();
 
+      voteType.addEventListener('change', () => {
+        updateFormFields(voteType.value);
+      });
+
       createVoteBtn.addEventListener('click', openCreateModal);
       closeModal.addEventListener('click', () => modal.classList.remove('active'));
       cancelModal.addEventListener('click', () => modal.classList.remove('active'));
@@ -754,7 +904,6 @@
       addOptionBtn.addEventListener('click', addOption);
       addManualVoteBtn.addEventListener('click', addManualVote);
 
-      // Logout
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = '/login.html';
