@@ -35,7 +35,7 @@ async function checkAdmin() {
         window.location.href = '../../login.html';
         return false;
     }
-    // Проверка роли в public.users (схема public по умолчанию)
+    // public.users (схема public по умолчанию)
     const { data: userData, error: roleError } = await supabase
         .from('users')
         .select('role')
@@ -51,7 +51,7 @@ async function checkAdmin() {
 }
 
 async function loadUsers() {
-    // public.users (схема public по умолчанию)
+    // public.users (по умолчанию public)
     const { data, error } = await supabase
         .from('users')
         .select('id, email');
@@ -65,8 +65,8 @@ async function loadUsers() {
 async function loadAddresses() {
     // Представление all_addresses в схеме addresses
     const { data, error } = await supabase
+        .schema(SCHEMA)      // <-- правильный способ указать схему
         .from('all_addresses')
-        .schema(SCHEMA) // <-- явно указываем схему
         .select('*');
     if (error) {
         console.error('Ошибка загрузки адресов:', error);
@@ -278,15 +278,15 @@ async function saveAddress(event) {
     if (editIdVal && editTypeVal) {
         const tableName = getTableName(editTypeVal);
         result = await supabase
+            .schema(SCHEMA)      // <-- правильный способ указать схему
             .from(tableName)
-            .schema(SCHEMA) // <-- явно указываем схему
             .update(payload)
             .eq('id', editIdVal);
     } else {
         const tableName = getTableName(type);
         result = await supabase
+            .schema(SCHEMA)      // <-- правильный способ указать схему
             .from(tableName)
-            .schema(SCHEMA) // <-- явно указываем схему
             .insert([payload]);
     }
 
@@ -313,8 +313,8 @@ function getTableName(type) {
 async function deleteAddress(id, type) {
     const tableName = getTableName(type);
     const { error } = await supabase
+        .schema(SCHEMA)      // <-- правильный способ указать схему
         .from(tableName)
-        .schema(SCHEMA) // <-- явно указываем схему
         .delete()
         .eq('id', id);
     if (error) {

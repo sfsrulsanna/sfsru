@@ -87,8 +87,8 @@ async function loadAddresses() {
     const allResults = await Promise.all(
       tables.map(table =>
         supabase
+          .schema(SCHEMA)      // <-- правильный способ указать схему
           .from(table)
-          .schema(SCHEMA) // <-- явно указываем схему
           .select('*')
           .eq('user_id', userId)
       )
