@@ -346,7 +346,7 @@
     const urlParams = new URLSearchParams(window.location.search);
     const voteId = urlParams.get('id');
 
-    const PHOTO_BUCKET = 'votes_photo_private';
+    const PHOTO_BUCKET = 'votes_photo';
 
     function formatDate(dateStr) {
       if (!dateStr) return '—';
@@ -433,7 +433,6 @@
           .eq('vote_type', voteType);
         if (optErr) { showError('Ошибка загрузки вариантов'); return; }
 
-        // Голоса пользователя
         const { data: userVotes } = await supabase
           .schema('votes')
           .from('user_votes')
@@ -443,7 +442,6 @@
         const hasVoted = userVotes && userVotes.length > 0;
         const userOptionIds = hasVoted ? userVotes.map(v => v.option_id) : [];
 
-        // Статистика
         const { data: allVotes } = await supabase
           .schema('votes')
           .from('user_votes')
@@ -453,29 +451,16 @@
         const counts = {};
         allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // Получаем подписанные URL для фото
-        const optionsWithPhoto = await Promise.all(options.map(async (opt) => {
+        const optionsWithPhoto = options.map(opt => {
           let photoUrl = null;
-          if (opt.photo_url) {
-            try {
-              const { data, error } = await supabase
-                .storage
-                .from(PHOTO_BUCKET)
-                .createSignedUrl(opt.photo_url, 60);
-              if (!error && data) {
-                photoUrl = data.signedUrl;
-                console.log('✅ Signed URL для фото:', photoUrl);
-              } else {
-                console.error('❌ Ошибка получения signed URL для', opt.photo_url, error);
-              }
-            } catch (err) {
-              console.error('❌ Исключение при получении signed URL:', err);
-            }
+          if (opt.photo_folder && opt.photo_name) {
+            const fullPath = opt.photo_folder + opt.photo_name;
+            const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(fullPath);
+            photoUrl = data.publicUrl;
           }
           return { ...opt, photoUrl };
-        }));
+        });
 
-        // --- Отрисовка ---
         voteTitleEl.textContent = voteData.title;
         voteMetaEl.innerHTML = `
           <span>Регион: ${voteData.territory}</span>
@@ -486,10 +471,8 @@
         voteDescriptionEl.textContent = voteData.description || 'Описание отсутствует';
 
         optionsContainer.innerHTML = '';
-
         const isElection = voteType.includes('election');
         const isReferendum = voteType.includes('referendum');
-
         const selectedOptions = [];
 
         if (isElection) {
@@ -502,19 +485,16 @@
             const isSelected = hasVoted && userOptionIds.includes(opt.id);
             if (isSelected) div.classList.add('selected');
             if (hasVoted || voteData.status !== 'active') div.style.cursor = 'default';
-
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
             if (isSelected) radio.checked = true;
             if (hasVoted || voteData.status !== 'active') radio.disabled = true;
-
             const img = document.createElement('img');
             img.src = opt.photoUrl || '/images/default-avatar.png';
             img.alt = opt.text;
-            img.onerror = () => { console.warn('⚠️ Ошибка загрузки фото, используем заглушку'); img.src = '/images/default-avatar.png'; };
-
+            img.onerror = () => { img.src = '/images/default-avatar.png'; };
             const info = document.createElement('div');
             info.className = 'candidate-info';
             const name = document.createElement('div');
@@ -525,17 +505,14 @@
             desc.textContent = opt.description || '';
             info.appendChild(name);
             info.appendChild(desc);
-
             const percentSpan = document.createElement('div');
             percentSpan.className = 'candidate-percent';
             percentSpan.textContent = `${percent}%`;
-
             div.appendChild(radio);
             div.appendChild(img);
             div.appendChild(info);
             div.appendChild(percentSpan);
             list.appendChild(div);
-
             div.addEventListener('click', () => {
               if (radio.disabled) return;
               document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
@@ -548,14 +525,12 @@
           });
           optionsContainer.appendChild(list);
         } else if (isReferendum) {
-          // Группируем по вопросу
           const groups = {};
           optionsWithPhoto.forEach(opt => {
             const q = opt.question_text || 'Без вопроса';
             if (!groups[q]) groups[q] = [];
             groups[q].push(opt);
           });
-
           let questionIndex = 0;
           for (const [question, opts] of Object.entries(groups)) {
             const block = document.createElement('div');
@@ -564,43 +539,32 @@
             qText.className = 'question-text';
             qText.textContent = question;
             block.appendChild(qText);
-
             const optsDiv = document.createElement('div');
             optsDiv.className = 'referendum-options';
             const groupName = `vote_question_${questionIndex}`;
-            let hasSelectedInGroup = false;
-
             opts.forEach(opt => {
               const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
               const div = document.createElement('div');
               div.className = 'referendum-option';
               const isSelected = hasVoted && userOptionIds.includes(opt.id);
-              if (isSelected) {
-                div.classList.add('selected');
-                hasSelectedInGroup = true;
-              }
+              if (isSelected) div.classList.add('selected');
               if (hasVoted || voteData.status !== 'active') div.style.cursor = 'default';
-
               const radio = document.createElement('input');
               radio.type = 'radio';
               radio.name = groupName;
               radio.value = opt.id;
               if (isSelected) radio.checked = true;
               if (hasVoted || voteData.status !== 'active') radio.disabled = true;
-
               const answerSpan = document.createElement('div');
               answerSpan.className = 'answer-text';
               answerSpan.textContent = opt.text;
-
               const percentSpan = document.createElement('div');
               percentSpan.className = 'answer-percent';
               percentSpan.textContent = `${percent}%`;
-
               div.appendChild(radio);
               div.appendChild(answerSpan);
               div.appendChild(percentSpan);
               optsDiv.appendChild(div);
-
               div.addEventListener('click', () => {
                 if (radio.disabled) return;
                 optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
@@ -631,7 +595,6 @@
           }
         }
 
-        // --- Настройка кнопки ---
         if (hasVoted) {
           disableVoting();
         } else if (voteData.status !== 'active') {
@@ -642,7 +605,6 @@
           voteStatus.innerHTML = '';
         }
 
-        // Обработчик голосования
         voteBtn.onclick = async () => {
           let optionsToVote = [];
           if (isElection) {
@@ -659,18 +621,15 @@
             }
             optionsToVote = Array.from(radios).map(r => r.value);
           }
-
           const inserts = optionsToVote.map(optionId => ({
             user_id: user.id,
             vote_id: voteId,
             option_id: optionId
           }));
-
           const { error } = await supabase
             .schema('votes')
             .from('user_votes')
             .insert(inserts);
-
           if (error) {
             alert('Ошибка: ' + error.message);
             return;
