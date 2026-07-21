@@ -3,8 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- favicons (полный набор) -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
   <title>Голосование — СФСРЮ</title>
   <style>
+    /* Стили (те же, но добавлены отступы) */
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.6; }
     a { text-decoration: none; color: inherit; }
@@ -142,6 +164,9 @@
       border-radius: 12px;
       border: 1px solid #eee;
     }
+    .referendum-question:last-child {
+      margin-bottom: 0; /* убираем лишний отступ у последнего */
+    }
     .referendum-question .question-text {
       font-weight: 700;
       font-size: 1.1rem;
@@ -248,6 +273,7 @@
   </style>
 </head>
 <body>
+  <!-- Шапка (такая же) -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -427,15 +453,24 @@
         const counts = {};
         allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // Signed URL для фото
+        // Получаем подписанные URL для фото
         const optionsWithPhoto = await Promise.all(options.map(async (opt) => {
           let photoUrl = null;
           if (opt.photo_url) {
-            const { data, error } = await supabase
-              .storage
-              .from(PHOTO_BUCKET)
-              .createSignedUrl(opt.photo_url, 60);
-            if (!error && data) photoUrl = data.signedUrl;
+            try {
+              const { data, error } = await supabase
+                .storage
+                .from(PHOTO_BUCKET)
+                .createSignedUrl(opt.photo_url, 60);
+              if (!error && data) {
+                photoUrl = data.signedUrl;
+                console.log('✅ Signed URL для фото:', photoUrl);
+              } else {
+                console.error('❌ Ошибка получения signed URL для', opt.photo_url, error);
+              }
+            } catch (err) {
+              console.error('❌ Исключение при получении signed URL:', err);
+            }
           }
           return { ...opt, photoUrl };
         }));
@@ -455,7 +490,6 @@
         const isElection = voteType.includes('election');
         const isReferendum = voteType.includes('referendum');
 
-        // Переменная для хранения выбранных option_id (для референдума – несколько)
         const selectedOptions = [];
 
         if (isElection) {
@@ -479,7 +513,7 @@
             const img = document.createElement('img');
             img.src = opt.photoUrl || '/images/default-avatar.png';
             img.alt = opt.text;
-            img.onerror = () => { img.src = '/images/default-avatar.png'; };
+            img.onerror = () => { console.warn('⚠️ Ошибка загрузки фото, используем заглушку'); img.src = '/images/default-avatar.png'; };
 
             const info = document.createElement('div');
             info.className = 'candidate-info';
@@ -507,19 +541,12 @@
               document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
               div.classList.add('selected');
               radio.checked = true;
-              // Для выборов – один вариант
               selectedOptions.length = 0;
               selectedOptions.push(opt.id);
               voteBtn.disabled = false;
             });
           });
           optionsContainer.appendChild(list);
-          // Если уже был выбран, активируем кнопку (но если hasVoted, она заблокирована)
-          if (hasVoted && userOptionIds.length > 0) {
-            // кнопка заблокирована
-          } else if (!hasVoted && voteData.status === 'active') {
-            // кнопка активируется только при выборе
-          }
         } else if (isReferendum) {
           // Группируем по вопросу
           const groups = {};
@@ -556,7 +583,7 @@
 
               const radio = document.createElement('input');
               radio.type = 'radio';
-              radio.name = groupName; // одинаковое имя для группы
+              radio.name = groupName;
               radio.value = opt.id;
               if (isSelected) radio.checked = true;
               if (hasVoted || voteData.status !== 'active') radio.disabled = true;
@@ -576,18 +603,15 @@
 
               div.addEventListener('click', () => {
                 if (radio.disabled) return;
-                // Снимаем выделение с других в этой группе
                 optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
                 div.classList.add('selected');
                 radio.checked = true;
-                // Обновляем selectedOptions: удаляем старый для этого вопроса, добавляем новый
                 const existingIndex = selectedOptions.findIndex(id => {
                   const optObj = optionsWithPhoto.find(o => o.id === id);
                   return optObj && optObj.question_text === question;
                 });
                 if (existingIndex !== -1) selectedOptions.splice(existingIndex, 1);
                 selectedOptions.push(opt.id);
-                // Проверяем, все ли вопросы заполнены
                 const totalQuestions = Object.keys(groups).length;
                 const answeredQuestions = new Set();
                 selectedOptions.forEach(id => {
@@ -605,13 +629,6 @@
             optionsContainer.appendChild(block);
             questionIndex++;
           }
-
-          // Если уже были выбраны все вопросы (hasVoted), то кнопка заблокирована
-          if (hasVoted) {
-            // кнопка заблокирована
-          } else if (voteData.status === 'active') {
-            // кнопка активируется только когда все вопросы заполнены
-          }
         }
 
         // --- Настройка кнопки ---
@@ -627,14 +644,12 @@
 
         // Обработчик голосования
         voteBtn.onclick = async () => {
-          // Собираем все выбранные option_id
           let optionsToVote = [];
           if (isElection) {
             const selectedRadio = document.querySelector('input[name="voteOption"]:checked');
             if (!selectedRadio) { alert('Выберите кандидата'); return; }
             optionsToVote = [selectedRadio.value];
           } else if (isReferendum) {
-            // Собираем все выбранные радио по группам
             const radios = document.querySelectorAll('.referendum-question input[type="radio"]:checked');
             if (radios.length === 0) { alert('Выберите ответы на все вопросы'); return; }
             const totalQuestions = document.querySelectorAll('.referendum-question').length;
@@ -645,7 +660,6 @@
             optionsToVote = Array.from(radios).map(r => r.value);
           }
 
-          // Вставляем все голоса
           const inserts = optionsToVote.map(optionId => ({
             user_id: user.id,
             vote_id: voteId,
