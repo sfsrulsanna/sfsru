@@ -1,6 +1,7 @@
 import { supabase } from '../../js/supabase-config.js';
 
-// Элементы DOM
+const SCHEMA = 'addresses'; // указываем схему
+
 const loadingEl = document.getElementById('loading');
 const tableWrapper = document.getElementById('tableWrapper');
 const tableBody = document.getElementById('tableBody');
@@ -24,10 +25,9 @@ const dateFields = document.getElementById('dateFields');
 const userSuggestions = document.getElementById('userSuggestions');
 
 let allAddresses = [];
-let allUsers = []; // [{id, email}]
+let allUsers = [];
 let currentFilter = '';
 
-// Проверка роли admin
 async function checkAdmin() {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
@@ -35,7 +35,6 @@ async function checkAdmin() {
         window.location.href = '../../login.html';
         return false;
     }
-    // Предполагаем, что роль хранится в user.user_metadata или app_metadata
     const role = user.app_metadata?.role || user.user_metadata?.role;
     if (role !== 'admin') {
         alert('У вас нет прав администратора');
@@ -45,7 +44,6 @@ async function checkAdmin() {
     return true;
 }
 
-// Загрузка всех пользователей (email)
 async function loadUsers() {
     const { data, error } = await supabase
         .from('profiles')
@@ -57,10 +55,9 @@ async function loadUsers() {
     return data || [];
 }
 
-// Загрузка всех адресов из view
 async function loadAddresses() {
     const { data, error } = await supabase
-        .from('all_addresses')
+        .from('all_addresses', { schema: SCHEMA })  // указываем схему
         .select('*');
     if (error) {
         console.error('Ошибка загрузки адресов:', error);
@@ -69,13 +66,11 @@ async function loadAddresses() {
     return data || [];
 }
 
-// Получение email по user_id
 function getUserEmail(userId) {
     const user = allUsers.find(u => u.id === userId);
     return user ? user.email : userId;
 }
 
-// Рендер таблицы
 function renderTable(addresses) {
     tableBody.innerHTML = '';
     if (!addresses || addresses.length === 0) {
@@ -94,11 +89,9 @@ function renderTable(addresses) {
             actual: 'Фактическая'
         }[addr.type] || addr.type;
 
-        // Определяем даты
         let regDate = addr.registration_date || '—';
         let startDate = addr.start_date || '—';
         let endDate = addr.end_date || '—';
-        // Для постоянной регистрации дата регистрации - это registration_date, а start/end пустые
         if (addr.type === 'permanent') {
             regDate = addr.registration_date || '—';
             startDate = '—';
@@ -138,7 +131,6 @@ function renderTable(addresses) {
         tableBody.appendChild(tr);
     });
 
-    // Обработчики для кнопок
     document.querySelectorAll('.btn-edit').forEach(btn => {
         btn.addEventListener('click', () => {
             const id = btn.dataset.id;
@@ -155,23 +147,20 @@ function renderTable(addresses) {
     });
 }
 
-// Открыть модалку для добавления
 function openAddModal() {
     modalTitle.textContent = 'Добавление адреса';
     addressForm.reset();
     editId.value = '';
     editType.value = '';
     userIdInput.value = '';
-    document.getElementById('userSuggestions').style.display = 'none';
+    userSuggestions.style.display = 'none';
     dateFields.innerHTML = '';
     generateDateFields('permanent');
     modal.classList.add('active');
 }
 
-// Открыть модалку для редактирования
 async function openEditModal(id, type) {
     modalTitle.textContent = 'Редактирование адреса';
-    // Найдём запись в allAddresses
     const addr = allAddresses.find(a => a.id === id && a.type === type);
     if (!addr) return;
 
@@ -181,14 +170,10 @@ async function openEditModal(id, type) {
     addressType.value = type;
     addressInput.value = addr.address || '';
     statusSelect.value = addr.status || 'pending';
-
-    // Генерируем поля дат в зависимости от типа
     generateDateFields(type, addr);
-
     modal.classList.add('active');
 }
 
-// Генерация полей дат
 function generateDateFields(type, data = {}) {
     dateFields.innerHTML = '';
     if (type === 'permanent') {
@@ -210,17 +195,14 @@ function generateDateFields(type, data = {}) {
             </div>
         `;
     } else if (type === 'actual') {
-        // Нет дополнительных полей
         dateFields.innerHTML = '';
     }
 }
 
-// Закрыть модалку
 function closeModal() {
     modal.classList.remove('active');
 }
 
-// Поиск пользователей по email
 async function searchUsers(query) {
     if (!query || query.length < 2) {
         userSuggestions.style.display = 'none';
@@ -246,11 +228,9 @@ async function searchUsers(query) {
     userSuggestions.style.display = 'block';
 }
 
-// Сохранение адреса
 async function saveAddress(event) {
     event.preventDefault();
 
-    // Получаем user_id по email
     const email = userIdInput.value.trim();
     const user = allUsers.find(u => u.email === email);
     if (!user) {
@@ -263,14 +243,12 @@ async function saveAddress(event) {
     const address = addressInput.value.trim();
     const status = statusSelect.value;
 
-    // Собираем данные
     const payload = {
         user_id: userId,
         address,
         status,
     };
 
-    // Добавляем даты в зависимости от типа
     if (type === 'permanent') {
         const regDate = document.getElementById('registrationDate')?.value;
         if (!regDate) { alert('Укажите дату регистрации'); return; }
@@ -283,24 +261,21 @@ async function saveAddress(event) {
         payload.start_date = start;
         payload.end_date = end;
     }
-    // Для actual ничего дополнительно не нужно
 
     const editIdVal = editId.value;
     const editTypeVal = editType.value;
 
     let result;
     if (editIdVal && editTypeVal) {
-        // Обновление
         const tableName = getTableName(editTypeVal);
         result = await supabase
-            .from(tableName)
+            .from(tableName, { schema: SCHEMA })  // указываем схему
             .update(payload)
             .eq('id', editIdVal);
     } else {
-        // Вставка
         const tableName = getTableName(type);
         result = await supabase
-            .from(tableName)
+            .from(tableName, { schema: SCHEMA })  // указываем схему
             .insert([payload]);
     }
 
@@ -312,10 +287,9 @@ async function saveAddress(event) {
 
     alert('Успешно сохранено!');
     closeModal();
-    loadData(); // перезагрузить таблицу
+    loadData();
 }
 
-// Получить имя таблицы по типу
 function getTableName(type) {
     const map = {
         permanent: 'permanent_registration',
@@ -325,11 +299,10 @@ function getTableName(type) {
     return map[type] || type;
 }
 
-// Удаление адреса
 async function deleteAddress(id, type) {
     const tableName = getTableName(type);
     const { error } = await supabase
-        .from(tableName)
+        .from(tableName, { schema: SCHEMA })  // указываем схему
         .delete()
         .eq('id', id);
     if (error) {
@@ -340,7 +313,6 @@ async function deleteAddress(id, type) {
     loadData();
 }
 
-// Основная загрузка данных
 async function loadData() {
     loadingEl.style.display = 'block';
     tableWrapper.style.display = 'none';
@@ -349,7 +321,6 @@ async function loadData() {
     allUsers = await loadUsers();
     allAddresses = await loadAddresses();
 
-    // Применяем фильтр
     let filtered = allAddresses;
     const filterText = currentFilter.trim().toLowerCase();
     if (filterText) {
@@ -363,14 +334,12 @@ async function loadData() {
     loadingEl.style.display = 'none';
 }
 
-// События
 document.addEventListener('DOMContentLoaded', async () => {
     const isAdmin = await checkAdmin();
     if (!isAdmin) return;
 
     await loadData();
 
-    // Фильтр
     applyFilterBtn.addEventListener('click', () => {
         currentFilter = userFilter.value;
         loadData();
@@ -384,23 +353,19 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (e.key === 'Enter') applyFilterBtn.click();
     });
 
-    // Добавление
     addNewBtn.addEventListener('click', openAddModal);
 
-    // Модалка
     closeModalBtn.addEventListener('click', closeModal);
     cancelModalBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
     });
 
-    // Смена типа в модалке
     addressType.addEventListener('change', () => {
         const type = addressType.value;
         generateDateFields(type);
     });
 
-    // Поиск пользователей при вводе
     userIdInput.addEventListener('input', () => {
         const query = userIdInput.value.trim();
         searchUsers(query);
@@ -409,6 +374,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         userSuggestions.style.display = 'none';
     });
 
-    // Сохранение формы
     addressForm.addEventListener('submit', saveAddress);
 });
