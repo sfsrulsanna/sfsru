@@ -20,14 +20,14 @@ const editType = document.getElementById('editType');
 const userIdInput = document.getElementById('userId');
 const addressType = document.getElementById('addressType');
 const addressInput = document.getElementById('address');
-const regionSelect = document.getElementById('regionId'); // <-- новое поле
+const regionSelect = document.getElementById('regionId'); // может быть null
 const statusSelect = document.getElementById('status');
 const dateFields = document.getElementById('dateFields');
 const userSuggestions = document.getElementById('userSuggestions');
 
 let allAddresses = [];
 let allUsers = [];
-let allRegions = []; // <-- массив регионов {id, name}
+let allRegions = [];
 let currentFilter = '';
 
 async function checkAdmin() {
@@ -62,7 +62,6 @@ async function loadUsers() {
     return data || [];
 }
 
-// Загрузка регионов из addresses.regions
 async function loadRegions() {
     const { data, error } = await supabase
         .schema(SCHEMA)
@@ -93,7 +92,6 @@ function getUserEmail(userId) {
     return user ? user.email : userId;
 }
 
-// Получение названия региона по id
 function getRegionName(regionId) {
     if (!regionId) return '—';
     const region = allRegions.find(r => r.id === regionId);
@@ -143,7 +141,6 @@ function renderTable(addresses) {
             archived: 'Архивный'
         }[statusClass] || statusClass;
 
-        // Добавляем столбец с регионом
         const regionName = getRegionName(addr.region_id);
 
         tr.innerHTML = `
@@ -188,7 +185,7 @@ function openAddModal() {
     userIdInput.value = '';
     userSuggestions.style.display = 'none';
     dateFields.innerHTML = '';
-    regionSelect.value = ''; // сброс
+    if (regionSelect) regionSelect.value = '';
     generateDateFields('permanent');
     modal.classList.add('active');
 }
@@ -204,7 +201,7 @@ async function openEditModal(id, type) {
     addressType.value = type;
     addressInput.value = addr.address || '';
     statusSelect.value = addr.status || 'pending';
-    regionSelect.value = addr.region_id || ''; // устанавливаем регион
+    if (regionSelect) regionSelect.value = addr.region_id || '';
     generateDateFields(type, addr);
     modal.classList.add('active');
 }
@@ -277,7 +274,7 @@ async function saveAddress(event) {
     const type = addressType.value;
     const address = addressInput.value.trim();
     const status = statusSelect.value;
-    const regionId = regionSelect.value ? parseInt(regionSelect.value) : null; // если выбрано, иначе null
+    const regionId = regionSelect && regionSelect.value ? parseInt(regionSelect.value) : null;
 
     const payload = {
         user_id: userId,
@@ -359,12 +356,14 @@ async function loadData() {
     noDataEl.style.display = 'none';
 
     allUsers = await loadUsers();
-    allRegions = await loadRegions(); // загружаем регионы
+    allRegions = await loadRegions();
     allAddresses = await loadAddresses();
 
-    // Заполняем селект регионов
-    regionSelect.innerHTML = '<option value="">Не указан</option>' +
-        allRegions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    // Заполняем селект регионов, если он существует
+    if (regionSelect) {
+        regionSelect.innerHTML = '<option value="">Не указан</option>' +
+            allRegions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
+    }
 
     let filtered = allAddresses;
     const filterText = currentFilter.trim().toLowerCase();
