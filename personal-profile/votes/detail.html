@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Голосование — СФСРЮ</title>
   <style>
-    /* ===== Стили (те же, что были) ===== */
+    /* ===== Общие стили (без изменений) ===== */
     * {
       margin: 0;
       padding: 0;
@@ -97,22 +97,24 @@
       max-width: 800px;
       margin: 0 auto;
     }
-    .page-header {
-      margin-bottom: 2rem;
-    }
-    .page-header h2 {
-      font-size: 2rem;
-      color: #7b0000;
-      margin-bottom: 0.25rem;
-    }
-    .back-link {
+
+    /* Новая кнопка "Назад" в виде таблетки */
+    .back-pill {
       display: inline-block;
-      margin-bottom: 1rem;
-      color: #7b0000;
+      padding: 0.4rem 1.5rem;
+      border-radius: 50px;
+      background: #7b0000;
+      color: white;
       font-weight: 600;
+      font-size: 0.95rem;
       cursor: pointer;
+      transition: opacity 0.2s;
+      border: none;
+      margin-bottom: 1rem;
     }
-    .back-link:hover { text-decoration: underline; }
+    .back-pill:hover {
+      opacity: 0.85;
+    }
 
     .vote-detail {
       background: white;
@@ -170,9 +172,27 @@
       cursor: pointer;
       flex-shrink: 0;
     }
-    .option-item .option-text {
+    .option-item .option-content {
       flex: 1;
+      display: flex;
+      flex-direction: column;
+    }
+    .option-item .option-text {
       font-size: 1.05rem;
+      font-weight: 500;
+    }
+    .option-item .option-info {
+      font-size: 0.9rem;
+      color: #555;
+      margin-top: 0.2rem;
+    }
+    .option-item .option-photo {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin-right: 1rem;
+      border: 2px solid #eee;
     }
     .option-item .option-percent {
       font-weight: 600;
@@ -260,6 +280,8 @@
       .nav-menu a { display: block; padding: 16px 20px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 1.1rem; text-align: left; border: 1px solid rgba(255,255,255,0.2); }
       .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: opacity 0.3s; }
       .menu-overlay.active { display: block; opacity: 1; }
+      .option-item { flex-wrap: wrap; }
+      .option-item .option-photo { width: 50px; height: 50px; }
     }
   </style>
 </head>
@@ -291,14 +313,14 @@
 
   <main class="main-content">
     <div class="container">
-      <div class="page-header">
-        <a class="back-link" onclick="history.back()">← Назад к списку</a>
-        <h2 id="voteTitle">Загрузка...</h2>
-      </div>
+      <!-- Кнопка "Назад" в виде таблетки -->
+      <button class="back-pill" onclick="history.back()">← Назад к списку</button>
 
       <div id="loading" class="loading">Загрузка данных...</div>
 
       <div id="voteDetail" class="vote-detail" style="display: none;">
+        <!-- Заголовок теперь внутри блока -->
+        <h2 class="vote-title" id="voteTitle">Загрузка...</h2>
         <div class="vote-meta" id="voteMeta"></div>
         <div class="vote-description" id="voteDescription"></div>
 
@@ -340,11 +362,9 @@
     const voteStatus = document.getElementById('voteStatus');
     const errorMessageEl = document.getElementById('errorMessage');
 
-    // --- Получаем ID голосования из URL ---
     const urlParams = new URLSearchParams(window.location.search);
     const voteId = urlParams.get('id');
 
-    // --- Вспомогательные функции ---
     function formatDate(dateStr) {
       if (!dateStr) return '—';
       try {
@@ -362,19 +382,14 @@
       errorMessageEl.textContent = message;
     }
 
-    // --- Функция блокировки интерфейса после голосования ---
     function disableVoting() {
-      // Блокируем все радиокнопки
       document.querySelectorAll('input[name="voteOption"]').forEach(radio => {
         radio.disabled = true;
       });
-      // Блокируем кнопку
       voteBtn.disabled = true;
-      // Показываем сообщение
       voteStatus.innerHTML = '<div class="already-voted">Вы уже проголосовали</div>';
     }
 
-    // --- Проверка региона пользователя ---
     async function checkRegion(userId, territory) {
       if (territory === 'Вся территория СФСРЮ') return true;
       const { data: permData, error: permError } = await supabase
@@ -394,7 +409,6 @@
       return regionData.name === territory;
     }
 
-    // --- Проверка типа учётной записи ---
     async function checkAccountType(userId) {
       const { data: userData, error } = await supabase
         .from('users')
@@ -405,7 +419,6 @@
       return userData.account_type || 'Не подтверждена';
     }
 
-    // --- Основная загрузка ---
     async function loadVote() {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
@@ -414,7 +427,6 @@
           return;
         }
 
-        // 1. Определяем тип голосования (поиск по 4 таблицам)
         const tables = [
           { name: 'federal_elections', type: 'federal_election' },
           { name: 'regional_elections', type: 'regional_election' },
@@ -432,7 +444,6 @@
             .select('*')
             .eq('id', voteId)
             .maybeSingle();
-
           if (data && !error) {
             voteData = data;
             voteType = table.type;
@@ -445,21 +456,18 @@
           return;
         }
 
-        // 2. Проверка региона
         const regionOk = await checkRegion(user.id, voteData.territory);
         if (!regionOk) {
           showError('Вы не можете участвовать в этом голосовании, так как ваш регион не соответствует');
           return;
         }
 
-        // 3. Проверка типа учётной записи
         const accountType = await checkAccountType(user.id);
         if (accountType !== 'Подтверждённая') {
           showError('Ваша учётная запись не подтверждена. Обратитесь в МФЦ или отделение МВД для подтверждения.');
           return;
         }
 
-        // 4. Загрузка вариантов
         const { data: options, error: optionsError } = await supabase
           .schema('votes')
           .from('options')
@@ -473,7 +481,6 @@
           return;
         }
 
-        // 5. Проверка, голосовал ли пользователь уже
         const { data: userVote, error: userVoteError } = await supabase
           .schema('votes')
           .from('user_votes')
@@ -484,7 +491,6 @@
 
         const hasVoted = !!userVote;
 
-        // 6. Подсчёт процентов для каждого варианта
         let optionPercentages = {};
         if (options && options.length > 0) {
           const { data: allVotes, error: allVotesError } = await supabase
@@ -492,7 +498,6 @@
             .from('user_votes')
             .select('option_id')
             .eq('vote_id', voteId);
-
           if (!allVotesError && allVotes) {
             const total = allVotes.length;
             const counts = {};
@@ -506,7 +511,7 @@
           }
         }
 
-        // --- Отрисовка ---
+        // Заполняем блок
         voteTitleEl.textContent = voteData.title;
         voteMetaEl.innerHTML = `
           <span>Регион: ${voteData.territory}</span>
@@ -516,7 +521,6 @@
         `;
         voteDescriptionEl.textContent = voteData.description || 'Описание отсутствует';
 
-        // Очищаем список вариантов
         optionsListEl.innerHTML = '';
 
         if (options && options.length > 0) {
@@ -530,37 +534,57 @@
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
-            // Если пользователь уже голосовал, выделим его выбор
             if (hasVoted && userVote.option_id === opt.id) {
               radio.checked = true;
               div.classList.add('selected');
             }
-            // Если голосование завершено или уже проголосовал, отключаем радиокнопки
             if (voteData.status !== 'active' || hasVoted) {
               radio.disabled = true;
               div.style.cursor = 'default';
             }
 
-            const textSpan = document.createElement('span');
+            // Фото кандидата
+            let photoHtml = '';
+            if (opt.photo_url) {
+              photoHtml = `<img src="${opt.photo_url}" alt="Фото" class="option-photo" />`;
+            }
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'option-content';
+
+            const textSpan = document.createElement('div');
             textSpan.className = 'option-text';
             textSpan.textContent = opt.text;
+
+            const infoSpan = document.createElement('div');
+            infoSpan.className = 'option-info';
+            infoSpan.textContent = opt.candidate_info || '';
+
+            contentDiv.appendChild(textSpan);
+            if (opt.candidate_info) contentDiv.appendChild(infoSpan);
 
             const percentSpan = document.createElement('span');
             percentSpan.className = 'option-percent';
             percentSpan.textContent = `${percent}%`;
 
+            if (photoHtml) {
+              const img = document.createElement('img');
+              img.src = opt.photo_url;
+              img.alt = 'Фото кандидата';
+              img.className = 'option-photo';
+              div.appendChild(img);
+            }
+
             div.appendChild(radio);
-            div.appendChild(textSpan);
+            div.appendChild(contentDiv);
             div.appendChild(percentSpan);
             optionsListEl.appendChild(div);
 
-            // Клик по блоку для выбора радио (только если не заблокировано)
             div.addEventListener('click', (e) => {
               if (radio.disabled) return;
               radio.checked = true;
               document.querySelectorAll('.option-item').forEach(el => el.classList.remove('selected'));
               div.classList.add('selected');
-              // Активируем кнопку
               voteBtn.disabled = false;
             });
           });
@@ -568,19 +592,16 @@
           optionsListEl.innerHTML = '<p>Нет вариантов для голосования</p>';
         }
 
-        // --- Настройка кнопки и статуса ---
         if (hasVoted) {
-          disableVoting(); // блокируем всё
+          disableVoting();
         } else if (voteData.status !== 'active') {
           voteBtn.disabled = true;
           voteStatus.innerHTML = '<div class="info-message">Голосование завершено</div>';
-          // также блокируем радиокнопки (уже сделано выше)
         } else {
-          voteBtn.disabled = true; // по умолчанию заблокирована, пока не выберут вариант
+          voteBtn.disabled = true;
           voteStatus.innerHTML = '';
         }
 
-        // --- Обработчик кнопки "Проголосовать" ---
         voteBtn.onclick = async () => {
           const selectedRadio = document.querySelector('input[name="voteOption"]:checked');
           if (!selectedRadio) {
@@ -604,15 +625,12 @@
           }
 
           alert('Ваш голос учтён!');
-          // Блокируем интерфейс сразу
           disableVoting();
-          // Через секунду перезагружаем страницу, чтобы обновить проценты
           setTimeout(() => {
             window.location.reload();
           }, 1000);
         };
 
-        // Показываем детали, скрываем загрузку
         loadingEl.style.display = 'none';
         voteDetailEl.style.display = 'block';
 
@@ -622,14 +640,12 @@
       }
     }
 
-    // Запуск
     if (voteId) {
       loadVote();
     } else {
       showError('Не указан идентификатор голосования');
     }
 
-    // Мобильное меню
     document.querySelector('.menu-toggle')?.addEventListener('click', function() {
       document.querySelector('.nav-menu').classList.toggle('active');
       document.querySelector('.menu-overlay').classList.toggle('active');

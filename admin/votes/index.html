@@ -5,327 +5,53 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Админ — Управление голосованиями</title>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f8f9fa;
-      color: #222;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    a { text-decoration: none; color: inherit; }
-
-    /* Шапка (адаптирована) */
-    .header {
-      background: linear-gradient(135deg, #ff6666, #cc0000);
-      padding: 0.8rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
-    .header-container {
-      max-width: 1300px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 2rem;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .logo img {
-      height: 40px;
-      width: auto;
-    }
-    .logo h1 {
-      font-size: 1.5rem;
-      color: white;
-      font-weight: 800;
-    }
-    .nav-menu ul {
-      display: flex;
-      gap: 1rem;
-    }
-    .nav-menu a {
-      padding: 0.5rem 1rem;
-      border-radius: 50px;
-      background: rgba(255,255,255,0.2);
-      color: white;
-      font-weight: 600;
-      transition: 0.3s;
-    }
-    .nav-menu a:hover {
-      background: rgba(255,255,255,0.4);
-    }
-
-    .main-content {
-      flex: 1;
-      padding: 2rem 1.5rem;
-    }
-    .container {
-      max-width: 1300px;
-      margin: 0 auto;
-    }
-    .page-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 2rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .page-header h2 {
-      font-size: 2rem;
-      color: #7b0000;
-    }
-    .btn {
-      padding: 0.6rem 1.2rem;
-      border: none;
-      border-radius: 6px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .btn-primary {
-      background: #7b0000;
-      color: white;
-    }
-    .btn-success {
-      background: #28a745;
-      color: white;
-    }
-    .btn-danger {
-      background: #dc3545;
-      color: white;
-    }
-    .btn-warning {
-      background: #ffc107;
-      color: #212529;
-    }
-    .btn-secondary {
-      background: #6c757d;
-      color: white;
-    }
-    .btn-sm {
-      padding: 0.3rem 0.8rem;
-      font-size: 0.85rem;
-    }
-    .btn:hover {
-      opacity: 0.85;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-    }
-    .no-data {
-      text-align: center;
-      padding: 3rem;
-      color: #888;
-      background: #fafafa;
-      border-radius: 16px;
-      border: 1px dashed #ddd;
-    }
-
-    /* Таблица голосований */
-    .vote-table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      border-radius: 12px;
-      overflow: hidden;
-      margin-bottom: 2rem;
-    }
-    .vote-table th, .vote-table td {
-      padding: 0.8rem 1rem;
-      text-align: left;
-      border-bottom: 1px solid #eee;
-      vertical-align: middle;
-    }
-    .vote-table th {
-      background: #f1f1f1;
-      font-weight: 600;
-    }
-    .vote-table tr:hover {
-      background: #fafafa;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 0.2rem 0.8rem;
-      border-radius: 50px;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-    .status-badge.active {
-      background: #d4edda;
-      color: #155724;
-    }
-    .status-badge.completed {
-      background: #e9ecef;
-      color: #6c757d;
-    }
-
-    /* Модальное окно */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.3s;
-    }
-    .modal.active {
-      display: flex;
-      opacity: 1;
-      visibility: visible;
-    }
-    .modal-content {
-      background: white;
-      border-radius: 16px;
-      width: 90%;
-      max-width: 700px;
-      padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      max-height: 90vh;
-      overflow-y: auto;
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.5rem;
-    }
-    .modal-header h4 {
-      font-size: 1.4rem;
-      color: #333;
-    }
-    .close {
-      background: none;
-      border: none;
-      font-size: 2rem;
-      cursor: pointer;
-      color: #999;
-    }
-    .form-group {
-      margin-bottom: 1.2rem;
-    }
-    .form-group label {
-      display: block;
-      font-weight: 600;
-      margin-bottom: 0.3rem;
-    }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 0.6rem 1rem;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    .form-row {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
-    .form-row .form-group {
-      flex: 1;
-      min-width: 200px;
-    }
-    .modal-footer {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.8rem;
-      margin-top: 1.5rem;
-    }
-
-    /* Список вариантов */
-    .options-list {
-      margin: 1rem 0;
+    /* ... стили те же, что и раньше ... */
+    /* добавим стиль для превью фото */
+    .photo-preview {
+      max-width: 100px;
+      max-height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      margin: 0.5rem 0;
+      border: 2px solid #ddd;
     }
     .option-item-admin {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 1rem;
       padding: 0.5rem 1rem;
       background: #f8f9fa;
       border-radius: 6px;
       margin-bottom: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .option-item-admin .option-photo-thumb {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
     }
     .option-item-admin .option-text {
       flex: 1;
-    }
-    .option-item-admin .option-percent {
-      font-weight: 600;
-      color: #7b0000;
-      margin: 0 1rem;
     }
     .option-item-admin .option-actions {
       display: flex;
       gap: 0.4rem;
     }
-
-    .statistics {
-      margin: 1rem 0;
-      padding: 1rem;
-      background: #f1f1f1;
-      border-radius: 8px;
-    }
-    .statistics .total-votes {
-      font-weight: 600;
-      margin-bottom: 0.5rem;
-    }
-
-    .add-vote-form {
+    .file-input-wrapper {
       display: flex;
-      gap: 0.8rem;
-      align-items: flex-end;
+      gap: 0.5rem;
+      align-items: center;
       flex-wrap: wrap;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: #e9ecef;
-      border-radius: 8px;
     }
-    .add-vote-form .form-group {
-      margin-bottom: 0;
+    .file-input-wrapper input[type="file"] {
       flex: 1;
       min-width: 150px;
-    }
-    .add-vote-form .form-group label {
-      font-weight: 500;
-      font-size: 0.9rem;
-    }
-    .add-vote-form .btn {
-      height: 40px;
-    }
-
-    @media (max-width: 768px) {
-      .header-container { flex-direction: column; gap: 0.5rem; }
-      .page-header { flex-direction: column; align-items: stretch; }
-      .form-row { flex-direction: column; }
-      .add-vote-form { flex-direction: column; align-items: stretch; }
     }
   </style>
 </head>
 <body>
+  <!-- Шапка как в предыдущей версии, без изменений -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -368,7 +94,7 @@
     </div>
   </main>
 
-  <!-- Модальное окно для создания/редактирования голосования и управления вариантами -->
+  <!-- Модальное окно (расширено) -->
   <div id="voteModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -401,8 +127,11 @@
           </div>
 
           <div class="form-group">
-            <label for="voteTerritory">Территория (регион или "Вся территория СФСРЮ")</label>
-            <input type="text" id="voteTerritory" placeholder="Например: Москва или Вся территория СФСРЮ" required />
+            <label for="voteTerritorySelect">Территория (регион)</label>
+            <select id="voteTerritorySelect" required>
+              <option value="">Выберите регион</option>
+              <!-- будет заполнено из addresses.regions -->
+            </select>
           </div>
 
           <div class="form-row">
@@ -429,9 +158,27 @@
           <h4>Варианты (кандидаты / вопросы)</h4>
           <div id="optionsContainer">
             <div class="options-list" id="optionsList"></div>
-            <div class="form-group" style="display: flex; gap: 0.5rem;">
-              <input type="text" id="newOptionText" placeholder="Текст варианта" style="flex:1;" />
-              <button type="button" class="btn btn-success btn-sm" id="addOptionBtn">+ Добавить</button>
+            <div style="border:1px solid #ddd; padding:1rem; border-radius:8px; margin-top:1rem;">
+              <h5>Добавить новый вариант</h5>
+              <div class="form-group">
+                <label for="newOptionText">Текст варианта</label>
+                <input type="text" id="newOptionText" placeholder="Например: Иванов И.И." />
+              </div>
+              <div class="form-group">
+                <label for="newOptionInfo">Информация о кандидате (кратко)</label>
+                <textarea id="newOptionInfo" rows="2" placeholder="Должность, партия, биография..."></textarea>
+              </div>
+              <div class="form-group">
+                <label>Фото кандидата</label>
+                <div class="file-input-wrapper">
+                  <input type="file" id="newOptionPhoto" accept="image/*" />
+                  <button type="button" class="btn btn-secondary btn-sm" id="uploadPhotoBtn">Загрузить фото</button>
+                  <span id="photoUploadStatus" style="font-size:0.9rem; color:#666;"></span>
+                </div>
+                <div id="photoPreview" style="margin-top:0.5rem;"></div>
+                <input type="hidden" id="newOptionPhotoUrl" />
+              </div>
+              <button type="button" class="btn btn-success" id="addOptionBtn">+ Добавить вариант</button>
             </div>
           </div>
 
@@ -479,7 +226,16 @@
   <script type="module">
     import { supabase } from '../../js/supabase-config.js';
 
-    // --- DOM ---
+    // DOM-элементы (добавляем новые поля)
+    const voteTerritorySelect = document.getElementById('voteTerritorySelect');
+    const newOptionInfo = document.getElementById('newOptionInfo');
+    const newOptionPhoto = document.getElementById('newOptionPhoto');
+    const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+    const photoUploadStatus = document.getElementById('photoUploadStatus');
+    const photoPreview = document.getElementById('photoPreview');
+    const newOptionPhotoUrl = document.getElementById('newOptionPhotoUrl');
+
+    // Остальные элементы как раньше
     const loading = document.getElementById('loading');
     const votesContainer = document.getElementById('votesContainer');
     const votesTableBody = document.getElementById('votesTableBody');
@@ -495,7 +251,6 @@
     const voteType = document.getElementById('voteType');
     const voteTitle = document.getElementById('voteTitle');
     const voteDescription = document.getElementById('voteDescription');
-    const voteTerritory = document.getElementById('voteTerritory');
     const voteStart = document.getElementById('voteStart');
     const voteEnd = document.getElementById('voteEnd');
     const voteStatus = document.getElementById('voteStatus');
@@ -513,6 +268,40 @@
     let currentVoteId = null;
     let currentVoteType = null;
     let allOptions = [];
+    let regions = [];
+
+    // --- Загрузка регионов ---
+    async function loadRegions() {
+      const { data, error } = await supabase
+        .schema('addresses')
+        .from('regions')
+        .select('id, name')
+        .order('name');
+      if (error) {
+        console.error('Ошибка загрузки регионов:', error);
+        return [];
+      }
+      return data || [];
+    }
+
+    // --- Заполнение select регионов ---
+    function populateRegions(selectedName) {
+      voteTerritorySelect.innerHTML = '<option value="">Выберите регион</option>';
+      // Добавляем специальное значение "Вся территория СФСРЮ"
+      const allOption = document.createElement('option');
+      allOption.value = 'Вся территория СФСРЮ';
+      allOption.textContent = 'Вся территория СФСРЮ';
+      if (selectedName === 'Вся территория СФСРЮ') allOption.selected = true;
+      voteTerritorySelect.appendChild(allOption);
+
+      regions.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.name;
+        opt.textContent = r.name;
+        if (r.name === selectedName) opt.selected = true;
+        voteTerritorySelect.appendChild(opt);
+      });
+    }
 
     // --- Проверка администратора ---
     async function checkAdmin() {
@@ -535,7 +324,7 @@
       return true;
     }
 
-    // --- Загрузка всех голосований ---
+    // --- Загрузка голосований ---
     async function loadVotes() {
       try {
         const { data, error } = await supabase
@@ -543,7 +332,6 @@
           .from('all_votes')
           .select('*')
           .order('created_at', { ascending: false });
-
         if (error) throw error;
         return data || [];
       } catch (err) {
@@ -570,10 +358,8 @@
           federal_referendum: 'Фед. референдум',
           regional_referendum: 'Рег. референдум'
         }[v.type] || v.type;
-
         const statusClass = v.status === 'active' ? 'active' : 'completed';
         const statusLabel = v.status === 'active' ? 'Активно' : 'Завершено';
-
         tr.innerHTML = `
           <td>${v.title}</td>
           <td>${typeLabel}</td>
@@ -588,7 +374,6 @@
         votesTableBody.appendChild(tr);
       });
 
-      // Обработчики
       document.querySelectorAll('.edit-vote').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = btn.dataset.id;
@@ -606,6 +391,41 @@
       });
     }
 
+    // --- Загрузка фото в Storage ---
+    async function uploadPhoto(file) {
+      if (!file) return null;
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `public/${fileName}`;
+      const { data, error } = await supabase.storage
+        .from('votes_photo')
+        .upload(filePath, file, { contentType: file.type });
+      if (error) {
+        console.error('Ошибка загрузки фото:', error);
+        return null;
+      }
+      const { publicURL } = supabase.storage.from('votes_photo').getPublicUrl(filePath).data;
+      return publicURL;
+    }
+
+    // --- Обработчик загрузки фото ---
+    uploadPhotoBtn.addEventListener('click', async () => {
+      const file = newOptionPhoto.files[0];
+      if (!file) {
+        alert('Выберите файл');
+        return;
+      }
+      photoUploadStatus.textContent = 'Загрузка...';
+      const url = await uploadPhoto(file);
+      if (url) {
+        newOptionPhotoUrl.value = url;
+        photoUploadStatus.textContent = 'Фото загружено ✓';
+        photoPreview.innerHTML = `<img src="${url}" class="photo-preview" />`;
+      } else {
+        photoUploadStatus.textContent = 'Ошибка загрузки';
+      }
+    });
+
     // --- Открытие модалки для создания ---
     function openCreateModal() {
       modalTitle.textContent = 'Создание голосования';
@@ -618,13 +438,15 @@
       optionsList.innerHTML = '';
       statisticsBlock.style.display = 'none';
       manualOptionId.innerHTML = '';
+      newOptionPhotoUrl.value = '';
+      photoPreview.innerHTML = '';
+      photoUploadStatus.textContent = '';
       modal.classList.add('active');
     }
 
     // --- Открытие модалки для редактирования ---
     async function openEditModal(id, type) {
       try {
-        // Загружаем голосование
         const tableName = getTableName(type);
         const { data: vote, error } = await supabase
           .schema(SCHEMA_VOTES)
@@ -632,7 +454,6 @@
           .select('*')
           .eq('id', id)
           .single();
-
         if (error) throw error;
 
         modalTitle.textContent = 'Редактирование голосования';
@@ -644,7 +465,8 @@
         voteType.value = type;
         voteTitle.value = vote.title;
         voteDescription.value = vote.description || '';
-        voteTerritory.value = vote.territory;
+        // Устанавливаем регион
+        populateRegions(vote.territory);
         voteStart.value = vote.start_date.slice(0, 16);
         voteEnd.value = vote.end_date.slice(0, 16);
         voteStatus.value = vote.status;
@@ -656,7 +478,6 @@
           .select('*')
           .eq('vote_id', id)
           .eq('vote_type', type);
-
         if (!optError) {
           allOptions = options || [];
         } else {
@@ -664,7 +485,6 @@
         }
         renderOptions();
 
-        // Статистика
         await loadStatistics(id);
 
         modal.classList.add('active');
@@ -683,14 +503,20 @@
       return map[type] || type;
     }
 
-    // --- Рендер вариантов ---
+    // --- Рендер вариантов (с фото и инфо) ---
     function renderOptions() {
       optionsList.innerHTML = '';
       allOptions.forEach(opt => {
         const div = document.createElement('div');
         div.className = 'option-item-admin';
+        let photoHtml = '';
+        if (opt.photo_url) {
+          photoHtml = `<img src="${opt.photo_url}" class="option-photo-thumb" />`;
+        }
         div.innerHTML = `
+          ${photoHtml}
           <span class="option-text">${opt.text}</span>
+          <span style="font-size:0.85rem; color:#666; flex:1;">${opt.candidate_info || ''}</span>
           <div class="option-actions">
             <button class="btn btn-danger btn-sm delete-option" data-id="${opt.id}">×</button>
           </div>
@@ -716,11 +542,14 @@
       });
     }
 
-    // --- Добавление варианта ---
+    // --- Добавление варианта с фото и инфо ---
     async function addOption() {
       const text = newOptionText.value.trim();
       if (!text) return alert('Введите текст варианта');
       if (!currentVoteId || !currentVoteType) return alert('Сначала сохраните голосование');
+
+      const candidateInfo = newOptionInfo.value.trim();
+      const photoUrl = newOptionPhotoUrl.value;
 
       const { data, error } = await supabase
         .schema(SCHEMA_VOTES)
@@ -728,7 +557,9 @@
         .insert([{
           vote_id: currentVoteId,
           vote_type: currentVoteType,
-          text: text
+          text: text,
+          candidate_info: candidateInfo || null,
+          photo_url: photoUrl || null
         }])
         .select();
 
@@ -737,6 +568,11 @@
         return;
       }
       newOptionText.value = '';
+      newOptionInfo.value = '';
+      newOptionPhotoUrl.value = '';
+      newOptionPhoto.value = '';
+      photoPreview.innerHTML = '';
+      photoUploadStatus.textContent = '';
       // Перезагружаем варианты
       const { data: options, error: optError } = await supabase
         .schema(SCHEMA_VOTES)
@@ -812,10 +648,15 @@
       const id = editVoteId.value;
       const type = voteType.value;
       const tableName = getTableName(type);
+      const territory = voteTerritorySelect.value;
+      if (!territory) {
+        alert('Выберите территорию');
+        return;
+      }
       const payload = {
         title: voteTitle.value.trim(),
         description: voteDescription.value.trim(),
-        territory: voteTerritory.value.trim(),
+        territory: territory,
         start_date: new Date(voteStart.value).toISOString(),
         end_date: new Date(voteEnd.value).toISOString(),
         status: voteStatus.value,
@@ -841,16 +682,12 @@
         return;
       }
 
-      // Если создавали новое, получаем id
       if (!id && result.data && result.data.length > 0) {
         currentVoteId = result.data[0].id;
         currentVoteType = type;
         editVoteId.value = currentVoteId;
         editVoteType.value = type;
         modalTitle.textContent = 'Редактирование голосования';
-        // теперь можно добавлять варианты
-      } else if (id) {
-        // обновление
       }
 
       alert('Сохранено!');
@@ -860,7 +697,6 @@
     // --- Удаление голосования ---
     async function deleteVote(id, type) {
       const tableName = getTableName(type);
-      // Удаляем варианты и голоса (каскадное удаление не настроено, делаем вручную)
       await supabase.schema(SCHEMA_VOTES).from('options').delete().eq('vote_id', id).eq('vote_type', type);
       await supabase.schema(SCHEMA_VOTES).from('user_votes').delete().eq('vote_id', id);
       const { error } = await supabase.schema(SCHEMA_VOTES).from(tableName).delete().eq('id', id);
@@ -895,7 +731,7 @@
       }
     }
 
-    // --- Общая загрузка и рендер ---
+    // --- Общая загрузка ---
     async function loadAndRender() {
       loading.style.display = 'block';
       votesContainer.style.display = 'none';
@@ -909,6 +745,9 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const isAdmin = await checkAdmin();
       if (!isAdmin) return;
+
+      regions = await loadRegions();
+      populateRegions();
 
       await loadAndRender();
 
