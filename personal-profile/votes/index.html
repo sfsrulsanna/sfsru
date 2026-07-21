@@ -1,501 +1,320 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Голосования и референдумы — СФСРЮ</title>
-  <style>
-    /* ===== Базовые стили (адаптированы под общий дизайн) ===== */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f8f9fa;
-      color: #222;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      line-height: 1.6;
-    }
-    a { text-decoration: none; color: inherit; }
-    ul { list-style: none; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Голосования и референдумы — СФСРЮ</title>
+    <style>
+        /* Стили как раньше */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.6; }
+        a { text-decoration: none; color: inherit; }
+        ul { list-style: none; }
+        .header { background: linear-gradient(135deg, #ff6666, #cc0000); padding: 1rem 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,180,180,0.3); }
+        .header-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: 0 2rem; position: relative; }
+        .logo { display: flex; align-items: center; gap: 12px; justify-content: center; }
+        .logo img { height: 52px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2)); }
+        .logo h1 { font-size: 1.7rem; font-weight: 800; color: white; letter-spacing: 0.5px; text-shadow: 0 0 6px rgba(0,0,0,0.2); }
+        .nav-menu ul { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin: 0; padding: 0; }
+        .nav-menu a { padding: 0.6rem 1.2rem; border-radius: 50px; background: rgba(255,255,255,0.25); border: 1px solid rgba(255,255,255,0.3); font-weight: 600; font-size: 0.95rem; color: white; transition: all 0.3s ease; text-align: center; min-width: 90px; }
+        .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.45); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
+        .menu-toggle { display: none; }
 
-    /* Шапка (такая же как на других страницах, скопирована из style.css) */
-    .header {
-      background: linear-gradient(135deg, #ff6666, #cc0000);
-      padding: 1rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-      border-bottom: 1px solid rgba(255,180,180,0.3);
-    }
-    .header-container {
-      max-width: 1200px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.2rem;
-      padding: 0 2rem;
-      position: relative;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      justify-content: center;
-    }
-    .logo img {
-      height: 52px;
-      width: auto;
-      object-fit: contain;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
-    }
-    .logo h1 {
-      font-size: 1.7rem;
-      font-weight: 800;
-      color: white;
-      letter-spacing: 0.5px;
-      text-shadow: 0 0 6px rgba(0,0,0,0.2);
-    }
-    .nav-menu ul {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin: 0;
-      padding: 0;
-    }
-    .nav-menu a {
-      padding: 0.6rem 1.2rem;
-      border-radius: 50px;
-      background: rgba(255,255,255,0.25);
-      border: 1px solid rgba(255,255,255,0.3);
-      font-weight: 600;
-      font-size: 0.95rem;
-      color: white;
-      transition: all 0.3s ease;
-      text-align: center;
-      min-width: 90px;
-    }
-    .nav-menu a.active,
-    .nav-menu a:hover {
-      background: rgba(255,255,255,0.45);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
-    }
-    .menu-toggle { display: none; }
+        .main-content { flex: 1; padding: 2.5rem 1.5rem; }
+        .container { max-width: 900px; margin: 0 auto; }
+        .page-header { text-align: center; margin-bottom: 2rem; }
+        .page-header h2 { font-size: 2rem; color: #7b0000; margin-bottom: 0.25rem; }
+        .page-header p { color: #666; font-size: 1rem; }
 
-    /* Основной контент */
-    .main-content {
-      flex: 1;
-      padding: 2.5rem 1.5rem;
-    }
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-    .page-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .page-header h2 {
-      font-size: 2rem;
-      color: #7b0000;
-      margin-bottom: 0.25rem;
-    }
-    .page-header p {
-      color: #666;
-      font-size: 1rem;
-    }
+        .tab-switch { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 2rem; }
+        .tab-btn { padding: 0.6rem 2rem; border: 2px solid #7b0000; background: transparent; border-radius: 50px; font-weight: 600; font-size: 1rem; color: #7b0000; cursor: pointer; transition: all 0.25s ease; }
+        .tab-btn.active { background: #7b0000; color: white; }
+        .tab-btn:hover { background: #7b0000; color: white; }
 
-    /* Вкладки */
-    .tab-switch {
-      display: flex;
-      gap: 0.5rem;
-      justify-content: center;
-      margin-bottom: 2rem;
-    }
-    .tab-btn {
-      padding: 0.6rem 2rem;
-      border: 2px solid #7b0000;
-      background: transparent;
-      border-radius: 50px;
-      font-weight: 600;
-      font-size: 1rem;
-      color: #7b0000;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-    .tab-btn.active {
-      background: #7b0000;
-      color: white;
-    }
-    .tab-btn:hover {
-      background: #7b0000;
-      color: white;
-    }
+        .votes-grid { display: flex; flex-direction: column; gap: 1.5rem; }
 
-    /* Сетка карточек */
-    .votes-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
+        .vote-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid #eee; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+        .vote-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.12); }
+        .vote-card .vote-title { font-size: 1.3rem; font-weight: 700; color: #7b0000; margin: 0 0 0.3rem 0; }
+        .vote-card .vote-territory { font-size: 0.95rem; color: #555; margin-bottom: 0.3rem; }
+        .vote-card .vote-territory span { font-weight: 600; }
+        .vote-card .vote-dates { font-size: 0.95rem; color: #666; }
+        .vote-card .vote-dates span { display: inline-block; margin-right: 1.5rem; }
 
-    /* Карточка голосования */
-    .vote-card {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-      border: 1px solid #eee;
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-    }
-    .vote-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 10px 24px rgba(0,0,0,0.12);
-    }
-    .vote-card .vote-title {
-      font-size: 1.3rem;
-      font-weight: 700;
-      color: #7b0000;
-      margin: 0 0 0.3rem 0;
-    }
-    .vote-card .vote-territory {
-      font-size: 0.95rem;
-      color: #555;
-      margin-bottom: 0.3rem;
-    }
-    .vote-card .vote-territory span {
-      font-weight: 600;
-    }
-    .vote-card .vote-dates {
-      font-size: 0.95rem;
-      color: #666;
-    }
-    .vote-card .vote-dates span {
-      display: inline-block;
-      margin-right: 1.5rem;
-    }
+        .no-data { text-align: center; padding: 3rem 1rem; color: #888; font-size: 1.1rem; background: #fafafa; border-radius: 16px; border: 1px dashed #ddd; }
+        .loading { text-align: center; padding: 3rem; color: #666; font-size: 1.1rem; }
 
-    /* Состояния */
-    .no-data {
-      text-align: center;
-      padding: 3rem 1rem;
-      color: #888;
-      font-size: 1.1rem;
-      background: #fafafa;
-      border-radius: 16px;
-      border: 1px dashed #ddd;
-    }
-    .loading {
-      text-align: center;
-      padding: 3rem;
-      color: #666;
-      font-size: 1.1rem;
-    }
+        .footer { background: linear-gradient(135deg, #ff6666, #cc0000); padding: 1.8rem; text-align: center; margin-top: auto; font-size: 0.95rem; color: white; border-top: 1px solid rgba(255,180,180,0.3); }
+        .footer a { color: #ffdddd; text-decoration: underline; }
+        .footer a:hover { color: #ffffff; }
 
-    /* Подвал */
-    .footer {
-      background: linear-gradient(135deg, #ff6666, #cc0000);
-      padding: 1.8rem;
-      text-align: center;
-      margin-top: auto;
-      font-size: 0.95rem;
-      color: white;
-      border-top: 1px solid rgba(255,180,180,0.3);
-      box-shadow: 0 -4px 12px rgba(0,0,0,0.1);
-    }
-    .footer a {
-      color: #ffdddd;
-      text-decoration: underline;
-    }
-    .footer a:hover { color: #ffffff; }
-
-    /* Мобильная адаптация */
-    @media (max-width: 768px) {
-      .header-container { flex-direction: row; justify-content: space-between; padding: 0 1rem; }
-      .logo { justify-content: flex-start; }
-      .menu-toggle { display: block; background: transparent; border: none; cursor: pointer; padding: 8px; width: 40px; height: 40px; position: relative; }
-      .menu-toggle-line { display: block; width: 100%; height: 3px; background: white; border-radius: 2px; position: absolute; left: 0; transition: 0.3s; }
-      .menu-toggle-line:nth-child(1) { top: 10px; }
-      .menu-toggle-line:nth-child(2) { top: 18px; }
-      .menu-toggle-line:nth-child(3) { top: 26px; }
-      .nav-menu { position: fixed; top: 0; right: -100%; width: 80%; max-width: 320px; height: 100vh; background: linear-gradient(135deg, #ff6666, #cc0000); z-index: 99; padding: 80px 20px 40px; transition: right 0.4s cubic-bezier(0.25,0.46,0.45,0.94); overflow-y: auto; }
-      .nav-menu.active { right: 0; }
-      .nav-menu ul { flex-direction: column; gap: 0; }
-      .nav-menu a { display: block; padding: 16px 20px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 1.1rem; text-align: left; border: 1px solid rgba(255,255,255,0.2); }
-      .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: opacity 0.3s; }
-      .menu-overlay.active { display: block; opacity: 1; }
-    }
-  </style>
+        @media (max-width: 768px) {
+            .header-container { flex-direction: row; justify-content: space-between; padding: 0 1rem; }
+            .logo { justify-content: flex-start; }
+            .menu-toggle { display: block; background: transparent; border: none; cursor: pointer; padding: 8px; width: 40px; height: 40px; position: relative; }
+            .menu-toggle-line { display: block; width: 100%; height: 3px; background: white; border-radius: 2px; position: absolute; left: 0; transition: 0.3s; }
+            .menu-toggle-line:nth-child(1) { top: 10px; }
+            .menu-toggle-line:nth-child(2) { top: 18px; }
+            .menu-toggle-line:nth-child(3) { top: 26px; }
+            .nav-menu { position: fixed; top: 0; right: -100%; width: 80%; max-width: 320px; height: 100vh; background: linear-gradient(135deg, #ff6666, #cc0000); z-index: 99; padding: 80px 20px 40px; transition: right 0.4s cubic-bezier(0.25,0.46,0.45,0.94); overflow-y: auto; }
+            .nav-menu.active { right: 0; }
+            .nav-menu ul { flex-direction: column; gap: 0; }
+            .nav-menu a { display: block; padding: 16px 20px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 1.1rem; text-align: left; border: 1px solid rgba(255,255,255,0.2); }
+            .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: opacity 0.3s; }
+            .menu-overlay.active { display: block; opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-  <!-- Шапка (такая же как на всех страницах) -->
-  <header class="header">
-    <div class="header-container">
-      <div class="logo">
-        <img src="/images/gerb.png" alt="Герб СФСРЮ" />
-        <h1>СФСРЮ</h1>
-      </div>
-      <button class="menu-toggle" aria-label="Открыть меню">
-        <span class="menu-toggle-line"></span>
-        <span class="menu-toggle-line"></span>
-        <span class="menu-toggle-line"></span>
-      </button>
-      <nav class="nav-menu">
-        <ul>
-          <li><a href="/index.html">Главная</a></li>
-          <li><a href="/news.html">Новости</a></li>
-          <li><a href="/wiki/">Википедия</a></li>
-          <li><a href="/healthcare.html">Здравоохранение</a></li>
-          <li><a href="/services.html">Услуги</a></li>
-          <li><a href="/profile.html">Личный кабинет</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-  <div class="menu-overlay"></div>
+    <!-- Шапка -->
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="/images/gerb.png" alt="Герб СФСРЮ" />
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="/index.html">Главная</a></li>
+                    <li><a href="/news.html">Новости</a></li>
+                    <li><a href="/wiki/">Википедия</a></li>
+                    <li><a href="/healthcare.html">Здравоохранение</a></li>
+                    <li><a href="/services.html">Услуги</a></li>
+                    <li><a href="/profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
 
-  <main class="main-content">
-    <div class="container">
-      <div class="page-header">
-        <h2>Голосования и референдумы</h2>
-        <p>Активные и завершённые</p>
-      </div>
+    <main class="main-content">
+        <div class="container">
+            <div class="page-header">
+                <h2>Голосования и референдумы</h2>
+                <p>Активные и завершённые</p>
+            </div>
 
-      <!-- Вкладки -->
-      <div class="tab-switch">
-        <button class="tab-btn active" data-tab="current">Текущие</button>
-        <button class="tab-btn" data-tab="completed">Завершённые</button>
-      </div>
+            <!-- Вкладки -->
+            <div class="tab-switch">
+                <button class="tab-btn active" data-tab="current">Текущие</button>
+                <button class="tab-btn" data-tab="completed">Завершённые</button>
+            </div>
 
-      <!-- Загрузка -->
-      <div id="loading" class="loading">Загрузка данных...</div>
+            <!-- Загрузка -->
+            <div id="loading" class="loading">Загрузка данных...</div>
 
-      <!-- Контейнеры для карточек -->
-      <div id="currentVotes" class="votes-grid" style="display: none;"></div>
-      <div id="completedVotes" class="votes-grid" style="display: none;"></div>
+            <!-- Контейнеры для карточек -->
+            <div id="currentVotes" class="votes-grid" style="display: none;"></div>
+            <div id="completedVotes" class="votes-grid" style="display: none;"></div>
 
-      <!-- Сообщение, если данных нет -->
-      <div id="noData" class="no-data" style="display: none;">Нет голосований для отображения</div>
-    </div>
-  </main>
+            <!-- Сообщение, если данных нет -->
+            <div id="noData" class="no-data" style="display: none;">Нет голосований для отображения</div>
+        </div>
+    </main>
 
-  <footer class="footer">
-    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-  </footer>
+    <footer class="footer">
+        <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
 
-  <script type="importmap">
-    {
-      "imports": {
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-      }
-    }
-  </script>
-  <script type="module">
-    import { createClient } from '@supabase/supabase-js';
-
-    // Конфигурация Supabase (замените на свои)
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-
-    // Элементы DOM
-    const loadingEl = document.getElementById('loading');
-    const currentContainer = document.getElementById('currentVotes');
-    const completedContainer = document.getElementById('completedVotes');
-    const noDataEl = document.getElementById('noData');
-    const tabBtns = document.querySelectorAll('.tab-btn');
-
-    const SCHEMA_VOTES = 'votes';
-
-    // Функция форматирования даты
-    function formatDate(dateStr) {
-      if (!dateStr) return '—';
-      try {
-        const d = new Date(dateStr);
-        return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-      } catch {
-        return dateStr;
-      }
-    }
-
-    // Создание карточки голосования
-    function renderVoteCard(vote) {
-      const card = document.createElement('div');
-      card.className = 'vote-card';
-
-      const title = document.createElement('div');
-      title.className = 'vote-title';
-      title.textContent = vote.title;
-
-      const territory = document.createElement('div');
-      territory.className = 'vote-territory';
-      territory.innerHTML = `<span>Территория:</span> ${vote.territory}`;
-
-      const dates = document.createElement('div');
-      dates.className = 'vote-dates';
-      dates.innerHTML = `
-        <span>Начало: ${formatDate(vote.start_date)}</span>
-        <span>Окончание: ${formatDate(vote.end_date)}</span>
-      `;
-
-      card.appendChild(title);
-      card.appendChild(territory);
-      card.appendChild(dates);
-
-      // При клике переходим на страницу деталей (пока заглушка)
-card.addEventListener('click', () => {
-    window.location.href = `/personal-profile/votes/detail.html?id=${vote.id}`;
-});
-
-      return card;
-    }
-
-    // Загрузка данных
-    async function loadVotes() {
-      try {
-        // 1. Получаем регион пользователя (если авторизован)
-        let userRegion = null;
-        const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (!userError && user) {
-          // Ищем постоянную регистрацию пользователя с регионом
-          const { data: permData, error: permError } = await supabase
-            .schema('addresses')
-            .from('permanent_registration')
-            .select('region_id')
-            .eq('user_id', user.id)
-            .maybeSingle();
-          if (!permError && permData && permData.region_id) {
-            // Получаем название региона
-            const { data: regionData, error: regionError } = await supabase
-              .schema('addresses')
-              .from('regions')
-              .select('name')
-              .eq('id', permData.region_id)
-              .single();
-            if (!regionError && regionData) {
-              userRegion = regionData.name;
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
             }
-          }
-          // Если нет постоянной, можно проверить временную или фактическую, но для простоты оставим так
+        }
+    </script>
+
+    <script type="module">
+        // Используем единый клиент из конфига
+        import { supabase } from '../../js/supabase-config.js';
+
+        // Элементы DOM
+        const loadingEl = document.getElementById('loading');
+        const currentContainer = document.getElementById('currentVotes');
+        const completedContainer = document.getElementById('completedVotes');
+        const noDataEl = document.getElementById('noData');
+        const tabBtns = document.querySelectorAll('.tab-btn');
+
+        const SCHEMA_VOTES = 'votes';
+
+        // Форматирование даты
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            try {
+                const d = new Date(dateStr);
+                return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            } catch { return dateStr; }
         }
 
-        // 2. Загружаем все голосования из представления all_votes
-        const { data: votes, error: votesError } = await supabase
-          .schema(SCHEMA_VOTES)
-          .from('all_votes')
-          .select('*');
+        // Рендер карточки
+        function renderVoteCard(vote) {
+            const card = document.createElement('div');
+            card.className = 'vote-card';
 
-        if (votesError) {
-          console.error('Ошибка загрузки голосований:', votesError);
-          loadingEl.textContent = 'Ошибка загрузки данных. Попробуйте позже.';
-          return;
+            const title = document.createElement('div');
+            title.className = 'vote-title';
+            title.textContent = vote.title;
+
+            const territory = document.createElement('div');
+            territory.className = 'vote-territory';
+            territory.innerHTML = `<span>Территория:</span> ${vote.territory}`;
+
+            const dates = document.createElement('div');
+            dates.className = 'vote-dates';
+            dates.innerHTML = `
+                <span>Начало: ${formatDate(vote.start_date)}</span>
+                <span>Окончание: ${formatDate(vote.end_date)}</span>
+            `;
+
+            card.appendChild(title);
+            card.appendChild(territory);
+            card.appendChild(dates);
+
+            // Переход на страницу деталей
+            card.addEventListener('click', () => {
+                window.location.href = `/personal-profile/votes/detail.html?id=${vote.id}`;
+            });
+
+            return card;
         }
 
-        // 3. Фильтруем по региону
-        let filtered = votes;
-        if (userRegion) {
-          filtered = votes.filter(v => v.territory === 'Вся территория СФСРЮ' || v.territory === userRegion);
-        } else {
-          // Если пользователь не авторизован или регион не определён, показываем только общие
-          filtered = votes.filter(v => v.territory === 'Вся территория СФСРЮ');
+        // Рендер списка
+        function renderVotes(container, votes) {
+            container.innerHTML = '';
+            if (!votes || votes.length === 0) {
+                const msg = document.createElement('div');
+                msg.className = 'no-data';
+                msg.textContent = 'Нет голосований';
+                container.appendChild(msg);
+                return;
+            }
+            votes.forEach(v => {
+                const card = renderVoteCard(v);
+                container.appendChild(card);
+            });
         }
 
-        // 4. Разделяем на текущие и завершённые
-        const now = new Date();
-        const current = filtered.filter(v => {
-          const end = new Date(v.end_date);
-          return end >= now && v.status === 'active';
+        // Переключение вкладок
+        function switchTab(tabId) {
+            const isCurrent = tabId === 'current';
+            currentContainer.style.display = isCurrent ? 'block' : 'none';
+            completedContainer.style.display = isCurrent ? 'none' : 'block';
+            tabBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tab === tabId);
+            });
+        }
+
+        // Основная загрузка
+        async function loadVotes() {
+            try {
+                let userRegion = null;
+                // Получаем текущего пользователя
+                const { data: { user }, error: userError } = await supabase.auth.getUser();
+                if (!userError && user) {
+                    // Ищем постоянную регистрацию с регионом
+                    const { data: permData, error: permError } = await supabase
+                        .schema('addresses')
+                        .from('permanent_registration')
+                        .select('region_id')
+                        .eq('user_id', user.id)
+                        .maybeSingle();
+                    if (!permError && permData && permData.region_id) {
+                        const { data: regionData, error: regionError } = await supabase
+                            .schema('addresses')
+                            .from('regions')
+                            .select('name')
+                            .eq('id', permData.region_id)
+                            .single();
+                        if (!regionError && regionData) {
+                            userRegion = regionData.name;
+                        }
+                    }
+                }
+
+                // Загружаем все голосования из представления
+                const { data: votes, error: votesError } = await supabase
+                    .schema(SCHEMA_VOTES)
+                    .from('all_votes')
+                    .select('*');
+
+                if (votesError) {
+                    console.error('Ошибка загрузки голосований:', votesError);
+                    loadingEl.textContent = 'Ошибка загрузки данных. Попробуйте позже.';
+                    return;
+                }
+
+                // Фильтруем по региону (если есть регион пользователя)
+                let filtered = votes;
+                if (userRegion) {
+                    filtered = votes.filter(v => v.territory === 'Вся территория СФСРЮ' || v.territory === userRegion);
+                } else {
+                    // Если пользователь не авторизован или регион не определён, показываем только общие
+                    filtered = votes.filter(v => v.territory === 'Вся территория СФСРЮ');
+                }
+
+                // Разделяем на текущие и завершённые
+                const now = new Date();
+                const current = filtered.filter(v => {
+                    const end = new Date(v.end_date);
+                    return end >= now && v.status === 'active';
+                });
+                const completed = filtered.filter(v => {
+                    const end = new Date(v.end_date);
+                    return end < now || v.status === 'completed';
+                });
+
+                // Сортируем
+                current.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
+                completed.sort((a, b) => new Date(b.end_date) - new Date(a.end_date));
+
+                renderVotes(currentContainer, current);
+                renderVotes(completedContainer, completed);
+
+                loadingEl.style.display = 'none';
+                if (current.length === 0 && completed.length === 0) {
+                    noDataEl.style.display = 'block';
+                    currentContainer.style.display = 'none';
+                    completedContainer.style.display = 'none';
+                } else {
+                    noDataEl.style.display = 'none';
+                    currentContainer.style.display = 'block';
+                    completedContainer.style.display = 'block';
+                }
+
+                // Показываем вкладку "Текущие" по умолчанию
+                switchTab('current');
+
+            } catch (err) {
+                console.error('Ошибка:', err);
+                loadingEl.textContent = 'Произошла ошибка. Попробуйте позже.';
+            }
+        }
+
+        // Обработчики вкладок
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                switchTab(btn.dataset.tab);
+            });
         });
-        const completed = filtered.filter(v => {
-          const end = new Date(v.end_date);
-          return end < now || v.status === 'completed';
+
+        // Мобильное меню
+        document.querySelector('.menu-toggle')?.addEventListener('click', function() {
+            document.querySelector('.nav-menu').classList.toggle('active');
+            document.querySelector('.menu-overlay').classList.toggle('active');
+        });
+        document.querySelector('.menu-overlay')?.addEventListener('click', function() {
+            document.querySelector('.nav-menu').classList.remove('active');
+            document.querySelector('.menu-overlay').classList.remove('active');
         });
 
-        // 5. Сортируем: текущие по дате начала (сначала ближайшие), завершённые по дате окончания (сначала свежие)
-        current.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));
-        completed.sort((a, b) => new Date(b.end_date) - new Date(a.end_date));
-
-        // 6. Рендерим
-        renderVotes(currentContainer, current);
-        renderVotes(completedContainer, completed);
-
-        loadingEl.style.display = 'none';
-        if (current.length === 0 && completed.length === 0) {
-          noDataEl.style.display = 'block';
-          currentContainer.style.display = 'none';
-          completedContainer.style.display = 'none';
-        } else {
-          noDataEl.style.display = 'none';
-          currentContainer.style.display = 'block';
-          completedContainer.style.display = 'block';
-        }
-
-        // По умолчанию показываем вкладку "Текущие"
-        switchTab('current');
-
-      } catch (err) {
-        console.error('Ошибка:', err);
-        loadingEl.textContent = 'Произошла ошибка. Попробуйте позже.';
-      }
-    }
-
-    function renderVotes(container, votes) {
-      container.innerHTML = '';
-      if (!votes || votes.length === 0) {
-        const msg = document.createElement('div');
-        msg.className = 'no-data';
-        msg.textContent = 'Нет голосований';
-        container.appendChild(msg);
-        return;
-      }
-      votes.forEach(v => {
-        const card = renderVoteCard(v);
-        container.appendChild(card);
-      });
-    }
-
-    // Переключение вкладок
-    function switchTab(tabId) {
-      const isCurrent = tabId === 'current';
-      currentContainer.style.display = isCurrent ? 'block' : 'none';
-      completedContainer.style.display = isCurrent ? 'none' : 'block';
-      tabBtns.forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.tab === tabId);
-      });
-    }
-
-    // Обработчики вкладок
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        switchTab(btn.dataset.tab);
-      });
-    });
-
-    // Мобильное меню
-    document.querySelector('.menu-toggle')?.addEventListener('click', function() {
-      document.querySelector('.nav-menu').classList.toggle('active');
-      document.querySelector('.menu-overlay').classList.toggle('active');
-    });
-    document.querySelector('.menu-overlay')?.addEventListener('click', function() {
-      document.querySelector('.nav-menu').classList.remove('active');
-      document.querySelector('.menu-overlay').classList.remove('active');
-    });
-
-    // Запуск
-    loadVotes();
-  </script>
+        // Запуск
+        loadVotes();
+    </script>
 </body>
 </html>
