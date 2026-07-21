@@ -28,7 +28,6 @@ let allAddresses = [];
 let allUsers = [];
 let currentFilter = '';
 
-// Проверка администратора через таблицу public.users
 async function checkAdmin() {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
@@ -36,7 +35,7 @@ async function checkAdmin() {
         window.location.href = '../../login.html';
         return false;
     }
-    // Запрос к public.users для получения роли
+    // Проверка роли в public.users (схема public по умолчанию)
     const { data: userData, error: roleError } = await supabase
         .from('users')
         .select('role')
@@ -51,8 +50,8 @@ async function checkAdmin() {
     return true;
 }
 
-// Загрузка всех пользователей (email и id) из public.users
 async function loadUsers() {
+    // public.users (схема public по умолчанию)
     const { data, error } = await supabase
         .from('users')
         .select('id, email');
@@ -63,10 +62,11 @@ async function loadUsers() {
     return data || [];
 }
 
-// Загрузка всех адресов из представления all_addresses (схема addresses)
 async function loadAddresses() {
+    // Представление all_addresses в схеме addresses
     const { data, error } = await supabase
-        .from('all_addresses', { schema: SCHEMA })
+        .from('all_addresses')
+        .schema(SCHEMA) // <-- явно указываем схему
         .select('*');
     if (error) {
         console.error('Ошибка загрузки адресов:', error);
@@ -278,13 +278,15 @@ async function saveAddress(event) {
     if (editIdVal && editTypeVal) {
         const tableName = getTableName(editTypeVal);
         result = await supabase
-            .from(tableName, { schema: SCHEMA })
+            .from(tableName)
+            .schema(SCHEMA) // <-- явно указываем схему
             .update(payload)
             .eq('id', editIdVal);
     } else {
         const tableName = getTableName(type);
         result = await supabase
-            .from(tableName, { schema: SCHEMA })
+            .from(tableName)
+            .schema(SCHEMA) // <-- явно указываем схему
             .insert([payload]);
     }
 
@@ -311,7 +313,8 @@ function getTableName(type) {
 async function deleteAddress(id, type) {
     const tableName = getTableName(type);
     const { error } = await supabase
-        .from(tableName, { schema: SCHEMA })
+        .from(tableName)
+        .schema(SCHEMA) // <-- явно указываем схему
         .delete()
         .eq('id', id);
     if (error) {
