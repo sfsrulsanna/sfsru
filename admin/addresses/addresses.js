@@ -359,7 +359,7 @@ async function loadData() {
     allRegions = await loadRegions();
     allAddresses = await loadAddresses();
 
-    // Заполняем селект регионов с проверкой на существование
+    // Заполняем селект регионов, если элемент существует
     if (regionSelect) {
         regionSelect.innerHTML = '<option value="">Не указан</option>' +
             allRegions.map(r => `<option value="${r.id}">${r.name}</option>`).join('');
