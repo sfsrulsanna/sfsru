@@ -1,6 +1,6 @@
 import { supabase } from '../../js/supabase-config.js';
 
-const SCHEMA = 'addresses'; // указываем схему
+const SCHEMA = 'addresses';
 
 const loadingEl = document.getElementById('loading');
 const tableWrapper = document.getElementById('tableWrapper');
@@ -28,6 +28,7 @@ let allAddresses = [];
 let allUsers = [];
 let currentFilter = '';
 
+// Проверка администратора через таблицу public.users
 async function checkAdmin() {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) {
@@ -35,8 +36,14 @@ async function checkAdmin() {
         window.location.href = '../../login.html';
         return false;
     }
-    const role = user.app_metadata?.role || user.user_metadata?.role;
-    if (role !== 'admin') {
+    // Запрос к public.users для получения роли
+    const { data: userData, error: roleError } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', user.id)
+        .single();
+
+    if (roleError || !userData || userData.role !== 'admin') {
         alert('У вас нет прав администратора');
         window.location.href = '../../profile.html';
         return false;
@@ -44,9 +51,10 @@ async function checkAdmin() {
     return true;
 }
 
+// Загрузка всех пользователей (email и id) из public.users
 async function loadUsers() {
     const { data, error } = await supabase
-        .from('profiles')
+        .from('users')
         .select('id, email');
     if (error) {
         console.error('Ошибка загрузки пользователей:', error);
@@ -55,9 +63,10 @@ async function loadUsers() {
     return data || [];
 }
 
+// Загрузка всех адресов из представления all_addresses (схема addresses)
 async function loadAddresses() {
     const { data, error } = await supabase
-        .from('all_addresses', { schema: SCHEMA })  // указываем схему
+        .from('all_addresses', { schema: SCHEMA })
         .select('*');
     if (error) {
         console.error('Ошибка загрузки адресов:', error);
@@ -269,13 +278,13 @@ async function saveAddress(event) {
     if (editIdVal && editTypeVal) {
         const tableName = getTableName(editTypeVal);
         result = await supabase
-            .from(tableName, { schema: SCHEMA })  // указываем схему
+            .from(tableName, { schema: SCHEMA })
             .update(payload)
             .eq('id', editIdVal);
     } else {
         const tableName = getTableName(type);
         result = await supabase
-            .from(tableName, { schema: SCHEMA })  // указываем схему
+            .from(tableName, { schema: SCHEMA })
             .insert([payload]);
     }
 
@@ -302,7 +311,7 @@ function getTableName(type) {
 async function deleteAddress(id, type) {
     const tableName = getTableName(type);
     const { error } = await supabase
-        .from(tableName, { schema: SCHEMA })  // указываем схему
+        .from(tableName, { schema: SCHEMA })
         .delete()
         .eq('id', id);
     if (error) {

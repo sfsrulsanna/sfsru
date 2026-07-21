@@ -6,8 +6,7 @@ const archivedContainer = document.getElementById('archivedAddresses');
 const noDataEl = document.getElementById('noData');
 const tabBtns = document.querySelectorAll('.tab-btn');
 
-let currentUserId = null;
-const SCHEMA = 'addresses'; // явно указываем схему
+const SCHEMA = 'addresses'; // схема адресов
 
 const STATUS_META = {
   verified: { label: 'Подтверждено', class: 'verified' },
@@ -37,6 +36,7 @@ function renderAddressCard(address, isArchived = false) {
   let title = '';
   let datesHtml = '';
 
+  // Определяем тип по наличию полей
   if (address.registration_date !== undefined) {
     title = 'Постоянная регистрация по месту жительства';
     datesHtml = `<span>Дата регистрации: ${formatDate(address.registration_date)}</span>`;
@@ -82,20 +82,16 @@ async function loadAddresses() {
     if (userError || !user) {
       throw new Error('Пользователь не авторизован');
     }
-    currentUserId = user.id;
+    const userId = user.id;
 
-    const tables = [
-      'permanent_registration',
-      'temporary_registration',
-      'actual_residence'
-    ];
-
+    // Запросы к трём таблицам с явным указанием схемы
+    const tables = ['permanent_registration', 'temporary_registration', 'actual_residence'];
     const allResults = await Promise.all(
       tables.map(table =>
         supabase
-          .from(table, { schema: SCHEMA })   // явно указываем схему
+          .from(table, { schema: SCHEMA })
           .select('*')
-          .eq('user_id', currentUserId)
+          .eq('user_id', userId)
       )
     );
 
