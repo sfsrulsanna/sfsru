@@ -32,6 +32,8 @@ function formatDate(dateStr) {
 function renderAddressCard(address, isArchived = false) {
   const card = document.createElement('div');
   card.className = `address-card ${isArchived ? 'archived' : ''}`;
+  // ==== ЯВНЫЙ ОТСТУП СНИЗУ ====
+  card.style.marginBottom = '2rem'; // ← гарантированный отступ между карточками
 
   let title = '';
   let datesHtml = '';
@@ -87,7 +89,7 @@ async function loadAddresses() {
     const allResults = await Promise.all(
       tables.map(table =>
         supabase
-          .schema(SCHEMA)      // <-- правильный способ указать схему
+          .schema(SCHEMA)
           .from(table)
           .select('*')
           .eq('user_id', userId)
