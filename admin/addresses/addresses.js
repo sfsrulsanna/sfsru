@@ -35,7 +35,6 @@ async function checkAdmin() {
         window.location.href = '../../login.html';
         return false;
     }
-    // public.users (схема public по умолчанию)
     const { data: userData, error: roleError } = await supabase
         .from('users')
         .select('role')
@@ -51,7 +50,6 @@ async function checkAdmin() {
 }
 
 async function loadUsers() {
-    // public.users (по умолчанию public)
     const { data, error } = await supabase
         .from('users')
         .select('id, email');
@@ -63,9 +61,8 @@ async function loadUsers() {
 }
 
 async function loadAddresses() {
-    // Представление all_addresses в схеме addresses
     const { data, error } = await supabase
-        .schema(SCHEMA)      // <-- правильный способ указать схему
+        .schema(SCHEMA)
         .from('all_addresses')
         .select('*');
     if (error) {
@@ -157,6 +154,11 @@ function renderTable(addresses) {
 }
 
 function openAddModal() {
+    console.log('Кнопка "Добавить адрес" нажата');
+    if (!modal) {
+        console.error('Элемент modal не найден');
+        return;
+    }
     modalTitle.textContent = 'Добавление адреса';
     addressForm.reset();
     editId.value = '';
@@ -166,6 +168,7 @@ function openAddModal() {
     dateFields.innerHTML = '';
     generateDateFields('permanent');
     modal.classList.add('active');
+    console.log('Модалке добавлен класс active, сейчас классы:', modal.className);
 }
 
 async function openEditModal(id, type) {
@@ -278,14 +281,14 @@ async function saveAddress(event) {
     if (editIdVal && editTypeVal) {
         const tableName = getTableName(editTypeVal);
         result = await supabase
-            .schema(SCHEMA)      // <-- правильный способ указать схему
+            .schema(SCHEMA)
             .from(tableName)
             .update(payload)
             .eq('id', editIdVal);
     } else {
         const tableName = getTableName(type);
         result = await supabase
-            .schema(SCHEMA)      // <-- правильный способ указать схему
+            .schema(SCHEMA)
             .from(tableName)
             .insert([payload]);
     }
@@ -313,7 +316,7 @@ function getTableName(type) {
 async function deleteAddress(id, type) {
     const tableName = getTableName(type);
     const { error } = await supabase
-        .schema(SCHEMA)      // <-- правильный способ указать схему
+        .schema(SCHEMA)
         .from(tableName)
         .delete()
         .eq('id', id);
