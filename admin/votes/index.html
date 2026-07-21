@@ -648,88 +648,90 @@
       });
     }
 
-    async function addOption() {
-      const text = newOptionText.value.trim();
-      if (!text) {
+async function addOption() {
+    const text = newOptionText.value.trim();
+    if (!text) {
         addLog('Ошибка: не введён текст', 'error');
         alert('Введите текст');
         return;
-      }
-      if (!currentVoteId || !currentVoteType) {
+    }
+    if (!currentVoteId || !currentVoteType) {
         addLog('Ошибка: сначала сохраните голосование', 'error');
         alert('Сначала сохраните голосование');
         return;
-      }
+    }
 
-      const isReferendum = currentVoteType.includes('referendum');
-      const description = newOptionDesc.value.trim();
-      const photoFile = newOptionPhoto.files[0];
+    const isReferendum = currentVoteType.includes('referendum');
+    const description = newOptionDesc.value.trim();
+    const photoFile = newOptionPhoto.files[0];
 
-      addLog(`Начинаем добавление варианта "${text}" (тип: ${isReferendum ? 'референдум' : 'выборы'})`, 'info');
+    addLog(`Начинаем добавление варианта "${text}" (тип: ${isReferendum ? 'референдум' : 'выборы'})`, 'info');
 
-      try {
-        let photoName = null;
+    try {
+        let photoPath = null;
         if (photoFile && !isReferendum) {
-          addLog(`Загрузка фото: ${photoFile.name} (${Math.round(photoFile.size/1024)} КБ)`, 'info');
-          const ext = photoFile.name.split('.').pop();
-          photoName = `candidate-${currentVoteId}-${Date.now()}.${ext}`;
-          const { error: uploadError } = await supabase.storage
-            .from(PHOTO_BUCKET)
-            .upload(photoName, photoFile, { cacheControl: '3600', upsert: false });
-          if (uploadError) {
-            addLog(`Ошибка загрузки фото: ${uploadError.message}`, 'error');
-            throw new Error(`Ошибка загрузки фото: ${uploadError.message}`);
-          }
-          addLog(`Фото загружено: ${photoName}`, 'success');
+            addLog(`Загрузка фото: ${photoFile.name} (${Math.round(photoFile.size/1024)} КБ)`, 'info');
+            const ext = photoFile.name.split('.').pop();
+            const fileName = `candidate-${currentVoteId}-${Date.now()}.${ext}`;
+            const fullPath = 'candidates/' + fileName; // папка candidates/
+            const { error: uploadError } = await supabase.storage
+                .from('votes_photo')
+                .upload(fullPath, photoFile, { cacheControl: '3600', upsert: false });
+            if (uploadError) {
+                addLog(`Ошибка загрузки фото: ${uploadError.message}`, 'error');
+                throw new Error(`Ошибка загрузки фото: ${uploadError.message}`);
+            }
+            photoPath = fullPath;
+            addLog(`Фото загружено: ${fullPath}`, 'success');
         } else if (isReferendum && photoFile) {
-          addLog('Для референдума фото не требуется, игнорируем', 'info');
+            addLog('Для референдума фото не требуется, игнорируем', 'info');
         }
 
         if (isReferendum) {
-          const optionsToInsert = [
-            { vote_id: currentVoteId, vote_type: currentVoteType, text: 'ДА', question_text: text },
-            { vote_id: currentVoteId, vote_type: currentVoteType, text: 'НЕТ', question_text: text }
-          ];
-          const { error } = await supabase
-            .schema(SCHEMA_VOTES)
-            .from('options')
-            .insert(optionsToInsert);
-          if (error) throw error;
-          addLog(`Добавлены варианты ДА/НЕТ для вопроса "${text}"`, 'success');
+            const optionsToInsert = [
+                { vote_id: currentVoteId, vote_type: currentVoteType, text: 'ДА', question_text: text },
+                { vote_id: currentVoteId, vote_type: currentVoteType, text: 'НЕТ', question_text: text }
+            ];
+            const { error } = await supabase
+                .schema('votes')
+                .from('options')
+                .insert(optionsToInsert);
+            if (error) throw error;
+            addLog(`Добавлены варианты ДА/НЕТ для вопроса "${text}"`, 'success');
         } else {
-          const { error } = await supabase
-            .schema(SCHEMA_VOTES)
-            .from('options')
-            .insert([{
-              vote_id: currentVoteId,
-              vote_type: currentVoteType,
-              text: text,
-              description: description,
-              photo_url: photoName
-            }]);
-          if (error) throw error;
-          addLog(`Кандидат "${text}" добавлен${photoName ? ' с фото' : ''}`, 'success');
+            const { error } = await supabase
+                .schema('votes')
+                .from('options')
+                .insert([{
+                    vote_id: currentVoteId,
+                    vote_type: currentVoteType,
+                    text: text,
+                    description: description,
+                    photo_url: photoPath // сохраняем полный путь (candidates/...)
+                }]);
+            if (error) throw error;
+            addLog(`Кандидат "${text}" добавлен${photoPath ? ' с фото' : ''}`, 'success');
         }
 
         newOptionText.value = '';
         newOptionDesc.value = '';
         newOptionPhoto.value = '';
         const { data: options, error: optError } = await supabase
-          .schema(SCHEMA_VOTES)
-          .from('options')
-          .select('*')
-          .eq('vote_id', currentVoteId)
-          .eq('vote_type', currentVoteType);
+            .schema('votes')
+            .from('options')
+            .select('*')
+            .eq('vote_id', currentVoteId)
+            .eq('vote_type', currentVoteType);
         if (!optError) {
-          allOptions = options || [];
-          renderOptions();
-          await loadStatistics(currentVoteId);
+            allOptions = options || [];
+            renderOptions();
+            await loadStatistics(currentVoteId);
         }
-      } catch (err) {
+    } catch (err) {
         addLog(`Ошибка: ${err.message}`, 'error');
         alert('Ошибка: ' + err.message);
-      }
     }
+}
 
     async function deleteOption(optionId) {
       const opt = allOptions.find(o => o.id === optionId);
