@@ -59,70 +59,214 @@
     <!-- Оверлей для меню (только для мобильных) -->
     <div class="menu-overlay"></div>
 
-    <!-- Основной контент -->
     <main class="main-content">
         <div class="wiki-intro">
             <h1>Википедия СФСРЮ</h1>
-            <p>
-                Свободная энциклопедия о Советской Федеративной Социалистической Республике Юльсанна. 
-                Здесь собрана вся информация о государстве, его истории, политической системе, 
-                достижениях трудящихся и культурном наследии.
-            </p>
-            <p>
-                Энциклопедия создается и редактируется народом СФСРЮ для свободного доступа 
-                к знаниям о своей великой Родине.
-            </p>
+            <p>Свободная энциклопедия о Советской Федеративной Социалистической Республике Юльсанна...</p>
         </div>
 
-        <div class="wiki-categories">
-            <div class="wiki-row">
-                <a href="people/index.html" class="wiki-btn">
-                    <span class="wiki-icon">👥</span>
-                    <h3>Люди</h3>
-                    <p>Выдающиеся граждане, герои труда, политические деятели и учёные СФСРЮ</p>
-                </a>
-                
-                <a href="countries/index.html" class="wiki-btn">
-                    <span class="wiki-icon">🌍</span>
-                    <h3>Страны</h3>
-                    <p>История, география, экономика и политическое устройство СФСРЮ и дружественных государств</p>
-                </a>
-                
-                <a href="politics/index.html" class="wiki-btn">
-                    <span class="wiki-icon">⚖️</span>
-                    <h3>Политика</h3>
-                    <p>Политическая система, государственное устройство, партии и идеологические основы СФСРЮ</p>
-                </a>
-            </div>
-            
-            <div class="wiki-row">
-                <a href="education/index.html" class="wiki-btn">
-                    <span class="wiki-icon">📚</span>
-                    <h3>Образование</h3>
-                    <p>Система образования, вузы, школы, научные достижения и образовательные программы</p>
-                </a>
-                
-                <a href="healthcare/index.html" class="wiki-btn">
-                    <span class="wiki-icon">🏥</span>
-                    <h3>Здравоохранение</h3>
-                    <p>Медицинская система, больницы, поликлиники, профилактика и достижения медицины СФСРЮ</p>
-                </a>
-				
-                <a href="registry/index.html" class="wiki-btn">
-                    <span class="wiki-icon">📃</span>
-                    <h3>Реестры</h3>
-                    <p>Федеральные списки граждан, угрожающих государственному суверенитету СФСРЮ</p>
-                </a>
-            </div>
+        <!-- Поиск -->
+        <div class="search-container">
+            <form id="search-form">
+                <input type="text" id="search-input" placeholder="Поиск по статьям..." />
+                <button type="submit">Найти</button>
+            </form>
+        </div>
+
+        <!-- Случайные страницы -->
+        <div class="random-pages"></div>
+
+        <!-- Категории со статьями -->
+        <div id="categories-container"></div>
+
+        <!-- Результаты поиска -->
+        <div id="search-results" style="display:none;">
+            <h2>Результаты поиска</h2>
+            <div id="results-list"></div>
         </div>
     </main>
 
-    <!-- Подвал -->
-    <footer class="footer">
-        <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-    </footer>
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
 
     <script src="../js/mob-menu.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+    import { supabase } from '../js/supabase-config.js';
+
+        let allArticles = [];
+
+        // Загрузка статей из БД
+        async function loadArticles() {
+            const { data, error } = await supabase
+                .from('articles')
+                .select('*')
+                .order('title');
+            if (error) {
+                console.error('Ошибка загрузки статей:', error);
+                return [];
+            }
+            return data;
+        }
+
+        // Перемешивание
+        function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+        }
+
+        function getRandomArticles(arr, n) {
+            const shuffled = shuffle([...arr]);
+            return shuffled.slice(0, n);
+        }
+
+        // Рендер случайных
+        function renderRandom(articles) {
+            const container = document.querySelector('.random-pages');
+            container.innerHTML = '';
+            if (articles.length === 0) return;
+            const randomArticles = getRandomArticles(articles, 3);
+            randomArticles.forEach(article => {
+                const card = document.createElement('a');
+                card.href = article.url;
+                card.className = 'random-card';
+                card.innerHTML = `
+                    <div class="random-label">Случайная страница</div>
+                    <h3>${article.title}</h3>
+                    <p>${article.description || ''}</p>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Рендер категорий
+        function renderCategories(articles) {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = '';
+
+            const categories = {};
+            articles.forEach(article => {
+                if (!categories[article.category]) {
+                    categories[article.category] = [];
+                }
+                categories[article.category].push(article);
+            });
+
+            const iconMap = {
+                'people': '👥',
+                'countries': '🌍',
+                'politics': '⚖️',
+                'education': '📚',
+                'healthcare': '🏥',
+                'registry': '📃'
+            };
+            const nameMap = {
+                'people': 'Люди',
+                'countries': 'Страны',
+                'politics': 'Политика',
+                'education': 'Образование',
+                'healthcare': 'Здравоохранение',
+                'registry': 'Реестры'
+            };
+            const categoryOrder = ['people', 'countries', 'politics', 'education', 'healthcare', 'registry'];
+
+            categoryOrder.forEach(cat => {
+                if (categories[cat] && categories[cat].length > 0) {
+                    const group = document.createElement('div');
+                    group.className = 'category-group';
+
+                    const title = document.createElement('h2');
+                    title.className = 'category-title';
+                    title.innerHTML = `<span class="cat-icon">${iconMap[cat] || '📄'}</span> ${nameMap[cat] || cat}`;
+                    group.appendChild(title);
+
+                    const list = document.createElement('div');
+                    list.className = 'category-articles';
+                    categories[cat].forEach(article => {
+                        const link = document.createElement('a');
+                        link.href = article.url;
+                        link.innerHTML = `${article.title} <span class="article-desc">${article.description || ''}</span>`;
+                        list.appendChild(link);
+                    });
+                    group.appendChild(list);
+                    container.appendChild(group);
+                }
+            });
+        }
+
+        // Поиск
+        function search(query) {
+            const searchResults = document.getElementById('search-results');
+            const resultsList = document.getElementById('results-list');
+            const randomPages = document.querySelector('.random-pages');
+            const categoriesContainer = document.getElementById('categories-container');
+
+            if (query.trim() === '') {
+                searchResults.style.display = 'none';
+                randomPages.style.display = 'flex';
+                categoriesContainer.style.display = 'block';
+                return;
+            }
+
+            const q = query.toLowerCase().trim();
+            const results = allArticles.filter(article =>
+                article.title.toLowerCase().includes(q) ||
+                (article.description && article.description.toLowerCase().includes(q))
+            );
+
+            randomPages.style.display = 'none';
+            categoriesContainer.style.display = 'none';
+            searchResults.style.display = 'block';
+            resultsList.innerHTML = '';
+
+            if (results.length === 0) {
+                resultsList.innerHTML = '<p>Ничего не найдено. Попробуйте изменить запрос.</p>';
+                return;
+            }
+
+            results.forEach(article => {
+                const item = document.createElement('a');
+                item.href = article.url;
+                item.className = 'result-item';
+                item.innerHTML = `
+                    <h4>${article.title}</h4>
+                    <p>${article.description || ''}</p>
+                `;
+                resultsList.appendChild(item);
+            });
+        }
+
+        // Инициализация
+        async function init() {
+            allArticles = await loadArticles();
+            if (allArticles.length === 0) {
+                // Можно вывести сообщение, что статьи не загружены
+                document.querySelector('.random-pages').innerHTML = '<p>Статьи не найдены. Добавьте их через админ-панель.</p>';
+                return;
+            }
+            renderRandom(allArticles);
+            renderCategories(allArticles);
+
+            // Обработчики поиска
+            const form = document.getElementById('search-form');
+            const input = document.getElementById('search-input');
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                search(input.value);
+            });
+            input.addEventListener('input', () => {
+                if (input.value.trim() === '') {
+                    search('');
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
 </body>
 </html>
