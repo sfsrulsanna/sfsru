@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Википедия СФСРЮ</title>
-    <!-- favicons (скопируйте свои) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
@@ -30,7 +30,6 @@
     <link rel="stylesheet" href="../css/wiki/index.css">
 </head>
 <body>
-    <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -56,14 +55,12 @@
     </header>
     <div class="menu-overlay"></div>
 
-    <!-- Основной контент -->
     <main class="main-content">
         <div class="wiki-intro">
             <h1>Википедия СФСРЮ</h1>
             <p>Свободная энциклопедия о Советской Федеративной Социалистической Республике Юльсанна.</p>
         </div>
 
-        <!-- Поиск -->
         <div class="search-container">
             <form id="search-form">
                 <input type="text" id="search-input" placeholder="Поиск по статьям..." />
@@ -71,20 +68,14 @@
             </form>
         </div>
 
-        <!-- Случайные страницы -->
         <div class="random-pages"></div>
-
-        <!-- Категории со статьями -->
         <div id="categories-container"></div>
-
-        <!-- Результаты поиска -->
         <div id="search-results" style="display:none;">
             <h2>Результаты поиска</h2>
             <div id="results-list"></div>
         </div>
     </main>
 
-    <!-- Подвал -->
     <footer class="footer">
         <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
@@ -92,20 +83,22 @@
 
     <script src="../js/mob-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module">
-        // ======= КОНФИГУРАЦИЯ С УКАЗАНИЕМ СХЕМЫ wiki =======
-    import { supabase } from '../../js/supabase-config.js';
-	
-		{
-            schema: 'wiki'   // ← все запросы будут идти к схеме wiki
-        });
+    <script>
+// js/supabase-config.js
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
         let allArticles = [];
 
-        // Загрузка статей из таблицы wiki.articles
+        // Запрос к таблице wiki.articles с явным указанием схемы
         async function loadArticles() {
             const { data, error } = await supabase
-                .from('articles')   // ← таблица "articles" в схеме "wiki"
+                .schema('wiki')           // ← явно указываем схему
+                .from('articles')         // ← таблица в этой схеме
                 .select('*')
                 .order('title');
             if (error) {
@@ -115,7 +108,6 @@
             return data;
         }
 
-        // Перемешивание
         function shuffle(arr) {
             for (let i = arr.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
@@ -129,7 +121,6 @@
             return shuffled.slice(0, n);
         }
 
-        // Рендер случайных
         function renderRandom(articles) {
             const container = document.querySelector('.random-pages');
             container.innerHTML = '';
@@ -148,7 +139,6 @@
             });
         }
 
-        // Рендер категорий
         function renderCategories(articles) {
             const container = document.getElementById('categories-container');
             container.innerHTML = '';
@@ -203,7 +193,6 @@
             });
         }
 
-        // Поиск
         function search(query) {
             const searchResults = document.getElementById('search-results');
             const resultsList = document.getElementById('results-list');
@@ -245,7 +234,6 @@
             });
         }
 
-        // Инициализация
         async function init() {
             allArticles = await loadArticles();
             if (allArticles.length === 0) {

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление статьями — Админ панель СФСРЮ</title>
-    <!-- favicons (полный набор) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -31,7 +31,7 @@
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Специфичные стили (те же, что и в предыдущей версии) */
+        /* те же стили, что и ранее */
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem; }
         .page-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; border-left: 4px solid #7b091a; padding-left: 1rem; }
         .page-description { color: #64748b; margin-bottom: 2rem; font-size: 1rem; }
@@ -147,7 +147,6 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
-    <!-- Модальное окно -->
     <div id="editModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -191,20 +190,20 @@
 
     <script src="../js/mob-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script type="module">
-        // ======= КОНФИГУРАЦИЯ С УКАЗАНИЕМ СХЕМЫ wiki =======
-    import { supabase } from '../../js/supabase-config.js';
-	
-		{
-            schema: 'wiki'   // ← все запросы к схеме wiki
-        });
+    <script>
+// js/supabase-config.js
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
         let currentUser = null;
         let articles = [];
         let sortField = 'id';
         let sortDirection = 'asc';
 
-        // DOM элементы
         const loading = document.getElementById('loading');
         const tableContainer = document.getElementById('tableContainer');
         const tableBody = document.getElementById('tableBody');
@@ -213,7 +212,6 @@
         const logoutBtn = document.getElementById('logoutBtn');
         const adminEmail = document.getElementById('adminEmail');
 
-        // Модальное окно
         const modal = document.getElementById('editModal');
         const modalTitle = document.getElementById('modalTitle');
         const editId = document.getElementById('editId');
@@ -223,7 +221,7 @@
         const formUrl = document.getElementById('formUrl');
         const saveBtn = document.getElementById('saveArticleBtn');
 
-        // ===== Аутентификация =====
+        // Аутентификация
         async function checkSession() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
@@ -231,7 +229,7 @@
                 adminEmail.textContent = currentUser.email;
                 loadArticles();
             } else {
-                window.location.href = 'index.html'; // редирект на логин
+                window.location.href = 'index.html';
             }
         }
 
@@ -240,11 +238,12 @@
             window.location.href = 'index.html';
         });
 
-        // ===== Загрузка статей из таблицы wiki.articles =====
+        // Запросы к таблице wiki.articles с явным указанием схемы
         async function loadArticles() {
             try {
                 const { data, error } = await supabase
-                    .from('articles')   // ← таблица "articles" в схеме "wiki"
+                    .schema('wiki')
+                    .from('articles')
                     .select('*')
                     .order(sortField, { ascending: sortDirection === 'asc' });
                 if (error) throw error;
@@ -258,7 +257,6 @@
             }
         }
 
-        // ===== Рендер таблицы =====
         function renderTable(data) {
             if (!data || data.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="6" class="no-data">Статей не найдено</td></tr>`;
@@ -297,7 +295,6 @@
             });
         }
 
-        // ===== Поиск =====
         searchInput.addEventListener('input', () => {
             const query = searchInput.value.toLowerCase().trim();
             if (!query) {
@@ -311,7 +308,6 @@
             renderTable(filtered);
         });
 
-        // ===== Сортировка =====
         document.querySelectorAll('th[data-sort]').forEach(th => {
             th.addEventListener('click', () => {
                 const field = th.dataset.sort;
@@ -325,7 +321,6 @@
             });
         });
 
-        // ===== Модальное окно =====
         function openEditModal(id = null) {
             if (id) {
                 const article = articles.find(a => a.id == id);
@@ -355,7 +350,6 @@
             if (e.target === modal) closeEditModal();
         });
 
-        // ===== Сохранение (INSERT / UPDATE) в таблицу wiki.articles =====
         saveBtn.addEventListener('click', async () => {
             const id = editId.value;
             const title = formTitle.value.trim();
@@ -372,16 +366,18 @@
 
             try {
                 if (id) {
-                    // UPDATE
+                    // UPDATE в таблице wiki.articles
                     const { error } = await supabase
+                        .schema('wiki')
                         .from('articles')
                         .update(payload)
                         .eq('id', id);
                     if (error) throw error;
                 } else {
-                    // INSERT
+                    // INSERT в таблицу wiki.articles
                     payload.created_at = new Date();
                     const { error } = await supabase
+                        .schema('wiki')
                         .from('articles')
                         .insert([payload]);
                     if (error) throw error;
@@ -393,11 +389,11 @@
             }
         });
 
-        // ===== Удаление =====
         async function deleteArticle(id) {
             if (!confirm('Удалить статью?')) return;
             try {
                 const { error } = await supabase
+                    .schema('wiki')
                     .from('articles')
                     .delete()
                     .eq('id', id);
