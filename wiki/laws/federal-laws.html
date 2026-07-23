@@ -1,4 +1,4 @@
-<!-- federal-laws.html — клиентская страница с поддержкой типа законов (федеральный / республиканский) -->
+<!-- federal-laws.html — клиентская страница (исправлена: убран бейдж для федеральных законов) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -57,7 +57,7 @@
             font-size: 0.9rem;
             margin-left: 10px;
         }
-        /* Дополнительный стиль для типа на карточке */
+        /* Стиль для плашки типа (только для республиканских) */
         .law-type-badge {
             display: inline-block;
             background: #e3f2fd;
@@ -252,20 +252,21 @@
                     const a = document.createElement('a');
                     a.className = 'law-btn' + (isRepealed ? ' archived' : '');
                     a.href = `?law=${encodeURIComponent(law.id)}`;
-                    // Определяем отображаемый заголовок в зависимости от типа
-                    let lawTypeLabel = '';
+                    
                     let titlePrefix = '';
+                    let badgeHtml = '';
                     if (law.type === 'republic') {
-                        lawTypeLabel = 'Закон Республики Юльсанна';
                         titlePrefix = `Закон Республики Юльсанна №${law.number}`;
+                        badgeHtml = `<div style="margin-bottom:4px;"><span class="law-type-badge">Закон Республики Юльсанна</span></div>`;
                     } else {
-                        lawTypeLabel = 'Федеральный закон';
                         titlePrefix = `Федеральный закон №${law.number}`;
+                        // Для федеральных законов бейдж не выводим
                     }
+                    
                     a.innerHTML = `
                         ${isRepealed ? '<span class="badge-repealed">Утратил силу</span>' : ''}
                         <span class="law-icon">⚖️</span>
-                        <div style="margin-bottom:4px;"><span class="law-type-badge">${lawTypeLabel}</span></div>
+                        ${badgeHtml}
                         <h3>${titlePrefix} от ${fmt(law.original_date)}</h3>
                         <p>«${law.title}»</p>
                     `;
