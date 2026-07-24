@@ -26,8 +26,8 @@
     <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
     
-    <link rel="stylesheet" href="../../../css/style.css">
-    <link rel="stylesheet" href="../../../css/president-profile.css">
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/president-profile.css">
     
     <style>
         /* ===== Общие стили (как на странице СФСРЮ) ===== */
@@ -113,7 +113,7 @@
         }
         .currency-table {
             width: 100%;
-            min-width: 900px; /* чтобы вместить все колонки */
+            min-width: 900px;
             border-collapse: collapse;
             font-size: 0.9rem;
             background: white;
@@ -213,6 +213,13 @@
             align-items: center;
             justify-content: center;
         }
+        .coin-display a {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
         .coin-display img {
             width: 100%;
             height: 100%;
@@ -227,10 +234,20 @@
             overflow: hidden;
             background: #fff;
         }
+        .banknote-display a {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
         .banknote-display img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+        }
+
+        .coin-display a, .banknote-display a,
+        .banknote-cell .banknote-img a, .coin-cell .coin-img a {
+            cursor: pointer;
         }
 
         .currency-symbol-block {
@@ -359,7 +376,9 @@
                             <div class="position-title">Монета 1 рубль (2026)</div>
                         </div>
                         <div class="coin-display">
-                            <img src="../../images/currency/coin_1_ruble_2026_front.png" alt="Монета 1 рубль 2026">
+                            <a href="../../images/currency/coin_1_ruble_2026_front.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                <img src="../../images/currency/coin_1_ruble_2026_front.png" alt="Монета 1 рубль 2026">
+                            </a>
                         </div>
                     </div>
                     <hr class="section-divider">
@@ -369,7 +388,9 @@
                             <div class="position-title">Банкнота 500 рублей (2026)</div>
                         </div>
                         <div class="banknote-display">
-                            <img src="../../images/currency/500_ruble_2026_front.png" alt="Банкнота 500 рублей 2026">
+                            <a href="../../images/currency/500r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                <img src="../../images/currency/500r_2026_revers.png" alt="Банкнота 500 рублей 2026">
+                            </a>
                         </div>
                     </div>
                     <hr class="section-divider">
@@ -387,8 +408,8 @@
                             <div class="position-detail"><div class="detail-label">ISO (средний)</div><div class="detail-value-wrapper"><span class="detail-value">RUU</span></div></div>
                             <div class="position-detail"><div class="detail-label">ISO (ранний)</div><div class="detail-value-wrapper"><span class="detail-value">SUU</span></div></div>
                             <div class="position-detail"><div class="detail-label">Эмитент</div><div class="detail-value-wrapper"><span class="detail-value">Центральный банк СФСРЮ</span></div></div>
-                            <div class="position-detail"><div class="detail-label">Дата введения</div><div class="detail-value-wrapper"><span class="detail-value">2 января 2025 года</span></div></div>
-                            <div class="position-detail"><div class="detail-label">Соотношение</div><div class="detail-value-wrapper"><span class="detail-value">1 YLS = 100 RUU = 10 000 SUU</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Дата введения</div><div class="detail-value-wrapper"><span class="detail-value">7 января 2025 года</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Соотношение</div><div class="detail-value-wrapper"><span class="detail-value">1 YLS = 100 RUU = 100 000 SUU</span></div></div>
                         </div>
                     </div>
                     <hr class="section-divider">
@@ -397,9 +418,9 @@
                     <div class="position-block">
                         <div class="period-nav">
                             <div class="period-nav-title">Периоды валюты</div>
-                            <a href="#early" class="period-nav-item"><span class="period-code">SUU</span><span class="period-date">02.01.2025 – 01.09.2025</span></a>
-                            <a href="#middle" class="period-nav-item"><span class="period-code">RUU</span><span class="period-date">01.09.2025 – 01.09.2026</span></a>
-                            <a href="#current" class="period-nav-item"><span class="period-code">YLS</span><span class="period-date">с 01.09.2026</span></a>
+                            <a href="#suu" class="period-nav-item"><span class="period-code">SUU</span><span class="period-date">07.01.2025 – 01.09.2025</span></a>
+                            <a href="#ruu" class="period-nav-item"><span class="period-code">RUU</span><span class="period-date">01.09.2025 – 01.09.2026</span></a>
+                            <a href="#yls" class="period-nav-item"><span class="period-code">YLS</span><span class="period-date">с 01.09.2026</span></a>
                         </div>
                     </div>
                     <hr class="section-divider">
@@ -421,31 +442,99 @@
                 <div class="history-content-card">
                     <h1>Юльсанниский рубль</h1>
 
-                    <h2>1. История создания</h2>
-                    <p><strong>Юльсанниский рубль</strong> — официальная денежная единица СФСРЮ. Введён 2 января 2025 года. Прошёл три этапа деноминации.</p>
-                    <h3>1.1 Ранний период (SUU)</h3>
-                    <p>С 02.01.2025 по 01.09.2025 действовал код SUU. Выпущены банкноты серии 2025 (1–5000 руб.) и монеты 1–50 копеек.</p>
-                    <h3>1.2 Средний период (RUU)</h3>
-                    <p>С 01.09.2025 по 01.09.2026 – код RUU, деноминация 1:100. В обращении оставались банкноты серии 2025, но с пересчитанным номиналом.</p>
-                    <h3>1.3 Текущий период (YLS)</h3>
-                    <p>С 01.09.2026 – код YLS, деноминация 1:100 (1 YLS = 100 RUU = 10 000 SUU). Выпущены новые банкноты серии 2026 (1–500 руб.) и монеты (1–75 копеек и 1 рубль).</p>
+                    <h2>1. История денежного обращения</h2>
+                    <p><strong>Юльсанниский рубль</strong> — официальная валюта Советской Федеративной Социалистической Республики Юльсанна (СФСРЮ). За короткий период с января 2025 года по сентябрь 2026 года денежная система страны пережила три крупных реформы, две деноминации и один гиперинфляционный кризис, что отразилось в смене валютных кодов и номинальных рядов.</p>
+
+                    <h3 id="suu">1.1 Первый период (SUU): 7 января – 1 сентября 2025 года</h3>
+                    <p>После федерализации и смены наименования государства с Республики Юльсанна на СФСРЮ в обращении некоторое время оставались старые банкноты образца 2024 года. Однако уже <strong>7 января 2025 года</strong> были введены первые собственные денежные знаки — юльсанниский рубль с международным кодом <strong>SUU</strong> (от Sovetskii Federalnyi Yul’sannyi). Банкноты выпускались номиналами:</p>
+                    <ul>
+                        <li>1, 5, 10, 50, 100, 500, 1000, 5000, 10 000, 50 000, 100 000 рублей.</li>
+                    </ul>
+                    <p>Все купюры были бумажными, водяные знаки содержали герб СФСРЮ (старый) и Республики Юльсанна (так можно было различить дату печати банкноты — до 7 января или после), а на оборотной стороне изображались промышленные предприятия и сельскохозяйственные ландшафты. Разменных копеек не предусматривалось — все расчёты велись в целых рублях.</p>
+                    <p>Уже к марту 2025 года экономика столкнулась с гиперинфляцией, вызванной резким ростом государственных расходов и нарушением цепочек поставок. <strong>1 марта 2025 года</strong> ЦБ экстренно вводит купюры 500 000 и 1 000 000 рублей, а <strong>1 июня 2025 года</strong> — 5 000 000 рублей (на всех банкнотах вместо старого герба СФСРЮ был уже новый). Эти гигантские номиналы печатались на упрощённой бумаге и имели минимальную защиту, что лишь усугубило падение доверия к валюте.</p>
+
+                    <h3 id="ruu">1.2 Второй период (RUU): 1 сентября 2025 – 1 сентября 2026 года</h3>
+                    <p><strong>1 сентября 2025 года</strong> была проведена деноминация с отсечением трёх нулей. Новый рубль получил код <strong>RUU</strong> (Rubble Ulsanian Union). Курс обмена: <strong>1 RUU = 1000 SUU</strong> (т.е. 1 новый рубль = 1000 старых).</p>
+                    <p>Дизайн банкнот был сохранён, но на них появились надписи «СФСРЮ» и обновлённый герб. Номинальный ряд был сокращён и включал:</p>
+                    <ul>
+                        <li>1, 5, 10, 25, 50, 100, 500, 1000, 2000, 5000 рублей.</li>
+                    </ul>
+                    <p>Однако банкноты <strong>5 и 10 рублей</strong> так и не поступили в обращение — их эмиссия была запланирована, но отменена из-за перехода к более крупным номиналам. Впервые в истории страны появились <strong>разменные банкноты (копейки)</strong> достоинством 1, 5, 10, 25 и 50 копеек. Они имели небольшой формат и печатались на плотной бумаге с орнаментом из колосьев. Монет по-прежнему не существовало.</p>
+                    <p>Несмотря на деноминацию, инфляция продолжалась, и к середине 2026 года курс RUU к ведущим мировым валютам упал в десятки раз.</p>
+
+                    <h3 id="yls">1.3 Третья валюта (YLS): с 1 сентября 2026 года</h3>
+                    <p><strong>1 сентября 2026 года</strong> вступила в силу вторая деноминация, уже с полной заменой дизайна и переименованием валюты. Новый денежный знак получил название юльсанниский рубль с кодом <strong>YLS</strong> (Yul’sannyi L’S — аббревиатура от Leninskiy Sotsialisticheskiy). Курс обмена: <strong>1 YLS = 100 RUU</strong>, что означает, что за два года произошло отсечение в общей сложности пяти нулей (<strong>100 000 SUU = 1 YLS</strong>).</p>
+                    <p>Новые банкноты были <strong>полимерными</strong>, с усиленной защитой и красочным оформлением. Каждый номинал посвящён одному из регионов страны (столица, области, автономные республики). Номинальный ряд:</p>
+                    <ul>
+                        <li><strong>Банкноты:</strong> 1, 2, 3, 5, 10, 20, 30, 50, 100, 200, 300, 500 рублей, а также 25 и 50 копеек (в виде банкнот малого формата).</li>
+                    </ul>
+                    <p><strong>Впервые в истории</strong> в обращение выпущены пластиковые монеты достоинством 1, 2, 3, 5, 10, 15, 25, 50, 75 копеек и 1 рубль. Монеты имеют шестиугольную форму (для республик) и круглую — для общегосударственного рубля, все изготовлены из ударопрочного цветного пластика с рельефным тиснением.</p>
+
+                    <h3>1.4 Монеты: появление и эволюция</h3>
+                    <p>В первых двух периодах (SUU и RUU) металлические или пластиковые монеты не выпускались — их роль выполняли бумажные копейки. Лишь с третьей денежной реформой правительство приняло решение о внедрении монет как более долговечного и удобного средства для мелких расчётов. Особым номиналом стала <strong>75 копеек</strong> — её ввели для удобства сдачи в туристической сфере (75 копеек равно ½+¼ рубля, что упрощает расчёт сдачи с 1 рубля). На всех копейках на аверсе изображался номинал, на реверсе — герб СФСРЮ и надпись «Центральный банк СФСРЮ».</p>
+
+                    <h3>1.5 Причины деноминаций и гиперинфляции</h3>
+                    <p>Трёхкратная смена валюты за два года была вызвана рядом факторов:</p>
+                    <ul>
+                        <li>Первоначальная эмиссия без обеспечения (первые банкноты 2025 года не имели золотого или валютного покрытия).</li>
+                        <li>Резкий рост государственных расходов на федерализацию и создание новых административных структур.</li>
+                        <li>Разрыв торговых связей с бывшими партнёрами, что привело к дефициту товаров и стремительному росту цен.</li>
+                        <li>Отсутствие доверия населения — каждая новая деноминация воспринималась как попытка «обнулить» долги, что провоцировало новые волны инфляции.</li>
+                    </ul>
+                    <p>После введения YLS правительство объявило о привязке курса к российскому рублю (<strong>60 RUB за 1 YLS</strong>) и установлении строгого контроля над эмиссией со стороны Центрального банка СФСРЮ.</p>
+
                     <hr>
 
-                    <h2>2. Периоды и соотношение</h2>
+                    <h2>2. Сравнительная таблица периодов</h2>
                     <div class="currency-table-wrap">
                         <table class="currency-table">
-                            <thead><tr><th>Период</th><th>Код ISO</th><th>Дата начала</th><th>Дата окончания</th><th>Соотношение к YLS</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th>Период</th>
+                                    <th>Код</th>
+                                    <th>Дата</th>
+                                    <th>Основные номиналы (макс.)</th>
+                                    <th>Копейки</th>
+                                    <th>Монеты</th>
+                                    <th>Курс перехода</th>
+                                </tr>
+                            </thead>
                             <tbody>
-                                <tr><td><strong>Ранний</strong> (унитарный)</td><td>SUU</td><td>02.01.2025</td><td>01.09.2025</td><td>10 000 SUU = 1 YLS</td></tr>
-                                <tr><td><strong>Средний</strong> (республиканский)</td><td>RUU</td><td>01.09.2025</td><td>01.09.2026</td><td>100 RUU = 1 YLS</td></tr>
-                                <tr><td><strong>Текущий</strong> (юльсанниский)</td><td>YLS</td><td>01.09.2026</td><td>по н.в.</td><td>1 YLS = 1 YLS</td></tr>
+                                <tr>
+                                    <td><strong>I (ранний)</strong></td>
+                                    <td>SUU</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                    <td>до 5 000 000 руб.</td>
+                                    <td>нет</td>
+                                    <td>нет</td>
+                                    <td>1 RUU = 1000 SUU</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>II (средний)</strong></td>
+                                    <td>RUU</td>
+                                    <td>01.09.2025 – 01.09.2026</td>
+                                    <td>до 5000 руб.</td>
+                                    <td>банкноты 1–50 коп.</td>
+                                    <td>нет</td>
+                                    <td>1 YLS = 100 RUU</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>III (текущий)</strong></td>
+                                    <td>YLS</td>
+                                    <td>с 01.09.2026</td>
+                                    <td>до 500 руб.</td>
+                                    <td>банкноты 25, 50 коп.; монеты 1–75 коп.</td>
+                                    <td>пластиковые</td>
+                                    <td>фиксирован к RUB (60:1)</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
 
                     <hr>
 
-                    <h2 id="early">3. Банкноты раннего периода (серия 2025)</h2>
+                    <h2 id="suu-table">3. Банкноты раннего периода (серия 2025, код SUU)</h2>
+                    <p>Первые банкноты, выпущенные с 7 января 2025 года. Для номиналов 1–100 рублей использован единый стиль: на лицевой стороне — герб и номинал, на обороте — номинал и изображение животного. Для номиналов от 500 рублей и выше дизайн повторяет более поздние банкноты RUU (с соответствующими номиналами).</p>
                     <div class="currency-table-wrap">
                         <table class="currency-table">
                             <thead>
@@ -459,13 +548,157 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <!-- 1 рубль -->
+                                <!-- 1 рубль SUU (медведь) -->
                                 <tr>
                                     <td>1 рубль</td>
                                     <td>
                                         <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">Герб СФСРЮ<br>1 рубль</a>
+                                            </div>
+                                            <div class="banknote-desc">Герб СФСРЮ, номинал</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">🐻 Медведь<br>1 рубль</a>
+                                            </div>
+                                            <div class="banknote-desc">Медведь (символ силы)</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>светло-серый</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 5 рублей SUU (волк) -->
+                                <tr>
+                                    <td>5 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">Герб СФСРЮ<br>5 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Герб СФСРЮ, номинал</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">🐺 Волк<br>5 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Волк (символ свободы)</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>светло-зелёный</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 10 рублей SUU (олень) -->
+                                <tr>
+                                    <td>10 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">Герб СФСРЮ<br>10 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Герб СФСРЮ, номинал</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">🦌 Олень<br>10 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Олень (символ благородства)</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>голубой</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 50 рублей SUU (орёл) -->
+                                <tr>
+                                    <td>50 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">Герб СФСРЮ<br>50 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Герб СФСРЮ, номинал</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">🦅 Орёл<br>50 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Орёл (символ власти)</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>розовый</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 100 рублей SUU (лев) -->
+                                <tr>
+                                    <td>100 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">Герб СФСРЮ<br>100 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Герб СФСРЮ, номинал</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px; background:#f0f0f0; display:flex; align-items:center; justify-content:center; font-size:0.7rem; color:#666;">
+                                                <a href="#suu-table" style="display:block; width:100%; height:100%; text-decoration:none; color:#666;">🦁 Лев<br>100 рублей</a>
+                                            </div>
+                                            <div class="banknote-desc">Лев (символ величия)</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>жёлтый</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 500 рублей SUU (дизайн 25 RUU) -->
+                                <tr>
+                                    <td>500 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/1r_2025_avers.png" alt="1 рубль лицо">
+                                                <a href="../../images/currency/500r_2025o_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500r_2025o_avers.png" alt="500 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Совет Федерации СФСРЮ</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/500r_2025o_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500r_2025o_revers.png" alt="500 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Председатель Совета Федерации СФСРЮ Филина А. Ю.</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>голубой</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 1000 рублей SUU (дизайн 1 RUU) -->
+                                <tr>
+                                    <td>1000 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/1000r_2025o_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1000r_2025o_avers.png" alt="1000 руб. лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Красная площадь</div>
                                         </div>
@@ -473,7 +706,219 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/1r_2025_revers.png" alt="1 рубль оборот">
+                                                <a href="../../images/currency/1000r_2025o_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1000r_2025o_revers.png" alt="1000 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Вице-президент СФСРЮ Мелихов Я.А.</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>светло-зелёный</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 5000 рублей SUU (дизайн 50 RUU) -->
+                                <tr>
+                                    <td>5000 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/50000r_2025o_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50000r_2025o_avers.png" alt="5000 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc"></div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/50000r_2025o_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50000r_2025o_revers.png" alt="5000 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Великая Бештинская Гора, портрет Елены Первой</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>тёмно-розовый</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 10000 рублей SUU (дизайн 100 RUU) -->
+                                <tr>
+                                    <td>10 000 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/10000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10000r_2025_avers.png" alt="10000 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Горящее здание Дергаевской средней школы</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/10000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10000r_2025_revers.png" alt="10000 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">МОУ Дергаевская СОШ №23, портрет Бобровой Е. В.</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>жёлтый</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 50000 рублей SUU (дизайн 500 RUU) -->
+                                <tr>
+                                    <td>50 000 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/50000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50000r_2025_avers.png" alt="5000 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Собор Бештиных, фотография Императора на Красной площади</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/50000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50000r_2025_revers.png" alt="5000 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Великая Бештинская Гора, портрет Елены Первой</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>тёмно-розовый</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 100000 рублей SUU (дизайн 1000 RUU) -->
+                                <tr>
+                                    <td>100 000 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/100000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/100000r_2025_avers.png" alt="10000 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Поповский лес</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/100000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/100000r_2025_revers.png" alt="10000 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Первый Президент СФСРЮ Гордеихин Д.А.</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>жёлтый</td>
+                                    <td>07.01.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 500000 рублей SUU (дизайн 1000 RUU) -->
+                                <tr>
+                                    <td>500 000 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
+                                                <a href="../../images/currency/500000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500000r_2025_avers.png" alt="100000 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">МОУ Дергаевская СОШ №23 (Вид сверху)</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
+                                                <a href="../../images/currency/500000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500000r_2025_revers.png" alt="100000 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Здание школы, территория, портрет Ситниковой И.Н.</div>
+                                        </div>
+                                    </td>
+                                    <td>150×65</td>
+                                    <td>зелёный</td>
+                                    <td>01.03.2025 – 01.09.2025</td>
+                                </tr>
+                                <!-- 1000000 рублей SUU (дизайн 1000 RUU) -->
+                                <tr>
+                                    <td>1 000 000 рублей</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
+                                                <a href="../../images/currency/1000000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1000000r_2025_avers.png" alt="100000 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">МОУ Дергаевская СОШ №23, логотип школы, герб Раменского района</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
+                                                <a href="../../images/currency/1000000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1000000r_2025_revers.png" alt="100000 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Фрагмент открытия кабинета "Точка роста", портрет Поповой Г.М.</div>
+                                        </div>
+                                    </td>
+                                    <td>150×65</td>
+                                    <td>зелёный</td>
+                                    <td>01.03.2025 – 01.09.2025</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <hr>
+
+                    <h2 id="ruu-table">4. Банкноты среднего периода (серия 2025, код RUU)</h2>
+                    <p>Эти банкноты находились в обращении с 1 сентября 2025 по 1 сентября 2026 года. Номиналы 5 и 10 рублей не были выпущены.</p>
+                    <div class="currency-table-wrap">
+                        <table class="currency-table">
+                            <thead>
+                                <tr>
+                                    <th>Номинал</th>
+                                    <th>Лицевая сторона</th>
+                                    <th>Оборотная сторона</th>
+                                    <th>Размеры (мм)</th>
+                                    <th>Основные цвета</th>
+                                    <th>Период обращения</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- 1 рубль RUU -->
+                                <tr>
+                                    <td>1 рубль</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/1r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1r_2025_avers.png" alt="1 рубль лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Красная площадь</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/1r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1r_2025_revers.png" alt="1 рубль оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Здание Администрации Президента, портрет Мелихова Я.А.</div>
                                         </div>
@@ -487,18 +932,42 @@
                                     <td>5 рублей</td>
                                     <td colspan="5" style="text-align:center; color:#999;">Не выпущена (планировалась, но не введена в обращение)</td>
                                 </tr>
-                                <!-- 10 рублей – не выпущена -->
+                                <!-- 10 рублей RUU -->
                                 <tr>
                                     <td>10 рублей</td>
-                                    <td colspan="5" style="text-align:center; color:#999;">Не выпущена (планировалась, но не введена в обращение)</td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/10r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10r_2025_avers.png" alt="10 руб. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">Горящее здание Дергаевской средней школы</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="banknote-cell">
+                                            <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
+                                                <a href="../../images/currency/10r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10r_2025_revers.png" alt="10 руб. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="banknote-desc">МОУ Дергаевская СОШ №23, портрет Бобровой Е. В.</div>
+                                        </div>
+                                    </td>
+                                    <td>130×60</td>
+                                    <td>бледно-зелёный</td>
+                                    <td>01.09.2025 – 01.09.2026</td>
                                 </tr>
-                                <!-- 25 рублей -->
+                                <!-- 25 рублей RUU -->
                                 <tr>
                                     <td>25 рублей</td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/25r_2025_avers.png" alt="25 руб. лицо">
+                                                <a href="../../images/currency/25r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/25r_2025_avers.png" alt="25 руб. лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Совет Федерации СФСРЮ</div>
                                         </div>
@@ -506,7 +975,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/25r_2025_revers.png" alt="25 руб. оборот">
+                                                <a href="../../images/currency/25r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/25r_2025_revers.png" alt="25 руб. оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Здание администрации Первого Председателя Совета Федерации, портрет Филиной А.Ю.</div>
                                         </div>
@@ -515,13 +986,15 @@
                                     <td>голубой</td>
                                     <td>01.09.2025 – 01.09.2026</td>
                                 </tr>
-                                <!-- 50 рублей -->
+                                <!-- 50 рублей RUU -->
                                 <tr>
                                     <td>50 рублей</td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/50r_2025_avers.png" alt="50 руб. лицо">
+                                                <a href="../../images/currency/50r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50r_2025_avers.png" alt="50 руб. лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Собор Бештиных, фотография Императора на Красной площади</div>
                                         </div>
@@ -529,7 +1002,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/50r_2025_revers.png" alt="50 руб. оборот">
+                                                <a href="../../images/currency/50r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50r_2025_revers.png" alt="50 руб. оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Великая Бештинская Гора, портрет Елены Первой</div>
                                         </div>
@@ -538,13 +1013,15 @@
                                     <td>тёмно-розовый</td>
                                     <td>01.09.2025 – 01.09.2026</td>
                                 </tr>
-                                <!-- 100 рублей -->
+                                <!-- 100 рублей RUU -->
                                 <tr>
                                     <td>100 рублей</td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/100r_2025_avers.png" alt="100 руб. лицо">
+                                                <a href="../../images/currency/100r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/100r_2025_avers.png" alt="100 руб. лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Поповский лес</div>
                                         </div>
@@ -552,7 +1029,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 13/6; width: 120px;">
-                                                <img src="../../../images/currency/100r_2025_revers.png" alt="100 руб. оборот">
+                                                <a href="../../images/currency/100r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/100r_2025_revers.png" alt="100 руб. оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Здание Администрации Президента, портрет Гордеихина Д.А.</div>
                                         </div>
@@ -561,21 +1040,25 @@
                                     <td>жёлтый</td>
                                     <td>01.09.2025 – 01.09.2026</td>
                                 </tr>
-                                <!-- 500 рублей -->
+                                <!-- 500 рублей RUU -->
                                 <tr>
                                     <td>500 рублей</td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
-                                                <img src="../../../images/currency/500r_2025_avers.png" alt="500 руб. лицо">
+                                                <a href="../../images/currency/500r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500r_2025_avers.png" alt="500 руб. лицо">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">МОУ Дергаевской СОШ №23 (вид сверху)</div>
+                                            <div class="banknote-desc">Здание МОУ Дергаевской СОШ №23 (вид сверху)</div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
-                                                <img src="../../../images/currency/500r_2025_revers.png" alt="500 руб. оборот">
+                                                <a href="../../images/currency/500r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500r_2025_revers.png" alt="500 руб. оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Здание школы, территория, портрет Ситниковой И.Н.</div>
                                         </div>
@@ -584,21 +1067,25 @@
                                     <td>фиолетовый</td>
                                     <td>01.09.2025 – 01.09.2026</td>
                                 </tr>
-                                <!-- 1000 рублей -->
+                                <!-- 1000 рублей RUU -->
                                 <tr>
                                     <td>1000 рублей</td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
-                                                <img src="../../../images/currency/1000r_2025_avers.png" alt="1000 руб. лицо">
+                                                <a href="../../images/currency/1000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1000r_2025_avers.png" alt="1000 руб. лицо">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">МОУ Дергаевской СОШ №23, логотип школы, герб Раменского района</div>
+                                            <div class="banknote-desc">МОУ Дергаевская СОШ №23, логотип школы, герб Раменского района</div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 30/13; width: 120px;">
-                                                <img src="../../../images/currency/1000r_2025_revers.png" alt="1000 руб. оборот">
+                                                <a href="../../images/currency/1000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1000r_2025_revers.png" alt="1000 руб. оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Фрагмент открытия кабинета "Точка роста", портрет Поповой Г.М.</div>
                                         </div>
@@ -607,36 +1094,42 @@
                                     <td>зелёный</td>
                                     <td>01.09.2025 – 01.09.2026</td>
                                 </tr>
-                                <!-- 2000 рублей -->
+                                <!-- 2000 рублей RUU -->
                                 <tr>
                                     <td>2000 рублей</td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 157/69; width: 120px;">
-                                                <img src="../../../images/currency/2000r_2025_avers.png" alt="2000 руб. лицо">
+                                                <a href="../../images/currency/2000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/2000r_2025_avers.png" alt="2000 руб. лицо">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">МОУ Раменской СОШ №8 (вид сбоку), герб Воскресенска</div>
+                                            <div class="banknote-desc">МОУ Раменская СОШ №8 (вид сбоку), герб Воскресенска</div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 157/69; width: 120px;">
-                                                <img src="../../../images/currency/2000r_2025_revers.png" alt="2000 руб. оборот">
+                                                <a href="../../images/currency/2000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/2000r_2025_revers.png" alt="2000 руб. оборот">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">МОУ Раменской СОШ №8 (вид спереди), портрет Натуральновой Н.Б.</div>
+                                            <div class="banknote-desc">МОУ Раменская СОШ №8, портрет Натуральновой Н.Б.</div>
                                         </div>
                                     </td>
                                     <td>157×69</td>
                                     <td>синий</td>
                                     <td>01.09.2025 – 01.09.2026</td>
                                 </tr>
-                                <!-- 5000 рублей -->
+                                <!-- 5000 рублей RUU -->
                                 <tr>
                                     <td>5000 рублей</td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 157/69; width: 120px;">
-                                                <img src="../../../images/currency/5000r_2025_avers.png" alt="5000 руб. лицо">
+                                                <a href="../../images/currency/5000r_2025_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/5000r_2025_avers.png" alt="5000 руб. лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Дом Советов СФСРЮ, герб Люберецкого района</div>
                                         </div>
@@ -644,9 +1137,11 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 157/69; width: 120px;">
-                                                <img src="../../../images/currency/5000r_2025_revers.png" alt="5000 руб. оборот">
+                                                <a href="../../images/currency/5000r_2025_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/5000r_2025_revers.png" alt="5000 руб. оборот">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">Жилые дома в Поповской области, портрет Великой Юльсанны</div>
+                                            <div class="banknote-desc">Жилые дома в Поповской обл., портрет Великой Юльсанны</div>
                                         </div>
                                     </td>
                                     <td>157×69</td>
@@ -656,11 +1151,11 @@
                             </tbody>
                         </table>
                     </div>
-                    <p style="font-size:0.85rem;color:#666;text-align:right;">* Для банкнот 5 и 10 рублей выпуск не состоялся.</p>
 
                     <hr>
 
-                    <h2 id="current">4. Банкноты текущего периода (серия 2026)</h2>
+                    <h2 id="yls-table">5. Банкноты текущего периода (серия 2026, код YLS)</h2>
+                    <p>Полимерные банкноты, введённые с 1 сентября 2026 года. Каждый номинал посвящён одному из регионов СФСРЮ.</p>
                     <div class="currency-table-wrap">
                         <table class="currency-table">
                             <thead>
@@ -679,7 +1174,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/1r_2026_avers.png" alt="1 рубль лицо">
+                                                <a href="../../images/currency/1r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1r_2026_avers.png" alt="1 рубль лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Дворец Независимости в г.ф.з. Поповске</div>
                                         </div>
@@ -687,7 +1184,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/1r_2026_revers.png" alt="1 рубль оборот">
+                                                <a href="../../images/currency/1r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1r_2026_revers.png" alt="1 рубль оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет Первого Президента СФСРЮ Д. Гордеихина</div>
                                         </div>
@@ -701,15 +1200,19 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/2r_2026_avers.png" alt="2 рубля лицо">
+                                                <a href="../../images/currency/2r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/2r_2026_avers.png" alt="2 рубля лицо">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">—</div>
+                                            <div class="banknote-desc">Жилые дома в Республике Марго и Маргаритка</div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/2r_2026_revers.png" alt="2 рубля оборот">
+                                                <a href="../../images/currency/2r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/2r_2026_revers.png" alt="2 рубля оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет "Марго" в двух проекциях (Лушникова М.А.)</div>
                                         </div>
@@ -722,7 +1225,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/3r_2026_avers.png" alt="3 рубля лицо">
+                                                <a href="../../images/currency/3r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/3r_2026_avers.png" alt="3 рубля лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">—</div>
                                         </div>
@@ -730,7 +1235,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/3r_2026_revers.png" alt="3 рубля оборот">
+                                                <a href="../../images/currency/3r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/3r_2026_revers.png" alt="3 рубля оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет учителя биологии Ивановой Н.Н.</div>
                                         </div>
@@ -743,17 +1250,21 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/5r_2026_avers.png" alt="5 рублей лицо">
+                                                <a href="../../images/currency/5r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/5r_2026_avers.png" alt="5 рублей лицо">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">Совет Федерации в г.ф.з. Алёнкин</div>
+                                            <div class="banknote-desc">Совет Федерации СФСР Юльсанна в г.ф.з. Алёнкин</div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/5r_2026_revers.png" alt="5 рублей оборот">
+                                                <a href="../../images/currency/5r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/5r_2026_revers.png" alt="5 рублей оборот">
+                                                </a>
                                             </div>
-                                            <div class="banknote-desc">Портрет Первого Председателя Совета Федерации А. Филиной</div>
+                                            <div class="banknote-desc">Портрет Председателя Совета Федерации СФСРЮ А. Филиной</div>
                                         </div>
                                     </td>
                                     <td>—</td>
@@ -764,7 +1275,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 138/68; width: 120px;">
-                                                <img src="../../../images/currency/10r_2026_avers.png" alt="10 рублей лицо">
+                                                <a href="../../images/currency/10r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10r_2026_avers.png" alt="10 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">—</div>
                                         </div>
@@ -772,7 +1285,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 138/68; width: 120px;">
-                                                <img src="../../../images/currency/10r_2026_revers.png" alt="10 рублей оборот">
+                                                <a href="../../images/currency/10r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10r_2026_revers.png" alt="10 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет учителя начальных классов Бобровой Е.В.</div>
                                         </div>
@@ -785,7 +1300,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/20r_2026_avers.png" alt="20 рублей лицо">
+                                                <a href="../../images/currency/20r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/20r_2026_avers.png" alt="20 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Здание МОУ Дергаевской СОШ №23 (вид сверху)</div>
                                         </div>
@@ -793,7 +1310,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/20r_2026_revers.png" alt="20 рублей оборот">
+                                                <a href="../../images/currency/20r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/20r_2026_revers.png" alt="20 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет учителя иностранных языков Ситниковой И.Н.</div>
                                         </div>
@@ -806,7 +1325,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/30r_2026_avers.png" alt="30 рублей лицо">
+                                                <a href="../../images/currency/30r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/30r_2026_avers.png" alt="30 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Открытие кабинета "Точка роста" в МОУ Дергаевской СОШ №23</div>
                                         </div>
@@ -814,7 +1335,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/30r_2026_revers.png" alt="30 рублей оборот">
+                                                <a href="../../images/currency/30r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/30r_2026_revers.png" alt="30 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет Поповой Г.М. учителя физики</div>
                                         </div>
@@ -827,7 +1350,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/50r_2026_avers.png" alt="50 рублей лицо">
+                                                <a href="../../images/currency/50r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50r_2026_avers.png" alt="50 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Великая Бештинская Гора</div>
                                         </div>
@@ -835,7 +1360,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/50r_2026_revers.png" alt="50 рублей оборот">
+                                                <a href="../../images/currency/50r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50r_2026_revers.png" alt="50 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет Первого Императора Бештинской Империи Елены Первой</div>
                                         </div>
@@ -848,7 +1375,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 144/72; width: 120px;">
-                                                <img src="../../../images/currency/100r_2026_avers.png" alt="100 рублей лицо">
+                                                <a href="../../images/currency/100r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/100r_2026_avers.png" alt="100 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Жилые дома в АР Эйтингон, герб г. Раменское</div>
                                         </div>
@@ -856,7 +1385,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 144/72; width: 120px;">
-                                                <img src="../../../images/currency/100r_2026_revers.png" alt="100 рублей оборот">
+                                                <a href="../../images/currency/100r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/100r_2026_revers.png" alt="100 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет Эйтингон И.В. (Вечного Президента АР Эйтингон)</div>
                                         </div>
@@ -869,7 +1400,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/200r_2026_avers.png" alt="200 рублей лицо">
+                                                <a href="../../images/currency/200r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/200r_2026_avers.png" alt="200 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Здание МОУ Раменской СОШ №8 (вид спереди), герб г. Воскресенск</div>
                                         </div>
@@ -877,7 +1410,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/200r_2026_revers.png" alt="200 рублей оборот">
+                                                <a href="../../images/currency/200r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/200r_2026_revers.png" alt="200 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет Натуральновой Н.Б. (Вечного Президента АР Натуральнова)</div>
                                         </div>
@@ -890,7 +1425,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/300r_2026_avers.png" alt="300 рублей лицо">
+                                                <a href="../../images/currency/300r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/300r_2026_avers.png" alt="300 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Здание МОУ Раменской СОШ №8 (Начальное отделение), герб г. Жуковский</div>
                                         </div>
@@ -898,7 +1435,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 135/62; width: 120px;">
-                                                <img src="../../../images/currency/300r_2026_revers.png" alt="300 рублей оборот">
+                                                <a href="../../images/currency/300r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/300r_2026_revers.png" alt="300 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет Ветровой М.О. (учителя информатики)</div>
                                         </div>
@@ -911,7 +1450,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 159/72; width: 120px;">
-                                                <img src="../../../images/currency/500r_2026_avers.png" alt="500 рублей лицо">
+                                                <a href="../../images/currency/500r_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500r_2026_avers.png" alt="500 рублей лицо">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Жилые дома в Поповской области, герб Люберецкого района</div>
                                         </div>
@@ -919,7 +1460,9 @@
                                     <td>
                                         <div class="banknote-cell">
                                             <div class="banknote-img" style="aspect-ratio: 159/72; width: 120px;">
-                                                <img src="../../../images/currency/500r_2026_revers.png" alt="500 рублей оборот">
+                                                <a href="../../images/currency/500r_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/500r_2026_revers.png" alt="500 рублей оборот">
+                                                </a>
                                             </div>
                                             <div class="banknote-desc">Портрет Великой Юльсанны (Зориной Ю.А.)</div>
                                         </div>
@@ -934,7 +1477,8 @@
 
                     <hr>
 
-                    <h2 id="middle">5. Монеты текущего периода (2026)</h2>
+                    <h2>6. Монеты текущего периода (2026, код YLS)</h2>
+                    <p>Пластиковые монеты, введённые 1 сентября 2026 года. Шестиугольные — для республик, круглые — для общегосударственного рубля.</p>
                     <div class="currency-table-wrap">
                         <table class="currency-table">
                             <thead>
@@ -952,13 +1496,21 @@
                                     <td>1 копейка</td>
                                     <td>
                                         <div class="coin-cell">
-                                            <div class="coin-img"><img src="../../../images/currency/1kop_2026_avers.png" alt="1 коп. лицо"></div>
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/1kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1kop_2026_avers.png" alt="1 коп. лицо">
+                                                </a>
+                                            </div>
                                             <div class="coin-desc">Номинал, герб СФСРЮ</div>
                                         </div>
                                     </td>
                                     <td>
                                         <div class="coin-cell">
-                                            <div class="coin-img"><img src="../../../images/currency/1kop_2026_revers.png" alt="1 коп. оборот"></div>
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/1kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1kop_2026_revers.png" alt="1 коп. оборот">
+                                                </a>
+                                            </div>
                                             <div class="coin-desc">Год чеканки, колосья</div>
                                         </div>
                                     </td>
@@ -968,57 +1520,201 @@
                                 </tr>
                                 <tr>
                                     <td>2 копейки</td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/2kop_2026_avers.png" alt="2 коп. лицо"></div><div class="coin-desc">Номинал, герб</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/2kop_2026_revers.png" alt="2 коп. оборот"></div><div class="coin-desc">Год, колосья</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/2kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/2kop_2026_avers.png" alt="2 коп. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/2kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/2kop_2026_revers.png" alt="2 коп. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Год, колосья</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. медь</td>
                                     <td>17</td>
                                 </tr>
                                 <tr>
                                     <td>3 копейки</td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/3kop_2026_avers.png" alt="3 коп. лицо"></div><div class="coin-desc">Номинал, герб</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/3kop_2026_revers.png" alt="3 коп. оборот"></div><div class="coin-desc">Год, колосья</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/3kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/3kop_2026_avers.png" alt="3 коп. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/3kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/3kop_2026_revers.png" alt="3 коп. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Год, колосья</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. медь</td>
                                     <td>18</td>
                                 </tr>
                                 <tr>
                                     <td>5 копеек</td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/5kop_2026_avers.png" alt="5 коп. лицо"></div><div class="coin-desc">Номинал, герб</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/5kop_2026_revers.png" alt="5 коп. оборот"></div><div class="coin-desc">Год, колосья</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/5kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/5kop_2026_avers.png" alt="5 коп. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/5kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/5kop_2026_revers.png" alt="5 коп. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Год, колосья</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. медь</td>
                                     <td>19</td>
                                 </tr>
                                 <tr>
                                     <td>10 копеек</td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/10kop_2026_avers.png" alt="10 коп. лицо"></div><div class="coin-desc">Номинал, герб</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/10kop_2026_revers.png" alt="10 коп. оборот"></div><div class="coin-desc">Год, колосья</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/10kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10kop_2026_avers.png" alt="10 коп. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/10kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/10kop_2026_revers.png" alt="10 коп. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Год, колосья</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. никель</td>
                                     <td>21</td>
                                 </tr>
                                 <tr>
                                     <td>25 копеек</td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/25kop_2026_avers.png" alt="25 коп. лицо"></div><div class="coin-desc">Номинал, герб</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/25kop_2026_revers.png" alt="25 коп. оборот"></div><div class="coin-desc">Год, колосья</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/25kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/25kop_2026_avers.png" alt="25 коп. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/25kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/25kop_2026_revers.png" alt="25 коп. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Год, колосья</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. никель</td>
                                     <td>23</td>
                                 </tr>
                                 <tr>
                                     <td>50 копеек</td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/50kop_2026_avers.png" alt="50 коп. лицо"></div><div class="coin-desc">Номинал, герб</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/50kop_2026_revers.png" alt="50 коп. оборот"></div><div class="coin-desc">Год, колосья</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/50kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50kop_2026_avers.png" alt="50 коп. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/50kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/50kop_2026_revers.png" alt="50 коп. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Год, колосья</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. никель</td>
                                     <td>25</td>
                                 </tr>
                                 <tr>
                                     <td>75 копеек</td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/75kop_2026_avers.png" alt="75 коп. лицо"></div><div class="coin-desc">Номинал, герб</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/75kop_2026_revers.png" alt="75 коп. оборот"></div><div class="coin-desc">Год, колосья</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/75kop_2026_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/75kop_2026_avers.png" alt="75 коп. лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/75kop_2026_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/75kop_2026_revers.png" alt="75 коп. оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Год, колосья</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. никель</td>
                                     <td>25</td>
                                 </tr>
                                 <tr>
                                     <td><strong>1 рубль</strong></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/1r_2026_coin_avers.png" alt="1 рубль лицо"></div><div class="coin-desc">Номинал, герб, год</div></div></td>
-                                    <td><div class="coin-cell"><div class="coin-img"><img src="../../../images/currency/1r_2026_coin_revers.png" alt="1 рубль оборот"></div><div class="coin-desc">Орнамент, номинал прописью</div></div></td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/1r_2026_coin_avers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1r_2026_coin_avers.png" alt="1 рубль лицо">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Номинал, герб, год</div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <div class="coin-cell">
+                                            <div class="coin-img">
+                                                <a href="../../images/currency/1r_2026_coin_revers.png" target="_blank" rel="noopener noreferrer" title="Открыть увеличенное изображение">
+                                                    <img src="../../images/currency/1r_2026_coin_revers.png" alt="1 рубль оборот">
+                                                </a>
+                                            </div>
+                                            <div class="coin-desc">Орнамент, номинал прописью</div>
+                                        </div>
+                                    </td>
                                     <td>сталь, плак. никель</td>
                                     <td>27</td>
                                 </tr>
@@ -1029,11 +1725,13 @@
 
                     <hr>
 
-                    <h2>6. Планируемые банкноты</h2>
-                    <p>В настоящее время Центральный банк разрабатывает банкноты образца 2027 года. Дизайн будет унифицирован с монетами.</p>
+                    <h2>7. Итоги и перспективы</h2>
+                    <p>Таким образом, денежная история СФСРЮ стала одним из самых показательных примеров радикальных валютных реформ в виртуальной экономике XXI века. Сегодняшняя валюта YLS отличается высокой степенью защищённости, прозрачным механизмом эмиссии и привязана к стабильному российскому рублю (<strong>60 RUB за 1 YLS</strong>), что должно обеспечить долгосрочную макроэкономическую стабильность.</p>
+                    <p>Планируется дальнейшее укрепление рубля, расширение спектра платёжных инструментов и постепенный переход к безналичным расчётам. Однако памятные серии банкнот и монет останутся важной частью культурного кода страны.</p>
+
                     <div style="background:#f9f9f9;border-left:4px solid #cc0000;padding:1rem;margin:1.5rem 0;border-radius:4px;">
                         <p style="margin:0;font-weight:600;color:#cc0000;">💡 Интересный факт</p>
-                        <p style="margin:0.5rem 0 0 0;font-size:0.95rem;">На банкнотах серии 2025 изображены школы и учителя – в знак уважения к образованию.</p>
+                        <p style="margin:0.5rem 0 0 0;font-size:0.95rem;">На банкнотах серии 2025 (RUU) были изображены школы и учителя – в знак уважения к образованию, а на купюрах YLS – регионы и их выдающиеся деятели.</p>
                     </div>
                 </div>
             </div>
