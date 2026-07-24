@@ -313,6 +313,51 @@
             .coin-cell .coin-img { width: 40px; height: 40px; }
             .coin-cell .coin-desc { font-size: 0.6rem; }
         }
+		/* Центрирование блоков монеты и банкноты */
+.coin-block,
+.banknote-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 280px;       /* одинаковая ширина для обоих блоков */
+    margin: 0 auto;
+}
+
+.coin-display {
+    width: 180px;
+    height: 180px;
+    margin: 0 auto;
+    border: 3px solid #cc0000;
+    border-radius: 50%;
+    overflow: hidden;
+    background: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.coin-display img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.banknote-display {
+    width: 100%;           /* теперь внутри блока шириной 280px */
+    aspect-ratio: 2 / 1;   /* сохраняем пропорции 2:1 */
+    margin: 0 auto;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.banknote-display img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
     </style>
 </head>
 <body>
@@ -343,78 +388,123 @@
 
     <main class="profile-main">
         <div class="profile-container">
-            <!-- ЛЕВАЯ КОЛОНКА (инфоблок) -->
-            <aside class="photo-column">
-                <div class="photo-card">
-                    <div class="photo-top-section">
-                        <div class="main-personal-info">
-                            <div class="last-name">Юльсанниский</div>
-                            <div class="first-name">рубль</div>
-                        </div>
-                    </div>
-                    <hr class="section-divider">
-                    <!-- Монета 1 рубль (2026) -->
-                    <div class="position-block">
-                        <div class="position-header">
-                            <div class="position-title">Монета 1 рубль (2026)</div>
-                        </div>
-                        <div class="coin-display">
-                            <img src="../../images/currency/coin_1_ruble_2026_front.png" alt="Монета 1 рубль 2026">
-                        </div>
-                    </div>
-                    <hr class="section-divider">
-                    <!-- Банкнота 500 рублей (2026) -->
-                    <div class="position-block">
-                        <div class="position-header">
-                            <div class="position-title">Банкнота 500 рублей (2026)</div>
-                        </div>
-                        <div class="banknote-display">
-                            <img src="../../images/currency/500_ruble_2026_front.png" alt="Банкнота 500 рублей 2026">
-                        </div>
-                    </div>
-                    <hr class="section-divider">
-                    <!-- Коды валюты -->
-                    <div class="position-block">
-                        <div class="position-header">
-                            <div class="position-title">Коды валюты</div>
-                        </div>
-                        <div class="currency-symbol-block">
-                            <div class="symbol">¥</div>
-                            <div class="desc">Символ рубля</div>
-                        </div>
-                        <div class="position-details">
-                            <div class="position-detail"><div class="detail-label">ISO (текущий)</div><div class="detail-value-wrapper"><span class="detail-value">YLS</span></div></div>
-                            <div class="position-detail"><div class="detail-label">ISO (средний)</div><div class="detail-value-wrapper"><span class="detail-value">RUU</span></div></div>
-                            <div class="position-detail"><div class="detail-label">ISO (ранний)</div><div class="detail-value-wrapper"><span class="detail-value">SUU</span></div></div>
-                            <div class="position-detail"><div class="detail-label">Эмитент</div><div class="detail-value-wrapper"><span class="detail-value">Центральный банк СФСРЮ</span></div></div>
-                            <div class="position-detail"><div class="detail-label">Дата введения</div><div class="detail-value-wrapper"><span class="detail-value">2 января 2025 года</span></div></div>
-                            <div class="position-detail"><div class="detail-label">Соотношение</div><div class="detail-value-wrapper"><span class="detail-value">1 YLS = 100 RUU = 10 000 SUU</span></div></div>
-                        </div>
-                    </div>
-                    <hr class="section-divider">
+<!-- ЛЕВАЯ КОЛОНКА -->
+<aside class="photo-column">
+    <div class="photo-card">
+        <div class="photo-top-section">
+            <div class="main-personal-info">
+                <div class="last-name">Юльсанниский</div>
+                <div class="first-name">рубль</div>
+            </div>
+        </div>
+        <hr class="section-divider">
 
-                    <!-- Навигация по периодам -->
-                    <div class="position-block">
-                        <div class="period-nav">
-                            <div class="period-nav-title">Периоды валюты</div>
-                            <a href="#early" class="period-nav-item"><span class="period-code">SUU</span><span class="period-date">02.01.2025 – 01.09.2025</span></a>
-                            <a href="#middle" class="period-nav-item"><span class="period-code">RUU</span><span class="period-date">01.09.2025 – 01.09.2026</span></a>
-                            <a href="#current" class="period-nav-item"><span class="period-code">YLS</span><span class="period-date">с 01.09.2026</span></a>
-                        </div>
-                    </div>
-                    <hr class="section-divider">
+        <!-- Блок: Монета 1 рубль (центрирован) -->
+        <div class="coin-block" style="display:flex; flex-direction:column; align-items:center; max-width:280px; margin:0 auto;">
+            <div class="position-header">
+                <div class="position-title">Монета 1 рубль (2026)</div>
+            </div>
+            <div class="coin-display" style="width:180px; height:180px; border:3px solid #cc0000; border-radius:50%; overflow:hidden; background:white; display:flex; align-items:center; justify-content:center; margin:0 auto;">
+                <img src="../../../images/currency/1_ruble_2026.png" alt="Монета 1 рубль 2026" style="width:100%; height:100%; object-fit:contain;">
+            </div>
+        </div>
 
-                    <!-- Факты -->
-                    <div class="position-block">
-                        <div class="position-header"><div class="position-title">Факты</div></div>
-                        <div class="position-details">
-                            <div class="position-detail"><div class="detail-label">Разменная монета</div><div class="detail-value-wrapper"><span class="detail-value">копейка (1/100 YLS)</span></div></div>
-                            <div class="position-detail"><div class="detail-label">Монетный двор</div><div class="detail-value-wrapper"><span class="detail-value">Поповский монетный двор</span></div></div>
-                            <div class="position-detail"><div class="detail-label">Банкноты</div><div class="detail-value-wrapper"><span class="detail-value">1, 2, 3, 5, 10, 20, 30, 50, 100, 200, 300, 500 руб.</span></div></div>
-                        </div>
-                    </div>
+        <hr class="section-divider">
+
+        <!-- Блок: Банкнота 500 рублей (центрирован) -->
+        <div class="banknote-block" style="display:flex; flex-direction:column; align-items:center; max-width:280px; margin:0 auto;">
+            <div class="position-header">
+                <div class="position-title">Банкнота 500 рублей (2026)</div>
+            </div>
+            <div class="banknote-display" style="width:100%; aspect-ratio:2/1; border:1px solid #ddd; border-radius:4px; overflow:hidden; background:#fff; margin:0 auto;">
+                <img src="../../../images/currency/500_ruble_2026.jpg" alt="Банкнота 500 рублей 2026" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Блок: Коды валюты -->
+        <div class="position-block">
+            <div class="position-header">
+                <div class="position-title">Коды валюты</div>
+            </div>
+            <div class="currency-symbol-block" style="background:#f9f9f9; border:1px solid #e0e0e0; border-radius:8px; padding:1.2rem; margin:1rem 0; text-align:center;">
+                <div class="symbol" style="font-size:3rem; font-weight:700; color:#cc0000;">₽</div>
+                <div class="desc" style="font-size:0.9rem; color:#555; margin-top:0.5rem;">Символ рубля</div>
+            </div>
+            <div class="position-details">
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">ISO (текущий)</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">YLS</span></div>
                 </div>
-            </aside>
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">ISO (средний)</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">RUU</span></div>
+                </div>
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">ISO (ранний)</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">SUU</span></div>
+                </div>
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">Эмитент</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">Центральный банк СФСРЮ</span></div>
+                </div>
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">Дата введения</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">2 января 2025 года</span></div>
+                </div>
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">Соотношение</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">1 YLS = 100 RUU = 10 000 SUU</span></div>
+                </div>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Навигация по периодам -->
+        <div class="position-block">
+            <div class="period-nav" style="background:#f9f9f9; border:1px solid #e0e0e0; border-radius:8px; padding:1rem; margin:1rem 0;">
+                <div class="period-nav-title" style="font-weight:600; color:#cc0000; font-size:0.85rem; margin-bottom:0.8rem; text-align:center; text-transform:uppercase; letter-spacing:0.5px;">Периоды валюты</div>
+                <a href="#early" class="period-nav-item" style="display:block; padding:0.6rem; background:white; border:1px solid #ddd; border-radius:6px; text-decoration:none; color:#333; transition:all 0.2s ease; margin-bottom:0.5rem; text-align:center;">
+                    <span class="period-code" style="font-weight:700; color:#cc0000;">SUU</span>
+                    <span class="period-date" style="font-size:0.8rem; color:#666;">02.01.2025 – 01.09.2025</span>
+                </a>
+                <a href="#middle" class="period-nav-item" style="display:block; padding:0.6rem; background:white; border:1px solid #ddd; border-radius:6px; text-decoration:none; color:#333; transition:all 0.2s ease; margin-bottom:0.5rem; text-align:center;">
+                    <span class="period-code" style="font-weight:700; color:#cc0000;">RUU</span>
+                    <span class="period-date" style="font-size:0.8rem; color:#666;">01.09.2025 – 01.09.2026</span>
+                </a>
+                <a href="#current" class="period-nav-item" style="display:block; padding:0.6rem; background:white; border:1px solid #ddd; border-radius:6px; text-decoration:none; color:#333; transition:all 0.2s ease; margin-bottom:0.5rem; text-align:center;">
+                    <span class="period-code" style="font-weight:700; color:#cc0000;">YLS</span>
+                    <span class="period-date" style="font-size:0.8rem; color:#666;">с 01.09.2026</span>
+                </a>
+            </div>
+        </div>
+
+        <hr class="section-divider">
+
+        <!-- Блок: Факты -->
+        <div class="position-block">
+            <div class="position-header">
+                <div class="position-title">Факты</div>
+            </div>
+            <div class="position-details">
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">Разменная монета</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">копейка (1/100 YLS)</span></div>
+                </div>
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">Монетный двор</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">Поповский монетный двор</span></div>
+                </div>
+                <div class="position-detail" style="display:flex; justify-content:space-between; padding:4px 0;">
+                    <div class="detail-label" style="font-weight:600;">Банкноты</div>
+                    <div class="detail-value-wrapper"><span class="detail-value">1, 2, 3, 5, 10, 20, 30, 50, 100, 200, 300, 500 руб.</span></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</aside>
 
             <!-- ПРАВАЯ КОЛОНКА -->
             <div class="info-column">
