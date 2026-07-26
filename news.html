@@ -1,11 +1,10 @@
-<!-- news.html — финальная версия (без JOIN, без RPC, просто author_name и author_surname) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Новости СФСРЮ</title>
-    <!-- favicons (без изменений) -->
+    <!-- favicons (те же) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -124,9 +123,16 @@
             return new Date(date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        function getMediaUrl(bucket, path) {
-            const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-            return data.publicUrl;
+        // Получение подписанного URL для медиа
+        async function getMediaSignedUrl(bucket, path) {
+            try {
+                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600); // 1 час
+                if (error) throw error;
+                return data.signedUrl;
+            } catch (err) {
+                console.error('Ошибка получения подписанного URL:', err);
+                return null;
+            }
         }
 
         async function loadArticles() {
@@ -180,27 +186,36 @@
 
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Просто получаем все комментарии – имя и фамилия уже есть в колонках author_name и author_surname
+                // Получаем подписанные URL для каждого медиа
+                const mediaWithUrls = [];
+                if (article.media && article.media.length > 0) {
+                    for (const m of article.media) {
+                        const signedUrl = await getMediaSignedUrl(m.bucket_name, m.file_path);
+                        mediaWithUrls.push({ ...m, signedUrl });
+                    }
+                }
+
+                // Формируем HTML медиа
+                let mediaHtml = '';
+                if (mediaWithUrls.length > 0) {
+                    mediaHtml = '<div class="news-media">';
+                    mediaWithUrls.forEach(m => {
+                        if (m.mime_type.startsWith('image/')) {
+                            mediaHtml += `<img src="${m.signedUrl}" alt="${m.file_name}" loading="lazy" />`;
+                        } else if (m.mime_type.startsWith('video/')) {
+                            mediaHtml += `<video controls src="${m.signedUrl}"></video>`;
+                        }
+                    });
+                    mediaHtml += '</div>';
+                }
+
+                // Получаем комментарии – в них уже есть author_name и author_surname
                 const { data: comments, error: commentsError } = await supabase
                     .from('comments')
                     .select('*')
                     .eq('article_id', id)
                     .order('created_at', { ascending: true });
                 if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
-
-                let mediaHtml = '';
-                if (article.media && article.media.length > 0) {
-                    mediaHtml = '<div class="news-media">';
-                    article.media.forEach(m => {
-                        const url = getMediaUrl(m.bucket_name, m.file_path);
-                        if (m.mime_type.startsWith('image/')) {
-                            mediaHtml += `<img src="${url}" alt="${m.file_name}" loading="lazy" />`;
-                        } else if (m.mime_type.startsWith('video/')) {
-                            mediaHtml += `<video controls src="${url}"></video>`;
-                        }
-                    });
-                    mediaHtml += '</div>';
-                }
 
                 let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
                 if (comments && comments.length > 0) {
@@ -260,6 +275,7 @@
                             return;
                         }
                         try {
+                            // Вставляем комментарий – триггер сам заполнит author_name и author_surname
                             const { error } = await supabase.from('comments').insert({
                                 article_id: id,
                                 user_id: user.id,

@@ -315,34 +315,39 @@
         }
 
         // Загрузка медиа для статьи
-        async function loadMedia(articleId) {
-            const { data, error } = await supabase.from(MEDIA_TABLE)
-                .select('*')
-                .eq('article_id', articleId)
-                .order('sort_order', { ascending: true });
-            if (error) { showMsg('Ошибка загрузки медиа: ' + error.message); return; }
-            existingMedia.innerHTML = '';
-            data.forEach(m => {
-                const url = supabase.storage.from(m.bucket_name).getPublicUrl(m.file_path).data.publicUrl;
-                const div = document.createElement('div');
-                div.className = 'media-item';
-                div.innerHTML = `
-                    <button class="remove-media" data-id="${m.id}">×</button>
-                    ${m.mime_type.startsWith('image/') ? `<img src="${url}" />` : `<video src="${url}" style="max-width:150px;max-height:150px;"></video>`}
-                `;
-                existingMedia.appendChild(div);
-            });
-            document.querySelectorAll('.remove-media').forEach(btn => btn.addEventListener('click', async function() {
-                const mediaId = this.dataset.id;
-                if (!confirm('Удалить этот файл?')) return;
-                const mediaItem = data.find(m => m.id == mediaId);
-                if (mediaItem) {
-                    await supabase.storage.from(mediaItem.bucket_name).remove([mediaItem.file_path]);
-                    await supabase.from(MEDIA_TABLE).delete().eq('id', mediaId);
-                    loadMedia(currentEditId);
-                }
-            }));
+async function loadMedia(articleId) {
+    const { data, error } = await supabase.from(MEDIA_TABLE)
+        .select('*')
+        .eq('article_id', articleId)
+        .order('sort_order', { ascending: true });
+    if (error) { showMsg('Ошибка загрузки медиа: ' + error.message); return; }
+    existingMedia.innerHTML = '';
+    for (const m of data) {
+        // Получаем подписанный URL
+        const { data: signedData, error: signedError } = await supabase.storage
+            .from(m.bucket_name)
+            .createSignedUrl(m.file_path, 3600);
+        if (signedError) continue;
+        const url = signedData.signedUrl;
+        const div = document.createElement('div');
+        div.className = 'media-item';
+        div.innerHTML = `
+            <button class="remove-media" data-id="${m.id}">×</button>
+            ${m.mime_type.startsWith('image/') ? `<img src="${url}" />` : `<video src="${url}" style="max-width:150px;max-height:150px;"></video>`}
+        `;
+        existingMedia.appendChild(div);
+    }
+    document.querySelectorAll('.remove-media').forEach(btn => btn.addEventListener('click', async function() {
+        const mediaId = this.dataset.id;
+        if (!confirm('Удалить этот файл?')) return;
+        const mediaItem = data.find(m => m.id == mediaId);
+        if (mediaItem) {
+            await supabase.storage.from(mediaItem.bucket_name).remove([mediaItem.file_path]);
+            await supabase.from(MEDIA_TABLE).delete().eq('id', mediaId);
+            loadMedia(currentEditId);
         }
+    }));
+}
 
         // Сохранение статьи
         articleForm.addEventListener('submit', async (e) => {
