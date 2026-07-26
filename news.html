@@ -1,3 +1,4 @@
+<!-- news.html — обновлённая клиентская страница с profiles -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -23,6 +24,7 @@
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css" />
     <style>
+        /* ... стили такие же как раньше ... */
         .news-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
         .news-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.3s; }
@@ -179,15 +181,12 @@
 
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Получаем комментарии с JOIN на auth.users для получения имени и фамилии
-                // Используем raw_user_meta_data для получения данных пользователя
+                // Запрос комментариев с JOIN на profiles (связь по user_id)
                 const { data: comments, error: commentsError } = await supabase
                     .from('comments')
                     .select(`
                         *,
-                        user:user_id (
-                            raw_user_meta_data
-                        )
+                        user:user_id ( name, surname )
                     `)
                     .eq('article_id', id)
                     .order('created_at', { ascending: true });
@@ -210,14 +209,13 @@
                 let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
                 if (comments && comments.length > 0) {
                     comments.forEach(c => {
-                        // Извлекаем имя и фамилию из raw_user_meta_data
+                        // Извлекаем имя и фамилию из связанной записи profiles
                         let authorName = 'Пользователь';
-                        if (c.user && c.user.raw_user_meta_data) {
-                            const meta = c.user.raw_user_meta_data;
-                            if (meta.name || meta.surname) {
-                                authorName = (meta.name || '') + (meta.surname ? ' ' + meta.surname : '');
-                            } else if (meta.full_name) {
-                                authorName = meta.full_name;
+                        if (c.user) {
+                            const name = c.user.name || '';
+                            const surname = c.user.surname || '';
+                            if (name || surname) {
+                                authorName = (name + ' ' + surname).trim();
                             }
                         }
                         commentsHtml += `
