@@ -1,11 +1,11 @@
-<!-- news.html — полная рабочая версия -->
+<!-- news.html — обновлённый клиентский код (без JOIN, без RPC) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Новости СФСРЮ</title>
-    <!-- favicons -->
+    <!-- favicons (те же) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -24,6 +24,7 @@
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css" />
     <style>
+        /* ... стили те же ... */
         .news-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
         .news-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.3s; }
@@ -61,6 +62,7 @@
     </style>
 </head>
 <body>
+    <!-- шапка (как раньше) -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -180,9 +182,12 @@
 
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Используем RPC функцию для получения комментариев с данными пользователя
+                // Просто получаем все комментарии – имя и фамилия уже есть в колонках author_name и author_surname
                 const { data: comments, error: commentsError } = await supabase
-                    .rpc('get_comments_with_users', { article_id: id });
+                    .from('comments')
+                    .select('*')
+                    .eq('article_id', id)
+                    .order('created_at', { ascending: true });
                 if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
 
                 let mediaHtml = '';
@@ -202,10 +207,9 @@
                 let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
                 if (comments && comments.length > 0) {
                     comments.forEach(c => {
-                        // Извлекаем имя и фамилию из данных, возвращённых функцией
                         let authorName = 'Пользователь';
-                        if (c.user_name || c.user_surname) {
-                            authorName = (c.user_name || '') + ' ' + (c.user_surname || '');
+                        if (c.author_name || c.author_surname) {
+                            authorName = (c.author_name || '') + ' ' + (c.author_surname || '');
                             authorName = authorName.trim();
                         }
                         commentsHtml += `
@@ -260,6 +264,7 @@
                             return;
                         }
                         try {
+                            // Вставка – триггер сам заполнит author_name и author_surname
                             const { error } = await supabase.from('comments').insert({
                                 article_id: id,
                                 user_id: user.id,
