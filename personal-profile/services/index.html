@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои услуги — СФСРЮ</title>
-    <!-- favicons -->
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -29,8 +29,7 @@
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Стили из объединённых файлов */
-        .services-container, .service-container {
+        .services-container {
             max-width: 1000px;
             margin: 2rem auto;
             background: white;
@@ -116,162 +115,106 @@
         .service-card .fa-check-circle { color: #28a745; }
         .service-card .fa-times-circle { color: #dc3545; }
         .service-card .fa-ban { color: #6c757d; }
-
         .loading, .no-data, .error {
             text-align: center;
             padding: 3rem;
             color: #6c757d;
             font-size: 1.1rem;
         }
-
-        /* Стили для просмотра */
-        .service-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #7b091a;
-            margin-bottom: 0.25rem;
-            letter-spacing: -0.5px;
+        /* Модалка просмотра */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
-        .service-number {
-            font-size: 1rem;
-            color: #6c757d;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 1rem;
+        .modal.active {
+            display: flex;
         }
+        .modal-content {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 24px;
+            max-width: 700px;
+            width: 95%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 35px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 0.75rem;
+        }
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #0f172a;
+        }
+        .close {
+            font-size: 1.75rem;
+            cursor: pointer;
+            color: #64748b;
+            transition: color 0.2s;
+            line-height: 1;
+        }
+        .close:hover { color: #7b091a; }
         .status-card {
             background: #f8f9fa;
-            border-radius: 14px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
             border: 1px solid #e9ecef;
-            transition: all 0.2s ease;
-        }
-        .status-card:hover {
-            background: #ffffff;
-            border-color: #ced4da;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
         .status-header {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
-        .status-icon {
-            font-size: 1.5rem;
-            line-height: 1;
-            width: 2rem;
-            text-align: center;
-        }
-        .status-name {
-            font-weight: 600;
-            color: #7b091a;
-            flex: 1;
-        }
-        .status-date {
-            color: #666;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-        .status-comment {
-            color: #555;
-            margin-bottom: 1rem;
-            padding-left: 2.75rem;
-        }
-        .files-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            padding-left: 2.75rem;
-        }
-        .file-item {
-            background: #e9ecef;
-            border-radius: 6px;
-            padding: 0.3rem 0.8rem;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        .file-item a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .file-item a:hover {
-            text-decoration: underline;
-        }
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            margin-top: 0.5rem;
-        }
-        .toggle-history, .back-link {
-            display: inline-block;
-            width: 100%;
-            text-align: center;
-            padding: 0.75rem 1rem;
-            font-size: 1rem;
-            border-radius: 8px;
-            box-sizing: border-box;
-            transition: background-color 0.2s;
-            border: none;
-            cursor: pointer;
-        }
+        .status-icon { font-size: 1.3rem; width: 2rem; text-align: center; }
+        .status-name { font-weight: 600; color: #7b091a; flex: 1; }
+        .status-date { color: #666; font-size: 0.85rem; }
+        .status-comment { color: #555; padding-left: 2.75rem; margin-bottom: 0.5rem; }
+        .files-list { display: flex; flex-wrap: wrap; gap: 0.5rem; padding-left: 2.75rem; }
+        .file-item { background: #e9ecef; border-radius: 6px; padding: 0.2rem 0.6rem; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .file-item a { color: #007bff; text-decoration: none; }
+        .file-item a:hover { text-decoration: underline; }
+        .detail-row { display: flex; padding: 0.3rem 0; border-bottom: 1px solid #f1f5f9; }
+        .detail-label { font-weight: 600; width: 35%; color: #0f172a; }
+        .detail-value { width: 65%; color: #1e293b; }
         .toggle-history {
-            background-color: #e9ecef;
+            background: #e9ecef;
             border: 1px solid #ced4da;
             color: #495057;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 1rem;
+            width: 100%;
+            text-align: center;
         }
-        .toggle-history:hover {
-            background-color: #dee2e6;
-        }
-        .back-link {
-            background-color: #6c757d;
-            color: white;
-            text-decoration: none;
-        }
-        .back-link:hover {
-            background-color: #5a6268;
-        }
-        .back-link i {
-            margin-right: 0.5rem;
-        }
-        .toggle-history {
-            display: none;
-        }
-        #historyList .status-card:not(:first-child) {
-            display: none;
-        }
-        #historyList.show-all .status-card {
-            display: block;
-        }
-
+        .toggle-history:hover { background: #dee2e6; }
+        #historyList .status-card:not(:first-child) { display: none; }
+        #historyList.show-all .status-card { display: block; }
         @media (max-width: 600px) {
-            .services-container, .service-container {
-                padding: 1.5rem;
-                margin: 1rem;
-            }
-            .service-card {
-                flex-wrap: wrap;
-                padding: 1rem;
-            }
-            .service-icon {
-                width: 2rem;
-                font-size: 1.5rem;
-            }
-            .service-name {
-                font-size: 1.1rem;
-                white-space: normal;
-            }
-            .service-status {
-                margin-left: 0;
-                width: 100%;
-                text-align: center;
-                margin-top: 0.5rem;
-            }
+            .services-container { padding: 1.5rem; margin: 1rem; }
+            .service-card { flex-wrap: wrap; padding: 1rem; }
+            .service-icon { width: 2rem; font-size: 1.5rem; }
+            .service-name { font-size: 1.1rem; white-space: normal; }
+            .service-status { margin-left: 0; width: 100%; text-align: center; margin-top: 0.5rem; }
+            .modal-content { padding: 1rem; }
         }
     </style>
     <script type="importmap">
@@ -309,8 +252,31 @@
     <div class="menu-overlay"></div>
 
     <main class="main-content">
-        <div id="app"></div>
+        <div class="services-container">
+            <h1 class="page-title">Мои услуги</h1>
+            <p class="page-description">Ваши заявления на получение услуг</p>
+
+            <div id="loading" class="loading">Загрузка...</div>
+            <div id="servicesList"></div>
+        </div>
     </main>
+
+    <!-- Модалка просмотра заявки -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="viewTitle">Заявление</h3>
+                <span class="close" id="closeViewModal">&times;</span>
+            </div>
+            <div id="viewContent">
+                <div id="viewDetails"></div>
+                <hr>
+                <h4><i class="fas fa-history"></i> История статусов</h4>
+                <div id="viewHistory"></div>
+                <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
@@ -322,6 +288,8 @@
         import { supabase } from '../../js/supabase-config.js';
 
         let currentUserId = null;
+        let serviceNameMap = {};
+
         const statusMap = {
             'submitted': 'Отправлено в ведомство',
             'processing': 'В работе',
@@ -330,12 +298,6 @@
             'completed': 'Результат выдан',
             'rejected': 'Отказано',
             'cancelled': 'Отменено'
-        };
-
-        const serviceTypeNames = {
-            'passport': 'Внутренний паспорт',
-            'foreign_passport': 'Заграничный паспорт',
-            'inn': 'Получение ИНН'
         };
 
         function getStatusIcon(status) {
@@ -358,112 +320,55 @@
             return true;
         }
 
-        // Получение подписанной ссылки на файл
-        async function getSignedUrl(filePath) {
-            if (!filePath) return null;
-            try {
-                const { data, error } = await supabase.storage
-                    .from('services-files')
-                    .createSignedUrl(filePath, 3600);
-                if (error) throw error;
-                return data.signedUrl;
-            } catch (e) {
-                console.error('Ошибка получения ссылки на файл:', e);
-                return null;
+        async function loadServiceCatalog() {
+            const { data, error } = await supabase
+                .schema('services')
+                .from('catalog')
+                .select('id, service_key, name_ru');
+            if (error) {
+                console.error('Ошибка загрузки каталога:', error);
+                return;
             }
+            data.forEach(item => {
+                serviceNameMap[item.id] = item.name_ru;
+            });
         }
 
-        // ========== Отрисовка списка ==========
-        async function renderList() {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="services-container">
-                    <h1 class="page-title">Мои услуги</h1>
-                    <p class="page-description">Ваши заявления на получение услуг</p>
-                    <div id="loading" class="loading">Загрузка...</div>
-                    <div id="servicesList"></div>
-                </div>
-            `;
-
+        async function loadServices() {
             const loading = document.getElementById('loading');
             const list = document.getElementById('servicesList');
             loading.style.display = 'block';
 
-            // Загружаем из старых таблиц
-            const tables = ['passport', 'foreign_passport'];
-            let allData = [];
-
-            for (const table of tables) {
-                const { data, error } = await supabase
-                    .schema('services')
-                    .from(table)
-                    .select('id, application_number, created_at, status, service_type')
-                    .eq('user_id', currentUserId)
-                    .order('created_at', { ascending: false });
-                if (!error && data) {
-                    allData = allData.concat(data);
-                } else {
-                    console.error(`Ошибка загрузки ${table}:`, error);
-                }
-            }
-
-            // Загружаем из новой таблицы applications (для ИНН и будущих услуг)
-            const { data: appData, error: appError } = await supabase
+            // Загружаем из новой единой таблицы
+            const { data, error } = await supabase
                 .schema('services')
                 .from('applications')
-                .select(`
-                    id,
-                    application_number,
-                    created_at,
-                    status,
-                    service_id,
-                    catalog:service_id (service_key, name_ru)
-                `)
+                .select('id, application_number, created_at, status, service_id, personal_code, data')
                 .eq('user_id', currentUserId)
                 .order('created_at', { ascending: false });
 
-            if (!appError && appData) {
-                // Преобразуем для единого формата
-                const mapped = appData.map(item => ({
-                    id: item.id,
-                    application_number: item.application_number,
-                    created_at: item.created_at,
-                    status: item.status,
-                    service_type: item.catalog ? item.catalog.service_key : 'unknown',
-                    _service_name: item.catalog ? item.catalog.name_ru : 'Услуга'
-                }));
-                allData = allData.concat(mapped);
-            } else {
-                console.error('Ошибка загрузки applications:', appError);
+            if (error) {
+                console.error('Ошибка загрузки услуг:', error);
+                list.innerHTML = '<p class="error">Ошибка загрузки данных</p>';
+                loading.style.display = 'none';
+                return;
             }
 
-            // Сортируем по дате
-            allData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-            if (allData.length === 0) {
+            if (!data || data.length === 0) {
                 list.innerHTML = '<p class="no-data">У вас пока нет заявлений</p>';
                 loading.style.display = 'none';
                 return;
             }
 
-            list.innerHTML = allData.map(item => {
+            list.innerHTML = data.map(item => {
+                const serviceName = serviceNameMap[item.service_id] || 'Услуга';
                 const statusClass = `status-${item.status}`;
                 const statusText = statusMap[item.status] || item.status;
                 const date = new Date(item.created_at).toLocaleDateString('ru-RU');
                 const iconHtml = getStatusIcon(item.status);
-                const serviceName = item._service_name || serviceTypeNames[item.service_type] || 'Услуга';
-
-                // Определяем тип для ссылки (для старых таблиц передаём type, для новых – type=application)
-                let typeParam = item.service_type;
-                if (item._service_name) {
-                    // это из applications
-                    typeParam = 'application';
-                }
-                // Если тип не определён, используем 'unknown'
-                const linkType = typeParam || 'unknown';
 
                 return `
-                    <div class="service-card" data-id="${item.id}" data-type="${linkType}">
+                    <div class="service-card" data-id="${item.id}">
                         <div class="service-icon">${iconHtml}</div>
                         <div class="service-info">
                             <div class="service-name">${serviceName}</div>
@@ -475,214 +380,145 @@
                 `;
             }).join('');
 
-            // Обработка клика по карточке
+            // Клик по карточке — открываем просмотр
             list.querySelectorAll('.service-card').forEach(card => {
                 card.addEventListener('click', () => {
                     const id = card.dataset.id;
-                    const type = card.dataset.type;
-                    // Переход на просмотр с параметрами
-                    window.history.pushState({}, '', `?id=${id}&type=${type}`);
-                    renderView(id, type);
+                    openViewModal(id);
                 });
             });
 
             loading.style.display = 'none';
         }
 
-        // ========== Отрисовка просмотра ==========
-        async function renderView(id, type) {
-            const app = document.getElementById('app');
-            app.innerHTML = `
-                <div class="service-container">
-                    <div id="viewContent">
-                        <div class="service-title" id="serviceName">Загрузка...</div>
-                        <div class="service-number" id="appNumber"></div>
-                        <div id="loading" class="loading">Загрузка...</div>
-                        <div id="error" class="error" style="display:none;"></div>
-                        <div id="historyList"></div>
-                        <div class="action-buttons">
-                            <button class="toggle-history" id="toggleHistoryBtn" style="display:none;">Показать историю</button>
-                            <button class="back-link" id="backToList"><i class="fas fa-arrow-left"></i> Назад к списку услуг</button>
-                        </div>
-                    </div>
-                </div>
-            `;
+        // ============================================================
+        // Просмотр заявки
+        // ============================================================
+        async function openViewModal(appId) {
+            const modal = document.getElementById('viewModal');
+            const details = document.getElementById('viewDetails');
+            const history = document.getElementById('viewHistory');
+            const title = document.getElementById('viewTitle');
 
-            document.getElementById('backToList').addEventListener('click', () => {
-                window.history.pushState({}, '', window.location.pathname);
-                renderList();
-            });
+            modal.classList.add('active');
+            details.innerHTML = 'Загрузка...';
+            history.innerHTML = '';
 
-            const loading = document.getElementById('loading');
-            const errorDiv = document.getElementById('error');
-            const historyList = document.getElementById('historyList');
-            const toggleBtn = document.getElementById('toggleHistoryBtn');
-
-            try {
-                let appData = null;
-                let historyTable = '';
-                let photoPath = null;
-
-                // Определяем, откуда загружать данные
-                if (type === 'application') {
-                    // Новая таблица applications
-                    const { data, error } = await supabase
-                        .schema('services')
-                        .from('applications')
-                        .select(`
-                            *,
-                            catalog:service_id (service_key, name_ru)
-                        `)
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .single();
-
-                    if (error || !data) {
-                        throw new Error('Заявление не найдено');
-                    }
-                    appData = data;
-                    // Для новой таблицы история в application_status_history
-                    historyTable = 'application_status_history';
-                    // В новой таблице нет photo_path, но могут быть вложения в истории
-                } else {
-                    // Старые таблицы: passport или foreign_passport
-                    let table = '';
-                    if (type === 'passport') table = 'passport';
-                    else if (type === 'foreign_passport') table = 'foreign_passport';
-                    else throw new Error('Неизвестный тип услуги');
-
-                    const { data, error } = await supabase
-                        .schema('services')
-                        .from(table)
-                        .select('*')
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .single();
-
-                    if (error || !data) {
-                        throw new Error('Заявление не найдено');
-                    }
-                    appData = data;
-                    // Определяем таблицу истории
-                    historyTable = (type === 'foreign_passport') ? 'foreign_passport_status_history' : 'passport_status_history';
-                    photoPath = data.photo_path || null;
-                }
-
-                // Отображаем название услуги
-                let serviceName = '';
-                if (appData.catalog) {
-                    serviceName = appData.catalog.name_ru || 'Услуга';
-                } else {
-                    serviceName = serviceTypeNames[appData.service_type] || 'Услуга';
-                }
-                document.getElementById('serviceName').textContent = serviceName;
-                document.getElementById('appNumber').textContent = `№ ${appData.application_number}`;
-
-                // Загружаем историю
-                await loadHistory(id, historyTable, photoPath, appData.application_number, historyList, toggleBtn);
-
-                loading.style.display = 'none';
-
-            } catch (err) {
-                console.error(err);
-                loading.style.display = 'none';
-                errorDiv.textContent = err.message || 'Ошибка загрузки данных';
-                errorDiv.style.display = 'block';
-                historyList.innerHTML = '';
-            }
-        }
-
-        // Загрузка истории (общая для старых и новых таблиц)
-        async function loadHistory(passportId, historyTable, photoPath, appNumber, listEl, toggleBtn) {
-            const { data, error } = await supabase
+            // Загружаем данные заявки
+            const { data: app, error: appError } = await supabase
                 .schema('services')
-                .from(historyTable)
-                .select('*')
-                .eq('passport_id', passportId)  // в новой таблице поле тоже называется passport_id (или application_id? проверим)
-                .order('created_at', { ascending: false });
+                .from('applications')
+                .select('*, catalog:service_id(name_ru)')
+                .eq('id', appId)
+                .single();
 
-            // Если таблица application_status_history использует application_id, а не passport_id, то нужно проверить
-            // Для универсальности, если данных нет, попробуем с application_id
-            let historyData = data;
-            if (error || !data || data.length === 0) {
-                // Возможно, используется application_id
-                const { data: altData, error: altError } = await supabase
-                    .schema('services')
-                    .from(historyTable)
-                    .select('*')
-                    .eq('application_id', passportId)
-                    .order('created_at', { ascending: false });
-                if (!altError && altData) {
-                    historyData = altData;
-                } else {
-                    // Если ничего не найдено, показываем сообщение
-                    listEl.innerHTML = '<p class="no-data">История отсутствует</p>';
-                    toggleBtn.style.display = 'none';
-                    return;
-                }
-            }
-
-            if (!historyData || historyData.length === 0) {
-                listEl.innerHTML = '<p class="no-data">История отсутствует</p>';
-                toggleBtn.style.display = 'none';
+            if (appError || !app) {
+                details.innerHTML = '<div class="error">Ошибка загрузки заявки</div>';
                 return;
             }
 
-            let html = '';
+            const serviceName = app.catalog?.name_ru || 'Услуга';
+            title.textContent = `${serviceName} — № ${app.application_number}`;
+
+            // Отображаем детали (автоматически из data)
+            let detailsHtml = '';
+            const dataFields = app.data || {};
+            // Основные поля
+            const mainFields = [
+                ['Номер заявления', app.application_number],
+                ['Статус', statusMap[app.status] || app.status],
+                ['Дата создания', new Date(app.created_at).toLocaleString()],
+                ['Личный код', app.personal_code || '—']
+            ];
+            mainFields.forEach(([label, value]) => {
+                detailsHtml += `<div class="detail-row"><div class="detail-label">${label}</div><div class="detail-value">${value}</div></div>`;
+            });
+
+            // Динамические поля из data (человекочитаемые названия)
+            const humanReadableMap = {
+                'type': 'Способ получения',
+                'fns_office_id': 'Отделение ФНС',
+                'reason': 'Причина',
+                'phone': 'Телефон',
+                'email': 'Email',
+                'passport_type': 'Тип паспорта',
+                'recipient_type': 'Кому',
+                'visa_type': 'Вид паспорта',
+                'include_children_in_parent': 'Вписывать детей'
+            };
+
+            // Преобразуем значения
+            const typeMap = {
+                'electronic': 'Электронный',
+                'paper': 'Бумажный',
+                'biometric': 'Биометрический',
+                'nonbiometric': 'Небиометрический',
+                'self': 'Только себе',
+                'self_children': 'Себе и детям',
+                'children_only': 'Только детям',
+                'civil': 'Общегражданский',
+                'diplomatic': 'Дипломатический',
+                'service': 'Служебный'
+            };
+
+            for (const [key, value] of Object.entries(dataFields)) {
+                if (value === null || value === undefined || value === '') continue;
+                let label = humanReadableMap[key] || key;
+                let displayValue = value;
+                if (key === 'include_children_in_parent') {
+                    displayValue = value ? 'Да' : 'Нет';
+                } else if (typeMap[value]) {
+                    displayValue = typeMap[value];
+                } else if (key === 'fns_office_id' && value) {
+                    // Загружаем название ФНС
+                    const { data: fnsData } = await supabase
+                        .schema('services')
+                        .from('fns_offices')
+                        .select('name')
+                        .eq('id', value)
+                        .single();
+                    if (fnsData) displayValue = fnsData.name;
+                }
+                detailsHtml += `<div class="detail-row"><div class="detail-label">${label}</div><div class="detail-value">${displayValue}</div></div>`;
+            }
+
+            details.innerHTML = detailsHtml;
+
+            // Загружаем историю
+            const { data: historyData, error: histError } = await supabase
+                .schema('services')
+                .from('application_status_history')
+                .select('*')
+                .eq('application_id', appId)
+                .order('created_at', { ascending: false });
+
+            if (histError) {
+                history.innerHTML = '<div class="error">Ошибка загрузки истории</div>';
+                return;
+            }
+
+            if (!historyData || historyData.length === 0) {
+                history.innerHTML = '<p class="no-data">История отсутствует</p>';
+                document.getElementById('toggleHistoryBtn').style.display = 'none';
+                return;
+            }
+
+            let historyHtml = '';
             for (const item of historyData) {
                 const statusText = statusMap[item.status] || item.status;
                 const iconHtml = getStatusIcon(item.status);
-                const files = item.attachments || [];
                 const fileLinks = [];
-
-                // Для статуса "submitted" добавляем фото и заявление (если есть)
-                if (item.status === 'submitted') {
-                    if (photoPath) {
-                        const photoUrl = await getSignedUrl(photoPath);
-                        if (photoUrl) {
-                            const fileName = photoPath.split('/').pop() || 'photo.jpg';
-                            fileLinks.push(`
-                                <div class="file-item">
-                                    <span>📷</span>
-                                    <a href="${photoUrl}" target="_blank">${fileName}</a>
-                                </div>
-                            `);
-                        }
-                    }
-                    // Для заграничного паспорта путь к PDF может быть другим
-                    let statementPath;
-                    if (currentServiceType === 'foreign_passport') {
-                        statementPath = `foreign_passport/${appNumber}/statement.pdf`;
-                    } else if (currentServiceType === 'passport') {
-                        statementPath = `passport/${appNumber}/statement.pdf`;
+                const attachments = item.attachments || [];
+                for (const filePath of attachments) {
+                    const signedUrl = await getSignedUrl(filePath);
+                    const fileName = filePath.split('/').pop() || 'файл';
+                    if (signedUrl) {
+                        fileLinks.push(`<div class="file-item"><a href="${signedUrl}" target="_blank">📎 ${fileName}</a></div>`);
                     } else {
-                        statementPath = `applications/${appNumber}/statement.pdf`; // для новых услуг
-                    }
-                    const statementUrl = await getSignedUrl(statementPath);
-                    if (statementUrl) {
-                        fileLinks.push(`
-                            <div class="file-item">
-                                <span>📄</span>
-                                <a href="${statementUrl}" target="_blank">statement.pdf</a>
-                            </div>
-                        `);
+                        fileLinks.push(`<div class="file-item">📎 ${fileName} (недоступен)</div>`);
                     }
                 }
-
-                for (const f of files) {
-                    const url = await getSignedUrl(f);
-                    if (url) {
-                        const fileName = f.split('/').pop() || 'файл';
-                        fileLinks.push(`
-                            <div class="file-item">
-                                <span>📎</span>
-                                <a href="${url}" target="_blank">${fileName}</a>
-                            </div>
-                        `);
-                    }
-                }
-
-                html += `
+                historyHtml += `
                     <div class="status-card">
                         <div class="status-header">
                             <div class="status-icon">${iconHtml}</div>
@@ -694,43 +530,65 @@
                     </div>
                 `;
             }
+            history.innerHTML = historyHtml;
 
-            listEl.innerHTML = html;
-
-            const statusCards = listEl.querySelectorAll('.status-card');
-            if (statusCards.length > 1) {
-                toggleBtn.style.display = 'inline-block';
-                listEl.classList.remove('show-all');
+            // Управление кнопкой "Показать историю"
+            const toggleBtn = document.getElementById('toggleHistoryBtn');
+            const historyContainer = document.getElementById('viewHistory');
+            const cards = historyContainer.querySelectorAll('.status-card');
+            if (cards.length > 1) {
+                toggleBtn.style.display = 'block';
+                historyContainer.classList.remove('show-all');
                 toggleBtn.textContent = 'Показать историю';
-                toggleBtn.onclick = () => {
-                    listEl.classList.toggle('show-all');
-                    toggleBtn.textContent = listEl.classList.contains('show-all') ? 'Скрыть историю' : 'Показать историю';
-                };
             } else {
                 toggleBtn.style.display = 'none';
             }
         }
 
-        // ========== Роутинг ==========
-        async function router() {
-            const params = new URLSearchParams(window.location.search);
-            const id = params.get('id');
-            const type = params.get('type');
-
-            if (id && type) {
-                await renderView(id, type);
-            } else {
-                await renderList();
+        async function getSignedUrl(filePath) {
+            if (!filePath) return null;
+            try {
+                const { data, error } = await supabase.storage
+                    .from('services-files')
+                    .createSignedUrl(filePath, 3600);
+                if (error) throw error;
+                return data.signedUrl;
+            } catch (e) {
+                console.error('Ошибка получения ссылки:', e);
+                return null;
             }
         }
 
-        // Обработка изменения URL (назад/вперёд)
-        window.addEventListener('popstate', router);
-
-        // ========== Инициализация ==========
+        // ============================================================
+        // Инициализация
+        // ============================================================
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await loadUserProfile()) return;
-            await router();
+            await loadServiceCatalog();
+            await loadServices();
+
+            // Закрытие модалки
+            document.getElementById('closeViewModal').addEventListener('click', () => {
+                document.getElementById('viewModal').classList.remove('active');
+            });
+            window.addEventListener('click', (e) => {
+                if (e.target === document.getElementById('viewModal')) {
+                    document.getElementById('viewModal').classList.remove('active');
+                }
+            });
+
+            // Кнопка "Показать историю"
+            document.getElementById('toggleHistoryBtn').addEventListener('click', () => {
+                const history = document.getElementById('viewHistory');
+                const btn = document.getElementById('toggleHistoryBtn');
+                if (history.classList.contains('show-all')) {
+                    history.classList.remove('show-all');
+                    btn.textContent = 'Показать историю';
+                } else {
+                    history.classList.add('show-all');
+                    btn.textContent = 'Скрыть историю';
+                }
+            });
         });
     </script>
 </body>
