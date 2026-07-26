@@ -114,24 +114,20 @@
         const listEl = document.getElementById('news-list');
         const detailEl = document.getElementById('news-detail');
 
-        // Получение текущего пользователя
         async function getCurrentUser() {
             const { data: { user } } = await supabase.auth.getUser();
             return user;
         }
 
-        // Форматирование даты
         function formatDate(date) {
             return new Date(date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // Получение публичного URL для медиа
         function getMediaUrl(bucket, path) {
             const { data } = supabase.storage.from(bucket).getPublicUrl(path);
             return data.publicUrl;
         }
 
-        // Загрузка списка статей
         async function loadArticles() {
             listEl.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка новостей...</div>';
             try {
@@ -167,14 +163,12 @@
             }
         }
 
-        // Загрузка одной статьи
         async function loadArticle(id) {
             detailEl.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка статьи...</div>';
             detailEl.style.display = 'block';
             listEl.style.display = 'none';
 
             try {
-                // Получаем статью с медиа
                 const { data: article, error } = await supabase
                     .from('articles')
                     .select('*, media(*)')
@@ -183,21 +177,19 @@
                     .single();
                 if (error || !article) throw new Error('Статья не найдена.');
 
-                // Увеличиваем счётчик просмотров
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Получаем комментарии с JOIN на profiles для получения имени и фамилии
+                // Правильный запрос комментариев с присоединением профилей
                 const { data: comments, error: commentsError } = await supabase
                     .from('comments')
                     .select(`
                         *,
-                        profile:user_id ( name, surname )
+                        profiles:user_id ( name, surname )
                     `)
                     .eq('article_id', id)
                     .order('created_at', { ascending: true });
                 if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
 
-                // Медиа
                 let mediaHtml = '';
                 if (article.media && article.media.length > 0) {
                     mediaHtml = '<div class="news-media">';
@@ -212,14 +204,15 @@
                     mediaHtml += '</div>';
                 }
 
-                // Комментарии с именем и фамилией
                 let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
                 if (comments && comments.length > 0) {
                     comments.forEach(c => {
-                        // Получаем имя и фамилию из профиля
                         let authorName = 'Пользователь';
-                        if (c.profile && c.profile.name) {
-                            authorName = c.profile.name + (c.profile.surname ? ' ' + c.profile.surname : '');
+                        if (c.profiles && c.profiles.length > 0) {
+                            const profile = c.profiles[0];
+                            if (profile.name) {
+                                authorName = profile.name + (profile.surname ? ' ' + profile.surname : '');
+                            }
                         }
                         commentsHtml += `
                             <div class="comment">
@@ -233,7 +226,6 @@
                     commentsHtml += '<p>Комментариев пока нет. Будьте первым!</p>';
                 }
 
-                // Форма комментария (только для авторизованных)
                 const user = await getCurrentUser();
                 if (user) {
                     commentsHtml += `
@@ -263,7 +255,6 @@
                     </div>
                 `;
 
-                // Обработка отправки комментария
                 const commentForm = document.getElementById('commentForm');
                 const commentMsg = document.getElementById('commentMsg');
                 if (commentForm) {
@@ -283,7 +274,6 @@
                             if (error) throw new Error(error.message);
                             commentMsg.innerHTML = '<div class="success-msg">Комментарий добавлен!</div>';
                             commentForm.querySelector('textarea').value = '';
-                            // Перезагружаем комментарии (без перезагрузки всей статьи)
                             setTimeout(() => loadArticle(id), 1000);
                         } catch (err) {
                             commentMsg.innerHTML = `<div class="error-msg">${err.message}</div>`;
@@ -296,7 +286,6 @@
             }
         }
 
-        // Маршрутизация
         function route() {
             const params = new URLSearchParams(window.location.search);
             const id = params.get('id');
