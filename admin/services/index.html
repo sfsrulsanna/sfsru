@@ -2,8 +2,8 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Управление услугами — Админ панель СФСРЮ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админка услуг — СФСРЮ</title>
     <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
@@ -26,68 +26,104 @@
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* все стили из предыдущих файлов + дополнительные */
+        /* Общие стили для админки */
         .container { max-width: 1280px; margin: 0 auto; padding: 1rem; }
         .page-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; border-left: 4px solid #7b091a; padding-left: 1rem; }
         .page-description { color: #64748b; margin-bottom: 2rem; font-size: 1rem; }
-        .service-tabs { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
-        .service-tab { background: #f1f5f9; border: none; padding: 0.75rem 1.75rem; border-radius: 40px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: all 0.2s; color: #1e293b; }
-        .service-tab:hover { background: #e2e8f0; transform: translateY(-2px); }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem; }
+        .btn-primary { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 40px; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,123,255,0.3); }
+        .btn-success { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 40px; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(40,167,69,0.3); }
+        .btn-danger { background: linear-gradient(135deg, #dc3545, #b02a37); color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 40px; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220,53,69,0.3); }
+        .btn-secondary { background: #6c757d; color: white; border: none; padding: 0.7rem 1.5rem; border-radius: 40px; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-secondary:hover { background: #5a6268; transform: translateY(-2px); }
+
+        .service-tabs { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .service-tab { background: #f1f5f9; border: none; padding: 0.6rem 1.5rem; border-radius: 40px; cursor: pointer; font-size: 0.95rem; font-weight: 500; transition: all 0.2s; color: #1e293b; }
+        .service-tab:hover { background: #e2e8f0; }
         .service-tab.active { background: #7b091a; color: white; box-shadow: 0 2px 8px rgba(123,9,26,0.2); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-        .stat-card { background: white; border-radius: 16px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; }
-        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
-        .stat-number { font-size: 2.5rem; font-weight: 700; color: #7b091a; margin-bottom: 0.5rem; }
-        .stat-label { color: #475569; font-size: 0.9rem; font-weight: 500; }
-        .filters { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center; background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
-        .filters select, .filters input { padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: 40px; font-size: 0.95rem; min-width: 200px; background: white; }
+
+        .filters { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-bottom: 1.5rem; }
+        .filters select, .filters input { padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: 40px; font-size: 0.95rem; background: white; }
+        .filters input { min-width: 200px; }
         .filters button { background: linear-gradient(135deg, #007bff, #0056b3); border: none; padding: 0.6rem 1.5rem; border-radius: 40px; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s; }
         .filters button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
         .stats-badge { background: #f1f5f9; padding: 0.4rem 1rem; border-radius: 40px; font-size: 0.9rem; font-weight: 500; color: #1e293b; }
+
         .app-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .app-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; }
-        .app-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+        .app-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; cursor: pointer; }
         .app-table tr:hover td { background: #fef9e3; }
-        .btn-view { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 6px 16px; border-radius: 40px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem; transition: all 0.2s; }
-        .btn-view:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
-        .btn-take { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 6px 16px; border-radius: 40px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
-        .btn-take:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(40,167,69,0.2); }
-        .btn-create { background: linear-gradient(135deg, #6f42c1, #5530a3); color: white; border: none; padding: 6px 16px; border-radius: 40px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
-        .btn-create:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(111,66,193,0.2); }
-        .action-bar { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; align-items: center; justify-content: space-between; }
+        .app-table .status-badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 30px; font-size: 0.8rem; font-weight: 500; }
+        .status-submitted { background: #fff3cd; color: #856404; }
+        .status-processing { background: #cce5ff; color: #004085; }
+        .status-interim { background: #d4edda; color: #155724; }
+        .status-positive { background: #d4edda; color: #155724; }
+        .status-completed { background: #d4edda; color: #155724; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+        .status-cancelled { background: #e2e3e5; color: #383d41; }
+
         .loading, .no-data, .error { text-align: center; padding: 2rem; color: #64748b; font-size: 1rem; }
         .error { color: #dc3545; background: #fff5f5; border-radius: 12px; }
-        .hidden { display: none; }
-        /* модальное окно создания заявления */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; overflow-y: auto; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; padding: 1.5rem; border-radius: 24px; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 35px rgba(0,0,0,0.2); }
+
+        /* Модальные окна */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 24px; max-width: 700px; width: 95%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 35px rgba(0,0,0,0.2); animation: slideUp 0.2s ease; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; }
         .modal-header h3 { margin: 0; font-size: 1.3rem; font-weight: 600; color: #0f172a; }
-        .close { font-size: 1.75rem; cursor: pointer; color: #64748b; transition: color 0.2s; line-height: 1; }
-        .close:hover { color: #7b091a; }
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; }
-        .form-control { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; transition: border 0.2s, box-shadow 0.2s; background: white; }
+        .modal-header .close { font-size: 1.75rem; cursor: pointer; color: #64748b; transition: color 0.2s; line-height: 1; }
+        .modal-header .close:hover { color: #7b091a; }
+
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; color: #1e293b; font-size: 0.95rem; }
+        .form-control { width: 100%; padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; transition: border 0.2s; background: white; }
         .form-control:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
-        select.form-control { background: white; cursor: pointer; }
-        .btn-primary { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 40px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,123,255,0.2); }
-        .btn-secondary { background: #6c757d; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 40px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
-        .btn-secondary:hover { background: #5a6268; transform: translateY(-2px); }
-        .mt-2 { margin-top: 1rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+        .form-group textarea { min-height: 80px; resize: vertical; }
+
+        .file-list { margin-top: 0.5rem; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.4rem 0.75rem; background: #f8fafc; margin-bottom: 0.3rem; border-radius: 8px; font-size: 0.9rem; }
+        .btn-small { padding: 0.2rem 0.6rem; font-size: 0.75rem; background: #dc3545; color: white; border: none; border-radius: 20px; cursor: pointer; }
+        .btn-small:hover { background: #b02a37; }
+
+        /* История */
+        .history-item { background: #ffffff; padding: 1rem; border-left: 4px solid #7b091a; margin-bottom: 0.75rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .history-item .meta { font-size: 0.8rem; color: #64748b; margin-bottom: 0.3rem; }
+        .history-item .status { font-weight: 700; color: #7b091a; }
+        .attachments-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+        .attachments-list a { background: #f1f5f9; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem; text-decoration: none; color: #0f172a; }
+        .attachments-list a:hover { background: #e2e8f0; }
+
+        /* Детали заявки в модалке */
+        .detail-row { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; }
+        .detail-label { font-weight: 600; width: 35%; color: #0f172a; }
+        .detail-value { width: 65%; color: #1e293b; }
+
+        /* Адаптив */
         @media (max-width: 768px) {
             .app-table, .app-table tbody, .app-table tr, .app-table td, .app-table th { display: block; }
             .app-table tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
             .app-table th { display: none; }
             .app-table td { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: none; }
             .app-table td::before { content: attr(data-label); font-weight: 600; color: #0f172a; margin-right: 1rem; }
-            .action-bar { flex-direction: column; align-items: stretch; }
-            .modal-content { padding: 1rem; }
+            .form-row { grid-template-columns: 1fr; }
+            .form-row-3 { grid-template-columns: 1fr; }
+            .modal-content { padding: 1rem; max-width: 100%; }
+            .top-bar { flex-direction: column; align-items: stretch; }
         }
     </style>
     <script type="importmap">
-        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
     </script>
 </head>
 <body>
@@ -95,7 +131,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ — Администратор</h1>
+                <h1>СФСРЮ — Администратор услуг</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -104,12 +140,10 @@
             </button>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная администратора</a></li>
+                    <li><a href="../index.html">Главная</a></li>
                     <li><a href="index.html" class="active">Услуги</a></li>
                     <li><a href="../documents/">Документы</a></li>
                     <li><a href="../addresses/">Адреса</a></li>
-                    <li><a href="../registry/">Регистры</a></li>
-                    <li><a href="../laws/">Законы</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
@@ -123,135 +157,196 @@
 
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Управление услугами</h1>
-            <p class="page-description">Статистика, список и создание заявлений</p>
-
-            <div class="service-tabs">
-                <button class="service-tab active" data-type="passport">Внутренние паспорта</button>
-                <button class="service-tab" data-type="foreign">Загранпаспорта</button>
-                <button class="service-tab" data-type="other">Другие услуги</button>
+            <div class="top-bar">
+                <div>
+                    <h1 class="page-title">Управление заявлениями</h1>
+                    <p class="page-description">Все заявления по услугам</p>
+                </div>
+                <button id="createBtn" class="btn-success"><i class="fas fa-plus"></i> Создать заявку</button>
             </div>
 
-            <div class="stats-grid" id="stats">
-                <div class="stat-card"><div class="stat-number" id="totalApps">0</div><div class="stat-label">Всего заявлений</div></div>
-                <div class="stat-card"><div class="stat-number" id="submittedApps">0</div><div class="stat-label">Отправлено в ведомство</div></div>
-                <div class="stat-card"><div class="stat-number" id="processingApps">0</div><div class="stat-label">В работе</div></div>
-                <div class="stat-card"><div class="stat-number" id="completedApps">0</div><div class="stat-label">Завершено</div></div>
-                <div class="stat-card"><div class="stat-number" id="rejectedApps">0</div><div class="stat-label">Отказано</div></div>
+            <div class="service-tabs">
+                <button class="service-tab active" data-filter="all">Все</button>
+                <button class="service-tab" data-filter="submitted">Отправлено</button>
+                <button class="service-tab" data-filter="processing">В работе</button>
+                <button class="service-tab" data-filter="interim">Промежуточные</button>
+                <button class="service-tab" data-filter="positive">Положительное</button>
+                <button class="service-tab" data-filter="completed">Завершено</button>
+                <button class="service-tab" data-filter="rejected">Отказано</button>
+                <button class="service-tab" data-filter="cancelled">Отменено</button>
             </div>
 
             <div class="filters">
-                <select id="statusFilter">
-                    <option value="">Все статусы</option>
-                    <option value="submitted">Отправлено в ведомство</option>
-                    <option value="processing">В работе</option>
-                    <option value="interim">Промежуточные результаты</option>
-                    <option value="positive">Принято положительное решение</option>
-                    <option value="completed">Результат выдан</option>
-                    <option value="rejected">Отказано</option>
-                    <option value="cancelled">Отменено</option>
+                <select id="typeFilter">
+                    <option value="all">Все типы</option>
+                    <option value="passport">Внутренние паспорта</option>
+                    <option value="foreign_passport">Загранпаспорта</option>
                 </select>
                 <input type="text" id="searchInput" placeholder="Поиск по номеру или личному коду">
-                <button id="applyFilters">Применить</button>
+                <button id="applyFilters"><i class="fas fa-search"></i> Применить</button>
                 <span id="totalCount" class="stats-badge">Всего: 0</span>
             </div>
 
-            <div class="action-bar">
-                <button id="createNewBtn" class="btn-create"><i class="fas fa-plus"></i> Создать заявление</button>
-                <div>
-                    <a href="#" id="pendingLink" class="btn btn-secondary" style="padding:0.5rem 1rem; text-decoration:none; display:inline-block;">Не завершённые</a>
-                    <a href="#" id="processingLink" class="btn btn-secondary" style="padding:0.5rem 1rem; text-decoration:none; display:inline-block;">В работе</a>
-                </div>
-            </div>
-
             <div id="loading" class="loading">Загрузка...</div>
+            <div id="error" class="error hidden"></div>
 
             <table class="app-table" id="appsTable">
-                <thead id="tableHeader">
+                <thead>
                     <tr>
-                        <th>Номер заявления</th>
+                        <th>№ заявления</th>
                         <th>Дата</th>
                         <th>Личный код</th>
-                        <th>Тип / Причина</th>
+                        <th>Тип услуги</th>
                         <th>Статус</th>
-                        <th>Действие</th>
                     </tr>
                 </thead>
                 <tbody id="appsTableBody">
-                    <tr><td colspan="6" class="no-data">Нет данных</td></tr>
+                    <tr><td colspan="5" class="no-data">Нет данных</td></tr>
                 </tbody>
             </table>
-
-            <!-- Блок просмотра заявления (скрыт по умолчанию) -->
-            <div id="viewSection" class="hidden">
-                <button id="backToListBtn" class="btn-secondary" style="margin-bottom:1rem;"><i class="fas fa-arrow-left"></i> Назад к списку</button>
-                <div id="viewContainer"></div>
-            </div>
         </div>
     </main>
 
-    <!-- Модальное окно создания заявления -->
+    <!-- Модалка создания заявки -->
     <div id="createModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Создание заявления (очно)</h3>
+                <h3><i class="fas fa-plus-circle"></i> Создание заявки</h3>
                 <span class="close" id="closeCreateModal">&times;</span>
             </div>
             <form id="createForm">
                 <div class="form-group">
                     <label>Тип услуги</label>
-                    <select class="form-control" id="createServiceType" required>
+                    <select id="createServiceType" class="form-control" required>
                         <option value="passport">Внутренний паспорт</option>
-                        <option value="foreign_passport">Загранпаспорт</option>
+                        <option value="foreign_passport">Заграничный паспорт</option>
                     </select>
                 </div>
+
                 <div class="form-group">
-                    <label>Личный код гражданина (обязательно)</label>
-                    <input type="text" class="form-control" id="createPersonalCode" placeholder="Введите личный код" required>
+                    <label>Личный код заявителя</label>
+                    <input type="text" id="createPersonalCode" class="form-control" placeholder="Введите личный код" required>
                 </div>
-                <div class="form-group">
-                    <label>Причина (для внутреннего паспорта)</label>
-                    <select class="form-control" id="createReason">
-                        <option value="first_14">Первичное получение в 14 лет</option>
-                        <option value="expired">Истёк срок действия</option>
-                        <option value="no_space">Закончилось место для штампов</option>
-                        <option value="name_changed">Изменилось ФИО, дата или место рождения</option>
-                        <option value="lost">Паспорт утерян или украден</option>
-                        <option value="damaged">Паспорт стал непригодным к использованию</option>
-                        <option value="citizenship">Получение гражданства СФСРЮ</option>
-                        <option value="appearance">Изменилась внешность</option>
-                        <option value="error">Ошибка в паспорте</option>
-                    </select>
+
+                <!-- Динамические поля для внутреннего паспорта -->
+                <div id="passportFields">
+                    <div class="form-group">
+                        <label>Причина</label>
+                        <select id="createReason" class="form-control">
+                            <option value="first_14">Первичное получение в 14 лет</option>
+                            <option value="expired">Истёк срок действия</option>
+                            <option value="no_space">Закончилось место для штампов</option>
+                            <option value="name_changed">Изменилось ФИО, дата или место рождения</option>
+                            <option value="lost">Паспорт утерян или украден</option>
+                            <option value="damaged">Паспорт стал непригодным</option>
+                            <option value="citizenship">Получение гражданства</option>
+                            <option value="appearance">Изменилась внешность</option>
+                            <option value="error">Ошибка в паспорте</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Телефон</label>
+                        <input type="text" id="createPhone" class="form-control" placeholder="+7 (999) 123-45-67">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="createEmail" class="form-control" placeholder="mail@example.com">
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Тип загранпаспорта (для загранпаспорта)</label>
-                    <select class="form-control" id="createPassportType">
-                        <option value="biometric">Биометрический</option>
-                        <option value="nonbiometric">Небиометрический</option>
-                    </select>
+
+                <!-- Динамические поля для загранпаспорта -->
+                <div id="foreignFields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Тип паспорта</label>
+                            <select id="createPassportType" class="form-control">
+                                <option value="biometric">Биометрический</option>
+                                <option value="nonbiometric">Небиометрический</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Кому</label>
+                            <select id="createRecipient" class="form-control">
+                                <option value="self">Только себе</option>
+                                <option value="self_children">Себе и детям</option>
+                                <option value="children_only">Только детям</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Вид паспорта</label>
+                            <select id="createVisaType" class="form-control">
+                                <option value="civil">Общегражданский</option>
+                                <option value="diplomatic">Дипломатический</option>
+                                <option value="service">Служебный</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Вписывать детей в паспорт родителя</label>
+                            <select id="createIncludeChildren" class="form-control">
+                                <option value="false">Нет</option>
+                                <option value="true">Да</option>
+                            </select>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Кому (для загранпаспорта)</label>
-                    <select class="form-control" id="createRecipientType">
-                        <option value="self">Только себе</option>
-                        <option value="self_children">Себе и детям</option>
-                        <option value="children_only">Только детям</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Вид загранпаспорта</label>
-                    <select class="form-control" id="createVisaType">
-                        <option value="civil">Общегражданский</option>
-                        <option value="diplomatic">Дипломатический</option>
-                        <option value="service">Служебный</option>
-                    </select>
-                </div>
+
                 <div class="form-group">
                     <label>Комментарий (необязательно)</label>
-                    <textarea class="form-control" id="createComment" rows="3"></textarea>
+                    <textarea id="createComment" class="form-control" rows="3"></textarea>
                 </div>
-                <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">Создать заявление</button>
+
+                <div class="form-group">
+                    <label>Прикрепить файлы</label>
+                    <input type="file" id="createFiles" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png">
+                    <div id="createFileList" class="file-list"></div>
+                </div>
+
+                <button type="submit" class="btn-primary" style="width:100%; justify-content:center;"><i class="fas fa-save"></i> Создать заявку</button>
             </form>
+        </div>
+    </div>
+
+    <!-- Модалка просмотра/редактирования заявки -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3><i class="fas fa-eye"></i> Просмотр заявки № <span id="viewAppNumber"></span></h3>
+                <span class="close" id="closeViewModal">&times;</span>
+            </div>
+            <div id="viewContent">
+                <div id="viewDetails"></div>
+                <hr>
+                <h4><i class="fas fa-history"></i> История статусов</h4>
+                <div id="viewHistory"></div>
+                <hr>
+                <div class="form-group">
+                    <label>Изменить статус</label>
+                    <select id="viewStatusSelect" class="form-control">
+                        <option value="processing">В работе</option>
+                        <option value="interim">Промежуточные результаты</option>
+                        <option value="positive">Принято положительное решение</option>
+                        <option value="completed">Результат выдан</option>
+                        <option value="rejected">Отказано</option>
+                        <option value="cancelled">Отменено</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Комментарий к изменению</label>
+                    <textarea id="viewComment" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Прикрепить файлы</label>
+                    <input type="file" id="viewFiles" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png">
+                    <div id="viewFileList" class="file-list"></div>
+                </div>
+                <div style="display:flex; gap:1rem; flex-wrap:wrap; margin-top:1rem;">
+                    <button id="viewUpdateStatusBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Обновить статус</button>
+                    <button id="viewDeleteBtn" class="btn-danger"><i class="fas fa-trash-alt"></i> Удалить заявку</button>
+                    <button id="viewCloseBtn" class="btn-secondary"><i class="fas fa-times"></i> Закрыть</button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -265,39 +360,45 @@
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../certificates/js/certificates-common.js';
 
-        // ============================
+        // ============================================================
         // Глобальные переменные
-        // ============================
-        let currentType = 'passport'; // 'passport', 'foreign', 'other'
+        // ============================================================
         let allData = [];
-        let currentView = 'list'; // 'list' или 'view'
+        let currentFilter = 'all';
+        let currentTypeFilter = 'all';
         let currentViewId = null;
+        let currentViewType = null;
+        let uploadedCreateFiles = [];
+        let uploadedViewFiles = [];
+        let mvdMap = {};
 
-        const tableMap = {
-            passport: 'passport',
-            foreign: 'foreign_passport',
-            other: 'service'
-        };
         const statusMap = {
-            'submitted': 'Отправлено в ведомство',
+            'submitted': 'Отправлено',
             'processing': 'В работе',
-            'interim': 'Промежуточные результаты',
-            'positive': 'Принято положительное решение',
-            'completed': 'Результат выдан',
+            'interim': 'Промежуточные',
+            'positive': 'Положительное',
+            'completed': 'Завершено',
             'rejected': 'Отказано',
             'cancelled': 'Отменено'
         };
+
+        const serviceTypeNames = {
+            'passport': 'Внутренний паспорт',
+            'foreign_passport': 'Загранпаспорт'
+        };
+
         const reasonMap = {
             'first_14': 'Первичное получение в 14 лет',
             'expired': 'Истёк срок действия',
             'no_space': 'Закончилось место для штампов',
-            'name_changed': 'Изменилось ФИО, дата или место рождения',
+            'name_changed': 'Изменилось ФИО',
             'lost': 'Паспорт утерян или украден',
-            'damaged': 'Паспорт стал непригодным к использованию',
-            'citizenship': 'Получение гражданства СФСРЮ',
+            'damaged': 'Паспорт стал непригодным',
+            'citizenship': 'Получение гражданства',
             'appearance': 'Изменилась внешность',
             'error': 'Ошибка в паспорте'
         };
+
         const passportTypeMap = {
             'biometric': 'Биометрический',
             'nonbiometric': 'Небиометрический'
@@ -312,570 +413,691 @@
             'diplomatic': 'Дипломатический',
             'service': 'Служебный'
         };
-        const genderMap = {
-            'male': 'Мужской',
-            'female': 'Женский'
-        };
 
-        // ============================
-        // Функции
-        // ============================
-        function getDynamicColumnLabel() {
-            if (currentType === 'other') return 'Название услуги';
-            if (currentType === 'foreign') return 'Тип паспорта / Кому';
-            return 'Причина';
+        // ============================================================
+        // Вспомогательные функции
+        // ============================================================
+        function getStatusBadge(status) {
+            const cls = `status-${status}`;
+            return `<span class="status-badge ${cls}">${statusMap[status] || status}</span>`;
         }
 
-        function getDynamicColumnValue(item) {
-            if (currentType === 'other') {
-                return item.service_type || '—';
-            }
-            if (currentType === 'foreign') {
-                const type = passportTypeMap[item.passport_type] || item.passport_type || '—';
-                const recipient = recipientTypeMap[item.recipient_type] || item.recipient_type || '—';
-                return `${type} (${recipient})`;
-            }
-            return reasonMap[item.reason] || item.reason || '—';
+        function generateApplicationNumber() {
+            const digits = Math.floor(100000000 + Math.random() * 900000000);
+            return `ADM-${digits}`;
         }
 
-        function updateTableHeader() {
-            const label = getDynamicColumnLabel();
-            document.getElementById('tableHeader').innerHTML = `
-                <tr>
-                    <th>Номер заявления</th>
-                    <th>Дата</th>
-                    <th>Личный код</th>
-                    <th>${label}</th>
-                    <th>Статус</th>
-                    <th>Действие</th>
-                </tr>
-            `;
-        }
-
-        async function loadStats() {
-            const table = tableMap[currentType];
-            if (!table) return;
+        async function getSignedUrl(filePath) {
+            if (!filePath) return null;
             try {
-                const { count: total } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true });
-                const { count: submitted } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).eq('status', 'submitted');
-                const { count: processing } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', ['processing', 'interim', 'positive']);
-                const { count: completed } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).eq('status', 'completed');
-                const { count: rejected } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', ['rejected', 'cancelled']);
-                document.getElementById('totalApps').textContent = total || 0;
-                document.getElementById('submittedApps').textContent = submitted || 0;
-                document.getElementById('processingApps').textContent = processing || 0;
-                document.getElementById('completedApps').textContent = completed || 0;
-                document.getElementById('rejectedApps').textContent = rejected || 0;
+                const { data, error } = await supabase.storage
+                    .from('services-files')
+                    .createSignedUrl(filePath, 3600);
+                if (error) throw error;
+                return data.signedUrl;
             } catch (e) {
-                console.error('Ошибка загрузки статистики:', e);
+                console.error('Ошибка получения ссылки:', e);
+                return null;
             }
         }
 
-        async function loadAllData() {
+        function extractFileName(filePath) {
+            if (!filePath) return 'файл';
+            const parts = filePath.split('/');
+            let name = parts[parts.length - 1];
+            const match = name.match(/^\d+_(.+)$/);
+            return match ? decodeURIComponent(match[1]) : decodeURIComponent(name);
+        }
+
+        function safeFileName(name) {
+            return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
+        }
+
+        async function loadMvd() {
+            const { data, error } = await supabase.from('mvd').select('id, name');
+            if (error) return;
+            data.forEach(item => { mvdMap[item.id] = item.name; });
+        }
+
+        // ============================================================
+        // Загрузка всех заявлений
+        // ============================================================
+        async function loadAllApplications() {
             const loading = document.getElementById('loading');
             const tbody = document.getElementById('appsTableBody');
             loading.style.display = 'block';
-            tbody.innerHTML = '';
-            const table = tableMap[currentType];
-            if (!table) return;
+
             try {
-                const { data, error } = await supabase
+                // Загружаем внутренние паспорта
+                const { data: passportData, error: pErr } = await supabase
                     .schema('services')
-                    .from(table)
-                    .select('*')
+                    .from('passport')
+                    .select('id, application_number, created_at, personal_code, status, service_type, reason')
                     .order('created_at', { ascending: false });
-                if (error) throw error;
-                allData = data || [];
-            } catch (e) {
-                console.error('Ошибка загрузки данных:', e);
-                tbody.innerHTML = `<tr><td colspan="6" class="error">Ошибка загрузки</td></tr>`;
+
+                // Загружаем загранпаспорта
+                const { data: foreignData, error: fErr } = await supabase
+                    .schema('services')
+                    .from('foreign_passport')
+                    .select('id, application_number, created_at, personal_code, status, service_type, passport_type, recipient_type')
+                    .order('created_at', { ascending: false });
+
+                if (pErr) console.error('Ошибка загрузки паспортов:', pErr);
+                if (fErr) console.error('Ошибка загрузки загранпаспортов:', fErr);
+
+                allData = [...(passportData || []), ...(foreignData || [])];
+                allData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+                loading.style.display = 'none';
+                applyFilters();
+            } catch (err) {
+                console.error(err);
+                loading.style.display = 'none';
+                document.getElementById('error').textContent = 'Ошибка загрузки данных';
+                document.getElementById('error').classList.remove('hidden');
             }
-            loading.style.display = 'none';
-            applyFilters();
         }
 
         function applyFilters() {
-            const status = document.getElementById('statusFilter').value;
             const search = document.getElementById('searchInput').value.trim().toLowerCase();
+            const type = document.getElementById('typeFilter').value;
+
             let filtered = allData;
-            if (status) {
-                filtered = filtered.filter(item => item.status === status);
+
+            // Фильтр по типу
+            if (type !== 'all') {
+                filtered = filtered.filter(item => item.service_type === type);
             }
+
+            // Фильтр по статусу (вкладки)
+            if (currentFilter !== 'all') {
+                filtered = filtered.filter(item => item.status === currentFilter);
+            }
+
+            // Поиск
             if (search) {
                 filtered = filtered.filter(item =>
                     (item.application_number && item.application_number.toLowerCase().includes(search)) ||
                     (item.personal_code && item.personal_code.toLowerCase().includes(search))
                 );
             }
+
             document.getElementById('totalCount').textContent = `Всего: ${filtered.length}`;
+
             const tbody = document.getElementById('appsTableBody');
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет записей</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет записей</td></tr>';
                 return;
             }
-            const columnLabel = getDynamicColumnLabel();
-            tbody.innerHTML = filtered.map(app => {
-                const dynamicValue = getDynamicColumnValue(app);
-                const statusText = statusMap[app.status] || app.status;
-                let actionHtml = '';
-                if (app.status === 'submitted') {
-                    actionHtml = `<button class="btn-take" data-id="${app.id}" data-type="${currentType}">Взять в работу</button>`;
+
+            tbody.innerHTML = filtered.map(item => {
+                const serviceName = serviceTypeNames[item.service_type] || item.service_type || '—';
+                let extra = '';
+                if (item.service_type === 'passport') {
+                    extra = reasonMap[item.reason] || item.reason || '';
                 } else {
-                    actionHtml = `<button class="btn-view" data-id="${app.id}" data-type="${currentType}">Просмотр</button>`;
+                    const pt = passportTypeMap[item.passport_type] || item.passport_type || '';
+                    const rt = recipientTypeMap[item.recipient_type] || item.recipient_type || '';
+                    extra = `${pt} (${rt})`;
                 }
                 return `
-                    <tr>
-                        <td data-label="Номер заявления">${app.application_number}</td>
-                        <td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
-                        <td data-label="Личный код">${app.personal_code || '—'}</td>
-                        <td data-label="${columnLabel}">${dynamicValue}</td>
-                        <td data-label="Статус">${statusText}</td>
-                        <td data-label="Действие">${actionHtml}</td>
+                    <tr data-id="${item.id}" data-type="${item.service_type}">
+                        <td data-label="№ заявления">${item.application_number}</td>
+                        <td data-label="Дата">${new Date(item.created_at).toLocaleDateString('ru-RU')}</td>
+                        <td data-label="Личный код">${item.personal_code || '—'}</td>
+                        <td data-label="Тип услуги">${serviceName} ${extra ? `<br><small>${extra}</small>` : ''}</td>
+                        <td data-label="Статус">${getStatusBadge(item.status)}</td>
                     </tr>
                 `;
             }).join('');
 
-            // Обработчики кнопок
-            document.querySelectorAll('.btn-take').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    const id = e.target.dataset.id;
-                    const type = e.target.dataset.type;
-                    const table = tableMap[type];
-                    const { error } = await supabase.schema('services').from(table).update({ status: 'processing', updated_at: new Date().toISOString() }).eq('id', id);
-                    if (error) {
-                        alert('Ошибка: ' + error.message);
-                    } else {
-                        // Добавляем запись в историю
-                        const historyTable = type === 'foreign' ? 'foreign_passport_status_history' : 'passport_status_history';
-                        await supabase.schema('services').from(historyTable).insert({
-                            passport_id: id,
-                            status: 'processing',
-                            comment: 'Взято в работу администратором',
-                            created_by: (await supabase.auth.getUser()).data.user.id
-                        });
-                        loadAllData();
-                        loadStats();
-                    }
-                });
-            });
-
-            document.querySelectorAll('.btn-view').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = btn.dataset.id;
-                    const type = btn.dataset.type;
-                    showView(id, type);
+            // Клик по строке для просмотра
+            tbody.querySelectorAll('tr[data-id]').forEach(tr => {
+                tr.addEventListener('click', () => {
+                    const id = tr.dataset.id;
+                    const type = tr.dataset.type;
+                    openViewModal(id, type);
                 });
             });
         }
 
-        // ============================
-        // Просмотр заявления
-        // ============================
-        async function showView(id, type) {
-            currentView = 'view';
-            currentViewId = id;
-            const viewSection = document.getElementById('viewSection');
-            const container = document.getElementById('viewContainer');
-            document.getElementById('appsTable').style.display = 'none';
-            document.querySelector('.filters').style.display = 'none';
-            document.querySelector('.action-bar').style.display = 'none';
-            viewSection.classList.remove('hidden');
-
-            const table = type === 'foreign' ? 'foreign_passport' : 'passport';
-            const historyTable = type === 'foreign' ? 'foreign_passport_status_history' : 'passport_status_history';
-
-            try {
-                const { data: app, error } = await supabase
-                    .schema('services')
-                    .from(table)
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-                if (error) throw error;
-
-                let html = `<div class="app-details"><table class="details-table">`;
-                const fields = [
-                    ['Номер заявления', app.application_number],
-                    ['Статус', statusMap[app.status] || app.status],
-                    ['Дата создания', new Date(app.created_at).toLocaleString()],
-                    ['Личный код', app.personal_code || '—'],
-                    ['Последнее обновление', new Date(app.updated_at).toLocaleString()]
-                ];
-                if (type === 'passport') {
-                    fields.push(['Причина', reasonMap[app.reason] || app.reason]);
-                    fields.push(['Детали причины', app.reason_details ? JSON.stringify(app.reason_details) : '—']);
-                    fields.push(['Личные данные', app.personal_data ? JSON.stringify(app.personal_data) : '—']);
-                    fields.push(['Новые данные', app.new_personal_data ? JSON.stringify(app.new_personal_data) : '—']);
-                    fields.push(['Телефон', app.phone || '—']);
-                    fields.push(['Email', app.email || '—']);
-                    fields.push(['Отделение МВД', app.mvd_id || '—']);
-                } else {
-                    fields.push(['Тип паспорта', passportTypeMap[app.passport_type] || app.passport_type]);
-                    fields.push(['Кому', recipientTypeMap[app.recipient_type] || app.recipient_type]);
-                    fields.push(['Вид паспорта', visaTypeMap[app.visa_type] || app.visa_type]);
-                    fields.push(['Вписывать детей в паспорт родителя', app.include_children_in_parent ? 'Да' : 'Нет']);
-                    fields.push(['Сведения о работе', app.work_info ? JSON.stringify(app.work_info) : '—']);
-                    fields.push(['Воинский учёт', app.military_info ? JSON.stringify(app.military_info) : '—']);
-                    fields.push(['Отделение МВД', app.mvd_id || '—']);
-                }
-                fields.forEach(([label, value]) => {
-                    html += `<tr><th>${label}</th><td>${value}</td></tr>`;
-                });
-                html += `</table></div>`;
-
-                // Получатели (только для загранпаспорта)
-                if (type === 'foreign') {
-                    const { data: applicants } = await supabase
-                        .schema('services')
-                        .from('foreign_passport_applicants')
-                        .select('*')
-                        .eq('passport_id', id);
-                    if (applicants && applicants.length) {
-                        html += `<div class="app-details"><h4>Получатели</h4><table class="details-table"><tr><th>Личный код</th><th>ФИО</th><th>Дата рождения</th><th>Пол</th><th>Роль</th></tr>`;
-                        applicants.forEach(a => {
-                            html += `<tr><td>${a.personal_code || '—'}</td><td>${a.surname} ${a.name} ${a.patronymic || ''}</td><td>${new Date(a.date_of_birth).toLocaleDateString('ru-RU')}</td><td>${genderMap[a.gender] || a.gender || '—'}</td><td>${a.is_applicant ? 'Заявитель' : 'Ребёнок'}</td></tr>`;
-                        });
-                        html += `</table></div>`;
-                    }
-                }
-
-                // История
-                const { data: history } = await supabase
-                    .schema('services')
-                    .from(historyTable)
-                    .select('*')
-                    .eq('passport_id', id)
-                    .order('created_at', { ascending: false });
-                if (history && history.length) {
-                    html += `<div class="app-details"><h4>История статусов</h4>`;
-                    history.forEach(h => {
-                        html += `<div style="border-left:3px solid #7b091a; padding-left:1rem; margin-bottom:1rem;">
-                            <div><strong>${statusMap[h.status] || h.status}</strong> — ${new Date(h.created_at).toLocaleString()}</div>
-                            <div>${h.comment || ''}</div>
-                            ${h.attachments && h.attachments.length ? `<div>Файлы: ${h.attachments.join(', ')}</div>` : ''}
-                        </div>`;
-                    });
-                    html += `</div>`;
-                }
-
-                // Кнопка изменения статуса
-                html += `<div class="action-buttons" style="margin-top:1.5rem;">
-                    <button class="btn-primary" id="changeStatusFromView">Изменить статус</button>
-                    <button class="btn-danger" id="deleteFromView">Удалить заявление</button>
-                </div>`;
-
-                container.innerHTML = html;
-
-                // Обработчики
-                document.getElementById('changeStatusFromView').addEventListener('click', () => {
-                    openStatusModal(id, type);
-                });
-                document.getElementById('deleteFromView').addEventListener('click', () => {
-                    deleteApplication(id, type);
-                });
-
-            } catch (e) {
-                console.error('Ошибка загрузки заявления:', e);
-                container.innerHTML = `<div class="error">Ошибка загрузки данных</div>`;
-            }
+        // ============================================================
+        // Создание заявки
+        // ============================================================
+        function toggleCreateFields() {
+            const type = document.getElementById('createServiceType').value;
+            document.getElementById('passportFields').style.display = (type === 'passport') ? 'block' : 'none';
+            document.getElementById('foreignFields').style.display = (type === 'foreign_passport') ? 'block' : 'none';
         }
 
-        // ============================
-        // Изменение статуса (модальное окно)
-        // ============================
-        let statusModalAppId = null;
-        let statusModalType = null;
+        document.getElementById('createServiceType').addEventListener('change', toggleCreateFields);
 
-        function openStatusModal(id, type) {
-            statusModalAppId = id;
-            statusModalType = type;
-            // Создаём модальное окно динамически, если его нет
-            let modal = document.getElementById('statusModal');
-            if (!modal) {
-                modal = document.createElement('div');
-                modal.id = 'statusModal';
-                modal.className = 'modal';
-                modal.innerHTML = `
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h3>Изменить статус</h3>
-                            <span class="close" id="closeStatusModal">&times;</span>
-                        </div>
-                        <form id="statusForm">
-                            <div class="form-group">
-                                <label>Новый статус</label>
-                                <select class="form-control" id="statusSelect">
-                                    <option value="processing">В работе</option>
-                                    <option value="interim">Промежуточные результаты</option>
-                                    <option value="positive">Принято положительное решение</option>
-                                    <option value="completed">Результат выдан</option>
-                                    <option value="rejected">Отказано</option>
-                                    <option value="cancelled">Отменено</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Комментарий (необязательно)</label>
-                                <textarea class="form-control" id="statusComment" rows="3"></textarea>
-                            </div>
-                            <button type="submit" class="btn-primary" style="width:100%; justify-content:center;">Сохранить</button>
-                        </form>
-                    </div>
+        document.getElementById('createFiles').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            const list = document.getElementById('createFileList');
+            list.innerHTML = '';
+            uploadedCreateFiles = files;
+            files.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <span><i class="fas fa-file"></i> ${file.name}</span>
+                    <button type="button" class="btn-small" data-index="${index}">Удалить</button>
                 `;
-                document.body.appendChild(modal);
-                document.getElementById('closeStatusModal').addEventListener('click', () => {
-                    modal.classList.remove('active');
+                list.appendChild(div);
+            });
+            list.querySelectorAll('.btn-small').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    uploadedCreateFiles.splice(idx, 1);
+                    const dt = new DataTransfer();
+                    uploadedCreateFiles.forEach(f => dt.items.add(f));
+                    document.getElementById('createFiles').files = dt.files;
+                    e.target.closest('.file-item').remove();
                 });
-                window.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.classList.remove('active');
-                });
-                document.getElementById('statusForm').addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const status = document.getElementById('statusSelect').value;
-                    const comment = document.getElementById('statusComment').value.trim();
-                    const table = statusModalType === 'foreign' ? 'foreign_passport' : 'passport';
-                    const historyTable = statusModalType === 'foreign' ? 'foreign_passport_status_history' : 'passport_status_history';
-                    try {
-                        const { error: updateError } = await supabase
-                            .schema('services')
-                            .from(table)
-                            .update({ status, updated_at: new Date().toISOString() })
-                            .eq('id', statusModalAppId);
-                        if (updateError) throw updateError;
-
-                        // Вставляем историю без поля comment, если его нет (но мы уже добавили колонку)
-                        const { error: histError } = await supabase
-                            .schema('services')
-                            .from(historyTable)
-                            .insert({
-                                passport_id: statusModalAppId,
-                                status: status,
-                                comment: comment,
-                                created_by: (await supabase.auth.getUser()).data.user.id
-                            });
-                        if (histError) {
-                            console.error('Ошибка сохранения истории:', histError);
-                            alert('Ошибка сохранения истории: ' + histError.message);
-                            return;
-                        }
-                        modal.classList.remove('active');
-                        // Обновляем текущий просмотр или список
-                        if (currentView === 'view') {
-                            showView(statusModalAppId, statusModalType);
-                        } else {
-                            loadAllData();
-                            loadStats();
-                        }
-                    } catch (e) {
-                        alert('Ошибка: ' + e.message);
-                    }
-                });
-            }
-            modal.classList.add('active');
-        }
-
-        // ============================
-        // Удаление заявления
-        // ============================
-        async function deleteApplication(id, type) {
-            if (!confirm('Удалить это заявление и все связанные данные?')) return;
-            const table = type === 'foreign' ? 'foreign_passport' : 'passport';
-            const historyTable = type === 'foreign' ? 'foreign_passport_status_history' : 'passport_status_history';
-            try {
-                // Удаляем историю
-                await supabase.schema('services').from(historyTable).delete().eq('passport_id', id);
-                // Удаляем получателей (если foreign)
-                if (type === 'foreign') {
-                    await supabase.schema('services').from('foreign_passport_applicants').delete().eq('passport_id', id);
-                }
-                // Удаляем основную запись
-                const { error } = await supabase.schema('services').from(table).delete().eq('id', id);
-                if (error) throw error;
-                alert('Заявление удалено');
-                if (currentView === 'view') {
-                    document.getElementById('viewSection').classList.add('hidden');
-                    document.getElementById('appsTable').style.display = '';
-                    document.querySelector('.filters').style.display = '';
-                    document.querySelector('.action-bar').style.display = '';
-                    currentView = 'list';
-                    loadAllData();
-                    loadStats();
-                } else {
-                    loadAllData();
-                    loadStats();
-                }
-            } catch (e) {
-                alert('Ошибка удаления: ' + e.message);
-            }
-        }
-
-        // ============================
-        // Создание заявления (очно)
-        // ============================
-        document.getElementById('createNewBtn').addEventListener('click', () => {
-            document.getElementById('createModal').classList.add('active');
-        });
-        document.getElementById('closeCreateModal').addEventListener('click', () => {
-            document.getElementById('createModal').classList.remove('active');
-        });
-        window.addEventListener('click', (e) => {
-            if (e.target === document.getElementById('createModal')) {
-                document.getElementById('createModal').classList.remove('active');
-            }
+            });
         });
 
         document.getElementById('createForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const serviceType = document.getElementById('createServiceType').value;
-            const personalCode = document.getElementById('createPersonalCode').value.trim();
-            if (!personalCode) {
-                alert('Введите личный код');
-                return;
-            }
-            // Генерируем номер заявления
-            const digits = Math.floor(100000000 + Math.random() * 900000000);
-            const appNumber = (serviceType === 'passport' ? 'P-' : 'FP-') + digits;
-            const now = new Date().toISOString();
-
-            let payload = {
-                application_number: appNumber,
-                user_id: null, // не привязан к пользователю, создаётся админом
-                personal_code: personalCode,
-                status: 'submitted',
-                service_type: serviceType,
-                created_at: now,
-                updated_at: now
-            };
-
-            if (serviceType === 'passport') {
-                payload.reason = document.getElementById('createReason').value;
-                payload.phone = '';
-                payload.email = '';
-                payload.personal_data = {};
-                payload.new_personal_data = {};
-                payload.mvd_id = null;
-                payload.photo_path = null;
-            } else {
-                payload.passport_type = document.getElementById('createPassportType').value;
-                payload.recipient_type = document.getElementById('createRecipientType').value;
-                payload.visa_type = document.getElementById('createVisaType').value;
-                payload.include_children_in_parent = false;
-                payload.work_info = {};
-                payload.military_info = { has_military: false };
-                payload.mvd_id = null;
-            }
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Создание...';
 
             try {
-                const { data, error } = await supabase
+                const serviceType = document.getElementById('createServiceType').value;
+                const personalCode = document.getElementById('createPersonalCode').value.trim();
+                const comment = document.getElementById('createComment').value.trim();
+                const files = uploadedCreateFiles;
+
+                if (!personalCode) {
+                    alert('Введите личный код заявителя');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Создать заявку';
+                    return;
+                }
+
+                // Проверяем, есть ли пользователь с таким личным кодом
+                const { data: userData, error: userError } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('personal_code', personalCode)
+                    .single();
+
+                if (userError || !userData) {
+                    alert('Пользователь с таким личным кодом не найден');
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Создать заявку';
+                    return;
+                }
+
+                const userId = userData.id;
+                const appNumber = generateApplicationNumber();
+
+                let payload = {
+                    application_number: appNumber,
+                    user_id: userId,
+                    personal_code: personalCode,
+                    status: 'submitted',
+                    service_type: serviceType,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                let tableName = serviceType;
+
+                if (serviceType === 'passport') {
+                    payload.reason = document.getElementById('createReason').value;
+                    payload.phone = document.getElementById('createPhone').value.trim() || null;
+                    payload.email = document.getElementById('createEmail').value.trim() || null;
+                } else {
+                    payload.passport_type = document.getElementById('createPassportType').value;
+                    payload.recipient_type = document.getElementById('createRecipient').value;
+                    payload.visa_type = document.getElementById('createVisaType').value;
+                    payload.include_children_in_parent = document.getElementById('createIncludeChildren').value === 'true';
+                }
+
+                // Вставка в БД
+                const { data: inserted, error: insertError } = await supabase
                     .schema('services')
-                    .from(serviceType)
+                    .from(tableName)
                     .insert(payload)
                     .select('id')
                     .single();
-                if (error) throw error;
-                // Добавляем запись в историю
+
+                if (insertError) {
+                    alert('Ошибка создания заявки: ' + insertError.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Создать заявку';
+                    return;
+                }
+
+                const newId = inserted.id;
+
+                // Загрузка файлов
+                const attachmentPaths = [];
+                for (const file of files) {
+                    const safeName = safeFileName(file.name);
+                    const folder = serviceType === 'foreign_passport' ? 'foreign_passport' : 'passport';
+                    const filePath = `${folder}/${appNumber}/${Date.now()}_${safeName}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('services-files')
+                        .upload(filePath, file);
+                    if (!uploadError) {
+                        attachmentPaths.push(filePath);
+                    } else {
+                        console.error('Ошибка загрузки файла:', uploadError);
+                    }
+                }
+
+                // Запись в историю
                 const historyTable = serviceType === 'foreign_passport' ? 'foreign_passport_status_history' : 'passport_status_history';
-                const comment = document.getElementById('createComment').value.trim() || 'Создано администратором очно';
-                await supabase.schema('services').from(historyTable).insert({
-                    passport_id: data.id,
-                    status: 'submitted',
-                    comment: comment,
-                    created_by: (await supabase.auth.getUser()).data.user.id
+                const { error: historyError } = await supabase
+                    .schema('services')
+                    .from(historyTable)
+                    .insert({
+                        passport_id: newId,
+                        status: 'submitted',
+                        comment: comment || 'Создано вручную администратором',
+                        attachments: attachmentPaths,
+                        created_by: (await supabase.auth.getUser()).data.user.id,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (historyError) {
+                    console.error('Ошибка записи истории:', historyError);
+                    alert('Заявка создана, но история не сохранена: ' + historyError.message);
+                }
+
+                alert('Заявка успешно создана! Номер: ' + appNumber);
+                document.getElementById('closeCreateModal').click();
+                await loadAllApplications();
+
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка: ' + err.message);
+            }
+
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Создать заявку';
+        });
+
+        // ============================================================
+        // Просмотр заявки
+        // ============================================================
+        async function openViewModal(id, type) {
+            currentViewId = id;
+            currentViewType = type;
+            document.getElementById('viewAppNumber').textContent = '...';
+            document.getElementById('viewContent').style.display = 'block';
+            document.getElementById('viewModal').classList.add('active');
+
+            // Загружаем данные
+            const { data, error } = await supabase
+                .schema('services')
+                .from(type)
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error) {
+                document.getElementById('viewDetails').innerHTML = `<div class="error">Ошибка загрузки: ${error.message}</div>`;
+                return;
+            }
+
+            document.getElementById('viewAppNumber').textContent = data.application_number;
+
+            // Отображаем детали
+            let detailsHtml = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">';
+            const fields = [
+                ['Номер', data.application_number],
+                ['Личный код', data.personal_code || '—'],
+                ['Статус', statusMap[data.status] || data.status],
+                ['Дата создания', new Date(data.created_at).toLocaleString()],
+                ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
+            ];
+
+            if (type === 'passport') {
+                fields.push(['Причина', reasonMap[data.reason] || data.reason]);
+                fields.push(['Телефон', data.phone || '—']);
+                fields.push(['Email', data.email || '—']);
+            } else {
+                fields.push(['Тип паспорта', passportTypeMap[data.passport_type] || data.passport_type]);
+                fields.push(['Кому', recipientTypeMap[data.recipient_type] || data.recipient_type]);
+                fields.push(['Вид', visaTypeMap[data.visa_type] || data.visa_type]);
+                fields.push(['Вписывать детей', data.include_children_in_parent ? 'Да' : 'Нет']);
+            }
+
+            fields.forEach(([label, value]) => {
+                detailsHtml += `<div><strong>${label}:</strong></div><div>${value}</div>`;
+            });
+            detailsHtml += '</div>';
+            document.getElementById('viewDetails').innerHTML = detailsHtml;
+
+            // Загружаем историю
+            const historyTable = type === 'foreign_passport' ? 'foreign_passport_status_history' : 'passport_status_history';
+            const { data: historyData, error: histError } = await supabase
+                .schema('services')
+                .from(historyTable)
+                .select('*')
+                .eq('passport_id', id)
+                .order('created_at', { ascending: false });
+
+            let historyHtml = '';
+            if (histError) {
+                historyHtml = `<div class="error">Ошибка загрузки истории</div>`;
+            } else if (!historyData || historyData.length === 0) {
+                historyHtml = '<p class="no-data">История отсутствует</p>';
+            } else {
+                for (const item of historyData) {
+                    const fileLinks = [];
+                    for (const fp of (item.attachments || [])) {
+                        const url = await getSignedUrl(fp);
+                        const name = extractFileName(fp);
+                        if (url) {
+                            fileLinks.push(`<a href="${url}" target="_blank"><i class="fas fa-paperclip"></i> ${name}</a>`);
+                        } else {
+                            fileLinks.push(`<span><i class="fas fa-exclamation-triangle"></i> ${name}</span>`);
+                        }
+                    }
+                    historyHtml += `
+                        <div class="history-item">
+                            <div class="meta">${new Date(item.created_at).toLocaleString()}</div>
+                            <div class="status">${statusMap[item.status] || item.status}</div>
+                            <div>${item.comment || ''}</div>
+                            <div class="attachments-list">${fileLinks.join(' ')}</div>
+                        </div>
+                    `;
+                }
+            }
+            document.getElementById('viewHistory').innerHTML = historyHtml;
+
+            // Очищаем файлы
+            uploadedViewFiles = [];
+            document.getElementById('viewFiles').value = '';
+            document.getElementById('viewFileList').innerHTML = '';
+            document.getElementById('viewComment').value = '';
+            document.getElementById('viewStatusSelect').value = 'processing';
+        }
+
+        // Загрузка файлов в модалке просмотра
+        document.getElementById('viewFiles').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            const list = document.getElementById('viewFileList');
+            list.innerHTML = '';
+            uploadedViewFiles = files;
+            files.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <span><i class="fas fa-file"></i> ${file.name}</span>
+                    <button type="button" class="btn-small" data-index="${index}">Удалить</button>
+                `;
+                list.appendChild(div);
+            });
+            list.querySelectorAll('.btn-small').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    uploadedViewFiles.splice(idx, 1);
+                    const dt = new DataTransfer();
+                    uploadedViewFiles.forEach(f => dt.items.add(f));
+                    document.getElementById('viewFiles').files = dt.files;
+                    e.target.closest('.file-item').remove();
                 });
-                alert('Заявление создано! Номер: ' + appNumber);
-                document.getElementById('createModal').classList.remove('active');
-                loadAllData();
-                loadStats();
-            } catch (e) {
-                alert('Ошибка создания: ' + e.message);
+            });
+        });
+
+        // Обновление статуса
+        document.getElementById('viewUpdateStatusBtn').addEventListener('click', async () => {
+            const newStatus = document.getElementById('viewStatusSelect').value;
+            const comment = document.getElementById('viewComment').value.trim();
+            const files = uploadedViewFiles;
+
+            if (!newStatus) {
+                alert('Выберите статус');
+                return;
+            }
+
+            const btn = document.getElementById('viewUpdateStatusBtn');
+            btn.disabled = true;
+            btn.textContent = 'Сохранение...';
+
+            try {
+                const type = currentViewType;
+                const id = currentViewId;
+                const table = type;
+                const historyTable = type === 'foreign_passport' ? 'foreign_passport_status_history' : 'passport_status_history';
+
+                // Загружаем application_number
+                const { data: appData } = await supabase
+                    .schema('services')
+                    .from(table)
+                    .select('application_number')
+                    .eq('id', id)
+                    .single();
+
+                const appNumber = appData?.application_number || 'unknown';
+
+                // Загружаем файлы
+                const attachmentPaths = [];
+                for (const file of files) {
+                    const safeName = safeFileName(file.name);
+                    const folder = type === 'foreign_passport' ? 'foreign_passport' : 'passport';
+                    const filePath = `${folder}/${appNumber}/${Date.now()}_${safeName}`;
+                    const { error: uploadError } = await supabase.storage
+                        .from('services-files')
+                        .upload(filePath, file);
+                    if (!uploadError) {
+                        attachmentPaths.push(filePath);
+                    }
+                }
+
+                // Запись в историю
+                const { error: historyError } = await supabase
+                    .schema('services')
+                    .from(historyTable)
+                    .insert({
+                        passport_id: id,
+                        status: newStatus,
+                        comment: comment || 'Статус изменён администратором',
+                        attachments: attachmentPaths,
+                        created_by: (await supabase.auth.getUser()).data.user.id,
+                        created_at: new Date().toISOString()
+                    });
+
+                if (historyError) {
+                    alert('Ошибка сохранения истории: ' + historyError.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Обновить статус';
+                    return;
+                }
+
+                // Обновляем основной статус
+                const { error: updateError } = await supabase
+                    .schema('services')
+                    .from(table)
+                    .update({ status: newStatus, updated_at: new Date().toISOString() })
+                    .eq('id', id);
+
+                if (updateError) {
+                    alert('Ошибка обновления статуса: ' + updateError.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Обновить статус';
+                    return;
+                }
+
+                alert('Статус успешно обновлён');
+                await loadAllApplications();
+                await openViewModal(id, type); // обновить просмотр
+
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка: ' + err.message);
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Обновить статус';
+        });
+
+        // Удаление заявки
+        document.getElementById('viewDeleteBtn').addEventListener('click', async () => {
+            if (!confirm('Удалить заявку безвозвратно?')) return;
+
+            const btn = document.getElementById('viewDeleteBtn');
+            btn.disabled = true;
+            btn.textContent = 'Удаление...';
+
+            try {
+                const type = currentViewType;
+                const id = currentViewId;
+                const table = type;
+                const historyTable = type === 'foreign_passport' ? 'foreign_passport_status_history' : 'passport_status_history';
+                const applicantsTable = type === 'foreign_passport' ? 'foreign_passport_applicants' : null;
+
+                // Собираем все пути файлов
+                let allFilePaths = [];
+
+                // Фото из основной записи (только для passport)
+                if (type === 'passport') {
+                    const { data: pData } = await supabase
+                        .schema('services')
+                        .from('passport')
+                        .select('photo_path')
+                        .eq('id', id)
+                        .single();
+                    if (pData?.photo_path) allFilePaths.push(pData.photo_path);
+                } else {
+                    // foreign — фото из applicants
+                    const { data: apps } = await supabase
+                        .schema('services')
+                        .from('foreign_passport_applicants')
+                        .select('photo_path')
+                        .eq('passport_id', id);
+                    if (apps) apps.forEach(a => { if (a.photo_path) allFilePaths.push(a.photo_path); });
+                }
+
+                // Файлы из истории
+                const { data: histData } = await supabase
+                    .schema('services')
+                    .from(historyTable)
+                    .select('attachments')
+                    .eq('passport_id', id);
+                if (histData) {
+                    histData.forEach(item => {
+                        if (item.attachments) allFilePaths.push(...item.attachments);
+                    });
+                }
+
+                // Удаляем файлы
+                if (allFilePaths.length > 0) {
+                    const { error: storageError } = await supabase.storage
+                        .from('services-files')
+                        .remove(allFilePaths);
+                    if (storageError) console.error('Ошибка удаления файлов:', storageError);
+                }
+
+                // Удаляем сообщения
+                await supabase.schema('messages').from('user_messages').delete().eq('service_id', id);
+
+                // Удаляем получателей (для foreign)
+                if (applicantsTable) {
+                    await supabase.schema('services').from(applicantsTable).delete().eq('passport_id', id);
+                }
+
+                // Удаляем историю
+                await supabase.schema('services').from(historyTable).delete().eq('passport_id', id);
+
+                // Удаляем основную запись
+                const { error: mainError } = await supabase
+                    .schema('services')
+                    .from(table)
+                    .delete()
+                    .eq('id', id);
+
+                if (mainError) {
+                    alert('Ошибка удаления: ' + mainError.message);
+                    btn.disabled = false;
+                    btn.textContent = 'Удалить заявку';
+                    return;
+                }
+
+                alert('Заявка удалена');
+                document.getElementById('closeViewModal').click();
+                await loadAllApplications();
+
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка: ' + err.message);
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Удалить заявку';
+        });
+
+        // ============================================================
+        // Закрытие модалок
+        // ============================================================
+        document.getElementById('closeCreateModal').addEventListener('click', () => {
+            document.getElementById('createModal').classList.remove('active');
+        });
+        document.getElementById('closeViewModal').addEventListener('click', () => {
+            document.getElementById('viewModal').classList.remove('active');
+        });
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
             }
         });
 
-        // ============================
-        // Переключение типов услуг
-        // ============================
-        function setActiveTab(type) {
-            document.querySelectorAll('.service-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.type === type);
-            });
-        }
-
-        async function switchServiceType(type) {
-            if (type === currentType) return;
-            currentType = type;
-            setActiveTab(type);
-            updateTableHeader();
-            await loadStats();
-            await loadAllData();
-            // Обновляем ссылки
-            document.getElementById('pendingLink').href = `#?type=${type}`;
-            document.getElementById('processingLink').href = `#?type=${type}`;
-        }
-
-        // Обработчики ссылок "Не завершённые" и "В работе" — они просто применяют фильтр
-        document.getElementById('pendingLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('statusFilter').value = 'submitted';
-            applyFilters();
-        });
-        document.getElementById('processingLink').addEventListener('click', (e) => {
-            e.preventDefault();
-            document.getElementById('statusFilter').value = 'processing';
-            applyFilters();
-        });
-
-        // ============================
-        // Кнопка "Назад к списку"
-        // ============================
-        document.getElementById('backToListBtn').addEventListener('click', () => {
-            document.getElementById('viewSection').classList.add('hidden');
-            document.getElementById('appsTable').style.display = '';
-            document.querySelector('.filters').style.display = '';
-            document.querySelector('.action-bar').style.display = '';
-            currentView = 'list';
-            loadAllData();
-            loadStats();
-        });
-
-        // ============================
+        // ============================================================
         // Инициализация
-        // ============================
+        // ============================================================
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await requireAdmin()) return;
+
+            // Показываем email админа
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) document.getElementById('adminEmail').textContent = user.email;
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const typeParam = urlParams.get('type');
-            if (typeParam && tableMap[typeParam]) {
-                currentType = typeParam;
-            }
-            setActiveTab(currentType);
-            updateTableHeader();
-            await loadStats();
-            await loadAllData();
+            await loadMvd();
 
-            document.querySelectorAll('.service-tab').forEach(tab => {
-                tab.addEventListener('click', () => switchServiceType(tab.dataset.type));
-            });
+            // Загружаем данные
+            await loadAllApplications();
 
+            // События фильтров
             document.getElementById('applyFilters').addEventListener('click', applyFilters);
-            document.getElementById('statusFilter').addEventListener('change', applyFilters);
             document.getElementById('searchInput').addEventListener('keyup', (e) => {
                 if (e.key === 'Enter') applyFilters();
             });
+            document.getElementById('typeFilter').addEventListener('change', applyFilters);
 
+            // Вкладки статусов
+            document.querySelectorAll('.service-tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    document.querySelectorAll('.service-tab').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    currentFilter = tab.dataset.filter;
+                    applyFilters();
+                });
+            });
+
+            // Кнопка создания
+            document.getElementById('createBtn').addEventListener('click', () => {
+                document.getElementById('createModal').classList.add('active');
+                toggleCreateFields();
+                // Сброс формы
+                document.getElementById('createForm').reset();
+                uploadedCreateFiles = [];
+                document.getElementById('createFileList').innerHTML = '';
+            });
+
+            // Выход
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
                 window.location.href = '../../login.html';
             });
 
-            // Если в URL есть параметр view, показать заявление
-            const viewId = urlParams.get('view');
-            const viewType = urlParams.get('viewType');
-            if (viewId && viewType) {
-                // Небольшая задержка для загрузки списка
-                setTimeout(() => showView(viewId, viewType), 300);
-            }
+            // Установить текущую дату для создания (опционально)
         });
     </script>
 </body>
