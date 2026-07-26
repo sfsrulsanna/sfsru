@@ -13,8 +13,6 @@
     <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
     <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
     <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
     <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
     <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
@@ -79,23 +77,24 @@
             </div>
 
             <form id="applicationForm">
-                <!-- Шаг 1: Титульный (вступление) -->
+                <!-- Шаг 1: Титульный -->
                 <div class="step-content" data-step="1">
                     <h2>Услуга по получению заграничного паспорта</h2>
                     <p>С помощью этой услуги вы можете подать заявление на оформление заграничного паспорта гражданина СФСРЮ для себя и/или своих детей.</p>
-                    <p>Услуга позволяет:</p>
                     <ul class="plain-list">
                         <li>выбрать тип паспорта (биометрический или небиометрический);</li>
                         <li>оформить паспорт только себе, себе и детям или только детям;</li>
+                        <li>для небиометрического паспорта – решить, вписывать ли детей в паспорт родителя;</li>
                         <li>автоматически подставить ваши данные из профиля;</li>
                         <li>указать информацию о детях (если они есть);</li>
                         <li>внести сведения о трудовой деятельности за последние 10 лет;</li>
                         <li>предоставить данные воинского учёта (если есть военный билет);</li>
                         <li>выбрать вид паспорта (общегражданский, дипломатический, служебный);</li>
                         <li>загрузить фото для каждого получателя;</li>
+                        <li>выбрать отделение МВД для получения паспорта;</li>
                         <li>проверить все данные и отправить заявление.</li>
                     </ul>
-                    <p><strong>Срок оказания услуги:</strong> 30 рабочих дней.</p>
+                    <p><strong>Срок оказания услуги:</strong> 10 рабочих дней.</p>
                     <p><strong>Стоимость:</strong> зависит от выбранного типа паспорта (см. следующий шаг).</p>
                     <p><small>Пошлину можно будет оплатить после проверки заявления в МВД.</small></p>
                     <div class="navigation">
@@ -104,7 +103,7 @@
                     </div>
                 </div>
 
-                <!-- Шаг 2: Выбор типа паспорта -->
+                <!-- Шаг 2: Тип паспорта -->
                 <div class="step-content hidden" data-step="2">
                     <h2>Выберите тип паспорта</h2>
                     <div class="radio-group">
@@ -131,8 +130,22 @@
                     </div>
                 </div>
 
-                <!-- Шаг 4: Информация о заявителе (автоподстановка) -->
+                <!-- Шаг 3a: Вписывать ли детей в паспорт родителя (только для небиометрического) -->
                 <div class="step-content hidden" data-step="4">
+                    <h2>Вписывать ли детей в паспорт родителя?</h2>
+                    <p>Для небиометрического паспорта вы можете вписать детей в паспорт родителя (без отдельного паспорта на каждого ребёнка).</p>
+                    <div class="radio-group">
+                        <label><input type="radio" name="includeChildren" value="yes" /> Да, вписать детей в паспорт родителя</label>
+                        <label><input type="radio" name="includeChildren" value="no" /> Нет, оформить отдельные паспорта на детей</label>
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 4: Информация о заявителе (был шаг 4, теперь шаг 5) -->
+                <div class="step-content hidden" data-step="5">
                     <h2>Информация о заявителе</h2>
                     <div id="applicantData"></div>
                     <div class="navigation">
@@ -141,8 +154,8 @@
                     </div>
                 </div>
 
-                <!-- Шаг 5: Информация о детях (если выбрано) -->
-                <div class="step-content hidden" data-step="5">
+                <!-- Шаг 5: Дети (был шаг 5, теперь шаг 6) -->
+                <div class="step-content hidden" data-step="6">
                     <h2>Дети, на которых оформляется паспорт</h2>
                     <div id="childrenList"></div>
                     <button type="button" class="btn btn-secondary" id="addChildBtn" style="margin-bottom:1rem;">
@@ -154,11 +167,11 @@
                     </div>
                 </div>
 
-                <!-- Шаг 6: Сведения о работе (заявителя) -->
-                <div class="step-content hidden" data-step="6">
+                <!-- Шаг 6: Работа (был шаг 6, теперь шаг 7) -->
+                <div class="step-content hidden" data-step="7">
                     <h2>Сведения о месте работы (учебы)</h2>
                     <div class="form-group">
-                        <label>Название организации (места учёбы)</label>
+                        <label>Название организации (место учёбы)</label>
                         <input type="text" class="form-control" id="workOrg" placeholder="Например: ООО «Ромашка»" />
                     </div>
                     <div class="form-group">
@@ -170,7 +183,7 @@
                         <input type="date" class="form-control" id="workStart" />
                     </div>
                     <div class="form-group">
-                        <label>Дата окончания работы (если работаете по настоящее время, оставьте пустым)</label>
+                        <label>Дата окончания работы (если работает по настоящее время, оставьте пустым)</label>
                         <input type="date" class="form-control" id="workEnd" />
                     </div>
                     <p><strong>Таблица трудовой деятельности за последние 10 лет:</strong></p>
@@ -184,8 +197,8 @@
                     </div>
                 </div>
 
-                <!-- Шаг 7: Воинский учет -->
-                <div class="step-content hidden" data-step="7">
+                <!-- Шаг 7: Воинский учёт (был шаг 7, теперь шаг 8) -->
+                <div class="step-content hidden" data-step="8">
                     <h2>Воинский учёт</h2>
                     <div class="form-group">
                         <label>Наличие военного билета</label>
@@ -218,8 +231,8 @@
                     </div>
                 </div>
 
-                <!-- Шаг 8: Вид паспорта -->
-                <div class="step-content hidden" data-step="8">
+                <!-- Шаг 8: Вид паспорта (был шаг 8, теперь шаг 9) -->
+                <div class="step-content hidden" data-step="9">
                     <h2>Вид заграничного паспорта</h2>
                     <div class="radio-group">
                         <label><input type="radio" name="visaType" value="civil" /> Общегражданский</label>
@@ -232,18 +245,28 @@
                     </div>
                 </div>
 
-                <!-- Шаг 9: Фото для каждого получателя -->
-                <div class="step-content hidden" data-step="9">
+                <!-- Шаг 9: Фото (был шаг 9, теперь шаг 10) -->
+                <div class="step-content hidden" data-step="10">
                     <h2>Загрузите фото для каждого получателя</h2>
                     <div id="photosContainer"></div>
                     <div class="navigation">
                         <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step" id="step9NextBtn" disabled>Далее</button>
+                        <button type="button" class="btn btn-primary next-step" id="step10NextBtn" disabled>Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 10: Подтверждение -->
-                <div class="step-content hidden" data-step="10">
+                <!-- Шаг 10: Выбор МВД (новый шаг) -->
+                <div class="step-content hidden" data-step="11">
+                    <h2>Выберите отделение МВД для получения паспорта</h2>
+                    <div id="mvdList" class="mvd-grid"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 11: Подтверждение (был шаг 10, теперь шаг 12) -->
+                <div class="step-content hidden" data-step="12">
                     <h2>Проверьте заявление</h2>
                     <div id="summary"></div>
                     <div class="navigation">
@@ -252,8 +275,8 @@
                     </div>
                 </div>
 
-                <!-- Шаг 11: Отправка завершена -->
-                <div class="step-content hidden" data-step="11">
+                <!-- Шаг 12: Отправка завершена (был шаг 11, теперь шаг 13) -->
+                <div class="step-content hidden" data-step="13">
                     <h2>Заявление отправлено!</h2>
                     <p>Номер вашего заявления: <strong id="applicationNumber"></strong></p>
                     <p>Вы можете отслеживать статус в личном кабинете.</p>
