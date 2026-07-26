@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Управление новостями — Админ-панель</title>
+    <!-- favicons (скопировать из fl.html) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;" />
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../../css/index.css" />
+    <link rel="stylesheet" href="../../css/admin.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="../../../../css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
+            onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js';">
+    </script>
+    <style>
+        * { box-sizing: border-box; }
+        body { background: #f5f5f5; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
+        .admin-container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+        .card { background: white; border-radius: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); padding: 24px; margin-bottom: 30px; }
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 20px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        .form-group label { font-weight: 600; color: #a00; }
+        input, select, textarea { padding: 10px 12px; border: 1px solid #ccc; border-radius: 12px; font-size: 0.95rem; }
+        textarea { min-height: 200px; resize: vertical; }
+        button { background: #a00; color: white; border: none; border-radius: 12px; padding: 10px 18px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #c00; transform: scale(1.02); }
+        button.secondary { background: #2c3e66; }
+        button.danger { background: #6c2e2e; }
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; }
+        th, td { padding: 12px 10px; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
+        th { background: #f8f0f0; color: #a00; }
+        .badge { background: #e0e0e0; border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; }
+        .badge.published { background: #c8e6c9; color: #2e7d32; }
+        .badge.draft { background: #ffcdd2; color: #c62828; }
+        .search-bar { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+        .search-bar input, .search-bar select { padding: 8px 12px; }
+        .media-preview { display: flex; flex-wrap: wrap; gap: 10px; margin: 10px 0; }
+        .media-preview img { max-width: 150px; max-height: 150px; border-radius: 8px; border: 1px solid #ddd; }
+        .media-preview .media-item { position: relative; }
+        .media-preview .remove-media { position: absolute; top: -8px; right: -8px; background: #c00; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
+                <h1>СФСРЮ — Администратор</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная администратора</a></li>
+                    <li><a href="../../services/">Услуги</a></li>
+                    <li><a href="../../documents/">Документы</a></li>
+                    <li><a href="../../addresses/">Адреса</a></li>
+                    <li><a href="../index.html">Регистры</a></li>
+                    <li><a href="../../laws/">Законы</a></li>
+                    <li><a href="../../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="admin-container">
+        <!-- Форма создания/редактирования статьи -->
+        <div class="card">
+            <h2 id="formTitle">📝 Создать новую статью</h2>
+            <form id="articleForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Заголовок</label>
+                        <input type="text" id="articleTitle" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Дата публикации</label>
+                        <input type="date" id="articleDate" required />
+                    </div>
+                    <div class="form-group">
+                        <label>Ссылка (slug)</label>
+                        <input type="text" id="articleSlug" placeholder="автоматически из заголовка" />
+                        <small>Оставьте пустым для автоматической генерации.</small>
+                    </div>
+                    <div class="form-group">
+                        <label>Статус</label>
+                        <select id="articleStatus">
+                            <option value="true">Опубликовано</option>
+                            <option value="false">Черновик</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Текст статьи</label>
+                    <textarea id="articleContent" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Медиа (фото, видео)</label>
+                    <input type="file" id="mediaUpload" accept="image/*,video/*" multiple />
+                    <div id="mediaPreview" class="media-preview"></div>
+                    <div id="existingMedia" class="media-preview"></div>
+                </div>
+                <input type="hidden" id="editArticleId" />
+                <div style="display:flex; gap:12px; margin-top:20px;">
+                    <button type="submit" id="saveArticleBtn">💾 Сохранить статью</button>
+                    <button type="button" id="cancelEdit" class="secondary" style="display:none;">Отменить</button>
+                </div>
+                <div id="articleMsg"></div>
+            </form>
+        </div>
+
+        <!-- Список статей -->
+        <div class="card">
+            <h2>📰 Все статьи</h2>
+            <div class="search-bar">
+                <input type="text" id="searchArticles" placeholder="Поиск..." />
+                <select id="statusFilter"><option value="">Все статусы</option><option value="true">Опубликовано</option><option value="false">Черновик</option></select>
+                <button id="refreshBtn">Обновить</button>
+            </div>
+            <div class="table-wrapper">
+                <table id="articlesTable">
+                    <thead><tr><th>Заголовок</th><th>Дата</th><th>Статус</th><th>Просмотры</th><th>Комментариев</th><th>Действия</th></tr></thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Просмотр комментариев (модалка) -->
+        <div id="commentsModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
+            <div style="background:white; border-radius:20px; max-width:700px; width:90%; max-height:80vh; overflow-y:auto; padding:20px; position:relative;">
+                <button id="closeCommentsModal" style="position:absolute; top:10px; right:15px; background:transparent; border:none; font-size:24px; cursor:pointer;">×</button>
+                <h3>Комментарии к статье</h3>
+                <div id="commentsList"></div>
+            </div>
+        </div>
+    </div>
+
+    <footer style="text-align:center; margin-top:40px; padding:20px; color:#666;">
+        © 2026 СФСРЮ. Все права защищены.
+    </footer>
+
+    <script>
+    (function() {
+        'use strict';
+
+        const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { db: { schema: 'news' } });
+        const ARTICLES_TABLE = 'articles';
+        const MEDIA_TABLE = 'media';
+        const COMMENTS_TABLE = 'comments';
+        const MEDIA_BUCKET = 'news-media';
+
+        const $ = id => document.getElementById(id);
+        const articleForm = $('articleForm');
+        const articleTitle = $('articleTitle');
+        const articleContent = $('articleContent');
+        const articleDate = $('articleDate');
+        const articleSlug = $('articleSlug');
+        const articleStatus = $('articleStatus');
+        const editArticleId = $('editArticleId');
+        const saveArticleBtn = $('saveArticleBtn');
+        const cancelEdit = $('cancelEdit');
+        const articleMsg = $('articleMsg');
+        const mediaUpload = $('mediaUpload');
+        const mediaPreview = $('mediaPreview');
+        const existingMedia = $('existingMedia');
+        const searchArticles = $('searchArticles');
+        const statusFilter = $('statusFilter');
+        const refreshBtn = $('refreshBtn');
+        const articlesTbody = document.querySelector('#articlesTable tbody');
+        const commentsModal = $('commentsModal');
+        const commentsList = $('commentsList');
+        const closeCommentsModal = $('closeCommentsModal');
+
+        let allArticles = [];
+        let currentEditId = null;
+        let mediaToRemove = [];
+
+        function showMsg(msg, isError = true) {
+            articleMsg.textContent = msg;
+            articleMsg.style.color = isError ? '#c00' : '#0a0';
+            setTimeout(() => articleMsg.textContent = '', 4000);
+        }
+
+        function generateSlug(text) {
+            return text.toLowerCase()
+                .replace(/[^a-zа-яё0-9\s-]/g, '')
+                .replace(/\s+/g, '-')
+                .replace(/-+/g, '-');
+        }
+
+        // Загрузка статей
+        async function loadArticles() {
+            const { data, error } = await supabase.from(ARTICLES_TABLE)
+                .select('*, comments_count:comments(count)')
+                .order('date_published', { ascending: false });
+            if (error) { showMsg('Ошибка загрузки статей: ' + error.message); return; }
+            allArticles = data || [];
+            renderTable();
+        }
+
+        function renderTable() {
+            const term = searchArticles.value.toLowerCase();
+            const status = statusFilter.value;
+            const filtered = allArticles.filter(a =>
+                (status === '' || a.is_published.toString() === status) &&
+                (a.title.toLowerCase().includes(term) || a.content.toLowerCase().includes(term))
+            );
+            articlesTbody.innerHTML = '';
+            filtered.forEach(a => {
+                const tr = articlesTbody.insertRow();
+                tr.insertCell(0).textContent = a.title;
+                tr.insertCell(1).textContent = new Date(a.date_published).toLocaleDateString('ru-RU');
+                tr.insertCell(2).innerHTML = `<span class="badge ${a.is_published ? 'published' : 'draft'}">${a.is_published ? 'Опубликовано' : 'Черновик'}</span>`;
+                tr.insertCell(3).textContent = a.views || 0;
+                tr.insertCell(4).textContent = a.comments_count ? a.comments_count[0].count : 0;
+                const actions = tr.insertCell(5);
+                actions.innerHTML = `
+                    <button class="edit-btn" data-id="${a.id}">✏️</button>
+                    <button class="delete-btn" data-id="${a.id}">🗑</button>
+                    <button class="comments-btn" data-id="${a.id}">💬</button>
+                `;
+            });
+            document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', () => editArticle(btn.dataset.id)));
+            document.querySelectorAll('.delete-btn').forEach(btn => btn.addEventListener('click', () => deleteArticle(btn.dataset.id)));
+            document.querySelectorAll('.comments-btn').forEach(btn => btn.addEventListener('click', () => showComments(btn.dataset.id)));
+        }
+
+        // Редактирование
+        async function editArticle(id) {
+            const article = allArticles.find(a => a.id == id);
+            if (!article) return;
+            currentEditId = id;
+            editArticleId.value = id;
+            articleTitle.value = article.title;
+            articleContent.value = article.content;
+            articleDate.value = article.date_published;
+            articleSlug.value = article.slug || '';
+            articleStatus.value = article.is_published ? 'true' : 'false';
+            saveArticleBtn.textContent = '✏️ Обновить статью';
+            cancelEdit.style.display = 'inline-block';
+            $('formTitle').textContent = '📝 Редактировать статью';
+            // Загружаем существующие медиа
+            await loadMedia(id);
+            window.scrollTo({ top: 0 });
+        }
+
+        function resetForm() {
+            articleForm.reset();
+            editArticleId.value = '';
+            currentEditId = null;
+            saveArticleBtn.textContent = '💾 Сохранить статью';
+            cancelEdit.style.display = 'none';
+            $('formTitle').textContent = '📝 Создать новую статью';
+            mediaPreview.innerHTML = '';
+            existingMedia.innerHTML = '';
+            mediaToRemove = [];
+            articleSlug.value = '';
+        }
+        cancelEdit.addEventListener('click', resetForm);
+
+        // Удаление статьи
+        async function deleteArticle(id) {
+            if (!confirm('Удалить статью? Все комментарии и медиа будут удалены.')) return;
+            try {
+                // Удаляем медиа из Storage
+                const { data: media } = await supabase.from(MEDIA_TABLE).select('*').eq('article_id', id);
+                for (const m of media) {
+                    await supabase.storage.from(m.bucket_name).remove([m.file_path]);
+                }
+                await supabase.from(MEDIA_TABLE).delete().eq('article_id', id);
+                await supabase.from(COMMENTS_TABLE).delete().eq('article_id', id);
+                await supabase.from(ARTICLES_TABLE).delete().eq('id', id);
+                showMsg('Статья удалена', false);
+                loadArticles();
+                if (currentEditId == id) resetForm();
+            } catch (err) {
+                showMsg('Ошибка удаления: ' + err.message);
+            }
+        }
+
+        // Загрузка медиа для статьи
+        async function loadMedia(articleId) {
+            const { data, error } = await supabase.from(MEDIA_TABLE)
+                .select('*')
+                .eq('article_id', articleId)
+                .order('sort_order', { ascending: true });
+            if (error) { showMsg('Ошибка загрузки медиа: ' + error.message); return; }
+            existingMedia.innerHTML = '';
+            data.forEach(m => {
+                const div = document.createElement('div');
+                div.className = 'media-item';
+                div.innerHTML = `
+                    <button class="remove-media" data-id="${m.id}">×</button>
+                    ${m.mime_type.startsWith('image/') ? `<img src="${m.file_path}" />` : `<video src="${m.file_path}" style="max-width:150px;max-height:150px;"></video>`}
+                `;
+                existingMedia.appendChild(div);
+            });
+            document.querySelectorAll('.remove-media').forEach(btn => btn.addEventListener('click', async function() {
+                const mediaId = this.dataset.id;
+                if (!confirm('Удалить этот файл?')) return;
+                const mediaItem = data.find(m => m.id == mediaId);
+                if (mediaItem) {
+                    await supabase.storage.from(mediaItem.bucket_name).remove([mediaItem.file_path]);
+                    await supabase.from(MEDIA_TABLE).delete().eq('id', mediaId);
+                    loadMedia(currentEditId);
+                }
+            }));
+        }
+
+        // Сохранение статьи
+        articleForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = articleTitle.value.trim();
+            const content = articleContent.value.trim();
+            const date = articleDate.value;
+            const isPublished = articleStatus.value === 'true';
+            let slug = articleSlug.value.trim() || generateSlug(title);
+            // Проверяем уникальность slug
+            if (!currentEditId) {
+                const { data: existing } = await supabase.from(ARTICLES_TABLE).select('slug').eq('slug', slug);
+                if (existing && existing.length > 0) {
+                    slug = slug + '-' + Date.now().toString(36);
+                }
+            }
+            try {
+                let articleId;
+                if (currentEditId) {
+                    const { error } = await supabase.from(ARTICLES_TABLE).update({
+                        title, content, date_published: date, slug, is_published: isPublished
+                    }).eq('id', currentEditId);
+                    if (error) throw new Error('Ошибка обновления: ' + error.message);
+                    articleId = currentEditId;
+                    showMsg('Статья обновлена', false);
+                } else {
+                    const { data, error } = await supabase.from(ARTICLES_TABLE).insert({
+                        title, content, date_published: date, slug, is_published: isPublished
+                    }).select().single();
+                    if (error) throw new Error('Ошибка создания: ' + error.message);
+                    articleId = data.id;
+                    showMsg('Статья создана', false);
+                }
+                // Загрузка новых медиа
+                const files = mediaUpload.files;
+                if (files.length > 0) {
+                    for (const file of files) {
+                        const fileExt = file.name.split('.').pop();
+                        const filePath = `articles/${articleId}/${Date.now()}-${file.name}`;
+                        const { error: uploadError } = await supabase.storage.from(MEDIA_BUCKET).upload(filePath, file);
+                        if (uploadError) throw new Error('Ошибка загрузки файла: ' + uploadError.message);
+                        await supabase.from(MEDIA_TABLE).insert({
+                            article_id: articleId,
+                            file_name: file.name,
+                            file_path: filePath,
+                            bucket_name: MEDIA_BUCKET,
+                            mime_type: file.type
+                        });
+                    }
+                }
+                resetForm();
+                loadArticles();
+            } catch (err) {
+                showMsg('Ошибка: ' + err.message);
+            }
+        });
+
+        // Просмотр комментариев
+        async function showComments(articleId) {
+            const { data, error } = await supabase.from(COMMENTS_TABLE)
+                .select('*, user:user_id(email)')
+                .eq('article_id', articleId)
+                .order('created_at', { ascending: true });
+            if (error) { showMsg('Ошибка загрузки комментариев: ' + error.message); return; }
+            commentsList.innerHTML = '';
+            if (!data || data.length === 0) {
+                commentsList.innerHTML = '<p>Комментариев нет.</p>';
+            } else {
+                data.forEach(c => {
+                    const div = document.createElement('div');
+                    div.style.padding = '8px 0';
+                    div.style.borderBottom = '1px solid #eee';
+                    div.innerHTML = `
+                        <strong>${c.user ? c.user.email : 'Аноним'}</strong> 
+                        <small style="color:#888;">${new Date(c.created_at).toLocaleString('ru-RU')}</small>
+                        <p style="margin:5px 0;">${c.content}</p>
+                    `;
+                    commentsList.appendChild(div);
+                });
+            }
+            commentsModal.style.display = 'flex';
+        }
+        closeCommentsModal.addEventListener('click', () => commentsModal.style.display = 'none');
+        commentsModal.addEventListener('click', (e) => {
+            if (e.target === commentsModal) commentsModal.style.display = 'none';
+        });
+
+        // События фильтрации
+        refreshBtn.addEventListener('click', loadArticles);
+        searchArticles.addEventListener('input', renderTable);
+        statusFilter.addEventListener('change', renderTable);
+
+        // Автогенерация slug
+        articleTitle.addEventListener('input', function() {
+            if (!editArticleId.value && !articleSlug.value) {
+                articleSlug.value = generateSlug(this.value);
+            }
+        });
+
+        loadArticles();
+    })();
+    </script>
+</body>
+</html>
