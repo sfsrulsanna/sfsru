@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Просмотр услуги — СФСРЮ</title>
+    <!-- favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <link rel="stylesheet" href="../../css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .service-container { max-width: 700px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 2rem; }
+        .service-title { font-size: 1.8rem; font-weight: 700; color: #7b091a; margin-bottom: 0.25rem; letter-spacing: -0.5px; }
+        .service-number { font-size: 1rem; color: #6c757d; margin-bottom: 2rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 1rem; }
+        .status-card { background: #f8f9fa; border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e9ecef; transition: all 0.2s ease; }
+        .status-card:hover { background: #ffffff; border-color: #ced4da; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .status-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .status-icon { font-size: 1.5rem; line-height: 1; width: 2rem; text-align: center; }
+        .status-name { font-weight: 600; color: #7b091a; flex: 1; }
+        .status-date { color: #666; font-size: 0.9rem; white-space: nowrap; }
+        .status-comment { color: #555; margin-bottom: 1rem; padding-left: 2.75rem; }
+        .files-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; padding-left: 2.75rem; }
+        .file-item { background: #e9ecef; border-radius: 6px; padding: 0.3rem 0.8rem; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .file-item a { color: #007bff; text-decoration: none; }
+        .file-item a:hover { text-decoration: underline; }
+        .section-title { font-weight: 600; margin: 2rem 0 1rem; color: #333; font-size: 1.4rem; }
+        .status-icon .fa-hourglass-half { color: #f0ad4e; }
+        .status-icon .fa-check-circle { color: #28a745; }
+        .status-icon .fa-times-circle { color: #dc3545; }
+        .status-icon .fa-ban { color: #6c757d; }
+        .action-buttons { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
+        .toggle-history, .back-link { display: inline-block; width: 100%; text-align: center; padding: 0.75rem 1rem; font-size: 1rem; border-radius: 8px; box-sizing: border-box; transition: background-color 0.2s; border: none; cursor: pointer; }
+        .toggle-history { background-color: #e9ecef; border: 1px solid #ced4da; color: #495057; }
+        .toggle-history:hover { background-color: #dee2e6; }
+        .back-link { background-color: #6c757d; color: white; text-decoration: none; }
+        .back-link:hover { background-color: #5a6268; }
+        .back-link i { margin-right: 0.5rem; }
+        .toggle-history { display: none; }
+        #historyList .status-card:not(:first-child) { display: none; }
+        #historyList.show-all .status-card { display: block; }
+        .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
+        /* Дополнительные стили для деталей */
+        .app-details { margin-bottom: 2rem; }
+        .detail-row { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; }
+        .detail-label { font-weight: 600; width: 35%; color: #0f172a; }
+        .detail-value { width: 65%; color: #1e293b; }
+        .detail-section { margin-bottom: 1rem; }
+        .detail-section h4 { margin: 1rem 0 0.5rem; color: #7b091a; }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../index.html">Главная</a></li>
+                    <li><a href="../../news.html">Новости</a></li>
+                    <li><a href="../../wiki/">Википедия</a></li>
+                    <li><a href="../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../services.html">Услуги</a></li>
+                    <li><a href="../index.html" class="active">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="service-container">
+            <div class="service-title" id="serviceName"></div>
+            <div class="service-number" id="appNumber"></div>
+
+            <div id="loading" class="loading">Загрузка...</div>
+            <div id="error" class="error" style="display: none;"></div>
+
+            <div id="content" style="display: none;">
+                <!-- Детали заявки (если нужно) -->
+                <div id="appDetails" class="app-details"></div>
+
+                <!-- История статусов -->
+                <div id="historyList"></div>
+
+                <!-- Контейнер для кнопок -->
+                <div class="action-buttons">
+                    <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
+                    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script type="module">
+        import { supabase } from '../../js/supabase-config.js';
+
+        let currentUserId = null;
+        let currentAppId = null;
+        let currentType = null; // 'passport', 'foreign_passport', 'application'
+
+        const statusMap = {
+            'submitted': 'Отправлено в ведомство',
+            'processing': 'В работе',
+            'interim': 'Промежуточные результаты',
+            'positive': 'Принято положительное решение',
+            'completed': 'Результат выдан',
+            'rejected': 'Отказано',
+            'cancelled': 'Отменено'
+        };
+
+        const serviceTypeNames = {
+            'passport': 'Получение паспорта гражданина СФСРЮ',
+            'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ',
+            'inn': 'Получение ИНН'
+        };
+
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'rejected': return '<i class="fas fa-times-circle"></i>';
+                case 'cancelled': return '<i class="fas fa-ban"></i>';
+                case 'positive': case 'completed': return '<i class="fas fa-check-circle"></i>';
+                default: return '<i class="fas fa-hourglass-half"></i>';
+            }
+        }
+
+        async function getSignedUrl(filePath) {
+            if (!filePath) return null;
+            try {
+                const { data, error } = await supabase.storage
+                    .from('services-files')
+                    .createSignedUrl(filePath, 3600);
+                if (error) throw error;
+                return data.signedUrl;
+            } catch (e) {
+                console.error('Ошибка получения ссылки на файл:', e);
+                return null;
+            }
+        }
+
+        async function loadUserProfile() {
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error || !session) {
+                window.location.href = '../../login.html';
+                return false;
+            }
+            currentUserId = session.user.id;
+            return true;
+        }
+
+        // Загрузка данных заявки в зависимости от типа
+        async function loadService() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            const type = urlParams.get('type'); // 'passport', 'foreign_passport', 'application'
+            if (!id) {
+                showError('Не указан ID заявления');
+                return;
+            }
+            currentAppId = id;
+            currentType = type;
+
+            try {
+                let app = null;
+                let tableName = '';
+                let serviceKey = '';
+
+                if (type === 'passport') {
+                    tableName = 'passport';
+                    const { data, error } = await supabase
+                        .schema('services')
+                        .from(tableName)
+                        .select('*')
+                        .eq('id', id)
+                        .eq('user_id', currentUserId)
+                        .single();
+                    if (error) throw error;
+                    app = data;
+                    serviceKey = 'passport';
+                } else if (type === 'foreign_passport') {
+                    tableName = 'foreign_passport';
+                    const { data, error } = await supabase
+                        .schema('services')
+                        .from(tableName)
+                        .select('*')
+                        .eq('id', id)
+                        .eq('user_id', currentUserId)
+                        .single();
+                    if (error) throw error;
+                    app = data;
+                    serviceKey = 'foreign_passport';
+                } else if (type === 'application') {
+                    // Новая структура
+                    tableName = 'applications';
+                    const { data, error } = await supabase
+                        .schema('services')
+                        .from(tableName)
+                        .select(`
+                            *,
+                            catalog:service_id (service_key, name_ru)
+                        `)
+                        .eq('id', id)
+                        .eq('user_id', currentUserId)
+                        .single();
+                    if (error) throw error;
+                    app = data;
+                    serviceKey = app.catalog?.service_key || 'unknown';
+                } else {
+                    // если тип не передан, пытаемся определить
+                    // сначала проверим в applications
+                    const { data: appData, error: appErr } = await supabase
+                        .schema('services')
+                        .from('applications')
+                        .select(`
+                            *,
+                            catalog:service_id (service_key, name_ru)
+                        `)
+                        .eq('id', id)
+                        .eq('user_id', currentUserId)
+                        .maybeSingle();
+                    if (appData) {
+                        app = appData;
+                        serviceKey = app.catalog?.service_key || 'unknown';
+                        currentType = 'application';
+                    } else {
+                        // проверим passport
+                        const { data: pData, error: pErr } = await supabase
+                            .schema('services')
+                            .from('passport')
+                            .select('*')
+                            .eq('id', id)
+                            .eq('user_id', currentUserId)
+                            .maybeSingle();
+                        if (pData) {
+                            app = pData;
+                            serviceKey = 'passport';
+                            currentType = 'passport';
+                        } else {
+                            // foreign_passport
+                            const { data: fData, error: fErr } = await supabase
+                                .schema('services')
+                                .from('foreign_passport')
+                                .select('*')
+                                .eq('id', id)
+                                .eq('user_id', currentUserId)
+                                .maybeSingle();
+                            if (fData) {
+                                app = fData;
+                                serviceKey = 'foreign_passport';
+                                currentType = 'foreign_passport';
+                            } else {
+                                showError('Заявление не найдено');
+                                return;
+                            }
+                        }
+                    }
+                }
+
+                if (!app) {
+                    showError('Заявление не найдено');
+                    return;
+                }
+
+                // Отображаем название и номер
+                const serviceName = serviceTypeNames[serviceKey] || serviceKey || 'Услуга';
+                document.getElementById('serviceName').textContent = serviceName;
+                document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
+
+                // Отображаем детали (если есть)
+                renderDetails(app, serviceKey);
+
+                // Загружаем историю
+                await loadHistory(app.id, serviceKey, app);
+            } catch (err) {
+                console.error(err);
+                showError('Ошибка загрузки данных: ' + err.message);
+            }
+        }
+
+        // Отображение дополнительных деталей (для разных типов)
+        function renderDetails(app, serviceKey) {
+            const container = document.getElementById('appDetails');
+            let html = '<div class="detail-section">';
+
+            // Общие поля
+            html += `<div class="detail-row"><span class="detail-label">Статус</span><span class="detail-value">${statusMap[app.status] || app.status}</span></div>`;
+            html += `<div class="detail-row"><span class="detail-label">Дата создания</span><span class="detail-value">${new Date(app.created_at).toLocaleString()}</span></div>`;
+            html += `<div class="detail-row"><span class="detail-label">Личный код</span><span class="detail-value">${app.personal_code || '—'}</span></div>`;
+
+            if (serviceKey === 'passport') {
+                html += `<div class="detail-row"><span class="detail-label">Причина</span><span class="detail-value">${app.reason || '—'}</span></div>`;
+                html += `<div class="detail-row"><span class="detail-label">Телефон</span><span class="detail-value">${app.phone || '—'}</span></div>`;
+                html += `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${app.email || '—'}</span></div>`;
+                // можно добавить другие поля
+            } else if (serviceKey === 'foreign_passport') {
+                const passportTypeMap = { 'biometric': 'Биометрический', 'nonbiometric': 'Небиометрический' };
+                const recipientMap = { 'self': 'Только себе', 'self_children': 'Себе и детям', 'children_only': 'Только детям' };
+                const visaMap = { 'civil': 'Общегражданский', 'diplomatic': 'Дипломатический', 'service': 'Служебный' };
+                html += `<div class="detail-row"><span class="detail-label">Тип паспорта</span><span class="detail-value">${passportTypeMap[app.passport_type] || app.passport_type || '—'}</span></div>`;
+                html += `<div class="detail-row"><span class="detail-label">Кому</span><span class="detail-value">${recipientMap[app.recipient_type] || app.recipient_type || '—'}</span></div>`;
+                html += `<div class="detail-row"><span class="detail-label">Вид</span><span class="detail-value">${visaMap[app.visa_type] || app.visa_type || '—'}</span></div>`;
+                html += `<div class="detail-row"><span class="detail-label">Вписывать детей</span><span class="detail-value">${app.include_children_in_parent ? 'Да' : 'Нет'}</span></div>`;
+            } else if (serviceKey === 'inn') {
+                const typeMap = { 'electronic': 'Электронный', 'paper': 'Бумажный' };
+                html += `<div class="detail-row"><span class="detail-label">Способ получения</span><span class="detail-value">${typeMap[app.data?.type] || app.data?.type || '—'}</span></div>`;
+                if (app.data?.fns_office_id) {
+                    html += `<div class="detail-row"><span class="detail-label">Отделение ФНС</span><span class="detail-value">${app.data.fns_office_id || '—'}</span></div>`;
+                }
+            }
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // Загрузка истории статусов
+        async function loadHistory(passportId, serviceKey, app) {
+            const list = document.getElementById('historyList');
+            const toggleBtn = document.getElementById('toggleHistoryBtn');
+
+            let historyTable = '';
+            let historyData = [];
+            let error = null;
+
+            if (serviceKey === 'passport') {
+                historyTable = 'passport_status_history';
+            } else if (serviceKey === 'foreign_passport') {
+                historyTable = 'foreign_passport_status_history';
+            } else {
+                // для новых услуг (inn и др.)
+                historyTable = 'application_status_history';
+            }
+
+            try {
+                const { data, error: err } = await supabase
+                    .schema('services')
+                    .from(historyTable)
+                    .select('*')
+                    .eq('passport_id', passportId)
+                    .order('created_at', { ascending: false });
+
+                if (err) throw err;
+                historyData = data || [];
+            } catch (err) {
+                console.error('Ошибка загрузки истории:', err);
+                error = err;
+            }
+
+            if (error) {
+                list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
+                toggleBtn.style.display = 'none';
+                return;
+            }
+
+            if (!historyData || historyData.length === 0) {
+                list.innerHTML = '<p class="no-data">История отсутствует</p>';
+                toggleBtn.style.display = 'none';
+                return;
+            }
+
+            let html = '';
+            for (const item of historyData) {
+                const statusText = statusMap[item.status] || item.status;
+                const iconHtml = getStatusIcon(item.status);
+                const fileLinks = [];
+
+                // Если это первая запись (submitted), добавляем фото и заявление, если есть
+                // Для старых паспортов — есть photo_path
+                // Для новых — можно искать в attachments
+                if (item.status === 'submitted') {
+                    // Для старых таблиц photo_path есть в основной записи
+                    if (serviceKey === 'passport' && app.photo_path) {
+                        const url = await getSignedUrl(app.photo_path);
+                        if (url) {
+                            const name = app.photo_path.split('/').pop() || 'photo.jpg';
+                            fileLinks.push(`<div class="file-item"><span>📷</span><a href="${url}" target="_blank">${name}</a></div>`);
+                        }
+                    }
+                    // Для заграничного паспорта тоже можно добавить фото, если есть
+                    // Но у foreign_passport фото в отдельной таблице, пока пропустим
+                    // Для новых заявок attachments в истории
+                }
+
+                // Добавляем файлы из attachments
+                for (const f of (item.attachments || [])) {
+                    const url = await getSignedUrl(f);
+                    if (url) {
+                        const name = f.split('/').pop() || 'файл';
+                        fileLinks.push(`<div class="file-item"><span>📎</span><a href="${url}" target="_blank">${name}</a></div>`);
+                    }
+                }
+
+                html += `
+                    <div class="status-card">
+                        <div class="status-header">
+                            <div class="status-icon">${iconHtml}</div>
+                            <span class="status-name">${statusText}</span>
+                            <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="status-comment">${item.comment || ''}</div>
+                        <div class="files-list">${fileLinks.join('')}</div>
+                    </div>
+                `;
+            }
+
+            list.innerHTML = html;
+
+            const statusCards = list.querySelectorAll('.status-card');
+            if (statusCards.length > 1) {
+                toggleBtn.style.display = 'inline-block';
+                list.classList.remove('show-all');
+                toggleBtn.textContent = 'Показать историю';
+            } else {
+                toggleBtn.style.display = 'none';
+            }
+        }
+
+        function showError(msg) {
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'none';
+            const err = document.getElementById('error');
+            if (err) {
+                err.textContent = msg;
+                err.style.display = 'block';
+            }
+            const content = document.getElementById('content');
+            if (content) content.style.display = 'none';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await loadUserProfile()) return;
+            await loadService();
+            const loading = document.getElementById('loading');
+            if (loading) loading.style.display = 'none';
+            const content = document.getElementById('content');
+            if (content) content.style.display = 'block';
+
+            const toggleBtn = document.getElementById('toggleHistoryBtn');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', () => {
+                    const history = document.getElementById('historyList');
+                    if (history) {
+                        history.classList.toggle('show-all');
+                        toggleBtn.textContent = history.classList.contains('show-all') ? 'Скрыть историю' : 'Показать историю';
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
