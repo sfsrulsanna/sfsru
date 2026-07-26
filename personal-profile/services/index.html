@@ -265,27 +265,40 @@ async function loadServices() {
     const list = document.getElementById('servicesList');
     loading.style.display = 'block';
 
-    const { data, error } = await supabase
+    // Загружаем из passport
+    const { data: passportData, error: passportError } = await supabase
         .schema('services')
         .from('passport')
         .select('id, application_number, created_at, status, service_type')
         .eq('user_id', currentUserId)
         .order('created_at', { ascending: false });
 
-    if (error) {
-        console.error('Ошибка загрузки услуг:', error);
+    // Загружаем из foreign_passport
+    const { data: foreignData, error: foreignError } = await supabase
+        .schema('services')
+        .from('foreign_passport')
+        .select('id, application_number, created_at, status, service_type')
+        .eq('user_id', currentUserId)
+        .order('created_at', { ascending: false });
+
+    if (passportError || foreignError) {
+        console.error('Ошибка загрузки услуг:', passportError || foreignError);
         list.innerHTML = '<p class="error">Ошибка загрузки данных</p>';
         loading.style.display = 'none';
         return;
     }
 
-    if (!data || data.length === 0) {
+    const allData = [...(passportData || []), ...(foreignData || [])];
+    if (allData.length === 0) {
         list.innerHTML = '<p class="no-data">У вас пока нет заявлений</p>';
         loading.style.display = 'none';
         return;
     }
 
-    list.innerHTML = data.map(item => {
+    // Сортируем по дате (новые сверху)
+    allData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    list.innerHTML = allData.map(item => {
         const statusClass = `status-${item.status}`;
         const statusText = statusMap[item.status] || item.status;
         const date = new Date(item.created_at).toLocaleDateString('ru-RU');
@@ -293,7 +306,7 @@ async function loadServices() {
         const serviceName = serviceTypeNames[item.service_type] || 'Услуга';
 
         return `
-            <a href="service-view.html?id=${item.id}" class="service-card">
+            <a href="service-view.html?id=${item.id}&type=${item.service_type}" class="service-card">
                 <div class="service-icon">${iconHtml}</div>
                 <div class="service-info">
                     <div class="service-name">${serviceName}</div>

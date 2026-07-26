@@ -744,7 +744,7 @@ async function submitApplication() {
     const payload = {
         application_number: applicationNumber,
         user_id: session.user.id,
-        passport_type: passportType ? passportType.value : null,
+		personal_code: userPersonalCode, // <-- добавлено        passport_type: passportType ? passportType.value : null,
         recipient_type: recipient ? recipient.value : null,
         visa_type: visaType ? visaType.value : null,
         include_children_in_parent: (passportType && passportType.value === 'nonbiometric' && include) ? (include.value === 'yes') : false,

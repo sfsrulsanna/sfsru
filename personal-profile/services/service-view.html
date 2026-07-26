@@ -239,10 +239,13 @@
     </footer>
 
     <script src="../../js/mob-menu.js"></script>
-    <script type="module">
+<script type="module">
 import { supabase } from '../../js/supabase-config.js';
 
 let currentUserId = null;
+let currentServiceType = null;
+let currentAppId = null;
+
 const statusMap = {
     'submitted': 'Отправлено в ведомство',
     'processing': 'В работе',
@@ -267,7 +270,7 @@ function getStatusIcon(status) {
         case 'positive':
         case 'completed':
             return '<i class="fas fa-check-circle"></i>';
-	    case 'interim':
+        case 'interim':
         case 'submitted':
         case 'processing':
         default:
@@ -302,44 +305,97 @@ async function loadUserProfile() {
 async function loadService() {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
+    const type = urlParams.get('type'); // 'passport' или 'foreign_passport'
     if (!id) {
         showError('Не указан ID заявления');
         return;
     }
+    currentAppId = id;
+    currentServiceType = type;
 
     try {
-        const { data: app, error: appError } = await supabase
-            .schema('services')
-            .from('passport')
-            .select('*')
-            .eq('id', id)
-            .eq('user_id', currentUserId)
-            .single();
+        let app = null;
+        let tableName = '';
+        if (type === 'foreign_passport') {
+            tableName = 'foreign_passport';
+        } else if (type === 'passport') {
+            tableName = 'passport';
+        } else {
+            // если type не передан, пытаемся определить: сначала foreign_passport, потом passport
+            const { data: fp, error: fpErr } = await supabase
+                .schema('services')
+                .from('foreign_passport')
+                .select('*')
+                .eq('id', id)
+                .eq('user_id', currentUserId)
+                .maybeSingle();
+            if (fp) {
+                app = fp;
+                tableName = 'foreign_passport';
+                currentServiceType = 'foreign_passport';
+            } else {
+                const { data: p, error: pErr } = await supabase
+                    .schema('services')
+                    .from('passport')
+                    .select('*')
+                    .eq('id', id)
+                    .eq('user_id', currentUserId)
+                    .maybeSingle();
+                if (p) {
+                    app = p;
+                    tableName = 'passport';
+                    currentServiceType = 'passport';
+                } else {
+                    showError('Заявление не найдено');
+                    return;
+                }
+            }
+        }
 
-        if (appError || !app) {
-            showError('Заявление не найдено');
-            return;
+        // Если тип известен, но ещё не загрузили данные
+        if (!app) {
+            const { data, error } = await supabase
+                .schema('services')
+                .from(tableName)
+                .select('*')
+                .eq('id', id)
+                .eq('user_id', currentUserId)
+                .single();
+            if (error || !data) {
+                showError('Заявление не найдено');
+                return;
+            }
+            app = data;
         }
 
         const serviceName = serviceTypeNames[app.service_type] || 'Услуга';
         document.getElementById('serviceName').textContent = serviceName;
         document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
 
-        await loadHistory(id, app.photo_path, app.application_number);
+        // В зависимости от типа услуги выбираем таблицу истории
+        let historyTable = '';
+        if (currentServiceType === 'foreign_passport') {
+            historyTable = 'foreign_passport_status_history';
+        } else {
+            historyTable = 'passport_status_history';
+        }
+
+        // Загружаем историю, передавая также photo_path (для passport) или другое поле
+        await loadHistory(id, historyTable, app.photo_path, app.application_number);
     } catch (err) {
         console.error(err);
         showError('Ошибка загрузки данных');
     }
 }
 
-async function loadHistory(passportId, photoPath, appNumber) {
+async function loadHistory(passportId, historyTable, photoPath, appNumber) {
     const list = document.getElementById('historyList');
     const toggleBtn = document.getElementById('toggleHistoryBtn');
     if (!list) return;
 
     const { data, error } = await supabase
         .schema('services')
-        .from('passport_status_history')
+        .from(historyTable)
         .select('*')
         .eq('passport_id', passportId)
         .order('created_at', { ascending: false });
@@ -363,7 +419,7 @@ async function loadHistory(passportId, photoPath, appNumber) {
         const files = item.attachments || [];
         const fileLinks = [];
 
-        // Для статуса "Отправлено в ведомство" добавляем фото и заявление
+        // Для статуса "submitted" добавляем фото и заявление (если есть)
         if (item.status === 'submitted') {
             if (photoPath) {
                 const photoUrl = await getSignedUrl(photoPath);
@@ -377,7 +433,13 @@ async function loadHistory(passportId, photoPath, appNumber) {
                     `);
                 }
             }
-            const statementPath = `passport/${appNumber}/statement.pdf`;
+            // Для заграничного паспорта путь к PDF может быть другим
+            let statementPath;
+            if (currentServiceType === 'foreign_passport') {
+                statementPath = `foreign_passport/${appNumber}/statement.pdf`;
+            } else {
+                statementPath = `passport/${appNumber}/statement.pdf`;
+            }
             const statementUrl = await getSignedUrl(statementPath);
             if (statementUrl) {
                 fileLinks.push(`
@@ -459,6 +521,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 });
-    </script>
+</script>
 </body>
 </html>
