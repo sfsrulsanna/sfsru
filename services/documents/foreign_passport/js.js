@@ -12,8 +12,8 @@ let applicationNumber = null;
 let selectedPassportType = null;
 let selectedRecipient = null;
 let includeChildren = null; // 'yes' или 'no' для небиометрического
-let applicants = [];
-let childrenList = [];
+let applicants = []; // массив получателей: [{ type: 'self'|'child', data: {...}, photoPath: null }]
+let childrenList = []; // список детей из БД (для выбора)
 let workRows = [];
 let selectedVisaType = null;
 let selectedMvdId = null;
@@ -132,6 +132,7 @@ function renderMvdList() {
         radio.value = mvd.id;
         radio.id = `mvd-${mvd.id}`;
         radio.classList.add('mvd-radio');
+        radio.style.display = 'none';
 
         const card = document.createElement('div');
         card.className = 'mvd-card';
@@ -168,16 +169,14 @@ function getNextStep(step) {
         case 2: return 3;
         case 3: return 4;
         case 4: {
-            // Если выбраны дети (не только себе), показываем шаг с детьми
             if (hasChildren) return 5;
-            else return 6; // иначе сразу на работу
+            else return 6;
         }
         case 5: return 6;
         case 6: return 7;
         case 7: {
-            // После воинского учёта проверяем: если небиометрический и есть дети → шаг 8 (вопрос о вписывании)
             if (isNonBiometric && hasChildren) return 8;
-            else return 9; // иначе сразу на вид паспорта
+            else return 9;
         }
         case 8: return 9;
         case 9: return 10;
@@ -198,11 +197,7 @@ function getPrevStep(step) {
         case 2: return 1;
         case 3: return 2;
         case 4: return 3;
-        case 5: {
-            // Если только себе, то на шаге 4 (заявитель), а не на шаге 5 (дети)
-            if (recipient && recipient.value === 'self') return 4;
-            return 4; // иначе тоже на заявителя
-        }
+        case 5: return 4;
         case 6: {
             if (hasChildren) return 5;
             else return 4;
@@ -210,7 +205,6 @@ function getPrevStep(step) {
         case 7: return 6;
         case 8: return 7;
         case 9: {
-            // Если был шаг 8 (вопрос о детях), возвращаемся на него
             if (isNonBiometric && hasChildren) return 8;
             else return 7;
         }
@@ -230,19 +224,16 @@ function goToStep(step) {
     if (targetStep) targetStep.classList.remove('hidden');
     currentStep = step;
 
-    if (step === 5) renderApplicantInfo();
-    if (step === 6) renderChildrenStep();
-    if (step === 7) renderWorkTable();
+    if (step === 4) renderApplicantInfo();
+    if (step === 5) renderChildrenStep();
+    if (step === 6) renderWorkTable();
     if (step === 10) renderPhotosStep();
+    if (step === 11 && mvdList.length === 0) loadMvd();
     if (step === 12) prepareSummary();
-    if (step === 11) {
-        // Загружаем МВД, если ещё не загружены
-        if (mvdList.length === 0) loadMvd();
-    }
 }
 
 // ============================================================
-// Шаг 5: Заявитель
+// Шаг 4: Информация о заявителе
 // ============================================================
 function renderApplicantInfo() {
     const container = document.getElementById('applicantData');
@@ -258,7 +249,7 @@ function renderApplicantInfo() {
 }
 
 // ============================================================
-// Шаг 6: Дети (аналогично предыдущей версии)
+// Шаг 5: Дети
 // ============================================================
 function renderChildrenStep() {
     const container = document.getElementById('childrenList');
@@ -344,7 +335,7 @@ document.getElementById('addChildBtn').addEventListener('click', () => {
 });
 
 // ============================================================
-// Шаг 7: Работа (без изменений)
+// Шаг 6: Работа (таблица за 10 лет)
 // ============================================================
 function renderWorkTable() {
     const container = document.getElementById('workTableContainer');
@@ -392,7 +383,7 @@ document.getElementById('addWorkRowBtn').addEventListener('click', () => {
 });
 
 // ============================================================
-// Шаг 8: Воинский учёт (без изменений)
+// Шаг 7: Воинский учёт
 // ============================================================
 document.getElementById('militaryStatus').addEventListener('change', (e) => {
     const fields = document.getElementById('militaryFields');
@@ -404,7 +395,7 @@ document.getElementById('militaryStatus').addEventListener('change', (e) => {
 });
 
 // ============================================================
-// Шаг 10: Фото (без изменений)
+// Шаг 10: Фото для каждого получателя
 // ============================================================
 function renderPhotosStep() {
     const container = document.getElementById('photosContainer');
@@ -555,7 +546,9 @@ function prepareSummary() {
     if (childrenApplicants.length > 0) {
         html += `<tr><th>Дети</th><td>`;
         childrenApplicants.forEach((child, i) => {
-            html += `${i+1}. ${child.data.surname} ${child.data.name} ${child.data.patronymic} (${new Date(child.data.date_of_birth).toLocaleDateString('ru-RU')})<br>`;
+            html += `${i+1}. ${child.data.surname} ${child.data.name} ${child.data.patronymic} (${new Date(child.data.date_of_birth).toLocaleDateString('ru-RU')})`;
+            if (child.data.place_of_birth) html += `, м.р. ${child.data.place_of_birth}`;
+            html += `<br>`;
         });
         html += `</td></tr>`;
     }
@@ -587,7 +580,7 @@ function prepareSummary() {
 }
 
 // ============================================================
-// Генерация PDF (с плейсхолдером)
+// Генерация PDF (идентично услуге получения паспорта)
 // ============================================================
 async function generatePDF() {
     const doc = new jsPDF();
@@ -612,26 +605,41 @@ async function generatePDF() {
         ['Тип паспорта', passportType ? (passportType.value === 'biometric' ? 'Биометрический' : 'Небиометрический') : '—'],
         ['Кому', recipient ? (recipient.value === 'self' ? 'Только себе' : recipient.value === 'self_children' ? 'Себе и детям' : 'Только детям') : '—'],
     ];
-    if (passportType && passportType.value === 'nonbiometric' && recipient && (recipient.value !== 'self')) {
+
+    if (passportType && passportType.value === 'nonbiometric' && 
+        recipient && (recipient.value === 'self_children' || recipient.value === 'children_only')) {
         data.push(['Вписывать детей в паспорт родителя', include ? (include.value === 'yes' ? 'Да' : 'Нет') : '—']);
     }
+
     data.push(['Заявитель', `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`]);
     data.push(['Личный код заявителя', userProfile.personal_code]);
+    data.push(['Дата рождения заявителя', new Date(userProfile.date_of_birth).toLocaleDateString('ru-RU')]);
+    data.push(['Место рождения заявителя', userProfile.place_of_birth || '—']);
 
     const childrenApplicants = applicants.filter(a => a.type === 'child');
     if (childrenApplicants.length > 0) {
         let childrenStr = '';
         childrenApplicants.forEach((child, i) => {
-            childrenStr += `${i+1}. ${child.data.surname} ${child.data.name} ${child.data.patronymic} (${new Date(child.data.date_of_birth).toLocaleDateString('ru-RU')}) `;
+            childrenStr += `${i+1}. ${child.data.surname} ${child.data.name} ${child.data.patronymic} (${new Date(child.data.date_of_birth).toLocaleDateString('ru-RU')})`;
+            if (child.data.place_of_birth) childrenStr += `, м.р. ${child.data.place_of_birth}`;
+            childrenStr += '\n';
         });
-        data.push(['Дети', childrenStr]);
+        data.push(['Дети', childrenStr.trim()]);
     }
 
-    data.push(['Место работы', document.getElementById('workOrg').value || '—']);
-    data.push(['Должность', document.getElementById('workPosition').value || '—']);
+    data.push(['Место работы (учебы)', document.getElementById('workOrg').value || '—']);
+    data.push(['Должность (специальность)', document.getElementById('workPosition').value || '—']);
+    
     let workStr = '';
     workRows.forEach(row => {
-        if (row.org) workStr += `${row.org} (${row.position}) ${row.start} - ${row.end || 'по н.в.'}\n`;
+        if (row.org) {
+            workStr += `${row.org}`;
+            if (row.position) workStr += ` (${row.position})`;
+            if (row.start) workStr += ` с ${row.start}`;
+            if (row.end) workStr += ` по ${row.end}`;
+            else if (row.start) workStr += ` по настоящее время`;
+            workStr += '\n';
+        }
     });
     data.push(['Трудовая деятельность (10 лет)', workStr || '—']);
 
@@ -644,8 +652,10 @@ async function generatePDF() {
 
     data.push(['Вид паспорта', visaType ? (visaType.value === 'civil' ? 'Общегражданский' : visaType.value === 'diplomatic' ? 'Дипломатический' : 'Служебный') : '—']);
     data.push(['Количество фото', Object.keys(photoPaths).length]);
-    const mvdName = mvdList.find(m => m.id === selectedMvdId)?.name || '—';
-    data.push(['Отделение МВД', mvdName]);
+    
+    const mvd = mvdList.find(m => m.id === selectedMvdId);
+    data.push(['Отделение МВД', mvd ? `${mvd.name} (${mvd.address})` : '—']);
+    data.push(['Дата подачи заявления', new Date().toLocaleDateString('ru-RU')]);
 
     autoTable(doc, {
         startY: 40,
@@ -661,10 +671,12 @@ async function generatePDF() {
     const { error } = await supabase.storage
         .from('services-files')
         .upload(pdfPath, pdfBlob, { contentType: 'application/pdf' });
+    
     if (error) {
         console.error('Ошибка сохранения PDF:', error);
         showError('Не удалось сохранить PDF, но заявление отправлено.');
     }
+    
     return pdfPath;
 }
 
@@ -819,7 +831,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     await loadChildren();
-    // МВД загружаем только при переходе на соответствующий шаг, но можно предзагрузить
+    // МВД загружаем при переходе на шаг 11, но можно предзагрузить
     loadMvd();
 
     // Подсветка радио
@@ -843,7 +855,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Навигация
     document.querySelectorAll('.next-step').forEach(btn => {
         btn.addEventListener('click', async () => {
-            // Валидация
+            // Валидация шагов
             if (currentStep === 2) {
                 const selected = document.querySelector('input[name="passportType"]:checked');
                 if (!selected) { showError('Выберите тип паспорта'); return; }
@@ -857,7 +869,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     applicants = applicants.filter(a => a.type !== 'child');
                 }
             }
-            if (currentStep === 4) {
+            if (currentStep === 8) {
                 const selected = document.querySelector('input[name="includeChildren"]:checked');
                 if (!selected) { showError('Укажите, нужно ли вписывать детей в паспорт родителя'); return; }
                 includeChildren = selected.value;
