@@ -155,30 +155,30 @@ function renderMvdList() {
 }
 
 // ============================================================
-// Управление шагами (новая нумерация)
+// Управление шагами (исправленная нумерация)
 // ============================================================
 function getNextStep(step) {
+    const passportType = document.querySelector('input[name="passportType"]:checked');
+    const recipient = document.querySelector('input[name="recipient"]:checked');
+    const isNonBiometric = passportType && passportType.value === 'nonbiometric';
+    const hasChildren = recipient && (recipient.value === 'self_children' || recipient.value === 'children_only');
+
     switch (step) {
         case 1: return 2;
         case 2: return 3;
-        case 3: {
-            const passportType = document.querySelector('input[name="passportType"]:checked');
-            const recipient = document.querySelector('input[name="recipient"]:checked');
-            // Если небиометрический и выбраны дети (self_children или children_only), добавляем шаг 4 (вопрос о вписывании)
-            if (passportType && passportType.value === 'nonbiometric' &&
-                recipient && (recipient.value === 'self_children' || recipient.value === 'children_only')) {
-                return 4;
-            }
-            return 5; // иначе сразу на заявителя
+        case 3: return 4;
+        case 4: {
+            // Если выбраны дети (не только себе), показываем шаг с детьми
+            if (hasChildren) return 5;
+            else return 6; // иначе сразу на работу
         }
-        case 4: return 5;
-        case 5: {
-            const recipient = document.querySelector('input[name="recipient"]:checked');
-            if (recipient && recipient.value === 'self') return 7;
-            else return 6;
-        }
+        case 5: return 6;
         case 6: return 7;
-        case 7: return 8;
+        case 7: {
+            // После воинского учёта проверяем: если небиометрический и есть дети → шаг 8 (вопрос о вписывании)
+            if (isNonBiometric && hasChildren) return 8;
+            else return 9; // иначе сразу на вид паспорта
+        }
         case 8: return 9;
         case 9: return 10;
         case 10: return 11;
@@ -189,24 +189,31 @@ function getNextStep(step) {
 }
 
 function getPrevStep(step) {
+    const passportType = document.querySelector('input[name="passportType"]:checked');
+    const recipient = document.querySelector('input[name="recipient"]:checked');
+    const isNonBiometric = passportType && passportType.value === 'nonbiometric';
+    const hasChildren = recipient && (recipient.value === 'self_children' || recipient.value === 'children_only');
+
     switch (step) {
         case 2: return 1;
         case 3: return 2;
         case 4: return 3;
-        case 5: return (document.querySelector('input[name="passportType"]:checked')?.value === 'nonbiometric' &&
-                        document.querySelector('input[name="recipient"]:checked')?.value !== 'self') ? 4 : 3;
+        case 5: {
+            // Если только себе, то на шаге 4 (заявитель), а не на шаге 5 (дети)
+            if (recipient && recipient.value === 'self') return 4;
+            return 4; // иначе тоже на заявителя
+        }
         case 6: {
-            const recipient = document.querySelector('input[name="recipient"]:checked');
-            if (recipient && (recipient.value === 'self_children' || recipient.value === 'children_only')) return 5;
-            else return 5; // если только себе, назад на заявителя (шаг 5)
+            if (hasChildren) return 5;
+            else return 4;
         }
-        case 7: {
-            const recipient = document.querySelector('input[name="recipient"]:checked');
-            if (recipient && (recipient.value === 'self_children' || recipient.value === 'children_only')) return 6;
-            else return 5;
-        }
+        case 7: return 6;
         case 8: return 7;
-        case 9: return 8;
+        case 9: {
+            // Если был шаг 8 (вопрос о детях), возвращаемся на него
+            if (isNonBiometric && hasChildren) return 8;
+            else return 7;
+        }
         case 10: return 9;
         case 11: return 10;
         case 12: return 11;
