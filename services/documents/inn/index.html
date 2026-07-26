@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Получение ИНН — СФСРЮ</title>
+    <link rel="stylesheet" href="../../../css/style.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    <!-- Favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;" />
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    <link rel="stylesheet" href="css.css" />
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2",
+                "jspdf": "https://esm.sh/jspdf@2.5.1",
+                "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.0"
+            }
+        }
+    </script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../../index.html">Главная</a></li>
+                    <li><a href="../../../news.html">Новости</a></li>
+                    <li><a href="../../../wiki/">Википедия</a></li>
+                    <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../../services.html" class="active">Услуги</a></li>
+                    <li><a href="../../../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="service-container">
+            <h1>Получение ИНН</h1>
+
+            <div id="errorMessage" class="alert alert-danger hidden"></div>
+            <div id="successMessage" class="alert alert-success hidden"></div>
+
+            <div id="activeApplicationWarning" class="blocking-warning hidden">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2>У вас уже есть активное заявление</h2>
+                <p>Вы можете подать новое заявление только после завершения текущего.</p>
+                <a href="../../../profile.html" class="btn btn-primary">Перейти в личный кабинет</a>
+            </div>
+
+            <form id="applicationForm">
+                <!-- Шаг 1: Титульный -->
+                <div class="step-content" data-step="1">
+                    <h2>Услуга по получению ИНН</h2>
+                    <p>ИНН (Идентификационный номер налогоплательщика) – это цифровой код, который присваивается каждому налогоплательщику в СФСРЮ.</p>
+                    <p>С помощью этой услуги вы можете подать заявление на получение ИНН:</p>
+                    <ul class="plain-list">
+                        <li>в электронном виде (ИНН будет отправлен в личный кабинет);</li>
+                        <li>в бумажном виде (вы получите свидетельство в отделении ФНС).</li>
+                    </ul>
+                    <p><strong>Срок оказания услуги:</strong> 5 рабочих дней.</p>
+                    <p><strong>Стоимость:</strong> бесплатно.</p>
+                    <div class="navigation">
+                        <span></span>
+                        <button type="button" class="btn btn-primary next-step">Начать</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 2: Выбор типа -->
+                <div class="step-content hidden" data-step="2">
+                    <h2>Выберите способ получения ИНН</h2>
+                    <div class="radio-group">
+                        <label><input type="radio" name="innType" value="electronic" /> Электронный (ИНН придёт в личный кабинет)</label>
+                        <label><input type="radio" name="innType" value="paper" /> Бумажный (получить свидетельство в отделении ФНС)</label>
+                    </div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 3: Проверка данных -->
+                <div class="step-content hidden" data-step="3">
+                    <h2>Проверьте ваши данные</h2>
+                    <div id="profileData"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 4 (бумажный): Выбор ФНС -->
+                <div class="step-content hidden" data-step="4">
+                    <h2>Выберите отделение ФНС для получения свидетельства</h2>
+                    <div id="fnsList" class="mvd-grid"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 5: Подтверждение и отправка -->
+                <div class="step-content hidden" data-step="5">
+                    <h2>Проверьте заявление</h2>
+                    <div id="summary"></div>
+                    <div class="navigation">
+                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
+                        <button type="button" class="btn btn-primary" id="submitApplication">Отправить заявление</button>
+                    </div>
+                </div>
+
+                <!-- Шаг 6: Завершение -->
+                <div class="step-content hidden" data-step="6">
+                    <h2>Заявление отправлено!</h2>
+                    <p>Номер вашего заявления: <strong id="applicationNumber"></strong></p>
+                    <p>Вы можете отслеживать статус в личном кабинете.</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                        <a href="../../../services.html" class="btn btn-secondary btn-lg">На главную услуг</a>
+                        <a href="../../../profile.html" class="btn btn-secondary btn-lg">В личный кабинет</a>
+                        <a id="gotoServiceLink" href="#" class="btn btn-primary btn-lg">Перейти к заявлению</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../../js/mob-menu.js"></script>
+    <script type="module" src="js.js"></script>
+</body>
+</html>
