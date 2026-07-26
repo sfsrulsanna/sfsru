@@ -181,54 +181,42 @@
 
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Запрос комментариев с JOIN на profiles (связь по user_id)
-                const { data: comments, error: commentsError } = await supabase
-                    .from('comments')
-                    .select(`
-                        *,
-                        user:user_id ( name, surname )
-                    `)
-                    .eq('article_id', id)
-                    .order('created_at', { ascending: true });
-                if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
+// Запрос комментариев с JOIN на profiles
+const { data: comments, error: commentsError } = await supabase
+    .from('comments')
+    .select(`
+        *,
+        user:user_id ( name, surname )
+    `)
+    .eq('article_id', id)
+    .order('created_at', { ascending: true });
 
-                let mediaHtml = '';
-                if (article.media && article.media.length > 0) {
-                    mediaHtml = '<div class="news-media">';
-                    article.media.forEach(m => {
-                        const url = getMediaUrl(m.bucket_name, m.file_path);
-                        if (m.mime_type.startsWith('image/')) {
-                            mediaHtml += `<img src="${url}" alt="${m.file_name}" loading="lazy" />`;
-                        } else if (m.mime_type.startsWith('video/')) {
-                            mediaHtml += `<video controls src="${url}"></video>`;
-                        }
-                    });
-                    mediaHtml += '</div>';
-                }
+if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
 
-                let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
-                if (comments && comments.length > 0) {
-                    comments.forEach(c => {
-                        // Извлекаем имя и фамилию из связанной записи profiles
-                        let authorName = 'Пользователь';
-                        if (c.user) {
-                            const name = c.user.name || '';
-                            const surname = c.user.surname || '';
-                            if (name || surname) {
-                                authorName = (name + ' ' + surname).trim();
-                            }
-                        }
-                        commentsHtml += `
-                            <div class="comment">
-                                <strong>${authorName}</strong>
-                                <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
-                                <p>${c.content}</p>
-                            </div>
-                        `;
-                    });
-                } else {
-                    commentsHtml += '<p>Комментариев пока нет. Будьте первым!</p>';
-                }
+// Рендеринг комментариев
+let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
+if (comments && comments.length > 0) {
+    comments.forEach(c => {
+        // Извлекаем имя и фамилию из связанной записи profiles
+        let authorName = 'Пользователь';
+        if (c.user) {
+            const name = c.user.name || '';
+            const surname = c.user.surname || '';
+            if (name || surname) {
+                authorName = (name + ' ' + surname).trim();
+            }
+        }
+        commentsHtml += `
+            <div class="comment">
+                <strong>${authorName}</strong>
+                <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
+                <p>${c.content}</p>
+            </div>
+        `;
+    });
+} else {
+    commentsHtml += '<p>Комментариев пока нет. Будьте первым!</p>';
+}
 
                 const user = await getCurrentUser();
                 if (user) {
