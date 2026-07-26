@@ -1,11 +1,11 @@
-<!-- news.html — обновлённая клиентская страница с profiles -->
+<!-- news.html — полная рабочая версия -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Новости СФСРЮ</title>
-    <!-- favicons (скопированы) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -24,7 +24,6 @@
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css" />
     <style>
-        /* ... стили такие же как раньше ... */
         .news-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
         .news-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.3s; }
@@ -165,132 +164,121 @@
             }
         }
 
-async function loadArticle(id) {
-    detailEl.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка статьи...</div>';
-    detailEl.style.display = 'block';
-    listEl.style.display = 'none';
+        async function loadArticle(id) {
+            detailEl.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка статьи...</div>';
+            detailEl.style.display = 'block';
+            listEl.style.display = 'none';
 
-    try {
-        const { data: article, error } = await supabase
-            .from('articles')
-            .select('*, media(*)')
-            .eq('id', id)
-            .eq('is_published', true)
-            .single();
-        if (error || !article) throw new Error('Статья не найдена.');
+            try {
+                const { data: article, error } = await supabase
+                    .from('articles')
+                    .select('*, media(*)')
+                    .eq('id', id)
+                    .eq('is_published', true)
+                    .single();
+                if (error || !article) throw new Error('Статья не найдена.');
 
-        await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
+                await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-        // Получаем комментарии с JOIN на profiles
-        const { data: comments, error: commentsError } = await supabase
-            .from('comments')
-            .select(`
-                *,
-                user:user_id ( name, surname )
-            `)
-            .eq('article_id', id)
-            .order('created_at', { ascending: true });
-        if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
+                // Используем RPC функцию для получения комментариев с данными пользователя
+                const { data: comments, error: commentsError } = await supabase
+                    .rpc('get_comments_with_users', { article_id: id });
+                if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
 
-        // Подготовка медиа
-        let mediaHtml = '';
-        if (article.media && article.media.length > 0) {
-            mediaHtml = '<div class="news-media">';
-            article.media.forEach(m => {
-                const url = getMediaUrl(m.bucket_name, m.file_path);
-                if (m.mime_type.startsWith('image/')) {
-                    mediaHtml += `<img src="${url}" alt="${m.file_name}" loading="lazy" />`;
-                } else if (m.mime_type.startsWith('video/')) {
-                    mediaHtml += `<video controls src="${url}"></video>`;
+                let mediaHtml = '';
+                if (article.media && article.media.length > 0) {
+                    mediaHtml = '<div class="news-media">';
+                    article.media.forEach(m => {
+                        const url = getMediaUrl(m.bucket_name, m.file_path);
+                        if (m.mime_type.startsWith('image/')) {
+                            mediaHtml += `<img src="${url}" alt="${m.file_name}" loading="lazy" />`;
+                        } else if (m.mime_type.startsWith('video/')) {
+                            mediaHtml += `<video controls src="${url}"></video>`;
+                        }
+                    });
+                    mediaHtml += '</div>';
                 }
-            });
-            mediaHtml += '</div>';
-        }
 
-        // Подготовка комментариев
-        let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
-        if (comments && comments.length > 0) {
-            comments.forEach(c => {
-                let authorName = 'Пользователь';
-                if (c.user) {
-                    const name = c.user.name || '';
-                    const surname = c.user.surname || '';
-                    if (name || surname) {
-                        authorName = (name + ' ' + surname).trim();
-                    }
+                let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
+                if (comments && comments.length > 0) {
+                    comments.forEach(c => {
+                        // Извлекаем имя и фамилию из данных, возвращённых функцией
+                        let authorName = 'Пользователь';
+                        if (c.user_name || c.user_surname) {
+                            authorName = (c.user_name || '') + ' ' + (c.user_surname || '');
+                            authorName = authorName.trim();
+                        }
+                        commentsHtml += `
+                            <div class="comment">
+                                <strong>${authorName}</strong>
+                                <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
+                                <p>${c.content}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    commentsHtml += '<p>Комментариев пока нет. Будьте первым!</p>';
                 }
-                commentsHtml += `
-                    <div class="comment">
-                        <strong>${authorName}</strong>
-                        <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
-                        <p>${c.content}</p>
+
+                const user = await getCurrentUser();
+                if (user) {
+                    commentsHtml += `
+                        <form id="commentForm" class="comment-form">
+                            <textarea name="content" placeholder="Ваш комментарий..." required></textarea>
+                            <button type="submit">Отправить</button>
+                            <div id="commentMsg"></div>
+                        </form>
+                    `;
+                } else {
+                    commentsHtml += `
+                        <div class="login-to-comment">
+                            <p><a href="/login.html">Войдите</a> или <a href="/register.html">зарегистрируйтесь</a>, чтобы оставить комментарий.</p>
+                        </div>
+                    `;
+                }
+                commentsHtml += '</div>';
+
+                detailEl.innerHTML = `
+                    <div class="news-detail">
+                        <a href="?page=news" class="back-link">← Назад к списку</a>
+                        <h1>${article.title}</h1>
+                        <div class="news-meta">${formatDate(article.date_published)} • Просмотров: ${article.views || 0}</div>
+                        ${mediaHtml}
+                        <div class="news-body">${article.content}</div>
+                        ${commentsHtml}
                     </div>
                 `;
-            });
-        } else {
-            commentsHtml += '<p>Комментариев пока нет. Будьте первым!</p>';
-        }
 
-        const user = await getCurrentUser();
-        if (user) {
-            commentsHtml += `
-                <form id="commentForm" class="comment-form">
-                    <textarea name="content" placeholder="Ваш комментарий..." required></textarea>
-                    <button type="submit">Отправить</button>
-                    <div id="commentMsg"></div>
-                </form>
-            `;
-        } else {
-            commentsHtml += `
-                <div class="login-to-comment">
-                    <p><a href="/login.html">Войдите</a> или <a href="/register.html">зарегистрируйтесь</a>, чтобы оставить комментарий.</p>
-                </div>
-            `;
-        }
-        commentsHtml += '</div>';
-
-        detailEl.innerHTML = `
-            <div class="news-detail">
-                <a href="?page=news" class="back-link">← Назад к списку</a>
-                <h1>${article.title}</h1>
-                <div class="news-meta">${formatDate(article.date_published)} • Просмотров: ${article.views || 0}</div>
-                ${mediaHtml}
-                <div class="news-body">${article.content}</div>
-                ${commentsHtml}
-            </div>
-        `;
-
-        // Обработка формы комментария
-        const commentForm = document.getElementById('commentForm');
-        const commentMsg = document.getElementById('commentMsg');
-        if (commentForm) {
-            commentForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const content = commentForm.querySelector('textarea').value.trim();
-                if (!content) {
-                    commentMsg.innerHTML = '<div class="error-msg">Введите текст комментария.</div>';
-                    return;
-                }
-                try {
-                    const { error } = await supabase.from('comments').insert({
-                        article_id: id,
-                        user_id: user.id,
-                        content: content
+                const commentForm = document.getElementById('commentForm');
+                const commentMsg = document.getElementById('commentMsg');
+                if (commentForm) {
+                    commentForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const content = commentForm.querySelector('textarea').value.trim();
+                        if (!content) {
+                            commentMsg.innerHTML = '<div class="error-msg">Введите текст комментария.</div>';
+                            return;
+                        }
+                        try {
+                            const { error } = await supabase.from('comments').insert({
+                                article_id: id,
+                                user_id: user.id,
+                                content: content
+                            });
+                            if (error) throw new Error(error.message);
+                            commentMsg.innerHTML = '<div class="success-msg">Комментарий добавлен!</div>';
+                            commentForm.querySelector('textarea').value = '';
+                            setTimeout(() => loadArticle(id), 1000);
+                        } catch (err) {
+                            commentMsg.innerHTML = `<div class="error-msg">${err.message}</div>`;
+                        }
                     });
-                    if (error) throw new Error(error.message);
-                    commentMsg.innerHTML = '<div class="success-msg">Комментарий добавлен!</div>';
-                    commentForm.querySelector('textarea').value = '';
-                    setTimeout(() => loadArticle(id), 1000);
-                } catch (err) {
-                    commentMsg.innerHTML = `<div class="error-msg">${err.message}</div>`;
                 }
-            });
+            } catch (err) {
+                detailEl.innerHTML = `<div class="error-msg">⚠️ ${err.message}</div>`;
+                console.error(err);
+            }
         }
-    } catch (err) {
-        detailEl.innerHTML = `<div class="error-msg">⚠️ ${err.message}</div>`;
-        console.error(err);
-    }
-}
 
         function route() {
             const params = new URLSearchParams(window.location.search);
