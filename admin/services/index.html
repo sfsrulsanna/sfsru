@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Управление услугами — Админ панель СФСРЮ</title>
     <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
@@ -21,33 +21,109 @@
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Основные стили как в предыдущих файлах */
         .container { max-width: 1280px; margin: 0 auto; padding: 1rem; }
         .page-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; border-left: 4px solid #7b091a; padding-left: 1rem; }
         .page-description { color: #64748b; margin-bottom: 2rem; font-size: 1rem; }
+        .service-tabs { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
+        .service-tab { background: #f1f5f9; border: none; padding: 0.75rem 1.75rem; border-radius: 40px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: all 0.2s; color: #1e293b; }
+        .service-tab:hover { background: #e2e8f0; transform: translateY(-2px); }
+        .service-tab.active { background: #7b091a; color: white; box-shadow: 0 2px 8px rgba(123,9,26,0.2); }
+        .back-link { margin-bottom: 1.5rem; }
+        .back-link a { color: #7b091a; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .back-link a:hover { text-decoration: underline; }
+        .filters { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center; background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .filters select, .filters input { padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: 40px; font-size: 0.95rem; min-width: 200px; background: white; }
+        .filters button { background: linear-gradient(135deg, #007bff, #0056b3); border: none; padding: 0.6rem 1.5rem; border-radius: 40px; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .filters button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
+        .stats-badge { background: #f1f5f9; padding: 0.4rem 1rem; border-radius: 40px; font-size: 0.9rem; font-weight: 500; color: #1e293b; }
+        .app-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .app-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; }
+        .app-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+        .app-table tr:hover td { background: #fef9e3; }
+        .btn-view { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 6px 16px; border-radius: 40px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem; transition: all 0.2s; }
+        .btn-view:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
+        .btn-take { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 6px 16px; border-radius: 40px; cursor: pointer; font-size: 0.9rem; transition: all 0.2s; }
+        .btn-take:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(40,167,69,0.2); }
+        .loading, .no-data, .error { text-align: center; padding: 2rem; color: #64748b; font-size: 1rem; }
+        .error { color: #dc3545; background: #fff5f5; border-radius: 12px; }
+        @media (max-width: 768px) {
+            .app-table, .app-table tbody, .app-table tr, .app-table td, .app-table th { display: block; }
+            .app-table tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+            .app-table th { display: none; }
+            .app-table td { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: none; }
+            .app-table td::before { content: attr(data-label); font-weight: 600; color: #0f172a; margin-right: 1rem; }
+        }
+        /* Статистика */
         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
         .stat-card { background: white; border-radius: 16px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; }
         .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
         .stat-number { font-size: 2.5rem; font-weight: 700; color: #7b091a; margin-bottom: 0.5rem; }
         .stat-label { color: #475569; font-size: 0.9rem; font-weight: 500; }
-        .service-tabs { display: flex; gap: 0.75rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
-        .service-tab { background: #f1f5f9; border: none; padding: 0.75rem 1.75rem; border-radius: 40px; cursor: pointer; font-size: 1rem; font-weight: 500; transition: all 0.2s; color: #1e293b; }
-        .service-tab:hover { background: #e2e8f0; transform: translateY(-2px); }
-        .service-tab.active { background: #7b091a; color: white; box-shadow: 0 2px 8px rgba(123,9,26,0.2); }
         .action-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
         .btn-large { padding: 0.85rem 2rem; font-size: 1rem; font-weight: 500; border-radius: 40px; }
         .btn-primary { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,123,255,0.2); background: linear-gradient(135deg, #0069d9, #004085); }
-        @media (max-width: 640px) { .stats-grid { gap: 1rem; } .stat-card { padding: 1rem; } .stat-number { font-size: 2rem; } .service-tab { padding: 0.6rem 1.25rem; font-size: 0.9rem; } }
+
+        /* Стили для просмотра */
+        .app-details { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 2rem; }
+        .details-table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+        .details-table th, .details-table td { padding: 12px 16px; border: 1px solid #e2e8f0; vertical-align: top; }
+        .details-table th { background: #f8fafc; font-weight: 600; color: #0f172a; width: 30%; text-align: right; font-size: 0.9rem; }
+        .details-table td { background: white; color: #1e293b; }
+        @media (max-width: 768px) {
+            .details-table, .details-table tbody, .details-table tr, .details-table th, .details-table td { display: block; }
+            .details-table tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+            .details-table th { width: 100%; text-align: left; background: #f1f5f9; border-bottom: none; }
+            .details-table td { border-top: none; }
+        }
+        .history-section { margin: 2rem 0; }
+        .history-section h3 { font-size: 1.4rem; font-weight: 600; margin-bottom: 1.25rem; color: #0f172a; display: flex; align-items: center; gap: 0.5rem; }
+        .history-section h3 i { color: #7b091a; }
+        .history-item { background: #ffffff; padding: 1.25rem; border-left: 4px solid #7b091a; margin-bottom: 1rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: box-shadow 0.2s; }
+        .history-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .history-item .meta { font-size: 0.85rem; color: #64748b; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; }
+        .history-item .status { font-weight: 700; color: #7b091a; font-size: 1rem; margin-bottom: 0.5rem; }
+        .attachments-list { margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .attachments-list a { background: #f1f5f9; padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.85rem; text-decoration: none; color: #0f172a; transition: background 0.2s; display: inline-flex; align-items: center; gap: 0.3rem; }
+        .attachments-list a:hover { background: #e2e8f0; color: #7b091a; }
+        .applicant-section { margin-top: 1.5rem; border-top: 2px solid #e2e8f0; padding-top: 1rem; }
+        .applicant-section h4 { font-size: 1.2rem; font-weight: 600; margin-bottom: 1rem; color: #1e293b; }
+        .applicant-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-bottom: 1rem; }
+        .applicant-table th { background: #f1f5f9; padding: 8px 12px; text-align: left; font-weight: 600; }
+        .applicant-table td { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+        .photo-link { color: #007bff; text-decoration: none; }
+        .photo-link:hover { text-decoration: underline; }
+        .details-table th i { margin-right: 0.5rem; width: 1.25rem; color: #7b091a; }
+
+        /* Модальное окно */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
+        .modal.active { display: flex; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 24px; max-width: 500px; width: 90%; max-height: 85vh; overflow-y: auto; box-shadow: 0 20px 35px rgba(0,0,0,0.2); animation: slideUp 0.2s ease; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid #e2e8f0; }
+        .modal-header h3 { margin: 0; font-size: 1.3rem; font-weight: 600; color: #0f172a; }
+        .close { font-size: 1.75rem; cursor: pointer; color: #64748b; transition: color 0.2s; line-height: 1; }
+        .close:hover { color: #7b091a; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; }
+        .form-control { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; transition: border 0.2s, box-shadow 0.2s; }
+        .form-control:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        select.form-control { background: white; cursor: pointer; }
+        .file-list { margin-top: 0.75rem; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0.75rem; background: #f8fafc; margin-bottom: 0.5rem; border-radius: 12px; font-size: 0.9rem; }
+        .btn-small { padding: 0.25rem 0.75rem; font-size: 0.8rem; background: #dc3545; color: white; border: none; border-radius: 20px; cursor: pointer; transition: background 0.2s; }
+        .btn-small:hover { background: #b02a37; }
+        .hidden { display: none !important; }
+        .view-container .back-link { margin-bottom: 1.5rem; }
+        .btn-danger { background: linear-gradient(135deg, #dc3545, #b02a37); color: white; border: none; padding: 0.75rem 1.5rem; font-size: 1rem; font-weight: 500; border-radius: 40px; cursor: pointer; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(220,53,69,0.2); background: linear-gradient(135deg, #c82333, #a71d2a); }
     </style>
     <script type="importmap">
         { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
@@ -68,7 +144,7 @@
             <nav class="nav-menu">
                 <ul>
                     <li><a href="../index.html">Главная администратора</a></li>
-                    <li><a href="index.html" class="active">Услуги</a></li>
+                    <li><a href="#" class="active">Услуги</a></li>
                     <li><a href="../documents/">Документы</a></li>
                     <li><a href="../addresses/">Адреса</a></li>
                     <li><a href="../registry/">Регистры</a></li>
@@ -86,30 +162,164 @@
 
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Управление услугами</h1>
-            <p class="page-description">Статистика и навигация по заявлениям</p>
-
-            <div class="service-tabs">
-                <button class="service-tab active" data-type="passport">Внутренние паспорта</button>
-                <button class="service-tab" data-type="foreign">Загранпаспорта</button>
-                <button class="service-tab" data-type="other">Другие услуги</button>
+            <!-- Главная страница (статистика) -->
+            <div id="page-index">
+                <h1 class="page-title">Управление услугами</h1>
+                <p class="page-description">Статистика и навигация по заявлениям</p>
+                <div class="service-tabs">
+                    <button class="service-tab active" data-type="passport">Внутренние паспорта</button>
+                    <button class="service-tab" data-type="foreign">Загранпаспорта</button>
+                    <button class="service-tab" data-type="other">Другие услуги</button>
+                </div>
+                <div class="stats-grid" id="stats">
+                    <div class="stat-card"><div class="stat-number" id="totalApps">0</div><div class="stat-label">Всего заявлений</div></div>
+                    <div class="stat-card"><div class="stat-number" id="submittedApps">0</div><div class="stat-label">Отправлено в ведомство</div></div>
+                    <div class="stat-card"><div class="stat-number" id="processingApps">0</div><div class="stat-label">В работе</div></div>
+                    <div class="stat-card"><div class="stat-number" id="completedApps">0</div><div class="stat-label">Завершено</div></div>
+                    <div class="stat-card"><div class="stat-number" id="rejectedApps">0</div><div class="stat-label">Отказано</div></div>
+                </div>
+                <div class="action-buttons">
+                    <a href="#" id="allLink" class="btn btn-primary btn-large">Все услуги</a>
+                    <a href="#" id="pendingLink" class="btn btn-primary btn-large">Не завершённые</a>
+                    <a href="#" id="processingLink" class="btn btn-primary btn-large">В работе</a>
+                </div>
             </div>
 
-            <div class="stats-grid" id="stats">
-                <div class="stat-card"><div class="stat-number" id="totalApps">0</div><div class="stat-label">Всего заявлений</div></div>
-                <div class="stat-card"><div class="stat-number" id="submittedApps">0</div><div class="stat-label">Отправлено в ведомство</div></div>
-                <div class="stat-card"><div class="stat-number" id="processingApps">0</div><div class="stat-label">В работе</div></div>
-                <div class="stat-card"><div class="stat-number" id="completedApps">0</div><div class="stat-label">Завершено</div></div>
-                <div class="stat-card"><div class="stat-number" id="rejectedApps">0</div><div class="stat-label">Отказано</div></div>
+            <!-- Список всех заявлений -->
+            <div id="page-all" class="hidden">
+                <div class="back-link">
+                    <a href="#" data-page="index"><i class="fas fa-arrow-left"></i> На главную услуг</a>
+                </div>
+                <h1 class="page-title">Все услуги</h1>
+                <p class="page-description">Полный список заявлений</p>
+                <div class="service-tabs">
+                    <button class="service-tab" data-type="passport">Внутренние паспорта</button>
+                    <button class="service-tab" data-type="foreign">Загранпаспорта</button>
+                    <button class="service-tab" data-type="other">Другие услуги</button>
+                </div>
+                <div class="filters">
+                    <select id="statusFilter">
+                        <option value="">Все статусы</option>
+                        <option value="submitted">Отправлено в ведомство</option>
+                        <option value="processing">В работе</option>
+                        <option value="interim">Промежуточные результаты</option>
+                        <option value="positive">Принято положительное решение</option>
+                        <option value="completed">Результат выдан</option>
+                        <option value="rejected">Отказано</option>
+                        <option value="cancelled">Отменено</option>
+                    </select>
+                    <input type="text" id="searchInput" placeholder="Поиск по номеру или личному коду">
+                    <button id="applyFilters">Применить</button>
+                    <span id="totalCount" class="stats-badge">Всего: 0</span>
+                </div>
+                <table class="app-table">
+                    <thead id="tableHeaderAll"></thead>
+                    <tbody id="appsTableBodyAll"><tr><td colspan="6" class="loading">Загрузка...</td></tr></tbody>
+                </table>
             </div>
 
-            <div class="action-buttons">
-                <a href="#" id="allLink" class="btn btn-primary btn-large">Все услуги</a>
-                <a href="#" id="pendingLink" class="btn btn-primary btn-large">Не завершённые</a>
-                <a href="#" id="processingLink" class="btn btn-primary btn-large">В работе</a>
+            <!-- Незавершённые -->
+            <div id="page-pending" class="hidden">
+                <div class="back-link">
+                    <a href="#" data-page="index"><i class="fas fa-arrow-left"></i> На главную услуг</a>
+                </div>
+                <h1 class="page-title">Незавершённые услуги</h1>
+                <p class="page-description">Заявления со статусом «отправлено в ведомство»</p>
+                <div class="service-tabs">
+                    <button class="service-tab" data-type="passport">Внутренние паспорта</button>
+                    <button class="service-tab" data-type="foreign">Загранпаспорта</button>
+                    <button class="service-tab" data-type="other">Другие услуги</button>
+                </div>
+                <table class="app-table">
+                    <thead id="tableHeaderPending"></thead>
+                    <tbody id="appsTableBodyPending"><tr><td colspan="5" class="loading">Загрузка...</td></tr></tbody>
+                </table>
+            </div>
+
+            <!-- В работе -->
+            <div id="page-processing" class="hidden">
+                <div class="back-link">
+                    <a href="#" data-page="index"><i class="fas fa-arrow-left"></i> На главную услуг</a>
+                </div>
+                <h1 class="page-title">Заявления в работе</h1>
+                <p class="page-description">Заявления со статусом «в работе»</p>
+                <div class="service-tabs">
+                    <button class="service-tab" data-type="passport">Внутренние паспорта</button>
+                    <button class="service-tab" data-type="foreign">Загранпаспорта</button>
+                    <button class="service-tab" data-type="other">Другие услуги</button>
+                </div>
+                <table class="app-table">
+                    <thead id="tableHeaderProcessing"></thead>
+                    <tbody id="appsTableBodyProcessing"><tr><td colspan="5" class="loading">Загрузка...</td></tr></tbody>
+                </table>
+            </div>
+
+            <!-- Просмотр заявления -->
+            <div id="page-view" class="hidden">
+                <div class="view-container">
+                    <div class="back-link">
+                        <a href="#" data-page="index"><i class="fas fa-arrow-left"></i> На главную услуг</a>
+                    </div>
+                    <h1 class="page-title">Заявление № <span id="viewAppNumber"></span></h1>
+                    <div id="viewLoading" class="loading">Загрузка...</div>
+                    <div id="viewError" class="error hidden"></div>
+                    <div id="viewAppDetails" class="app-details hidden">
+                        <table class="details-table" id="viewDetailsTable"></table>
+                    </div>
+                    <div id="viewApplicantsSection" class="applicant-section hidden">
+                        <h4><i class="fas fa-users"></i> Получатели</h4>
+                        <table class="applicant-table">
+                            <thead><tr><th>Личный код</th><th>ФИО</th><th>Дата рождения</th><th>Пол</th><th>Фото</th><th>Роль</th></tr></thead>
+                            <tbody id="viewApplicantsBody"></tbody>
+                        </table>
+                    </div>
+                    <div id="viewHistorySection" class="history-section hidden">
+                        <h3><i class="fas fa-history"></i> История статусов</h3>
+                        <div id="viewHistoryList"></div>
+                    </div>
+                    <div class="action-buttons">
+                        <button id="changeStatusBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Изменить статус</button>
+                        <button id="deleteBtn" class="btn-danger"><i class="fas fa-trash-alt"></i> Удалить услугу</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
+
+    <!-- Модальное окно для изменения статуса -->
+    <div id="actionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Изменение статуса</h3>
+                <span class="close" id="closeModalBtn">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="actionForm">
+                    <div class="form-group">
+                        <label for="statusSelect">Новый статус</label>
+                        <select id="statusSelect" class="form-control" required>
+                            <option value="processing">В работе</option>
+                            <option value="interim">Промежуточные результаты</option>
+                            <option value="positive">Принято положительное решение</option>
+                            <option value="completed">Результат выдан</option>
+                            <option value="rejected">Отказано</option>
+                            <option value="cancelled">Отменено</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalComment">Комментарий</label>
+                        <textarea id="modalComment" class="form-control" rows="4"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="modalFiles">Прикрепить файлы (PDF, изображения)</label>
+                        <input type="file" id="modalFiles" class="form-control" multiple accept=".pdf,.jpg,.jpeg,.png">
+                        <div id="fileList" class="file-list"></div>
+                    </div>
+                    <button type="submit" class="btn-primary" style="width: 100%; justify-content: center;">Сохранить</button>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <footer class="footer">
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
@@ -121,7 +331,31 @@
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../certificates/js/certificates-common.js';
 
-        let currentType = 'passport';
+        // ---- Конфигурация ----
+        const statusMap = {
+            'submitted': 'Отправлено в ведомство',
+            'processing': 'В работе',
+            'interim': 'Промежуточные результаты',
+            'positive': 'Принято положительное решение',
+            'completed': 'Результат выдан',
+            'rejected': 'Отказано',
+            'cancelled': 'Отменено'
+        };
+        const reasonMap = {
+            'first_14': 'Первичное получение в 14 лет',
+            'expired': 'Истёк срок действия',
+            'no_space': 'Закончилось место для штампов',
+            'name_changed': 'Изменилось ФИО, дата или место рождения',
+            'lost': 'Паспорт утерян или украден',
+            'damaged': 'Паспорт стал непригодным к использованию',
+            'citizenship': 'Получение гражданства СФСРЮ',
+            'appearance': 'Изменилась внешность',
+            'error': 'Ошибка в паспорте'
+        };
+        const passportTypeMap = { 'biometric': 'Биометрический', 'nonbiometric': 'Небиометрический' };
+        const recipientTypeMap = { 'self': 'Только себе', 'self_children': 'Себе и детям', 'children_only': 'Только детям' };
+        const visaTypeMap = { 'civil': 'Общегражданский', 'diplomatic': 'Дипломатический', 'service': 'Служебный' };
+        const genderMap = { 'male': 'Мужской', 'female': 'Женский' };
         const tableMap = { passport: 'passport', foreign: 'foreign_passport', other: 'service' };
         const statusGroups = {
             submitted: ['submitted'],
@@ -130,68 +364,698 @@
             rejected: ['rejected', 'cancelled']
         };
 
+        let currentType = 'passport';
+        let currentPage = 'index'; // index, all, pending, processing, view
+        let viewServiceType = 'passport';
+        let currentAppId = null;
+        let applicationNumber = null;
+        let currentUserId = null;
+        let uploadedFiles = [];
+        let mvdMap = {};
+        let allData = [];
+
+        // ---- Вспомогательные функции ----
+        function getDynamicColumnLabel(type) {
+            if (type === 'other') return 'Название услуги';
+            if (type === 'foreign') return 'Тип паспорта / Кому';
+            return 'Причина';
+        }
+        function getDynamicColumnValue(type, item) {
+            if (type === 'other') return item.service_type || '—';
+            if (type === 'foreign') {
+                const t = passportTypeMap[item.passport_type] || item.passport_type || '—';
+                const r = recipientTypeMap[item.recipient_type] || item.recipient_type || '—';
+                return `${t} (${r})`;
+            }
+            return reasonMap[item.reason] || item.reason || '—';
+        }
+
+        function getSignedUrl(filePath) {
+            if (!filePath) return Promise.resolve(null);
+            return supabase.storage.from('services-files').createSignedUrl(filePath, 3600)
+                .then(({ data, error }) => error ? null : data.signedUrl)
+                .catch(() => null);
+        }
+
+        function extractFileNameFromPath(filePath) {
+            if (!filePath) return 'файл';
+            let parts = filePath.split('/');
+            let fullName = parts[parts.length - 1];
+            let match = fullName.match(/^\d+_(.+)$/);
+            return match ? decodeURIComponent(match[1]) : decodeURIComponent(fullName);
+        }
+
+        function formatPersonalData(data) {
+            if (!data) return '—';
+            const hasData = Object.values(data).some(v => v && v !== '');
+            if (!hasData) return '—';
+            const parts = [];
+            if (data.surname || data.name || data.patronymic)
+                parts.push(`ФИО: ${data.surname || ''} ${data.name || ''} ${data.patronymic || ''}`.trim());
+            if (data.birth_date)
+                parts.push(`Дата рождения: ${new Date(data.birth_date).toLocaleDateString('ru-RU')}`);
+            if (data.birth_place)
+                parts.push(`Место рождения: ${data.birth_place}`);
+            if (data.gender)
+                parts.push(`Пол: ${data.gender === 'male' ? 'Мужской' : 'Женский'}`);
+            return parts.length ? parts.join('<br>') : '—';
+        }
+
+        function formatReasonDetails(details) {
+            if (!details) return '—';
+            if (typeof details === 'string') return details;
+            const typeMap = {
+                'marriage': 'Свидетельство о браке',
+                'divorce': 'Свидетельство о разводе',
+                'name_change': 'Свидетельство о перемене имени',
+                'birth_certificate': 'Свидетельство о рождении'
+            };
+            const type = typeMap[details.type] || details.type || '—';
+            let result = type;
+            if (details.number || details.date || details.issuedBy) {
+                const parts = [];
+                if (details.number) parts.push(`№${details.number}`);
+                if (details.date) parts.push(`от ${new Date(details.date).toLocaleDateString('ru-RU')}`);
+                if (details.issuedBy) parts.push(`выдан: ${details.issuedBy}`);
+                if (parts.length) result += `, ${parts.join(', ')}`;
+            }
+            return result;
+        }
+
+        function formatWorkInfo(workInfo) {
+            if (!workInfo || typeof workInfo !== 'object') return '—';
+            const parts = [];
+            if (workInfo.organization) parts.push(`Организация: ${workInfo.organization}`);
+            if (workInfo.position) parts.push(`Должность: ${workInfo.position}`);
+            if (workInfo.start_date) parts.push(`С: ${new Date(workInfo.start_date).toLocaleDateString('ru-RU')}`);
+            if (workInfo.end_date) parts.push(`По: ${new Date(workInfo.end_date).toLocaleDateString('ru-RU')}`);
+            if (workInfo.work_history && Array.isArray(workInfo.work_history) && workInfo.work_history.length) {
+                const history = workInfo.work_history.filter(row => row.org || row.position || row.start || row.end)
+                    .map(row => {
+                        let s = row.org || '';
+                        if (row.position) s += ` (${row.position})`;
+                        if (row.start) s += ` с ${row.start}`;
+                        if (row.end) s += ` по ${row.end}`;
+                        else if (row.start) s += ` по н.в.`;
+                        return s;
+                    })
+                    .filter(Boolean)
+                    .join('; ');
+                if (history) parts.push(`История: ${history}`);
+            }
+            return parts.length ? parts.join('<br>') : '—';
+        }
+
+        function formatMilitaryInfo(militaryInfo) {
+            if (!militaryInfo || typeof militaryInfo !== 'object') return '—';
+            if (!militaryInfo.has_military) return 'Нет';
+            const parts = [];
+            if (militaryInfo.number) parts.push(`Номер: ${militaryInfo.number}`);
+            if (militaryInfo.office) parts.push(`Военкомат: ${militaryInfo.office}`);
+            if (militaryInfo.category) parts.push(`Категория: ${militaryInfo.category}`);
+            if (militaryInfo.vus) parts.push(`ВУС: ${militaryInfo.vus}`);
+            return parts.length ? parts.join(', ') : '—';
+        }
+
+        function safeFileName(name) {
+            return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
+        }
+
+        // ---- Загрузка МВД ----
+        async function loadMvd() {
+            const { data, error } = await supabase.from('mvd').select('id, name');
+            if (error) { console.error('Ошибка загрузки МВД:', error); return; }
+            data.forEach(item => { mvdMap[item.id] = item.name; });
+        }
+
+        // ---- Переключение страниц ----
+        function showPage(page) {
+            document.querySelectorAll('[id^="page-"]').forEach(el => el.classList.add('hidden'));
+            const pageEl = document.getElementById('page-' + page);
+            if (pageEl) pageEl.classList.remove('hidden');
+            currentPage = page;
+            // Обновляем URL без перезагрузки
+            const url = new URL(window.location);
+            url.searchParams.set('page', page);
+            if (page === 'view') {
+                const id = new URLSearchParams(window.location.search).get('id');
+                if (id) url.searchParams.set('id', id);
+            } else {
+                url.searchParams.delete('id');
+            }
+            window.history.pushState({ page }, '', url);
+        }
+
+        // ---- Главная страница (статистика) ----
         async function loadStats() {
             const table = tableMap[currentType];
             if (!table) return;
-
-            const { count: total, error: eTotal } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true });
-            const { count: submitted, error: eSub } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.submitted);
-            const { count: processing, error: eProc } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.processing);
-            const { count: completed, error: eComp } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.completed);
-            const { count: rejected, error: eRej } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.rejected);
-
-            if (eTotal) console.error('Ошибка загрузки общего количества:', eTotal);
-            if (eSub) console.error('Ошибка загрузки отправленных:', eSub);
-            if (eProc) console.error('Ошибка загрузки в работе:', eProc);
-            if (eComp) console.error('Ошибка загрузки завершённых:', eComp);
-            if (eRej) console.error('Ошибка загрузки отказанных:', eRej);
-
+            const { count: total } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true });
+            const { count: submitted } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.submitted);
+            const { count: processing } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.processing);
+            const { count: completed } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.completed);
+            const { count: rejected } = await supabase.schema('services').from(table).select('*', { count: 'exact', head: true }).in('status', statusGroups.rejected);
             document.getElementById('totalApps').textContent = total ?? 0;
             document.getElementById('submittedApps').textContent = submitted ?? 0;
             document.getElementById('processingApps').textContent = processing ?? 0;
             document.getElementById('completedApps').textContent = completed ?? 0;
             document.getElementById('rejectedApps').textContent = rejected ?? 0;
+            document.getElementById('allLink').href = `#page=all&type=${currentType}`;
+            document.getElementById('pendingLink').href = `#page=pending&type=${currentType}`;
+            document.getElementById('processingLink').href = `#page=processing&type=${currentType}`;
         }
 
-        function updateNavigationLinks() {
-            document.getElementById('allLink').href = `all.html?type=${currentType}`;
-            document.getElementById('pendingLink').href = `pending.html?type=${currentType}`;
-            document.getElementById('processingLink').href = `processing.html?type=${currentType}`;
+        // ---- Страница "Все" ----
+        function updateAllHeader() {
+            const label = getDynamicColumnLabel(currentType);
+            document.getElementById('tableHeaderAll').innerHTML =
+                `<tr><th>Номер заявления</th><th>Дата</th><th>Личный код</th><th>${label}</th><th>Статус</th><th>Действие</th></tr>`;
         }
 
-        function setActiveTab(type) {
-            document.querySelectorAll('.service-tab').forEach(tab => {
-                tab.classList.toggle('active', tab.dataset.type === type);
+        async function loadAllData() {
+            const tbody = document.getElementById('appsTableBodyAll');
+            tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка...</td></tr>';
+            const table = tableMap[currentType];
+            if (!table) return;
+            const { data, error } = await supabase.schema('services').from(table).select('*').order('created_at', { ascending: false });
+            if (error) { tbody.innerHTML = `<tr><td colspan="6" class="error">Ошибка: ${error.message}</td></tr>`; return; }
+            allData = data || [];
+            applyFilters();
+        }
+
+        function applyFilters() {
+            const status = document.getElementById('statusFilter').value;
+            const search = document.getElementById('searchInput').value.trim().toLowerCase();
+            let filtered = allData;
+            if (status) filtered = filtered.filter(item => item.status === status);
+            if (search) {
+                filtered = filtered.filter(item =>
+                    (item.application_number && item.application_number.toLowerCase().includes(search)) ||
+                    (item.personal_code && item.personal_code.toLowerCase().includes(search))
+                );
+            }
+            document.getElementById('totalCount').textContent = `Всего: ${filtered.length}`;
+            const tbody = document.getElementById('appsTableBodyAll');
+            if (!filtered.length) { tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет записей</td></tr>'; return; }
+            const label = getDynamicColumnLabel(currentType);
+            tbody.innerHTML = filtered.map(app => `
+                <tr>
+                    <td data-label="Номер заявления">${app.application_number}</td>
+                    <td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
+                    <td data-label="Личный код">${app.personal_code || '—'}</td>
+                    <td data-label="${label}">${getDynamicColumnValue(currentType, app)}</td>
+                    <td data-label="Статус">${statusMap[app.status] || app.status}</td>
+                    <td data-label="Действие"><a href="#" data-page="view" data-id="${app.id}" data-type="${currentType}" class="btn-view view-link">Просмотр</a></td>
+                </tr>
+            `).join('');
+            // Обработка кликов по ссылкам просмотра
+            document.querySelectorAll('.view-link').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = el.dataset.id;
+                    const type = el.dataset.type;
+                    openView(id, type);
+                });
             });
         }
 
-        async function switchServiceType(type) {
-            if (type === currentType) return;
-            currentType = type;
-            setActiveTab(type);
-            await loadStats();
-            updateNavigationLinks();
+        // ---- Страница "Незавершённые" ----
+        function updatePendingHeader() {
+            const label = getDynamicColumnLabel(currentType);
+            document.getElementById('tableHeaderPending').innerHTML =
+                `<tr><th>№ заявления</th><th>Дата</th><th>Личный код</th><th>${label}</th><th>Действие</th></tr>`;
         }
 
+        async function loadPending() {
+            const tbody = document.getElementById('appsTableBodyPending');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">Загрузка...</td></tr>';
+            const table = tableMap[currentType];
+            if (!table) return;
+            const { data, error } = await supabase.schema('services').from(table)
+                .select('id, application_number, created_at, personal_code, reason, passport_type, recipient_type, service_type')
+                .eq('status', 'submitted')
+                .order('created_at', { ascending: false });
+            if (error) { tbody.innerHTML = `<tr><td colspan="5" class="error">Ошибка: ${error.message}</td></tr>`; return; }
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет заявлений</td></tr>'; return; }
+            const label = getDynamicColumnLabel(currentType);
+            tbody.innerHTML = data.map(app => `
+                <tr>
+                    <td data-label="№ заявления">${app.application_number}</td>
+                    <td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
+                    <td data-label="Личный код">${app.personal_code || '—'}</td>
+                    <td data-label="${label}">${getDynamicColumnValue(currentType, app)}</td>
+                    <td data-label="Действие"><button class="btn-take take-btn" data-id="${app.id}" data-type="${currentType}">Взять в работу</button></td>
+                </tr>
+            `).join('');
+            document.querySelectorAll('.take-btn').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.dataset.id;
+                    const type = e.target.dataset.type;
+                    const table = tableMap[type];
+                    const { error } = await supabase.schema('services').from(table).update({ status: 'processing', updated_at: new Date().toISOString() }).eq('id', id);
+                    if (error) alert('Ошибка: ' + error.message);
+                    else openView(id, type);
+                });
+            });
+        }
+
+        // ---- Страница "В работе" ----
+        function updateProcessingHeader() {
+            const label = getDynamicColumnLabel(currentType);
+            document.getElementById('tableHeaderProcessing').innerHTML =
+                `<tr><th>№ заявления</th><th>Дата</th><th>Личный код</th><th>${label}</th><th>Действие</th></tr>`;
+        }
+
+        async function loadProcessing() {
+            const tbody = document.getElementById('appsTableBodyProcessing');
+            tbody.innerHTML = '<tr><td colspan="5" class="loading">Загрузка...</td></tr>';
+            const table = tableMap[currentType];
+            if (!table) return;
+            const { data, error } = await supabase.schema('services').from(table)
+                .select('id, application_number, created_at, personal_code, reason, passport_type, recipient_type, service_type')
+                .in('status', ['processing', 'interim', 'positive'])
+                .order('created_at', { ascending: false });
+            if (error) { tbody.innerHTML = `<tr><td colspan="5" class="error">Ошибка: ${error.message}</td></tr>`; return; }
+            if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет заявлений в работе</td></tr>'; return; }
+            const label = getDynamicColumnLabel(currentType);
+            tbody.innerHTML = data.map(app => `
+                <tr>
+                    <td data-label="№ заявления">${app.application_number}</td>
+                    <td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
+                    <td data-label="Личный код">${app.personal_code || '—'}</td>
+                    <td data-label="${label}">${getDynamicColumnValue(currentType, app)}</td>
+                    <td data-label="Действие"><a href="#" data-page="view" data-id="${app.id}" data-type="${currentType}" class="btn-view view-link">Просмотр</a></td>
+                </tr>
+            `).join('');
+            document.querySelectorAll('.view-link').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = el.dataset.id;
+                    const type = el.dataset.type;
+                    openView(id, type);
+                });
+            });
+        }
+
+        // ---- Страница просмотра ----
+        async function openView(id, type) {
+            currentAppId = id;
+            viewServiceType = type === 'foreign' ? 'foreign_passport' : 'passport';
+            // Показываем страницу view
+            showPage('view');
+            // Сбрасываем старые данные
+            document.getElementById('viewAppNumber').textContent = '';
+            document.getElementById('viewAppDetails').classList.add('hidden');
+            document.getElementById('viewApplicantsSection').classList.add('hidden');
+            document.getElementById('viewHistorySection').classList.add('hidden');
+            document.getElementById('viewLoading').classList.remove('hidden');
+            document.getElementById('viewError').classList.add('hidden');
+
+            await loadMvd();
+            const table = viewServiceType;
+            const { data, error } = await supabase.schema('services').from(table).select('*').eq('id', id).single();
+            if (error) {
+                document.getElementById('viewLoading').classList.add('hidden');
+                document.getElementById('viewError').textContent = 'Заявление не найдено';
+                document.getElementById('viewError').classList.remove('hidden');
+                return;
+            }
+            applicationNumber = data.application_number;
+            currentUserId = data.user_id;
+            document.getElementById('viewAppNumber').textContent = data.application_number;
+            renderViewDetails(data);
+            if (viewServiceType === 'foreign_passport') {
+                await loadViewApplicants(id);
+            }
+            await loadViewHistory(id);
+            document.getElementById('viewLoading').classList.add('hidden');
+            document.getElementById('viewAppDetails').classList.remove('hidden');
+        }
+
+        function renderViewDetails(data) {
+            const container = document.getElementById('viewDetailsTable');
+            const fields = [];
+            fields.push(['Номер заявления', data.application_number]);
+            fields.push(['Статус', statusMap[data.status] || data.status]);
+            fields.push(['Дата создания', new Date(data.created_at).toLocaleString()]);
+            fields.push(['Личный код', data.personal_code || '—']);
+            fields.push(['Последнее обновление', new Date(data.updated_at).toLocaleString()]);
+            if (viewServiceType === 'passport') {
+                fields.push(['Причина', reasonMap[data.reason] || data.reason]);
+                fields.push(['Детали причины', formatReasonDetails(data.reason_details)]);
+                fields.push(['Личные данные', formatPersonalData(data.personal_data)]);
+                fields.push(['Новые данные', data.new_personal_data ? formatPersonalData(data.new_personal_data) : '—']);
+                fields.push(['Телефон', data.phone || '—']);
+                fields.push(['Email', data.email || '—']);
+                fields.push(['Отделение МВД', mvdMap[data.mvd_id] || data.mvd_id || '—']);
+            } else {
+                fields.push(['Тип паспорта', passportTypeMap[data.passport_type] || data.passport_type]);
+                fields.push(['Кому', recipientTypeMap[data.recipient_type] || data.recipient_type]);
+                fields.push(['Вид паспорта', visaTypeMap[data.visa_type] || data.visa_type]);
+                fields.push(['Вписывать детей в паспорт родителя', data.include_children_in_parent ? 'Да' : 'Нет']);
+                fields.push(['Сведения о работе', formatWorkInfo(data.work_info)]);
+                fields.push(['Воинский учёт', formatMilitaryInfo(data.military_info)]);
+                fields.push(['Отделение МВД', mvdMap[data.mvd_id] || data.mvd_id || '—']);
+            }
+            const iconMap = {
+                'Номер заявления': 'fa-hashtag',
+                'Статус': 'fa-info-circle',
+                'Дата создания': 'fa-calendar-alt',
+                'Личный код': 'fa-id-card',
+                'Причина': 'fa-question-circle',
+                'Детали причины': 'fa-file-alt',
+                'Личные данные': 'fa-user',
+                'Новые данные': 'fa-user-edit',
+                'Телефон': 'fa-phone',
+                'Email': 'fa-envelope',
+                'Отделение МВД': 'fa-building',
+                'Последнее обновление': 'fa-clock',
+                'Тип паспорта': 'fa-passport',
+                'Кому': 'fa-users',
+                'Вид паспорта': 'fa-star',
+                'Вписывать детей в паспорт родителя': 'fa-child',
+                'Сведения о работе': 'fa-briefcase',
+                'Воинский учёт': 'fa-shield-alt'
+            };
+            let html = '';
+            fields.forEach(([label, value]) => {
+                const icon = iconMap[label] || 'fa-tag';
+                html += `<tr><th><i class="fas ${icon}"></i> ${label}</th><td>${value}</td></tr>`;
+            });
+            container.innerHTML = html;
+        }
+
+        async function loadViewApplicants(passportId) {
+            const { data, error } = await supabase.schema('services').from('foreign_passport_applicants')
+                .select('*').eq('passport_id', passportId).order('is_applicant', { ascending: false });
+            const tbody = document.getElementById('viewApplicantsBody');
+            if (error || !data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет получателей</td></tr>';
+                document.getElementById('viewApplicantsSection').classList.remove('hidden');
+                return;
+            }
+            let html = '';
+            for (const app of data) {
+                const photoLink = app.photo_path ? await getSignedUrl(app.photo_path) : null;
+                html += `
+                    <tr>
+                        <td>${app.personal_code || '—'}</td>
+                        <td>${app.surname} ${app.name} ${app.patronymic || ''}</td>
+                        <td>${new Date(app.date_of_birth).toLocaleDateString('ru-RU')}</td>
+                        <td>${genderMap[app.gender] || app.gender || '—'}</td>
+                        <td>${photoLink ? `<a href="${photoLink}" target="_blank" class="photo-link"><i class="fas fa-image"></i> Фото</a>` : '—'}</td>
+                        <td>${app.is_applicant ? 'Заявитель' : 'Ребёнок'}</td>
+                    </tr>
+                `;
+            }
+            tbody.innerHTML = html;
+            document.getElementById('viewApplicantsSection').classList.remove('hidden');
+        }
+
+        async function loadViewHistory(passportId) {
+            const historyTable = viewServiceType === 'foreign_passport' ? 'foreign_passport_status_history' : 'passport_status_history';
+            const { data, error } = await supabase.schema('services').from(historyTable)
+                .select('*').eq('passport_id', passportId).order('created_at', { ascending: false });
+            const list = document.getElementById('viewHistoryList');
+            if (error) { list.innerHTML = '<p class="error">Ошибка загрузки истории</p>'; return; }
+            if (!data || data.length === 0) {
+                list.innerHTML = '<p class="no-data">История отсутствует</p>';
+                document.getElementById('viewHistorySection').classList.remove('hidden');
+                return;
+            }
+            let html = '';
+            for (const item of data) {
+                const statusText = statusMap[item.status] || item.status;
+                const fileLinks = [];
+                for (const filePath of (item.attachments || [])) {
+                    const url = await getSignedUrl(filePath);
+                    const name = extractFileNameFromPath(filePath);
+                    fileLinks.push(url ? `<a href="${url}" target="_blank"><i class="fas fa-paperclip"></i> ${name}</a>` :
+                        `<span><i class="fas fa-exclamation-triangle"></i> ${name} (недоступен)</span>`);
+                }
+                html += `
+                    <div class="history-item">
+                        <div class="meta"><i class="far fa-clock"></i> ${new Date(item.created_at).toLocaleString()}</div>
+                        <div class="status"><i class="fas fa-tag"></i> ${statusText}</div>
+                        <div>${item.comment || ''}</div>
+                        <div class="attachments-list">${fileLinks.join(' ')}</div>
+                    </div>
+                `;
+            }
+            list.innerHTML = html;
+            document.getElementById('viewHistorySection').classList.remove('hidden');
+        }
+
+        // ---- Отправка уведомления ----
+        async function sendStatusNotification(newStatus, comment) {
+            if (!currentUserId) return;
+            const newStatusText = statusMap[newStatus] || newStatus;
+            const title = 'Изменение статуса заявления';
+            const serviceName = viewServiceType === 'foreign_passport' ? 'загранпаспорта' : 'паспорта';
+            let content = `Статус вашего заявления №${applicationNumber} по получению ${serviceName} изменен на "${newStatusText}".`;
+            if (comment && comment.trim()) content += `\n\nКомментарий: ${comment.trim()}`;
+            await supabase.schema('messages').from('user_messages').insert({
+                user_id: currentUserId,
+                title,
+                content,
+                type: 'status_change',
+                is_read: false,
+                service_id: currentAppId,
+                created_at: new Date().toISOString()
+            });
+        }
+
+        // ---- Изменение статуса (модалка) ----
+        function openModal() {
+            document.getElementById('modalComment').value = '';
+            document.getElementById('modalFiles').value = '';
+            document.getElementById('fileList').innerHTML = '';
+            uploadedFiles = [];
+            document.getElementById('actionModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('actionModal').classList.remove('active');
+        }
+
+        document.getElementById('modalFiles').addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            const list = document.getElementById('fileList');
+            list.innerHTML = '';
+            uploadedFiles = files;
+            files.forEach((file, index) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <span><i class="fas fa-file"></i> ${file.name}</span>
+                    <button type="button" class="btn-small" data-index="${index}">Удалить</button>
+                `;
+                list.appendChild(div);
+            });
+            document.querySelectorAll('.file-item .btn-small').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = parseInt(e.target.dataset.index);
+                    uploadedFiles.splice(idx, 1);
+                    const dt = new DataTransfer();
+                    uploadedFiles.forEach(f => dt.items.add(f));
+                    document.getElementById('modalFiles').files = dt.files;
+                    e.target.closest('.file-item').remove();
+                    document.querySelectorAll('.file-item .btn-small').forEach((btn, newIdx) => {
+                        btn.dataset.index = newIdx;
+                    });
+                });
+            });
+        });
+
+        document.getElementById('actionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const selectedStatus = document.getElementById('statusSelect').value;
+            const comment = document.getElementById('modalComment').value.trim();
+            const files = uploadedFiles;
+            if (!selectedStatus) { alert('Выберите статус'); return; }
+
+            const attachmentPaths = [];
+            for (const file of files) {
+                const safeName = safeFileName(file.name);
+                const folder = viewServiceType === 'foreign_passport' ? 'foreign_passport' : 'passport';
+                const filePath = `${folder}/${applicationNumber}/${Date.now()}_${safeName}`;
+                const { error } = await supabase.storage.from('services-files').upload(filePath, file);
+                if (error) { alert('Ошибка загрузки файла: ' + error.message); return; }
+                attachmentPaths.push(filePath);
+            }
+
+            const historyTable = viewServiceType === 'foreign_passport' ? 'foreign_passport_status_history' : 'passport_status_history';
+            const { error: historyError } = await supabase.schema('services').from(historyTable).insert({
+                passport_id: currentAppId,
+                status: selectedStatus,
+                comment: comment,
+                attachments: attachmentPaths,
+                created_by: (await supabase.auth.getUser()).data.user.id
+            });
+            if (historyError) { alert('Ошибка сохранения истории: ' + historyError.message); return; }
+
+            const table = viewServiceType;
+            const { error: updateError } = await supabase.schema('services').from(table)
+                .update({ status: selectedStatus, updated_at: new Date().toISOString() })
+                .eq('id', currentAppId);
+            if (updateError) { alert('Ошибка обновления статуса: ' + updateError.message); return; }
+
+            await sendStatusNotification(selectedStatus, comment);
+            closeModal();
+            // Обновляем страницу просмотра
+            openView(currentAppId, viewServiceType === 'foreign_passport' ? 'foreign' : 'passport');
+        });
+
+        // ---- Удаление заявления ----
+        async function deleteApplication() {
+            if (!confirm('Вы уверены, что хотите полностью удалить это заявление и все связанные данные? Это необратимо.')) return;
+            try {
+                const table = viewServiceType;
+                const historyTable = viewServiceType === 'foreign_passport' ? 'foreign_passport_status_history' : 'passport_status_history';
+                const applicantsTable = viewServiceType === 'foreign_passport' ? 'foreign_passport_applicants' : null;
+
+                let allFilePaths = [];
+                if (viewServiceType === 'passport') {
+                    const { data: pd } = await supabase.schema('services').from('passport').select('photo_path').eq('id', currentAppId).single();
+                    if (pd?.photo_path) allFilePaths.push(pd.photo_path);
+                } else {
+                    const { data: apps } = await supabase.schema('services').from('foreign_passport_applicants').select('photo_path').eq('passport_id', currentAppId);
+                    if (apps) apps.forEach(a => { if (a.photo_path) allFilePaths.push(a.photo_path); });
+                }
+                const { data: hist } = await supabase.schema('services').from(historyTable).select('attachments').eq('passport_id', currentAppId);
+                if (hist) hist.forEach(item => { if (item.attachments) allFilePaths.push(...item.attachments); });
+
+                if (allFilePaths.length) {
+                    const { error: se } = await supabase.storage.from('services-files').remove(allFilePaths);
+                    if (se) { console.error('Ошибка удаления файлов:', se); alert('Ошибка удаления файлов'); return; }
+                }
+
+                await supabase.schema('messages').from('user_messages').delete().eq('service_id', currentAppId);
+
+                if (applicantsTable) {
+                    await supabase.schema('services').from(applicantsTable).delete().eq('passport_id', currentAppId);
+                }
+                await supabase.schema('services').from(historyTable).delete().eq('passport_id', currentAppId);
+                await supabase.schema('services').from(table).delete().eq('id', currentAppId);
+
+                alert('Заявление удалено');
+                showPage('index');
+                loadStats();
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка при удалении');
+            }
+        }
+
+        // ---- Инициализация ----
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await requireAdmin()) return;
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) document.getElementById('adminEmail').textContent = user.email;
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const typeParam = urlParams.get('type');
-            if (typeParam && tableMap[typeParam]) currentType = typeParam;
-            setActiveTab(currentType);
-            await loadStats();
-            updateNavigationLinks();
+            // Определяем начальную страницу из URL
+            const params = new URLSearchParams(window.location.search);
+            const page = params.get('page') || 'index';
+            const type = params.get('type') || 'passport';
+            const id = params.get('id');
+            currentType = type;
 
-            document.querySelectorAll('.service-tab').forEach(tab => {
-                tab.addEventListener('click', () => switchServiceType(tab.dataset.type));
+            // Показываем нужную страницу
+            if (page === 'view' && id) {
+                await openView(id, type);
+                // Подключаем кнопки модалки
+                document.getElementById('changeStatusBtn').addEventListener('click', openModal);
+                document.getElementById('deleteBtn').addEventListener('click', deleteApplication);
+                document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+                window.addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('actionModal')) closeModal();
+                });
+            } else {
+                showPage(page);
+                // Настройка вкладок для текущей страницы
+                document.querySelectorAll('.service-tabs').forEach(group => {
+                    group.querySelectorAll('.service-tab').forEach(tab => {
+                        tab.classList.toggle('active', tab.dataset.type === currentType);
+                        tab.addEventListener('click', async () => {
+                            const newType = tab.dataset.type;
+                            if (newType === currentType) return;
+                            currentType = newType;
+                            // Переключаем все вкладки
+                            document.querySelectorAll('.service-tab').forEach(t => {
+                                t.classList.toggle('active', t.dataset.type === currentType);
+                            });
+                            // Перезагружаем данные для текущей страницы
+                            if (currentPage === 'index') {
+                                await loadStats();
+                            } else if (currentPage === 'all') {
+                                updateAllHeader();
+                                await loadAllData();
+                            } else if (currentPage === 'pending') {
+                                updatePendingHeader();
+                                await loadPending();
+                            } else if (currentPage === 'processing') {
+                                updateProcessingHeader();
+                                await loadProcessing();
+                            }
+                            // Обновляем ссылки в главной
+                            if (currentPage === 'index') {
+                                document.getElementById('allLink').href = `#page=all&type=${currentType}`;
+                                document.getElementById('pendingLink').href = `#page=pending&type=${currentType}`;
+                                document.getElementById('processingLink').href = `#page=processing&type=${currentType}`;
+                            }
+                        });
+                    });
+                });
+
+                // Загружаем данные для страницы
+                if (page === 'index') {
+                    await loadStats();
+                } else if (page === 'all') {
+                    updateAllHeader();
+                    document.getElementById('applyFilters').addEventListener('click', applyFilters);
+                    document.getElementById('statusFilter').addEventListener('change', applyFilters);
+                    document.getElementById('searchInput').addEventListener('keyup', (e) => { if (e.key === 'Enter') applyFilters(); });
+                    await loadAllData();
+                } else if (page === 'pending') {
+                    updatePendingHeader();
+                    await loadPending();
+                } else if (page === 'processing') {
+                    updateProcessingHeader();
+                    await loadProcessing();
+                }
+            }
+
+            // Обработчики для ссылок "На главную"
+            document.querySelectorAll('[data-page="index"]').forEach(el => {
+                el.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showPage('index');
+                    loadStats();
+                });
             });
 
+            // Выход
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
                 window.location.href = '../../login.html';
+            });
+
+            // Обработка изменения URL через history
+            window.addEventListener('popstate', (e) => {
+                const params = new URLSearchParams(window.location.search);
+                const p = params.get('page') || 'index';
+                const t = params.get('type') || 'passport';
+                const id = params.get('id');
+                if (p === 'view' && id) {
+                    openView(id, t);
+                } else {
+                    showPage(p);
+                    // Перезагружаем данные (упрощённо)
+                    if (p === 'index') loadStats();
+                    else if (p === 'all') loadAllData();
+                    else if (p === 'pending') loadPending();
+                    else if (p === 'processing') loadProcessing();
+                }
             });
         });
     </script>
