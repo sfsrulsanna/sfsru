@@ -1,11 +1,11 @@
-<!-- news.html — обновлённый клиентский код (без JOIN, без RPC) -->
+<!-- news.html — финальная версия (без JOIN, без RPC, просто author_name и author_surname) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Новости СФСРЮ</title>
-    <!-- favicons (те же) -->
+    <!-- favicons (без изменений) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -24,7 +24,6 @@
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css" />
     <style>
-        /* ... стили те же ... */
         .news-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
         .news-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.3s; }
@@ -62,7 +61,6 @@
     </style>
 </head>
 <body>
-    <!-- шапка (как раньше) -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -207,14 +205,12 @@
                 let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
                 if (comments && comments.length > 0) {
                     comments.forEach(c => {
-                        let authorName = 'Пользователь';
-                        if (c.author_name || c.author_surname) {
-                            authorName = (c.author_name || '') + ' ' + (c.author_surname || '');
-                            authorName = authorName.trim();
-                        }
+                        let fullName = (c.author_name || '') + ' ' + (c.author_surname || '');
+                        fullName = fullName.trim();
+                        if (!fullName) fullName = 'Пользователь';
                         commentsHtml += `
                             <div class="comment">
-                                <strong>${authorName}</strong>
+                                <strong>${fullName}</strong>
                                 <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
                                 <p>${c.content}</p>
                             </div>
@@ -264,7 +260,6 @@
                             return;
                         }
                         try {
-                            // Вставка – триггер сам заполнит author_name и author_surname
                             const { error } = await supabase.from('comments').insert({
                                 article_id: id,
                                 user_id: user.id,
