@@ -101,30 +101,25 @@ async function loadChildren() {
 }
 
 // ============================================================
-// Управление шагами
+// Управление шагами (нумерация изменена: 1 - титульный, 2 - тип, 3 - кому, 4 - заявитель, 5 - дети, 6 - работа, 7 - воинский, 8 - вид, 9 - фото, 10 - подтверждение, 11 - финал)
 // ============================================================
 function getNextStep(step) {
-    // Динамический переход в зависимости от выбора
     switch (step) {
         case 1: return 2;
-        case 2: {
+        case 2: return 3;
+        case 3: return 4;
+        case 4: {
             const recipient = document.querySelector('input[name="recipient"]:checked');
-            if (!recipient) return 2;
-            if (recipient.value === 'self') return 3; // только себе -> сразу инфо о себе, пропускаем детей
-            else return 3; // если с детьми, всё равно сначала инфо о себе
+            if (!recipient) return 4;
+            if (recipient.value === 'self') return 6; // только себе -> работа
+            else return 5; // с детьми -> дети
         }
-        case 3: {
-            const recipient = document.querySelector('input[name="recipient"]:checked');
-            if (!recipient) return 3;
-            if (recipient.value === 'self') return 5; // только себе -> работа
-            else return 4; // с детьми -> дети
-        }
-        case 4: return 5;
         case 5: return 6;
         case 6: return 7;
         case 7: return 8;
         case 8: return 9;
         case 9: return 10;
+        case 10: return 11;
         default: return step + 1;
     }
 }
@@ -133,27 +128,28 @@ function getPrevStep(step) {
     switch (step) {
         case 2: return 1;
         case 3: return 2;
-        case 4: {
-            const recipient = document.querySelector('input[name="recipient"]:checked');
-            if (recipient && recipient.value === 'self') return 2; // если только себе, назад на шаг 2
-            return 3;
-        }
+        case 4: return 3;
         case 5: {
             const recipient = document.querySelector('input[name="recipient"]:checked');
             if (recipient && (recipient.value === 'self_children' || recipient.value === 'children_only')) return 4;
             return 3;
         }
-        case 6: return 5;
+        case 6: {
+            const recipient = document.querySelector('input[name="recipient"]:checked');
+            if (recipient && (recipient.value === 'self_children' || recipient.value === 'children_only')) return 5;
+            return 4;
+        }
         case 7: return 6;
         case 8: return 7;
         case 9: return 8;
         case 10: return 9;
+        case 11: return 10;
         default: return step - 1;
     }
 }
 
 function goToStep(step) {
-    if (step < 1 || step > 10) return;
+    if (step < 1 || step > 11) return;
 
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
     const targetStep = document.querySelector(`.step-content[data-step="${step}"]`);
@@ -161,25 +157,25 @@ function goToStep(step) {
     currentStep = step;
 
     // Обработка шагов с динамическим содержимым
-    if (step === 3) {
+    if (step === 4) {
         renderApplicantInfo();
     }
-    if (step === 4) {
+    if (step === 5) {
         renderChildrenStep();
     }
-    if (step === 5) {
+    if (step === 6) {
         renderWorkTable();
     }
-    if (step === 8) {
+    if (step === 9) {
         renderPhotosStep();
     }
-    if (step === 9) {
+    if (step === 10) {
         prepareSummary();
     }
 }
 
 // ============================================================
-// Шаг 3: Информация о заявителе
+// Шаг 4: Информация о заявителе
 // ============================================================
 function renderApplicantInfo() {
     const container = document.getElementById('applicantData');
@@ -195,11 +191,10 @@ function renderApplicantInfo() {
 }
 
 // ============================================================
-// Шаг 4: Дети
+// Шаг 5: Дети
 // ============================================================
 function renderChildrenStep() {
     const container = document.getElementById('childrenList');
-    // Показываем список уже добавленных детей (applicants, где type === 'child')
     const childrenApplicants = applicants.filter(a => a.type === 'child');
     if (childrenApplicants.length === 0) {
         container.innerHTML = '<p>Дети ещё не добавлены. Нажмите кнопку "Добавить ребёнка".</p>';
@@ -216,7 +211,6 @@ function renderChildrenStep() {
     });
     container.innerHTML = html;
 
-    // Обработка удаления
     document.querySelectorAll('.remove-child').forEach(el => {
         el.addEventListener('click', (e) => {
             const idx = parseInt(e.currentTarget.dataset.index);
@@ -226,13 +220,9 @@ function renderChildrenStep() {
     });
 }
 
-// Модальное окно для добавления ребёнка (упрощённо – через prompt, но в реальном проекте лучше использовать форму)
 document.getElementById('addChildBtn').addEventListener('click', () => {
-    // Простой вариант: предложить выбрать из списка детей или ввести вручную
-    // Для демонстрации используем prompt
     const choice = confirm('Добавить ребёнка из списка? (OK – из списка, Отмена – вручную)');
     if (choice) {
-        // Выбор из списка
         if (childrenList.length === 0) {
             alert('У вас нет добавленных детей. Сначала добавьте детей в личном кабинете.');
             return;
@@ -245,7 +235,6 @@ document.getElementById('addChildBtn').addEventListener('click', () => {
             return;
         }
         const child = childrenList[idx];
-        // Добавляем в applicants
         applicants.push({
             type: 'child',
             data: {
@@ -256,13 +245,11 @@ document.getElementById('addChildBtn').addEventListener('click', () => {
                 date_of_birth: child.date_of_birth,
                 place_of_birth: child.place_of_birth || '',
                 gender: child.gender || 'male',
-                // можно добавить другие поля
             },
             photoPath: null
         });
         renderChildrenStep();
     } else {
-        // Ручной ввод
         const surname = prompt('Введите фамилию ребёнка:');
         if (!surname) return;
         const name = prompt('Введите имя ребёнка:');
@@ -272,7 +259,6 @@ document.getElementById('addChildBtn').addEventListener('click', () => {
         if (!birthDate) return;
         const birthPlace = prompt('Введите место рождения:') || '';
         const gender = confirm('Пол: OK – мужской, Отмена – женский') ? 'male' : 'female';
-        // Добавляем
         applicants.push({
             type: 'child',
             data: {
@@ -291,12 +277,11 @@ document.getElementById('addChildBtn').addEventListener('click', () => {
 });
 
 // ============================================================
-// Шаг 5: Работа (таблица за 10 лет)
+// Шаг 6: Работа (таблица за 10 лет)
 // ============================================================
 function renderWorkTable() {
     const container = document.getElementById('workTableContainer');
     if (workRows.length === 0) {
-        // Добавим одну пустую строку для примера
         workRows.push({ org: '', position: '', start: '', end: '' });
     }
     let html = `<table class="work-table"><thead><tr><th>Организация</th><th>Должность</th><th>Дата начала</th><th>Дата окончания</th><th></th></tr></thead><tbody>`;
@@ -312,7 +297,6 @@ function renderWorkTable() {
     html += `</tbody></table>`;
     container.innerHTML = html;
 
-    // Обработка удаления строк
     document.querySelectorAll('.remove-row').forEach(el => {
         el.addEventListener('click', (e) => {
             const idx = parseInt(e.currentTarget.dataset.index);
@@ -325,7 +309,6 @@ function renderWorkTable() {
         });
     });
 
-    // Сохранение изменений в workRows при вводе
     container.querySelectorAll('input[data-field]').forEach(input => {
         input.addEventListener('input', (e) => {
             const tr = e.currentTarget.closest('tr');
@@ -342,7 +325,7 @@ document.getElementById('addWorkRowBtn').addEventListener('click', () => {
 });
 
 // ============================================================
-// Шаг 6: Воинский учёт
+// Шаг 7: Воинский учёт
 // ============================================================
 document.getElementById('militaryStatus').addEventListener('change', (e) => {
     const fields = document.getElementById('militaryFields');
@@ -354,23 +337,15 @@ document.getElementById('militaryStatus').addEventListener('change', (e) => {
 });
 
 // ============================================================
-// Шаг 7: Вид паспорта
-// ============================================================
-// (обработка выбора через радио, сохраняется в selectedVisaType)
-
-// ============================================================
-// Шаг 8: Фото для каждого получателя
+// Шаг 9: Фото для каждого получателя
 // ============================================================
 function renderPhotosStep() {
     const container = document.getElementById('photosContainer');
-    // Получатели: заявитель (self) + дети (child)
     const allApplicants = [];
-    // Добавляем заявителя, если выбран "себе" или "себе и детям"
     const recipient = document.querySelector('input[name="recipient"]:checked');
     if (recipient && (recipient.value === 'self' || recipient.value === 'self_children')) {
         allApplicants.push({ type: 'self', label: 'Заявитель', data: userProfile, photoPath: null });
     }
-    // Добавляем детей
     applicants.filter(a => a.type === 'child').forEach((child, idx) => {
         allApplicants.push({ type: 'child', label: `Ребёнок ${idx+1}`, data: child.data, photoPath: child.photoPath });
     });
@@ -397,7 +372,6 @@ function renderPhotosStep() {
     });
     container.innerHTML = html;
 
-    // Навешиваем обработчики для загрузки
     container.querySelectorAll('.upload-area').forEach(area => {
         const idx = parseInt(area.dataset.index);
         const fileInput = area.querySelector('input[type="file"]');
@@ -425,7 +399,6 @@ function renderPhotosStep() {
             const file = fileInput.files[0];
             const success = await uploadPhotoForApplicant(idx, file);
             if (success) {
-                // Показать предпросмотр
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const previewDiv = area.parentElement.querySelector('.photo-preview');
@@ -434,17 +407,14 @@ function renderPhotosStep() {
                     previewDiv.classList.remove('hidden');
                 };
                 reader.readAsDataURL(file);
-                // Обновить список файлов
                 const fileList = area.parentElement.querySelector('.file-list');
                 fileList.innerHTML = `<i class="fas fa-check-circle" style="color:#28a745;"></i> ${file.name}`;
-                // Проверить, все ли фото загружены
                 checkAllPhotosUploaded();
             }
         });
     });
 }
 
-// Хранилище путей фото для каждого получателя (индекс в allApplicants)
 let photoPaths = {};
 
 async function uploadPhotoForApplicant(index, file) {
@@ -484,14 +454,13 @@ function checkAllPhotosUploaded() {
         total++;
         if (photoPaths[0]) uploaded++;
     }
-    // дети
     const childCount = applicants.filter(a => a.type === 'child').length;
     for (let i = 0; i < childCount; i++) {
         total++;
         const idx = (recipient && (recipient.value === 'self' || recipient.value === 'self_children')) ? i + 1 : i;
         if (photoPaths[idx]) uploaded++;
     }
-    const nextBtn = document.getElementById('step8NextBtn');
+    const nextBtn = document.getElementById('step9NextBtn');
     if (total > 0 && uploaded === total) {
         nextBtn.disabled = false;
     } else {
@@ -500,10 +469,9 @@ function checkAllPhotosUploaded() {
 }
 
 // ============================================================
-// Шаг 9: Подтверждение
+// Шаг 10: Подтверждение
 // ============================================================
 function prepareSummary() {
-    // Собираем все данные для отображения
     const recipient = document.querySelector('input[name="recipient"]:checked');
     const passportType = document.querySelector('input[name="passportType"]:checked');
     const visaType = document.querySelector('input[name="visaType"]:checked');
@@ -514,7 +482,6 @@ function prepareSummary() {
     html += `<tr><th>Заявитель</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
     html += `<tr><th>Личный код заявителя</th><td>${userProfile.personal_code}</td></tr>`;
 
-    // Дети
     const childrenApplicants = applicants.filter(a => a.type === 'child');
     if (childrenApplicants.length > 0) {
         html += `<tr><th>Дети</th><td>`;
@@ -524,10 +491,8 @@ function prepareSummary() {
         html += `</td></tr>`;
     }
 
-    // Работа
     html += `<tr><th>Место работы</th><td>${document.getElementById('workOrg').value || '—'}</td></tr>`;
     html += `<tr><th>Должность</th><td>${document.getElementById('workPosition').value || '—'}</td></tr>`;
-    // Таблица работы
     if (workRows.length > 0) {
         html += `<tr><th>Трудовая деятельность (10 лет)</th><td>`;
         workRows.forEach(row => {
@@ -536,7 +501,6 @@ function prepareSummary() {
         html += `</td></tr>`;
     }
 
-    // Воинский учёт
     const milStatus = document.getElementById('militaryStatus').value;
     if (milStatus === 'yes') {
         html += `<tr><th>Воинский учёт</th><td>Номер: ${document.getElementById('militaryNumber').value || '—'}, Военкомат: ${document.getElementById('militaryOffice').value || '—'}, Категория: ${document.getElementById('militaryCategory').value || '—'}, ВУС: ${document.getElementById('militaryVUS').value || '—'}</td></tr>`;
@@ -544,25 +508,19 @@ function prepareSummary() {
         html += `<tr><th>Воинский учёт</th><td>Нет</td></tr>`;
     }
 
-    // Вид паспорта
     html += `<tr><th>Вид паспорта</th><td>${visaType ? (visaType.value === 'civil' ? 'Общегражданский' : visaType.value === 'diplomatic' ? 'Дипломатический' : 'Служебный') : '—'}</td></tr>`;
-
-    // Фото
     const totalPhotos = Object.keys(photoPaths).length;
     html += `<tr><th>Фото</th><td>Загружено ${totalPhotos} фото</td></tr>`;
-
     html += '</table>';
     document.getElementById('summary').innerHTML = html;
 }
 
 // ============================================================
-// Генерация PDF (с плейсхолдером для шрифта)
+// Генерация PDF (с плейсхолдером)
 // ============================================================
 async function generatePDF() {
     const doc = new jsPDF();
-    // Шрифт PT Sans (base64 вставлен, но для краткости здесь ...)
-    // Полный base64 шрифта можно скопировать из другого проекта.
-    const fontBase64 = '...'; // здесь будет полный base64 шрифта
+    const fontBase64 = '...'; // полный base64 шрифта
     doc.addFileToVFS('PT_Sans.ttf', fontBase64);
     doc.addFont('PT_Sans.ttf', 'PT Sans', 'normal');
     doc.setFont('PT Sans');
@@ -596,7 +554,6 @@ async function generatePDF() {
 
     data.push(['Место работы', document.getElementById('workOrg').value || '—']);
     data.push(['Должность', document.getElementById('workPosition').value || '—']);
-    // Таблица работы
     let workStr = '';
     workRows.forEach(row => {
         if (row.org) workStr += `${row.org} (${row.position}) ${row.start} - ${row.end || 'по н.в.'}\n`;
@@ -644,14 +601,11 @@ async function submitApplication() {
         return false;
     }
 
-    // Собираем данные
     const passportType = document.querySelector('input[name="passportType"]:checked');
     const recipient = document.querySelector('input[name="recipient"]:checked');
     const visaType = document.querySelector('input[name="visaType"]:checked');
 
-    // Формируем массив получателей (applicants)
     const applicantsData = [];
-    // Заявитель, если выбран "себе" или "себе и детям"
     if (recipient && (recipient.value === 'self' || recipient.value === 'self_children')) {
         applicantsData.push({
             personal_code: userPersonalCode,
@@ -665,7 +619,6 @@ async function submitApplication() {
             is_applicant: true
         });
     }
-    // Дети
     const childrenApplicants = applicants.filter(a => a.type === 'child');
     childrenApplicants.forEach((child, idx) => {
         const photoIdx = (recipient && (recipient.value === 'self' || recipient.value === 'self_children')) ? idx + 1 : idx;
@@ -682,7 +635,6 @@ async function submitApplication() {
         });
     });
 
-    // Сведения о работе
     const workInfo = {
         organization: document.getElementById('workOrg').value || '',
         position: document.getElementById('workPosition').value || '',
@@ -691,7 +643,6 @@ async function submitApplication() {
         work_history: workRows
     };
 
-    // Воинский учёт
     const militaryInfoData = {
         has_military: document.getElementById('militaryStatus').value === 'yes',
         number: document.getElementById('militaryNumber').value || '',
@@ -700,7 +651,6 @@ async function submitApplication() {
         vus: document.getElementById('militaryVUS').value || ''
     };
 
-    // Основная запись в foreign_passport
     const payload = {
         application_number: applicationNumber,
         user_id: session.user.id,
@@ -711,10 +661,9 @@ async function submitApplication() {
         military_info: militaryInfoData,
         status: 'submitted',
         service_type: 'foreign_passport',
-        applicants: applicantsData // сохраним как JSONB для истории, но также запишем в отдельную таблицу
+        applicants: applicantsData
     };
 
-    // Вставляем в основную таблицу
     const { data: inserted, error } = await supabase
         .schema('services')
         .from('foreign_passport')
@@ -727,7 +676,6 @@ async function submitApplication() {
         return false;
     }
 
-    // Сохраняем каждого получателя в foreign_passport_applicants
     for (const app of applicantsData) {
         const appPayload = {
             passport_id: inserted.id,
@@ -751,12 +699,13 @@ async function submitApplication() {
         }
     }
 
-    // Запись истории статусов
+    const pdfPath = await generatePDF();
+
     const historyPayload = {
         passport_id: inserted.id,
         status: 'submitted',
         created_at: new Date().toISOString(),
-        attachments: [pdfPath] // путь к PDF
+        attachments: [pdfPath]
     };
     const { error: historyError } = await supabase
         .schema('services')
@@ -770,7 +719,7 @@ async function submitApplication() {
 }
 
 // ============================================================
-// Инициализация при загрузке страницы
+// Инициализация
 // ============================================================
 document.addEventListener('DOMContentLoaded', async () => {
     if (!await loadUserProfile()) return;
@@ -791,7 +740,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadChildren();
 
-    // Обработка выбора радио (подсветка)
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             const parentLabel = e.target.closest('label');
@@ -804,38 +752,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
-    // Подсветить уже выбранные
     document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
         const label = radio.closest('label');
         if (label) label.classList.add('selected');
     });
 
-    // Навигация
     document.querySelectorAll('.next-step').forEach(btn => {
         btn.addEventListener('click', async () => {
-            // Валидация шага
-            if (currentStep === 1) {
+            // Валидация шагов
+            if (currentStep === 2) {
                 const selected = document.querySelector('input[name="passportType"]:checked');
                 if (!selected) { showError('Выберите тип паспорта'); return; }
                 selectedPassportType = selected.value;
             }
-            if (currentStep === 2) {
+            if (currentStep === 3) {
                 const selected = document.querySelector('input[name="recipient"]:checked');
                 if (!selected) { showError('Выберите, кому оформляется паспорт'); return; }
                 selectedRecipient = selected.value;
-                // Если выбрано "только себе", очищаем детей
                 if (selected.value === 'self') {
                     applicants = applicants.filter(a => a.type !== 'child');
                 }
             }
-            if (currentStep === 7) {
+            if (currentStep === 8) {
                 const selected = document.querySelector('input[name="visaType"]:checked');
                 if (!selected) { showError('Выберите вид паспорта'); return; }
                 selectedVisaType = selected.value;
             }
-            if (currentStep === 8) {
-                // Проверка загрузки всех фото уже сделана через disabled кнопки
-                const nextBtn = document.getElementById('step8NextBtn');
+            if (currentStep === 9) {
+                const nextBtn = document.getElementById('step9NextBtn');
                 if (nextBtn.disabled) {
                     showError('Загрузите фото для всех получателей');
                     return;
@@ -854,14 +798,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
-    // Отправка
     document.getElementById('submitApplication').addEventListener('click', async () => {
         const btn = document.getElementById('submitApplication');
         btn.disabled = true;
         btn.textContent = 'Отправка...';
-
-        // Генерируем PDF
-        const pdfPath = await generatePDF();
 
         const success = await submitApplication();
 
@@ -871,10 +811,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (success) {
             document.getElementById('applicationNumber').textContent = applicationNumber;
             document.getElementById('gotoServiceLink').href = `../../../personal-profile/services/service-view.html?id=${applicationNumber}`;
-            goToStep(10);
+            goToStep(11);
         }
     });
 
-    // Начало с шага 1
     goToStep(1);
 });
