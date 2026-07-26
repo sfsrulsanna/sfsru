@@ -35,6 +35,7 @@
         .service-tab.active { background: #7b091a; color: white; box-shadow: 0 2px 8px rgba(123,9,26,0.2); }
         .back-link { margin-bottom: 1.5rem; }
         .back-link a { color: #7b091a; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .back-link a:hover { text-decoration: underline; }
         .app-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
         .app-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; }
         .app-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
@@ -109,11 +110,26 @@
 
         const tableMap = { passport: 'passport', foreign: 'foreign_passport', other: 'service' };
         const reasonMap = { '14_20_45': 'Исполнилось 14, 20 или 45 лет', 'no_space': 'Закончилось место для штампов', 'name_changed': 'Изменилось ФИО, дата или место рождения', 'lost': 'Паспорт утерян или украден', 'damaged': 'Паспорт стал непригодным к использованию', 'citizenship': 'Получение гражданства СФСРЮ', 'appearance': 'Изменилась внешность', 'error': 'Ошибка в паспорте', 'first_14': 'Первичное получение в 14 лет', 'expired': 'Истёк срок действия' };
+        const passportTypeMap = { 'biometric': 'Биометрический', 'nonbiometric': 'Небиометрический' };
+        const recipientTypeMap = { 'self': 'Только себе', 'self_children': 'Себе и детям', 'children_only': 'Только детям' };
 
         let currentType = 'passport';
 
-        function getDynamicColumnLabel() { return currentType === 'other' ? 'Название услуги' : 'Причина'; }
-        function getDynamicColumnValue(item) { return currentType === 'other' ? (item.service_type || '—') : (reasonMap[item.reason] || item.reason || '—'); }
+        function getDynamicColumnLabel() {
+            if (currentType === 'other') return 'Название услуги';
+            if (currentType === 'foreign') return 'Тип паспорта / Кому';
+            return 'Причина';
+        }
+
+        function getDynamicColumnValue(item) {
+            if (currentType === 'other') return item.service_type || '—';
+            if (currentType === 'foreign') {
+                const type = passportTypeMap[item.passport_type] || item.passport_type || '—';
+                const recipient = recipientTypeMap[item.recipient_type] || item.recipient_type || '—';
+                return `${type} (${recipient})`;
+            }
+            return reasonMap[item.reason] || item.reason || '—';
+        }
 
         function updateTableHeader() {
             const label = getDynamicColumnLabel();
@@ -125,22 +141,44 @@
             tbody.innerHTML = '<tr><td colspan="5" class="loading">Загрузка...</td></tr>';
             const table = tableMap[currentType];
             if (!table) return;
-            const { data, error } = await supabase.schema('services').from(table).select('id, application_number, created_at, personal_code, reason, service_type').in('status', ['processing', 'interim', 'positive']).order('created_at', { ascending: false });
+            const { data, error } = await supabase.schema('services').from(table).select('id, application_number, created_at, personal_code, reason, passport_type, recipient_type, service_type').in('status', ['processing', 'interim', 'positive']).order('created_at', { ascending: false });
             if (error) { tbody.innerHTML = `<tr><td colspan="5" class="error">Ошибка: ${error.message}</td></tr>`; return; }
             if (!data.length) { tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет заявлений в работе</td></tr>'; return; }
             const columnLabel = getDynamicColumnLabel();
-            tbody.innerHTML = data.map(app => `<tr><td data-label="№ заявления">${app.application_number}</td><td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td><td data-label="Личный код">${app.personal_code || '—'}</td><td data-label="${columnLabel}">${getDynamicColumnValue(app)}</td><td data-label="Действие"><a href="view.html?id=${app.id}&type=${currentType}" class="btn-view">Просмотр</a></td></tr>`).join('');
+            tbody.innerHTML = data.map(app => {
+                const dynamicValue = getDynamicColumnValue(app);
+                return `<tr>
+                    <td data-label="№ заявления">${app.application_number}</td>
+                    <td data-label="Дата">${new Date(app.created_at).toLocaleDateString('ru-RU')}</td>
+                    <td data-label="Личный код">${app.personal_code || '—'}</td>
+                    <td data-label="${columnLabel}">${dynamicValue}</td>
+                    <td data-label="Действие"><a href="view.html?id=${app.id}&type=${currentType}" class="btn-view">Просмотр</a></td>
+                </tr>`;
+            }).join('');
         }
 
-        function setActiveTab(type) { document.querySelectorAll('.service-tab').forEach(tab => { if (tab.dataset.type === type) tab.classList.add('active'); else tab.classList.remove('active'); }); }
-        async function switchServiceType(type) { if (type === currentType) return; currentType = type; setActiveTab(type); document.querySelector('.back-link a').href = `index.html?type=${currentType}`; updateTableHeader(); await loadProcessing(); }
+        function setActiveTab(type) {
+            document.querySelectorAll('.service-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.type === type);
+            });
+        }
+
+        async function switchServiceType(type) {
+            if (type === currentType) return;
+            currentType = type;
+            setActiveTab(type);
+            document.querySelector('.back-link a').href = `index.html?type=${currentType}`;
+            updateTableHeader();
+            await loadProcessing();
+        }
 
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await requireAdmin()) return;
             const urlParams = new URLSearchParams(window.location.search);
             const typeParam = urlParams.get('type');
             if (typeParam && tableMap[typeParam]) currentType = typeParam;
-            setActiveTab(currentType); updateTableHeader();
+            setActiveTab(currentType);
+            updateTableHeader();
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) document.getElementById('adminEmail').textContent = user.email;
             await loadProcessing();
