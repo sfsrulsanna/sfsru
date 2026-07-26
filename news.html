@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Новости СФСРЮ</title>
-    <!-- favicons (скопировать из других страниц) -->
+    <!-- favicons (скопированы) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -22,14 +22,12 @@
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css" />
-    <link rel="stylesheet" href="../../../css/news.css" />
     <style>
-        /* Основные стили для новостей */
+        /* Основные стили для новостей (без внешнего news.css) */
         .news-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
         .news-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.3s; }
         .news-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-        .news-card img { width: 100%; height: 200px; object-fit: cover; }
         .news-card .news-content { padding: 20px; }
         .news-card .news-title { font-size: 1.3rem; margin: 0 0 10px; }
         .news-card .news-title a { color: #a00; text-decoration: none; }
@@ -39,7 +37,7 @@
         .news-detail { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .news-detail h1 { color: #a00; font-size: 2rem; margin-bottom: 10px; }
         .news-detail .news-meta { color: #888; font-size: 0.95rem; margin-bottom: 20px; }
-        .news-detail .news-body { font-size: 1.1rem; line-height: 1.8; }
+        .news-detail .news-body { font-size: 1.1rem; line-height: 1.8; white-space: pre-wrap; }
         .news-detail .news-media { margin: 20px 0; display: flex; flex-wrap: wrap; gap: 15px; }
         .news-detail .news-media img, .news-detail .news-media video { max-width: 100%; max-height: 500px; border-radius: 12px; }
         .comments-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
@@ -48,15 +46,22 @@
         .comment strong { color: #a00; }
         .comment .comment-meta { color: #888; font-size: 0.85rem; }
         .comment-form textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 12px; min-height: 100px; font-family: inherit; font-size: 1rem; }
-        .comment-form button { background: #a00; color: white; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: 600; }
+        .comment-form button { background: #a00; color: white; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: 600; margin-top: 10px; }
         .comment-form button:hover { background: #c00; }
         .login-to-comment { background: #f5f5f5; padding: 20px; border-radius: 12px; text-align: center; }
         .login-to-comment a { color: #a00; font-weight: 600; }
+        .error-msg { color: #c00; background: #ffebee; padding: 12px 16px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #c00; }
+        .success-msg { color: #2e7d32; background: #e8f5e9; padding: 12px 16px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #2e7d32; }
+        .loader { text-align: center; padding: 40px; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #a00; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #a00; font-weight: 600; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
         @media (max-width: 768px) { .news-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
-    <!-- Шапка (как на других страницах) -->
+    <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -83,7 +88,6 @@
 
     <div class="main-content">
         <div class="news-container">
-            <h1>Новости СФСРЮ</h1>
             <div id="news-list"></div>
             <div id="news-detail" style="display:none;"></div>
         </div>
@@ -112,7 +116,7 @@
         const listEl = document.getElementById('news-list');
         const detailEl = document.getElementById('news-detail');
 
-        // Проверка авторизации
+        // Получение текущего пользователя
         async function getCurrentUser() {
             const { data: { user } } = await supabase.auth.getUser();
             return user;
@@ -123,141 +127,168 @@
             return new Date(date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // Загрузка списка статей
-        async function loadArticles() {
-            const { data, error } = await supabase
-                .from('articles')
-                .select('*, media(count)')
-                .eq('is_published', true)
-                .order('date_published', { ascending: false });
-            if (error) {
-                listEl.innerHTML = '<p style="color:#c00;">Ошибка загрузки новостей.</p>';
-                return;
-            }
-            if (!data || data.length === 0) {
-                listEl.innerHTML = '<p>Новостей пока нет.</p>';
-                return;
-            }
-            let html = '<div class="news-grid">';
-            data.forEach(article => {
-                // Получаем первое изображение из медиа (если есть)
-                // Для простоты, можно сделать дополнительный запрос, но для демонстрации используем заглушку
-                html += `
-                    <div class="news-card">
-                        <div class="news-content">
-                            <div class="news-title"><a href="?id=${article.id}">${article.title}</a></div>
-                            <div class="news-meta">${formatDate(article.date_published)}</div>
-                            <div class="news-excerpt">${article.content.substring(0, 150)}${article.content.length > 150 ? '...' : ''}</div>
-                            <a href="?id=${article.id}" class="news-readmore">Читать далее →</a>
-                        </div>
-                    </div>
-                `;
-            });
-            html += '</div>';
-            listEl.innerHTML = html;
+        // Получение публичного URL для медиа
+        function getMediaUrl(bucket, path) {
+            const { data } = supabase.storage.from(bucket).getPublicUrl(path);
+            return data.publicUrl;
         }
 
-        // Загрузка одной статьи с комментариями
-        async function loadArticle(id) {
-            const { data: article, error } = await supabase
-                .from('articles')
-                .select('*, media(*)')
-                .eq('id', id)
-                .eq('is_published', true)
-                .single();
-            if (error || !article) {
-                detailEl.innerHTML = '<p style="color:#c00;">Статья не найдена.</p>';
-                return;
-            }
-            // Увеличиваем счётчик просмотров
-            await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
-
-            // Получаем комментарии с данными пользователя
-            const { data: comments } = await supabase
-                .from('comments')
-                .select('*, user:user_id(email)')
-                .eq('article_id', id)
-                .order('created_at', { ascending: true });
-
-            let mediaHtml = '';
-            if (article.media && article.media.length > 0) {
-                mediaHtml = '<div class="news-media">';
-                article.media.forEach(m => {
-                    const url = supabase.storage.from(m.bucket_name).getPublicUrl(m.file_path).data.publicUrl;
-                    if (m.mime_type.startsWith('image/')) {
-                        mediaHtml += `<img src="${url}" alt="${m.file_name}" />`;
-                    } else if (m.mime_type.startsWith('video/')) {
-                        mediaHtml += `<video controls src="${url}"></video>`;
-                    }
-                });
-                mediaHtml += '</div>';
-            }
-
-            // Комментарии
-            let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
-            if (comments && comments.length > 0) {
-                comments.forEach(c => {
-                    commentsHtml += `
-                        <div class="comment">
-                            <strong>${c.user ? c.user.email : 'Аноним'}</strong>
-                            <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
-                            <p>${c.content}</p>
+        // Загрузка списка статей
+        async function loadArticles() {
+            listEl.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка новостей...</div>';
+            try {
+                const { data, error } = await supabase
+                    .from('articles')
+                    .select('*, media:media(count)')
+                    .eq('is_published', true)
+                    .order('date_published', { ascending: false });
+                if (error) throw new Error('Ошибка загрузки: ' + error.message);
+                if (!data || data.length === 0) {
+                    listEl.innerHTML = '<p>Новостей пока нет.</p>';
+                    return;
+                }
+                let html = '<div class="news-grid">';
+                data.forEach(article => {
+                    const excerpt = article.content.substring(0, 150) + (article.content.length > 150 ? '...' : '');
+                    html += `
+                        <div class="news-card">
+                            <div class="news-content">
+                                <div class="news-title"><a href="?id=${article.id}">${article.title}</a></div>
+                                <div class="news-meta">${formatDate(article.date_published)}</div>
+                                <div class="news-excerpt">${excerpt}</div>
+                                <a href="?id=${article.id}" class="news-readmore">Читать далее →</a>
+                            </div>
                         </div>
                     `;
                 });
-            } else {
-                commentsHtml += '<p>Комментариев пока нет. Будьте первым!</p>';
+                html += '</div>';
+                listEl.innerHTML = html;
+            } catch (err) {
+                listEl.innerHTML = `<div class="error-msg">⚠️ ${err.message}</div>`;
+                console.error(err);
             }
+        }
 
-            // Форма комментария (только для авторизованных)
-            const user = await getCurrentUser();
-            if (user) {
-                commentsHtml += `
-                    <form id="commentForm" class="comment-form">
-                        <textarea name="content" placeholder="Ваш комментарий..." required></textarea>
-                        <button type="submit">Отправить</button>
-                    </form>
-                `;
-            } else {
-                commentsHtml += `
-                    <div class="login-to-comment">
-                        <p><a href="/login.html">Войдите</a> или <a href="/register.html">зарегистрируйтесь</a>, чтобы оставить комментарий.</p>
-                    </div>
-                `;
-            }
-            commentsHtml += '</div>';
-
-            detailEl.innerHTML = `
-                <div class="news-detail">
-                    <h1>${article.title}</h1>
-                    <div class="news-meta">${formatDate(article.date_published)} • Просмотров: ${article.views || 0}</div>
-                    ${mediaHtml}
-                    <div class="news-body">${article.content}</div>
-                    ${commentsHtml}
-                </div>
-            `;
+        // Загрузка одной статьи
+        async function loadArticle(id) {
+            detailEl.innerHTML = '<div class="loader"><div class="spinner"></div>Загрузка статьи...</div>';
             detailEl.style.display = 'block';
             listEl.style.display = 'none';
 
-            // Обработка отправки комментария
-            const commentForm = document.getElementById('commentForm');
-            if (commentForm) {
-                commentForm.addEventListener('submit', async (e) => {
-                    e.preventDefault();
-                    const content = commentForm.querySelector('textarea').value.trim();
-                    if (!content) return;
-                    const { error } = await supabase.from('comments').insert({
-                        article_id: id,
-                        user_id: user.id,
-                        content: content
+            try {
+                // Получаем статью с медиа
+                const { data: article, error } = await supabase
+                    .from('articles')
+                    .select('*, media(*)')
+                    .eq('id', id)
+                    .eq('is_published', true)
+                    .single();
+                if (error || !article) throw new Error('Статья не найдена.');
+
+                // Увеличиваем счётчик просмотров
+                await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
+
+                // Получаем комментарии (без вложенного user, чтобы избежать ошибки связи)
+                const { data: comments, error: commentsError } = await supabase
+                    .from('comments')
+                    .select('*')
+                    .eq('article_id', id)
+                    .order('created_at', { ascending: true });
+                if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
+
+                // Медиа
+                let mediaHtml = '';
+                if (article.media && article.media.length > 0) {
+                    mediaHtml = '<div class="news-media">';
+                    article.media.forEach(m => {
+                        const url = getMediaUrl(m.bucket_name, m.file_path);
+                        if (m.mime_type.startsWith('image/')) {
+                            mediaHtml += `<img src="${url}" alt="${m.file_name}" loading="lazy" />`;
+                        } else if (m.mime_type.startsWith('video/')) {
+                            mediaHtml += `<video controls src="${url}"></video>`;
+                        }
                     });
-                    if (error) {
-                        alert('Ошибка отправки комментария: ' + error.message);
-                    } else {
-                        commentForm.querySelector('textarea').value = '';
-                        loadArticle(id); // обновить комментарии
-                    }
-                });
+                    mediaHtml += '</div>';
+                }
+
+                // Комментарии
+                let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
+                if (comments && comments.length > 0) {
+                    comments.forEach(c => {
+                        // Показываем "Пользователь", так как мы не можем получить email из auth.users без отдельного запроса
+                        const author = c.user_id ? 'Пользователь' : 'Аноним';
+                        commentsHtml += `
+                            <div class="comment">
+                                <strong>${author}</strong>
+                                <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
+                                <p>${c.content}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    commentsHtml += '<p>Комментариев пока нет. Будьте первым!</p>';
+                }
+
+                // Форма комментария (только для авторизованных)
+                const user = await getCurrentUser();
+                if (user) {
+                    commentsHtml += `
+                        <form id="commentForm" class="comment-form">
+                            <textarea name="content" placeholder="Ваш комментарий..." required></textarea>
+                            <button type="submit">Отправить</button>
+                            <div id="commentMsg"></div>
+                        </form>
+                    `;
+                } else {
+                    commentsHtml += `
+                        <div class="login-to-comment">
+                            <p><a href="/login.html">Войдите</a> или <a href="/register.html">зарегистрируйтесь</a>, чтобы оставить комментарий.</p>
+                        </div>
+                    `;
+                }
+                commentsHtml += '</div>';
+
+                detailEl.innerHTML = `
+                    <div class="news-detail">
+                        <a href="?page=news" class="back-link">← Назад к списку</a>
+                        <h1>${article.title}</h1>
+                        <div class="news-meta">${formatDate(article.date_published)} • Просмотров: ${article.views || 0}</div>
+                        ${mediaHtml}
+                        <div class="news-body">${article.content}</div>
+                        ${commentsHtml}
+                    </div>
+                `;
+
+                // Обработка отправки комментария
+                const commentForm = document.getElementById('commentForm');
+                const commentMsg = document.getElementById('commentMsg');
+                if (commentForm) {
+                    commentForm.addEventListener('submit', async (e) => {
+                        e.preventDefault();
+                        const content = commentForm.querySelector('textarea').value.trim();
+                        if (!content) {
+                            commentMsg.innerHTML = '<div class="error-msg">Введите текст комментария.</div>';
+                            return;
+                        }
+                        try {
+                            const { error } = await supabase.from('comments').insert({
+                                article_id: id,
+                                user_id: user.id,
+                                content: content
+                            });
+                            if (error) throw new Error(error.message);
+                            commentMsg.innerHTML = '<div class="success-msg">Комментарий добавлен!</div>';
+                            commentForm.querySelector('textarea').value = '';
+                            // Перезагружаем комментарии (без перезагрузки всей статьи)
+                            setTimeout(() => loadArticle(id), 1000);
+                        } catch (err) {
+                            commentMsg.innerHTML = `<div class="error-msg">${err.message}</div>`;
+                        }
+                    });
+                }
+            } catch (err) {
+                detailEl.innerHTML = `<div class="error-msg">⚠️ ${err.message}</div>`;
+                console.error(err);
             }
         }
 
