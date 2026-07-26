@@ -23,7 +23,6 @@
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css" />
     <style>
-        /* Основные стили для новостей (без внешнего news.css) */
         .news-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
         .news-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.3s; }
@@ -61,7 +60,6 @@
     </style>
 </head>
 <body>
-    <!-- Шапка -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -188,10 +186,13 @@
                 // Увеличиваем счётчик просмотров
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Получаем комментарии (без вложенного user, чтобы избежать ошибки связи)
+                // Получаем комментарии с JOIN на profiles для получения имени и фамилии
                 const { data: comments, error: commentsError } = await supabase
                     .from('comments')
-                    .select('*')
+                    .select(`
+                        *,
+                        profile:user_id ( name, surname )
+                    `)
                     .eq('article_id', id)
                     .order('created_at', { ascending: true });
                 if (commentsError) throw new Error('Ошибка загрузки комментариев: ' + commentsError.message);
@@ -211,15 +212,18 @@
                     mediaHtml += '</div>';
                 }
 
-                // Комментарии
+                // Комментарии с именем и фамилией
                 let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
                 if (comments && comments.length > 0) {
                     comments.forEach(c => {
-                        // Показываем "Пользователь", так как мы не можем получить email из auth.users без отдельного запроса
-                        const author = c.user_id ? 'Пользователь' : 'Аноним';
+                        // Получаем имя и фамилию из профиля
+                        let authorName = 'Пользователь';
+                        if (c.profile && c.profile.name) {
+                            authorName = c.profile.name + (c.profile.surname ? ' ' + c.profile.surname : '');
+                        }
                         commentsHtml += `
                             <div class="comment">
-                                <strong>${author}</strong>
+                                <strong>${authorName}</strong>
                                 <span class="comment-meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
                                 <p>${c.content}</p>
                             </div>
