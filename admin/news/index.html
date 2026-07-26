@@ -1,10 +1,11 @@
+<!-- admin/news/index.html — исправленная админ-панель для новостей -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Управление новостями — Админ-панель</title>
-    <!-- favicons (скопировать из fl.html) -->
+    <!-- favicons (скопированы из fl.html) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -56,6 +57,12 @@
         .media-preview .media-item { position: relative; }
         .media-preview .remove-media { position: absolute; top: -8px; right: -8px; background: #c00; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; cursor: pointer; font-size: 12px; }
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } th, td { font-size: 0.8rem; } }
+        .comments-modal { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center; }
+        .comments-modal-content { background:white; border-radius:20px; max-width:700px; width:90%; max-height:80vh; overflow-y:auto; padding:20px; position:relative; }
+        .comments-modal-close { position:absolute; top:10px; right:15px; background:transparent; border:none; font-size:24px; cursor:pointer; }
+        .comment-item { padding: 8px 0; border-bottom: 1px solid #eee; }
+        .comment-item strong { color: #a00; }
+        .comment-item .meta { color: #888; font-size: 0.85rem; }
     </style>
 </head>
 <body>
@@ -150,10 +157,10 @@
             </div>
         </div>
 
-        <!-- Просмотр комментариев (модалка) -->
-        <div id="commentsModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.6); z-index:1000; align-items:center; justify-content:center;">
-            <div style="background:white; border-radius:20px; max-width:700px; width:90%; max-height:80vh; overflow-y:auto; padding:20px; position:relative;">
-                <button id="closeCommentsModal" style="position:absolute; top:10px; right:15px; background:transparent; border:none; font-size:24px; cursor:pointer;">×</button>
+        <!-- Модалка комментариев -->
+        <div id="commentsModal" class="comments-modal">
+            <div class="comments-modal-content">
+                <button id="closeCommentsModal" class="comments-modal-close">×</button>
                 <h3>Комментарии к статье</h3>
                 <div id="commentsList"></div>
             </div>
@@ -215,9 +222,10 @@
                 .replace(/-+/g, '-');
         }
 
-        // Загрузка статей
+        // Загрузка статей с количеством комментариев
         async function loadArticles() {
-            const { data, error } = await supabase.from(ARTICLES_TABLE)
+            const { data, error } = await supabase
+                .from(ARTICLES_TABLE)
                 .select('*, comments_count:comments(count)')
                 .order('date_published', { ascending: false });
             if (error) { showMsg('Ошибка загрузки статей: ' + error.message); return; }
@@ -282,6 +290,7 @@
             existingMedia.innerHTML = '';
             mediaToRemove = [];
             articleSlug.value = '';
+            articleMsg.innerHTML = '';
         }
         cancelEdit.addEventListener('click', resetForm);
 
@@ -314,11 +323,12 @@
             if (error) { showMsg('Ошибка загрузки медиа: ' + error.message); return; }
             existingMedia.innerHTML = '';
             data.forEach(m => {
+                const url = supabase.storage.from(m.bucket_name).getPublicUrl(m.file_path).data.publicUrl;
                 const div = document.createElement('div');
                 div.className = 'media-item';
                 div.innerHTML = `
                     <button class="remove-media" data-id="${m.id}">×</button>
-                    ${m.mime_type.startsWith('image/') ? `<img src="${m.file_path}" />` : `<video src="${m.file_path}" style="max-width:150px;max-height:150px;"></video>`}
+                    ${m.mime_type.startsWith('image/') ? `<img src="${url}" />` : `<video src="${url}" style="max-width:150px;max-height:150px;"></video>`}
                 `;
                 existingMedia.appendChild(div);
             });
@@ -390,10 +400,11 @@
             }
         });
 
-        // Просмотр комментариев
+        // Просмотр комментариев – используем author_name и author_surname
         async function showComments(articleId) {
-            const { data, error } = await supabase.from(COMMENTS_TABLE)
-                .select('*, user:user_id(email)')
+            const { data, error } = await supabase
+                .from(COMMENTS_TABLE)
+                .select('*')
                 .eq('article_id', articleId)
                 .order('created_at', { ascending: true });
             if (error) { showMsg('Ошибка загрузки комментариев: ' + error.message); return; }
@@ -402,19 +413,21 @@
                 commentsList.innerHTML = '<p>Комментариев нет.</p>';
             } else {
                 data.forEach(c => {
+                    const author = (c.author_name || '') + ' ' + (c.author_surname || '');
+                    const authorDisplay = author.trim() || 'Пользователь';
                     const div = document.createElement('div');
-                    div.style.padding = '8px 0';
-                    div.style.borderBottom = '1px solid #eee';
+                    div.className = 'comment-item';
                     div.innerHTML = `
-                        <strong>${c.user ? c.user.email : 'Аноним'}</strong> 
-                        <small style="color:#888;">${new Date(c.created_at).toLocaleString('ru-RU')}</small>
-                        <p style="margin:5px 0;">${c.content}</p>
+                        <strong>${authorDisplay}</strong>
+                        <span class="meta">${new Date(c.created_at).toLocaleString('ru-RU')}</span>
+                        <p>${c.content}</p>
                     `;
                     commentsList.appendChild(div);
                 });
             }
             commentsModal.style.display = 'flex';
         }
+
         closeCommentsModal.addEventListener('click', () => commentsModal.style.display = 'none');
         commentsModal.addEventListener('click', (e) => {
             if (e.target === commentsModal) commentsModal.style.display = 'none';
