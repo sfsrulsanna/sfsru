@@ -179,12 +179,15 @@
 
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Правильный запрос комментариев с присоединением профилей
+                // Получаем комментарии с JOIN на auth.users для получения имени и фамилии
+                // Используем raw_user_meta_data для получения данных пользователя
                 const { data: comments, error: commentsError } = await supabase
                     .from('comments')
                     .select(`
                         *,
-                        profiles:user_id ( name, surname )
+                        user:user_id (
+                            raw_user_meta_data
+                        )
                     `)
                     .eq('article_id', id)
                     .order('created_at', { ascending: true });
@@ -207,11 +210,14 @@
                 let commentsHtml = '<div class="comments-section"><h3>Комментарии</h3>';
                 if (comments && comments.length > 0) {
                     comments.forEach(c => {
+                        // Извлекаем имя и фамилию из raw_user_meta_data
                         let authorName = 'Пользователь';
-                        if (c.profiles && c.profiles.length > 0) {
-                            const profile = c.profiles[0];
-                            if (profile.name) {
-                                authorName = profile.name + (profile.surname ? ' ' + profile.surname : '');
+                        if (c.user && c.user.raw_user_meta_data) {
+                            const meta = c.user.raw_user_meta_data;
+                            if (meta.name || meta.surname) {
+                                authorName = (meta.name || '') + (meta.surname ? ' ' + meta.surname : '');
+                            } else if (meta.full_name) {
+                                authorName = meta.full_name;
                             }
                         }
                         commentsHtml += `
