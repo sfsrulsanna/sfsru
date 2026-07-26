@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Просмотр услуги — СФСРЮ</title>
-    <!-- favicons (полный набор) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -21,15 +21,11 @@
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
     <link rel="stylesheet" href="../../css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .service-container { max-width: 700px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 2rem; }
-        .service-title { font-size: 1.8rem; font-weight: 700; color: #7b091a; margin-bottom: 0.25rem; letter-spacing: -0.5px; }
+        .service-container { max-width: 800px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 2rem; }
+        .service-title { font-size: 1.8rem; font-weight: 700; color: #7b091a; margin-bottom: 0.25rem; }
         .service-number { font-size: 1rem; color: #6c757d; margin-bottom: 2rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 1rem; }
         .status-card { background: #f8f9fa; border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; border: 1px solid #e9ecef; transition: all 0.2s ease; }
         .status-card:hover { background: #ffffff; border-color: #ced4da; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
@@ -42,45 +38,32 @@
         .file-item { background: #e9ecef; border-radius: 6px; padding: 0.3rem 0.8rem; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.3rem; }
         .file-item a { color: #007bff; text-decoration: none; }
         .file-item a:hover { text-decoration: underline; }
-        .section-title { font-weight: 600; margin: 2rem 0 1rem; color: #333; font-size: 1.4rem; }
+        .detail-section { margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 12px; }
+        .detail-row { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #e9ecef; }
+        .detail-label { font-weight: 600; width: 35%; color: #0f172a; }
+        .detail-value { width: 65%; color: #1e293b; }
+        .action-buttons { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
+        .back-link { display: inline-block; width: 100%; text-align: center; padding: 0.75rem 1rem; font-size: 1rem; border-radius: 8px; background-color: #6c757d; color: white; text-decoration: none; border: none; cursor: pointer; transition: background-color 0.2s; }
+        .back-link:hover { background-color: #5a6268; }
+        .back-link i { margin-right: 0.5rem; }
+        .toggle-history { display: none; background-color: #e9ecef; border: 1px solid #ced4da; color: #495057; padding: 0.75rem 1rem; font-size: 1rem; border-radius: 8px; cursor: pointer; width: 100%; text-align: center; transition: background-color 0.2s; }
+        .toggle-history:hover { background-color: #dee2e6; }
+        #historyList .status-card:not(:first-child) { display: none; }
+        #historyList.show-all .status-card { display: block; }
+        .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
         .status-icon .fa-hourglass-half { color: #f0ad4e; }
         .status-icon .fa-check-circle { color: #28a745; }
         .status-icon .fa-times-circle { color: #dc3545; }
         .status-icon .fa-ban { color: #6c757d; }
-        .action-buttons { display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem; }
-        .toggle-history, .back-link { display: inline-block; width: 100%; text-align: center; padding: 0.75rem 1rem; font-size: 1rem; border-radius: 8px; box-sizing: border-box; transition: background-color 0.2s; border: none; cursor: pointer; }
-        .toggle-history { background-color: #e9ecef; border: 1px solid #ced4da; color: #495057; }
-        .toggle-history:hover { background-color: #dee2e6; }
-        .back-link { background-color: #6c757d; color: white; text-decoration: none; }
-        .back-link:hover { background-color: #5a6268; }
-        .back-link i { margin-right: 0.5rem; }
-        .toggle-history { display: none; }
-        #historyList .status-card:not(:first-child) { display: none; }
-        #historyList.show-all .status-card { display: block; }
-        .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
-        /* Дополнительные стили для деталей */
-        .app-details { margin-bottom: 2rem; }
-        .detail-row { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; }
-        .detail-label { font-weight: 600; width: 35%; color: #0f172a; }
-        .detail-value { width: 65%; color: #1e293b; }
-        .detail-section { margin-bottom: 1rem; }
-        .detail-section h4 { margin: 1rem 0 0.5rem; color: #7b091a; }
     </style>
     <script type="importmap">
-        {
-            "imports": {
-                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-            }
-        }
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
     </script>
 </head>
 <body>
     <header class="header">
         <div class="header-container">
-            <div class="logo">
-                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ</h1>
-            </div>
+            <div class="logo"><img src="../../images/gerb.png" alt="Герб СФСРЮ"><h1>СФСРЮ</h1></div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
                 <span class="menu-toggle-line"></span>
@@ -109,13 +92,12 @@
             <div id="error" class="error" style="display: none;"></div>
 
             <div id="content" style="display: none;">
-                <!-- Детали заявки (если нужно) -->
-                <div id="appDetails" class="app-details"></div>
+                <!-- Детали заявки -->
+                <div id="detailsSection"></div>
 
                 <!-- История статусов -->
                 <div id="historyList"></div>
 
-                <!-- Контейнер для кнопок -->
                 <div class="action-buttons">
                     <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
                     <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
@@ -135,7 +117,7 @@
 
         let currentUserId = null;
         let currentAppId = null;
-        let currentType = null; // 'passport', 'foreign_passport', 'application'
+        let serviceName = '';
 
         const statusMap = {
             'submitted': 'Отправлено в ведомство',
@@ -145,12 +127,6 @@
             'completed': 'Результат выдан',
             'rejected': 'Отказано',
             'cancelled': 'Отменено'
-        };
-
-        const serviceTypeNames = {
-            'passport': 'Получение паспорта гражданина СФСРЮ',
-            'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ',
-            'inn': 'Получение ИНН'
         };
 
         function getStatusIcon(status) {
@@ -177,253 +153,222 @@
         }
 
         async function loadUserProfile() {
-            const { data: { session }, error } = await supabase.auth.getSession();
-            if (error || !session) {
-                window.location.href = '../../login.html';
-                return false;
-            }
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../../login.html'; return false; }
             currentUserId = session.user.id;
             return true;
         }
 
-        // Загрузка данных заявки в зависимости от типа
-        async function loadService() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            const type = urlParams.get('type'); // 'passport', 'foreign_passport', 'application'
-            if (!id) {
-                showError('Не указан ID заявления');
-                return;
-            }
-            currentAppId = id;
-            currentType = type;
+        // Получить человекочитаемое название поля
+        function getFieldLabel(key, humanReadable) {
+            if (humanReadable && humanReadable[key]) return humanReadable[key];
+            const map = {
+                'type': 'Способ получения',
+                'fns_office_id': 'Отделение ФНС',
+                'reason': 'Причина',
+                'phone': 'Телефон',
+                'email': 'Email',
+                'passport_type': 'Тип паспорта',
+                'recipient_type': 'Кому',
+                'visa_type': 'Вид паспорта',
+                'include_children_in_parent': 'Вписывать детей'
+            };
+            return map[key] || key;
+        }
 
-            try {
-                let app = null;
-                let tableName = '';
-                let serviceKey = '';
-
-                if (type === 'passport') {
-                    tableName = 'passport';
-                    const { data, error } = await supabase
-                        .schema('services')
-                        .from(tableName)
-                        .select('*')
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .single();
-                    if (error) throw error;
-                    app = data;
-                    serviceKey = 'passport';
-                } else if (type === 'foreign_passport') {
-                    tableName = 'foreign_passport';
-                    const { data, error } = await supabase
-                        .schema('services')
-                        .from(tableName)
-                        .select('*')
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .single();
-                    if (error) throw error;
-                    app = data;
-                    serviceKey = 'foreign_passport';
-                } else if (type === 'application') {
-                    // Новая структура
-                    tableName = 'applications';
-                    const { data, error } = await supabase
-                        .schema('services')
-                        .from(tableName)
-                        .select(`
-                            *,
-                            catalog:service_id (service_key, name_ru)
-                        `)
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .single();
-                    if (error) throw error;
-                    app = data;
-                    serviceKey = app.catalog?.service_key || 'unknown';
-                } else {
-                    // если тип не передан, пытаемся определить
-                    // сначала проверим в applications
-                    const { data: appData, error: appErr } = await supabase
-                        .schema('services')
-                        .from('applications')
-                        .select(`
-                            *,
-                            catalog:service_id (service_key, name_ru)
-                        `)
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .maybeSingle();
-                    if (appData) {
-                        app = appData;
-                        serviceKey = app.catalog?.service_key || 'unknown';
-                        currentType = 'application';
-                    } else {
-                        // проверим passport
-                        const { data: pData, error: pErr } = await supabase
-                            .schema('services')
-                            .from('passport')
-                            .select('*')
-                            .eq('id', id)
-                            .eq('user_id', currentUserId)
-                            .maybeSingle();
-                        if (pData) {
-                            app = pData;
-                            serviceKey = 'passport';
-                            currentType = 'passport';
-                        } else {
-                            // foreign_passport
-                            const { data: fData, error: fErr } = await supabase
-                                .schema('services')
-                                .from('foreign_passport')
-                                .select('*')
-                                .eq('id', id)
-                                .eq('user_id', currentUserId)
-                                .maybeSingle();
-                            if (fData) {
-                                app = fData;
-                                serviceKey = 'foreign_passport';
-                                currentType = 'foreign_passport';
-                            } else {
-                                showError('Заявление не найдено');
-                                return;
-                            }
+        // Отобразить значение поля в читаемом виде
+        function formatFieldValue(key, value, catalogSchema) {
+            if (value === null || value === undefined || value === '') return '—';
+            
+            // Для select-полей используем options из схемы
+            if (catalogSchema && catalogSchema.sections) {
+                for (const section of catalogSchema.sections) {
+                    for (const field of section.fields) {
+                        if (field.key === key && field.type === 'select' && field.options) {
+                            const opt = field.options.find(o => o.value === value);
+                            if (opt) return opt.label;
                         }
                     }
                 }
+            }
+            
+            // Специальные преобразования для известных полей
+            const maps = {
+                'type': { 'electronic': 'Электронный', 'paper': 'Бумажный' },
+                'passport_type': { 'biometric': 'Биометрический', 'nonbiometric': 'Небиометрический' },
+                'recipient_type': { 'self': 'Только себе', 'self_children': 'Себе и детям', 'children_only': 'Только детям' },
+                'visa_type': { 'civil': 'Общегражданский', 'diplomatic': 'Дипломатический', 'service': 'Служебный' },
+                'include_children_in_parent': { 'true': 'Да', 'false': 'Нет' }
+            };
+            if (maps[key] && maps[key][String(value)]) return maps[key][String(value)];
+            
+            // Для булевых значений
+            if (typeof value === 'boolean') return value ? 'Да' : 'Нет';
+            
+            return value;
+        }
 
-                if (!app) {
+        async function loadService() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (!id) { showError('Не указан ID заявления'); return; }
+            currentAppId = id;
+
+            try {
+                // 1. Загружаем заявку из единой таблицы
+                const { data: app, error: appError } = await supabase
+                    .schema('services')
+                    .from('applications')
+                    .select('*, service_id, data')
+                    .eq('id', id)
+                    .eq('user_id', currentUserId)
+                    .single();
+
+                if (appError || !app) {
                     showError('Заявление не найдено');
                     return;
                 }
 
-                // Отображаем название и номер
-                const serviceName = serviceTypeNames[serviceKey] || serviceKey || 'Услуга';
+                // 2. Получаем название услуги из каталога
+                let catalogName = 'Услуга';
+                let catalogSchema = null;
+                if (app.service_id) {
+                    const { data: catalog, error: catError } = await supabase
+                        .schema('services')
+                        .from('catalog')
+                        .select('name_ru, fields_schema')
+                        .eq('id', app.service_id)
+                        .single();
+                    if (!catError && catalog) {
+                        catalogName = catalog.name_ru;
+                        catalogSchema = catalog.fields_schema;
+                    }
+                }
+                serviceName = catalogName;
+
                 document.getElementById('serviceName').textContent = serviceName;
                 document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
 
-                // Отображаем детали (если есть)
-                renderDetails(app, serviceKey);
+                // 3. Отображаем детали
+                renderDetails(app, catalogSchema);
 
-                // Загружаем историю
-                await loadHistory(app.id, serviceKey, app);
+                // 4. Загружаем историю
+                await loadHistory(id);
+
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
             } catch (err) {
                 console.error(err);
-                showError('Ошибка загрузки данных: ' + err.message);
+                showError('Ошибка загрузки данных');
             }
         }
 
-        // Отображение дополнительных деталей (для разных типов)
-        function renderDetails(app, serviceKey) {
-            const container = document.getElementById('appDetails');
-            let html = '<div class="detail-section">';
+        function renderDetails(app, catalogSchema) {
+            const container = document.getElementById('detailsSection');
+            const data = app.data || {};
 
-            // Общие поля
-            html += `<div class="detail-row"><span class="detail-label">Статус</span><span class="detail-value">${statusMap[app.status] || app.status}</span></div>`;
-            html += `<div class="detail-row"><span class="detail-label">Дата создания</span><span class="detail-value">${new Date(app.created_at).toLocaleString()}</span></div>`;
-            html += `<div class="detail-row"><span class="detail-label">Личный код</span><span class="detail-value">${app.personal_code || '—'}</span></div>`;
+            // Основные поля из самой заявки
+            const baseFields = [
+                ['Статус', statusMap[app.status] || app.status],
+                ['Дата создания', new Date(app.created_at).toLocaleString()],
+                ['Личный код', app.personal_code || '—']
+            ];
 
-            if (serviceKey === 'passport') {
-                html += `<div class="detail-row"><span class="detail-label">Причина</span><span class="detail-value">${app.reason || '—'}</span></div>`;
-                html += `<div class="detail-row"><span class="detail-label">Телефон</span><span class="detail-value">${app.phone || '—'}</span></div>`;
-                html += `<div class="detail-row"><span class="detail-label">Email</span><span class="detail-value">${app.email || '—'}</span></div>`;
-                // можно добавить другие поля
-            } else if (serviceKey === 'foreign_passport') {
-                const passportTypeMap = { 'biometric': 'Биометрический', 'nonbiometric': 'Небиометрический' };
-                const recipientMap = { 'self': 'Только себе', 'self_children': 'Себе и детям', 'children_only': 'Только детям' };
-                const visaMap = { 'civil': 'Общегражданский', 'diplomatic': 'Дипломатический', 'service': 'Служебный' };
-                html += `<div class="detail-row"><span class="detail-label">Тип паспорта</span><span class="detail-value">${passportTypeMap[app.passport_type] || app.passport_type || '—'}</span></div>`;
-                html += `<div class="detail-row"><span class="detail-label">Кому</span><span class="detail-value">${recipientMap[app.recipient_type] || app.recipient_type || '—'}</span></div>`;
-                html += `<div class="detail-row"><span class="detail-label">Вид</span><span class="detail-value">${visaMap[app.visa_type] || app.visa_type || '—'}</span></div>`;
-                html += `<div class="detail-row"><span class="detail-label">Вписывать детей</span><span class="detail-value">${app.include_children_in_parent ? 'Да' : 'Нет'}</span></div>`;
-            } else if (serviceKey === 'inn') {
-                const typeMap = { 'electronic': 'Электронный', 'paper': 'Бумажный' };
-                html += `<div class="detail-row"><span class="detail-label">Способ получения</span><span class="detail-value">${typeMap[app.data?.type] || app.data?.type || '—'}</span></div>`;
-                if (app.data?.fns_office_id) {
-                    html += `<div class="detail-row"><span class="detail-label">Отделение ФНС</span><span class="detail-value">${app.data.fns_office_id || '—'}</span></div>`;
+            // Поля из data (динамические)
+            const dataFields = [];
+            if (data && typeof data === 'object') {
+                // Получаем human_readable из схемы
+                const humanReadable = catalogSchema?.human_readable || {};
+                for (const [key, value] of Object.entries(data)) {
+                    if (key === 'fns_office_id' && value) {
+                        // Для ФНС подставляем название
+                        dataFields.push([getFieldLabel(key, humanReadable), value]);
+                    } else {
+                        const label = getFieldLabel(key, humanReadable);
+                        const formatted = formatFieldValue(key, value, catalogSchema);
+                        dataFields.push([label, formatted]);
+                    }
                 }
             }
 
+            // Если есть fns_office_id, получаем название отделения
+            if (data?.fns_office_id) {
+                const fnsId = data.fns_office_id;
+                supabase
+                    .schema('services')
+                    .from('fns_offices')
+                    .select('name')
+                    .eq('id', fnsId)
+                    .single()
+                    .then(({ data: fnsData }) => {
+                        if (fnsData) {
+                            const row = container.querySelector('[data-field="fns_office_id"]');
+                            if (row) {
+                                const val = row.querySelector('.detail-value');
+                                if (val) val.textContent = fnsData.name;
+                            }
+                        }
+                    });
+            }
+
+            // Собираем все поля для отображения
+            const allFields = [...baseFields, ...dataFields];
+
+            let html = '<div class="detail-section">';
+            allFields.forEach(([label, value]) => {
+                const fieldKey = Object.keys(data || {}).find(k => getFieldLabel(k, catalogSchema?.human_readable) === label) || label;
+                html += `
+                    <div class="detail-row" data-field="${fieldKey}">
+                        <div class="detail-label">${label}</div>
+                        <div class="detail-value">${value}</div>
+                    </div>
+                `;
+            });
             html += '</div>';
             container.innerHTML = html;
         }
 
-        // Загрузка истории статусов
-        async function loadHistory(passportId, serviceKey, app) {
+        async function loadHistory(appId) {
             const list = document.getElementById('historyList');
             const toggleBtn = document.getElementById('toggleHistoryBtn');
 
-            let historyTable = '';
-            let historyData = [];
-            let error = null;
-
-            if (serviceKey === 'passport') {
-                historyTable = 'passport_status_history';
-            } else if (serviceKey === 'foreign_passport') {
-                historyTable = 'foreign_passport_status_history';
-            } else {
-                // для новых услуг (inn и др.)
-                historyTable = 'application_status_history';
-            }
-
-            try {
-                const { data, error: err } = await supabase
-                    .schema('services')
-                    .from(historyTable)
-                    .select('*')
-                    .eq('passport_id', passportId)
-                    .order('created_at', { ascending: false });
-
-                if (err) throw err;
-                historyData = data || [];
-            } catch (err) {
-                console.error('Ошибка загрузки истории:', err);
-                error = err;
-            }
+            const { data, error } = await supabase
+                .schema('services')
+                .from('application_status_history')
+                .select('*')
+                .eq('application_id', appId)
+                .order('created_at', { ascending: false });
 
             if (error) {
+                console.error('Ошибка загрузки истории:', error);
                 list.innerHTML = '<p class="error">Ошибка загрузки истории</p>';
-                toggleBtn.style.display = 'none';
                 return;
             }
 
-            if (!historyData || historyData.length === 0) {
+            if (!data || data.length === 0) {
                 list.innerHTML = '<p class="no-data">История отсутствует</p>';
                 toggleBtn.style.display = 'none';
                 return;
             }
 
             let html = '';
-            for (const item of historyData) {
+            for (const item of data) {
                 const statusText = statusMap[item.status] || item.status;
                 const iconHtml = getStatusIcon(item.status);
+                const files = item.attachments || [];
                 const fileLinks = [];
 
-                // Если это первая запись (submitted), добавляем фото и заявление, если есть
-                // Для старых паспортов — есть photo_path
-                // Для новых — можно искать в attachments
-                if (item.status === 'submitted') {
-                    // Для старых таблиц photo_path есть в основной записи
-                    if (serviceKey === 'passport' && app.photo_path) {
-                        const url = await getSignedUrl(app.photo_path);
-                        if (url) {
-                            const name = app.photo_path.split('/').pop() || 'photo.jpg';
-                            fileLinks.push(`<div class="file-item"><span>📷</span><a href="${url}" target="_blank">${name}</a></div>`);
-                        }
-                    }
-                    // Для заграничного паспорта тоже можно добавить фото, если есть
-                    // Но у foreign_passport фото в отдельной таблице, пока пропустим
-                    // Для новых заявок attachments в истории
-                }
-
-                // Добавляем файлы из attachments
-                for (const f of (item.attachments || [])) {
+                for (const f of files) {
                     const url = await getSignedUrl(f);
                     if (url) {
-                        const name = f.split('/').pop() || 'файл';
-                        fileLinks.push(`<div class="file-item"><span>📎</span><a href="${url}" target="_blank">${name}</a></div>`);
+                        const fileName = f.split('/').pop() || 'файл';
+                        fileLinks.push(`
+                            <div class="file-item">
+                                <span>📎</span>
+                                <a href="${url}" target="_blank">${fileName}</a>
+                            </div>
+                        `);
                     }
                 }
 
@@ -439,7 +384,6 @@
                     </div>
                 `;
             }
-
             list.innerHTML = html;
 
             const statusCards = list.querySelectorAll('.status-card');
@@ -467,10 +411,6 @@
         document.addEventListener('DOMContentLoaded', async () => {
             if (!await loadUserProfile()) return;
             await loadService();
-            const loading = document.getElementById('loading');
-            if (loading) loading.style.display = 'none';
-            const content = document.getElementById('content');
-            if (content) content.style.display = 'block';
 
             const toggleBtn = document.getElementById('toggleHistoryBtn');
             if (toggleBtn) {
