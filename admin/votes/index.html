@@ -869,14 +869,12 @@
       const app = allApplications.find(a => a.id === appId);
       if (!app) return;
 
-      // Формируем читаемый вывод
       let html = '<div style="margin-bottom:1rem;">';
       html += `<div class="app-detail-field"><span class="label">Тип заявления</span><span class="value">${getAppTypeLabel(app.type)}</span></div>`;
       html += `<div class="app-detail-field"><span class="label">Статус</span><span class="value">${getAppStatusLabel(app.status)}</span></div>`;
       html += `<div class="app-detail-field"><span class="label">Дата подачи</span><span class="value">${formatDate(app.created_at)}</span></div>`;
       html += `<div class="app-detail-field"><span class="label">Комментарий</span><span class="value">${app.comment || '—'}</span></div>`;
 
-      // Данные заявления (распарсить JSON)
       const data = app.data || {};
       if (data.full_name) {
         html += `<div class="app-detail-field"><span class="label">ФИО</span><span class="value">${data.full_name}</span></div>`;
@@ -909,7 +907,6 @@
         html += `<div class="app-detail-field"><span class="label">Фото</span><span class="value"><a href="${data.photo_path}" target="_blank">Смотреть фото</a></span></div>`;
       }
 
-      // Если есть другие поля, вывести их как есть
       const extraFields = Object.keys(data).filter(k =>
         !['full_name', 'surname', 'name', 'patronymic', 'party', 'position',
           'party_membership', 'party_nomination', 'new_polling_station',
@@ -924,6 +921,7 @@
       appDetailModal.classList.add('active');
     }
 
+    // === ИЗМЕНЕННАЯ ФУНКЦИЯ ===
     async function changeAppStatus(appId, newStatus) {
       if (!confirm(`Изменить статус заявления на "${getAppStatusLabel(newStatus)}"?`)) return;
       const { data: { user } } = await supabase.auth.getUser();
@@ -938,8 +936,35 @@
         .eq('id', appId);
       if (error) { alert('Ошибка: ' + error.message); return; }
 
-      // Если одобряем кандидата, добавляем его в список кандидатов
       const app = allApplications.find(a => a.id === appId);
+
+      // === НОВОЕ: одобрение дистанционного голосования ===
+      if (newStatus === 'approved' && app && app.type === 'remote_voting_request') {
+        const { data: existing } = await supabase
+          .schema(SCHEMA)
+          .from('remote_voting_approvals')
+          .select('id')
+          .eq('user_id', app.user_id)
+          .eq('election_id', currentVoteId)
+          .maybeSingle();
+        if (!existing) {
+          const { error: insErr } = await supabase
+            .schema(SCHEMA)
+            .from('remote_voting_approvals')
+            .insert({
+              user_id: app.user_id,
+              election_id: currentVoteId,
+              approved_at: new Date().toISOString()
+            });
+          if (insErr) {
+            alert('Ошибка сохранения отметки о дистанционном голосовании: ' + insErr.message);
+          } else {
+            alert('Дистанционное голосование одобрено для пользователя!');
+          }
+        }
+      }
+
+      // Если одобряем кандидата, добавляем его в список кандидатов
       if (newStatus === 'approved' && app && app.type === 'candidate_registration') {
         const data = app.data || {};
         let fullName = data.full_name || '';
@@ -978,6 +1003,7 @@
           alert('Не удалось определить ФИО кандидата для добавления');
         }
       }
+
       await loadApplications(currentVoteId);
     }
 
@@ -1114,6 +1140,23 @@
         await supabase.auth.signOut();
         window.location.href = '/login.html';
       });
+
+      // ======== ВТОРОЙ ФРАГМЕНТ (для будущего использования) ========
+      // Здесь можно добавить обработчик для ручного добавления голоса.
+      // Пример проверки на существующий голос:
+      /*
+      const { data: existingVote } = await supabase
+        .schema(SCHEMA)
+        .from('user_votes')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('election_id', currentVoteId)
+        .maybeSingle();
+      if (existingVote) {
+        alert('Этот пользователь уже проголосовал в этом голосовании');
+        return;
+      }
+      */
     });
   </script>
 </body>
