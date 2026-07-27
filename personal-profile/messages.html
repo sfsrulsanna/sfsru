@@ -135,11 +135,35 @@
             background-color: #0056b3;
         }
 
+        .btn-view-application {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-view-application:hover {
+            background-color: #1e7e34;
+        }
+
         .loading, .no-data {
             text-align: center;
             padding: 3rem;
             color: #6c757d;
             font-size: 1.1rem;
+        }
+
+        .error {
+            text-align: center;
+            padding: 2rem;
+            color: #dc3545;
         }
 
         @media (max-width: 600px) {
@@ -154,9 +178,13 @@
             .message-date {
                 white-space: normal;
             }
-            .btn-mark-read {
+            .btn-mark-read, .btn-view-application {
                 width: 100%;
                 text-align: center;
+            }
+            .message-footer {
+                flex-direction: column;
+                align-items: stretch;
             }
         }
     </style>
@@ -216,6 +244,13 @@
 
         let currentUserId = null;
 
+        // Маппинг типов услуг в человекочитаемые названия
+        const serviceTypeNames = {
+            'passport': 'Внутренний паспорт',
+            'foreign_passport': 'Заграничный паспорт',
+            'inn': 'ИНН (Идентификационный номер налогоплательщика)'
+        };
+
         async function loadUser() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) {
@@ -233,6 +268,7 @@
 
             loading.style.display = 'block';
             list.innerHTML = '';
+            noMessages.style.display = 'none';
 
             const { data, error } = await supabase
                 .schema('messages')
@@ -255,22 +291,40 @@
                 return;
             }
 
-            noMessages.style.display = 'none';
+            list.innerHTML = data.map(msg => {
+                const serviceType = msg.service_type || 'unknown';
+                const serviceName = serviceTypeNames[serviceType] || serviceType || 'Услуга';
+                // Формируем ссылку на просмотр заявки
+                let viewLink = '#';
+                if (serviceType === 'passport' || serviceType === 'foreign_passport') {
+                    viewLink = `../profile/services/service-view.html?id=${msg.service_id}&type=${serviceType}`;
+                } else if (serviceType === 'inn' || serviceType === 'application') {
+                    // Для новых услуг пока используем универсальный просмотр (его нужно создать)
+                    // Пока ссылаемся на страницу заявки в личном кабинете
+                    viewLink = `../profile/services/service-view.html?id=${msg.service_id}&type=application`;
+                } else {
+                    viewLink = `../profile/services/service-view.html?id=${msg.service_id}&type=${serviceType}`;
+                }
 
-            list.innerHTML = data.map(msg => `
-                <div class="message-item ${msg.is_read ? '' : 'unread'}" data-id="${msg.id}">
-                    <div class="message-header">
-                        <span class="message-title">${escapeHTML(msg.title)}</span>
-                        <span class="message-date">${new Date(msg.created_at).toLocaleString()}</span>
+                return `
+                    <div class="message-item ${msg.is_read ? '' : 'unread'}" data-id="${msg.id}">
+                        <div class="message-header">
+                            <span class="message-title">${escapeHTML(msg.title)}</span>
+                            <span class="message-date">${new Date(msg.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="message-content">
+                            ${escapeHTML(msg.content)}
+                            ${serviceType ? `<p><strong>Услуга:</strong> ${escapeHTML(serviceName)}</p>` : ''}
+                        </div>
+                        <div class="message-footer">
+                            <a href="${viewLink}" class="btn-view-application" target="_blank">Перейти к заявлению</a>
+                            ${!msg.is_read ? '<button class="btn-mark-read" data-id="'+msg.id+'">Отметить прочитанным</button>' : ''}
+                        </div>
                     </div>
-                    <div class="message-content">${escapeHTML(msg.content)}</div>
-                    <div class="message-footer">
-                        ${msg.comment ? `<p><strong>Комментарий:</strong> ${escapeHTML(msg.comment)}</p>` : ''}
-                        ${!msg.is_read ? '<button class="btn-mark-read" data-id="'+msg.id+'">Отметить прочитанным</button>' : ''}
-                    </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
 
+            // Обработчики для кнопок "Отметить прочитанным"
             document.querySelectorAll('.btn-mark-read').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.target.dataset.id;
