@@ -217,7 +217,6 @@
       color: #dc3545;
     }
 
-    /* Стили для просмотра заявления */
     .app-detail-field { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; }
     .app-detail-field .label { font-weight: 600; width: 30%; color: #555; }
     .app-detail-field .value { width: 70%; }
@@ -398,7 +397,7 @@
             </div>
           </div>
 
-          <!-- Вкладка: Результаты (добавлена статистика и ручное голосование) -->
+          <!-- Вкладка: Результаты -->
           <div id="tabStats" class="tab-pane">
             <div id="statsContainer">
               <div class="statistics" id="statisticsBlock" style="display:none;">
@@ -407,7 +406,7 @@
               </div>
               <div id="statsEmpty" class="no-data">Нет голосов</div>
 
-              <!-- Блок редактирования статистики (НОВОЕ) -->
+              <!-- Блок редактирования статистики -->
               <div class="statistics-edit">
                 <h4>Редактирование статистики голосования</h4>
                 <div class="form-row">
@@ -732,9 +731,7 @@
       voteEnd.value = end.toISOString().slice(0,16);
       const deadline = new Date(start.getTime() - 2*24*60*60*1000);
       voteDeadline.value = deadline.toISOString().slice(0,16);
-      // Сброс ручного голосования
       resetManualVoteForm();
-      // Сброс полей статистики
       statRegistered.value = 0;
       statVoted.value = 0;
       statSpoiled.value = 0;
@@ -807,9 +804,7 @@
 
         await loadApplications(id);
         await loadStatistics(id);
-        // Загружаем статистику для редактирования
         await loadElectionStatistics(id);
-        // Заполняем селект вариантов для ручного голосования
         populateVoteOptions();
 
         modal.classList.add('active');
@@ -880,7 +875,6 @@
           await deleteOption(btn.dataset.id);
         });
       });
-      // Обновляем селект для ручного голосования
       populateVoteOptions();
     }
 
@@ -1254,7 +1248,6 @@
           .eq('election_id', electionId)
           .maybeSingle();
         if (error) {
-          // Если таблицы нет – игнорируем
           if (error.code === '42P01') return;
           console.error('Ошибка загрузки статистики:', error);
           return;
@@ -1265,7 +1258,6 @@
           statSpoiled.value = data.spoiled_ballots || 0;
           statRefused.value = data.refused || 0;
         } else {
-          // Нет записи – ставим нули
           statRegistered.value = 0;
           statVoted.value = 0;
           statSpoiled.value = 0;
@@ -1294,7 +1286,6 @@
         return;
       }
 
-      // Проверяем, существует ли уже запись
       const { data: existing, error: checkErr } = await supabase
         .schema(SCHEMA)
         .from('election_statistics')
@@ -1304,7 +1295,6 @@
 
       let result;
       if (existing) {
-        // Обновляем
         result = await supabase
           .schema(SCHEMA)
           .from('election_statistics')
@@ -1317,7 +1307,6 @@
           })
           .eq('id', existing.id);
       } else {
-        // Вставляем
         result = await supabase
           .schema(SCHEMA)
           .from('election_statistics')
@@ -1338,7 +1327,6 @@
 
       statisticsSaveResult.textContent = 'Статистика успешно сохранена!';
       statisticsSaveResult.style.color = '#28a745';
-      // Перезагружаем статистику для отображения (если нужно)
       await loadElectionStatistics(electionId);
     }
 
@@ -1387,7 +1375,6 @@
         modalTitle.textContent = 'Редактирование голосования';
       }
 
-      // Обновляем данные внутри модалки
       if (currentVoteId) {
         const { data: options, error: optError } = await supabase
           .schema(SCHEMA)
@@ -1405,14 +1392,10 @@
         populateVoteOptions();
       }
 
-      // Обновляем список голосований в фоновом режиме
       await loadAndRender();
-
-      // Модалка остаётся открытой
     }
 
     // --- Ручное голосование ---
-    // Поиск пользователей
     let searchTimeout = null;
     userSearchInput.addEventListener('input', async () => {
       const query = userSearchInput.value.trim();
@@ -1424,7 +1407,6 @@
       }
       searchTimeout = setTimeout(async () => {
         try {
-          // Ищем по личному коду или по ФИО (в полях surname, name, patronymic)
           const { data, error } = await supabase
             .from('users')
             .select('id, personal_code, surname, name, patronymic')
@@ -1441,7 +1423,6 @@
             return `<div class="result-item" data-id="${u.id}" data-name="${fullName}">${fullName} (личный код: ${u.personal_code || '—'})</div>`;
           }).join('');
           userSearchResults.style.display = 'block';
-          // Добавляем обработчики клика
           document.querySelectorAll('.result-item').forEach(el => {
             el.addEventListener('click', () => {
               const id = el.dataset.id;
@@ -1473,7 +1454,7 @@
       manualVoteResult.textContent = '';
     });
 
-    // Добавление голоса
+    // Добавление голоса (исправлена обработка ошибки)
     addManualVoteBtn.addEventListener('click', async () => {
       if (!currentVoteId) {
         manualVoteResult.textContent = 'Ошибка: голосование не выбрано';
@@ -1520,19 +1501,22 @@
           election_id: currentVoteId,
           option_id: optionId
         });
+
       if (insertErr) {
-        manualVoteResult.textContent = 'Ошибка добавления голоса: ' + insertErr.message;
+        // Проверяем, связана ли ошибка с внешним ключом
+        if (insertErr.code === '23503') {
+          manualVoteResult.textContent = 'Ошибка: пользователь не найден в таблице, на которую ссылается внешний ключ. Проверьте, что внешний ключ user_votes.user_id ссылается на public.users (или auth.users) и что пользователь существует.';
+        } else {
+          manualVoteResult.textContent = 'Ошибка добавления голоса: ' + insertErr.message;
+        }
         manualVoteResult.style.color = '#dc3545';
         return;
       }
 
       manualVoteResult.textContent = 'Голос успешно добавлен!';
       manualVoteResult.style.color = '#28a745';
-      // Обновляем статистику
       await loadStatistics(currentVoteId);
-      // Сброс формы (кроме пользователя, чтобы можно было добавить ещё)
       voteOptionSelect.value = '';
-      // Очистка выбранного пользователя
       selectedUserId = null;
       selectedUserText = '';
       userSearchInput.value = '';
@@ -1588,7 +1572,6 @@
         if (currentVoteId) loadApplications(currentVoteId);
       });
 
-      // Модалка просмотра заявления
       closeAppDetailModal.addEventListener('click', () => appDetailModal.classList.remove('active'));
       closeAppDetailBtn.addEventListener('click', () => appDetailModal.classList.remove('active'));
       appDetailModal.addEventListener('click', (e) => { if (e.target === appDetailModal) appDetailModal.classList.remove('active'); });
