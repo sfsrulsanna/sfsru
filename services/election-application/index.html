@@ -4,269 +4,237 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Обращение в Центральную избирательную комиссию — СФСРЮ</title>
-    <link rel="stylesheet" href="../../../css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <!-- favicons (полный набор) -->
-    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
-    <meta name="application-name" content="&nbsp;"/>
-    <meta name="msapplication-TileColor" content="#FFFFFF" />
-    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
     <link rel="stylesheet" href="css.css">
-    <script type="importmap">
-        {
-            "imports": {
-                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-            }
-        }
-    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <header class="header">
         <div class="header-container">
             <div class="logo">
-                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <img src="/images/gerb.png" alt="Герб">
                 <h1>СФСРЮ</h1>
             </div>
-            <button class="menu-toggle" aria-label="Открыть меню">
-                <span class="menu-toggle-line"></span>
-                <span class="menu-toggle-line"></span>
-                <span class="menu-toggle-line"></span>
-            </button>
             <nav class="nav-menu">
                 <ul>
                     <li><a href="../../../index.html">Главная</a></li>
                     <li><a href="../../../news.html">Новости</a></li>
                     <li><a href="../../../wiki/">Википедия</a></li>
                     <li><a href="../../../healthcare.html">Здравоохранение</a></li>
-                    <li><a href="../../../services.html" class="active">Услуги</a></li>
+                    <li><a href="../../../services.html">Услуги</a></li>
                     <li><a href="../../../profile.html">Личный кабинет</a></li>
                 </ul>
             </nav>
         </div>
     </header>
-    <div class="menu-overlay"></div>
 
     <main class="main-content">
         <div class="service-container">
             <h1>Обращение в Центральную избирательную комиссию</h1>
-
-            <div id="errorMessage" class="alert alert-danger hidden"></div>
-            <div id="successMessage" class="alert alert-success hidden"></div>
-
+            
             <div id="activeApplicationWarning" class="blocking-warning hidden">
                 <i class="fas fa-exclamation-triangle"></i>
                 <h2>У вас уже есть активное обращение</h2>
                 <p>Вы можете подать новое обращение только после завершения текущего.</p>
-                <a href="../../../profile.html" class="btn btn-primary">Перейти в личный кабинет</a>
+                <a href="../../../profile.html" class="btn btn-primary mt-2">Перейти в личный кабинет</a>
             </div>
 
-            <form id="applicationForm">
-                <!-- Шаг 1: Титульный -->
-                <div class="step-content" data-step="1">
+            <div id="applicationForm" class="hidden">
+                <div class="intro-text">
                     <h2>Обращение в Центральную избирательную комиссию</h2>
-                    <p>С помощью этой услуги вы можете подать обращение в ЦИК для участия в выборах и референдумах.</p>
+                    <p>С помощью этой услуги вы можете подать обращение в ЦИК для участия в выборах и референдумах:</p>
                     <ul class="plain-list">
                         <li>зарегистрироваться в качестве кандидата;</li>
                         <li>зарегистрироваться в качестве наблюдателя;</li>
                         <li>изменить способ голосования (участок, электронное голосование);</li>
                         <li>отказаться от голосования.</li>
                     </ul>
-                    <p><strong>Срок рассмотрения:</strong> до 5 рабочих дней.</p>
-                    <p><strong>Стоимость:</strong> бесплатно.</p>
-                    <div class="navigation">
-                        <span></span>
-                        <button type="button" class="btn btn-primary next-step">Начать</button>
-                    </div>
+                    <p><strong>Срок рассмотрения:</strong> до 5 рабочих дней.<br>
+                    <strong>Стоимость:</strong> бесплатно.</p>
+                </div>
+
+                <div id="errorMessage" class="alert alert-danger hidden"></div>
+                <div id="successMessage" class="alert alert-success hidden"></div>
+
+                <!-- Шаг 1: Введение -->
+                <div class="step-content" data-step="1">
+                    <button class="btn btn-primary next-step">Начать</button>
                 </div>
 
                 <!-- Шаг 2: Выбор цели -->
                 <div class="step-content hidden" data-step="2">
                     <h2>Выберите цель обращения</h2>
                     <div class="radio-group">
-                        <label><input type="radio" name="applicationType" value="candidate_registration"> Зарегистрироваться кандидатом</label>
-                        <label><input type="radio" name="applicationType" value="observer_registration"> Зарегистрироваться наблюдателем</label>
-                        <label><input type="radio" name="applicationType" value="voter_change"> Изменить способ голосования (для граждан)</label>
+                        <label>
+                            <input type="radio" name="applicationType" value="candidate_registration">
+                            Зарегистрироваться кандидатом
+                        </label>
+                        <label>
+                            <input type="radio" name="applicationType" value="observer_registration">
+                            Зарегистрироваться наблюдателем
+                        </label>
+                        <label>
+                            <input type="radio" name="applicationType" value="voter_change">
+                            Изменить способ голосования (для граждан)
+                        </label>
                     </div>
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary next-step">Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 3: Выбор голосования (для всех типов) -->
+                <!-- Шаг 3: Выбор голосования -->
                 <div class="step-content hidden" data-step="3">
                     <h2>Выберите голосование</h2>
-                    <div id="electionsList"></div>
+                    <div id="electionsList">
+                        <p class="loading">Загрузка списка голосований...</p>
+                    </div>
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary next-step">Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 4: Проверка данных профиля -->
+                <!-- Шаг 4: Проверка данных -->
                 <div class="step-content hidden" data-step="4">
                     <h2>Проверьте ваши данные</h2>
                     <div id="profileData"></div>
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary next-step">Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 5: Для кандидата – партия -->
+                <!-- Шаг 5: Партия (Кандидат) -->
                 <div class="step-content hidden" data-step="5">
                     <h2>Принадлежность к партии</h2>
                     <div class="form-group">
                         <label>Принадлежите ли вы к какой-либо партии?</label>
-                        <select class="form-control" id="partyMembership">
+                        <select id="partyMembership" class="form-control">
                             <option value="no">Нет</option>
                             <option value="yes">Да</option>
                         </select>
                     </div>
+                    
                     <div id="partyFields" class="hidden">
                         <div class="form-group">
-                            <label>Название партии</label>
-                            <input type="text" class="form-control" id="partyName" placeholder="Например: Партия свободы">
+                            <label for="partyName">Название партии</label>
+                            <input type="text" id="partyName" class="form-control" placeholder="Например: КПСС">
                         </div>
-                    </div>
-                    <div id="partyNominationQuestion" class="hidden">
-                        <div class="form-group">
+                        
+                        <div id="partyNominationQuestion" class="form-group hidden">
                             <label>Выдвинула ли вас ваша партия?</label>
-                            <select class="form-control" id="partyNominated">
+                            <select id="partyNominated" class="form-control">
                                 <option value="yes">Да</option>
                                 <option value="no">Нет</option>
                             </select>
                         </div>
-                    </div>
-                    <div id="signatureRequirement" class="hidden">
-                        <div class="alert alert-warning">
-                            <i class="fas fa-info-circle"></i>
+
+                        <div id="signatureRequirement" class="alert alert-warning hidden">
                             Для выдвижения необходимо собрать минимум 10 подписей в вашу поддержку.
                         </div>
                     </div>
+
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary next-step">Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 6: Для наблюдателя – партия -->
+                <!-- Шаг 6: Партия (Наблюдатель) -->
                 <div class="step-content hidden" data-step="6">
                     <h2>Принадлежность к партии (для наблюдателя)</h2>
                     <div class="form-group">
                         <label>Принадлежите ли вы к какой-либо партии?</label>
-                        <select class="form-control" id="observerPartyMembership">
+                        <select id="observerPartyMembership" class="form-control">
                             <option value="no">Нет</option>
                             <option value="yes">Да</option>
                         </select>
                     </div>
+                    
                     <div id="observerPartyFields" class="hidden">
                         <div class="form-group">
-                            <label>Название партии</label>
-                            <input type="text" class="form-control" id="observerPartyName" placeholder="Например: Партия свободы">
+                            <label for="observerPartyName">Название партии</label>
+                            <input type="text" id="observerPartyName" class="form-control" placeholder="Например: ЛДПР">
                         </div>
                     </div>
+
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary next-step">Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 7: Для избирателя – цель внутри -->
+                <!-- Шаг 7: Цель для избирателя -->
                 <div class="step-content hidden" data-step="7">
                     <h2>Цель обращения (для избирателя)</h2>
                     <div class="radio-group">
-                        <label><input type="radio" name="voterChangeType" value="change_polling_station"> Изменить участок голосования</label>
-                        <label><input type="radio" name="voterChangeType" value="electronic_voting"> Голосовать в электронном виде</label>
-                        <label><input type="radio" name="voterChangeType" value="refuse_voting"> Отказаться от голосования</label>
+                        <label>
+                            <input type="radio" name="voterChangeType" value="change_polling_station">
+                            Изменить участок голосования
+                        </label>
+                        <label>
+                            <input type="radio" name="voterChangeType" value="electronic_voting">
+                            Голосовать в электронном виде
+                        </label>
+                        <label>
+                            <input type="radio" name="voterChangeType" value="refuse_voting">
+                            Отказаться от голосования
+                        </label>
                     </div>
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary next-step">Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 8: Выбор участка (для избирателя) -->
+                <!-- Шаг 8: Выбор участка -->
                 <div class="step-content hidden" data-step="8">
                     <h2>Выберите новый участок голосования</h2>
-                    <div id="pollingStationsList"></div>
+                    <div id="pollingStationsList">
+                        <p class="loading">Загрузка участков...</p>
+                    </div>
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step">Далее</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary next-step">Далее</button>
                     </div>
                 </div>
 
-                <!-- Шаг 9: Загрузка фото (для кандидата) -->
-                <div class="step-content hidden" data-step="9">
-                    <h2>Загрузите фото для отображения при голосовании</h2>
-                    <p>Формат JPG, не более 1 МБ</p>
-                    <div class="upload-area" id="dropZone">
-                        <i class="fas fa-cloud-upload-alt"></i>
-                        <p>Перетащите файл сюда или нажмите для выбора</p>
-                        <input type="file" id="photoUpload" accept=".jpg,.jpeg" style="display: none;">
-                    </div>
-                    <div id="photoPreview" class="photo-preview hidden">
-                        <img id="previewImg" src="#" alt="Предпросмотр">
-                    </div>
-                    <div class="upload-progress hidden" id="uploadProgressContainer">
-                        <div class="progress">
-                            <div class="progress-bar" id="uploadProgressBar" style="width: 0%;"></div>
-                        </div>
-                        <div class="file-list" id="fileList"></div>
-                    </div>
-                    <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary next-step" id="step9NextBtn" disabled>Далее</button>
-                    </div>
-                </div>
+                <!-- Шаг 9 (УДАЛЕН: Загрузка фото) -->
 
-                <!-- Шаг 10: Подтверждение и отправка -->
+                <!-- Шаг 10: Подтверждение (был 11) -->
                 <div class="step-content hidden" data-step="10">
                     <h2>Проверьте обращение</h2>
                     <div id="summary"></div>
                     <div class="navigation">
-                        <button type="button" class="btn btn-secondary prev-step">Назад</button>
-                        <button type="button" class="btn btn-primary" id="submitApplication">Отправить обращение</button>
+                        <button class="btn btn-secondary prev-step">Назад</button>
+                        <button class="btn btn-primary" id="submitApplication">Отправить обращение</button>
                     </div>
                 </div>
 
-                <!-- Шаг 11: Завершение -->
-                <div class="step-content hidden" data-step="11">
+                <!-- Шаг 11: Успех (был 12) -->
+                <div class="step-content hidden text-center" data-step="11">
+                    <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--success-color); margin-bottom: 1rem;"></i>
                     <h2>Обращение отправлено!</h2>
                     <p>Номер вашего обращения: <strong id="applicationNumber"></strong></p>
                     <p>Вы можете отслеживать статус в личном кабинете.</p>
-                    <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-                        <a href="../../../services.html" class="btn btn-secondary btn-lg">На главную услуг</a>
-                        <a href="../../../profile.html" class="btn btn-secondary btn-lg">В личный кабинет</a>
-                        <a id="gotoServiceLink" href="#" class="btn btn-primary btn-lg">Перейти к обращению</a>
+                    <div class="mt-2">
+                        <a href="../../../services.html" class="btn btn-secondary">На главную услуг</a>
+                        <a href="../../../profile.html" class="btn btn-primary">В личный кабинет</a>
+                        <a href="#" id="gotoServiceLink" class="btn btn-warning">Перейти к обращению</a>
                     </div>
                 </div>
-            </form>
+            </div>
         </div>
     </main>
 
     <footer class="footer">
-        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+        <div class="container">
+            <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+            <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+        </div>
     </footer>
 
-    <script src="../../../js/mob-menu.js"></script>
     <script type="module" src="js.js"></script>
 </body>
 </html>

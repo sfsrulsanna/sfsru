@@ -11,7 +11,7 @@ let selectedElectionId = null;
 let selectedApplicationType = null; // 'candidate_registration', 'observer_registration', 'voter_change'
 let selectedVoterChangeType = null; // 'change_polling_station', 'electronic_voting', 'refuse_voting'
 let selectedPollingStationId = null;
-let photoPath = null;
+// let photoPath = null; // УДАЛЕНО
 let electionsList = [];
 let pollingStationsList = [];
 let hasActiveApp = false;
@@ -47,15 +47,18 @@ async function loadUserProfile() {
         window.location.href = '../../../login.html?redirect=' + encodeURIComponent(window.location.pathname);
         return false;
     }
+
     const { data, error } = await supabase
         .from('users')
         .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender, phone, email')
         .eq('id', session.user.id)
         .single();
+
     if (error) {
         console.error('Ошибка загрузки профиля:', error);
         return false;
     }
+
     userProfile = data;
     userPersonalCode = data.personal_code;
     return true;
@@ -67,6 +70,7 @@ async function loadUserProfile() {
 async function checkActiveApplication() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return false;
+
     const { data, error } = await supabase
         .schema('votes')
         .from('applications')
@@ -74,6 +78,7 @@ async function checkActiveApplication() {
         .eq('user_id', session.user.id)
         .in('status', ['submitted', 'under_review'])
         .maybeSingle();
+
     if (error) {
         console.error('Ошибка проверки обращений:', error);
         return false;
@@ -91,6 +96,7 @@ async function loadElections() {
         .select('id, title, type, scope, territory, start_date, end_date, status')
         .eq('status', 'active')
         .order('start_date', { ascending: true });
+
     if (error) {
         console.error('Ошибка загрузки голосований:', error);
         return;
@@ -105,8 +111,10 @@ function renderElections() {
         container.innerHTML = '<p class="no-data">Нет активных голосований</p>';
         return;
     }
+
     const typeMap = { election: 'Выборы', referendum: 'Референдум', poll: 'Опрос' };
     const scopeMap = { federal: 'Федеральные', regional: 'Региональные', local: 'Местные' };
+
     let html = '<div class="radio-group">';
     electionsList.forEach(el => {
         const label = `${typeMap[el.type] || el.type} — ${el.title} (${scopeMap[el.scope] || el.scope}, ${el.territory})`;
@@ -143,6 +151,7 @@ function renderPollingStations() {
         container.innerHTML = '<p class="no-data">Нет доступных участков</p>';
         return;
     }
+
     let html = '<div class="radio-group">';
     pollingStationsList.forEach(ps => {
         html += `<label><input type="radio" name="pollingStation" value="${ps.id}"> ${ps.name}</label>`;
@@ -164,7 +173,6 @@ function renderPollingStations() {
 // ============================================================
 function getNextStep(step) {
     const type = document.querySelector('input[name="applicationType"]:checked');
-
     switch (step) {
         case 1: return 2;
         case 2: {
@@ -184,12 +192,8 @@ function getNextStep(step) {
         }
         case 5: {
             // Кандидат – проверка партийной номинации
-            const nominated = document.getElementById('partyNominated');
-            if (nominated && nominated.value === 'no') {
-                // Предупреждение о подписях уже показано, переходим к фото
-                return 9;
-            }
-            return 9;
+            // Раньше здесь был переход на шаг 9 (фото), теперь сразу на 10 (подтверждение)
+            return 10;
         }
         case 6: {
             // Наблюдатель – после партии сразу финал
@@ -205,10 +209,7 @@ function getNextStep(step) {
             if (!selectedPollingStationId) return 8;
             return 10;
         }
-        case 9: {
-            if (!photoPath) return 9;
-            return 10;
-        }
+        // Шаг 9 удален
         case 10: return 11;
         default: return step + 1;
     }
@@ -216,7 +217,6 @@ function getNextStep(step) {
 
 function getPrevStep(step) {
     const type = document.querySelector('input[name="applicationType"]:checked');
-
     switch (step) {
         case 2: return 1;
         case 3: return 2;
@@ -225,12 +225,9 @@ function getPrevStep(step) {
         case 6: return 4;
         case 7: return 4;
         case 8: return 7;
-        case 9: {
-            if (type && type.value === 'candidate_registration') return 5;
-            return 4;
-        }
+        // Шаг 9 удален
         case 10: {
-            if (type && type.value === 'candidate_registration') return 9;
+            if (type && type.value === 'candidate_registration') return 5;
             if (type && type.value === 'observer_registration') return 6;
             if (type && type.value === 'voter_change') {
                 const voterType = document.querySelector('input[name="voterChangeType"]:checked');
@@ -250,18 +247,15 @@ function goToStep(step) {
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
     const targetStep = document.querySelector(`.step-content[data-step="${step}"]`);
     if (targetStep) targetStep.classList.remove('hidden');
+
     currentStep = step;
 
     if (step === 4) renderProfileData();
     if (step === 5) updatePartyFields();
     if (step === 6) updateObserverPartyFields();
-    if (step === 9) {
-        const nextBtn = document.getElementById('step9NextBtn');
-        nextBtn.disabled = !photoPath;
-        if (photoPath) {
-            document.getElementById('fileList').innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> Фото загружено';
-        }
-    }
+    
+    // Удалена логика для шага 9 (фото)
+    
     if (step === 10) prepareSummary();
 }
 
@@ -271,13 +265,14 @@ function goToStep(step) {
 function renderProfileData() {
     const container = document.getElementById('profileData');
     if (!userProfile) return;
+
     let html = `<table class="summary-table">`;
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code || '—'}</td></tr>`;
     html += `<tr><th>ФИО</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
     html += `<tr><th>Дата рождения</th><td>${new Date(userProfile.date_of_birth).toLocaleDateString('ru-RU')}</td></tr>`;
     html += `<tr><th>Место рождения</th><td>${userProfile.place_of_birth || '—'}</td></tr>`;
     html += `<tr><th>Пол</th><td>${userProfile.gender === 'male' ? 'Мужской' : 'Женский'}</td></tr>`;
-    html += '</table>';
+    html += `</table>`;
     container.innerHTML = html;
 }
 
@@ -293,6 +288,7 @@ function updatePartyFields() {
     if (membership === 'yes') {
         partyFields.classList.remove('hidden');
         nominationQuestion.classList.remove('hidden');
+        
         const nominated = document.getElementById('partyNominated').value;
         if (nominated === 'no') {
             signatureReq.classList.remove('hidden');
@@ -315,97 +311,19 @@ document.getElementById('partyNominated').addEventListener('change', updateParty
 function updateObserverPartyFields() {
     const membership = document.getElementById('observerPartyMembership').value;
     const fields = document.getElementById('observerPartyFields');
+
     if (membership === 'yes') {
         fields.classList.remove('hidden');
     } else {
         fields.classList.add('hidden');
     }
 }
+
 document.getElementById('observerPartyMembership').addEventListener('change', updateObserverPartyFields);
 
 // ============================================================
-// Шаг 9: Фото
+// Шаг 9: Фото (УДАЛЕНО ВЕСЬ БЛОК)
 // ============================================================
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('photoUpload');
-
-if (dropZone) {
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.background = '#e9ecef';
-    });
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.background = '#fafafa';
-    });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.background = '#fafafa';
-        const files = e.dataTransfer.files;
-        if (files.length) {
-            fileInput.files = files;
-            const event = new Event('change', { bubbles: true });
-            fileInput.dispatchEvent(event);
-        }
-    });
-}
-
-fileInput.addEventListener('change', async () => {
-    if (!fileInput.files.length) return;
-    const nextBtn = document.getElementById('step9NextBtn');
-    nextBtn.disabled = true;
-    const success = await uploadPhoto(fileInput.files[0]);
-    if (success) {
-        nextBtn.disabled = false;
-    }
-});
-
-async function uploadPhoto(file) {
-    if (!file) return false;
-    if (file.size > 1024 * 1024) {
-        showError('Фото должно быть не более 1 МБ');
-        return false;
-    }
-    if (file.type !== 'image/jpeg') {
-        showError('Только JPG формат');
-        return false;
-    }
-
-    const progressContainer = document.getElementById('uploadProgressContainer');
-    const progressBar = document.getElementById('uploadProgressBar');
-    const fileList = document.getElementById('fileList');
-    progressContainer.classList.remove('hidden');
-    progressBar.style.width = '0%';
-    fileList.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Загрузка...';
-
-    if (!applicationNumber) {
-        applicationNumber = generateApplicationNumber();
-    }
-    const filePath = `election_applications/${applicationNumber}/photo.jpg`;
-
-    const { error } = await supabase.storage
-        .from('services-files')
-        .upload(filePath, file, { upsert: false });
-
-    if (error) {
-        showError('Ошибка загрузки фото: ' + error.message);
-        progressContainer.classList.add('hidden');
-        return false;
-    }
-
-    photoPath = filePath;
-    progressBar.style.width = '100%';
-    fileList.innerHTML = '<i class="fas fa-check-circle" style="color:#28a745;"></i> ' + file.name;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-        document.getElementById('previewImg').src = e.target.result;
-        document.getElementById('photoPreview').classList.remove('hidden');
-    };
-    reader.readAsDataURL(file);
-
-    return true;
-}
 
 // ============================================================
 // Шаг 10: Подтверждение
@@ -413,7 +331,7 @@ async function uploadPhoto(file) {
 function prepareSummary() {
     const type = document.querySelector('input[name="applicationType"]:checked');
     const election = electionsList.find(e => e.id === selectedElectionId);
-    
+
     // Определяем финальный тип для отображения
     let displayType = '';
     let displayDetails = [];
@@ -432,7 +350,7 @@ function prepareSummary() {
         } else {
             displayDetails.push('Самовыдвижение');
         }
-        if (photoPath) displayDetails.push('Фото загружено');
+        // Удалена проверка photoPath
     } else if (type && type.value === 'observer_registration') {
         displayType = 'Регистрация наблюдателя';
         const membership = document.getElementById('observerPartyMembership').value;
@@ -468,6 +386,7 @@ function prepareSummary() {
     html += `<tr><th>Голосование</th><td>${election ? election.title : '—'}</td></tr>`;
     html += `<tr><th>Заявитель</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code}</td></tr>`;
+    
     if (displayDetails.length) {
         html += `<tr><th>Дополнительно</th><td><ul>${displayDetails.map(d => `<li>${d}</li>`).join('')}</ul></td></tr>`;
     }
@@ -510,7 +429,7 @@ async function submitApplication() {
             dataPayload.party_name = document.getElementById('partyName').value.trim();
             dataPayload.party_nominated = document.getElementById('partyNominated').value === 'yes';
         }
-        dataPayload.photo_path = photoPath;
+        // Удалено: dataPayload.photo_path = photoPath;
         finalType = 'candidate_registration';
     }
 
@@ -529,7 +448,6 @@ async function submitApplication() {
             return false;
         }
         const changeType = voterType.value;
-
         if (changeType === 'electronic_voting') {
             finalType = 'remote_voting_request';
             dataPayload.voting_method = 'electronic';
@@ -554,7 +472,7 @@ async function submitApplication() {
     const payload = {
         user_id: session.user.id,
         election_id: selectedElectionId,
-        type: finalType,                    // <-- теперь допустимое значение
+        type: finalType,
         status: 'submitted',
         data: dataPayload,
         created_at: new Date().toISOString(),
@@ -573,22 +491,7 @@ async function submitApplication() {
         return false;
     }
 
-    // Если есть фото, сохраняем в application_files
-    if (photoPath) {
-        const filePayload = {
-            application_id: inserted.id,
-            file_path: photoPath,
-            file_name: 'photo.jpg'
-        };
-        const { error: fileError } = await supabase
-            .schema('votes')
-            .from('application_files')
-            .insert(filePayload);
-        if (fileError) {
-            console.error('Ошибка сохранения файла:', fileError);
-            showError('Обращение создано, но не удалось сохранить файл.');
-        }
-    }
+    // Удален блок сохранения файла в application_files
 
     return true;
 }
@@ -646,7 +549,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (currentStep === 8) {
                 if (!selectedPollingStationId) { showError('Выберите участок'); return; }
             }
-
+            
             const next = getNextStep(currentStep);
             goToStep(next);
         });
