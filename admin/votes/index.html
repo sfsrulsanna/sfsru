@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Админ — Управление голосованиями</title>
   <style>
-    /* (стили без изменений) */
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; }
     a { text-decoration: none; color: inherit; }
@@ -165,6 +164,49 @@
     .statistics { margin: 1rem 0; padding: 1rem; background: #f1f1f1; border-radius: 8px; }
     .statistics .total-votes { font-weight: 600; margin-bottom: 0.5rem; }
 
+    .manual-vote-form {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+    }
+    .manual-vote-form h4 { margin-bottom: 1rem; color: #333; }
+    .manual-vote-form .form-row { margin-bottom: 1rem; }
+    .manual-vote-form .form-group { margin-bottom: 0; }
+    .manual-vote-form .user-search-result {
+      background: white;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      max-height: 150px;
+      overflow-y: auto;
+      display: none;
+      position: absolute;
+      width: 100%;
+      z-index: 10;
+    }
+    .manual-vote-form .user-search-result .result-item {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .manual-vote-form .user-search-result .result-item:hover {
+      background: #f0f0f0;
+    }
+    .manual-vote-form .selected-user {
+      background: #e9ecef;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      margin-top: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .manual-vote-form .selected-user .remove-user {
+      cursor: pointer;
+      color: #dc3545;
+    }
+
     /* Стили для просмотра заявления */
     .app-detail-field { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; }
     .app-detail-field .label { font-weight: 600; width: 30%; color: #555; }
@@ -179,6 +221,7 @@
       .app-detail-field { flex-direction: column; }
       .app-detail-field .label { width: 100%; }
       .app-detail-field .value { width: 100%; }
+      .manual-vote-form .user-search-result { position: relative; }
     }
   </style>
 </head>
@@ -345,7 +388,7 @@
             </div>
           </div>
 
-          <!-- Вкладка: Результаты (с ручным добавлением) -->
+          <!-- Вкладка: Результаты (добавлена форма ручного голосования) -->
           <div id="tabStats" class="tab-pane">
             <div id="statsContainer">
               <div class="statistics" id="statisticsBlock" style="display:none;">
@@ -354,24 +397,30 @@
               </div>
               <div id="statsEmpty" class="no-data">Нет голосов</div>
 
-              <!-- Блок ручного добавления голоса -->
-              <div style="margin-top: 2rem; padding-top: 1rem; border-top: 2px solid #eee;">
-                <h4 style="margin-bottom: 0.5rem;">Ручное добавление голоса (офлайн-голосование)</h4>
-                <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 1rem;">Выберите избирателя по личному коду и кандидата, за которого он проголосовал.</p>
-                <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
-                  <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">Личный код избирателя</label>
-                    <input type="text" id="manualVoterCode" placeholder="Например: 1234-5678-9012" style="width: 100%; padding: 0.6rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;" />
+              <!-- Форма для ручного добавления голоса -->
+              <div class="manual-vote-form" id="manualVoteForm">
+                <h4>Добавить голос вручную (для очного голосования)</h4>
+                <div class="form-row">
+                  <div class="form-group" style="position: relative;">
+                    <label for="userSearchInput">Поиск пользователя (личный код или ФИО)</label>
+                    <input type="text" id="userSearchInput" class="form-control" placeholder="Введите личный код или ФИО" />
+                    <div id="userSearchResults" class="user-search-result"></div>
                   </div>
-                  <div style="flex: 1; min-width: 200px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">Кандидат / вариант</label>
-                    <select id="manualOptionSelect" style="width: 100%; padding: 0.6rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;">
-                      <option value="">— Выберите кандидата —</option>
+                  <div class="form-group">
+                    <label for="voteOptionSelect">Вариант голосования</label>
+                    <select id="voteOptionSelect" class="form-control">
+                      <option value="">-- Выберите вариант --</option>
                     </select>
                   </div>
-                  <button type="button" class="btn btn-primary" id="addManualVoteBtn">Добавить голос</button>
                 </div>
-                <div id="manualVoteResult" style="margin-top: 0.8rem; font-size: 0.95rem;"></div>
+                <div id="selectedUserDisplay" style="display: none;">
+                  <div class="selected-user">
+                    <span id="selectedUserInfo"></span>
+                    <span class="remove-user" id="removeSelectedUser">✕</span>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-success" id="addManualVoteBtn">Добавить голос</button>
+                <div id="manualVoteResult" style="margin-top: 0.5rem; font-weight: 500;"></div>
               </div>
             </div>
           </div>
@@ -457,17 +506,21 @@
     const statisticsList = document.getElementById('statisticsList');
     const statsEmpty = document.getElementById('statsEmpty');
 
-    // Ручное добавление голоса
-    const manualVoterCode = document.getElementById('manualVoterCode');
-    const manualOptionSelect = document.getElementById('manualOptionSelect');
-    const addManualVoteBtn = document.getElementById('addManualVoteBtn');
-    const manualVoteResult = document.getElementById('manualVoteResult');
-
     // Модалка просмотра заявления
     const appDetailModal = document.getElementById('appDetailModal');
     const appDetailContent = document.getElementById('appDetailContent');
     const closeAppDetailModal = document.getElementById('closeAppDetailModal');
     const closeAppDetailBtn = document.getElementById('closeAppDetailBtn');
+
+    // Ручное голосование
+    const userSearchInput = document.getElementById('userSearchInput');
+    const userSearchResults = document.getElementById('userSearchResults');
+    const voteOptionSelect = document.getElementById('voteOptionSelect');
+    const addManualVoteBtn = document.getElementById('addManualVoteBtn');
+    const manualVoteResult = document.getElementById('manualVoteResult');
+    const selectedUserDisplay = document.getElementById('selectedUserDisplay');
+    const selectedUserInfo = document.getElementById('selectedUserInfo');
+    const removeSelectedUser = document.getElementById('removeSelectedUser');
 
     // Прочее
     const adminEmail = document.getElementById('adminEmail');
@@ -480,6 +533,8 @@
     let currentVoteId = null;
     let allOptions = [];
     let allApplications = [];
+    let selectedUserId = null;
+    let selectedUserText = '';
 
     // --- Вспомогательные функции ---
     function addLog(message, type = 'info') {
@@ -623,12 +678,6 @@
       statsEmpty.style.display = 'block';
       uploadLog.innerHTML = '<div class="log-entry info">Лог загрузки фото...</div>';
       modalTitle.textContent = 'Создание голосования';
-      
-      // Очистка поля ручного ввода
-      if (manualVoterCode) manualVoterCode.value = '';
-      if (manualVoteResult) manualVoteResult.innerHTML = '';
-      if (manualOptionSelect) manualOptionSelect.innerHTML = '<option value="">— Выберите кандидата —</option>';
-
       tabBtns.forEach(btn => btn.classList.remove('active'));
       document.querySelector('.tab-btn[data-tab="tabOptions"]').classList.add('active');
       Object.values(tabPanes).forEach(p => p.classList.remove('active'));
@@ -640,6 +689,19 @@
       voteEnd.value = end.toISOString().slice(0,16);
       const deadline = new Date(start.getTime() - 2*24*60*60*1000);
       voteDeadline.value = deadline.toISOString().slice(0,16);
+      // Сброс ручного голосования
+      resetManualVoteForm();
+    }
+
+    function resetManualVoteForm() {
+      selectedUserId = null;
+      selectedUserText = '';
+      userSearchInput.value = '';
+      userSearchResults.innerHTML = '';
+      userSearchResults.style.display = 'none';
+      selectedUserDisplay.style.display = 'none';
+      manualVoteResult.textContent = '';
+      voteOptionSelect.innerHTML = '<option value="">-- Выберите вариант --</option>';
     }
 
     function openCreateModal() {
@@ -696,6 +758,8 @@
 
         await loadApplications(id);
         await loadStatistics(id);
+        // Заполняем селект вариантов для ручного голосования
+        populateVoteOptions();
 
         modal.classList.add('active');
       } catch (err) {
@@ -765,29 +829,16 @@
           await deleteOption(btn.dataset.id);
         });
       });
-      
-      // Обновляем список для ручного добавления
-      updateManualOptionSelect();
+      // Обновляем селект для ручного голосования
+      populateVoteOptions();
     }
 
-    // Обновляем список кандидатов в выпадающем списке ручного добавления
-    function updateManualOptionSelect() {
-      if (!manualOptionSelect) return;
-      const currentVal = manualOptionSelect.value;
-      manualOptionSelect.innerHTML = '<option value="">— Выберите кандидата —</option>';
+    function populateVoteOptions() {
+      voteOptionSelect.innerHTML = '<option value="">-- Выберите вариант --</option>';
       allOptions.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt.id;
-        let label = opt.text;
-        if (opt.description) label += ` (${opt.description})`;
-        if (opt.question_text) label += ` [${opt.question_text}]`;
-        option.textContent = label;
-        manualOptionSelect.appendChild(option);
+        const label = opt.text + (opt.description ? ` (${opt.description})` : '');
+        voteOptionSelect.innerHTML += `<option value="${opt.id}">${label}</option>`;
       });
-      // Пытаемся сохранить выбор, если он еще валиден
-      if (currentVal && allOptions.find(o => o.id === currentVal)) {
-        manualOptionSelect.value = currentVal;
-      }
     }
 
     async function addOption() {
@@ -985,7 +1036,7 @@
       appDetailModal.classList.add('active');
     }
 
-    // === ИЗМЕНЕННАЯ ФУНКЦИЯ: добавлено уведомление в messages.user_messages ===
+    // --- Изменение статуса заявления ---
     async function changeAppStatus(appId, newStatus) {
       if (!confirm(`Изменить статус заявления на "${getAppStatusLabel(newStatus)}"?`)) return;
       const { data: { user } } = await supabase.auth.getUser();
@@ -1141,77 +1192,7 @@
       statsEmpty.style.display = 'none';
     }
 
-    // --- Ручное добавление голоса ---
-    async function addManualVote() {
-      const personalCode = manualVoterCode.value.trim();
-      const optionId = manualOptionSelect.value;
-      
-      if (!personalCode) {
-        manualVoteResult.innerHTML = '<span style="color: #dc3545;">Введите личный код избирателя</span>';
-        return;
-      }
-      if (!optionId) {
-        manualVoteResult.innerHTML = '<span style="color: #dc3545;">Выберите кандидата/вариант</span>';
-        return;
-      }
-      if (!currentVoteId) {
-        manualVoteResult.innerHTML = '<span style="color: #dc3545;">Сначала сохраните голосование</span>';
-        return;
-      }
-
-      manualVoteResult.innerHTML = '<span style="color: #007bff;">Проверка...</span>';
-
-      // Ищем пользователя по личному коду
-      const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('personal_code', personalCode)
-        .maybeSingle();
-
-      if (userError || !userData) {
-        manualVoteResult.innerHTML = `<span style="color: #dc3545;">Пользователь с личным кодом "${personalCode}" не найден</span>`;
-        return;
-      }
-
-      const userId = userData.id;
-
-      // Проверяем, не голосовал ли уже этот пользователь в данном голосовании
-      const { data: existingVote, error: checkError } = await supabase
-        .schema(SCHEMA)
-        .from('user_votes')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('election_id', currentVoteId)
-        .maybeSingle();
-
-      if (existingVote) {
-        manualVoteResult.innerHTML = `<span style="color: #dc3545;">Этот пользователь уже проголосовал в данном голосовании</span>`;
-        return;
-      }
-
-      // Вставляем голос
-      const { error: insertError } = await supabase
-        .schema(SCHEMA)
-        .from('user_votes')
-        .insert({
-          user_id: userId,
-          election_id: currentVoteId,
-          option_id: optionId
-        });
-
-      if (insertError) {
-        manualVoteResult.innerHTML = `<span style="color: #dc3545;">Ошибка добавления голоса: ${insertError.message}</span>`;
-        return;
-      }
-
-      manualVoteResult.innerHTML = `<span style="color: #28a745;">Голос успешно добавлен!</span>`;
-      // Обновляем статистику
-      await loadStatistics(currentVoteId);
-      // Очищаем поле кода
-      manualVoterCode.value = '';
-    }
-
-    // --- Сохранение голосования (исправлено: модалка не закрывается, нет alert) ---
+    // --- Сохранение голосования ---
     async function saveVote(e) {
       e.preventDefault();
       const id = editVoteId.value;
@@ -1270,13 +1251,145 @@
         }
         await loadStatistics(currentVoteId);
         await loadApplications(currentVoteId);
+        populateVoteOptions();
       }
 
       // Обновляем список голосований в фоновом режиме
       await loadAndRender();
 
-      // Модалка остаётся открытой – никаких alert и закрытий
+      // Модалка остаётся открытой
     }
+
+    // --- Ручное голосование ---
+    // Поиск пользователей
+    let searchTimeout = null;
+    userSearchInput.addEventListener('input', async () => {
+      const query = userSearchInput.value.trim();
+      if (searchTimeout) clearTimeout(searchTimeout);
+      if (query.length < 2) {
+        userSearchResults.innerHTML = '';
+        userSearchResults.style.display = 'none';
+        return;
+      }
+      searchTimeout = setTimeout(async () => {
+        try {
+          // Ищем по личному коду или по ФИО (в полях surname, name, patronymic)
+          const { data, error } = await supabase
+            .from('users')
+            .select('id, personal_code, surname, name, patronymic')
+            .or(`personal_code.ilike.%${query}%,surname.ilike.%${query}%,name.ilike.%${query}%,patronymic.ilike.%${query}%`)
+            .limit(10);
+          if (error) throw error;
+          if (!data || data.length === 0) {
+            userSearchResults.innerHTML = '<div class="result-item">Пользователи не найдены</div>';
+            userSearchResults.style.display = 'block';
+            return;
+          }
+          userSearchResults.innerHTML = data.map(u => {
+            const fullName = `${u.surname} ${u.name} ${u.patronymic || ''}`.trim();
+            return `<div class="result-item" data-id="${u.id}" data-name="${fullName}">${fullName} (личный код: ${u.personal_code || '—'})</div>`;
+          }).join('');
+          userSearchResults.style.display = 'block';
+          // Добавляем обработчики клика
+          document.querySelectorAll('.result-item').forEach(el => {
+            el.addEventListener('click', () => {
+              const id = el.dataset.id;
+              const name = el.dataset.name;
+              selectUser(id, name);
+            });
+          });
+        } catch (err) {
+          console.error('Ошибка поиска пользователей:', err);
+        }
+      }, 300);
+    });
+
+    function selectUser(id, name) {
+      selectedUserId = id;
+      selectedUserText = name;
+      userSearchInput.value = name;
+      userSearchResults.style.display = 'none';
+      selectedUserDisplay.style.display = 'block';
+      selectedUserInfo.textContent = `Выбран: ${name}`;
+      manualVoteResult.textContent = '';
+    }
+
+    removeSelectedUser.addEventListener('click', () => {
+      selectedUserId = null;
+      selectedUserText = '';
+      userSearchInput.value = '';
+      selectedUserDisplay.style.display = 'none';
+      manualVoteResult.textContent = '';
+    });
+
+    // Добавление голоса
+    addManualVoteBtn.addEventListener('click', async () => {
+      if (!currentVoteId) {
+        manualVoteResult.textContent = 'Ошибка: голосование не выбрано';
+        manualVoteResult.style.color = '#dc3545';
+        return;
+      }
+      if (!selectedUserId) {
+        manualVoteResult.textContent = 'Выберите пользователя';
+        manualVoteResult.style.color = '#dc3545';
+        return;
+      }
+      const optionId = voteOptionSelect.value;
+      if (!optionId) {
+        manualVoteResult.textContent = 'Выберите вариант голосования';
+        manualVoteResult.style.color = '#dc3545';
+        return;
+      }
+
+      // Проверяем, не голосовал ли уже пользователь
+      const { data: existing, error: checkErr } = await supabase
+        .schema(SCHEMA)
+        .from('user_votes')
+        .select('id')
+        .eq('user_id', selectedUserId)
+        .eq('election_id', currentVoteId)
+        .maybeSingle();
+      if (checkErr) {
+        manualVoteResult.textContent = 'Ошибка проверки: ' + checkErr.message;
+        manualVoteResult.style.color = '#dc3545';
+        return;
+      }
+      if (existing) {
+        manualVoteResult.textContent = 'Этот пользователь уже проголосовал в данном голосовании!';
+        manualVoteResult.style.color = '#dc3545';
+        return;
+      }
+
+      // Вставляем голос
+      const { error: insertErr } = await supabase
+        .schema(SCHEMA)
+        .from('user_votes')
+        .insert({
+          user_id: selectedUserId,
+          election_id: currentVoteId,
+          option_id: optionId
+        });
+      if (insertErr) {
+        manualVoteResult.textContent = 'Ошибка добавления голоса: ' + insertErr.message;
+        manualVoteResult.style.color = '#dc3545';
+        return;
+      }
+
+      manualVoteResult.textContent = 'Голос успешно добавлен!';
+      manualVoteResult.style.color = '#28a745';
+      // Обновляем статистику
+      await loadStatistics(currentVoteId);
+      // Сброс формы (кроме пользователя, чтобы можно было добавить ещё)
+      voteOptionSelect.value = '';
+      // Очистка выбранного пользователя
+      selectedUserId = null;
+      selectedUserText = '';
+      userSearchInput.value = '';
+      selectedUserDisplay.style.display = 'none';
+      setTimeout(() => {
+        manualVoteResult.textContent = '';
+      }, 3000);
+    });
 
     // --- Загрузка и рендеринг ---
     async function loadAndRender() {
@@ -1318,11 +1431,6 @@
       refreshApplicationsBtn.addEventListener('click', () => {
         if (currentVoteId) loadApplications(currentVoteId);
       });
-
-      // Обработчик ручного добавления голоса
-      if (addManualVoteBtn) {
-        addManualVoteBtn.addEventListener('click', addManualVote);
-      }
 
       // Модалка просмотра заявления
       closeAppDetailModal.addEventListener('click', () => appDetailModal.classList.remove('active'));
