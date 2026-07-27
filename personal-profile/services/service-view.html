@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* (стили без изменений) */
         .service-container {
             max-width: 700px;
             margin: 2rem auto;
@@ -265,7 +266,9 @@
             'positive': 'Принято положительное решение',
             'completed': 'Результат выдан',
             'rejected': 'Отказано',
-            'cancelled': 'Отменено'
+            'cancelled': 'Отменено',
+            'under_review': 'На рассмотрении',
+            'approved': 'Одобрено'
         };
 
         const serviceTypeNames = {
@@ -289,12 +292,23 @@
             'service': 'Служебный'
         };
 
+        // Маппинг типов ЦИК для отображения
+        const voteTypeNames = {
+            'candidate_registration': 'Регистрация кандидата',
+            'observer_registration': 'Регистрация наблюдателя',
+            'remote_voting_request': 'Дистанционное голосование',
+            'change_polling_station': 'Смена участка голосования',
+            'data_change': 'Изменение данных',
+            'other': 'Другое обращение'
+        };
+
         function getStatusIcon(status) {
             switch (status) {
                 case 'rejected': return '<i class="fas fa-times-circle"></i>';
                 case 'cancelled': return '<i class="fas fa-ban"></i>';
                 case 'positive':
-                case 'completed': return '<i class="fas fa-check-circle"></i>';
+                case 'completed':
+                case 'approved': return '<i class="fas fa-check-circle"></i>';
                 default: return '<i class="fas fa-hourglass-half"></i>';
             }
         }
@@ -358,6 +372,18 @@
             return data || [];
         }
 
+        async function getElectionTitle(electionId) {
+            if (!electionId) return '—';
+            const { data, error } = await supabase
+                .schema('votes')
+                .from('elections')
+                .select('title')
+                .eq('id', electionId)
+                .single();
+            if (error || !data) return '—';
+            return data.title;
+        }
+
         async function loadService() {
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
@@ -377,11 +403,28 @@
                 let app = null;
                 let source = null;
 
-                if (type === 'passport') {
+                // === НОВОЕ: обработка заявлений ЦИК ===
+                if (type === 'vote') {
+                    const { data, error } = await supabase
+                        .schema('votes')
+                        .from('applications')
+                        .select('*')
+                        .eq('id', id)
+                        .eq('user_id', currentUserId)
+                        .maybeSingle();
+
+                    if (error || !data) {
+                        showError('Заявление не найдено');
+                        return;
+                    }
+                    app = data;
+                    source = 'vote_application';
+                } else if (type === 'passport') {
                     source = 'passport';
                 } else if (type === 'foreign_passport') {
                     source = 'foreign_passport';
                 } else {
+                    // попытка загрузить из services.applications (услуги)
                     const { data: appData, error: appError } = await supabase
                         .schema('services')
                         .from('applications')
@@ -397,6 +440,7 @@
                         app = appData;
                         source = 'applications';
                     } else {
+                        // может быть старый паспорт
                         const { data: pData, error: pError } = await supabase
                             .schema('services')
                             .from('passport')
@@ -423,23 +467,22 @@
                     }
                 }
 
-                if (!app) {
-                    if (type === 'passport' || type === 'foreign_passport') {
-                        const table = type;
-                        const { data, error } = await supabase
-                            .schema('services')
-                            .from(table)
-                            .select('*')
-                            .eq('id', id)
-                            .eq('user_id', currentUserId)
-                            .single();
-                        if (error || !data) {
-                            showError('Заявление не найдено');
-                            return;
-                        }
-                        app = data;
-                        source = type;
+                // Если всё ещё нет app, то загружаем из passport/foreign_passport по type (если type указан)
+                if (!app && (type === 'passport' || type === 'foreign_passport')) {
+                    const table = type;
+                    const { data, error } = await supabase
+                        .schema('services')
+                        .from(table)
+                        .select('*')
+                        .eq('id', id)
+                        .eq('user_id', currentUserId)
+                        .single();
+                    if (error || !data) {
+                        showError('Заявление не найдено');
+                        return;
                     }
+                    app = data;
+                    source = type;
                 }
 
                 if (!app) {
@@ -449,15 +492,18 @@
 
                 currentSource = source;
 
+                // Определяем название услуги
                 let serviceName = '';
-                if (source === 'applications') {
+                if (source === 'vote_application') {
+                    serviceName = voteTypeNames[app.type] || app.type || 'Обращение в ЦИК';
+                } else if (source === 'applications') {
                     serviceName = app.catalog?.name_ru || serviceTypeNames[app.service_type] || 'Услуга';
                 } else {
                     serviceName = serviceTypeNames[app.service_type] || 'Услуга';
                 }
 
                 document.getElementById('serviceName').textContent = serviceName;
-                document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
+                document.getElementById('appNumber').textContent = `№ ${app.application_number || '—'}`;
 
                 let applicants = [];
                 if (source === 'foreign_passport') {
@@ -482,7 +528,7 @@
             html += '<table class="details-table">';
 
             const fields = [
-                ['Номер заявления', app.application_number],
+                ['Номер заявления', app.application_number || '—'],
                 ['Статус', statusMap[app.status] || app.status],
                 ['Дата создания', new Date(app.created_at).toLocaleString()],
                 ['Личный код', app.personal_code || '—']
@@ -504,6 +550,49 @@
                 fields.push(['Кому', recipientTypeMap[app.recipient_type] || app.recipient_type || '—']);
                 fields.push(['Вид', visaTypeMap[app.visa_type] || app.visa_type || '—']);
                 fields.push(['Вписывать детей', app.include_children_in_parent ? 'Да' : 'Нет']);
+            } else if (source === 'vote_application') {
+                // === ДЕТАЛИ ДЛЯ ЗАЯВЛЕНИЙ ЦИК ===
+                const typeName = voteTypeNames[app.type] || app.type;
+                fields.push(['Тип обращения', typeName]);
+                const electionTitle = await getElectionTitle(app.election_id);
+                fields.push(['Голосование', electionTitle]);
+
+                // Выводим содержимое поля data в читаемом виде
+                const data = app.data || {};
+                if (data.party_membership !== undefined) {
+                    fields.push(['Член партии', data.party_membership ? 'Да' : 'Нет']);
+                }
+                if (data.party_name) {
+                    fields.push(['Название партии', data.party_name]);
+                }
+                if (data.party_nominated !== undefined) {
+                    fields.push(['Выдвинут партией', data.party_nominated ? 'Да' : 'Нет']);
+                }
+                if (data.voting_method) {
+                    fields.push(['Способ голосования', data.voting_method === 'electronic' ? 'Электронный' : 'Бумажный']);
+                }
+                if (data.new_polling_station_id) {
+                    fields.push(['Новый участок', data.new_polling_station_id]);
+                }
+                if (data.reason) {
+                    fields.push(['Причина', data.reason]);
+                }
+                if (data.photo_path) {
+                    const photoUrl = await getSignedUrl(data.photo_path);
+                    if (photoUrl) {
+                        const fileName = data.photo_path.split('/').pop() || 'photo.jpg';
+                        fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
+                    }
+                }
+                // Прочие поля выводим как есть
+                const extraKeys = Object.keys(data).filter(k =>
+                    !['party_membership', 'party_name', 'party_nominated', 'voting_method',
+                      'new_polling_station_id', 'reason', 'photo_path', 'voter_change_type'
+                    ].includes(k)
+                );
+                if (extraKeys.length) {
+                    fields.push(['Доп. данные', `<pre style="background:#f5f5f5;padding:0.5rem;border-radius:4px;font-size:0.85rem;white-space:pre-wrap;">${JSON.stringify(extraKeys.reduce((acc, k) => ({...acc, [k]: data[k]}), {}), null, 2)}</pre>`]);
+                }
             } else if (source === 'applications') {
                 const data = app.data || {};
                 if (data.type) {
@@ -513,7 +602,6 @@
                     const fnsName = fnsMap[data.fns_office_id] || data.fns_office_id;
                     fields.push(['Отделение ФНС', fnsName]);
                 }
-                // можно добавить другие поля
             }
 
             for (const [label, value] of fields) {
@@ -526,11 +614,11 @@
                 html += '<h3 class="section-title" style="margin-top:1.5rem;">Фото получателей</h3>';
                 html += '<table class="details-table">';
                 html += `<tr><th>ФИО</th><th>Дата рождения</th><th>Фото</th></tr>`;
-                for (const app of applicants) {
-                    const photoUrl = app.photo_path ? await getSignedUrl(app.photo_path) : null;
+                for (const applicant of applicants) {
+                    const photoUrl = applicant.photo_path ? await getSignedUrl(applicant.photo_path) : null;
                     html += `<tr>
-                        <td>${app.surname} ${app.name} ${app.patronymic || ''}</td>
-                        <td>${app.date_of_birth ? new Date(app.date_of_birth).toLocaleDateString('ru-RU') : '—'}</td>
+                        <td>${applicant.surname} ${applicant.name} ${applicant.patronymic || ''}</td>
+                        <td>${applicant.date_of_birth ? new Date(applicant.date_of_birth).toLocaleDateString('ru-RU') : '—'}</td>
                         <td>${photoUrl ? `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> Фото</a>` : '—'}</td>
                     </tr>`;
                 }
@@ -546,6 +634,7 @@
 
             let historyTable = '';
             let idField = '';
+            let schema = 'services'; // по умолчанию
 
             if (source === 'passport') {
                 historyTable = 'passport_status_history';
@@ -556,6 +645,11 @@
             } else if (source === 'applications') {
                 historyTable = 'application_status_history';
                 idField = 'application_id';
+            } else if (source === 'vote_application') {
+                // === ИСТОРИЯ ДЛЯ ЗАЯВЛЕНИЙ ЦИК ===
+                historyTable = 'application_status_history';
+                idField = 'application_id';
+                schema = 'votes';
             } else {
                 list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
                 toggleBtn.style.display = 'none';
@@ -563,7 +657,7 @@
             }
 
             const { data, error } = await supabase
-                .schema('services')
+                .schema(schema)
                 .from(historyTable)
                 .select('*')
                 .eq(idField, passportId)
@@ -571,6 +665,12 @@
 
             if (error) {
                 console.error('Ошибка загрузки истории:', error);
+                // Если таблицы нет, просто показываем текущий статус
+                if (source === 'vote_application') {
+                    list.innerHTML = '<p class="no-data">История отсутствует</p>';
+                    toggleBtn.style.display = 'none';
+                    return;
+                }
                 list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
                 return;
             }
@@ -601,7 +701,8 @@
                     }
                 }
 
-                if (item.status === 'submitted') {
+                // Для заявлений ЦИК нет фото/заявления из app, поэтому пропускаем
+                if (source !== 'vote_application' && item.status === 'submitted') {
                     let photoPath = null;
                     if (source === 'passport' && app.photo_path) {
                         photoPath = app.photo_path;

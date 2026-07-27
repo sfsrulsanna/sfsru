@@ -30,6 +30,7 @@
     <link rel="stylesheet" href="../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* стили без изменений */
         .messages-container {
             max-width: 800px;
             margin: 2rem auto;
@@ -38,7 +39,6 @@
             box-shadow: 0 8px 30px rgba(0,0,0,0.12);
             padding: 2rem;
         }
-
         .page-title {
             font-size: 2.2rem;
             font-weight: 700;
@@ -46,7 +46,6 @@
             margin-bottom: 0.25rem;
             letter-spacing: -0.5px;
         }
-
         .page-description {
             font-size: 1.1rem;
             color: #6c757d;
@@ -54,7 +53,6 @@
             border-bottom: 2px solid #f0f0f0;
             padding-bottom: 1rem;
         }
-
         .message-item {
             background: white;
             border-radius: 14px;
@@ -64,18 +62,15 @@
             transition: all 0.2s ease;
             position: relative;
         }
-
         .message-item:hover {
             background: #fafbfc;
             border-color: #ced4da;
             box-shadow: 0 4px 12px rgba(0,0,0,0.05);
         }
-
         .message-item.unread {
             border-left: 4px solid #28a745;
             background: #f8f9fa;
         }
-
         .message-header {
             display: flex;
             justify-content: space-between;
@@ -84,25 +79,21 @@
             flex-wrap: wrap;
             gap: 0.5rem;
         }
-
         .message-title {
             font-weight: 600;
             font-size: 1.2rem;
             color: #7b091a;
         }
-
         .message-date {
             color: #6c757d;
             font-size: 0.9rem;
             white-space: nowrap;
         }
-
         .message-content {
             margin: 0.75rem 0;
             line-height: 1.6;
             color: #333;
         }
-
         .message-footer {
             margin-top: 1rem;
             display: flex;
@@ -111,13 +102,11 @@
             flex-wrap: wrap;
             gap: 1rem;
         }
-
         .message-footer p {
             margin: 0;
             color: #555;
             font-size: 0.95rem;
         }
-
         .btn-mark-read {
             background-color: #007bff;
             color: white;
@@ -130,11 +119,9 @@
             transition: background-color 0.2s;
             border: 1px solid transparent;
         }
-
         .btn-mark-read:hover {
             background-color: #0056b3;
         }
-
         .btn-view-application {
             background-color: #28a745;
             color: white;
@@ -148,44 +135,44 @@
             text-decoration: none;
             display: inline-block;
         }
-
         .btn-view-application:hover {
             background-color: #1e7e34;
         }
-
         .loading, .no-data {
             text-align: center;
             padding: 3rem;
             color: #6c757d;
             font-size: 1.1rem;
         }
-
         .error {
             text-align: center;
             padding: 2rem;
             color: #dc3545;
         }
+        .status-badge {
+            display: inline-block;
+            padding: 0.2rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .status-badge.submitted { background: #fff3cd; color: #856404; }
+        .status-badge.processing { background: #fff3cd; color: #856404; }
+        .status-badge.interim { background: #d4edda; color: #155724; }
+        .status-badge.positive { background: #d4edda; color: #155724; }
+        .status-badge.completed { background: #d4edda; color: #155724; }
+        .status-badge.rejected { background: #f8d7da; color: #721c24; }
+        .status-badge.cancelled { background: #e2e3e5; color: #383d41; }
+        .status-badge.under_review { background: #cce5ff; color: #004085; }
+        .status-badge.approved { background: #d4edda; color: #155724; }
 
         @media (max-width: 600px) {
-            .messages-container {
-                padding: 1.5rem;
-                margin: 1rem;
-            }
-            .message-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            .message-date {
-                white-space: normal;
-            }
-            .btn-mark-read, .btn-view-application {
-                width: 100%;
-                text-align: center;
-            }
-            .message-footer {
-                flex-direction: column;
-                align-items: stretch;
-            }
+            .messages-container { padding: 1.5rem; margin: 1rem; }
+            .message-header { flex-direction: column; align-items: flex-start; }
+            .message-date { white-space: normal; }
+            .btn-mark-read, .btn-view-application { width: 100%; text-align: center; }
+            .message-footer { flex-direction: column; align-items: stretch; }
         }
     </style>
     <script type="importmap">
@@ -244,6 +231,26 @@
 
         let currentUserId = null;
         let catalogMap = {}; // service_key → name_ru
+        let voteTypeNames = {
+            'candidate_registration': 'Регистрация кандидата',
+            'observer_registration': 'Регистрация наблюдателя',
+            'remote_voting_request': 'Дистанционное голосование',
+            'change_polling_station': 'Смена участка голосования',
+            'data_change': 'Изменение данных',
+            'other': 'Другое обращение'
+        };
+        let statusMap = {
+            'draft': 'Черновик',
+            'submitted': 'Отправлено в ведомство',
+            'processing': 'В работе',
+            'interim': 'Промежуточные результаты',
+            'positive': 'Принято положительное решение',
+            'completed': 'Результат выдан',
+            'rejected': 'Отказано',
+            'cancelled': 'Отменено',
+            'under_review': 'На рассмотрении',
+            'approved': 'Одобрено'
+        };
 
         async function loadUser() {
             const { data: { session } } = await supabase.auth.getSession();
@@ -269,6 +276,72 @@
             });
         }
 
+        // Получить название голосования по ID
+        async function getElectionTitle(electionId) {
+            if (!electionId) return 'голосование';
+            const { data, error } = await supabase
+                .schema('votes')
+                .from('elections')
+                .select('title')
+                .eq('id', electionId)
+                .single();
+            if (error || !data) return 'голосование';
+            return data.title;
+        }
+
+        // Получить историю статусов заявлений ЦИК для пользователя и преобразовать в "виртуальные" сообщения
+        async function loadVoteStatusHistory() {
+            // 1. Получить все заявления пользователя в votes.applications
+            const { data: apps, error: appsErr } = await supabase
+                .schema('votes')
+                .from('applications')
+                .select('id, application_number, type, election_id')
+                .eq('user_id', currentUserId);
+
+            if (appsErr || !apps || apps.length === 0) {
+                return [];
+            }
+
+            const appIds = apps.map(a => a.id);
+            // 2. Получить историю статусов для этих заявлений
+            const { data: history, error: histErr } = await supabase
+                .schema('votes')
+                .from('application_status_history')
+                .select('*')
+                .in('application_id', appIds)
+                .order('created_at', { ascending: false });
+
+            if (histErr || !history || history.length === 0) {
+                return [];
+            }
+
+            // 3. Для каждого события создаём виртуальное сообщение
+            const messages = [];
+            for (const item of history) {
+                const app = apps.find(a => a.id === item.application_id);
+                if (!app) continue;
+                const electionTitle = await getElectionTitle(app.election_id);
+                const typeName = voteTypeNames[app.type] || app.type || 'заявление';
+                const statusText = statusMap[item.status] || item.status;
+
+                const title = `Изменение статуса заявления в ЦИК`;
+                const content = `Ваше заявление "${typeName}" по голосованию «${electionTitle}» изменило статус на <strong>${statusText}</strong>${item.comment ? `. Комментарий: ${item.comment}` : ''}.`;
+                messages.push({
+                    id: `vote_${item.id}`,
+                    title: title,
+                    content: content,
+                    created_at: item.created_at,
+                    is_read: false, // всегда непрочитанное
+                    service_id: app.id,
+                    service_type: 'vote', // специальный тип
+                    application_number: app.application_number || '—',
+                    is_virtual: true,
+                    status: item.status
+                });
+            }
+            return messages;
+        }
+
         async function loadMessages() {
             const loading = document.getElementById('loading');
             const list = document.getElementById('messagesList');
@@ -278,50 +351,98 @@
             list.innerHTML = '';
             noMessages.style.display = 'none';
 
-            const { data, error } = await supabase
+            // 1. Загружаем сообщения из таблицы user_messages
+            const { data: dbMessages, error: dbError } = await supabase
                 .schema('messages')
                 .from('user_messages')
                 .select('*')
                 .eq('user_id', currentUserId)
                 .order('created_at', { ascending: false });
 
-            if (error) {
-                console.error('Ошибка загрузки сообщений:', error);
+            if (dbError) {
+                console.error('Ошибка загрузки сообщений:', dbError);
                 loading.style.display = 'none';
                 list.innerHTML = '<p class="error">Ошибка загрузки</p>';
                 return;
             }
 
+            // 2. Загружаем виртуальные уведомления из истории ЦИК
+            const voteNotifications = await loadVoteStatusHistory();
+
+            // 3. Объединяем, преобразуем к единому формату
+            let allMessages = [];
+
+            // Сообщения из БД
+            if (dbMessages) {
+                allMessages = dbMessages.map(msg => ({
+                    id: msg.id,
+                    title: msg.title,
+                    content: msg.content,
+                    created_at: msg.created_at,
+                    is_read: msg.is_read,
+                    service_id: msg.service_id,
+                    service_type: msg.service_type,
+                    application_number: null,
+                    is_virtual: false,
+                    status: null
+                }));
+            }
+
+            // Добавляем виртуальные
+            allMessages = [...allMessages, ...voteNotifications];
+
+            // Сортируем по дате (новые сверху)
+            allMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
             loading.style.display = 'none';
 
-            if (!data || data.length === 0) {
+            if (allMessages.length === 0) {
                 noMessages.style.display = 'block';
                 return;
             }
 
-            list.innerHTML = data.map(msg => {
+            list.innerHTML = allMessages.map(msg => {
                 const serviceType = msg.service_type || 'unknown';
-                // Получаем название из каталога, если есть, иначе делаем красивое форматирование
+                // Название услуги
                 let serviceName = catalogMap[serviceType];
                 if (!serviceName) {
-                    serviceName = serviceType
-                        .replace(/_/g, ' ')
-                        .replace(/\b\w/g, l => l.toUpperCase());
+                    if (serviceType === 'vote') {
+                        serviceName = 'Обращение в ЦИК';
+                    } else {
+                        serviceName = serviceType
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, l => l.toUpperCase());
+                    }
                 }
 
-                // Формируем ссылку на просмотр заявки
+                // Ссылка на просмотр заявки
                 let viewLink = '#';
-                // Для старых паспортов используем type=serviceType, для всех остальных — type=application
-                if (serviceType === 'passport' || serviceType === 'foreign_passport') {
+                if (msg.is_virtual || serviceType === 'vote') {
+                    viewLink = `services/service-view.html?id=${msg.service_id}&type=vote`;
+                } else if (serviceType === 'passport' || serviceType === 'foreign_passport') {
                     viewLink = `services/service-view.html?id=${msg.service_id}&type=${serviceType}`;
                 } else {
                     viewLink = `services/service-view.html?id=${msg.service_id}&type=application`;
                 }
 
+                // Статус-бейдж для виртуальных сообщений
+                let statusBadge = '';
+                if (msg.is_virtual && msg.status) {
+                    const statusClass = `status-badge ${msg.status}`;
+                    const statusText = statusMap[msg.status] || msg.status;
+                    statusBadge = `<span class="${statusClass}">${statusText}</span>`;
+                }
+
+                // Кнопка "Отметить прочитанным" только для невиртуальных и непрочитанных
+                let markReadBtn = '';
+                if (!msg.is_virtual && !msg.is_read) {
+                    markReadBtn = `<button class="btn-mark-read" data-id="${msg.id}">Отметить прочитанным</button>`;
+                }
+
                 return `
                     <div class="message-item ${msg.is_read ? '' : 'unread'}" data-id="${msg.id}">
                         <div class="message-header">
-                            <span class="message-title">${escapeHTML(msg.title)}</span>
+                            <span class="message-title">${escapeHTML(msg.title)} ${statusBadge}</span>
                             <span class="message-date">${new Date(msg.created_at).toLocaleString()}</span>
                         </div>
                         <div class="message-content">
@@ -330,13 +451,13 @@
                         </div>
                         <div class="message-footer">
                             <a href="${viewLink}" class="btn-view-application" target="_blank">Перейти к заявлению</a>
-                            ${!msg.is_read ? '<button class="btn-mark-read" data-id="'+msg.id+'">Отметить прочитанным</button>' : ''}
+                            ${markReadBtn}
                         </div>
                     </div>
                 `;
             }).join('');
 
-            // Обработчики для кнопок "Отметить прочитанным"
+            // Обработчики для кнопок "Отметить прочитанным" (только для реальных сообщений)
             document.querySelectorAll('.btn-mark-read').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.target.dataset.id;

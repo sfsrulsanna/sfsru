@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои услуги — СФСРЮ</title>
-    <!-- favicons -->
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -29,7 +29,7 @@
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* те же стили, что были */
+        /* (стили без изменений) */
         .services-container { max-width: 1000px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 2.5rem; }
         .page-title { font-size: 2.2rem; font-weight: 700; color: #7b091a; margin-bottom: 0.25rem; letter-spacing: -0.5px; }
         .page-description { font-size: 1.1rem; color: #6c757d; margin-bottom: 2rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 1rem; }
@@ -47,6 +47,8 @@
         .status-completed { background: #d4edda; color: #155724; }
         .status-rejected { background: #f8d7da; color: #721c24; }
         .status-cancelled { background: #e2e3e5; color: #383d41; }
+        .status-under_review { background: #cce5ff; color: #004085; }
+        .status-approved { background: #d4edda; color: #155724; }
         .service-card .fa-hourglass-half { color: #f0ad4e; }
         .service-card .fa-check-circle { color: #28a745; }
         .service-card .fa-times-circle { color: #dc3545; }
@@ -87,7 +89,7 @@
     <main class="main-content">
         <div class="services-container">
             <h1 class="page-title">Мои услуги</h1>
-            <p class="page-description">Ваши заявления на получение услуг</p>
+            <p class="page-description">Ваши заявления на получение услуг и обращения в ЦИК</p>
             <div id="loading" class="loading">Загрузка...</div>
             <div id="servicesList"></div>
         </div>
@@ -111,21 +113,34 @@
             'positive': 'Принято положительное решение',
             'completed': 'Результат выдан',
             'rejected': 'Отказано',
-            'cancelled': 'Отменено'
+            'cancelled': 'Отменено',
+            'under_review': 'На рассмотрении',      // для ЦИК
+            'approved': 'Одобрено',                 // для ЦИК
+            'draft': 'Черновик'                     // для ЦИК
         };
 
-        // Маппинг service_type -> название для пользователя
+        // Маппинг service_type -> название для пользователя (услуги)
         const serviceTypeNames = {
             'passport': 'Получение паспорта гражданина СФСРЮ',
             'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ',
             'inn': 'Получение ИНН'
         };
 
+        // Маппинг типов обращений в ЦИК -> название
+        const voteTypeNames = {
+            'candidate_registration': 'Регистрация кандидата',
+            'observer_registration': 'Регистрация наблюдателя',
+            'remote_voting_request': 'Дистанционное голосование',
+            'change_polling_station': 'Смена участка голосования',
+            'data_change': 'Изменение данных',
+            'other': 'Другое обращение'
+        };
+
         function getStatusIcon(status) {
             switch (status) {
                 case 'rejected': return '<i class="fas fa-times-circle" style="color:#dc3545;"></i>';
                 case 'cancelled': return '<i class="fas fa-ban" style="color:#6c757d;"></i>';
-                case 'positive': case 'completed': return '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
+                case 'positive': case 'completed': case 'approved': return '<i class="fas fa-check-circle" style="color:#28a745;"></i>';
                 default: return '<i class="fas fa-hourglass-half" style="color:#f0ad4e;"></i>';
             }
         }
@@ -140,14 +155,13 @@
             return true;
         }
 
-        // Загрузка заявлений из разных таблиц и объединение
         async function loadServices() {
             const loading = document.getElementById('loading');
             const list = document.getElementById('servicesList');
             loading.style.display = 'block';
 
             try {
-                // 1. Загружаем из passport (старая структура)
+                // 1. Паспорта (старая структура)
                 const { data: passportData, error: pErr } = await supabase
                     .schema('services')
                     .from('passport')
@@ -155,7 +169,7 @@
                     .eq('user_id', currentUserId)
                     .order('created_at', { ascending: false });
 
-                // 2. Загружаем из foreign_passport
+                // 2. Загранпаспорта
                 const { data: foreignData, error: fErr } = await supabase
                     .schema('services')
                     .from('foreign_passport')
@@ -163,7 +177,7 @@
                     .eq('user_id', currentUserId)
                     .order('created_at', { ascending: false });
 
-                // 3. Загружаем из applications (новая структура) — подтягиваем название услуги из catalog
+                // 3. Заявления на услуги (новая структура)
                 const { data: appData, error: aErr } = await supabase
                     .schema('services')
                     .from('applications')
@@ -182,7 +196,17 @@
                 if (fErr) console.error('Ошибка загрузки загранпаспортов:', fErr);
                 if (aErr) console.error('Ошибка загрузки заявлений из applications:', aErr);
 
-                // Преобразуем данные из applications в единый формат
+                // 4. ЗАЯВЛЕНИЯ В ЦИК (НОВОЕ)
+                const { data: voteApps, error: vErr } = await supabase
+                    .schema('votes')
+                    .from('applications')
+                    .select('id, application_number, created_at, status, type, election_id, data')
+                    .eq('user_id', currentUserId)
+                    .order('created_at', { ascending: false });
+
+                if (vErr) console.error('Ошибка загрузки заявлений ЦИК:', vErr);
+
+                // Преобразуем данные из applications (услуги) в единый формат
                 const formattedApps = (appData || []).map(item => {
                     const serviceKey = item.catalog?.service_key || 'unknown';
                     return {
@@ -191,8 +215,23 @@
                         created_at: item.created_at,
                         status: item.status,
                         service_type: serviceKey,
-                        // для ссылки будем использовать type=application&id=...
                         _type: 'application'
+                    };
+                });
+
+                // Преобразуем заявления ЦИК
+                const formattedVoteApps = (voteApps || []).map(item => {
+                    const typeName = voteTypeNames[item.type] || item.type || 'Обращение в ЦИК';
+                    return {
+                        id: item.id,
+                        application_number: item.application_number || `CIC-${String(item.id).slice(0,8)}`,
+                        created_at: item.created_at,
+                        status: item.status,
+                        service_type: 'vote',  // для идентификации
+                        _type: 'vote',
+                        _displayName: typeName,
+                        // сохраним оригинальные данные для возможного использования
+                        _voteData: { type: item.type, election_id: item.election_id, data: item.data }
                     };
                 });
 
@@ -200,7 +239,8 @@
                 const allData = [
                     ...(passportData || []).map(item => ({ ...item, _type: 'passport' })),
                     ...(foreignData || []).map(item => ({ ...item, _type: 'foreign_passport' })),
-                    ...formattedApps
+                    ...formattedApps,
+                    ...formattedVoteApps
                 ];
 
                 // Сортируем по дате (новые сверху)
@@ -217,21 +257,18 @@
                     const statusText = statusMap[item.status] || item.status;
                     const date = new Date(item.created_at).toLocaleDateString('ru-RU');
                     const iconHtml = getStatusIcon(item.status);
+                    
                     // Определяем название услуги
-                    let serviceName = serviceTypeNames[item.service_type] || item.service_type || 'Услуга';
-                    // Для старых паспортов service_type уже есть
-                    // Для новых из applications service_type = service_key
-                    // Но если это старая запись, service_type уже проставлен
-                    // Для единообразия передаём type в URL
+                    let serviceName = item._displayName || serviceTypeNames[item.service_type] || item.service_type || 'Услуга';
+                    
+                    // Определяем тип для ссылки
                     let typeParam = item._type;
-                    if (typeParam === 'application') {
-                        // Для новых заявок передаём type=application
-                        typeParam = 'application';
+                    if (typeParam === 'vote') {
+                        typeParam = 'vote';
                     } else if (typeParam === 'passport' || typeParam === 'foreign_passport') {
-                        // оставляем как есть
+                        typeParam = item.service_type;  // 'passport' или 'foreign_passport'
                     } else {
-                        // fallback
-                        typeParam = item.service_type;
+                        typeParam = 'application';
                     }
 
                     return `

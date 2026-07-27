@@ -5,28 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Админ — Управление голосованиями</title>
   <style>
+    /* стили без изменений (оставляем как было) */
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; }
     a { text-decoration: none; color: inherit; }
-
-    .header {
-      background: linear-gradient(135deg, #ff6666, #cc0000);
-      padding: 0.8rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
-    .header-container {
-      max-width: 1300px;
-      margin: 0 auto;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0 2rem;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
+    .header { background: linear-gradient(135deg, #ff6666, #cc0000); padding: 0.8rem 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .header-container { max-width: 1300px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 2rem; flex-wrap: wrap; gap: 1rem; }
     .logo { display: flex; align-items: center; gap: 12px; }
     .logo img { height: 40px; width: auto; }
     .logo h1 { font-size: 1.5rem; color: white; font-weight: 800; }
@@ -34,12 +18,10 @@
     .nav-menu a { padding: 0.5rem 1rem; border-radius: 50px; background: rgba(255,255,255,0.2); color: white; font-weight: 600; transition: 0.3s; }
     .nav-menu a:hover { background: rgba(255,255,255,0.4); }
     .admin-user { display: flex; align-items: center; gap: 12px; color: white; }
-
     .main-content { flex: 1; padding: 2rem 1.5rem; }
     .container { max-width: 1300px; margin: 0 auto; }
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem; }
     .page-header h2 { font-size: 2rem; color: #7b0000; }
-
     .btn { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: 0.2s; }
     .btn-primary { background: #7b0000; color: white; }
     .btn-success { background: #28a745; color: white; }
@@ -48,10 +30,8 @@
     .btn-secondary { background: #6c757d; color: white; }
     .btn-sm { padding: 0.3rem 0.8rem; font-size: 0.85rem; }
     .btn:hover { opacity: 0.85; }
-
     .loading { text-align: center; padding: 3rem; color: #666; }
     .no-data { text-align: center; padding: 3rem; color: #888; background: #fafafa; border-radius: 16px; border: 1px dashed #ddd; }
-
     .vote-table { width: 100%; border-collapse: collapse; background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-radius: 12px; overflow: hidden; margin-bottom: 2rem; }
     .vote-table th, .vote-table td { padding: 0.8rem 1rem; text-align: left; border-bottom: 1px solid #eee; vertical-align: middle; }
     .vote-table th { background: #f1f1f1; font-weight: 600; }
@@ -61,33 +41,9 @@
     .status-badge.active { background: #d4edda; color: #155724; }
     .status-badge.completed { background: #cce5ff; color: #004085; }
     .status-badge.cancelled { background: #f8d7da; color: #721c24; }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      justify-content: center;
-      align-items: center;
-      z-index: 2000;
-      opacity: 0;
-      visibility: hidden;
-      transition: 0.3s;
-    }
+    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 2000; opacity: 0; visibility: hidden; transition: 0.3s; }
     .modal.active { display: flex; opacity: 1; visibility: visible; }
-    .modal-content {
-      background: white;
-      border-radius: 16px;
-      width: 95%;
-      max-width: 950px;
-      padding: 2rem;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      max-height: 95vh;
-      overflow-y: auto;
-    }
+    .modal-content { background: white; border-radius: 16px; width: 95%; max-width: 950px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.3); max-height: 95vh; overflow-y: auto; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
     .modal-header h4 { font-size: 1.4rem; color: #333; }
     .close { background: none; border: none; font-size: 2rem; cursor: pointer; color: #999; }
@@ -97,43 +53,20 @@
     .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
     .form-row .form-group { flex: 1; min-width: 200px; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem; }
-
     .tabs { display: flex; gap: 0.5rem; border-bottom: 2px solid #ddd; margin-bottom: 1.5rem; flex-wrap: wrap; }
     .tab-btn { padding: 0.5rem 1.2rem; background: none; border: none; border-bottom: 3px solid transparent; font-weight: 600; cursor: pointer; color: #666; transition: 0.2s; }
     .tab-btn.active { border-bottom-color: #7b0000; color: #7b0000; }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
-
     .options-list { margin: 1rem 0; }
-    .option-item-admin {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 0.5rem 1rem;
-      background: #f8f9fa;
-      border-radius: 6px;
-      margin-bottom: 0.5rem;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-    }
+    .option-item-admin { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 1rem; background: #f8f9fa; border-radius: 6px; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
     .option-item-admin .option-text { flex: 1; }
     .option-item-admin .option-photo { max-width: 60px; max-height: 60px; border-radius: 50%; margin-right: 10px; }
     .option-item-admin .option-percent { font-weight: 600; color: #7b0000; margin: 0 1rem; }
     .option-item-admin .option-actions { display: flex; gap: 0.4rem; }
-
-    .add-option-form {
-      display: flex;
-      gap: 0.8rem;
-      align-items: center;
-      flex-wrap: wrap;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: #e9ecef;
-      border-radius: 8px;
-    }
+    .add-option-form { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; margin: 1rem 0; padding: 1rem; background: #e9ecef; border-radius: 8px; }
     .add-option-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
     .add-option-form .form-group label { font-weight: 500; font-size: 0.9rem; }
-
     .applications-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     .applications-table th, .applications-table td { padding: 0.5rem 0.8rem; border: 1px solid #eee; }
     .applications-table th { background: #f1f1f1; }
@@ -143,32 +76,16 @@
     .app-status-badge.approved { background: #d4edda; color: #155724; }
     .app-status-badge.rejected { background: #f8d7da; color: #721c24; }
     .app-status-badge.completed { background: #e9ecef; color: #6c757d; }
-
-    .upload-log {
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 0.8rem;
-      margin-top: 0.8rem;
-      max-height: 150px;
-      overflow-y: auto;
-      font-family: monospace;
-      font-size: 0.85rem;
-      color: #333;
-    }
+    .upload-log { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 0.8rem; margin-top: 0.8rem; max-height: 150px; overflow-y: auto; font-family: monospace; font-size: 0.85rem; color: #333; }
     .upload-log .log-entry { padding: 0.2rem 0; border-bottom: 1px solid #eee; }
     .upload-log .log-entry.success { color: #28a745; }
     .upload-log .log-entry.error { color: #dc3545; }
     .upload-log .log-entry.info { color: #007bff; }
-
     .statistics { margin: 1rem 0; padding: 1rem; background: #f1f1f1; border-radius: 8px; }
     .statistics .total-votes { font-weight: 600; margin-bottom: 0.5rem; }
-
-    /* Стили для просмотра заявления */
     .app-detail-field { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; }
     .app-detail-field .label { font-weight: 600; width: 30%; color: #555; }
     .app-detail-field .value { width: 70%; }
-
     @media (max-width: 768px) {
       .header-container { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       .page-header { flex-direction: column; align-items: stretch; }
@@ -503,25 +420,24 @@
       return map[type] || type;
     }
 
-    async function checkAdmin() {
-      const { data: { user }, error } = await supabase.auth.getUser();
-      if (error || !user) {
-        alert('Необходимо авторизоваться');
-        window.location.href = '/login.html';
-        return false;
-      }
-      const { data: userData, error: roleError } = await supabase
-        .from('users')
-        .select('role, email')
-        .eq('id', user.id)
-        .single();
-      if (roleError || !userData || userData.role !== 'admin') {
-        alert('У вас нет прав администратора');
-        window.location.href = '/profile.html';
-        return false;
-      }
-      adminEmail.textContent = userData.email;
-      return true;
+    // --- ИСПРАВЛЕНИЕ ВРЕМЕНИ: преобразование локальной даты в UTC без смещения ---
+    function toUtcIsoString(localDateStr) {
+      if (!localDateStr) return null;
+      // Создаём Date из строки как локального времени
+      const date = new Date(localDateStr);
+      // Используем метод toISOString, который сохраняет локальное время как UTC
+      return date.toISOString();
+    }
+
+    // --- КОРРЕКТНОЕ ЗАПОЛНЕНИЕ ПОЛЕЙ ДАТЫ ПРИ ОТКРЫТИИ РЕДАКТИРОВАНИЯ ---
+    function setDateTimeLocalInput(inputElement, dateStr) {
+      if (!dateStr) return;
+      // Преобразуем ISO строку (UTC) в локальное время для отображения
+      const date = new Date(dateStr);
+      // Получаем локальное смещение в минутах и корректируем
+      const offset = date.getTimezoneOffset();
+      const localDate = new Date(date.getTime() - offset * 60000);
+      inputElement.value = localDate.toISOString().slice(0, 16);
     }
 
     // --- Загрузка голосований ---
@@ -603,10 +519,13 @@
       const now = new Date();
       const start = new Date(now.getTime() + 7*24*60*60*1000);
       const end = new Date(start.getTime() + 7*24*60*60*1000);
-      voteStart.value = start.toISOString().slice(0,16);
-      voteEnd.value = end.toISOString().slice(0,16);
-      const deadline = new Date(start.getTime() - 2*24*60*60*1000);
-      voteDeadline.value = deadline.toISOString().slice(0,16);
+      // Устанавливаем локальное время для полей (через toISOString с учётом смещения)
+      const localStart = new Date(start.getTime() - start.getTimezoneOffset() * 60000);
+      const localEnd = new Date(end.getTime() - end.getTimezoneOffset() * 60000);
+      const localDeadline = new Date(start.getTime() - 2*24*60*60*1000 - start.getTimezoneOffset() * 60000);
+      voteStart.value = localStart.toISOString().slice(0,16);
+      voteEnd.value = localEnd.toISOString().slice(0,16);
+      voteDeadline.value = localDeadline.toISOString().slice(0,16);
     }
 
     function openCreateModal() {
@@ -634,10 +553,11 @@
         voteTitle.value = vote.title || '';
         voteDescription.value = vote.description || '';
         voteTerritory.value = vote.territory || '';
-        voteStart.value = vote.start_date ? vote.start_date.slice(0,16) : '';
-        voteEnd.value = vote.end_date ? vote.end_date.slice(0,16) : '';
+        // Устанавливаем даты с учётом локального времени
+        setDateTimeLocalInput(voteStart, vote.start_date);
+        setDateTimeLocalInput(voteEnd, vote.end_date);
         if (vote.settings && vote.settings.applications_deadline) {
-          voteDeadline.value = vote.settings.applications_deadline.slice(0,16);
+          setDateTimeLocalInput(voteDeadline, vote.settings.applications_deadline);
         } else {
           voteDeadline.value = '';
         }
@@ -921,10 +841,12 @@
       appDetailModal.classList.add('active');
     }
 
-    // === ИЗМЕНЕННАЯ ФУНКЦИЯ ===
+    // === ИЗМЕНЕННАЯ ФУНКЦИЯ: добавлено уведомление и убран pop-up "Сохранено!" ===
     async function changeAppStatus(appId, newStatus) {
       if (!confirm(`Изменить статус заявления на "${getAppStatusLabel(newStatus)}"?`)) return;
       const { data: { user } } = await supabase.auth.getUser();
+      
+      // Обновляем статус в БД
       const { error } = await supabase
         .schema(SCHEMA)
         .from('applications')
@@ -936,9 +858,45 @@
         .eq('id', appId);
       if (error) { alert('Ошибка: ' + error.message); return; }
 
+      // Получаем обновлённое заявление
       const app = allApplications.find(a => a.id === appId);
+      if (!app) {
+        console.error('Заявление не найдено после обновления');
+        return;
+      }
 
-      // === НОВОЕ: одобрение дистанционного голосования ===
+      // Отправка уведомления пользователю (без изменений)
+      try {
+        const statusText = getAppStatusLabel(newStatus);
+        const typeLabel = getAppTypeLabel(app.type);
+        const title = `Изменение статуса заявления "${typeLabel}"`;
+        const appNumber = app.application_number || app.id.slice(0, 8);
+        const content = `Ваше заявление "${typeLabel}" (№${appNumber}) изменило статус на "${statusText}".`;
+        
+        const { error: msgError } = await supabase
+          .schema('messages')
+          .from('user_messages')
+          .insert({
+            user_id: app.user_id,
+            title: title,
+            content: content,
+            type: 'status_service_change',
+            is_read: false,
+            service_type: 'vote',
+            service_id: app.id,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+        if (msgError) {
+          console.error('Ошибка отправки уведомления:', msgError);
+        } else {
+          console.log(`Уведомление отправлено пользователю ${app.user_id} о статусе заявления ${appId}`);
+        }
+      } catch (err) {
+        console.error('Ошибка при отправке уведомления:', err);
+      }
+
+      // === Одобрение дистанционного голосования ===
       if (newStatus === 'approved' && app && app.type === 'remote_voting_request') {
         const { data: existing } = await supabase
           .schema(SCHEMA)
@@ -1004,6 +962,7 @@
         }
       }
 
+      // Обновляем список заявлений
       await loadApplications(currentVoteId);
     }
 
@@ -1041,7 +1000,7 @@
       statsEmpty.style.display = 'none';
     }
 
-    // --- Сохранение голосования ---
+    // --- Сохранение голосования (ИСПРАВЛЕНО: корректная дата, убран pop-up) ---
     async function saveVote(e) {
       e.preventDefault();
       const id = editVoteId.value;
@@ -1051,13 +1010,13 @@
         title: voteTitle.value.trim(),
         description: voteDescription.value.trim(),
         territory: voteTerritory.value.trim(),
-        start_date: new Date(voteStart.value).toISOString(),
-        end_date: new Date(voteEnd.value).toISOString(),
+        start_date: toUtcIsoString(voteStart.value),  // исправлено
+        end_date: toUtcIsoString(voteEnd.value),      // исправлено
         status: voteStatus.value,
         settings: {}
       };
       if (voteDeadline.value) {
-        payload.settings.applications_deadline = new Date(voteDeadline.value).toISOString();
+        payload.settings.applications_deadline = toUtcIsoString(voteDeadline.value);
       }
       let result;
       if (id) {
@@ -1082,7 +1041,9 @@
         editVoteId.value = currentVoteId;
         modalTitle.textContent = 'Редактирование голосования';
       }
-      alert('Сохранено!');
+      // Убираем alert("Сохранено!")
+      // alert('Сохранено!'); // <-- удалено
+      console.log('Голосование сохранено успешно');
       await loadAndRender();
       if (currentVoteId) {
         await loadApplications(currentVoteId);
@@ -1140,23 +1101,6 @@
         await supabase.auth.signOut();
         window.location.href = '/login.html';
       });
-
-      // ======== ВТОРОЙ ФРАГМЕНТ (для будущего использования) ========
-      // Здесь можно добавить обработчик для ручного добавления голоса.
-      // Пример проверки на существующий голос:
-      /*
-      const { data: existingVote } = await supabase
-        .schema(SCHEMA)
-        .from('user_votes')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('election_id', currentVoteId)
-        .maybeSingle();
-      if (existingVote) {
-        alert('Этот пользователь уже проголосовал в этом голосовании');
-        return;
-      }
-      */
     });
   </script>
 </body>
