@@ -11,7 +11,6 @@ let selectedPurpose = null; // 'candidate', 'observer', 'voter'
 let selectedVoterGoal = null; // 'change_polling_station', 'electronic_voting', 'refuse_voting'
 let selectedPollingStationId = null;
 let pollingStations = [];
-let photoPath = null;
 let hasActiveApp = false;
 
 // ============================================================
@@ -80,9 +79,6 @@ async function checkActiveApplication() {
 // Загрузка участков для голосования
 // ============================================================
 async function loadPollingStations() {
-    // Используем таблицу адресов, предполагаем, что есть таблица polling_stations
-    // Если её нет, создадим или используем существующие адреса
-    // Для примера используем заглушку или берём из таблицы
     const { data, error } = await supabase
         .schema('addresses')
         .from('polling_stations')
@@ -152,9 +148,9 @@ function getNextStep(step) {
         }
         case 3: {
             if (selectedPurpose === 'candidate') return 4;
-            if (selectedPurpose === 'observer') return 4; // шаг 4-observer
-            if (selectedPurpose === 'voter') return 4; // шаг 4-voter
-            return 7; // завершение
+            if (selectedPurpose === 'observer') return '4-observer';
+            if (selectedPurpose === 'voter') return '4-voter';
+            return 6; // завершение
         }
         case 4: {
             // Для кандидата – проверка партии
@@ -163,29 +159,21 @@ function getNextStep(step) {
             return 5;
         }
         case 5: {
-            // Для кандидата – выдвижение партией
-            // После этого шага переходим к загрузке фото
+            // Для кандидата – выдвижение партией (сразу на подтверждение)
             return 6;
         }
-        case 6: {
-            // Загрузка фото – проверяем, загружено ли
-            if (!photoPath) return 6;
-            return 7;
-        }
-        case '4-observer': return 7;
+        case '4-observer': return 6;
         case '4-voter': {
             if (!voterGoal) return '4-voter';
             selectedVoterGoal = voterGoal.value;
-            if (selectedVoterGoal === 'change_polling_station') return 5;
-            if (selectedVoterGoal === 'electronic_voting') return 7;
-            if (selectedVoterGoal === 'refuse_voting') return 7;
-            return 7;
+            if (selectedVoterGoal === 'change_polling_station') return '5-voter';
+            return 6;
         }
-        case 5: {
-            if (!selectedPollingStationId) return 5;
-            return 7;
+        case '5-voter': {
+            if (!selectedPollingStationId) return '5-voter';
+            return 6;
         }
-        case 7: return 8;
+        case 6: return 7;
         default: return step + 1;
     }
 }
@@ -196,17 +184,16 @@ function getPrevStep(step) {
         case 3: return 2;
         case 4: return 3;
         case 5: return 4;
-        case 6: return 5;
-        case 7: {
-            if (selectedPurpose === 'candidate') return 6;
+        case 6: {
+            if (selectedPurpose === 'candidate') return 5;
             if (selectedPurpose === 'observer') return '4-observer';
             if (selectedPurpose === 'voter') {
-                if (selectedVoterGoal === 'change_polling_station') return 5;
+                if (selectedVoterGoal === 'change_polling_station') return '5-voter';
                 return '4-voter';
             }
             return 3;
         }
-        case 8: return 7;
+        case 7: return 6;
         default: return step - 1;
     }
 }
@@ -216,7 +203,7 @@ function goToStep(step) {
     let numericStep = step;
     if (step === '4-observer') numericStep = 4;
     else if (step === '4-voter') numericStep = 4;
-    else if (step === 5) numericStep = 5; // для voter – шаг 5-voter
+    else if (step === '5-voter') numericStep = 5;
 
     // Скрываем все шаги
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
@@ -225,7 +212,7 @@ function goToStep(step) {
     let targetSelector;
     if (step === '4-observer') targetSelector = '.step-content[data-step="4-observer"]';
     else if (step === '4-voter') targetSelector = '.step-content[data-step="4-voter"]';
-    else if (step === 5 && selectedPurpose === 'voter') targetSelector = '.step-content[data-step="5-voter"]';
+    else if (step === '5-voter') targetSelector = '.step-content[data-step="5-voter"]';
     else targetSelector = `.step-content[data-step="${numericStep}"]`;
 
     const targetStep = document.querySelector(targetSelector);
@@ -268,10 +255,10 @@ function goToStep(step) {
             });
         });
     }
-    if (step === 5 && selectedPurpose === 'voter') {
+    if (step === '5-voter') {
         if (pollingStations.length === 0) loadPollingStations();
     }
-    if (step === 7) prepareSummary();
+    if (step === 6) prepareSummary();
 }
 
 // ============================================================
@@ -291,82 +278,7 @@ function renderProfileData() {
 }
 
 // ============================================================
-// Шаг 6: Загрузка фото (для кандидата)
-// ============================================================
-function initPhotoUpload() {
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('photoUpload');
-    if (!dropZone) return;
-
-    dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.style.background = '#e9ecef';
-    });
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.background = '#fafafa';
-    });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.background = '#fafafa';
-        const files = e.dataTransfer.files;
-        if (files.length) {
-            fileInput.files = files;
-            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
-        }
-    });
-
-    fileInput.addEventListener('change', async () => {
-        if (!fileInput.files.length) return;
-        const file = fileInput.files[0];
-        const nextBtn = document.getElementById('step6NextBtn');
-        nextBtn.disabled = true;
-        const success = await uploadPhoto(file);
-        if (success) {
-            nextBtn.disabled = false;
-            // Показать предпросмотр
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                document.getElementById('previewImg').src = e.target.result;
-                document.getElementById('photoPreview').classList.remove('hidden');
-            };
-            reader.readAsDataURL(file);
-            document.getElementById('fileList').innerHTML = `<i class="fas fa-check-circle" style="color:#28a745;"></i> ${file.name}`;
-        }
-    });
-}
-
-async function uploadPhoto(file) {
-    if (!file) return false;
-    if (file.size > 1024 * 1024) {
-        showError('Фото должно быть не более 1 МБ');
-        return false;
-    }
-    if (file.type !== 'image/jpeg') {
-        showError('Только JPG формат');
-        return false;
-    }
-
-    if (!applicationNumber) {
-        applicationNumber = generateApplicationNumber();
-    }
-    const filePath = `election_applications/${applicationNumber}/photo.jpg`;
-
-    const { error } = await supabase.storage
-        .from('services-files')
-        .upload(filePath, file, { upsert: false });
-
-    if (error) {
-        showError('Ошибка загрузки фото: ' + error.message);
-        return false;
-    }
-
-    photoPath = filePath;
-    return true;
-}
-
-// ============================================================
-// Шаг 7: Подтверждение
+// Шаг 6: Подтверждение
 // ============================================================
 function prepareSummary() {
     let html = '<table class="summary-table">';
@@ -395,7 +307,6 @@ function prepareSummary() {
                 html += `<tr><th>Примечание</th><td>Требуется сбор 10 подписей избирателей</td></tr>`;
             }
         }
-        html += `<tr><th>Фото</th><td>${photoPath ? 'Загружено' : 'Не загружено'}</td></tr>`;
     }
 
     if (selectedPurpose === 'observer') {
@@ -449,8 +360,7 @@ async function submitApplication() {
             personal_code: userPersonalCode,
             has_party: hasParty ? hasParty.value === 'yes' : false,
             party_name: hasParty && hasParty.value === 'yes' ? document.getElementById('partyName').value.trim() : null,
-            nominated_by_party: nominated ? nominated.value === 'yes' : false,
-            photo_path: photoPath
+            nominated_by_party: nominated ? nominated.value === 'yes' : false
         };
         appType = 'candidate_registration';
     } else if (selectedPurpose === 'observer') {
@@ -517,9 +427,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         formContainer.classList.add('loaded');
     }
 
-    // Инициализация загрузки фото
-    initPhotoUpload();
-
     // Подсветка радио
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
@@ -558,9 +465,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 selectedVoterGoal = goal.value;
             }
-            if (currentStep === 6) {
-                if (!photoPath) {
-                    showError('Загрузите фото');
+            if (currentStep === '5-voter') {
+                if (!selectedPollingStationId) {
+                    showError('Выберите участок');
                     return;
                 }
             }
@@ -592,7 +499,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (success) {
             document.getElementById('applicationNumber').textContent = applicationNumber;
             document.getElementById('gotoServiceLink').href = `../../../personal-profile/services/service-view.html?id=${applicationNumber}`;
-            goToStep(8);
+            goToStep(7);
         }
     });
 
