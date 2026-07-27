@@ -239,136 +239,144 @@
     </footer>
 
     <script src="../js/mob-menu.js"></script>
-<script type="module">
-    import { supabase } from '../js/supabase-config.js';
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
 
-    let currentUserId = null;
-    let catalogMap = {}; // service_key → name_ru
+        let currentUserId = null;
+        let catalogMap = {}; // service_key → name_ru
 
-    async function loadUser() {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            window.location.href = '../login.html';
-            return false;
-        }
-        currentUserId = session.user.id;
-        return true;
-    }
-
-    async function loadCatalog() {
-        const { data, error } = await supabase
-            .schema('services')
-            .from('catalog')
-            .select('service_key, name_ru');
-        if (error) {
-            console.error('Ошибка загрузки каталога услуг:', error);
-            return;
-        }
-        data.forEach(item => {
-            catalogMap[item.service_key] = item.name_ru;
-        });
-    }
-
-    async function loadMessages() {
-        const loading = document.getElementById('loading');
-        const list = document.getElementById('messagesList');
-        const noMessages = document.getElementById('noMessages');
-
-        loading.style.display = 'block';
-        list.innerHTML = '';
-        noMessages.style.display = 'none';
-
-        const { data, error } = await supabase
-            .schema('messages')
-            .from('user_messages')
-            .select('*')
-            .eq('user_id', currentUserId)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            console.error('Ошибка загрузки сообщений:', error);
-            loading.style.display = 'none';
-            list.innerHTML = '<p class="error">Ошибка загрузки</p>';
-            return;
+        async function loadUser() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = '../login.html';
+                return false;
+            }
+            currentUserId = session.user.id;
+            return true;
         }
 
-        loading.style.display = 'none';
-
-        if (!data || data.length === 0) {
-            noMessages.style.display = 'block';
-            return;
+        async function loadCatalog() {
+            const { data, error } = await supabase
+                .schema('services')
+                .from('catalog')
+                .select('service_key, name_ru');
+            if (error) {
+                console.error('Ошибка загрузки каталога услуг:', error);
+                return;
+            }
+            data.forEach(item => {
+                catalogMap[item.service_key] = item.name_ru;
+            });
         }
 
-        list.innerHTML = data.map(msg => {
-            const serviceType = msg.service_type || 'unknown';
-            // Получаем название из каталога, если есть, иначе используем serviceType как fallback
-            const serviceName = catalogMap[serviceType] || serviceType || 'Услуга';
-            // Формируем ссылку на просмотр заявки
-            let viewLink = '#';
-            if (serviceType === 'passport' || serviceType === 'foreign_passport') {
-                viewLink = `services/service-view.html?id=${msg.service_id}&type=${serviceType}`;
-            } else {
-                // Для всех остальных (включая inn и application) используем type=application
-                viewLink = `services/service-view.html?id=${msg.service_id}&type=application`;
+        async function loadMessages() {
+            const loading = document.getElementById('loading');
+            const list = document.getElementById('messagesList');
+            const noMessages = document.getElementById('noMessages');
+
+            loading.style.display = 'block';
+            list.innerHTML = '';
+            noMessages.style.display = 'none';
+
+            const { data, error } = await supabase
+                .schema('messages')
+                .from('user_messages')
+                .select('*')
+                .eq('user_id', currentUserId)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Ошибка загрузки сообщений:', error);
+                loading.style.display = 'none';
+                list.innerHTML = '<p class="error">Ошибка загрузки</p>';
+                return;
             }
 
-            return `
-                <div class="message-item ${msg.is_read ? '' : 'unread'}" data-id="${msg.id}">
-                    <div class="message-header">
-                        <span class="message-title">${escapeHTML(msg.title)}</span>
-                        <span class="message-date">${new Date(msg.created_at).toLocaleString()}</span>
-                    </div>
-                    <div class="message-content">
-                        ${escapeHTML(msg.content)}
-                        ${serviceType ? `<p><strong>Услуга:</strong> ${escapeHTML(serviceName)}</p>` : ''}
-                    </div>
-                    <div class="message-footer">
-                        <a href="${viewLink}" class="btn-view-application" target="_blank">Перейти к заявлению</a>
-                        ${!msg.is_read ? '<button class="btn-mark-read" data-id="'+msg.id+'">Отметить прочитанным</button>' : ''}
-                    </div>
-                </div>
-            `;
-        }).join('');
+            loading.style.display = 'none';
 
-        // Обработчики для кнопок "Отметить прочитанным"
-        document.querySelectorAll('.btn-mark-read').forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                const id = e.target.dataset.id;
-                const { error } = await supabase
-                    .schema('messages')
-                    .from('user_messages')
-                    .update({ is_read: true })
-                    .eq('id', id)
-                    .eq('user_id', currentUserId);
+            if (!data || data.length === 0) {
+                noMessages.style.display = 'block';
+                return;
+            }
 
-                if (error) {
-                    alert('Ошибка: ' + error.message);
-                } else {
-                    const msgDiv = document.querySelector(`.message-item[data-id="${id}"]`);
-                    if (msgDiv) {
-                        msgDiv.classList.remove('unread');
-                        e.target.remove();
-                    }
+            list.innerHTML = data.map(msg => {
+                const serviceType = msg.service_type || 'unknown';
+                // Получаем название из каталога, если есть, иначе делаем красивое форматирование
+                let serviceName = catalogMap[serviceType];
+                if (!serviceName) {
+                    // Если в каталоге нет, пробуем преобразовать ключ в читаемый вид
+                    serviceName = serviceType
+                        .replace(/_/g, ' ')
+                        .replace(/\b\w/g, l => l.toUpperCase());
                 }
+
+                // Формируем ссылку на просмотр заявки
+                let viewLink = '#';
+                const isLegacy = serviceType === 'passport' || serviceType === 'foreign_passport';
+                if (isLegacy) {
+                    viewLink = `services/service-view.html?id=${msg.service_id}&type=${serviceType}`;
+                } else {
+                    // Для новых услуг (inn, application и любых других) используем type=application
+                    viewLink = `services/service-view.html?id=${msg.service_id}&type=application`;
+                }
+
+                return `
+                    <div class="message-item ${msg.is_read ? '' : 'unread'}" data-id="${msg.id}">
+                        <div class="message-header">
+                            <span class="message-title">${escapeHTML(msg.title)}</span>
+                            <span class="message-date">${new Date(msg.created_at).toLocaleString()}</span>
+                        </div>
+                        <div class="message-content">
+                            ${escapeHTML(msg.content)}
+                            ${serviceType && serviceType !== 'unknown' ? `<p><strong>Услуга:</strong> ${escapeHTML(serviceName)}</p>` : ''}
+                        </div>
+                        <div class="message-footer">
+                            <a href="${viewLink}" class="btn-view-application" target="_blank">Перейти к заявлению</a>
+                            ${!msg.is_read ? '<button class="btn-mark-read" data-id="'+msg.id+'">Отметить прочитанным</button>' : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Обработчики для кнопок "Отметить прочитанным"
+            document.querySelectorAll('.btn-mark-read').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    const id = e.target.dataset.id;
+                    const { error } = await supabase
+                        .schema('messages')
+                        .from('user_messages')
+                        .update({ is_read: true })
+                        .eq('id', id)
+                        .eq('user_id', currentUserId);
+
+                    if (error) {
+                        alert('Ошибка: ' + error.message);
+                    } else {
+                        const msgDiv = document.querySelector(`.message-item[data-id="${id}"]`);
+                        if (msgDiv) {
+                            msgDiv.classList.remove('unread');
+                            e.target.remove();
+                        }
+                    }
+                });
             });
+        }
+
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await loadUser()) return;
+            await loadCatalog();
+            await loadMessages();
         });
-    }
-
-    function escapeHTML(str) {
-        if (!str) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#039;');
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-        if (!await loadUser()) return;
-        await loadCatalog();
-        await loadMessages();
-    });
-</script>
+    </script>
 </body>
 </html>
