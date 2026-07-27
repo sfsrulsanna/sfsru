@@ -26,6 +26,7 @@
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* (стили без изменений, те же что были) */
         .container { max-width: 1280px; margin: 0 auto; padding: 1rem; }
         .page-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; border-left: 4px solid #7b091a; padding-left: 1rem; }
         .page-description { color: #64748b; margin-bottom: 2rem; font-size: 1rem; }
@@ -67,7 +68,6 @@
         .loading, .no-data, .error { text-align: center; padding: 2rem; color: #64748b; font-size: 1rem; }
         .error { color: #dc3545; background: #fff5f5; border-radius: 12px; }
 
-        /* Модальные окна */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); justify-content: center; align-items: center; z-index: 1000; }
         .modal.active { display: flex; animation: fadeIn 0.2s ease; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -91,7 +91,6 @@
         .btn-small { padding: 0.2rem 0.6rem; font-size: 0.75rem; background: #dc3545; color: white; border: none; border-radius: 20px; cursor: pointer; }
         .btn-small:hover { background: #b02a37; }
 
-        /* История */
         .history-item { background: #ffffff; padding: 1rem; border-left: 4px solid #7b091a; margin-bottom: 0.75rem; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .history-item .meta { font-size: 0.8rem; color: #64748b; margin-bottom: 0.3rem; }
         .history-item .status { font-weight: 700; color: #7b091a; }
@@ -99,7 +98,6 @@
         .attachments-list a { background: #f1f5f9; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.8rem; text-decoration: none; color: #0f172a; }
         .attachments-list a:hover { background: #e2e8f0; }
 
-        /* Детали заявки в модалке */
         .detail-row { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f1f5f9; }
         .detail-label { font-weight: 600; width: 35%; color: #0f172a; }
         .detail-value { width: 65%; color: #1e293b; }
@@ -383,8 +381,10 @@
         let currentFilter = 'all';
         let currentTypeFilter = 'all';
         let currentViewId = null;
-        let currentViewType = null; // 'passport', 'foreign_passport', или 'application'
+        let currentViewType = null; // 'passport', 'foreign_passport', или ключ из каталога
         let currentViewSource = null; // 'old' или 'new'
+        let currentAppUserId = null; // <-- НОВОЕ: ID пользователя, которому принадлежит заявка
+        let currentAppNumber = null;  // <-- НОВОЕ: номер заявки
         let uploadedCreateFiles = [];
         let uploadedViewFiles = [];
         let fnsList = [];
@@ -472,6 +472,39 @@
             return name.replace(/[^a-zA-Z0-9а-яА-ЯёЁ_.-]/g, '_').replace(/\s+/g, '_');
         }
 
+        // ============================================================
+        // Функция отправки уведомления (НОВОЕ)
+        // ============================================================
+        async function sendStatusNotification(userId, appNumber, newStatus, comment, serviceId, serviceType) {
+            try {
+                const statusText = statusMap[newStatus] || newStatus;
+                const title = `Изменение статуса вашего заявления №${appNumber}`;
+                const content = `Статус вашего заявления №${appNumber} изменён на "${statusText}". Комментарий: ${comment || 'без комментария'}`;
+
+                const { error } = await supabase
+                    .schema('messages')
+                    .from('user_messages')
+                    .insert({
+                        user_id: userId,
+                        title: title,
+                        content: content,
+                        type: 'status_service_change',
+                        service_id: serviceId,
+                        service_type: serviceType,
+                        is_read: false,
+                        created_at: new Date().toISOString()
+                    });
+                if (error) {
+                    console.error('Ошибка отправки уведомления:', error);
+                }
+            } catch (e) {
+                console.error('Ошибка в sendStatusNotification:', e);
+            }
+        }
+
+        // ============================================================
+        // Загрузка каталога и отделений ФНС
+        // ============================================================
         async function loadFnsOffices() {
             const { data, error } = await supabase
                 .schema('services')
@@ -870,6 +903,10 @@
                 return;
             }
 
+            // Сохраняем данные для уведомления <-- НОВОЕ
+            currentAppUserId = data.user_id;
+            currentAppNumber = data.application_number;
+
             document.getElementById('viewAppNumber').textContent = data.application_number || '—';
 
             // Формируем детали
@@ -1104,6 +1141,18 @@
                     btn.textContent = 'Обновить статус';
                     return;
                 }
+
+                // ============================================================
+                // ОТПРАВКА УВЕДОМЛЕНИЯ (НОВОЕ)
+                // ============================================================
+                await sendStatusNotification(
+                    currentAppUserId,        // user_id получателя
+                    currentAppNumber,        // номер заявления
+                    newStatus,               // новый статус
+                    comment,                 // комментарий
+                    currentViewId,           // service_id (id заявки в таблице)
+                    currentViewType          // service_type (ключ услуги)
+                );
 
                 alert('Статус успешно обновлён');
                 await loadAllApplications();
