@@ -82,7 +82,7 @@
       background: white;
       border-radius: 16px;
       width: 95%;
-      max-width: 900px;
+      max-width: 950px;
       padding: 2rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
       max-height: 95vh;
@@ -164,17 +164,10 @@
     .statistics { margin: 1rem 0; padding: 1rem; background: #f1f1f1; border-radius: 8px; }
     .statistics .total-votes { font-weight: 600; margin-bottom: 0.5rem; }
 
-    .add-vote-form {
-      display: flex;
-      gap: 0.8rem;
-      align-items: flex-end;
-      flex-wrap: wrap;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: #e9ecef;
-      border-radius: 8px;
-    }
-    .add-vote-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
+    /* Стили для просмотра заявления */
+    .app-detail-field { display: flex; padding: 0.4rem 0; border-bottom: 1px solid #f0f0f0; }
+    .app-detail-field .label { font-weight: 600; width: 30%; color: #555; }
+    .app-detail-field .value { width: 70%; }
 
     @media (max-width: 768px) {
       .header-container { flex-direction: column; align-items: stretch; gap: 0.5rem; }
@@ -182,6 +175,9 @@
       .form-row { flex-direction: column; }
       .add-option-form, .add-vote-form { flex-direction: column; align-items: stretch; }
       .modal-content { padding: 1rem; }
+      .app-detail-field { flex-direction: column; }
+      .app-detail-field .label { width: 100%; }
+      .app-detail-field .value { width: 100%; }
     }
   </style>
 </head>
@@ -233,7 +229,7 @@
     </div>
   </main>
 
-  <!-- Модальное окно -->
+  <!-- Модальное окно редактирования голосования -->
   <div id="voteModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -311,6 +307,7 @@
             <button class="tab-btn" data-tab="tabStats">Результаты</button>
           </div>
 
+          <!-- Вкладка: Кандидаты -->
           <div id="tabOptions" class="tab-pane active">
             <div id="optionsContainer">
               <div class="options-list" id="optionsList"></div>
@@ -335,6 +332,7 @@
             </div>
           </div>
 
+          <!-- Вкладка: Заявления -->
           <div id="tabApplications" class="tab-pane">
             <div id="applicationsContainer">
               <div id="applicationsList">
@@ -346,6 +344,7 @@
             </div>
           </div>
 
+          <!-- Вкладка: Результаты -->
           <div id="tabStats" class="tab-pane">
             <div id="statsContainer">
               <div class="statistics" id="statisticsBlock" style="display:none;">
@@ -361,6 +360,22 @@
             <button type="submit" class="btn btn-primary" id="saveVoteBtn">Сохранить</button>
           </div>
         </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно просмотра заявления -->
+  <div id="appDetailModal" class="modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="modal-header">
+        <h4>Детали заявления</h4>
+        <button class="close" id="closeAppDetailModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="appDetailContent"></div>
+        <div style="margin-top: 1.5rem; text-align: right;">
+          <button class="btn btn-secondary" id="closeAppDetailBtn">Закрыть</button>
+        </div>
       </div>
     </div>
   </div>
@@ -421,6 +436,12 @@
     const statisticsList = document.getElementById('statisticsList');
     const statsEmpty = document.getElementById('statsEmpty');
 
+    // Модалка просмотра заявления
+    const appDetailModal = document.getElementById('appDetailModal');
+    const appDetailContent = document.getElementById('appDetailContent');
+    const closeAppDetailModal = document.getElementById('closeAppDetailModal');
+    const closeAppDetailBtn = document.getElementById('closeAppDetailBtn');
+
     // Прочее
     const adminEmail = document.getElementById('adminEmail');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -449,7 +470,12 @@
     }
 
     function getStatusLabel(status) {
-      const map = { draft: 'Черновик', active: 'Активно', completed: 'Завершено', cancelled: 'Отменено' };
+      const map = {
+        draft: 'Черновик',
+        active: 'Активно',
+        completed: 'Завершено',
+        cancelled: 'Отменено'
+      };
       return map[status] || status;
     }
 
@@ -465,13 +491,16 @@
       return map[status] || status;
     }
 
-    function getFullName(data) {
-      if (!data) return 'Кандидат';
-      const parts = [];
-      if (data.surname) parts.push(data.surname);
-      if (data.name) parts.push(data.name);
-      if (data.patronymic) parts.push(data.patronymic);
-      return parts.length ? parts.join(' ') : 'Кандидат';
+    function getAppTypeLabel(type) {
+      const map = {
+        candidate_registration: 'Регистрация кандидата',
+        observer_registration: 'Регистрация наблюдателя',
+        remote_voting_request: 'Дистанционное голосование',
+        data_change: 'Изменение данных',
+        change_polling_station: 'Смена участка',
+        other: 'Другое'
+      };
+      return map[type] || type;
     }
 
     async function checkAdmin() {
@@ -499,7 +528,7 @@
     async function loadVotes() {
       const { data, error } = await supabase
         .schema(SCHEMA)
-        .from('all_votes')
+        .from('elections')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -545,7 +574,11 @@
     }
 
     async function deleteVote(id) {
-      const { error } = await supabase.schema(SCHEMA).from('elections').delete().eq('id', id);
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from('elections')
+        .delete()
+        .eq('id', id);
       if (error) throw error;
       await loadAndRender();
     }
@@ -758,7 +791,11 @@
         await supabase.storage.from(PHOTO_BUCKET).remove([fullPath]);
         addLog(`Удалено фото ${fullPath}`, 'info');
       }
-      const { error } = await supabase.schema(SCHEMA).from('options').delete().eq('id', optionId);
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from('options')
+        .delete()
+        .eq('id', optionId);
       if (error) { alert('Ошибка удаления: ' + error.message); return; }
       allOptions = allOptions.filter(o => o.id !== optionId);
       renderOptions();
@@ -799,17 +836,9 @@
         </thead>
         <tbody>`;
       allApplications.forEach(app => {
-        const typeLabel = {
-          candidate_registration: 'Регистрация кандидата',
-          observer_registration: 'Регистрация наблюдателя',
-          remote_voting_request: 'Дистанционное голосование',
-          data_change: 'Изменение данных',
-          voter_request: 'Обращение избирателя',
-          other: 'Другое'
-        }[app.type] || app.type;
         html += `
           <tr>
-            <td>${typeLabel}</td>
+            <td>${getAppTypeLabel(app.type)}</td>
             <td><span class="app-status-badge ${app.status}">${getAppStatusLabel(app.status)}</span></td>
             <td>${formatDate(app.created_at)}</td>
             <td>
@@ -839,79 +868,114 @@
     function viewApplication(appId) {
       const app = allApplications.find(a => a.id === appId);
       if (!app) return;
-      // Формируем читаемый вывод
-      let details = `Заявление #${app.id.slice(0,8)}\n`;
-      details += `Тип: ${app.type}\n`;
-      details += `Статус: ${getAppStatusLabel(app.status)}\n`;
-      details += `Дата подачи: ${formatDate(app.created_at)}\n`;
-      details += `\n--- Данные заявления ---\n`;
 
-      if (app.data) {
-        const d = app.data;
-        if (d.surname || d.name || d.patronymic) {
-          details += `ФИО: ${d.surname || ''} ${d.name || ''} ${d.patronymic || ''}\n`;
-        }
-        if (d.party) details += `Партия: ${d.party}\n`;
-        if (d.nominated_by_party !== undefined) {
-          details += `Выдвинут партией: ${d.nominated_by_party ? 'Да' : 'Нет'}\n`;
-        }
-        if (d.signatures !== undefined) {
-          details += `Собрано подписей: ${d.signatures || 0}\n`;
-        }
-        if (d.target_station) details += `Желаемый участок: ${d.target_station}\n`;
-        if (d.voting_method) details += `Способ голосования: ${d.voting_method === 'electronic' ? 'Электронный' : 'На участке'}\n`;
-        if (d.reason) details += `Причина: ${d.reason}\n`;
-        // Если есть другие поля, выводим их
-        Object.keys(d).forEach(key => {
-          if (!['surname','name','patronymic','party','nominated_by_party','signatures','target_station','voting_method','reason'].includes(key)) {
-            details += `${key}: ${JSON.stringify(d[key])}\n`;
-          }
-        });
-      } else {
-        details += 'Нет данных\n';
+      // Формируем читаемый вывод
+      let html = '<div style="margin-bottom:1rem;">';
+      html += `<div class="app-detail-field"><span class="label">Тип заявления</span><span class="value">${getAppTypeLabel(app.type)}</span></div>`;
+      html += `<div class="app-detail-field"><span class="label">Статус</span><span class="value">${getAppStatusLabel(app.status)}</span></div>`;
+      html += `<div class="app-detail-field"><span class="label">Дата подачи</span><span class="value">${formatDate(app.created_at)}</span></div>`;
+      html += `<div class="app-detail-field"><span class="label">Комментарий</span><span class="value">${app.comment || '—'}</span></div>`;
+
+      // Данные заявления (распарсить JSON)
+      const data = app.data || {};
+      if (data.full_name) {
+        html += `<div class="app-detail-field"><span class="label">ФИО</span><span class="value">${data.full_name}</span></div>`;
+      }
+      if (data.surname && data.name) {
+        html += `<div class="app-detail-field"><span class="label">ФИО</span><span class="value">${data.surname} ${data.name} ${data.patronymic || ''}</span></div>`;
+      }
+      if (data.party) {
+        html += `<div class="app-detail-field"><span class="label">Партия</span><span class="value">${data.party}</span></div>`;
+      }
+      if (data.position) {
+        html += `<div class="app-detail-field"><span class="label">Должность</span><span class="value">${data.position}</span></div>`;
+      }
+      if (data.party_membership !== undefined) {
+        html += `<div class="app-detail-field"><span class="label">Член партии</span><span class="value">${data.party_membership ? 'Да' : 'Нет'}</span></div>`;
+      }
+      if (data.party_nomination !== undefined) {
+        html += `<div class="app-detail-field"><span class="label">Выдвинут партией</span><span class="value">${data.party_nomination ? 'Да' : 'Нет'}</span></div>`;
+      }
+      if (data.new_polling_station) {
+        html += `<div class="app-detail-field"><span class="label">Новый участок</span><span class="value">${data.new_polling_station}</span></div>`;
+      }
+      if (data.voting_method) {
+        html += `<div class="app-detail-field"><span class="label">Способ голосования</span><span class="value">${data.voting_method}</span></div>`;
+      }
+      if (data.reason) {
+        html += `<div class="app-detail-field"><span class="label">Причина</span><span class="value">${data.reason}</span></div>`;
+      }
+      if (data.photo_path) {
+        html += `<div class="app-detail-field"><span class="label">Фото</span><span class="value"><a href="${data.photo_path}" target="_blank">Смотреть фото</a></span></div>`;
       }
 
-      alert(details);
+      // Если есть другие поля, вывести их как есть
+      const extraFields = Object.keys(data).filter(k =>
+        !['full_name', 'surname', 'name', 'patronymic', 'party', 'position',
+          'party_membership', 'party_nomination', 'new_polling_station',
+          'voting_method', 'reason', 'photo_path'].includes(k)
+      );
+      if (extraFields.length) {
+        html += `<div class="app-detail-field"><span class="label">Дополнительные данные</span><span class="value"><pre style="background:#f5f5f5;padding:0.5rem;border-radius:4px;font-size:0.85rem;white-space:pre-wrap;">${JSON.stringify(extraFields.reduce((acc, k) => ({...acc, [k]: data[k]}), {}), null, 2)}</pre></span></div>`;
+      }
+
+      html += '</div>';
+      appDetailContent.innerHTML = html;
+      appDetailModal.classList.add('active');
     }
 
     async function changeAppStatus(appId, newStatus) {
       if (!confirm(`Изменить статус заявления на "${getAppStatusLabel(newStatus)}"?`)) return;
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
         .schema(SCHEMA)
         .from('applications')
-        .update({ status: newStatus, reviewed_by: (await supabase.auth.getUser()).data.user.id })
+        .update({
+          status: newStatus,
+          reviewed_by: user?.id || null,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', appId);
       if (error) { alert('Ошибка: ' + error.message); return; }
 
+      // Если одобряем кандидата, добавляем его в список кандидатов
       const app = allApplications.find(a => a.id === appId);
-      if (newStatus === 'approved' && app.type === 'candidate_registration') {
-        if (confirm('Одобрена регистрация кандидата. Добавить его в список кандидатов?')) {
-          const fullName = getFullName(app.data);
-          const desc = app.data.party || app.data.position || '';
-          const { error: insErr } = await supabase
-            .schema(SCHEMA)
-            .from('options')
-            .insert({
-              election_id: app.election_id,
-              text: fullName,
-              description: desc,
-              order: allOptions.length
-            });
-          if (insErr) {
-            alert('Кандидат не добавлен: ' + insErr.message);
-          } else {
-            alert('Кандидат добавлен!');
-            const { data: options } = await supabase
+      if (newStatus === 'approved' && app && app.type === 'candidate_registration') {
+        const data = app.data || {};
+        let fullName = data.full_name || '';
+        if (!fullName && data.surname) {
+          fullName = `${data.surname} ${data.name || ''} ${data.patronymic || ''}`.trim();
+        }
+        if (fullName && currentVoteId) {
+          if (confirm(`Одобрена регистрация кандидата "${fullName}". Добавить его в список кандидатов?`)) {
+            const desc = data.position || data.party || '';
+            const { error: insErr } = await supabase
               .schema(SCHEMA)
               .from('options')
-              .select('*')
-              .eq('election_id', app.election_id)
-              .order('order', { ascending: true });
-            if (options) {
-              allOptions = options;
-              renderOptions();
+              .insert({
+                election_id: currentVoteId,
+                text: fullName,
+                description: desc,
+                order: allOptions.length
+              });
+            if (insErr) {
+              alert('Кандидат не добавлен: ' + insErr.message);
+            } else {
+              alert('Кандидат добавлен!');
+              const { data: options } = await supabase
+                .schema(SCHEMA)
+                .from('options')
+                .select('*')
+                .eq('election_id', currentVoteId)
+                .order('order', { ascending: true });
+              if (options) {
+                allOptions = options;
+                renderOptions();
+              }
             }
           }
+        } else {
+          alert('Не удалось определить ФИО кандидата для добавления');
         }
       }
       await loadApplications(currentVoteId);
@@ -971,9 +1035,17 @@
       }
       let result;
       if (id) {
-        result = await supabase.schema(SCHEMA).from('elections').update(payload).eq('id', id);
+        result = await supabase
+          .schema(SCHEMA)
+          .from('elections')
+          .update(payload)
+          .eq('id', id);
       } else {
-        result = await supabase.schema(SCHEMA).from('elections').insert([payload]).select();
+        result = await supabase
+          .schema(SCHEMA)
+          .from('elections')
+          .insert([payload])
+          .select();
       }
       if (result.error) {
         alert('Ошибка сохранения: ' + result.error.message);
@@ -1032,6 +1104,11 @@
       refreshApplicationsBtn.addEventListener('click', () => {
         if (currentVoteId) loadApplications(currentVoteId);
       });
+
+      // Модалка просмотра заявления
+      closeAppDetailModal.addEventListener('click', () => appDetailModal.classList.remove('active'));
+      closeAppDetailBtn.addEventListener('click', () => appDetailModal.classList.remove('active'));
+      appDetailModal.addEventListener('click', (e) => { if (e.target === appDetailModal) appDetailModal.classList.remove('active'); });
 
       logoutBtn.addEventListener('click', async () => {
         await supabase.auth.signOut();
