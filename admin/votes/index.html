@@ -57,8 +57,10 @@
     .vote-table th { background: #f1f1f1; font-weight: 600; }
     .vote-table tr:hover { background: #fafafa; }
     .status-badge { display: inline-block; padding: 0.2rem 0.8rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; }
+    .status-badge.draft { background: #e9ecef; color: #6c757d; }
     .status-badge.active { background: #d4edda; color: #155724; }
-    .status-badge.completed { background: #e9ecef; color: #6c757d; }
+    .status-badge.completed { background: #cce5ff; color: #004085; }
+    .status-badge.cancelled { background: #f8d7da; color: #721c24; }
 
     .modal {
       display: none;
@@ -79,11 +81,11 @@
     .modal-content {
       background: white;
       border-radius: 16px;
-      width: 90%;
-      max-width: 800px;
+      width: 95%;
+      max-width: 900px;
       padding: 2rem;
       box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-      max-height: 90vh;
+      max-height: 95vh;
       overflow-y: auto;
     }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
@@ -95,6 +97,13 @@
     .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
     .form-row .form-group { flex: 1; min-width: 200px; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem; }
+
+    /* Вкладки внутри модалки */
+    .tabs { display: flex; gap: 0.5rem; border-bottom: 2px solid #ddd; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .tab-btn { padding: 0.5rem 1.2rem; background: none; border: none; border-bottom: 3px solid transparent; font-weight: 600; cursor: pointer; color: #666; transition: 0.2s; }
+    .tab-btn.active { border-bottom-color: #7b0000; color: #7b0000; }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
 
     .options-list { margin: 1rem 0; }
     .option-item-admin {
@@ -113,23 +122,6 @@
     .option-item-admin .option-percent { font-weight: 600; color: #7b0000; margin: 0 1rem; }
     .option-item-admin .option-actions { display: flex; gap: 0.4rem; }
 
-    .statistics { margin: 1rem 0; padding: 1rem; background: #f1f1f1; border-radius: 8px; }
-    .statistics .total-votes { font-weight: 600; margin-bottom: 0.5rem; }
-
-    .add-vote-form {
-      display: flex;
-      gap: 0.8rem;
-      align-items: flex-end;
-      flex-wrap: wrap;
-      margin: 1rem 0;
-      padding: 1rem;
-      background: #e9ecef;
-      border-radius: 8px;
-    }
-    .add-vote-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
-    .add-vote-form .form-group label { font-weight: 500; font-size: 0.9rem; }
-    .add-vote-form .btn { height: 40px; }
-
     .add-option-form {
       display: flex;
       gap: 0.8rem;
@@ -142,6 +134,16 @@
     }
     .add-option-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
     .add-option-form .form-group label { font-weight: 500; font-size: 0.9rem; }
+
+    .applications-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .applications-table th, .applications-table td { padding: 0.5rem 0.8rem; border: 1px solid #eee; }
+    .applications-table th { background: #f1f1f1; }
+    .app-status-badge { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 30px; font-size: 0.75rem; font-weight: 600; }
+    .app-status-badge.submitted { background: #fff3cd; color: #856404; }
+    .app-status-badge.under_review { background: #cce5ff; color: #004085; }
+    .app-status-badge.approved { background: #d4edda; color: #155724; }
+    .app-status-badge.rejected { background: #f8d7da; color: #721c24; }
+    .app-status-badge.completed { background: #e9ecef; color: #6c757d; }
 
     .upload-log {
       background: #f8f9fa;
@@ -160,11 +162,27 @@
     .upload-log .log-entry.error { color: #dc3545; }
     .upload-log .log-entry.info { color: #007bff; }
 
+    .statistics { margin: 1rem 0; padding: 1rem; background: #f1f1f1; border-radius: 8px; }
+    .statistics .total-votes { font-weight: 600; margin-bottom: 0.5rem; }
+
+    .add-vote-form {
+      display: flex;
+      gap: 0.8rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #e9ecef;
+      border-radius: 8px;
+    }
+    .add-vote-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
+
     @media (max-width: 768px) {
       .header-container { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       .page-header { flex-direction: column; align-items: stretch; }
       .form-row { flex-direction: column; }
-      .add-vote-form, .add-option-form { flex-direction: column; align-items: stretch; }
+      .add-option-form, .add-vote-form { flex-direction: column; align-items: stretch; }
+      .modal-content { padding: 1rem; }
     }
   </style>
 </head>
@@ -202,6 +220,7 @@
             <tr>
               <th>Название</th>
               <th>Тип</th>
+              <th>Уровень</th>
               <th>Территория</th>
               <th>Даты</th>
               <th>Статус</th>
@@ -225,100 +244,122 @@
       <div class="modal-body">
         <form id="voteForm">
           <input type="hidden" id="editVoteId" />
-          <input type="hidden" id="editVoteType" />
 
-          <div class="form-group">
-            <label for="voteType">Тип голосования</label>
-            <select id="voteType" required>
-              <option value="federal_election">Федеральные выборы</option>
-              <option value="regional_election">Региональные выборы</option>
-              <option value="federal_referendum">Федеральный референдум</option>
-              <option value="regional_referendum">Региональный референдум</option>
-            </select>
+          <!-- Основные поля -->
+          <div class="form-row">
+            <div class="form-group">
+              <label for="voteType">Тип</label>
+              <select id="voteType" required>
+                <option value="election">Выборы</option>
+                <option value="referendum">Референдум</option>
+                <option value="poll">Опрос</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="voteScope">Уровень</label>
+              <select id="voteScope" required>
+                <option value="federal">Федеральный</option>
+                <option value="regional">Региональный</option>
+                <option value="local">Местный</option>
+              </select>
+            </div>
           </div>
 
           <div class="form-group">
             <label for="voteTitle">Название</label>
-            <input type="text" id="voteTitle" required />
+            <input type="text" id="voteTitle" required placeholder="Например: Выборы президента СФСРЮ" />
           </div>
 
           <div class="form-group">
             <label for="voteDescription">Описание</label>
-            <textarea id="voteDescription" rows="3"></textarea>
+            <textarea id="voteDescription" rows="3" placeholder="Краткое описание"></textarea>
           </div>
 
           <div class="form-group">
-            <label for="voteTerritory">Территория (регион или "Вся территория СФСРЮ")</label>
-            <input type="text" id="voteTerritory" placeholder="Например: Москва или Вся территория СФСРЮ" required />
+            <label for="voteTerritory">Территория</label>
+            <input type="text" id="voteTerritory" required placeholder="Вся территория СФСРЮ или название региона" />
           </div>
 
           <div class="form-row">
             <div class="form-group">
-              <label for="voteStart">Дата начала</label>
+              <label for="voteStart">Начало голосования</label>
               <input type="datetime-local" id="voteStart" required />
             </div>
             <div class="form-group">
-              <label for="voteEnd">Дата окончания</label>
+              <label for="voteEnd">Окончание голосования</label>
               <input type="datetime-local" id="voteEnd" required />
             </div>
           </div>
 
-          <div class="form-group">
-            <label for="voteStatus">Статус</label>
-            <select id="voteStatus">
-              <option value="active">Активно</option>
-              <option value="completed">Завершено</option>
-            </select>
-          </div>
-
-          <hr style="margin: 1.5rem 0;" />
-
-          <h4>Варианты (кандидаты / вопросы)</h4>
-          <div id="optionsContainer">
-            <div class="options-list" id="optionsList"></div>
-            <div class="add-option-form" id="addOptionForm">
-              <div class="form-group">
-                <label for="newOptionText" id="newOptionLabel">Текст (имя кандидата / вопрос)</label>
-                <input type="text" id="newOptionText" placeholder="Например: Иванов Иван" />
-              </div>
-              <div class="form-group" id="descGroup">
-                <label for="newOptionDesc">Краткое описание</label>
-                <input type="text" id="newOptionDesc" placeholder="Должность, партия" />
-              </div>
-              <div class="form-group" id="photoGroup">
-                <label for="newOptionPhoto">Фото кандидата</label>
-                <input type="file" id="newOptionPhoto" accept="image/*" />
-              </div>
-              <button type="button" class="btn btn-success" id="addOptionBtn">+ Добавить</button>
-            </div>
-            <div class="upload-log" id="uploadLog">
-              <div class="log-entry info">Лог загрузки фото...</div>
-            </div>
-          </div>
-
-          <hr style="margin: 1.5rem 0;" />
-
-          <h4>Статистика голосов</h4>
-          <div id="statisticsContainer">
-            <div class="statistics" id="statisticsBlock" style="display:none;">
-              <div class="total-votes">Всего голосов: <span id="totalVotes">0</span></div>
-              <div id="statisticsList"></div>
-            </div>
-          </div>
-
-          <hr style="margin: 1.5rem 0;" />
-
-          <h4>Добавить голос вручную</h4>
-          <div class="add-vote-form" id="manualVoteForm">
+          <div class="form-row">
             <div class="form-group">
-              <label for="manualUserId">Личный код пользователя</label>
-              <input type="text" id="manualUserId" placeholder="Введите personal_code" />
+              <label for="voteDeadline">Срок приёма заявлений (опционально)</label>
+              <input type="datetime-local" id="voteDeadline" />
             </div>
             <div class="form-group">
-              <label for="manualOptionId">Вариант</label>
-              <select id="manualOptionId"></select>
+              <label for="voteStatus">Статус</label>
+              <select id="voteStatus">
+                <option value="draft">Черновик</option>
+                <option value="active">Активно</option>
+                <option value="completed">Завершено</option>
+                <option value="cancelled">Отменено</option>
+              </select>
             </div>
-            <button type="button" class="btn btn-warning" id="addManualVoteBtn">Добавить голос</button>
+          </div>
+
+          <!-- Вкладки -->
+          <div class="tabs">
+            <button class="tab-btn active" data-tab="tabOptions">Кандидаты / Варианты</button>
+            <button class="tab-btn" data-tab="tabApplications">Заявления граждан</button>
+            <button class="tab-btn" data-tab="tabStats">Результаты</button>
+          </div>
+
+          <!-- Вкладка: Кандидаты -->
+          <div id="tabOptions" class="tab-pane active">
+            <div id="optionsContainer">
+              <div class="options-list" id="optionsList"></div>
+              <div class="add-option-form">
+                <div class="form-group">
+                  <label for="newOptionText">Текст (имя кандидата / вопрос)</label>
+                  <input type="text" id="newOptionText" placeholder="Например: Иванов Иван" />
+                </div>
+                <div class="form-group">
+                  <label for="newOptionDesc">Краткое описание</label>
+                  <input type="text" id="newOptionDesc" placeholder="Должность, партия" />
+                </div>
+                <div class="form-group">
+                  <label for="newOptionPhoto">Фото</label>
+                  <input type="file" id="newOptionPhoto" accept="image/*" />
+                </div>
+                <button type="button" class="btn btn-success" id="addOptionBtn">+ Добавить</button>
+              </div>
+              <div class="upload-log" id="uploadLog">
+                <div class="log-entry info">Лог загрузки фото...</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Вкладка: Заявления -->
+          <div id="tabApplications" class="tab-pane">
+            <div id="applicationsContainer">
+              <div id="applicationsList">
+                <p class="no-data">Нет заявлений для этого голосования</p>
+              </div>
+              <div style="margin-top: 1rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="refreshApplications">Обновить список</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Вкладка: Результаты -->
+          <div id="tabStats" class="tab-pane">
+            <div id="statsContainer">
+              <div class="statistics" id="statisticsBlock" style="display:none;">
+                <div class="total-votes">Всего голосов: <span id="totalVotes">0</span></div>
+                <div id="statisticsList"></div>
+              </div>
+              <div id="statsEmpty" class="no-data">Нет голосов</div>
+            </div>
           </div>
 
           <div class="modal-footer">
@@ -336,7 +377,7 @@
   <script type="module">
     import { supabase } from '../../js/supabase-config.js';
 
-    // --- DOM ---
+    // --- DOM элементы ---
     const loading = document.getElementById('loading');
     const votesContainer = document.getElementById('votesContainer');
     const votesTableBody = document.getElementById('votesTableBody');
@@ -348,46 +389,91 @@
     const modalTitle = document.getElementById('modalTitle');
     const voteForm = document.getElementById('voteForm');
     const editVoteId = document.getElementById('editVoteId');
-    const editVoteType = document.getElementById('editVoteType');
+
+    // Поля формы
     const voteType = document.getElementById('voteType');
+    const voteScope = document.getElementById('voteScope');
     const voteTitle = document.getElementById('voteTitle');
     const voteDescription = document.getElementById('voteDescription');
     const voteTerritory = document.getElementById('voteTerritory');
     const voteStart = document.getElementById('voteStart');
     const voteEnd = document.getElementById('voteEnd');
+    const voteDeadline = document.getElementById('voteDeadline');
     const voteStatus = document.getElementById('voteStatus');
+
+    // Вкладки
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabPanes = {
+      tabOptions: document.getElementById('tabOptions'),
+      tabApplications: document.getElementById('tabApplications'),
+      tabStats: document.getElementById('tabStats')
+    };
+
+    // Кандидаты
     const optionsList = document.getElementById('optionsList');
     const newOptionText = document.getElementById('newOptionText');
     const newOptionDesc = document.getElementById('newOptionDesc');
     const newOptionPhoto = document.getElementById('newOptionPhoto');
     const addOptionBtn = document.getElementById('addOptionBtn');
+    const uploadLog = document.getElementById('uploadLog');
+
+    // Заявления
+    const applicationsList = document.getElementById('applicationsList');
+    const refreshApplicationsBtn = document.getElementById('refreshApplications');
+
+    // Статистика
     const statisticsBlock = document.getElementById('statisticsBlock');
     const totalVotesSpan = document.getElementById('totalVotes');
     const statisticsList = document.getElementById('statisticsList');
-    const manualUserId = document.getElementById('manualUserId');
-    const manualOptionId = document.getElementById('manualOptionId');
-    const addManualVoteBtn = document.getElementById('addManualVoteBtn');
-    const adminEmail = document.getElementById('adminEmail');
-    const newOptionLabel = document.getElementById('newOptionLabel');
-    const descGroup = document.getElementById('descGroup');
-    const photoGroup = document.getElementById('photoGroup');
-    const uploadLog = document.getElementById('uploadLog');
+    const statsEmpty = document.getElementById('statsEmpty');
 
-    const SCHEMA_VOTES = 'votes';
+    // Прочее
+    const adminEmail = document.getElementById('adminEmail');
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const SCHEMA = 'votes';
     const PHOTO_BUCKET = 'votes_photo';
     const PHOTO_FOLDER = 'candidates/';
 
     let currentVoteId = null;
-    let currentVoteType = null;
     let allOptions = [];
+    let allApplications = [];
 
+    // --- Вспомогательные функции ---
     function addLog(message, type = 'info') {
       const entry = document.createElement('div');
       entry.className = `log-entry ${type}`;
       entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
       uploadLog.appendChild(entry);
       uploadLog.scrollTop = uploadLog.scrollHeight;
-      console.log(`[${type}]`, message);
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      try { return new Date(dateStr).toLocaleString('ru-RU'); }
+      catch { return dateStr; }
+    }
+
+    function getStatusLabel(status) {
+      const map = {
+        draft: 'Черновик',
+        active: 'Активно',
+        completed: 'Завершено',
+        cancelled: 'Отменено'
+      };
+      return map[status] || status;
+    }
+
+    function getAppStatusLabel(status) {
+      const map = {
+        draft: 'Черновик',
+        submitted: 'Подано',
+        under_review: 'На рассмотрении',
+        approved: 'Одобрено',
+        rejected: 'Отклонено',
+        completed: 'Завершено'
+      };
+      return map[status] || status;
     }
 
     async function checkAdmin() {
@@ -411,9 +497,10 @@
       return true;
     }
 
+    // --- Загрузка голосований ---
     async function loadVotes() {
       const { data, error } = await supabase
-        .schema(SCHEMA_VOTES)
+        .schema(SCHEMA)
         .from('all_votes')
         .select('*')
         .order('created_at', { ascending: false });
@@ -432,145 +519,140 @@
       noData.style.display = 'none';
       votes.forEach(v => {
         const tr = document.createElement('tr');
-        const typeLabel = {
-          federal_election: 'Фед. выборы',
-          regional_election: 'Рег. выборы',
-          federal_referendum: 'Фед. референдум',
-          regional_referendum: 'Рег. референдум'
-        }[v.type] || v.type;
-        const statusClass = v.status === 'active' ? 'active' : 'completed';
-        const statusLabel = v.status === 'active' ? 'Активно' : 'Завершено';
+        const typeLabel = { election: 'Выборы', referendum: 'Референдум', poll: 'Опрос' }[v.type] || v.type;
+        const scopeLabel = { federal: 'Фед.', regional: 'Рег.', local: 'Местн.' }[v.scope] || v.scope;
         tr.innerHTML = `
           <td>${v.title}</td>
           <td>${typeLabel}</td>
+          <td>${scopeLabel}</td>
           <td>${v.territory}</td>
           <td>${new Date(v.start_date).toLocaleDateString()} – ${new Date(v.end_date).toLocaleDateString()}</td>
-          <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+          <td><span class="status-badge ${v.status}">${getStatusLabel(v.status)}</span></td>
           <td>
-            <button class="btn btn-warning btn-sm edit-vote" data-id="${v.id}" data-type="${v.type}">Редактировать</button>
-            <button class="btn btn-danger btn-sm delete-vote" data-id="${v.id}" data-type="${v.type}">Удалить</button>
+            <button class="btn btn-warning btn-sm edit-vote" data-id="${v.id}">Редактировать</button>
+            <button class="btn btn-danger btn-sm delete-vote" data-id="${v.id}">Удалить</button>
           </td>
         `;
         votesTableBody.appendChild(tr);
       });
+      // Обработчики
       document.querySelectorAll('.edit-vote').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const id = btn.dataset.id;
-          const type = btn.dataset.type;
-          openEditModal(id, type);
-        });
+        btn.addEventListener('click', () => openEditModal(btn.dataset.id));
       });
       document.querySelectorAll('.delete-vote').forEach(btn => {
         btn.addEventListener('click', async () => {
           if (!confirm('Удалить голосование?')) return;
-          await deleteVote(btn.dataset.id, btn.dataset.type);
+          await deleteVote(btn.dataset.id);
         });
       });
     }
 
-    async function deleteVote(id, type) {
-      const tableName = getTableName(type);
-      await supabase.schema(SCHEMA_VOTES).from('options').delete().eq('vote_id', id).eq('vote_type', type);
-      await supabase.schema(SCHEMA_VOTES).from('user_votes').delete().eq('vote_id', id);
-      const { error } = await supabase.schema(SCHEMA_VOTES).from(tableName).delete().eq('id', id);
+    async function deleteVote(id) {
+      // Удаляем всё каскадно благодаря ON DELETE CASCADE
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from('elections')
+        .delete()
+        .eq('id', id);
       if (error) throw error;
       await loadAndRender();
     }
 
-    function getTableName(type) {
-      const map = {
-        federal_election: 'federal_elections',
-        regional_election: 'regional_elections',
-        federal_referendum: 'federal_referendums',
-        regional_referendum: 'regional_referendums'
-      };
-      return map[type] || type;
-    }
-
-    function resetModalForm() {
+    // --- Работа с модалкой ---
+    function resetModal() {
       voteForm.reset();
       editVoteId.value = '';
-      editVoteType.value = '';
       currentVoteId = null;
-      currentVoteType = null;
       allOptions = [];
+      allApplications = [];
       optionsList.innerHTML = '';
+      applicationsList.innerHTML = '<p class="no-data">Нет заявлений для этого голосования</p>';
       statisticsBlock.style.display = 'none';
-      manualOptionId.innerHTML = '';
-      newOptionPhoto.value = '';
+      statsEmpty.style.display = 'block';
       uploadLog.innerHTML = '<div class="log-entry info">Лог загрузки фото...</div>';
       modalTitle.textContent = 'Создание голосования';
-      descGroup.style.display = 'block';
-      photoGroup.style.display = 'block';
-      newOptionLabel.textContent = 'Текст (имя кандидата / вопрос)';
+      // Сброс вкладок
+      tabBtns.forEach(btn => btn.classList.remove('active'));
+      document.querySelector('.tab-btn[data-tab="tabOptions"]').classList.add('active');
+      Object.values(tabPanes).forEach(p => p.classList.remove('active'));
+      tabPanes.tabOptions.classList.add('active');
+      // Сброс дат
+      const now = new Date();
+      const start = new Date(now.getTime() + 7*24*60*60*1000);
+      const end = new Date(start.getTime() + 7*24*60*60*1000);
+      voteStart.value = start.toISOString().slice(0,16);
+      voteEnd.value = end.toISOString().slice(0,16);
+      // Срок приёма заявлений – за 2 дня до начала
+      const deadline = new Date(start.getTime() - 2*24*60*60*1000);
+      voteDeadline.value = deadline.toISOString().slice(0,16);
     }
 
     function openCreateModal() {
-      resetModalForm();
+      resetModal();
       modal.classList.add('active');
     }
 
-    async function openEditModal(id, type) {
+    async function openEditModal(id) {
       try {
-        const tableName = getTableName(type);
         const { data: vote, error } = await supabase
-          .schema(SCHEMA_VOTES)
-          .from(tableName)
+          .schema(SCHEMA)
+          .from('elections')
           .select('*')
           .eq('id', id)
           .single();
         if (error) throw error;
+
+        resetModal();
         modalTitle.textContent = 'Редактирование голосования';
         editVoteId.value = id;
-        editVoteType.value = type;
         currentVoteId = id;
-        currentVoteType = type;
-        voteType.value = type;
-        voteTitle.value = vote.title;
+
+        voteType.value = vote.type || 'election';
+        voteScope.value = vote.scope || 'federal';
+        voteTitle.value = vote.title || '';
         voteDescription.value = vote.description || '';
-        voteTerritory.value = vote.territory;
-        voteStart.value = vote.start_date.slice(0, 16);
-        voteEnd.value = vote.end_date.slice(0, 16);
-        voteStatus.value = vote.status;
-        uploadLog.innerHTML = '<div class="log-entry info">Лог загрузки фото...</div>';
-        updateFormFields(type);
+        voteTerritory.value = vote.territory || '';
+        voteStart.value = vote.start_date ? vote.start_date.slice(0,16) : '';
+        voteEnd.value = vote.end_date ? vote.end_date.slice(0,16) : '';
+        if (vote.settings && vote.settings.applications_deadline) {
+          voteDeadline.value = vote.settings.applications_deadline.slice(0,16);
+        } else {
+          voteDeadline.value = '';
+        }
+        voteStatus.value = vote.status || 'draft';
+
+        // Загружаем кандидатов
         const { data: options, error: optError } = await supabase
-          .schema(SCHEMA_VOTES)
+          .schema(SCHEMA)
           .from('options')
           .select('*')
-          .eq('vote_id', id)
-          .eq('vote_type', type);
-        if (!optError) {
-          allOptions = options || [];
-        } else {
-          allOptions = [];
-        }
+          .eq('election_id', id)
+          .order('order', { ascending: true });
+        if (!optError) allOptions = options || [];
+        else allOptions = [];
         renderOptions();
+
+        // Загружаем заявления
+        await loadApplications(id);
+
+        // Загружаем статистику
         await loadStatistics(id);
+
         modal.classList.add('active');
       } catch (err) {
         alert('Ошибка загрузки: ' + err.message);
       }
     }
 
-    function updateFormFields(type) {
-      const isReferendum = type && type.includes('referendum');
-      if (isReferendum) {
-        descGroup.style.display = 'none';
-        photoGroup.style.display = 'none';
-        newOptionLabel.textContent = 'Вопрос для референдума';
-        newOptionText.placeholder = 'Например: Поддерживаете ли вы...';
-      } else {
-        descGroup.style.display = 'block';
-        photoGroup.style.display = 'block';
-        newOptionLabel.textContent = 'Текст (имя кандидата / вопрос)';
-        newOptionText.placeholder = 'Например: Иванов Иван';
-      }
-    }
-
+    // --- Кандидаты ---
     function renderOptions() {
       optionsList.innerHTML = '';
-      const isReferendum = currentVoteType && currentVoteType.includes('referendum');
+      if (!allOptions.length) {
+        optionsList.innerHTML = '<p class="no-data">Нет кандидатов / вариантов</p>';
+        return;
+      }
+      // Группировка для референдумов (по question_text)
+      const isReferendum = voteType.value === 'referendum';
       if (isReferendum) {
         const groups = {};
         allOptions.forEach(opt => {
@@ -586,9 +668,9 @@
           div.style.marginBottom = '0.5rem';
           div.innerHTML = `
             <strong>${question}</strong>
-            <div style="display:flex; gap:1rem; margin-top:0.3rem;">
+            <div style="display:flex; gap:1rem; margin-top:0.3rem; flex-wrap:wrap;">
               ${opts.map(opt => `
-                <span>${opt.text} 
+                <span>${opt.text}
                   <button class="btn btn-danger btn-sm delete-option" data-id="${opt.id}" style="margin-left:0.5rem;">×</button>
                 </span>
               `).join('')}
@@ -596,12 +678,6 @@
           `;
           optionsList.appendChild(div);
         }
-        document.querySelectorAll('.delete-option').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            if (!confirm('Удалить вариант?')) return;
-            await deleteOption(btn.dataset.id);
-          });
-        });
       } else {
         allOptions.forEach(opt => {
           const div = document.createElement('div');
@@ -613,7 +689,7 @@
             photoHtml = `<img src="${data.publicUrl}" class="option-photo" alt="Фото" />`;
           }
           div.innerHTML = `
-            <div style="display:flex; align-items:center; gap:10px; flex:1;">
+            <div style="display:flex; align-items:center; gap:10px; flex:1; flex-wrap:wrap;">
               ${photoHtml}
               <span class="option-text">${opt.text}</span>
               ${opt.description ? `<small style="color:#555;">${opt.description}</small>` : ''}
@@ -624,73 +700,63 @@
           `;
           optionsList.appendChild(div);
         });
-        document.querySelectorAll('.delete-option').forEach(btn => {
-          btn.addEventListener('click', async () => {
-            if (!confirm('Удалить вариант?')) return;
-            await deleteOption(btn.dataset.id);
-          });
-        });
       }
-      manualOptionId.innerHTML = '';
-      allOptions.forEach(opt => {
-        const option = document.createElement('option');
-        option.value = opt.id;
-        option.textContent = opt.text + (opt.question_text ? ` (${opt.question_text})` : '');
-        manualOptionId.appendChild(option);
+      document.querySelectorAll('.delete-option').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          if (!confirm('Удалить вариант?')) return;
+          await deleteOption(btn.dataset.id);
+        });
       });
-    }
-
-    async function uploadPhoto(file) {
-      const ext = file.name.split('.').pop();
-      const fileName = `candidate-${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${ext}`;
-      const fullPath = PHOTO_FOLDER + fileName;
-      const { error } = await supabase.storage
-        .from(PHOTO_BUCKET)
-        .upload(fullPath, file, { cacheControl: '3600', upsert: false });
-      if (error) throw error;
-      return { folder: PHOTO_FOLDER, name: fileName };
     }
 
     async function addOption() {
       const text = newOptionText.value.trim();
-      if (!text) { addLog('Ошибка: не введён текст', 'error'); alert('Введите текст'); return; }
-      if (!currentVoteId || !currentVoteType) { addLog('Ошибка: сначала сохраните голосование', 'error'); alert('Сначала сохраните голосование'); return; }
-      const isReferendum = currentVoteType.includes('referendum');
+      if (!text) { alert('Введите текст'); return; }
+      if (!currentVoteId) { alert('Сначала сохраните голосование'); return; }
+      const isReferendum = voteType.value === 'referendum';
       const description = newOptionDesc.value.trim();
       const photoFile = newOptionPhoto.files[0];
       try {
-        let photoFolder = null;
-        let photoName = null;
+        let photoFolder = null, photoName = null;
         if (photoFile && !isReferendum) {
-          const { folder, name } = await uploadPhoto(photoFile);
-          photoFolder = folder;
-          photoName = name;
-          addLog(`Фото загружено в ${folder}${name}`, 'success');
+          const ext = photoFile.name.split('.').pop();
+          const fileName = `candidate-${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
+          const fullPath = PHOTO_FOLDER + fileName;
+          const { error } = await supabase.storage.from(PHOTO_BUCKET).upload(fullPath, photoFile);
+          if (error) throw error;
+          photoFolder = PHOTO_FOLDER;
+          photoName = fileName;
+          addLog(`Фото загружено: ${fullPath}`, 'success');
         }
         if (isReferendum) {
-          await supabase.schema(SCHEMA_VOTES).from('options').insert([
-            { vote_id: currentVoteId, vote_type: currentVoteType, text: 'ДА', question_text: text },
-            { vote_id: currentVoteId, vote_type: currentVoteType, text: 'НЕТ', question_text: text }
+          // Для референдума добавляем два варианта: ДА и НЕТ
+          const { error } = await supabase.schema(SCHEMA).from('options').insert([
+            { election_id: currentVoteId, text: 'ДА', question_text: text },
+            { election_id: currentVoteId, text: 'НЕТ', question_text: text }
           ]);
+          if (error) throw error;
+          addLog(`Добавлены варианты для вопроса "${text}"`, 'success');
         } else {
-          await supabase.schema(SCHEMA_VOTES).from('options').insert([{
-            vote_id: currentVoteId,
-            vote_type: currentVoteType,
+          const { error } = await supabase.schema(SCHEMA).from('options').insert({
+            election_id: currentVoteId,
             text: text,
             description: description,
             photo_folder: photoFolder,
-            photo_name: photoName
-          }]);
+            photo_name: photoName,
+            order: allOptions.length
+          });
+          if (error) throw error;
+          addLog(`Добавлен кандидат "${text}"`, 'success');
         }
         newOptionText.value = '';
         newOptionDesc.value = '';
         newOptionPhoto.value = '';
         const { data: options } = await supabase
-          .schema(SCHEMA_VOTES)
+          .schema(SCHEMA)
           .from('options')
           .select('*')
-          .eq('vote_id', currentVoteId)
-          .eq('vote_type', currentVoteType);
+          .eq('election_id', currentVoteId)
+          .order('order', { ascending: true });
         if (options) {
           allOptions = options;
           renderOptions();
@@ -710,7 +776,7 @@
         addLog(`Удалено фото ${fullPath}`, 'info');
       }
       const { error } = await supabase
-        .schema(SCHEMA_VOTES)
+        .schema(SCHEMA)
         .from('options')
         .delete()
         .eq('id', optionId);
@@ -718,124 +784,219 @@
       allOptions = allOptions.filter(o => o.id !== optionId);
       renderOptions();
       await loadStatistics(currentVoteId);
-      addLog(`Вариант удалён`, 'info');
+      addLog('Вариант удалён', 'info');
     }
 
-    async function loadStatistics(voteId) {
-      if (!voteId) { statisticsBlock.style.display = 'none'; return; }
-      const { data: votes, error } = await supabase
-        .schema(SCHEMA_VOTES)
-        .from('user_votes')
-        .select('option_id')
-        .eq('vote_id', voteId);
-      if (error) { console.error(error); return; }
-      const total = votes ? votes.length : 0;
+    // --- Заявления ---
+    async function loadApplications(electionId) {
+      if (!electionId) return;
+      const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from('applications')
+        .select('*')
+        .eq('election_id', electionId)
+        .order('created_at', { ascending: false });
+      if (error) {
+        console.error('Ошибка загрузки заявлений:', error);
+        return;
+      }
+      allApplications = data || [];
+      renderApplications();
+    }
+
+    function renderApplications() {
+      if (!allApplications.length) {
+        applicationsList.innerHTML = '<p class="no-data">Нет заявлений для этого голосования</p>';
+        return;
+      }
+      let html = `<table class="applications-table">
+        <thead>
+          <tr>
+            <th>Тип</th>
+            <th>Статус</th>
+            <th>Дата подачи</th>
+            <th>Действия</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      allApplications.forEach(app => {
+        const typeLabel = {
+          candidate_registration: 'Регистрация кандидата',
+          observer_registration: 'Регистрация наблюдателя',
+          remote_voting_request: 'Дистанционное голосование',
+          data_change: 'Изменение данных',
+          other: 'Другое'
+        }[app.type] || app.type;
+        html += `
+          <tr>
+            <td>${typeLabel}</td>
+            <td><span class="app-status-badge ${app.status}">${getAppStatusLabel(app.status)}</span></td>
+            <td>${formatDate(app.created_at)}</td>
+            <td>
+              <button class="btn btn-primary btn-sm view-application" data-id="${app.id}">Просмотр</button>
+              ${app.status === 'submitted' || app.status === 'under_review' ? `
+                <button class="btn btn-success btn-sm approve-application" data-id="${app.id}">Одобрить</button>
+                <button class="btn btn-danger btn-sm reject-application" data-id="${app.id}">Отклонить</button>
+              ` : ''}
+            </td>
+          </tr>
+        `;
+      });
+      html += '</tbody></table>';
+      applicationsList.innerHTML = html;
+
+      // Обработчики
+      document.querySelectorAll('.view-application').forEach(btn => {
+        btn.addEventListener('click', () => viewApplication(btn.dataset.id));
+      });
+      document.querySelectorAll('.approve-application').forEach(btn => {
+        btn.addEventListener('click', () => changeAppStatus(btn.dataset.id, 'approved'));
+      });
+      document.querySelectorAll('.reject-application').forEach(btn => {
+        btn.addEventListener('click', () => changeAppStatus(btn.dataset.id, 'rejected'));
+      });
+    }
+
+    async function viewApplication(appId) {
+      const app = allApplications.find(a => a.id === appId);
+      if (!app) return;
+      // Простой просмотр в alert (можно расширить)
+      const dataStr = JSON.stringify(app.data, null, 2);
+      alert(`Заявление #${app.id}\nТип: ${app.type}\nСтатус: ${getAppStatusLabel(app.status)}\nДанные:\n${dataStr}`);
+    }
+
+    async function changeAppStatus(appId, newStatus) {
+      if (!confirm(`Изменить статус заявления на "${getAppStatusLabel(newStatus)}"?`)) return;
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from('applications')
+        .update({ status: newStatus, reviewed_by: (await supabase.auth.getUser()).data.user.id })
+        .eq('id', appId);
+      if (error) { alert('Ошибка: ' + error.message); return; }
+      // Если одобряем кандидата, предлагаем добавить его в кандидаты
+      const app = allApplications.find(a => a.id === appId);
+      if (newStatus === 'approved' && app.type === 'candidate_registration') {
+        if (confirm('Одобрена регистрация кандидата. Добавить его в список кандидатов?')) {
+          const name = app.data.full_name || app.data.surname + ' ' + app.data.name;
+          const desc = app.data.position || app.data.party || '';
+          // Добавляем кандидата
+          const { error: insErr } = await supabase
+            .schema(SCHEMA)
+            .from('options')
+            .insert({
+              election_id: app.election_id,
+              text: name,
+              description: desc,
+              order: allOptions.length
+            });
+          if (insErr) {
+            alert('Кандидат не добавлен: ' + insErr.message);
+          } else {
+            alert('Кандидат добавлен!');
+            // Обновим список кандидатов
+            const { data: options } = await supabase
+              .schema(SCHEMA)
+              .from('options')
+              .select('*')
+              .eq('election_id', app.election_id)
+              .order('order', { ascending: true });
+            if (options) {
+              allOptions = options;
+              renderOptions();
+            }
+          }
+        }
+      }
+      await loadApplications(currentVoteId);
+    }
+
+    // --- Статистика ---
+    async function loadStatistics(electionId) {
+      if (!electionId) { statisticsBlock.style.display = 'none'; statsEmpty.style.display = 'block'; return; }
+      const { data, error } = await supabase
+        .schema(SCHEMA)
+        .from('vote_statistics')
+        .select('*')
+        .eq('election_id', electionId);
+      if (error) {
+        console.error('Ошибка статистики:', error);
+        return;
+      }
+      if (!data || data.length === 0) {
+        statisticsBlock.style.display = 'none';
+        statsEmpty.style.display = 'block';
+        return;
+      }
+      const total = data[0]?.total_votes || 0;
       totalVotesSpan.textContent = total;
-      const counts = {};
-      votes.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
       statisticsList.innerHTML = '';
-      allOptions.forEach(opt => {
-        const count = counts[opt.id] || 0;
-        const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+      data.forEach(row => {
+        const percent = total > 0 ? Math.round((row.votes_count / total) * 100) : 0;
         const div = document.createElement('div');
         div.style.display = 'flex';
         div.style.justifyContent = 'space-between';
         div.style.padding = '0.2rem 0';
-        div.innerHTML = `<span>${opt.text}${opt.question_text ? ` (${opt.question_text})` : ''}</span><span>${count} (${percent}%)</span>`;
+        const label = row.option_text + (row.question_text ? ` (${row.question_text})` : '');
+        div.innerHTML = `<span>${label}</span><span>${row.votes_count} (${percent}%)</span>`;
         statisticsList.appendChild(div);
       });
       statisticsBlock.style.display = 'block';
+      statsEmpty.style.display = 'none';
     }
 
+    // --- Сохранение голосования ---
     async function saveVote(e) {
       e.preventDefault();
       const id = editVoteId.value;
-      const type = voteType.value;
-      const tableName = getTableName(type);
       const payload = {
+        type: voteType.value,
+        scope: voteScope.value,
         title: voteTitle.value.trim(),
         description: voteDescription.value.trim(),
         territory: voteTerritory.value.trim(),
         start_date: new Date(voteStart.value).toISOString(),
         end_date: new Date(voteEnd.value).toISOString(),
         status: voteStatus.value,
+        settings: {}
       };
+      if (voteDeadline.value) {
+        payload.settings.applications_deadline = new Date(voteDeadline.value).toISOString();
+      }
       let result;
       if (id) {
         result = await supabase
-          .schema(SCHEMA_VOTES)
-          .from(tableName)
+          .schema(SCHEMA)
+          .from('elections')
           .update(payload)
           .eq('id', id);
       } else {
         result = await supabase
-          .schema(SCHEMA_VOTES)
-          .from(tableName)
+          .schema(SCHEMA)
+          .from('elections')
           .insert([payload])
           .select();
       }
       if (result.error) {
-        addLog(`Ошибка сохранения: ${result.error.message}`, 'error');
-        alert('Ошибка: ' + result.error.message);
+        alert('Ошибка сохранения: ' + result.error.message);
         return;
       }
       if (!id && result.data && result.data.length > 0) {
         currentVoteId = result.data[0].id;
-        currentVoteType = type;
         editVoteId.value = currentVoteId;
-        editVoteType.value = type;
         modalTitle.textContent = 'Редактирование голосования';
-        addLog(`Голосование создано с ID ${currentVoteId}`, 'success');
-      } else {
-        addLog(`Голосование обновлено`, 'success');
+        // Обновим кандидатов (если они были добавлены до сохранения, сохраним их)
+        // В текущей логике кандидаты добавляются только после сохранения, поэтому ничего не делаем
       }
       alert('Сохранено!');
       await loadAndRender();
+      // Обновим заявления и статистику
+      if (currentVoteId) {
+        await loadApplications(currentVoteId);
+        await loadStatistics(currentVoteId);
+      }
     }
 
-    async function addManualVote() {
-      const personalCode = manualUserId.value.trim();
-      const optionId = manualOptionId.value;
-      if (!personalCode) { alert('Введите личный код пользователя'); return; }
-      if (!optionId) { alert('Выберите вариант'); return; }
-      const { data: user, error: userError } = await supabase
-        .from('users')
-        .select('id')
-        .eq('personal_code', personalCode)
-        .maybeSingle();
-      if (userError || !user) {
-        alert('Пользователь с таким личным кодом не найден');
-        addLog(`Пользователь с кодом ${personalCode} не найден`, 'error');
-        return;
-      }
-      const userId = user.id;
-      const { data: existing } = await supabase
-        .schema(SCHEMA_VOTES)
-        .from('user_votes')
-        .select('id')
-        .eq('user_id', userId)
-        .eq('vote_id', currentVoteId)
-        .eq('option_id', optionId)
-        .maybeSingle();
-      if (existing) {
-        alert('Этот пользователь уже проголосовал за данный вариант');
-        addLog(`Пользователь ${personalCode} уже голосовал за вариант ${optionId}`, 'error');
-        return;
-      }
-      const { error } = await supabase
-        .schema(SCHEMA_VOTES)
-        .from('user_votes')
-        .insert([{ user_id: userId, vote_id: currentVoteId, option_id: optionId }]);
-      if (error) {
-        addLog(`Ошибка добавления голоса: ${error.message}`, 'error');
-        alert('Ошибка: ' + error.message);
-        return;
-      }
-      addLog(`Голос пользователя с кодом ${personalCode} добавлен за вариант ${optionId}`, 'success');
-      alert('Голос добавлен');
-      await loadStatistics(currentVoteId);
-    }
-
+    // --- Загрузка и рендеринг ---
     async function loadAndRender() {
       loading.style.display = 'block';
       votesContainer.style.display = 'none';
@@ -850,19 +1011,35 @@
       loading.style.display = 'none';
     }
 
+    // --- Инициализация ---
     document.addEventListener('DOMContentLoaded', async () => {
       const isAdmin = await checkAdmin();
       if (!isAdmin) return;
       await loadAndRender();
-      voteType.addEventListener('change', () => updateFormFields(voteType.value));
+
+      // Вкладки
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          Object.values(tabPanes).forEach(p => p.classList.remove('active'));
+          const pane = tabPanes[btn.dataset.tab];
+          if (pane) pane.classList.add('active');
+        });
+      });
+
+      // Кнопки
       createVoteBtn.addEventListener('click', openCreateModal);
       closeModal.addEventListener('click', () => modal.classList.remove('active'));
       cancelModal.addEventListener('click', () => modal.classList.remove('active'));
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.remove('active'); });
       voteForm.addEventListener('submit', saveVote);
       addOptionBtn.addEventListener('click', addOption);
-      addManualVoteBtn.addEventListener('click', addManualVote);
-      document.getElementById('logoutBtn').addEventListener('click', async () => {
+      refreshApplicationsBtn.addEventListener('click', () => {
+        if (currentVoteId) loadApplications(currentVoteId);
+      });
+
+      logoutBtn.addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = '/login.html';
       });
