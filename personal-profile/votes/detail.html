@@ -80,7 +80,7 @@
     /* Стили для статистики */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
       gap: 1rem;
       margin: 1.5rem 0 2rem;
       background: #f8f9fa;
@@ -99,16 +99,23 @@
       line-height: 1.2;
     }
     .stat-item .stat-label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #6c757d;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       margin-top: 0.2rem;
     }
+    .stat-item .stat-sub {
+      font-size: 0.8rem;
+      color: #6c757d;
+      font-weight: 500;
+    }
     .stat-item .stat-number.green { color: #28a745; }
     .stat-item .stat-number.blue { color: #007bff; }
     .stat-item .stat-number.orange { color: #fd7e14; }
     .stat-item .stat-number.purple { color: #6f42c1; }
+    .stat-item .stat-number.red { color: #dc3545; }
+    .stat-item .stat-number.teal { color: #20c997; }
 
     .footer { background: linear-gradient(135deg, #ff6666, #cc0000); padding: 1.8rem; text-align: center; color: white; margin-top: auto; }
     .footer a { color: #ffdddd; text-decoration: underline; }
@@ -129,6 +136,9 @@
       .menu-overlay.active { display: block; opacity: 1; }
       .candidate-item { flex-wrap: wrap; }
       .referendum-options { flex-direction: column; }
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 500px) {
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
@@ -178,10 +188,17 @@
           <div class="stat-item">
             <div class="stat-number green" id="votedCount">0</div>
             <div class="stat-label">Проголосовало</div>
+            <div class="stat-sub" id="votedPercent">0%</div>
           </div>
           <div class="stat-item">
             <div class="stat-number orange" id="spoiledCount">0</div>
             <div class="stat-label">Испорченных</div>
+            <div class="stat-sub" id="spoiledPercent">0%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number red" id="refusedCount">0</div>
+            <div class="stat-label">Отказавшихся</div>
+            <div class="stat-sub" id="refusedPercent">0%</div>
           </div>
           <div class="stat-item">
             <div class="stat-number purple" id="turnoutPercent">0%</div>
@@ -231,7 +248,11 @@
     // Элементы статистики
     const registeredCountEl = document.getElementById('registeredCount');
     const votedCountEl = document.getElementById('votedCount');
+    const votedPercentEl = document.getElementById('votedPercent');
     const spoiledCountEl = document.getElementById('spoiledCount');
+    const spoiledPercentEl = document.getElementById('spoiledPercent');
+    const refusedCountEl = document.getElementById('refusedCount');
+    const refusedPercentEl = document.getElementById('refusedPercent');
     const turnoutPercentEl = document.getElementById('turnoutPercent');
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -255,17 +276,24 @@
       errorMessageEl.textContent = msg;
     }
 
-    // Заглушка для статистики (позже заменим реальными данными)
+    // Заглушка для статистики (позже заменим реальными данными из таблицы election_statistics)
     async function getElectionStatistics(electionId) {
       // Пока возвращаем тестовые данные
-      // В будущем здесь будут запросы к таблицам:
-      // - registered_voters (количество зарегистрированных)
-      // - user_votes (количество проголосовавших)
-      // - spoiled_ballots (количество испорченных бюллетеней)
+      // В будущем здесь будет запрос к таблице votes.election_statistics
+      // const { data, error } = await supabase
+      //   .schema(SCHEMA)
+      //   .from('election_statistics')
+      //   .select('*')
+      //   .eq('election_id', electionId)
+      //   .single();
+      // if (error) throw error;
+      // return data;
+
       return {
         registered: 1250,
         voted: 847,
-        spoiled: 12
+        spoiled: 12,
+        refused: 45
       };
     }
 
@@ -401,10 +429,23 @@
 
         // 8. Статистика избирателей (заглушка)
         const stats = await getElectionStatistics(voteId);
-        registeredCountEl.textContent = stats.registered;
-        votedCountEl.textContent = stats.voted;
-        spoiledCountEl.textContent = stats.spoiled;
-        const turnout = stats.registered > 0 ? Math.round((stats.voted / stats.registered) * 100) : 0;
+        const { registered, voted, spoiled, refused } = stats;
+
+        registeredCountEl.textContent = registered;
+
+        votedCountEl.textContent = voted;
+        const votedPercent = registered > 0 ? Math.round((voted / registered) * 100) : 0;
+        votedPercentEl.textContent = votedPercent + '%';
+
+        spoiledCountEl.textContent = spoiled;
+        const spoiledPercent = registered > 0 ? Math.round((spoiled / registered) * 100) : 0;
+        spoiledPercentEl.textContent = spoiledPercent + '%';
+
+        refusedCountEl.textContent = refused;
+        const refusedPercent = registered > 0 ? Math.round((refused / registered) * 100) : 0;
+        refusedPercentEl.textContent = refusedPercent + '%';
+
+        const turnout = registered > 0 ? Math.round(((voted + spoiled) / registered) * 100) : 0;
         turnoutPercentEl.textContent = turnout + '%';
 
         // 9. Формируем данные для отображения
