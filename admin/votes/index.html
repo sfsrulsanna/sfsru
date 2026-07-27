@@ -95,7 +95,7 @@
     .form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; }
     .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem; }
     .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
-    .form-row .form-group { flex: 1; min-width: 200px; }
+    .form-row .form-group { flex: 1; min-width: 150px; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem; }
 
     .tabs { display: flex; gap: 0.5rem; border-bottom: 2px solid #ddd; margin-bottom: 1.5rem; flex-wrap: wrap; }
@@ -163,6 +163,16 @@
 
     .statistics { margin: 1rem 0; padding: 1rem; background: #f1f1f1; border-radius: 8px; }
     .statistics .total-votes { font-weight: 600; margin-bottom: 0.5rem; }
+
+    .statistics-edit {
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      border: 1px solid #e9ecef;
+    }
+    .statistics-edit h4 { margin-bottom: 1rem; color: #333; }
+    .statistics-edit .form-row { margin-bottom: 1rem; }
 
     .manual-vote-form {
       margin-top: 1.5rem;
@@ -388,7 +398,7 @@
             </div>
           </div>
 
-          <!-- Вкладка: Результаты (добавлена форма ручного голосования) -->
+          <!-- Вкладка: Результаты (добавлена статистика и ручное голосование) -->
           <div id="tabStats" class="tab-pane">
             <div id="statsContainer">
               <div class="statistics" id="statisticsBlock" style="display:none;">
@@ -396,6 +406,31 @@
                 <div id="statisticsList"></div>
               </div>
               <div id="statsEmpty" class="no-data">Нет голосов</div>
+
+              <!-- Блок редактирования статистики (НОВОЕ) -->
+              <div class="statistics-edit">
+                <h4>Редактирование статистики голосования</h4>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="statRegistered">Зарегистрировано избирателей</label>
+                    <input type="number" id="statRegistered" class="form-control" min="0" value="0" />
+                  </div>
+                  <div class="form-group">
+                    <label for="statVoted">Проголосовало</label>
+                    <input type="number" id="statVoted" class="form-control" min="0" value="0" />
+                  </div>
+                  <div class="form-group">
+                    <label for="statSpoiled">Испорченных бюллетеней</label>
+                    <input type="number" id="statSpoiled" class="form-control" min="0" value="0" />
+                  </div>
+                  <div class="form-group">
+                    <label for="statRefused">Отказавшихся</label>
+                    <input type="number" id="statRefused" class="form-control" min="0" value="0" />
+                  </div>
+                </div>
+                <button type="button" class="btn btn-primary" id="saveStatisticsBtn">Сохранить статистику</button>
+                <div id="statisticsSaveResult" style="margin-top:0.5rem;font-weight:500;"></div>
+              </div>
 
               <!-- Форма для ручного добавления голоса -->
               <div class="manual-vote-form" id="manualVoteForm">
@@ -505,6 +540,14 @@
     const totalVotesSpan = document.getElementById('totalVotes');
     const statisticsList = document.getElementById('statisticsList');
     const statsEmpty = document.getElementById('statsEmpty');
+
+    // Редактирование статистики
+    const statRegistered = document.getElementById('statRegistered');
+    const statVoted = document.getElementById('statVoted');
+    const statSpoiled = document.getElementById('statSpoiled');
+    const statRefused = document.getElementById('statRefused');
+    const saveStatisticsBtn = document.getElementById('saveStatisticsBtn');
+    const statisticsSaveResult = document.getElementById('statisticsSaveResult');
 
     // Модалка просмотра заявления
     const appDetailModal = document.getElementById('appDetailModal');
@@ -691,6 +734,12 @@
       voteDeadline.value = deadline.toISOString().slice(0,16);
       // Сброс ручного голосования
       resetManualVoteForm();
+      // Сброс полей статистики
+      statRegistered.value = 0;
+      statVoted.value = 0;
+      statSpoiled.value = 0;
+      statRefused.value = 0;
+      statisticsSaveResult.textContent = '';
     }
 
     function resetManualVoteForm() {
@@ -758,6 +807,8 @@
 
         await loadApplications(id);
         await loadStatistics(id);
+        // Загружаем статистику для редактирования
+        await loadElectionStatistics(id);
         // Заполняем селект вариантов для ручного голосования
         populateVoteOptions();
 
@@ -1158,7 +1209,7 @@
       await loadApplications(currentVoteId);
     }
 
-    // --- Статистика ---
+    // --- Статистика голосов (результаты) ---
     async function loadStatistics(electionId) {
       if (!electionId) { statisticsBlock.style.display = 'none'; statsEmpty.style.display = 'block'; return; }
       const { data, error } = await supabase
@@ -1190,6 +1241,105 @@
       });
       statisticsBlock.style.display = 'block';
       statsEmpty.style.display = 'none';
+    }
+
+    // --- Управление статистикой голосования (election_statistics) ---
+    async function loadElectionStatistics(electionId) {
+      if (!electionId) return;
+      try {
+        const { data, error } = await supabase
+          .schema(SCHEMA)
+          .from('election_statistics')
+          .select('*')
+          .eq('election_id', electionId)
+          .maybeSingle();
+        if (error) {
+          // Если таблицы нет – игнорируем
+          if (error.code === '42P01') return;
+          console.error('Ошибка загрузки статистики:', error);
+          return;
+        }
+        if (data) {
+          statRegistered.value = data.registered_voters || 0;
+          statVoted.value = data.voted || 0;
+          statSpoiled.value = data.spoiled_ballots || 0;
+          statRefused.value = data.refused || 0;
+        } else {
+          // Нет записи – ставим нули
+          statRegistered.value = 0;
+          statVoted.value = 0;
+          statSpoiled.value = 0;
+          statRefused.value = 0;
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки статистики:', err);
+      }
+    }
+
+    async function saveElectionStatistics(electionId) {
+      if (!electionId) {
+        statisticsSaveResult.textContent = 'Ошибка: голосование не выбрано';
+        statisticsSaveResult.style.color = '#dc3545';
+        return;
+      }
+
+      const registered = parseInt(statRegistered.value) || 0;
+      const voted = parseInt(statVoted.value) || 0;
+      const spoiled = parseInt(statSpoiled.value) || 0;
+      const refused = parseInt(statRefused.value) || 0;
+
+      if (registered < 0 || voted < 0 || spoiled < 0 || refused < 0) {
+        statisticsSaveResult.textContent = 'Все значения должны быть >= 0';
+        statisticsSaveResult.style.color = '#dc3545';
+        return;
+      }
+
+      // Проверяем, существует ли уже запись
+      const { data: existing, error: checkErr } = await supabase
+        .schema(SCHEMA)
+        .from('election_statistics')
+        .select('id')
+        .eq('election_id', electionId)
+        .maybeSingle();
+
+      let result;
+      if (existing) {
+        // Обновляем
+        result = await supabase
+          .schema(SCHEMA)
+          .from('election_statistics')
+          .update({
+            registered_voters: registered,
+            voted: voted,
+            spoiled_ballots: spoiled,
+            refused: refused,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existing.id);
+      } else {
+        // Вставляем
+        result = await supabase
+          .schema(SCHEMA)
+          .from('election_statistics')
+          .insert({
+            election_id: electionId,
+            registered_voters: registered,
+            voted: voted,
+            spoiled_ballots: spoiled,
+            refused: refused
+          });
+      }
+
+      if (result.error) {
+        statisticsSaveResult.textContent = 'Ошибка сохранения: ' + result.error.message;
+        statisticsSaveResult.style.color = '#dc3545';
+        return;
+      }
+
+      statisticsSaveResult.textContent = 'Статистика успешно сохранена!';
+      statisticsSaveResult.style.color = '#28a745';
+      // Перезагружаем статистику для отображения (если нужно)
+      await loadElectionStatistics(electionId);
     }
 
     // --- Сохранение голосования ---
@@ -1251,6 +1401,7 @@
         }
         await loadStatistics(currentVoteId);
         await loadApplications(currentVoteId);
+        await loadElectionStatistics(currentVoteId);
         populateVoteOptions();
       }
 
@@ -1389,6 +1540,11 @@
       setTimeout(() => {
         manualVoteResult.textContent = '';
       }, 3000);
+    });
+
+    // --- Обработчик сохранения статистики ---
+    saveStatisticsBtn.addEventListener('click', async () => {
+      await saveElectionStatistics(currentVoteId);
     });
 
     // --- Загрузка и рендеринг ---
