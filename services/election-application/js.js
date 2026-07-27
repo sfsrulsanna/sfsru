@@ -115,7 +115,6 @@ function renderElections() {
     html += '</div>';
     container.innerHTML = html;
 
-    // Подсветка выбора
     document.querySelectorAll('#electionsList input[type="radio"]').forEach(radio => {
         radio.addEventListener('change', (e) => {
             document.querySelectorAll('#electionsList label').forEach(l => l.classList.remove('selected'));
@@ -130,7 +129,6 @@ function renderElections() {
 // ============================================================
 async function loadPollingStations() {
     // Здесь можно загрузить из справочника участков, но пока заглушка
-    // Для примера – создадим тестовые данные
     pollingStationsList = [
         { id: '1', name: 'Участок №1, ул. Ленина, д. 10' },
         { id: '2', name: 'Участок №2, ул. Советская, д. 5' },
@@ -188,10 +186,8 @@ function getNextStep(step) {
             // Кандидат – проверка партийной номинации
             const nominated = document.getElementById('partyNominated');
             if (nominated && nominated.value === 'no') {
-                // Если партия не выдвинула – остаёмся на шаге 5 (с предупреждением)
-                // Но мы разрешаем переход, так как в интерфейсе уже показано предупреждение
-                // и пользователь должен собрать подписи
-                return 9; // переход на загрузку фото
+                // Предупреждение о подписях уже показано, переходим к фото
+                return 9;
             }
             return 9;
         }
@@ -200,13 +196,10 @@ function getNextStep(step) {
             return 10;
         }
         case 7: {
-            // Избиратель – выбор цели внутри
             const voterType = document.querySelector('input[name="voterChangeType"]:checked');
             if (!voterType) return 7;
             if (voterType.value === 'change_polling_station') return 8;
-            if (voterType.value === 'electronic_voting') return 10;
-            if (voterType.value === 'refuse_voting') return 10;
-            return 7;
+            else return 10; // electronic_voting или refuse_voting → сразу на подтверждение
         }
         case 8: {
             if (!selectedPollingStationId) return 8;
@@ -300,7 +293,6 @@ function updatePartyFields() {
     if (membership === 'yes') {
         partyFields.classList.remove('hidden');
         nominationQuestion.classList.remove('hidden');
-        // Проверяем номинацию
         const nominated = document.getElementById('partyNominated').value;
         if (nominated === 'no') {
             signatureReq.classList.remove('hidden');
@@ -421,59 +413,70 @@ async function uploadPhoto(file) {
 function prepareSummary() {
     const type = document.querySelector('input[name="applicationType"]:checked');
     const election = electionsList.find(e => e.id === selectedElectionId);
-    const typeLabel = type ? (type.value === 'candidate_registration' ? 'Регистрация кандидата' :
-                              type.value === 'observer_registration' ? 'Регистрация наблюдателя' :
-                              'Изменение способа голосования') : '—';
+    
+    // Определяем финальный тип для отображения
+    let displayType = '';
+    let displayDetails = [];
+
+    if (type && type.value === 'candidate_registration') {
+        displayType = 'Регистрация кандидата';
+        const membership = document.getElementById('partyMembership').value;
+        if (membership === 'yes') {
+            displayDetails.push(`Партия: ${document.getElementById('partyName').value || '—'}`);
+            const nominated = document.getElementById('partyNominated').value;
+            if (nominated === 'no') {
+                displayDetails.push('Требуется сбор 10 подписей');
+            } else {
+                displayDetails.push('Выдвинут партией');
+            }
+        } else {
+            displayDetails.push('Самовыдвижение');
+        }
+        if (photoPath) displayDetails.push('Фото загружено');
+    } else if (type && type.value === 'observer_registration') {
+        displayType = 'Регистрация наблюдателя';
+        const membership = document.getElementById('observerPartyMembership').value;
+        if (membership === 'yes') {
+            displayDetails.push(`Партия: ${document.getElementById('observerPartyName').value || '—'}`);
+        } else {
+            displayDetails.push('Независимый наблюдатель');
+        }
+    } else if (type && type.value === 'voter_change') {
+        const voterType = document.querySelector('input[name="voterChangeType"]:checked');
+        if (voterType) {
+            switch (voterType.value) {
+                case 'change_polling_station':
+                    displayType = 'Смена участка голосования';
+                    const station = pollingStationsList.find(ps => ps.id === selectedPollingStationId);
+                    displayDetails.push(`Новый участок: ${station ? station.name : '—'}`);
+                    break;
+                case 'electronic_voting':
+                    displayType = 'Электронное голосование';
+                    displayDetails.push('Учётная запись должна быть подтверждена');
+                    break;
+                case 'refuse_voting':
+                    displayType = 'Отказ от голосования';
+                    break;
+                default:
+                    displayType = 'Изменение способа голосования';
+            }
+        }
+    }
 
     let html = '<table class="summary-table">';
-    html += `<tr><th>Цель обращения</th><td>${typeLabel}</td></tr>`;
+    html += `<tr><th>Цель обращения</th><td>${displayType || '—'}</td></tr>`;
     html += `<tr><th>Голосование</th><td>${election ? election.title : '—'}</td></tr>`;
     html += `<tr><th>Заявитель</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code}</td></tr>`;
-
-    if (type && type.value === 'candidate_registration') {
-        const membership = document.getElementById('partyMembership').value;
-        html += `<tr><th>Принадлежность к партии</th><td>${membership === 'yes' ? 'Да' : 'Нет'}</td></tr>`;
-        if (membership === 'yes') {
-            html += `<tr><th>Название партии</th><td>${document.getElementById('partyName').value || '—'}</td></tr>`;
-            const nominated = document.getElementById('partyNominated').value;
-            html += `<tr><th>Выдвинула партия</th><td>${nominated === 'yes' ? 'Да' : 'Нет'}</td></tr>`;
-            if (nominated === 'no') {
-                html += `<tr><th>Требуется сбор подписей</th><td>Необходимо собрать минимум 10 подписей</td></tr>`;
-            }
-        }
-        html += `<tr><th>Фото</th><td>${photoPath ? 'Загружено' : 'Не загружено'}</td></tr>`;
+    if (displayDetails.length) {
+        html += `<tr><th>Дополнительно</th><td><ul>${displayDetails.map(d => `<li>${d}</li>`).join('')}</ul></td></tr>`;
     }
-
-    if (type && type.value === 'observer_registration') {
-        const membership = document.getElementById('observerPartyMembership').value;
-        html += `<tr><th>Принадлежность к партии</th><td>${membership === 'yes' ? 'Да' : 'Нет'}</td></tr>`;
-        if (membership === 'yes') {
-            html += `<tr><th>Название партии</th><td>${document.getElementById('observerPartyName').value || '—'}</td></tr>`;
-        }
-    }
-
-    if (type && type.value === 'voter_change') {
-        const voterType = document.querySelector('input[name="voterChangeType"]:checked');
-        const voterLabel = voterType ? (voterType.value === 'change_polling_station' ? 'Изменить участок' :
-                                        voterType.value === 'electronic_voting' ? 'Электронное голосование' :
-                                        'Отказ от голосования') : '—';
-        html += `<tr><th>Действие</th><td>${voterLabel}</td></tr>`;
-        if (voterType && voterType.value === 'change_polling_station') {
-            const station = pollingStationsList.find(ps => ps.id === selectedPollingStationId);
-            html += `<tr><th>Новый участок</th><td>${station ? station.name : '—'}</td></tr>`;
-        }
-        if (voterType && voterType.value === 'electronic_voting') {
-            html += `<tr><th>Условие</th><td>Учётная запись должна быть подтверждена</td></tr>`;
-        }
-    }
-
     html += '</table>';
     document.getElementById('summary').innerHTML = html;
 }
 
 // ============================================================
-// Отправка заявления
+// Отправка заявления (ИСПРАВЛЕННАЯ ВЕРСИЯ)
 // ============================================================
 async function submitApplication() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -497,8 +500,10 @@ async function submitApplication() {
         applicationNumber = generateApplicationNumber();
     }
 
-    // Формируем данные в JSON
+    // Определяем финальный тип и данные для БД
+    let finalType = type.value;
     let dataPayload = {};
+
     if (type.value === 'candidate_registration') {
         dataPayload.party_membership = document.getElementById('partyMembership').value === 'yes';
         if (dataPayload.party_membership) {
@@ -506,6 +511,7 @@ async function submitApplication() {
             dataPayload.party_nominated = document.getElementById('partyNominated').value === 'yes';
         }
         dataPayload.photo_path = photoPath;
+        finalType = 'candidate_registration';
     }
 
     if (type.value === 'observer_registration') {
@@ -513,6 +519,7 @@ async function submitApplication() {
         if (dataPayload.party_membership) {
             dataPayload.party_name = document.getElementById('observerPartyName').value.trim();
         }
+        finalType = 'observer_registration';
     }
 
     if (type.value === 'voter_change') {
@@ -521,20 +528,33 @@ async function submitApplication() {
             showError('Выберите действие');
             return false;
         }
-        dataPayload.voter_change_type = voterType.value;
-        if (voterType.value === 'change_polling_station') {
+        const changeType = voterType.value;
+
+        if (changeType === 'electronic_voting') {
+            finalType = 'remote_voting_request';
+            dataPayload.voting_method = 'electronic';
+        } else if (changeType === 'change_polling_station') {
+            finalType = 'change_polling_station';
             if (!selectedPollingStationId) {
                 showError('Выберите участок');
                 return false;
             }
             dataPayload.new_polling_station_id = selectedPollingStationId;
+        } else if (changeType === 'refuse_voting') {
+            finalType = 'other';
+            dataPayload.reason = 'Отказ от голосования';
+        } else {
+            // fallback
+            finalType = 'other';
+            dataPayload.voter_change_type = changeType;
         }
     }
 
+    // Собираем финальный payload
     const payload = {
         user_id: session.user.id,
         election_id: selectedElectionId,
-        type: type.value,
+        type: finalType,                    // <-- теперь допустимое значение
         status: 'submitted',
         data: dataPayload,
         created_at: new Date().toISOString(),
