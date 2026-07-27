@@ -8,9 +8,11 @@ let userProfile = null;
 let userPersonalCode = null;
 let applicationNumber = null;
 let selectedPurpose = null; // 'candidate', 'observer', 'voter'
+let selectedElectionId = null; // новое
 let selectedVoterGoal = null; // 'change_polling_station', 'electronic_voting', 'refuse_voting'
 let selectedPollingStationId = null;
 let pollingStations = [];
+let elections = [];
 let hasActiveApp = false;
 
 // ============================================================
@@ -76,6 +78,69 @@ async function checkActiveApplication() {
 }
 
 // ============================================================
+// Загрузка активных голосований
+// ============================================================
+async function loadElections() {
+    const { data, error } = await supabase
+        .schema('votes')
+        .from('elections')
+        .select('id, title, type, scope, territory, start_date, end_date')
+        .eq('status', 'active')
+        .order('start_date', { ascending: true });
+    if (error) {
+        console.error('Ошибка загрузки голосований:', error);
+        // Заглушка для демонстрации
+        elections = [
+            { id: 'e1', title: 'Выборы президента СФСРЮ 2026', type: 'election', scope: 'federal', territory: 'Вся территория' },
+            { id: 'e2', title: 'Референдум по конституции', type: 'referendum', scope: 'federal', territory: 'Вся территория' }
+        ];
+        renderElections();
+        return;
+    }
+    elections = data || [];
+    renderElections();
+}
+
+function renderElections() {
+    const container = document.getElementById('electionsList');
+    container.innerHTML = '';
+    if (elections.length === 0) {
+        container.innerHTML = '<p class="no-data">Нет активных голосований</p>';
+        return;
+    }
+    const typeMap = { election: 'Выборы', referendum: 'Референдум', poll: 'Опрос' };
+    const scopeMap = { federal: 'Федеральные', regional: 'Региональные', local: 'Местные' };
+    elections.forEach(el => {
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'election';
+        radio.value = el.id;
+        radio.id = `e-${el.id}`;
+        radio.style.display = 'none';
+
+        const card = document.createElement('div');
+        card.className = 'mvd-card';
+        card.setAttribute('data-id', el.id);
+        card.innerHTML = `
+            <h4><i class="fas fa-vote-yea" style="margin-right:0.5rem; color:#7b091a;"></i> ${el.title}</h4>
+            <p>${typeMap[el.type] || el.type} • ${scopeMap[el.scope] || el.scope} • ${el.territory}</p>
+            <small>${new Date(el.start_date).toLocaleDateString('ru-RU')} – ${new Date(el.end_date).toLocaleDateString('ru-RU')}</small>
+        `;
+
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.mvd-card').forEach(c => c.classList.remove('selected'));
+            card.classList.add('selected');
+            radio.checked = true;
+            selectedElectionId = el.id;
+            document.getElementById('step2_5NextBtn').disabled = false;
+        });
+
+        container.appendChild(radio);
+        container.appendChild(card);
+    });
+}
+
+// ============================================================
 // Загрузка участков для голосования
 // ============================================================
 async function loadPollingStations() {
@@ -108,7 +173,6 @@ function renderPollingStations() {
         radio.name = 'pollingStation';
         radio.value = ps.id;
         radio.id = `ps-${ps.id}`;
-        radio.classList.add('ps-radio');
         radio.style.display = 'none';
 
         const card = document.createElement('div');
@@ -144,22 +208,24 @@ function getNextStep(step) {
         case 2: {
             if (!purpose) return 2;
             selectedPurpose = purpose.value;
+            return '2.5'; // новый шаг выбора голосования
+        }
+        case '2.5': {
+            if (!selectedElectionId) return '2.5';
             return 3;
         }
         case 3: {
             if (selectedPurpose === 'candidate') return 4;
             if (selectedPurpose === 'observer') return '4-observer';
             if (selectedPurpose === 'voter') return '4-voter';
-            return 6; // завершение
+            return 6;
         }
         case 4: {
-            // Для кандидата – проверка партии
             const hasParty = document.querySelector('input[name="hasParty"]:checked');
             if (!hasParty) return 4;
             return 5;
         }
         case 5: {
-            // Для кандидата – выдвижение партией (сразу на подтверждение)
             return 6;
         }
         case '4-observer': return 6;
@@ -181,7 +247,8 @@ function getNextStep(step) {
 function getPrevStep(step) {
     switch (step) {
         case 2: return 1;
-        case 3: return 2;
+        case '2.5': return 2;
+        case 3: return '2.5';
         case 4: return 3;
         case 5: return 4;
         case 6: {
@@ -204,6 +271,7 @@ function goToStep(step) {
     if (step === '4-observer') numericStep = 4;
     else if (step === '4-voter') numericStep = 4;
     else if (step === '5-voter') numericStep = 5;
+    else if (step === '2.5') numericStep = 2.5;
 
     // Скрываем все шаги
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
@@ -213,6 +281,7 @@ function goToStep(step) {
     if (step === '4-observer') targetSelector = '.step-content[data-step="4-observer"]';
     else if (step === '4-voter') targetSelector = '.step-content[data-step="4-voter"]';
     else if (step === '5-voter') targetSelector = '.step-content[data-step="5-voter"]';
+    else if (step === '2.5') targetSelector = '.step-content[data-step="2.5"]';
     else targetSelector = `.step-content[data-step="${numericStep}"]`;
 
     const targetStep = document.querySelector(targetSelector);
@@ -221,8 +290,8 @@ function goToStep(step) {
 
     // Обработка шагов с динамическим содержимым
     if (step === 3) renderProfileData();
+    if (step === '2.5' && elections.length === 0) loadElections();
     if (step === 4 && selectedPurpose === 'candidate') {
-        // Показать/скрыть поле партии
         document.querySelectorAll('input[name="hasParty"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const partyField = document.getElementById('partyField');
@@ -235,7 +304,6 @@ function goToStep(step) {
         });
     }
     if (step === 5 && selectedPurpose === 'candidate') {
-        // Показать/скрыть предупреждение при отсутствии выдвижения
         document.querySelectorAll('input[name="nominated"]').forEach(radio => {
             radio.addEventListener('change', (e) => {
                 const warning = document.getElementById('noNominationWarning');
@@ -289,6 +357,11 @@ function prepareSummary() {
         voter: 'Изменение способа голосования'
     }[selectedPurpose] || selectedPurpose;
     html += `<tr><th>Цель обращения</th><td>${purposeLabel}</td></tr>`;
+
+    // Выбранное голосование
+    const election = elections.find(e => e.id === selectedElectionId);
+    html += `<tr><th>Голосование</th><td>${election ? election.title : '—'}</td></tr>`;
+
     html += `<tr><th>Заявитель</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code}</td></tr>`;
 
@@ -344,6 +417,11 @@ async function submitApplication() {
         return false;
     }
 
+    if (!selectedElectionId) {
+        showError('Выберите голосование');
+        return false;
+    }
+
     if (!applicationNumber) {
         applicationNumber = generateApplicationNumber();
     }
@@ -383,7 +461,7 @@ async function submitApplication() {
     // Вставка в БД
     const payload = {
         user_id: session.user.id,
-        election_id: null, // пока не привязано к конкретному голосованию
+        election_id: selectedElectionId,
         type: appType,
         status: 'submitted',
         data: appData,
@@ -456,6 +534,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 selectedPurpose = purpose.value;
+            }
+            if (currentStep === '2.5') {
+                if (!selectedElectionId) {
+                    showError('Выберите голосование');
+                    return;
+                }
             }
             if (currentStep === '4-voter') {
                 const goal = document.querySelector('input[name="voterGoal"]:checked');
