@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои услуги — СФСРЮ</title>
-    <!-- favicons  -->
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -29,7 +29,6 @@
     <link rel="stylesheet" href="../../css/index.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* (стили без изменений) */
         .services-container { max-width: 1000px; margin: 2rem auto; background: white; border-radius: 16px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); padding: 2.5rem; }
         .page-title { font-size: 2.2rem; font-weight: 700; color: #7b091a; margin-bottom: 0.25rem; letter-spacing: -0.5px; }
         .page-description { font-size: 1.1rem; color: #6c757d; margin-bottom: 2rem; border-bottom: 2px solid #f0f0f0; padding-bottom: 1rem; }
@@ -114,19 +113,17 @@
             'completed': 'Результат выдан',
             'rejected': 'Отказано',
             'cancelled': 'Отменено',
-            'under_review': 'На рассмотрении',      // для ЦИК
-            'approved': 'Одобрено',                 // для ЦИК
-            'draft': 'Черновик'                     // для ЦИК
+            'under_review': 'На рассмотрении',
+            'approved': 'Одобрено',
+            'draft': 'Черновик'
         };
 
-        // Маппинг service_type -> название для пользователя (услуги)
         const serviceTypeNames = {
             'passport': 'Получение паспорта гражданина СФСРЮ',
             'foreign_passport': 'Получение заграничного паспорта гражданина СФСРЮ',
             'inn': 'Получение ИНН'
         };
 
-        // Маппинг типов обращений в ЦИК -> название
         const voteTypeNames = {
             'candidate_registration': 'Регистрация кандидата',
             'observer_registration': 'Регистрация наблюдателя',
@@ -145,6 +142,14 @@
             }
         }
 
+        // Генерация номера заявления для ЦИК на основе ID
+        function generateVoteAppNumber(id) {
+            if (!id) return 'CIC-00000000';
+            // Берём первые 8 символов UUID
+            const short = id.replace(/-/g, '').slice(0, 8).toUpperCase();
+            return `CIC-${short}`;
+        }
+
         async function loadUserProfile() {
             const { data: { session }, error } = await supabase.auth.getSession();
             if (error || !session) {
@@ -161,7 +166,7 @@
             loading.style.display = 'block';
 
             try {
-                // 1. Паспорта (старая структура)
+                // 1. Паспорта
                 const { data: passportData, error: pErr } = await supabase
                     .schema('services')
                     .from('passport')
@@ -196,7 +201,7 @@
                 if (fErr) console.error('Ошибка загрузки загранпаспортов:', fErr);
                 if (aErr) console.error('Ошибка загрузки заявлений из applications:', aErr);
 
-                // 4. ЗАЯВЛЕНИЯ В ЦИК (исправлено: без application_number)
+                // 4. ЗАЯВЛЕНИЯ В ЦИК (исправленный запрос – без application_number)
                 const { data: voteApps, error: vErr } = await supabase
                     .schema('votes')
                     .from('applications')
@@ -204,9 +209,11 @@
                     .eq('user_id', currentUserId)
                     .order('created_at', { ascending: false });
 
-                if (vErr) console.error('Ошибка загрузки заявлений ЦИК:', vErr);
+                if (vErr) {
+                    console.error('Ошибка загрузки заявлений ЦИК:', vErr);
+                }
 
-                // Преобразуем данные из applications (услуги) в единый формат
+                // Преобразуем данные из applications (услуги)
                 const formattedApps = (appData || []).map(item => {
                     const serviceKey = item.catalog?.service_key || 'unknown';
                     return {
@@ -219,17 +226,16 @@
                     };
                 });
 
-                // Преобразуем заявления ЦИК
+                // Преобразуем заявления ЦИК (генерируем номер из ID)
                 const formattedVoteApps = (voteApps || []).map(item => {
                     const typeName = voteTypeNames[item.type] || item.type || 'Обращение в ЦИК';
-                    // генерируем номер из ID
-                    const appNumber = `CIC-${String(item.id).slice(0,8)}`;
+                    const appNumber = generateVoteAppNumber(item.id);
                     return {
                         id: item.id,
                         application_number: appNumber,
                         created_at: item.created_at,
                         status: item.status,
-                        service_type: 'vote',  // для идентификации
+                        service_type: 'vote',
                         _type: 'vote',
                         _displayName: typeName,
                         _voteData: { type: item.type, election_id: item.election_id, data: item.data }
@@ -244,7 +250,6 @@
                     ...formattedVoteApps
                 ];
 
-                // Сортируем по дате (новые сверху)
                 allData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
                 if (allData.length === 0) {
@@ -258,16 +263,14 @@
                     const statusText = statusMap[item.status] || item.status;
                     const date = new Date(item.created_at).toLocaleDateString('ru-RU');
                     const iconHtml = getStatusIcon(item.status);
-                    
-                    // Определяем название услуги
+
                     let serviceName = item._displayName || serviceTypeNames[item.service_type] || item.service_type || 'Услуга';
-                    
-                    // Определяем тип для ссылки
+
                     let typeParam = item._type;
                     if (typeParam === 'vote') {
                         typeParam = 'vote';
                     } else if (typeParam === 'passport' || typeParam === 'foreign_passport') {
-                        typeParam = item.service_type;  // 'passport' или 'foreign_passport'
+                        typeParam = item.service_type;
                     } else {
                         typeParam = 'application';
                     }

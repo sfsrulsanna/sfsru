@@ -24,7 +24,6 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* (стили без изменений) */
         .service-container {
             max-width: 700px;
             margin: 2rem auto;
@@ -292,7 +291,6 @@
             'service': 'Служебный'
         };
 
-        // Маппинг типов ЦИК для отображения
         const voteTypeNames = {
             'candidate_registration': 'Регистрация кандидата',
             'observer_registration': 'Регистрация наблюдателя',
@@ -384,7 +382,14 @@
             return data.title;
         }
 
-        // ---- ИСПРАВЛЕНИЕ: парсинг data ----
+        // Генерация номера заявления для ЦИК на основе ID
+        function generateVoteAppNumber(id) {
+            if (!id) return 'CIC-00000000';
+            const short = id.replace(/-/g, '').slice(0, 8).toUpperCase();
+            return `CIC-${short}`;
+        }
+
+        // Парсинг поля data
         function parseDataField(app) {
             if (!app) return app;
             if (app.data && typeof app.data === 'string') {
@@ -430,7 +435,7 @@
                         showError('Заявление не найдено');
                         return;
                     }
-                    app = parseDataField(data); // парсим data
+                    app = parseDataField(data);
                     source = 'vote_application';
                 } else if (type === 'passport') {
                     source = 'passport';
@@ -480,24 +485,6 @@
                     }
                 }
 
-                // Если всё ещё нет app, то загружаем из passport/foreign_passport по type (если type указан)
-                if (!app && (type === 'passport' || type === 'foreign_passport')) {
-                    const table = type;
-                    const { data, error } = await supabase
-                        .schema('services')
-                        .from(table)
-                        .select('*')
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .single();
-                    if (error || !data) {
-                        showError('Заявление не найдено');
-                        return;
-                    }
-                    app = data;
-                    source = type;
-                }
-
                 if (!app) {
                     showError('Заявление не найдено');
                     return;
@@ -505,18 +492,22 @@
 
                 currentSource = source;
 
-                // Определяем название услуги
                 let serviceName = '';
+                let appNumber = '';
+
                 if (source === 'vote_application') {
                     serviceName = voteTypeNames[app.type] || app.type || 'Обращение в ЦИК';
+                    appNumber = generateVoteAppNumber(app.id);
                 } else if (source === 'applications') {
                     serviceName = app.catalog?.name_ru || serviceTypeNames[app.service_type] || 'Услуга';
+                    appNumber = app.application_number || '—';
                 } else {
                     serviceName = serviceTypeNames[app.service_type] || 'Услуга';
+                    appNumber = app.application_number || '—';
                 }
 
                 document.getElementById('serviceName').textContent = serviceName;
-                document.getElementById('appNumber').textContent = `№ ${app.application_number || '—'}`;
+                document.getElementById('appNumber').textContent = `№ ${appNumber}`;
 
                 let applicants = [];
                 if (source === 'foreign_passport') {
@@ -540,8 +531,15 @@
             let html = '<h3 class="section-title">Детали заявки</h3>';
             html += '<table class="details-table">';
 
+            let appNumber = '';
+            if (source === 'vote_application') {
+                appNumber = generateVoteAppNumber(app.id);
+            } else {
+                appNumber = app.application_number || '—';
+            }
+
             const fields = [
-                ['Номер заявления', app.application_number || '—'],
+                ['Номер заявления', appNumber],
                 ['Статус', statusMap[app.status] || app.status],
                 ['Дата создания', new Date(app.created_at).toLocaleString()],
                 ['Личный код', app.personal_code || '—']
@@ -564,13 +562,11 @@
                 fields.push(['Вид', visaTypeMap[app.visa_type] || app.visa_type || '—']);
                 fields.push(['Вписывать детей', app.include_children_in_parent ? 'Да' : 'Нет']);
             } else if (source === 'vote_application') {
-                // === ДЕТАЛИ ДЛЯ ЗАЯВЛЕНИЙ ЦИК ===
                 const typeName = voteTypeNames[app.type] || app.type;
                 fields.push(['Тип обращения', typeName]);
                 const electionTitle = await getElectionTitle(app.election_id);
                 fields.push(['Голосование', electionTitle]);
 
-                // Выводим содержимое поля data (уже распарсено)
                 const data = app.data || {};
                 if (data.has_party !== undefined) {
                     fields.push(['Принадлежит к партии', data.has_party ? 'Да' : 'Нет']);
@@ -602,7 +598,6 @@
                         fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
                     }
                 }
-                // Прочие поля выводим как есть
                 const extraKeys = Object.keys(data).filter(k =>
                     !['has_party', 'party_name', 'nominated_by_party', 'goal',
                       'new_polling_station_id', 'reason', 'photo_path', 'voter_change_type',
@@ -647,217 +642,142 @@
             container.innerHTML = html;
         }
 
-async function loadHistory(passportId, source, app) {
-    const list = document.getElementById('historyList');
-    const toggleBtn = document.getElementById('toggleHistoryBtn');
+        async function loadHistory(passportId, source, app) {
+            const list = document.getElementById('historyList');
+            const toggleBtn = document.getElementById('toggleHistoryBtn');
 
-    let historyTable = '';
-    let idField = '';
-    let schema = 'services';
+            let historyTable = '';
+            let idField = '';
+            let schema = 'services';
 
-    if (source === 'passport') {
-        historyTable = 'passport_status_history';
-        idField = 'passport_id';
-    } else if (source === 'foreign_passport') {
-        historyTable = 'foreign_passport_status_history';
-        idField = 'passport_id';
-    } else if (source === 'applications') {
-        historyTable = 'application_status_history';
-        idField = 'application_id';
-    } else if (source === 'vote_application') {
-        historyTable = 'application_status_history';
-        idField = 'application_id';
-        schema = 'votes';
-    } else {
-        list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
-        toggleBtn.style.display = 'none';
-        return;
-    }
-
-    const { data, error } = await supabase
-        .schema(schema)
-        .from(historyTable)
-        .select('*')
-        .eq(idField, passportId)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Ошибка загрузки истории:', error);
-        // Если нет прав или таблица не существует, показываем "История отсутствует"
-        if (error.code === '42501' || error.code === '42P01') {
-            list.innerHTML = '<p class="no-data">История отсутствует</p>';
-            toggleBtn.style.display = 'none';
-            return;
-        }
-        list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        list.innerHTML = '<p class="no-data">История отсутствует</p>';
-        toggleBtn.style.display = 'none';
-        return;
-    }
-
-    let html = '';
-    for (const item of data) {
-        const statusText = statusMap[item.status] || item.status;
-        const iconHtml = getStatusIcon(item.status);
-        const files = item.attachments || [];
-        const fileLinks = [];
-
-        for (const f of files) {
-            const url = await getSignedUrl(f);
-            if (url) {
-                const fileName = extractFileName(f);
-                fileLinks.push(`
-                    <div class="file-item">
-                        <span>📎</span>
-                        <a href="${url}" target="_blank">${fileName}</a>
-                    </div>
-                `);
-            }
-        }
-
-        if (source !== 'vote_application' && item.status === 'submitted') {
-            let photoPath = null;
-            if (source === 'passport' && app.photo_path) {
-                photoPath = app.photo_path;
-            }
-            if (photoPath) {
-                const photoUrl = await getSignedUrl(photoPath);
-                if (photoUrl) {
-                    const fileName = photoPath.split('/').pop() || 'photo.jpg';
-                    fileLinks.push(`
-                        <div class="file-item">
-                            <span>📷</span>
-                            <a href="${photoUrl}" target="_blank">${fileName}</a>
-                        </div>
-                    `);
-                }
-            }
-            let statementPath = '';
             if (source === 'passport') {
-                statementPath = `passport/${app.application_number}/statement.pdf`;
+                historyTable = 'passport_status_history';
+                idField = 'passport_id';
             } else if (source === 'foreign_passport') {
-                statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
-            }
-            if (statementPath) {
-                const url = await getSignedUrl(statementPath);
-                if (url) {
-                    fileLinks.push(`
-                        <div class="file-item">
-                            <span>📄</span>
-                            <a href="${url}" target="_blank">statement.pdf</a>
-                        </div>
-                    `);
-                }
-            }
-        }
-
-        html += `
-            <div class="status-card">
-                <div class="status-header">
-                    <div class="status-icon">${iconHtml}</div>
-                    <span class="status-name">${statusText}</span>
-                    <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
-                </div>
-                <div class="status-comment">${item.comment || ''}</div>
-                <div class="files-list">${fileLinks.join('')}</div>
-            </div>
-        `;
-    }
-
-    list.innerHTML = html;
-
-    const statusCards = list.querySelectorAll('.status-card');
-    if (statusCards.length > 1) {
-        toggleBtn.style.display = 'inline-block';
-        list.classList.remove('show-all');
-        toggleBtn.textContent = 'Показать историю';
-    } else {
-        toggleBtn.style.display = 'none';
-    }
-}
-
-            let html = '';
-            for (const item of data) {
-                const statusText = statusMap[item.status] || item.status;
-                const iconHtml = getStatusIcon(item.status);
-                const files = item.attachments || [];
-                const fileLinks = [];
-
-                for (const f of files) {
-                    const url = await getSignedUrl(f);
-                    if (url) {
-                        const fileName = extractFileName(f);
-                        fileLinks.push(`
-                            <div class="file-item">
-                                <span>📎</span>
-                                <a href="${url}" target="_blank">${fileName}</a>
-                            </div>
-                        `);
-                    }
-                }
-
-                // Для заявлений ЦИК нет фото/заявления из app, поэтому пропускаем
-                if (source !== 'vote_application' && item.status === 'submitted') {
-                    let photoPath = null;
-                    if (source === 'passport' && app.photo_path) {
-                        photoPath = app.photo_path;
-                    }
-                    if (photoPath) {
-                        const photoUrl = await getSignedUrl(photoPath);
-                        if (photoUrl) {
-                            const fileName = photoPath.split('/').pop() || 'photo.jpg';
-                            fileLinks.push(`
-                                <div class="file-item">
-                                    <span>📷</span>
-                                    <a href="${photoUrl}" target="_blank">${fileName}</a>
-                                </div>
-                            `);
-                        }
-                    }
-                    let statementPath = '';
-                    if (source === 'passport') {
-                        statementPath = `passport/${app.application_number}/statement.pdf`;
-                    } else if (source === 'foreign_passport') {
-                        statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
-                    }
-                    if (statementPath) {
-                        const url = await getSignedUrl(statementPath);
-                        if (url) {
-                            fileLinks.push(`
-                                <div class="file-item">
-                                    <span>📄</span>
-                                    <a href="${url}" target="_blank">statement.pdf</a>
-                                </div>
-                            `);
-                        }
-                    }
-                }
-
-                html += `
-                    <div class="status-card">
-                        <div class="status-header">
-                            <div class="status-icon">${iconHtml}</div>
-                            <span class="status-name">${statusText}</span>
-                            <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
-                        </div>
-                        <div class="status-comment">${item.comment || ''}</div>
-                        <div class="files-list">${fileLinks.join('')}</div>
-                    </div>
-                `;
-            }
-
-            list.innerHTML = html;
-
-            const statusCards = list.querySelectorAll('.status-card');
-            if (statusCards.length > 1) {
-                toggleBtn.style.display = 'inline-block';
-                list.classList.remove('show-all');
-                toggleBtn.textContent = 'Показать историю';
+                historyTable = 'foreign_passport_status_history';
+                idField = 'passport_id';
+            } else if (source === 'applications') {
+                historyTable = 'application_status_history';
+                idField = 'application_id';
+            } else if (source === 'vote_application') {
+                historyTable = 'application_status_history';
+                idField = 'application_id';
+                schema = 'votes';
             } else {
+                list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
+                toggleBtn.style.display = 'none';
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .schema(schema)
+                    .from(historyTable)
+                    .select('*')
+                    .eq(idField, passportId)
+                    .order('created_at', { ascending: false });
+
+                if (error) {
+                    // Если ошибка 403 (нет прав) или таблица не существует – показываем сообщение
+                    if (error.code === '42501' || error.code === '42P01') {
+                        list.innerHTML = '<p class="no-data">История статусов недоступна (нет прав доступа)</p>';
+                        toggleBtn.style.display = 'none';
+                        return;
+                    }
+                    console.error('Ошибка загрузки истории:', error);
+                    list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
+                    toggleBtn.style.display = 'none';
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    list.innerHTML = '<p class="no-data">История отсутствует</p>';
+                    toggleBtn.style.display = 'none';
+                    return;
+                }
+
+                let html = '';
+                for (const item of data) {
+                    const statusText = statusMap[item.status] || item.status;
+                    const iconHtml = getStatusIcon(item.status);
+                    const files = item.attachments || [];
+                    const fileLinks = [];
+
+                    for (const f of files) {
+                        const url = await getSignedUrl(f);
+                        if (url) {
+                            const fileName = extractFileName(f);
+                            fileLinks.push(`
+                                <div class="file-item">
+                                    <span>📎</span>
+                                    <a href="${url}" target="_blank">${fileName}</a>
+                                </div>
+                            `);
+                        }
+                    }
+
+                    if (source !== 'vote_application' && item.status === 'submitted') {
+                        let photoPath = null;
+                        if (source === 'passport' && app.photo_path) {
+                            photoPath = app.photo_path;
+                        }
+                        if (photoPath) {
+                            const photoUrl = await getSignedUrl(photoPath);
+                            if (photoUrl) {
+                                const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                                fileLinks.push(`
+                                    <div class="file-item">
+                                        <span>📷</span>
+                                        <a href="${photoUrl}" target="_blank">${fileName}</a>
+                                    </div>
+                                `);
+                            }
+                        }
+                        let statementPath = '';
+                        if (source === 'passport') {
+                            statementPath = `passport/${app.application_number}/statement.pdf`;
+                        } else if (source === 'foreign_passport') {
+                            statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
+                        }
+                        if (statementPath) {
+                            const url = await getSignedUrl(statementPath);
+                            if (url) {
+                                fileLinks.push(`
+                                    <div class="file-item">
+                                        <span>📄</span>
+                                        <a href="${url}" target="_blank">statement.pdf</a>
+                                    </div>
+                                `);
+                            }
+                        }
+                    }
+
+                    html += `
+                        <div class="status-card">
+                            <div class="status-header">
+                                <div class="status-icon">${iconHtml}</div>
+                                <span class="status-name">${statusText}</span>
+                                <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+                            </div>
+                            <div class="status-comment">${item.comment || ''}</div>
+                            <div class="files-list">${fileLinks.join('')}</div>
+                        </div>
+                    `;
+                }
+
+                list.innerHTML = html;
+
+                const statusCards = list.querySelectorAll('.status-card');
+                if (statusCards.length > 1) {
+                    toggleBtn.style.display = 'inline-block';
+                    list.classList.remove('show-all');
+                    toggleBtn.textContent = 'Показать историю';
+                } else {
+                    toggleBtn.style.display = 'none';
+                }
+            } catch (err) {
+                console.error('Ошибка при загрузке истории:', err);
+                list.innerHTML = '<p class="error">Не удалось загрузить историю</p>';
                 toggleBtn.style.display = 'none';
             }
         }
