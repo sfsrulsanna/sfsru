@@ -861,96 +861,134 @@
             submitBtn.textContent = 'Создать заявку';
         });
 
-        // ============================================================
-        // Просмотр заявки (универсальный)
-        // ============================================================
-        async function openViewModal(id, source, service) {
-            currentViewId = id;
-            currentViewSource = source;
-            currentViewType = service;
-            document.getElementById('viewAppNumber').textContent = '...';
-            document.getElementById('viewContent').style.display = 'block';
-            document.getElementById('viewModal').classList.add('active');
+// ============================================================
+// Просмотр заявки (универсальный) – исправленная версия с фото
+// ============================================================
+async function openViewModal(id, source, service) {
+    currentViewId = id;
+    currentViewSource = source;
+    currentViewType = service;
+    document.getElementById('viewAppNumber').textContent = '...';
+    document.getElementById('viewContent').style.display = 'block';
+    document.getElementById('viewModal').classList.add('active');
 
-            let data = null;
-            let error = null;
+    let data = null;
+    let error = null;
 
-            if (source === 'passport' || source === 'foreign_passport') {
-                // Старые таблицы
-                const table = source;
-                const result = await supabase
-                    .schema('services')
-                    .from(table)
-                    .select('*')
-                    .eq('id', id)
-                    .single();
-                data = result.data;
-                error = result.error;
-            } else {
-                // Новая таблица applications
-                const result = await supabase
-                    .schema('services')
-                    .from('applications')
-                    .select('*, catalog:service_id (service_key, name_ru)')
-                    .eq('id', id)
-                    .single();
-                data = result.data;
-                error = result.error;
+    if (source === 'passport' || source === 'foreign_passport') {
+        const table = source;
+        const result = await supabase
+            .schema('services')
+            .from(table)
+            .select('*')
+            .eq('id', id)
+            .single();
+        data = result.data;
+        error = result.error;
+    } else {
+        const result = await supabase
+            .schema('services')
+            .from('applications')
+            .select('*, catalog:service_id (service_key, name_ru)')
+            .eq('id', id)
+            .single();
+        data = result.data;
+        error = result.error;
+    }
+
+    if (error || !data) {
+        document.getElementById('viewDetails').innerHTML = `<div class="error">Ошибка загрузки: ${error?.message || 'Данные не найдены'}</div>`;
+        return;
+    }
+
+    currentAppUserId = data.user_id;
+    currentAppNumber = data.application_number;
+
+    document.getElementById('viewAppNumber').textContent = data.application_number || '—';
+
+    // Формируем детали
+    let detailsHtml = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">';
+    const fields = [
+        ['Номер', data.application_number],
+        ['Личный код', data.personal_code || '—'],
+        ['Статус', statusMap[data.status] || data.status],
+        ['Дата создания', new Date(data.created_at).toLocaleString()],
+        ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
+    ];
+
+    if (source === 'passport') {
+        fields.push(['Причина', reasonMap[data.reason] || data.reason]);
+        fields.push(['Телефон', data.phone || '—']);
+        fields.push(['Email', data.email || '—']);
+        // Для внутреннего паспорта – фото заявителя
+        if (data.photo_path) {
+            const photoUrl = await getSignedUrl(data.photo_path);
+            if (photoUrl) {
+                fields.push(['Фото заявителя', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> Фото</a>`]);
             }
-
-            if (error || !data) {
-                document.getElementById('viewDetails').innerHTML = `<div class="error">Ошибка загрузки: ${error?.message || 'Данные не найдены'}</div>`;
-                return;
+        }
+    } else if (source === 'foreign_passport') {
+        fields.push(['Тип паспорта', passportTypeMap[data.passport_type] || data.passport_type]);
+        fields.push(['Кому', recipientTypeMap[data.recipient_type] || data.recipient_type]);
+        fields.push(['Вид', visaTypeMap[data.visa_type] || data.visa_type]);
+        fields.push(['Вписывать детей', data.include_children_in_parent ? 'Да' : 'Нет']);
+    } else if (source === 'application') {
+        const d = data.data || {};
+        if (service === 'inn') {
+            fields.push(['Способ получения', d.type === 'electronic' ? 'Электронный' : 'Бумажный']);
+            if (d.type === 'paper') {
+                const fnsName = fnsList.find(f => f.id === d.fns_office_id)?.name || '—';
+                fields.push(['Отделение ФНС', fnsName]);
             }
-
-            // Сохраняем данные для уведомления <-- НОВОЕ
-            currentAppUserId = data.user_id;
-            currentAppNumber = data.application_number;
-
-            document.getElementById('viewAppNumber').textContent = data.application_number || '—';
-
-            // Формируем детали
-            let detailsHtml = '<div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem;">';
-            const fields = [
-                ['Номер', data.application_number],
-                ['Личный код', data.personal_code || '—'],
-                ['Статус', statusMap[data.status] || data.status],
-                ['Дата создания', new Date(data.created_at).toLocaleString()],
-                ['Последнее обновление', new Date(data.updated_at).toLocaleString()]
-            ];
-
-            if (source === 'passport') {
-                fields.push(['Причина', reasonMap[data.reason] || data.reason]);
-                fields.push(['Телефон', data.phone || '—']);
-                fields.push(['Email', data.email || '—']);
-            } else if (source === 'foreign_passport') {
-                fields.push(['Тип паспорта', passportTypeMap[data.passport_type] || data.passport_type]);
-                fields.push(['Кому', recipientTypeMap[data.recipient_type] || data.recipient_type]);
-                fields.push(['Вид', visaTypeMap[data.visa_type] || data.visa_type]);
-                fields.push(['Вписывать детей', data.include_children_in_parent ? 'Да' : 'Нет']);
-            } else if (source === 'application') {
-                // Новая структура — данные в JSON
-                const d = data.data || {};
-                if (service === 'inn') {
-                    fields.push(['Способ получения', d.type === 'electronic' ? 'Электронный' : 'Бумажный']);
-                    if (d.type === 'paper') {
-                        const fnsName = fnsList.find(f => f.id === d.fns_office_id)?.name || '—';
-                        fields.push(['Отделение ФНС', fnsName]);
-                    }
-                } else {
-                    // Для других новых услуг — выводим все ключи из data
-                    Object.keys(d).forEach(key => {
-                        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                        fields.push([label, d[key] || '—']);
-                    });
-                }
-            }
-
-            fields.forEach(([label, value]) => {
-                detailsHtml += `<div><strong>${label}:</strong></div><div>${value}</div>`;
+        } else {
+            Object.keys(d).forEach(key => {
+                const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                fields.push([label, d[key] || '—']);
             });
-            detailsHtml += '</div>';
-            document.getElementById('viewDetails').innerHTML = detailsHtml;
+        }
+    }
+
+    fields.forEach(([label, value]) => {
+        detailsHtml += `<div><strong>${label}:</strong></div><div>${value}</div>`;
+    });
+    detailsHtml += '</div>';
+
+    // ===== ДОБАВЛЯЕМ БЛОК С ПОЛУЧАТЕЛЯМИ (ДЛЯ ЗАГРАНПАСПОРТА) =====
+    if (source === 'foreign_passport') {
+        const { data: applicants, error: appErr } = await supabase
+            .schema('services')
+            .from('foreign_passport_applicants')
+            .select('*')
+            .eq('passport_id', id);
+
+        if (!appErr && applicants && applicants.length > 0) {
+            let applicantsHtml = `
+                <div style="margin-top:1.5rem; border-top:2px solid #e2e8f0; padding-top:1rem;">
+                    <h4 style="margin-bottom:0.5rem;"><i class="fas fa-users"></i> Получатели</h4>
+                    <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                        <tr>
+                            <th style="border:1px solid #e2e8f0; padding:0.5rem; background:#f8fafc; text-align:left;">ФИО</th>
+                            <th style="border:1px solid #e2e8f0; padding:0.5rem; background:#f8fafc; text-align:left;">Дата рождения</th>
+                            <th style="border:1px solid #e2e8f0; padding:0.5rem; background:#f8fafc; text-align:left;">Фото</th>
+                        </tr>`;
+            for (const app of applicants) {
+                const photoUrl = app.photo_path ? await getSignedUrl(app.photo_path) : null;
+                applicantsHtml += `
+                    <tr>
+                        <td style="border:1px solid #e2e8f0; padding:0.5rem;">${app.surname} ${app.name} ${app.patronymic || ''}</td>
+                        <td style="border:1px solid #e2e8f0; padding:0.5rem;">${app.date_of_birth ? new Date(app.date_of_birth).toLocaleDateString('ru-RU') : '—'}</td>
+                        <td style="border:1px solid #e2e8f0; padding:0.5rem;">
+                            ${photoUrl ? `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> Фото</a>` : '—'}
+                        </td>
+                    </tr>
+                `;
+            }
+            applicantsHtml += '</table></div>';
+            detailsHtml += applicantsHtml;
+        }
+    }
+
+    document.getElementById('viewDetails').innerHTML = detailsHtml;
 
             // История статусов
             let historyData = [];
