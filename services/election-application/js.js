@@ -7,13 +7,11 @@ let currentStep = 1;
 let userProfile = null;
 let userPersonalCode = null;
 let applicationNumber = null;
-let selectedElectionId = null;
-let selectedApplicationType = null; // 'candidate_registration', 'observer_registration', 'voter_change'
-let selectedVoterChangeType = null; // 'change_polling_station', 'electronic_voting', 'refuse_voting'
+let selectedPurpose = null; // 'candidate', 'observer', 'voter'
+let selectedVoterGoal = null; // 'change_polling_station', 'electronic_voting', 'refuse_voting'
 let selectedPollingStationId = null;
-// let photoPath = null; // УДАЛЕНО
-let electionsList = [];
-let pollingStationsList = [];
+let pollingStations = [];
+let photoPath = null;
 let hasActiveApp = false;
 
 // ============================================================
@@ -39,7 +37,7 @@ function showSuccess(msg) {
 }
 
 // ============================================================
-// Загрузка профиля пользователя
+// Загрузка профиля и проверка активного заявления
 // ============================================================
 async function loadUserProfile() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -47,30 +45,23 @@ async function loadUserProfile() {
         window.location.href = '../../../login.html?redirect=' + encodeURIComponent(window.location.pathname);
         return false;
     }
-
     const { data, error } = await supabase
         .from('users')
         .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender, phone, email')
         .eq('id', session.user.id)
         .single();
-
     if (error) {
         console.error('Ошибка загрузки профиля:', error);
         return false;
     }
-
     userProfile = data;
     userPersonalCode = data.personal_code;
     return true;
 }
 
-// ============================================================
-// Проверка активного обращения
-// ============================================================
 async function checkActiveApplication() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return false;
-
     const { data, error } = await supabase
         .schema('votes')
         .from('applications')
@@ -78,324 +69,362 @@ async function checkActiveApplication() {
         .eq('user_id', session.user.id)
         .in('status', ['submitted', 'under_review'])
         .maybeSingle();
-
     if (error) {
-        console.error('Ошибка проверки обращений:', error);
+        console.error('Ошибка проверки заявлений:', error);
         return false;
     }
     return !!data;
 }
 
 // ============================================================
-// Загрузка активных голосований
-// ============================================================
-async function loadElections() {
-    const { data, error } = await supabase
-        .schema('votes')
-        .from('elections')
-        .select('id, title, type, scope, territory, start_date, end_date, status')
-        .eq('status', 'active')
-        .order('start_date', { ascending: true });
-
-    if (error) {
-        console.error('Ошибка загрузки голосований:', error);
-        return;
-    }
-    electionsList = data || [];
-    renderElections();
-}
-
-function renderElections() {
-    const container = document.getElementById('electionsList');
-    if (!electionsList.length) {
-        container.innerHTML = '<p class="no-data">Нет активных голосований</p>';
-        return;
-    }
-
-    const typeMap = { election: 'Выборы', referendum: 'Референдум', poll: 'Опрос' };
-    const scopeMap = { federal: 'Федеральные', regional: 'Региональные', local: 'Местные' };
-
-    let html = '<div class="radio-group">';
-    electionsList.forEach(el => {
-        const label = `${typeMap[el.type] || el.type} — ${el.title} (${scopeMap[el.scope] || el.scope}, ${el.territory})`;
-        html += `<label><input type="radio" name="election" value="${el.id}"> ${label}</label>`;
-    });
-    html += '</div>';
-    container.innerHTML = html;
-
-    document.querySelectorAll('#electionsList input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            document.querySelectorAll('#electionsList label').forEach(l => l.classList.remove('selected'));
-            e.target.closest('label').classList.add('selected');
-            selectedElectionId = e.target.value;
-        });
-    });
-}
-
-// ============================================================
-// Загрузка участков (для избирателя)
+// Загрузка участков для голосования
 // ============================================================
 async function loadPollingStations() {
-    // Здесь можно загрузить из справочника участков, но пока заглушка
-    pollingStationsList = [
-        { id: '1', name: 'Участок №1, ул. Ленина, д. 10' },
-        { id: '2', name: 'Участок №2, ул. Советская, д. 5' },
-        { id: '3', name: 'Участок №3, пр. Мира, д. 20' }
-    ];
+    // Используем таблицу адресов, предполагаем, что есть таблица polling_stations
+    // Если её нет, создадим или используем существующие адреса
+    // Для примера используем заглушку или берём из таблицы
+    const { data, error } = await supabase
+        .schema('addresses')
+        .from('polling_stations')
+        .select('*')
+        .order('name');
+    if (error) {
+        console.error('Ошибка загрузки участков:', error);
+        // Заглушка для демонстрации
+        pollingStations = [
+            { id: '1', name: 'Участок №1', address: 'г. Поповск, ул. Ленина, д. 1' },
+            { id: '2', name: 'Участок №2', address: 'г. Поповск, ул. Советская, д. 10' },
+            { id: '3', name: 'Участок №3', address: 'г. Поповск, ул. Мира, д. 5' }
+        ];
+        renderPollingStations();
+        return;
+    }
+    pollingStations = data || [];
     renderPollingStations();
 }
 
 function renderPollingStations() {
     const container = document.getElementById('pollingStationsList');
-    if (!pollingStationsList.length) {
-        container.innerHTML = '<p class="no-data">Нет доступных участков</p>';
-        return;
-    }
+    container.innerHTML = '';
+    pollingStations.forEach(ps => {
+        const radio = document.createElement('input');
+        radio.type = 'radio';
+        radio.name = 'pollingStation';
+        radio.value = ps.id;
+        radio.id = `ps-${ps.id}`;
+        radio.classList.add('ps-radio');
+        radio.style.display = 'none';
 
-    let html = '<div class="radio-group">';
-    pollingStationsList.forEach(ps => {
-        html += `<label><input type="radio" name="pollingStation" value="${ps.id}"> ${ps.name}</label>`;
-    });
-    html += '</div>';
-    container.innerHTML = html;
+        const card = document.createElement('div');
+        card.className = 'mvd-card';
+        card.setAttribute('data-id', ps.id);
+        card.innerHTML = `
+            <h4><i class="fas fa-map-pin" style="margin-right:0.5rem; color:#7b091a;"></i>${ps.name}</h4>
+            <p>${ps.address}</p>
+        `;
 
-    document.querySelectorAll('#pollingStationsList input[type="radio"]').forEach(radio => {
-        radio.addEventListener('change', (e) => {
-            document.querySelectorAll('#pollingStationsList label').forEach(l => l.classList.remove('selected'));
-            e.target.closest('label').classList.add('selected');
-            selectedPollingStationId = e.target.value;
+        card.addEventListener('click', () => {
+            document.querySelectorAll('.mvd-card').forEach(el => el.classList.remove('selected'));
+            card.classList.add('selected');
+            radio.checked = true;
+            selectedPollingStationId = ps.id;
+            document.getElementById('step5VoterNextBtn').disabled = false;
         });
+
+        container.appendChild(radio);
+        container.appendChild(card);
     });
 }
 
 // ============================================================
-// Управление шагами
+// Управление шагами (динамическая нумерация)
 // ============================================================
 function getNextStep(step) {
-    const type = document.querySelector('input[name="applicationType"]:checked');
+    const purpose = document.querySelector('input[name="purpose"]:checked');
+    const voterGoal = document.querySelector('input[name="voterGoal"]:checked');
+
     switch (step) {
         case 1: return 2;
         case 2: {
-            if (!type) return 2;
+            if (!purpose) return 2;
+            selectedPurpose = purpose.value;
             return 3;
         }
         case 3: {
-            if (!selectedElectionId) return 3;
-            return 4;
+            if (selectedPurpose === 'candidate') return 4;
+            if (selectedPurpose === 'observer') return 4; // шаг 4-observer
+            if (selectedPurpose === 'voter') return 4; // шаг 4-voter
+            return 7; // завершение
         }
         case 4: {
-            if (!type) return 4;
-            if (type.value === 'candidate_registration') return 5;
-            if (type.value === 'observer_registration') return 6;
-            if (type.value === 'voter_change') return 7;
-            return 4;
+            // Для кандидата – проверка партии
+            const hasParty = document.querySelector('input[name="hasParty"]:checked');
+            if (!hasParty) return 4;
+            return 5;
         }
         case 5: {
-            // Кандидат – проверка партийной номинации
-            // Раньше здесь был переход на шаг 9 (фото), теперь сразу на 10 (подтверждение)
-            return 10;
+            // Для кандидата – выдвижение партией
+            // После этого шага переходим к загрузке фото
+            return 6;
         }
         case 6: {
-            // Наблюдатель – после партии сразу финал
-            return 10;
+            // Загрузка фото – проверяем, загружено ли
+            if (!photoPath) return 6;
+            return 7;
         }
-        case 7: {
-            const voterType = document.querySelector('input[name="voterChangeType"]:checked');
-            if (!voterType) return 7;
-            if (voterType.value === 'change_polling_station') return 8;
-            else return 10; // electronic_voting или refuse_voting → сразу на подтверждение
+        case '4-observer': return 7;
+        case '4-voter': {
+            if (!voterGoal) return '4-voter';
+            selectedVoterGoal = voterGoal.value;
+            if (selectedVoterGoal === 'change_polling_station') return 5;
+            if (selectedVoterGoal === 'electronic_voting') return 7;
+            if (selectedVoterGoal === 'refuse_voting') return 7;
+            return 7;
         }
-        case 8: {
-            if (!selectedPollingStationId) return 8;
-            return 10;
+        case 5: {
+            if (!selectedPollingStationId) return 5;
+            return 7;
         }
-        // Шаг 9 удален
-        case 10: return 11;
+        case 7: return 8;
         default: return step + 1;
     }
 }
 
 function getPrevStep(step) {
-    const type = document.querySelector('input[name="applicationType"]:checked');
     switch (step) {
         case 2: return 1;
         case 3: return 2;
         case 4: return 3;
         case 5: return 4;
-        case 6: return 4;
-        case 7: return 4;
-        case 8: return 7;
-        // Шаг 9 удален
-        case 10: {
-            if (type && type.value === 'candidate_registration') return 5;
-            if (type && type.value === 'observer_registration') return 6;
-            if (type && type.value === 'voter_change') {
-                const voterType = document.querySelector('input[name="voterChangeType"]:checked');
-                if (voterType && voterType.value === 'change_polling_station') return 8;
-                return 7;
+        case 6: return 5;
+        case 7: {
+            if (selectedPurpose === 'candidate') return 6;
+            if (selectedPurpose === 'observer') return '4-observer';
+            if (selectedPurpose === 'voter') {
+                if (selectedVoterGoal === 'change_polling_station') return 5;
+                return '4-voter';
             }
-            return 4;
+            return 3;
         }
-        case 11: return 10;
+        case 8: return 7;
         default: return step - 1;
     }
 }
 
 function goToStep(step) {
-    if (step < 1 || step > 11) return;
+    // Преобразуем строковые шаги в числовые для DOM
+    let numericStep = step;
+    if (step === '4-observer') numericStep = 4;
+    else if (step === '4-voter') numericStep = 4;
+    else if (step === 5) numericStep = 5; // для voter – шаг 5-voter
 
+    // Скрываем все шаги
     document.querySelectorAll('.step-content').forEach(el => el.classList.add('hidden'));
-    const targetStep = document.querySelector(`.step-content[data-step="${step}"]`);
-    if (targetStep) targetStep.classList.remove('hidden');
 
+    // Показываем нужный шаг
+    let targetSelector;
+    if (step === '4-observer') targetSelector = '.step-content[data-step="4-observer"]';
+    else if (step === '4-voter') targetSelector = '.step-content[data-step="4-voter"]';
+    else if (step === 5 && selectedPurpose === 'voter') targetSelector = '.step-content[data-step="5-voter"]';
+    else targetSelector = `.step-content[data-step="${numericStep}"]`;
+
+    const targetStep = document.querySelector(targetSelector);
+    if (targetStep) targetStep.classList.remove('hidden');
     currentStep = step;
 
-    if (step === 4) renderProfileData();
-    if (step === 5) updatePartyFields();
-    if (step === 6) updateObserverPartyFields();
-    
-    // Удалена логика для шага 9 (фото)
-    
-    if (step === 10) prepareSummary();
+    // Обработка шагов с динамическим содержимым
+    if (step === 3) renderProfileData();
+    if (step === 4 && selectedPurpose === 'candidate') {
+        // Показать/скрыть поле партии
+        document.querySelectorAll('input[name="hasParty"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const partyField = document.getElementById('partyField');
+                if (e.target.value === 'yes') {
+                    partyField.classList.remove('hidden');
+                } else {
+                    partyField.classList.add('hidden');
+                }
+            });
+        });
+    }
+    if (step === 5 && selectedPurpose === 'candidate') {
+        // Показать/скрыть предупреждение при отсутствии выдвижения
+        document.querySelectorAll('input[name="nominated"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                const warning = document.getElementById('noNominationWarning');
+                if (e.target.value === 'no') {
+                    warning.classList.remove('hidden');
+                } else {
+                    warning.classList.add('hidden');
+                }
+            });
+        });
+    }
+    if (step === '4-voter') {
+        // Обработка выбора цели
+        document.querySelectorAll('input[name="voterGoal"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                // Ничего не делаем, переход по кнопке Далее
+            });
+        });
+    }
+    if (step === 5 && selectedPurpose === 'voter') {
+        if (pollingStations.length === 0) loadPollingStations();
+    }
+    if (step === 7) prepareSummary();
 }
 
 // ============================================================
-// Шаг 4: Профиль
+// Шаг 3: Данные профиля
 // ============================================================
 function renderProfileData() {
     const container = document.getElementById('profileData');
     if (!userProfile) return;
-
     let html = `<table class="summary-table">`;
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code || '—'}</td></tr>`;
     html += `<tr><th>ФИО</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
     html += `<tr><th>Дата рождения</th><td>${new Date(userProfile.date_of_birth).toLocaleDateString('ru-RU')}</td></tr>`;
     html += `<tr><th>Место рождения</th><td>${userProfile.place_of_birth || '—'}</td></tr>`;
     html += `<tr><th>Пол</th><td>${userProfile.gender === 'male' ? 'Мужской' : 'Женский'}</td></tr>`;
-    html += `</table>`;
+    html += '</table>';
     container.innerHTML = html;
 }
 
 // ============================================================
-// Шаг 5: Партии для кандидата
+// Шаг 6: Загрузка фото (для кандидата)
 // ============================================================
-function updatePartyFields() {
-    const membership = document.getElementById('partyMembership').value;
-    const partyFields = document.getElementById('partyFields');
-    const nominationQuestion = document.getElementById('partyNominationQuestion');
-    const signatureReq = document.getElementById('signatureRequirement');
+function initPhotoUpload() {
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('photoUpload');
+    if (!dropZone) return;
 
-    if (membership === 'yes') {
-        partyFields.classList.remove('hidden');
-        nominationQuestion.classList.remove('hidden');
-        
-        const nominated = document.getElementById('partyNominated').value;
-        if (nominated === 'no') {
-            signatureReq.classList.remove('hidden');
-        } else {
-            signatureReq.classList.add('hidden');
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.style.background = '#e9ecef';
+    });
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.background = '#fafafa';
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.background = '#fafafa';
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            fileInput.files = files;
+            fileInput.dispatchEvent(new Event('change', { bubbles: true }));
         }
-    } else {
-        partyFields.classList.add('hidden');
-        nominationQuestion.classList.add('hidden');
-        signatureReq.classList.add('hidden');
-    }
+    });
+
+    fileInput.addEventListener('change', async () => {
+        if (!fileInput.files.length) return;
+        const file = fileInput.files[0];
+        const nextBtn = document.getElementById('step6NextBtn');
+        nextBtn.disabled = true;
+        const success = await uploadPhoto(file);
+        if (success) {
+            nextBtn.disabled = false;
+            // Показать предпросмотр
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('previewImg').src = e.target.result;
+                document.getElementById('photoPreview').classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+            document.getElementById('fileList').innerHTML = `<i class="fas fa-check-circle" style="color:#28a745;"></i> ${file.name}`;
+        }
+    });
 }
 
-document.getElementById('partyMembership').addEventListener('change', updatePartyFields);
-document.getElementById('partyNominated').addEventListener('change', updatePartyFields);
-
-// ============================================================
-// Шаг 6: Партии для наблюдателя
-// ============================================================
-function updateObserverPartyFields() {
-    const membership = document.getElementById('observerPartyMembership').value;
-    const fields = document.getElementById('observerPartyFields');
-
-    if (membership === 'yes') {
-        fields.classList.remove('hidden');
-    } else {
-        fields.classList.add('hidden');
+async function uploadPhoto(file) {
+    if (!file) return false;
+    if (file.size > 1024 * 1024) {
+        showError('Фото должно быть не более 1 МБ');
+        return false;
     }
+    if (file.type !== 'image/jpeg') {
+        showError('Только JPG формат');
+        return false;
+    }
+
+    if (!applicationNumber) {
+        applicationNumber = generateApplicationNumber();
+    }
+    const filePath = `election_applications/${applicationNumber}/photo.jpg`;
+
+    const { error } = await supabase.storage
+        .from('services-files')
+        .upload(filePath, file, { upsert: false });
+
+    if (error) {
+        showError('Ошибка загрузки фото: ' + error.message);
+        return false;
+    }
+
+    photoPath = filePath;
+    return true;
 }
 
-document.getElementById('observerPartyMembership').addEventListener('change', updateObserverPartyFields);
-
 // ============================================================
-// Шаг 9: Фото (УДАЛЕНО ВЕСЬ БЛОК)
-// ============================================================
-
-// ============================================================
-// Шаг 10: Подтверждение
+// Шаг 7: Подтверждение
 // ============================================================
 function prepareSummary() {
-    const type = document.querySelector('input[name="applicationType"]:checked');
-    const election = electionsList.find(e => e.id === selectedElectionId);
-
-    // Определяем финальный тип для отображения
-    let displayType = '';
-    let displayDetails = [];
-
-    if (type && type.value === 'candidate_registration') {
-        displayType = 'Регистрация кандидата';
-        const membership = document.getElementById('partyMembership').value;
-        if (membership === 'yes') {
-            displayDetails.push(`Партия: ${document.getElementById('partyName').value || '—'}`);
-            const nominated = document.getElementById('partyNominated').value;
-            if (nominated === 'no') {
-                displayDetails.push('Требуется сбор 10 подписей');
-            } else {
-                displayDetails.push('Выдвинут партией');
-            }
-        } else {
-            displayDetails.push('Самовыдвижение');
-        }
-        // Удалена проверка photoPath
-    } else if (type && type.value === 'observer_registration') {
-        displayType = 'Регистрация наблюдателя';
-        const membership = document.getElementById('observerPartyMembership').value;
-        if (membership === 'yes') {
-            displayDetails.push(`Партия: ${document.getElementById('observerPartyName').value || '—'}`);
-        } else {
-            displayDetails.push('Независимый наблюдатель');
-        }
-    } else if (type && type.value === 'voter_change') {
-        const voterType = document.querySelector('input[name="voterChangeType"]:checked');
-        if (voterType) {
-            switch (voterType.value) {
-                case 'change_polling_station':
-                    displayType = 'Смена участка голосования';
-                    const station = pollingStationsList.find(ps => ps.id === selectedPollingStationId);
-                    displayDetails.push(`Новый участок: ${station ? station.name : '—'}`);
-                    break;
-                case 'electronic_voting':
-                    displayType = 'Электронное голосование';
-                    displayDetails.push('Учётная запись должна быть подтверждена');
-                    break;
-                case 'refuse_voting':
-                    displayType = 'Отказ от голосования';
-                    break;
-                default:
-                    displayType = 'Изменение способа голосования';
-            }
-        }
-    }
-
     let html = '<table class="summary-table">';
-    html += `<tr><th>Цель обращения</th><td>${displayType || '—'}</td></tr>`;
-    html += `<tr><th>Голосование</th><td>${election ? election.title : '—'}</td></tr>`;
+    html += `<tr><th>Номер заявления</th><td>${applicationNumber || generateApplicationNumber()}</td></tr>`;
+    const purposeLabel = {
+        candidate: 'Регистрация кандидата',
+        observer: 'Регистрация наблюдателя',
+        voter: 'Изменение способа голосования'
+    }[selectedPurpose] || selectedPurpose;
+    html += `<tr><th>Цель обращения</th><td>${purposeLabel}</td></tr>`;
     html += `<tr><th>Заявитель</th><td>${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}</td></tr>`;
     html += `<tr><th>Личный код</th><td>${userProfile.personal_code}</td></tr>`;
-    
-    if (displayDetails.length) {
-        html += `<tr><th>Дополнительно</th><td><ul>${displayDetails.map(d => `<li>${d}</li>`).join('')}</ul></td></tr>`;
+
+    if (selectedPurpose === 'candidate') {
+        const hasParty = document.querySelector('input[name="hasParty"]:checked');
+        if (hasParty && hasParty.value === 'yes') {
+            const partyName = document.getElementById('partyName').value.trim() || '—';
+            html += `<tr><th>Партия</th><td>${partyName}</td></tr>`;
+        } else {
+            html += `<tr><th>Партия</th><td>Не принадлежит</td></tr>`;
+        }
+        const nominated = document.querySelector('input[name="nominated"]:checked');
+        if (nominated) {
+            html += `<tr><th>Выдвинут партией</th><td>${nominated.value === 'yes' ? 'Да' : 'Нет'}</td></tr>`;
+            if (nominated.value === 'no') {
+                html += `<tr><th>Примечание</th><td>Требуется сбор 10 подписей избирателей</td></tr>`;
+            }
+        }
+        html += `<tr><th>Фото</th><td>${photoPath ? 'Загружено' : 'Не загружено'}</td></tr>`;
     }
+
+    if (selectedPurpose === 'observer') {
+        const party = document.getElementById('observerParty').value.trim();
+        if (party) html += `<tr><th>Партия</th><td>${party}</td></tr>`;
+    }
+
+    if (selectedPurpose === 'voter') {
+        const goalLabel = {
+            change_polling_station: 'Изменение места голосования',
+            electronic_voting: 'Голосование в электронном виде',
+            refuse_voting: 'Отказ от голосования'
+        }[selectedVoterGoal] || selectedVoterGoal;
+        html += `<tr><th>Цель как голосующего</th><td>${goalLabel}</td></tr>`;
+        if (selectedVoterGoal === 'change_polling_station') {
+            const ps = pollingStations.find(p => p.id === selectedPollingStationId);
+            html += `<tr><th>Новый участок</th><td>${ps ? ps.name + ' (' + ps.address + ')' : '—'}</td></tr>`;
+        }
+        if (selectedVoterGoal === 'electronic_voting') {
+            html += `<tr><th>Примечание</th><td>Для голосования в электронном виде необходима подтверждённая учётная запись.</td></tr>`;
+        }
+    }
+
     html += '</table>';
     document.getElementById('summary').innerHTML = html;
 }
 
 // ============================================================
-// Отправка заявления (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+// Отправка заявления
 // ============================================================
 async function submitApplication() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -404,77 +433,51 @@ async function submitApplication() {
         return false;
     }
 
-    const type = document.querySelector('input[name="applicationType"]:checked');
-    if (!type) {
-        showError('Выберите цель обращения');
-        return false;
-    }
-
-    if (!selectedElectionId) {
-        showError('Выберите голосование');
-        return false;
-    }
-
     if (!applicationNumber) {
         applicationNumber = generateApplicationNumber();
     }
 
-    // Определяем финальный тип и данные для БД
-    let finalType = type.value;
-    let dataPayload = {};
+    // Собираем данные в зависимости от типа
+    let appData = {};
+    let appType = selectedPurpose;
 
-    if (type.value === 'candidate_registration') {
-        dataPayload.party_membership = document.getElementById('partyMembership').value === 'yes';
-        if (dataPayload.party_membership) {
-            dataPayload.party_name = document.getElementById('partyName').value.trim();
-            dataPayload.party_nominated = document.getElementById('partyNominated').value === 'yes';
-        }
-        // Удалено: dataPayload.photo_path = photoPath;
-        finalType = 'candidate_registration';
+    if (selectedPurpose === 'candidate') {
+        const hasParty = document.querySelector('input[name="hasParty"]:checked');
+        const nominated = document.querySelector('input[name="nominated"]:checked');
+        appData = {
+            full_name: `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`,
+            personal_code: userPersonalCode,
+            has_party: hasParty ? hasParty.value === 'yes' : false,
+            party_name: hasParty && hasParty.value === 'yes' ? document.getElementById('partyName').value.trim() : null,
+            nominated_by_party: nominated ? nominated.value === 'yes' : false,
+            photo_path: photoPath
+        };
+        appType = 'candidate_registration';
+    } else if (selectedPurpose === 'observer') {
+        appData = {
+            full_name: `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`,
+            personal_code: userPersonalCode,
+            party: document.getElementById('observerParty').value.trim() || null
+        };
+        appType = 'observer_registration';
+    } else if (selectedPurpose === 'voter') {
+        appData = {
+            full_name: `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`,
+            personal_code: userPersonalCode,
+            goal: selectedVoterGoal,
+            new_polling_station_id: selectedVoterGoal === 'change_polling_station' ? selectedPollingStationId : null
+        };
+        appType = 'voter_request';
     }
 
-    if (type.value === 'observer_registration') {
-        dataPayload.party_membership = document.getElementById('observerPartyMembership').value === 'yes';
-        if (dataPayload.party_membership) {
-            dataPayload.party_name = document.getElementById('observerPartyName').value.trim();
-        }
-        finalType = 'observer_registration';
-    }
-
-    if (type.value === 'voter_change') {
-        const voterType = document.querySelector('input[name="voterChangeType"]:checked');
-        if (!voterType) {
-            showError('Выберите действие');
-            return false;
-        }
-        const changeType = voterType.value;
-        if (changeType === 'electronic_voting') {
-            finalType = 'remote_voting_request';
-            dataPayload.voting_method = 'electronic';
-        } else if (changeType === 'change_polling_station') {
-            finalType = 'change_polling_station';
-            if (!selectedPollingStationId) {
-                showError('Выберите участок');
-                return false;
-            }
-            dataPayload.new_polling_station_id = selectedPollingStationId;
-        } else if (changeType === 'refuse_voting') {
-            finalType = 'other';
-            dataPayload.reason = 'Отказ от голосования';
-        } else {
-            // fallback
-            finalType = 'other';
-            dataPayload.voter_change_type = changeType;
-        }
-    }
-
-    // Собираем финальный payload
+    // Вставка в БД
     const payload = {
         user_id: session.user.id,
-        election_id: selectedElectionId,
-        type: finalType,
+        election_id: null, // пока не привязано к конкретному голосованию
+        type: appType,
         status: 'submitted',
-        data: dataPayload,
+        data: appData,
+        comment: null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
     };
@@ -487,11 +490,9 @@ async function submitApplication() {
         .single();
 
     if (error) {
-        showError('Ошибка отправки обращения: ' + error.message);
+        showError('Ошибка отправки заявления: ' + error.message);
         return false;
     }
-
-    // Удален блок сохранения файла в application_files
 
     return true;
 }
@@ -516,8 +517,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         formContainer.classList.add('loaded');
     }
 
-    await loadElections();
-    await loadPollingStations();
+    // Инициализация загрузки фото
+    initPhotoUpload();
 
     // Подсветка радио
     document.querySelectorAll('input[type="radio"]').forEach(radio => {
@@ -532,29 +533,44 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
+    document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+        const label = radio.closest('label');
+        if (label) label.classList.add('selected');
+    });
 
-    // Навигация
+    // Навигация "Далее"
     document.querySelectorAll('.next-step').forEach(btn => {
         btn.addEventListener('click', async () => {
+            // Валидация
             if (currentStep === 2) {
-                const type = document.querySelector('input[name="applicationType"]:checked');
-                if (!type) { showError('Выберите цель обращения'); return; }
-                selectedApplicationType = type.value;
+                const purpose = document.querySelector('input[name="purpose"]:checked');
+                if (!purpose) {
+                    showError('Выберите цель обращения');
+                    return;
+                }
+                selectedPurpose = purpose.value;
             }
-            if (currentStep === 7) {
-                const voterType = document.querySelector('input[name="voterChangeType"]:checked');
-                if (!voterType) { showError('Выберите действие'); return; }
-                selectedVoterChangeType = voterType.value;
+            if (currentStep === '4-voter') {
+                const goal = document.querySelector('input[name="voterGoal"]:checked');
+                if (!goal) {
+                    showError('Выберите цель');
+                    return;
+                }
+                selectedVoterGoal = goal.value;
             }
-            if (currentStep === 8) {
-                if (!selectedPollingStationId) { showError('Выберите участок'); return; }
+            if (currentStep === 6) {
+                if (!photoPath) {
+                    showError('Загрузите фото');
+                    return;
+                }
             }
-            
+
             const next = getNextStep(currentStep);
             goToStep(next);
         });
     });
 
+    // Навигация "Назад"
     document.querySelectorAll('.prev-step').forEach(btn => {
         btn.addEventListener('click', () => {
             const prev = getPrevStep(currentStep);
@@ -562,6 +578,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // Отправка
     document.getElementById('submitApplication').addEventListener('click', async () => {
         const btn = document.getElementById('submitApplication');
         btn.disabled = true;
@@ -570,12 +587,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         const success = await submitApplication();
 
         btn.disabled = false;
-        btn.textContent = 'Отправить обращение';
+        btn.textContent = 'Отправить заявление';
 
         if (success) {
             document.getElementById('applicationNumber').textContent = applicationNumber;
             document.getElementById('gotoServiceLink').href = `../../../personal-profile/services/service-view.html?id=${applicationNumber}`;
-            goToStep(11);
+            goToStep(8);
         }
     });
 
