@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Уведомления — СФСРЮ</title>
-    <!-- favicons -->
+    <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
@@ -304,7 +304,6 @@
                 // Получаем название из каталога, если есть, иначе делаем красивое форматирование
                 let serviceName = catalogMap[serviceType];
                 if (!serviceName) {
-                    // Если в каталоге нет, пробуем преобразовать ключ в читаемый вид
                     serviceName = serviceType
                         .replace(/_/g, ' ')
                         .replace(/\b\w/g, l => l.toUpperCase());
@@ -312,11 +311,10 @@
 
                 // Формируем ссылку на просмотр заявки
                 let viewLink = '#';
-                const isLegacy = serviceType === 'passport' || serviceType === 'foreign_passport';
-                if (isLegacy) {
+                // Для старых паспортов используем type=serviceType, для всех остальных — type=application
+                if (serviceType === 'passport' || serviceType === 'foreign_passport') {
                     viewLink = `services/service-view.html?id=${msg.service_id}&type=${serviceType}`;
                 } else {
-                    // Для новых услуг (inn, application и любых других) используем type=application
                     viewLink = `services/service-view.html?id=${msg.service_id}&type=application`;
                 }
 
@@ -331,6 +329,7 @@
                             ${serviceType && serviceType !== 'unknown' ? `<p><strong>Услуга:</strong> ${escapeHTML(serviceName)}</p>` : ''}
                         </div>
                         <div class="message-footer">
+                            <a href="${viewLink}" class="btn-view-application" target="_blank">Перейти к заявлению</a>
                             ${!msg.is_read ? '<button class="btn-mark-read" data-id="'+msg.id+'">Отметить прочитанным</button>' : ''}
                         </div>
                     </div>
