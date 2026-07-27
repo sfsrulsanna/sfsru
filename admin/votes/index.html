@@ -118,6 +118,7 @@
     }
     .option-item-admin .option-text { flex: 1; }
     .option-item-admin .option-photo { max-width: 60px; max-height: 60px; border-radius: 50%; margin-right: 10px; }
+    .option-item-admin .option-percent { font-weight: 600; color: #7b0000; margin: 0 1rem; }
     .option-item-admin .option-actions { display: flex; gap: 0.4rem; }
 
     .add-option-form {
@@ -137,7 +138,6 @@
     .applications-table th, .applications-table td { padding: 0.5rem 0.8rem; border: 1px solid #eee; }
     .applications-table th { background: #f1f1f1; }
     .app-status-badge { display: inline-block; padding: 0.1rem 0.6rem; border-radius: 30px; font-size: 0.75rem; font-weight: 600; }
-    .app-status-badge.draft { background: #e9ecef; color: #6c757d; }
     .app-status-badge.submitted { background: #fff3cd; color: #856404; }
     .app-status-badge.under_review { background: #cce5ff; color: #004085; }
     .app-status-badge.approved { background: #d4edda; color: #155724; }
@@ -164,20 +164,25 @@
     .statistics { margin: 1rem 0; padding: 1rem; background: #f1f1f1; border-radius: 8px; }
     .statistics .total-votes { font-weight: 600; margin-bottom: 0.5rem; }
 
+    .add-vote-form {
+      display: flex;
+      gap: 0.8rem;
+      align-items: flex-end;
+      flex-wrap: wrap;
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #e9ecef;
+      border-radius: 8px;
+    }
+    .add-vote-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
+
     @media (max-width: 768px) {
       .header-container { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       .page-header { flex-direction: column; align-items: stretch; }
       .form-row { flex-direction: column; }
-      .add-option-form { flex-direction: column; align-items: stretch; }
+      .add-option-form, .add-vote-form { flex-direction: column; align-items: stretch; }
       .modal-content { padding: 1rem; }
     }
-
-    /* Стили для просмотра заявления */
-    .app-detail-modal .modal-content { max-width: 600px; }
-    .app-detail-field { margin-bottom: 0.8rem; }
-    .app-detail-field label { font-weight: 600; display: block; margin-bottom: 0.2rem; color: #555; }
-    .app-detail-field .value { padding: 0.4rem 0.6rem; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #7b0000; }
-    .app-detail-field .value pre { white-space: pre-wrap; word-break: break-word; margin: 0; font-family: inherit; }
   </style>
 </head>
 <body>
@@ -228,7 +233,7 @@
     </div>
   </main>
 
-  <!-- Основная модалка -->
+  <!-- Модальное окно -->
   <div id="voteModal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
@@ -360,41 +365,6 @@
     </div>
   </div>
 
-  <!-- Модалка просмотра заявления -->
-  <div id="appDetailModal" class="modal app-detail-modal">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h4>Детали заявления</h4>
-        <button class="close" id="closeAppDetailModal">&times;</button>
-      </div>
-      <div id="appDetailContent">
-        <div class="app-detail-field">
-          <label>Тип</label>
-          <div class="value" id="appDetailType"></div>
-        </div>
-        <div class="app-detail-field">
-          <label>Статус</label>
-          <div class="value" id="appDetailStatus"></div>
-        </div>
-        <div class="app-detail-field">
-          <label>Дата подачи</label>
-          <div class="value" id="appDetailDate"></div>
-        </div>
-        <div class="app-detail-field">
-          <label>Данные</label>
-          <div class="value"><pre id="appDetailData"></pre></div>
-        </div>
-        <div class="app-detail-field">
-          <label>Комментарий</label>
-          <div class="value" id="appDetailComment"></div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" id="closeAppDetailBtn">Закрыть</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script type="importmap">
     { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
   </script>
@@ -451,16 +421,7 @@
     const statisticsList = document.getElementById('statisticsList');
     const statsEmpty = document.getElementById('statsEmpty');
 
-    // Просмотр заявления
-    const appDetailModal = document.getElementById('appDetailModal');
-    const closeAppDetailModal = document.getElementById('closeAppDetailModal');
-    const closeAppDetailBtn = document.getElementById('closeAppDetailBtn');
-    const appDetailType = document.getElementById('appDetailType');
-    const appDetailStatus = document.getElementById('appDetailStatus');
-    const appDetailDate = document.getElementById('appDetailDate');
-    const appDetailData = document.getElementById('appDetailData');
-    const appDetailComment = document.getElementById('appDetailComment');
-
+    // Прочее
     const adminEmail = document.getElementById('adminEmail');
     const logoutBtn = document.getElementById('logoutBtn');
 
@@ -488,12 +449,7 @@
     }
 
     function getStatusLabel(status) {
-      const map = {
-        draft: 'Черновик',
-        active: 'Активно',
-        completed: 'Завершено',
-        cancelled: 'Отменено'
-      };
+      const map = { draft: 'Черновик', active: 'Активно', completed: 'Завершено', cancelled: 'Отменено' };
       return map[status] || status;
     }
 
@@ -509,15 +465,13 @@
       return map[status] || status;
     }
 
-    function getTypeLabel(type) {
-      const map = {
-        candidate_registration: 'Регистрация кандидата',
-        observer_registration: 'Регистрация наблюдателя',
-        remote_voting_request: 'Дистанционное голосование',
-        data_change: 'Изменение данных',
-        other: 'Другое'
-      };
-      return map[type] || type;
+    function getFullName(data) {
+      if (!data) return 'Кандидат';
+      const parts = [];
+      if (data.surname) parts.push(data.surname);
+      if (data.name) parts.push(data.name);
+      if (data.patronymic) parts.push(data.patronymic);
+      return parts.length ? parts.join(' ') : 'Кандидат';
     }
 
     async function checkAdmin() {
@@ -545,7 +499,7 @@
     async function loadVotes() {
       const { data, error } = await supabase
         .schema(SCHEMA)
-        .from('elections')
+        .from('all_votes')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
@@ -591,11 +545,7 @@
     }
 
     async function deleteVote(id) {
-      const { error } = await supabase
-        .schema(SCHEMA)
-        .from('elections')
-        .delete()
-        .eq('id', id);
+      const { error } = await supabase.schema(SCHEMA).from('elections').delete().eq('id', id);
       if (error) throw error;
       await loadAndRender();
     }
@@ -660,7 +610,6 @@
         }
         voteStatus.value = vote.status || 'draft';
 
-        // Загружаем кандидатов
         const { data: options, error: optError } = await supabase
           .schema(SCHEMA)
           .from('options')
@@ -671,10 +620,7 @@
         else allOptions = [];
         renderOptions();
 
-        // Загружаем заявления
         await loadApplications(id);
-
-        // Загружаем статистику
         await loadStatistics(id);
 
         modal.classList.add('active');
@@ -812,11 +758,7 @@
         await supabase.storage.from(PHOTO_BUCKET).remove([fullPath]);
         addLog(`Удалено фото ${fullPath}`, 'info');
       }
-      const { error } = await supabase
-        .schema(SCHEMA)
-        .from('options')
-        .delete()
-        .eq('id', optionId);
+      const { error } = await supabase.schema(SCHEMA).from('options').delete().eq('id', optionId);
       if (error) { alert('Ошибка удаления: ' + error.message); return; }
       allOptions = allOptions.filter(o => o.id !== optionId);
       renderOptions();
@@ -857,9 +799,17 @@
         </thead>
         <tbody>`;
       allApplications.forEach(app => {
+        const typeLabel = {
+          candidate_registration: 'Регистрация кандидата',
+          observer_registration: 'Регистрация наблюдателя',
+          remote_voting_request: 'Дистанционное голосование',
+          data_change: 'Изменение данных',
+          voter_request: 'Обращение избирателя',
+          other: 'Другое'
+        }[app.type] || app.type;
         html += `
           <tr>
-            <td>${getTypeLabel(app.type)}</td>
+            <td>${typeLabel}</td>
             <td><span class="app-status-badge ${app.status}">${getAppStatusLabel(app.status)}</span></td>
             <td>${formatDate(app.created_at)}</td>
             <td>
@@ -886,15 +836,42 @@
       });
     }
 
-    async function viewApplication(appId) {
+    function viewApplication(appId) {
       const app = allApplications.find(a => a.id === appId);
       if (!app) return;
-      appDetailType.textContent = getTypeLabel(app.type);
-      appDetailStatus.textContent = getAppStatusLabel(app.status);
-      appDetailDate.textContent = formatDate(app.created_at);
-      appDetailData.textContent = JSON.stringify(app.data, null, 2);
-      appDetailComment.textContent = app.comment || '—';
-      appDetailModal.classList.add('active');
+      // Формируем читаемый вывод
+      let details = `Заявление #${app.id.slice(0,8)}\n`;
+      details += `Тип: ${app.type}\n`;
+      details += `Статус: ${getAppStatusLabel(app.status)}\n`;
+      details += `Дата подачи: ${formatDate(app.created_at)}\n`;
+      details += `\n--- Данные заявления ---\n`;
+
+      if (app.data) {
+        const d = app.data;
+        if (d.surname || d.name || d.patronymic) {
+          details += `ФИО: ${d.surname || ''} ${d.name || ''} ${d.patronymic || ''}\n`;
+        }
+        if (d.party) details += `Партия: ${d.party}\n`;
+        if (d.nominated_by_party !== undefined) {
+          details += `Выдвинут партией: ${d.nominated_by_party ? 'Да' : 'Нет'}\n`;
+        }
+        if (d.signatures !== undefined) {
+          details += `Собрано подписей: ${d.signatures || 0}\n`;
+        }
+        if (d.target_station) details += `Желаемый участок: ${d.target_station}\n`;
+        if (d.voting_method) details += `Способ голосования: ${d.voting_method === 'electronic' ? 'Электронный' : 'На участке'}\n`;
+        if (d.reason) details += `Причина: ${d.reason}\n`;
+        // Если есть другие поля, выводим их
+        Object.keys(d).forEach(key => {
+          if (!['surname','name','patronymic','party','nominated_by_party','signatures','target_station','voting_method','reason'].includes(key)) {
+            details += `${key}: ${JSON.stringify(d[key])}\n`;
+          }
+        });
+      } else {
+        details += 'Нет данных\n';
+      }
+
+      alert(details);
     }
 
     async function changeAppStatus(appId, newStatus) {
@@ -902,28 +879,15 @@
       const { error } = await supabase
         .schema(SCHEMA)
         .from('applications')
-        .update({ 
-          status: newStatus, 
-          reviewed_by: (await supabase.auth.getUser()).data.user.id 
-        })
+        .update({ status: newStatus, reviewed_by: (await supabase.auth.getUser()).data.user.id })
         .eq('id', appId);
       if (error) { alert('Ошибка: ' + error.message); return; }
-      
+
       const app = allApplications.find(a => a.id === appId);
-      if (newStatus === 'approved' && app && app.type === 'candidate_registration') {
+      if (newStatus === 'approved' && app.type === 'candidate_registration') {
         if (confirm('Одобрена регистрация кандидата. Добавить его в список кандидатов?')) {
-          // Извлекаем ФИО из data
-          const data = app.data || {};
-          let fullName = data.full_name || '';
-          if (!fullName && data.surname && data.name) {
-            fullName = `${data.surname} ${data.name}`;
-            if (data.patronymic) fullName += ` ${data.patronymic}`;
-          }
-          if (!fullName) fullName = 'Кандидат';
-          
-          const desc = data.party || data.position || '';
-          
-          // Добавляем кандидата в options
+          const fullName = getFullName(app.data);
+          const desc = app.data.party || app.data.position || '';
           const { error: insErr } = await supabase
             .schema(SCHEMA)
             .from('options')
@@ -937,7 +901,6 @@
             alert('Кандидат не добавлен: ' + insErr.message);
           } else {
             alert('Кандидат добавлен!');
-            // Обновляем список кандидатов
             const { data: options } = await supabase
               .schema(SCHEMA)
               .from('options')
@@ -1008,17 +971,9 @@
       }
       let result;
       if (id) {
-        result = await supabase
-          .schema(SCHEMA)
-          .from('elections')
-          .update(payload)
-          .eq('id', id);
+        result = await supabase.schema(SCHEMA).from('elections').update(payload).eq('id', id);
       } else {
-        result = await supabase
-          .schema(SCHEMA)
-          .from('elections')
-          .insert([payload])
-          .select();
+        result = await supabase.schema(SCHEMA).from('elections').insert([payload]).select();
       }
       if (result.error) {
         alert('Ошибка сохранения: ' + result.error.message);
@@ -1051,11 +1006,6 @@
       }
       loading.style.display = 'none';
     }
-
-    // --- Закрытие модалки просмотра ---
-    closeAppDetailModal.addEventListener('click', () => appDetailModal.classList.remove('active'));
-    closeAppDetailBtn.addEventListener('click', () => appDetailModal.classList.remove('active'));
-    appDetailModal.addEventListener('click', (e) => { if (e.target === appDetailModal) appDetailModal.classList.remove('active'); });
 
     // --- Инициализация ---
     document.addEventListener('DOMContentLoaded', async () => {
