@@ -647,58 +647,138 @@
             container.innerHTML = html;
         }
 
-        async function loadHistory(passportId, source, app) {
-            const list = document.getElementById('historyList');
-            const toggleBtn = document.getElementById('toggleHistoryBtn');
+async function loadHistory(passportId, source, app) {
+    const list = document.getElementById('historyList');
+    const toggleBtn = document.getElementById('toggleHistoryBtn');
 
-            let historyTable = '';
-            let idField = '';
-            let schema = 'services'; // по умолчанию
+    let historyTable = '';
+    let idField = '';
+    let schema = 'services';
 
-            if (source === 'passport') {
-                historyTable = 'passport_status_history';
-                idField = 'passport_id';
-            } else if (source === 'foreign_passport') {
-                historyTable = 'foreign_passport_status_history';
-                idField = 'passport_id';
-            } else if (source === 'applications') {
-                historyTable = 'application_status_history';
-                idField = 'application_id';
-            } else if (source === 'vote_application') {
-                // === ИСТОРИЯ ДЛЯ ЗАЯВЛЕНИЙ ЦИК ===
-                historyTable = 'application_status_history';
-                idField = 'application_id';
-                schema = 'votes';
-            } else {
-                list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
-                toggleBtn.style.display = 'none';
-                return;
+    if (source === 'passport') {
+        historyTable = 'passport_status_history';
+        idField = 'passport_id';
+    } else if (source === 'foreign_passport') {
+        historyTable = 'foreign_passport_status_history';
+        idField = 'passport_id';
+    } else if (source === 'applications') {
+        historyTable = 'application_status_history';
+        idField = 'application_id';
+    } else if (source === 'vote_application') {
+        historyTable = 'application_status_history';
+        idField = 'application_id';
+        schema = 'votes';
+    } else {
+        list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
+        toggleBtn.style.display = 'none';
+        return;
+    }
+
+    const { data, error } = await supabase
+        .schema(schema)
+        .from(historyTable)
+        .select('*')
+        .eq(idField, passportId)
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        console.error('Ошибка загрузки истории:', error);
+        // Если нет прав или таблица не существует, показываем "История отсутствует"
+        if (error.code === '42501' || error.code === '42P01') {
+            list.innerHTML = '<p class="no-data">История отсутствует</p>';
+            toggleBtn.style.display = 'none';
+            return;
+        }
+        list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
+        return;
+    }
+
+    if (!data || data.length === 0) {
+        list.innerHTML = '<p class="no-data">История отсутствует</p>';
+        toggleBtn.style.display = 'none';
+        return;
+    }
+
+    let html = '';
+    for (const item of data) {
+        const statusText = statusMap[item.status] || item.status;
+        const iconHtml = getStatusIcon(item.status);
+        const files = item.attachments || [];
+        const fileLinks = [];
+
+        for (const f of files) {
+            const url = await getSignedUrl(f);
+            if (url) {
+                const fileName = extractFileName(f);
+                fileLinks.push(`
+                    <div class="file-item">
+                        <span>📎</span>
+                        <a href="${url}" target="_blank">${fileName}</a>
+                    </div>
+                `);
             }
+        }
 
-            const { data, error } = await supabase
-                .schema(schema)
-                .from(historyTable)
-                .select('*')
-                .eq(idField, passportId)
-                .order('created_at', { ascending: false });
-
-            if (error) {
-                console.error('Ошибка загрузки истории:', error);
-                // Если таблицы нет, просто показываем текущий статус
-                if (source === 'vote_application') {
-                    list.innerHTML = '<p class="no-data">История отсутствует</p>';
-                    toggleBtn.style.display = 'none';
-                    return;
+        if (source !== 'vote_application' && item.status === 'submitted') {
+            let photoPath = null;
+            if (source === 'passport' && app.photo_path) {
+                photoPath = app.photo_path;
+            }
+            if (photoPath) {
+                const photoUrl = await getSignedUrl(photoPath);
+                if (photoUrl) {
+                    const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                    fileLinks.push(`
+                        <div class="file-item">
+                            <span>📷</span>
+                            <a href="${photoUrl}" target="_blank">${fileName}</a>
+                        </div>
+                    `);
                 }
-                list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
-                return;
             }
+            let statementPath = '';
+            if (source === 'passport') {
+                statementPath = `passport/${app.application_number}/statement.pdf`;
+            } else if (source === 'foreign_passport') {
+                statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
+            }
+            if (statementPath) {
+                const url = await getSignedUrl(statementPath);
+                if (url) {
+                    fileLinks.push(`
+                        <div class="file-item">
+                            <span>📄</span>
+                            <a href="${url}" target="_blank">statement.pdf</a>
+                        </div>
+                    `);
+                }
+            }
+        }
 
-            if (!data || data.length === 0) {
-                list.innerHTML = '<p class="no-data">История отсутствует</p>';
-                toggleBtn.style.display = 'none';
-                return;
-            }
+        html += `
+            <div class="status-card">
+                <div class="status-header">
+                    <div class="status-icon">${iconHtml}</div>
+                    <span class="status-name">${statusText}</span>
+                    <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+                </div>
+                <div class="status-comment">${item.comment || ''}</div>
+                <div class="files-list">${fileLinks.join('')}</div>
+            </div>
+        `;
+    }
+
+    list.innerHTML = html;
+
+    const statusCards = list.querySelectorAll('.status-card');
+    if (statusCards.length > 1) {
+        toggleBtn.style.display = 'inline-block';
+        list.classList.remove('show-all');
+        toggleBtn.textContent = 'Показать историю';
+    } else {
+        toggleBtn.style.display = 'none';
+    }
+}
 
             let html = '';
             for (const item of data) {
