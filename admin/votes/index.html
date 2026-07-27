@@ -345,7 +345,7 @@
             </div>
           </div>
 
-          <!-- Вкладка: Результаты -->
+          <!-- Вкладка: Результаты (с ручным добавлением) -->
           <div id="tabStats" class="tab-pane">
             <div id="statsContainer">
               <div class="statistics" id="statisticsBlock" style="display:none;">
@@ -353,6 +353,26 @@
                 <div id="statisticsList"></div>
               </div>
               <div id="statsEmpty" class="no-data">Нет голосов</div>
+
+              <!-- Блок ручного добавления голоса -->
+              <div style="margin-top: 2rem; padding-top: 1rem; border-top: 2px solid #eee;">
+                <h4 style="margin-bottom: 0.5rem;">Ручное добавление голоса (офлайн-голосование)</h4>
+                <p style="color: #6c757d; font-size: 0.9rem; margin-bottom: 1rem;">Выберите избирателя по личному коду и кандидата, за которого он проголосовал.</p>
+                <div style="display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end;">
+                  <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">Личный код избирателя</label>
+                    <input type="text" id="manualVoterCode" placeholder="Например: 1234-5678-9012" style="width: 100%; padding: 0.6rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;" />
+                  </div>
+                  <div style="flex: 1; min-width: 200px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 0.3rem;">Кандидат / вариант</label>
+                    <select id="manualOptionSelect" style="width: 100%; padding: 0.6rem 1rem; border: 1px solid #ccc; border-radius: 6px; font-size: 1rem;">
+                      <option value="">— Выберите кандидата —</option>
+                    </select>
+                  </div>
+                  <button type="button" class="btn btn-primary" id="addManualVoteBtn">Добавить голос</button>
+                </div>
+                <div id="manualVoteResult" style="margin-top: 0.8rem; font-size: 0.95rem;"></div>
+              </div>
             </div>
           </div>
 
@@ -436,6 +456,12 @@
     const totalVotesSpan = document.getElementById('totalVotes');
     const statisticsList = document.getElementById('statisticsList');
     const statsEmpty = document.getElementById('statsEmpty');
+
+    // Ручное добавление голоса
+    const manualVoterCode = document.getElementById('manualVoterCode');
+    const manualOptionSelect = document.getElementById('manualOptionSelect');
+    const addManualVoteBtn = document.getElementById('addManualVoteBtn');
+    const manualVoteResult = document.getElementById('manualVoteResult');
 
     // Модалка просмотра заявления
     const appDetailModal = document.getElementById('appDetailModal');
@@ -597,6 +623,12 @@
       statsEmpty.style.display = 'block';
       uploadLog.innerHTML = '<div class="log-entry info">Лог загрузки фото...</div>';
       modalTitle.textContent = 'Создание голосования';
+      
+      // Очистка поля ручного ввода
+      if (manualVoterCode) manualVoterCode.value = '';
+      if (manualVoteResult) manualVoteResult.innerHTML = '';
+      if (manualOptionSelect) manualOptionSelect.innerHTML = '<option value="">— Выберите кандидата —</option>';
+
       tabBtns.forEach(btn => btn.classList.remove('active'));
       document.querySelector('.tab-btn[data-tab="tabOptions"]').classList.add('active');
       Object.values(tabPanes).forEach(p => p.classList.remove('active'));
@@ -733,6 +765,29 @@
           await deleteOption(btn.dataset.id);
         });
       });
+      
+      // Обновляем список для ручного добавления
+      updateManualOptionSelect();
+    }
+
+    // Обновляем список кандидатов в выпадающем списке ручного добавления
+    function updateManualOptionSelect() {
+      if (!manualOptionSelect) return;
+      const currentVal = manualOptionSelect.value;
+      manualOptionSelect.innerHTML = '<option value="">— Выберите кандидата —</option>';
+      allOptions.forEach(opt => {
+        const option = document.createElement('option');
+        option.value = opt.id;
+        let label = opt.text;
+        if (opt.description) label += ` (${opt.description})`;
+        if (opt.question_text) label += ` [${opt.question_text}]`;
+        option.textContent = label;
+        manualOptionSelect.appendChild(option);
+      });
+      // Пытаемся сохранить выбор, если он еще валиден
+      if (currentVal && allOptions.find(o => o.id === currentVal)) {
+        manualOptionSelect.value = currentVal;
+      }
     }
 
     async function addOption() {
@@ -1086,6 +1141,76 @@
       statsEmpty.style.display = 'none';
     }
 
+    // --- Ручное добавление голоса ---
+    async function addManualVote() {
+      const personalCode = manualVoterCode.value.trim();
+      const optionId = manualOptionSelect.value;
+      
+      if (!personalCode) {
+        manualVoteResult.innerHTML = '<span style="color: #dc3545;">Введите личный код избирателя</span>';
+        return;
+      }
+      if (!optionId) {
+        manualVoteResult.innerHTML = '<span style="color: #dc3545;">Выберите кандидата/вариант</span>';
+        return;
+      }
+      if (!currentVoteId) {
+        manualVoteResult.innerHTML = '<span style="color: #dc3545;">Сначала сохраните голосование</span>';
+        return;
+      }
+
+      manualVoteResult.innerHTML = '<span style="color: #007bff;">Проверка...</span>';
+
+      // Ищем пользователя по личному коду
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id')
+        .eq('personal_code', personalCode)
+        .maybeSingle();
+
+      if (userError || !userData) {
+        manualVoteResult.innerHTML = `<span style="color: #dc3545;">Пользователь с личным кодом "${personalCode}" не найден</span>`;
+        return;
+      }
+
+      const userId = userData.id;
+
+      // Проверяем, не голосовал ли уже этот пользователь в данном голосовании
+      const { data: existingVote, error: checkError } = await supabase
+        .schema(SCHEMA)
+        .from('user_votes')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('election_id', currentVoteId)
+        .maybeSingle();
+
+      if (existingVote) {
+        manualVoteResult.innerHTML = `<span style="color: #dc3545;">Этот пользователь уже проголосовал в данном голосовании</span>`;
+        return;
+      }
+
+      // Вставляем голос
+      const { error: insertError } = await supabase
+        .schema(SCHEMA)
+        .from('user_votes')
+        .insert({
+          user_id: userId,
+          election_id: currentVoteId,
+          option_id: optionId
+        });
+
+      if (insertError) {
+        manualVoteResult.innerHTML = `<span style="color: #dc3545;">Ошибка добавления голоса: ${insertError.message}</span>`;
+        return;
+      }
+
+      manualVoteResult.innerHTML = `<span style="color: #28a745;">Голос успешно добавлен!</span>`;
+      // Обновляем статистику
+      await loadStatistics(currentVoteId);
+      // Очищаем поле кода
+      manualVoterCode.value = '';
+    }
+
     // --- Сохранение голосования (исправлено: модалка не закрывается, нет alert) ---
     async function saveVote(e) {
       e.preventDefault();
@@ -1193,6 +1318,11 @@
       refreshApplicationsBtn.addEventListener('click', () => {
         if (currentVoteId) loadApplications(currentVoteId);
       });
+
+      // Обработчик ручного добавления голоса
+      if (addManualVoteBtn) {
+        addManualVoteBtn.addEventListener('click', addManualVote);
+      }
 
       // Модалка просмотра заявления
       closeAppDetailModal.addEventListener('click', () => appDetailModal.classList.remove('active'));
