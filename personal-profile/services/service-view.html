@@ -251,427 +251,425 @@
     </footer>
 
     <script src="../../js/mob-menu.js"></script>
-    <script type="module">
-import { supabase } from '../../js/supabase-config.js';
+<script type="module">
+    import { supabase } from '../../js/supabase-config.js';
 
-let currentUserId = null;
-let currentAppId = null;
-let currentType = null;
-let currentSource = null; // 'applications', 'passport', 'foreign_passport'
-let currentAppData = null;
+    let currentUserId = null;
+    let currentAppId = null;
+    let currentType = null;
+    let currentSource = null; // 'applications', 'passport', 'foreign_passport'
+    let currentAppData = null;
 
-const statusMap = {
-    'draft': 'Черновик',
-    'submitted': 'Отправлено в ведомство',
-    'processing': 'В работе',
-    'interim': 'Промежуточные результаты',
-    'positive': 'Принято положительное решение',
-    'completed': 'Результат выдан',
-    'rejected': 'Отказано',
-    'cancelled': 'Отменено'
-};
+    const statusMap = {
+        'draft': 'Черновик',
+        'submitted': 'Отправлено в ведомство',
+        'processing': 'В работе',
+        'interim': 'Промежуточные результаты',
+        'positive': 'Принято положительное решение',
+        'completed': 'Результат выдан',
+        'rejected': 'Отказано',
+        'cancelled': 'Отменено'
+    };
 
-const serviceTypeNames = {
-    'passport': 'Внутренний паспорт',
-    'foreign_passport': 'Заграничный паспорт',
-    'inn': 'Получение ИНН'
-};
+    const serviceTypeNames = {
+        'passport': 'Внутренний паспорт',
+        'foreign_passport': 'Заграничный паспорт',
+        'inn': 'Получение ИНН'
+    };
 
-function getStatusIcon(status) {
-    switch (status) {
-        case 'rejected': return '<i class="fas fa-times-circle"></i>';
-        case 'cancelled': return '<i class="fas fa-ban"></i>';
-        case 'positive':
-        case 'completed': return '<i class="fas fa-check-circle"></i>';
-        default: return '<i class="fas fa-hourglass-half"></i>';
-    }
-}
-
-async function getSignedUrl(filePath) {
-    if (!filePath) return null;
-    try {
-        const { data, error } = await supabase.storage
-            .from('services-files')
-            .createSignedUrl(filePath, 3600);
-        if (error) throw error;
-        return data.signedUrl;
-    } catch (e) {
-        console.error('Ошибка получения ссылки на файл:', e);
-        return null;
-    }
-}
-
-async function loadUserProfile() {
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-        window.location.href = '../../login.html';
-        return false;
-    }
-    currentUserId = session.user.id;
-    return true;
-}
-
-function extractFileName(filePath) {
-    if (!filePath) return 'файл';
-    const parts = filePath.split('/');
-    let name = parts[parts.length - 1];
-    const match = name.match(/^\d+_(.+)$/);
-    return match ? decodeURIComponent(match[1]) : decodeURIComponent(name);
-}
-
-async function loadApplicants(passportId) {
-    const { data, error } = await supabase
-        .schema('services')
-        .from('foreign_passport_applicants')
-        .select('*')
-        .eq('passport_id', passportId);
-    if (error) {
-        console.error('Ошибка загрузки получателей:', error);
-        return [];
-    }
-    return data || [];
-}
-
-async function loadService() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('id');
-    const type = urlParams.get('type');
-
-    if (!id) {
-        showError('Не указан ID заявления');
-        return;
+    function getStatusIcon(status) {
+        switch (status) {
+            case 'rejected': return '<i class="fas fa-times-circle"></i>';
+            case 'cancelled': return '<i class="fas fa-ban"></i>';
+            case 'positive':
+            case 'completed': return '<i class="fas fa-check-circle"></i>';
+            default: return '<i class="fas fa-hourglass-half"></i>';
+        }
     }
 
-    currentAppId = id;
-    currentType = type;
+    async function getSignedUrl(filePath) {
+        if (!filePath) return null;
+        try {
+            const { data, error } = await supabase.storage
+                .from('services-files')
+                .createSignedUrl(filePath, 3600);
+            if (error) throw error;
+            return data.signedUrl;
+        } catch (e) {
+            console.error('Ошибка получения ссылки на файл:', e);
+            return null;
+        }
+    }
 
-    try {
-        let app = null;
-        let source = null;
+    async function loadUserProfile() {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session) {
+            window.location.href = '../../login.html';
+            return false;
+        }
+        currentUserId = session.user.id;
+        return true;
+    }
 
-        if (type === 'passport') {
-            source = 'passport';
-        } else if (type === 'foreign_passport') {
-            source = 'foreign_passport';
-        } else {
-            // Пробуем applications
-            const { data: appData, error: appError } = await supabase
-                .schema('services')
-                .from('applications')
-                .select(`
-                    *,
-                    catalog:service_id(name_ru, service_key)
-                `)
-                .eq('id', id)
-                .eq('user_id', currentUserId)
-                .maybeSingle();
+    function extractFileName(filePath) {
+        if (!filePath) return 'файл';
+        const parts = filePath.split('/');
+        let name = parts[parts.length - 1];
+        const match = name.match(/^\d+_(.+)$/);
+        return match ? decodeURIComponent(match[1]) : decodeURIComponent(name);
+    }
 
-            if (appData) {
-                app = appData;
-                source = 'applications';
+    async function loadApplicants(passportId) {
+        const { data, error } = await supabase
+            .schema('services')
+            .from('foreign_passport_applicants')
+            .select('*')
+            .eq('passport_id', passportId);
+        if (error) {
+            console.error('Ошибка загрузки получателей:', error);
+            return [];
+        }
+        return data || [];
+    }
+
+    async function loadService() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+        const type = urlParams.get('type');
+
+        if (!id) {
+            showError('Не указан ID заявления');
+            return;
+        }
+
+        currentAppId = id;
+        currentType = type;
+
+        try {
+            let app = null;
+            let source = null;
+
+            if (type === 'passport') {
+                source = 'passport';
+            } else if (type === 'foreign_passport') {
+                source = 'foreign_passport';
             } else {
-                // Паспорта
-                const { data: pData, error: pError } = await supabase
+                const { data: appData, error: appError } = await supabase
                     .schema('services')
-                    .from('passport')
-                    .select('*')
+                    .from('applications')
+                    .select(`
+                        *,
+                        catalog:service_id(name_ru, service_key)
+                    `)
                     .eq('id', id)
                     .eq('user_id', currentUserId)
                     .maybeSingle();
-                if (pData) {
-                    app = pData;
-                    source = 'passport';
+
+                if (appData) {
+                    app = appData;
+                    source = 'applications';
                 } else {
-                    const { data: fpData, error: fpError } = await supabase
+                    const { data: pData, error: pError } = await supabase
                         .schema('services')
-                        .from('foreign_passport')
+                        .from('passport')
                         .select('*')
                         .eq('id', id)
                         .eq('user_id', currentUserId)
                         .maybeSingle();
-                    if (fpData) {
-                        app = fpData;
-                        source = 'foreign_passport';
+                    if (pData) {
+                        app = pData;
+                        source = 'passport';
+                    } else {
+                        const { data: fpData, error: fpError } = await supabase
+                            .schema('services')
+                            .from('foreign_passport')
+                            .select('*')
+                            .eq('id', id)
+                            .eq('user_id', currentUserId)
+                            .maybeSingle();
+                        if (fpData) {
+                            app = fpData;
+                            source = 'foreign_passport';
+                        }
                     }
                 }
             }
-        }
 
-        if (!app) {
-            // Если тип известен, но ещё не загрузили
-            if (type === 'passport' || type === 'foreign_passport') {
-                const table = type;
-                const { data, error } = await supabase
-                    .schema('services')
-                    .from(table)
-                    .select('*')
-                    .eq('id', id)
-                    .eq('user_id', currentUserId)
-                    .single();
-                if (error || !data) {
-                    showError('Заявление не найдено');
-                    return;
+            if (!app) {
+                if (type === 'passport' || type === 'foreign_passport') {
+                    const table = type;
+                    const { data, error } = await supabase
+                        .schema('services')
+                        .from(table)
+                        .select('*')
+                        .eq('id', id)
+                        .eq('user_id', currentUserId)
+                        .single();
+                    if (error || !data) {
+                        showError('Заявление не найдено');
+                        return;
+                    }
+                    app = data;
+                    source = type;
                 }
-                app = data;
-                source = type;
             }
+
+            if (!app) {
+                showError('Заявление не найдено');
+                return;
+            }
+
+            currentSource = source;
+            currentAppData = app;
+
+            let serviceName = '';
+            if (source === 'applications') {
+                serviceName = app.catalog?.name_ru || serviceTypeNames[app.service_type] || 'Услуга';
+            } else {
+                serviceName = serviceTypeNames[app.service_type] || 'Услуга';
+            }
+
+            document.getElementById('serviceName').textContent = serviceName;
+            document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
+
+            // Загружаем получателей для загранпаспорта
+            let applicants = [];
+            if (source === 'foreign_passport') {
+                applicants = await loadApplicants(app.id);
+            }
+
+            await renderDetails(app, source, applicants);
+
+            await loadHistory(app.id, source, app);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('content').style.display = 'block';
+
+        } catch (err) {
+            console.error(err);
+            showError('Ошибка загрузки данных');
+        }
+    }
+
+    // Объявлена как async
+    async function renderDetails(app, source, applicants) {
+        const container = document.getElementById('detailsContainer');
+        let html = '<h3 class="section-title">Детали заявки</h3>';
+        html += '<table class="details-table">';
+
+        const fields = [
+            ['Номер заявления', app.application_number],
+            ['Статус', statusMap[app.status] || app.status],
+            ['Дата создания', new Date(app.created_at).toLocaleString()],
+            ['Личный код', app.personal_code || '—']
+        ];
+
+        if (source === 'passport') {
+            fields.push(['Причина', app.reason || '—']);
+            fields.push(['Телефон', app.phone || '—']);
+            fields.push(['Email', app.email || '—']);
+            // Фото для внутреннего паспорта
+            if (app.photo_path) {
+                const photoUrl = await getSignedUrl(app.photo_path);
+                if (photoUrl) {
+                    const fileName = app.photo_path.split('/').pop() || 'photo.jpg';
+                    fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
+                }
+            }
+        } else if (source === 'foreign_passport') {
+            fields.push(['Тип паспорта', app.passport_type || '—']);
+            fields.push(['Кому', app.recipient_type || '—']);
+            fields.push(['Вид', app.visa_type || '—']);
+            fields.push(['Вписывать детей', app.include_children_in_parent ? 'Да' : 'Нет']);
+        } else if (source === 'applications') {
+            const data = app.data || {};
+            if (data.type) {
+                fields.push(['Способ получения', data.type === 'electronic' ? 'Электронный' : 'Бумажный']);
+            }
+            if (data.fns_office_id) {
+                fields.push(['Отделение ФНС', data.fns_office_name || data.fns_office_id]);
+            }
+            // Можно добавить другие поля из data
         }
 
-        if (!app) {
-            showError('Заявление не найдено');
+        fields.forEach(([label, value]) => {
+            html += `<tr><th>${label}</th><td>${value}</td></tr>`;
+        });
+
+        html += '</table>';
+
+        // Если загранпаспорт, добавляем таблицу с фото получателей
+        if (source === 'foreign_passport' && applicants && applicants.length > 0) {
+            html += '<h3 class="section-title" style="margin-top:1.5rem;">Фото получателей</h3>';
+            html += '<table class="details-table">';
+            html += `<tr><th>ФИО</th><th>Дата рождения</th><th>Фото</th></tr>`;
+            for (const applicant of applicants) {
+                const photoUrl = applicant.photo_path ? await getSignedUrl(applicant.photo_path) : null;
+                html += `<tr>
+                    <td>${applicant.surname} ${applicant.name} ${applicant.patronymic || ''}</td>
+                    <td>${applicant.date_of_birth ? new Date(applicant.date_of_birth).toLocaleDateString('ru-RU') : '—'}</td>
+                    <td>${photoUrl ? `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> Фото</a>` : '—'}</td>
+                </tr>`;
+            }
+            html += '</table>';
+        }
+
+        container.innerHTML = html;
+    }
+
+    async function loadHistory(passportId, source, app) {
+        const list = document.getElementById('historyList');
+        const toggleBtn = document.getElementById('toggleHistoryBtn');
+
+        let historyTable = '';
+        let idField = '';
+
+        if (source === 'passport') {
+            historyTable = 'passport_status_history';
+            idField = 'passport_id';
+        } else if (source === 'foreign_passport') {
+            historyTable = 'foreign_passport_status_history';
+            idField = 'passport_id';
+        } else if (source === 'applications') {
+            historyTable = 'application_status_history';
+            idField = 'application_id';
+        } else {
+            list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
+            toggleBtn.style.display = 'none';
             return;
         }
 
-        currentSource = source;
-        currentAppData = app;
+        const { data, error } = await supabase
+            .schema('services')
+            .from(historyTable)
+            .select('*')
+            .eq(idField, passportId)
+            .order('created_at', { ascending: false });
 
-        let serviceName = '';
-        if (source === 'applications') {
-            serviceName = app.catalog?.name_ru || serviceTypeNames[app.service_type] || 'Услуга';
-        } else {
-            serviceName = serviceTypeNames[app.service_type] || 'Услуга';
+        if (error) {
+            console.error('Ошибка загрузки истории:', error);
+            list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
+            return;
         }
 
-        document.getElementById('serviceName').textContent = serviceName;
-        document.getElementById('appNumber').textContent = `№ ${app.application_number}`;
-
-        // Загружаем получателей для загранпаспорта
-        let applicants = [];
-        if (source === 'foreign_passport') {
-            applicants = await loadApplicants(app.id);
+        if (!data || data.length === 0) {
+            list.innerHTML = '<p class="no-data">История отсутствует</p>';
+            toggleBtn.style.display = 'none';
+            return;
         }
 
-        renderDetails(app, source, applicants);
+        let html = '';
+        for (const item of data) {
+            const statusText = statusMap[item.status] || item.status;
+            const iconHtml = getStatusIcon(item.status);
+            const files = item.attachments || [];
+            const fileLinks = [];
 
-        await loadHistory(app.id, source, app);
-
-        document.getElementById('loading').style.display = 'none';
-        document.getElementById('content').style.display = 'block';
-
-    } catch (err) {
-        console.error(err);
-        showError('Ошибка загрузки данных');
-    }
-}
-
-function renderDetails(app, source, applicants) {
-    const container = document.getElementById('detailsContainer');
-    let html = '<h3 class="section-title">Детали заявки</h3>';
-    html += '<table class="details-table">';
-
-    const fields = [
-        ['Номер заявления', app.application_number],
-        ['Статус', statusMap[app.status] || app.status],
-        ['Дата создания', new Date(app.created_at).toLocaleString()],
-        ['Личный код', app.personal_code || '—']
-    ];
-
-    if (source === 'passport') {
-        fields.push(['Причина', app.reason || '—']);
-        fields.push(['Телефон', app.phone || '—']);
-        fields.push(['Email', app.email || '—']);
-        // фото для внутреннего паспорта
-        if (app.photo_path) {
-            const photoUrl = await getSignedUrl(app.photo_path);
-            if (photoUrl) {
-                const fileName = app.photo_path.split('/').pop() || 'photo.jpg';
-                fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
-            }
-        }
-    } else if (source === 'foreign_passport') {
-        fields.push(['Тип паспорта', app.passport_type || '—']);
-        fields.push(['Кому', app.recipient_type || '—']);
-        fields.push(['Вид', app.visa_type || '—']);
-        fields.push(['Вписывать детей', app.include_children_in_parent ? 'Да' : 'Нет']);
-        // Здесь фото будут отображены отдельно после таблицы
-    } else if (source === 'applications') {
-        const data = app.data || {};
-        if (data.type) {
-            fields.push(['Способ получения', data.type === 'electronic' ? 'Электронный' : 'Бумажный']);
-        }
-        if (data.fns_office_id) {
-            fields.push(['Отделение ФНС', data.fns_office_name || data.fns_office_id]);
-        }
-    }
-
-    fields.forEach(([label, value]) => {
-        html += `<tr><th>${label}</th><td>${value}</td></tr>`;
-    });
-
-    html += '</table>';
-
-    // Если загранпаспорт, добавим блок с фото получателей
-    if (source === 'foreign_passport' && applicants && applicants.length > 0) {
-        html += '<h3 class="section-title" style="margin-top:1.5rem;">Фото получателей</h3>';
-        html += '<table class="details-table">';
-        html += `<tr><th>ФИО</th><th>Дата рождения</th><th>Фото</th></tr>`;
-        for (const app of applicants) {
-            const photoUrl = app.photo_path ? await getSignedUrl(app.photo_path) : null;
-            html += `<tr>
-                <td>${app.surname} ${app.name} ${app.patronymic || ''}</td>
-                <td>${app.date_of_birth ? new Date(app.date_of_birth).toLocaleDateString('ru-RU') : '—'}</td>
-                <td>${photoUrl ? `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> Фото</a>` : '—'}</td>
-            </tr>`;
-        }
-        html += '</table>';
-    }
-
-    container.innerHTML = html;
-}
-
-async function loadHistory(passportId, source, app) {
-    const list = document.getElementById('historyList');
-    const toggleBtn = document.getElementById('toggleHistoryBtn');
-
-    let historyTable = '';
-    let idField = '';
-
-    if (source === 'passport') {
-        historyTable = 'passport_status_history';
-        idField = 'passport_id';
-    } else if (source === 'foreign_passport') {
-        historyTable = 'foreign_passport_status_history';
-        idField = 'passport_id';
-    } else if (source === 'applications') {
-        historyTable = 'application_status_history';
-        idField = 'application_id';
-    } else {
-        list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
-        toggleBtn.style.display = 'none';
-        return;
-    }
-
-    const { data, error } = await supabase
-        .schema('services')
-        .from(historyTable)
-        .select('*')
-        .eq(idField, passportId)
-        .order('created_at', { ascending: false });
-
-    if (error) {
-        console.error('Ошибка загрузки истории:', error);
-        list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
-        return;
-    }
-
-    if (!data || data.length === 0) {
-        list.innerHTML = '<p class="no-data">История отсутствует</p>';
-        toggleBtn.style.display = 'none';
-        return;
-    }
-
-    let html = '';
-    for (const item of data) {
-        const statusText = statusMap[item.status] || item.status;
-        const iconHtml = getStatusIcon(item.status);
-        const files = item.attachments || [];
-        const fileLinks = [];
-
-        for (const f of files) {
-            const url = await getSignedUrl(f);
-            if (url) {
-                const fileName = extractFileName(f);
-                fileLinks.push(`
-                    <div class="file-item">
-                        <span>📎</span>
-                        <a href="${url}" target="_blank">${fileName}</a>
-                    </div>
-                `);
-            }
-        }
-
-        // Для статуса submitted добавляем фото и заявление, если есть
-        if (item.status === 'submitted') {
-            let photoPath = null;
-            if (source === 'passport' && app.photo_path) {
-                photoPath = app.photo_path;
-            } else if (source === 'foreign_passport') {
-                // У загранпаспорта фото в applicants, пока пропустим
-            }
-            if (photoPath) {
-                const photoUrl = await getSignedUrl(photoPath);
-                if (photoUrl) {
-                    const fileName = photoPath.split('/').pop() || 'photo.jpg';
-                    fileLinks.push(`
-                        <div class="file-item">
-                            <span>📷</span>
-                            <a href="${photoUrl}" target="_blank">${fileName}</a>
-                        </div>
-                    `);
-                }
-            }
-            // PDF заявление
-            let statementPath = '';
-            if (source === 'passport') {
-                statementPath = `passport/${app.application_number}/statement.pdf`;
-            } else if (source === 'foreign_passport') {
-                statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
-            }
-            if (statementPath) {
-                const url = await getSignedUrl(statementPath);
+            for (const f of files) {
+                const url = await getSignedUrl(f);
                 if (url) {
+                    const fileName = extractFileName(f);
                     fileLinks.push(`
                         <div class="file-item">
-                            <span>📄</span>
-                            <a href="${url}" target="_blank">statement.pdf</a>
+                            <span>📎</span>
+                            <a href="${url}" target="_blank">${fileName}</a>
                         </div>
                     `);
                 }
             }
+
+            // Для статуса submitted добавляем фото и заявление, если есть
+            if (item.status === 'submitted') {
+                let photoPath = null;
+                if (source === 'passport' && app.photo_path) {
+                    photoPath = app.photo_path;
+                } else if (source === 'foreign_passport') {
+                    // У загранпаспорта фото в applicants, пока пропускаем
+                }
+                if (photoPath) {
+                    const photoUrl = await getSignedUrl(photoPath);
+                    if (photoUrl) {
+                        const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                        fileLinks.push(`
+                            <div class="file-item">
+                                <span>📷</span>
+                                <a href="${photoUrl}" target="_blank">${fileName}</a>
+                            </div>
+                        `);
+                    }
+                }
+                // PDF заявление
+                let statementPath = '';
+                if (source === 'passport') {
+                    statementPath = `passport/${app.application_number}/statement.pdf`;
+                } else if (source === 'foreign_passport') {
+                    statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
+                }
+                if (statementPath) {
+                    const url = await getSignedUrl(statementPath);
+                    if (url) {
+                        fileLinks.push(`
+                            <div class="file-item">
+                                <span>📄</span>
+                                <a href="${url}" target="_blank">statement.pdf</a>
+                            </div>
+                        `);
+                    }
+                }
+            }
+
+            html += `
+                <div class="status-card">
+                    <div class="status-header">
+                        <div class="status-icon">${iconHtml}</div>
+                        <span class="status-name">${statusText}</span>
+                        <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
+                    </div>
+                    <div class="status-comment">${item.comment || ''}</div>
+                    <div class="files-list">${fileLinks.join('')}</div>
+                </div>
+            `;
         }
 
-        html += `
-            <div class="status-card">
-                <div class="status-header">
-                    <div class="status-icon">${iconHtml}</div>
-                    <span class="status-name">${statusText}</span>
-                    <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
-                </div>
-                <div class="status-comment">${item.comment || ''}</div>
-                <div class="files-list">${fileLinks.join('')}</div>
-            </div>
-        `;
+        list.innerHTML = html;
+
+        const statusCards = list.querySelectorAll('.status-card');
+        if (statusCards.length > 1) {
+            toggleBtn.style.display = 'inline-block';
+            list.classList.remove('show-all');
+            toggleBtn.textContent = 'Показать историю';
+        } else {
+            toggleBtn.style.display = 'none';
+        }
     }
 
-    list.innerHTML = html;
-
-    const statusCards = list.querySelectorAll('.status-card');
-    if (statusCards.length > 1) {
-        toggleBtn.style.display = 'inline-block';
-        list.classList.remove('show-all');
-        toggleBtn.textContent = 'Показать историю';
-    } else {
-        toggleBtn.style.display = 'none';
+    function showError(msg) {
+        const loading = document.getElementById('loading');
+        if (loading) loading.style.display = 'none';
+        const err = document.getElementById('error');
+        if (err) {
+            err.textContent = msg;
+            err.style.display = 'block';
+        }
+        const content = document.getElementById('content');
+        if (content) content.style.display = 'none';
     }
-}
 
-function showError(msg) {
-    const loading = document.getElementById('loading');
-    if (loading) loading.style.display = 'none';
-    const err = document.getElementById('error');
-    if (err) {
-        err.textContent = msg;
-        err.style.display = 'block';
-    }
-    const content = document.getElementById('content');
-    if (content) content.style.display = 'none';
-}
+    document.addEventListener('DOMContentLoaded', async () => {
+        if (!await loadUserProfile()) return;
+        await loadService();
 
-document.addEventListener('DOMContentLoaded', async () => {
-    if (!await loadUserProfile()) return;
-    await loadService();
-
-    const toggleBtn = document.getElementById('toggleHistoryBtn');
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', () => {
-            const history = document.getElementById('historyList');
-            if (history) {
-                history.classList.toggle('show-all');
-                toggleBtn.textContent = history.classList.contains('show-all') ? 'Скрыть историю' : 'Показать историю';
-            }
-        });
-    }
-});
-    </script>
+        const toggleBtn = document.getElementById('toggleHistoryBtn');
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                const history = document.getElementById('historyList');
+                if (history) {
+                    history.classList.toggle('show-all');
+                    toggleBtn.textContent = history.classList.contains('show-all') ? 'Скрыть историю' : 'Показать историю';
+                }
+            });
+        }
+    });
+</script>
 </body>
 </html>
