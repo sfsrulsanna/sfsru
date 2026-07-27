@@ -49,25 +49,36 @@
     .vote-detail .vote-meta span { display: inline-block; margin-right: 1.5rem; }
     .vote-detail .vote-description { margin: 1.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 8px; border-left: 4px solid #7b0000; }
     .candidate-list { display: flex; flex-direction: column; gap: 1.2rem; margin: 2rem 0; }
-    .candidate-item { display: flex; align-items: center; gap: 1.2rem; padding: 1rem; border: 1px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.2s; }
+    .candidate-item { display: flex; flex-direction: column; align-items: center; padding: 1rem; border: 1px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.2s; background: white; }
     .candidate-item:hover { background: #f5f5f5; }
     .candidate-item.selected { border-color: #7b0000; background: #fff0f0; }
-    .candidate-item img { width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ddd; }
-    .candidate-item .candidate-info { flex: 1; }
+    .candidate-item .candidate-top { display: flex; align-items: center; gap: 1.2rem; width: 100%; }
+    .candidate-item img { width: 80px; height: 80px; border-radius: 8px; object-fit: cover; border: 2px solid #ddd; flex-shrink: 0; }
+    .candidate-item .candidate-info { flex: 1; min-width: 0; }
     .candidate-item .candidate-name { font-size: 1.2rem; font-weight: 700; }
     .candidate-item .candidate-desc { color: #666; font-size: 0.9rem; }
-    .candidate-item .candidate-percent { font-weight: 700; color: #7b0000; font-size: 1.1rem; margin-left: 1rem; }
+    .candidate-item .candidate-percent { font-weight: 700; color: #7b0000; font-size: 1.1rem; margin-left: 1rem; flex-shrink: 0; }
     .candidate-item input[type="radio"] { display: none; }
+    /* Прогресс-бар для кандидатов */
+    .candidate-progress { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 0.75rem; overflow: hidden; }
+    .candidate-progress-bar { height: 100%; background: #7b0000; border-radius: 3px; transition: width 0.4s ease; }
+
+    /* Референдум */
     .referendum-question { margin: 1.5rem 0; padding: 1rem; background: #fafafa; border-radius: 12px; border: 1px solid #eee; }
     .referendum-question:last-child { margin-bottom: 0; }
     .referendum-question .question-text { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; }
-    .referendum-options { display: flex; gap: 1rem; }
-    .referendum-option { flex: 1; padding: 0.6rem; text-align: center; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: 0.2s; background: white; }
+    .referendum-options { display: flex; flex-direction: column; gap: 0.75rem; }
+    .referendum-option { display: flex; flex-direction: column; align-items: center; padding: 0.8rem; border: 2px solid #ddd; border-radius: 8px; cursor: pointer; transition: 0.2s; background: white; }
     .referendum-option:hover { background: #f0f0f0; }
     .referendum-option.selected { border-color: #7b0000; background: #fff0f0; }
+    .referendum-option .answer-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
     .referendum-option .answer-text { font-weight: 600; font-size: 1.1rem; }
-    .referendum-option .answer-percent { font-size: 0.9rem; color: #7b0000; margin-top: 0.2rem; }
+    .referendum-option .answer-percent { font-size: 0.9rem; color: #7b0000; font-weight: 600; }
     .referendum-option input[type="radio"] { display: none; }
+    /* Прогресс-бар для референдума */
+    .referendum-progress { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
+    .referendum-progress-bar { height: 100%; background: #7b0000; border-radius: 3px; transition: width 0.4s ease; }
+
     .vote-actions { margin-top: 2rem; text-align: center; }
     .vote-actions .btn-vote { padding: 0.8rem 3rem; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 600; background: linear-gradient(135deg, #7b0000, #c41e3a); color: white; cursor: pointer; transition: 0.2s; }
     .vote-actions .btn-vote:disabled { opacity: 0.5; cursor: not-allowed; }
@@ -134,8 +145,8 @@
       .nav-menu a { display: block; padding: 16px 20px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 1.1rem; text-align: left; border: 1px solid rgba(255,255,255,0.2); }
       .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: 0.3s; }
       .menu-overlay.active { display: block; opacity: 1; }
-      .candidate-item { flex-wrap: wrap; }
-      .referendum-options { flex-direction: column; }
+      .candidate-item .candidate-top { flex-wrap: wrap; justify-content: center; }
+      .candidate-item .candidate-percent { margin-left: 0; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 500px) {
@@ -276,9 +287,6 @@
       errorMessageEl.textContent = msg;
     }
 
-    // ============================================================
-    // РЕАЛЬНАЯ ЗАГРУЗКА СТАТИСТИКИ ИЗ БД (исправлено)
-    // ============================================================
     async function loadElectionStatistics(electionId) {
       if (!electionId) return null;
       try {
@@ -290,7 +298,6 @@
           .maybeSingle();
 
         if (error) {
-          // Если таблица не существует или нет прав – возвращаем нули
           console.warn('Не удалось загрузить статистику:', error.message);
           return null;
         }
@@ -376,28 +383,23 @@
           return;
         }
 
-        // Переменные для блокировки
         let blockReason = null;
 
-        // 2. Проверка региона – если не подходит, блокируем, но продолжаем
         const regionOk = await checkRegion(user.id, election.territory);
         if (!regionOk) {
           blockReason = 'Ваш регион не соответствует этому голосованию. Голосование недоступно.';
         }
 
-        // 3. Проверка типа учётной записи
         const accountType = await getAccountType(user.id);
         if (accountType !== 'Подтверждённая') {
           blockReason = blockReason ? blockReason + ' Учётная запись не подтверждена.' : 'Голосование невозможно: учётная запись не подтверждена.';
         }
 
-        // 4. Проверка отметки о дистанционном голосовании
         const hasApproval = await checkRemoteVotingApproval(user.id, voteId);
         if (!hasApproval) {
           blockReason = blockReason ? blockReason + ' Отсутствует разрешение на дистанционное голосование.' : 'Голосование невозможно: отсутствует разрешение на дистанционное голосование для этого опроса.';
         }
 
-        // 5. Загружаем варианты
         const { data: options, error: optErr } = await supabase
           .schema(SCHEMA)
           .from('options')
@@ -410,7 +412,6 @@
           return;
         }
 
-        // 6. Проверяем, голосовал ли пользователь
         const { data: userVotes } = await supabase
           .schema(SCHEMA)
           .from('user_votes')
@@ -421,7 +422,6 @@
         const hasVoted = userVotes && userVotes.length > 0;
         const userOptionIds = hasVoted ? userVotes.map(v => v.option_id) : [];
 
-        // 7. Статистика голосов
         const { data: allVotes } = await supabase
           .schema(SCHEMA)
           .from('user_votes')
@@ -431,7 +431,7 @@
         const counts = {};
         allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // 8. ЗАГРУЖАЕМ РЕАЛЬНУЮ СТАТИСТИКУ ИЗ БД
+        // Загружаем реальную статистику из БД
         const stats = await loadElectionStatistics(voteId);
         let registered = 0, voted = 0, spoiled = 0, refused = 0;
         if (stats) {
@@ -442,7 +442,6 @@
         }
 
         registeredCountEl.textContent = registered;
-
         votedCountEl.textContent = voted;
         const votedPercent = registered > 0 ? Math.round((voted / registered) * 100) : 0;
         votedPercentEl.textContent = votedPercent + '%';
@@ -458,7 +457,6 @@
         const turnout = registered > 0 ? Math.round(((voted + spoiled) / registered) * 100) : 0;
         turnoutPercentEl.textContent = turnout + '%';
 
-        // 9. Формируем данные для отображения
         const optionsWithPhoto = options.map(opt => {
           let photoUrl = null;
           if (opt.photo_folder && opt.photo_name) {
@@ -469,7 +467,6 @@
           return { ...opt, photoUrl };
         });
 
-        // 10. Заполняем DOM
         voteTitleEl.textContent = election.title;
         voteMetaEl.innerHTML = `
           <span>Регион: ${election.territory}</span>
@@ -492,7 +489,6 @@
         const isAfterEnd = now > end;
         const isActive = election.status === 'active' && !isBeforeStart && !isAfterEnd;
 
-        // Если голосование не активно, блокируем
         if (!isActive) {
           if (isBeforeStart) {
             blockReason = `Голосование начнётся ${formatDate(election.start_date)}`;
@@ -513,16 +509,23 @@
             const isSelected = hasVoted && userOptionIds.includes(opt.id);
             if (isSelected) div.classList.add('selected');
             if (hasVoted || !isActive || blockReason) div.style.cursor = 'default';
+
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
             if (isSelected) radio.checked = true;
             if (hasVoted || !isActive || blockReason) radio.disabled = true;
+
+            // Верхняя часть (фото + инфо + процент)
+            const top = document.createElement('div');
+            top.className = 'candidate-top';
+
             const img = document.createElement('img');
             img.src = opt.photoUrl || '/images/default-avatar.png';
             img.alt = opt.text;
             img.onerror = () => { img.src = '/images/default-avatar.png'; };
+
             const info = document.createElement('div');
             info.className = 'candidate-info';
             const name = document.createElement('div');
@@ -533,14 +536,28 @@
             desc.textContent = opt.description || '';
             info.appendChild(name);
             info.appendChild(desc);
+
             const percentSpan = document.createElement('div');
             percentSpan.className = 'candidate-percent';
             percentSpan.textContent = `${percent}%`;
+
+            top.appendChild(img);
+            top.appendChild(info);
+            top.appendChild(percentSpan);
+
+            // Прогресс-бар
+            const progressWrap = document.createElement('div');
+            progressWrap.className = 'candidate-progress';
+            const progressBar = document.createElement('div');
+            progressBar.className = 'candidate-progress-bar';
+            progressBar.style.width = `${percent}%`;
+            progressWrap.appendChild(progressBar);
+
             div.appendChild(radio);
-            div.appendChild(img);
-            div.appendChild(info);
-            div.appendChild(percentSpan);
+            div.appendChild(top);
+            div.appendChild(progressWrap);
             list.appendChild(div);
+
             div.addEventListener('click', () => {
               if (radio.disabled) return;
               if (!isActive || blockReason) {
@@ -571,9 +588,11 @@
             qText.className = 'question-text';
             qText.textContent = question;
             block.appendChild(qText);
+
             const optsDiv = document.createElement('div');
             optsDiv.className = 'referendum-options';
             const groupName = `vote_question_${questionIndex}`;
+
             opts.forEach(opt => {
               const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
               const div = document.createElement('div');
@@ -581,22 +600,38 @@
               const isSelected = hasVoted && userOptionIds.includes(opt.id);
               if (isSelected) div.classList.add('selected');
               if (hasVoted || !isActive || blockReason) div.style.cursor = 'default';
+
               const radio = document.createElement('input');
               radio.type = 'radio';
               radio.name = groupName;
               radio.value = opt.id;
               if (isSelected) radio.checked = true;
               if (hasVoted || !isActive || blockReason) radio.disabled = true;
+
+              const top = document.createElement('div');
+              top.className = 'answer-top';
               const answerSpan = document.createElement('div');
               answerSpan.className = 'answer-text';
               answerSpan.textContent = opt.text;
               const percentSpan = document.createElement('div');
               percentSpan.className = 'answer-percent';
               percentSpan.textContent = `${percent}%`;
+              top.appendChild(answerSpan);
+              top.appendChild(percentSpan);
+
+              // Прогресс-бар для референдума
+              const progressWrap = document.createElement('div');
+              progressWrap.className = 'referendum-progress';
+              const progressBar = document.createElement('div');
+              progressBar.className = 'referendum-progress-bar';
+              progressBar.style.width = `${percent}%`;
+              progressWrap.appendChild(progressBar);
+
               div.appendChild(radio);
-              div.appendChild(answerSpan);
-              div.appendChild(percentSpan);
+              div.appendChild(top);
+              div.appendChild(progressWrap);
               optsDiv.appendChild(div);
+
               div.addEventListener('click', () => {
                 if (radio.disabled) return;
                 if (!isActive || blockReason) {
@@ -625,6 +660,7 @@
                 }
               });
             });
+
             block.appendChild(optsDiv);
             optionsContainer.appendChild(block);
             questionIndex++;
@@ -639,12 +675,17 @@
             const isSelected = hasVoted && userOptionIds.includes(opt.id);
             if (isSelected) div.classList.add('selected');
             if (hasVoted || !isActive || blockReason) div.style.cursor = 'default';
+
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
             if (isSelected) radio.checked = true;
             if (hasVoted || !isActive || blockReason) radio.disabled = true;
+
+            const top = document.createElement('div');
+            top.className = 'candidate-top';
+
             const info = document.createElement('div');
             info.className = 'candidate-info';
             const name = document.createElement('div');
@@ -655,13 +696,26 @@
             desc.textContent = opt.description || '';
             info.appendChild(name);
             info.appendChild(desc);
+
             const percentSpan = document.createElement('div');
             percentSpan.className = 'candidate-percent';
             percentSpan.textContent = `${percent}%`;
+
+            top.appendChild(info);
+            top.appendChild(percentSpan);
+
+            const progressWrap = document.createElement('div');
+            progressWrap.className = 'candidate-progress';
+            const progressBar = document.createElement('div');
+            progressBar.className = 'candidate-progress-bar';
+            progressBar.style.width = `${percent}%`;
+            progressWrap.appendChild(progressBar);
+
             div.appendChild(radio);
-            div.appendChild(info);
-            div.appendChild(percentSpan);
+            div.appendChild(top);
+            div.appendChild(progressWrap);
             list.appendChild(div);
+
             div.addEventListener('click', () => {
               if (radio.disabled) return;
               if (!isActive || blockReason) {
@@ -679,7 +733,6 @@
           optionsContainer.appendChild(list);
         }
 
-        // Управление кнопкой и статусом
         if (hasVoted) {
           disableVoting();
         } else if (blockReason) {
