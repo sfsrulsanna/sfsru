@@ -80,7 +80,7 @@
     /* Стили для статистики */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
       gap: 1rem;
       margin: 1.5rem 0 2rem;
       background: #f8f9fa;
@@ -136,10 +136,10 @@
       .menu-overlay.active { display: block; opacity: 1; }
       .candidate-item { flex-wrap: wrap; }
       .referendum-options { flex-direction: column; }
-      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
     @media (max-width: 500px) {
-      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
     }
   </style>
 </head>
@@ -276,25 +276,29 @@
       errorMessageEl.textContent = msg;
     }
 
-    // Заглушка для статистики (позже заменим реальными данными из таблицы election_statistics)
-    async function getElectionStatistics(electionId) {
-      // Пока возвращаем тестовые данные
-      // В будущем здесь будет запрос к таблице votes.election_statistics
-      // const { data, error } = await supabase
-      //   .schema(SCHEMA)
-      //   .from('election_statistics')
-      //   .select('*')
-      //   .eq('election_id', electionId)
-      //   .single();
-      // if (error) throw error;
-      // return data;
+    // ============================================================
+    // РЕАЛЬНАЯ ЗАГРУЗКА СТАТИСТИКИ ИЗ БД (исправлено)
+    // ============================================================
+    async function loadElectionStatistics(electionId) {
+      if (!electionId) return null;
+      try {
+        const { data, error } = await supabase
+          .schema(SCHEMA)
+          .from('election_statistics')
+          .select('*')
+          .eq('election_id', electionId)
+          .maybeSingle();
 
-      return {
-        registered: 1250,
-        voted: 847,
-        spoiled: 12,
-        refused: 45
-      };
+        if (error) {
+          // Если таблица не существует или нет прав – возвращаем нули
+          console.warn('Не удалось загрузить статистику:', error.message);
+          return null;
+        }
+        return data || null;
+      } catch (err) {
+        console.error('Ошибка загрузки статистики:', err);
+        return null;
+      }
     }
 
     async function checkRegion(userId, territory) {
@@ -427,9 +431,15 @@
         const counts = {};
         allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // 8. Статистика избирателей (заглушка)
-        const stats = await getElectionStatistics(voteId);
-        const { registered, voted, spoiled, refused } = stats;
+        // 8. ЗАГРУЖАЕМ РЕАЛЬНУЮ СТАТИСТИКУ ИЗ БД
+        const stats = await loadElectionStatistics(voteId);
+        let registered = 0, voted = 0, spoiled = 0, refused = 0;
+        if (stats) {
+          registered = stats.registered_voters || 0;
+          voted = stats.voted || 0;
+          spoiled = stats.spoiled_ballots || 0;
+          refused = stats.refused || 0;
+        }
 
         registeredCountEl.textContent = registered;
 
