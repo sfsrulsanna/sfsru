@@ -120,6 +120,8 @@
     .option-item-admin .option-photo { max-width: 60px; max-height: 60px; border-radius: 50%; margin-right: 10px; }
     .option-item-admin .option-percent { font-weight: 600; color: #7b0000; margin: 0 1rem; }
     .option-item-admin .option-actions { display: flex; gap: 0.4rem; }
+    .option-item-admin .option-actions .btn-edit-option { background: #17a2b8; color: white; border: none; padding: 0.2rem 0.5rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem; }
+    .option-item-admin .option-actions .btn-edit-option:hover { background: #138496; }
 
     .add-option-form {
       display: flex;
@@ -133,6 +135,19 @@
     }
     .add-option-form .form-group { margin-bottom: 0; flex: 1; min-width: 150px; }
     .add-option-form .form-group label { font-weight: 500; font-size: 0.9rem; }
+
+    .copy-options-block {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: #d1ecf1;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .copy-options-block label { font-weight: 600; }
+    .copy-options-block select { padding: 0.4rem 0.8rem; border-radius: 4px; border: 1px solid #ccc; }
 
     .applications-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
     .applications-table th, .applications-table td { padding: 0.5rem 0.8rem; border: 1px solid #eee; }
@@ -221,6 +236,10 @@
     .app-detail-field .label { font-weight: 600; width: 30%; color: #555; }
     .app-detail-field .value { width: 70%; }
 
+    /* Модалка редактирования варианта */
+    .edit-option-modal .modal-content { max-width: 500px; }
+    .edit-option-modal .modal-content .current-photo { max-width: 100px; max-height: 100px; border-radius: 50%; display: block; margin: 0.5rem 0; }
+
     @media (max-width: 768px) {
       .header-container { flex-direction: column; align-items: stretch; gap: 0.5rem; }
       .page-header { flex-direction: column; align-items: stretch; }
@@ -231,6 +250,7 @@
       .app-detail-field .label { width: 100%; }
       .app-detail-field .value { width: 100%; }
       .manual-vote-form .user-search-result { position: relative; }
+      .copy-options-block { flex-direction: column; align-items: stretch; }
     }
   </style>
 </head>
@@ -379,6 +399,17 @@
                 </div>
                 <button type="button" class="btn btn-success" id="addOptionBtn">+ Добавить</button>
               </div>
+
+              <!-- Блок копирования -->
+              <div class="copy-options-block">
+                <label for="copyFromVote">Скопировать кандидатов из другого голосования:</label>
+                <select id="copyFromVote" class="form-control" style="display:inline-block; width:auto; min-width:200px;">
+                  <option value="">-- Выберите голосование --</option>
+                </select>
+                <button type="button" class="btn btn-primary" id="copyOptionsBtn">Скопировать</button>
+                <span id="copyStatus" style="margin-left: 1rem; font-weight: 500;"></span>
+              </div>
+
               <div class="upload-log" id="uploadLog">
                 <div class="log-entry info">Лог загрузки фото...</div>
               </div>
@@ -406,7 +437,6 @@
               </div>
               <div id="statsEmpty" class="no-data">Нет голосов</div>
 
-              <!-- Блок редактирования статистики -->
               <div class="statistics-edit">
                 <h4>Редактирование статистики голосования</h4>
                 <div class="form-row">
@@ -431,7 +461,6 @@
                 <div id="statisticsSaveResult" style="margin-top:0.5rem;font-weight:500;"></div>
               </div>
 
-              <!-- Форма для ручного добавления голоса -->
               <div class="manual-vote-form" id="manualVoteForm">
                 <h4>Добавить голос вручную (для очного голосования)</h4>
                 <div class="form-row">
@@ -462,6 +491,41 @@
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" id="cancelModal">Отмена</button>
             <button type="submit" class="btn btn-primary" id="saveVoteBtn">Сохранить</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Модальное окно редактирования варианта -->
+  <div id="editOptionModal" class="modal edit-option-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4>Редактирование кандидата / варианта</h4>
+        <button class="close" id="closeEditOptionModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="editOptionForm">
+          <input type="hidden" id="editOptionId" />
+          <div class="form-group">
+            <label for="editOptionText">Текст (имя)</label>
+            <input type="text" id="editOptionText" class="form-control" required />
+          </div>
+          <div class="form-group">
+            <label for="editOptionDesc">Краткое описание</label>
+            <input type="text" id="editOptionDesc" class="form-control" />
+          </div>
+          <div class="form-group">
+            <label>Текущее фото</label>
+            <div id="editOptionCurrentPhotoContainer"></div>
+          </div>
+          <div class="form-group">
+            <label for="editOptionPhoto">Новое фото (оставьте пустым, чтобы не менять)</label>
+            <input type="file" id="editOptionPhoto" class="form-control" accept="image/*" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelEditOptionBtn">Отмена</button>
+            <button type="submit" class="btn btn-primary" id="saveEditOptionBtn">Сохранить</button>
           </div>
         </form>
       </div>
@@ -530,6 +594,11 @@
     const addOptionBtn = document.getElementById('addOptionBtn');
     const uploadLog = document.getElementById('uploadLog');
 
+    // Копирование
+    const copyFromVote = document.getElementById('copyFromVote');
+    const copyOptionsBtn = document.getElementById('copyOptionsBtn');
+    const copyStatus = document.getElementById('copyStatus');
+
     // Заявления
     const applicationsList = document.getElementById('applicationsList');
     const refreshApplicationsBtn = document.getElementById('refreshApplications');
@@ -564,6 +633,17 @@
     const selectedUserInfo = document.getElementById('selectedUserInfo');
     const removeSelectedUser = document.getElementById('removeSelectedUser');
 
+    // Модалка редактирования варианта
+    const editOptionModal = document.getElementById('editOptionModal');
+    const closeEditOptionModal = document.getElementById('closeEditOptionModal');
+    const cancelEditOptionBtn = document.getElementById('cancelEditOptionBtn');
+    const editOptionForm = document.getElementById('editOptionForm');
+    const editOptionId = document.getElementById('editOptionId');
+    const editOptionText = document.getElementById('editOptionText');
+    const editOptionDesc = document.getElementById('editOptionDesc');
+    const editOptionPhoto = document.getElementById('editOptionPhoto');
+    const editOptionCurrentPhotoContainer = document.getElementById('editOptionCurrentPhotoContainer');
+
     // Прочее
     const adminEmail = document.getElementById('adminEmail');
     const logoutBtn = document.getElementById('logoutBtn');
@@ -577,6 +657,7 @@
     let allApplications = [];
     let selectedUserId = null;
     let selectedUserText = '';
+    let allVotesList = []; // для выпадающего списка копирования
 
     // --- Вспомогательные функции ---
     function addLog(message, type = 'info') {
@@ -737,6 +818,9 @@
       statSpoiled.value = 0;
       statRefused.value = 0;
       statisticsSaveResult.textContent = '';
+      copyStatus.textContent = '';
+      // Заполняем выпадающий список для копирования
+      populateCopyFromVote();
     }
 
     function resetManualVoteForm() {
@@ -761,6 +845,29 @@
       const offset = d.getTimezoneOffset();
       const local = new Date(d.getTime() - offset * 60000);
       return local.toISOString().slice(0,16);
+    }
+
+    // Заполнение выпадающего списка для копирования
+    async function populateCopyFromVote() {
+      copyFromVote.innerHTML = '<option value="">-- Выберите голосование --</option>';
+      try {
+        const { data, error } = await supabase
+          .schema(SCHEMA)
+          .from('elections')
+          .select('id, title, status')
+          .neq('id', currentVoteId) // исключаем текущее
+          .order('title');
+        if (error) throw error;
+        allVotesList = data || [];
+        allVotesList.forEach(v => {
+          const option = document.createElement('option');
+          option.value = v.id;
+          option.textContent = `${v.title} (${getStatusLabel(v.status)})`;
+          copyFromVote.appendChild(option);
+        });
+      } catch (err) {
+        console.error('Ошибка загрузки списка голосований:', err);
+      }
     }
 
     async function openEditModal(id) {
@@ -806,6 +913,7 @@
         await loadStatistics(id);
         await loadElectionStatistics(id);
         populateVoteOptions();
+        populateCopyFromVote(); // заполняем список для копирования
 
         modal.classList.add('active');
       } catch (err) {
@@ -840,6 +948,7 @@
               ${opts.map(opt => `
                 <span>${opt.text}
                   <button class="btn btn-danger btn-sm delete-option" data-id="${opt.id}" style="margin-left:0.5rem;">×</button>
+                  <button class="btn btn-edit-option btn-sm" data-id="${opt.id}" style="margin-left:0.3rem;">✎</button>
                 </span>
               `).join('')}
             </div>
@@ -863,16 +972,24 @@
               ${opt.description ? `<small style="color:#555;">${opt.description}</small>` : ''}
             </div>
             <div class="option-actions">
+              <button class="btn btn-edit-option" data-id="${opt.id}" title="Редактировать">✎</button>
               <button class="btn btn-danger btn-sm delete-option" data-id="${opt.id}">×</button>
             </div>
           `;
           optionsList.appendChild(div);
         });
       }
+      // Обработчики
       document.querySelectorAll('.delete-option').forEach(btn => {
         btn.addEventListener('click', async () => {
           if (!confirm('Удалить вариант?')) return;
           await deleteOption(btn.dataset.id);
+        });
+      });
+      document.querySelectorAll('.btn-edit-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const optionId = btn.dataset.id;
+          openEditOptionModal(optionId);
         });
       });
       populateVoteOptions();
@@ -961,6 +1078,191 @@
       renderOptions();
       await loadStatistics(currentVoteId);
       addLog('Вариант удалён', 'info');
+    }
+
+    // --- Редактирование варианта ---
+    function openEditOptionModal(optionId) {
+      const opt = allOptions.find(o => o.id === optionId);
+      if (!opt) return;
+      editOptionId.value = opt.id;
+      editOptionText.value = opt.text || '';
+      editOptionDesc.value = opt.description || '';
+      // Показываем текущее фото
+      let photoHtml = '';
+      if (opt.photo_folder && opt.photo_name) {
+        const fullPath = opt.photo_folder + opt.photo_name;
+        const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(fullPath);
+        photoHtml = `<img src="${data.publicUrl}" class="current-photo" alt="Текущее фото" /><br><small>Текущее фото</small>`;
+      } else {
+        photoHtml = '<p>Фото не загружено</p>';
+      }
+      editOptionCurrentPhotoContainer.innerHTML = photoHtml;
+      editOptionPhoto.value = '';
+      editOptionModal.classList.add('active');
+    }
+
+    async function saveEditOption(e) {
+      e.preventDefault();
+      const optionId = editOptionId.value;
+      const newText = editOptionText.value.trim();
+      if (!newText) { alert('Введите текст'); return; }
+      const newDesc = editOptionDesc.value.trim();
+      const photoFile = editOptionPhoto.files[0];
+
+      const opt = allOptions.find(o => o.id === optionId);
+      if (!opt) { alert('Вариант не найден'); return; }
+
+      let newPhotoFolder = opt.photo_folder;
+      let newPhotoName = opt.photo_name;
+
+      // Если загружено новое фото
+      if (photoFile) {
+        // Удаляем старое фото, если есть
+        if (opt.photo_folder && opt.photo_name) {
+          const oldPath = opt.photo_folder + opt.photo_name;
+          await supabase.storage.from(PHOTO_BUCKET).remove([oldPath]);
+          addLog(`Удалено старое фото ${oldPath}`, 'info');
+        }
+        // Загружаем новое
+        const ext = photoFile.name.split('.').pop();
+        const fileName = `candidate-${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
+        const fullPath = PHOTO_FOLDER + fileName;
+        const { error } = await supabase.storage.from(PHOTO_BUCKET).upload(fullPath, photoFile);
+        if (error) throw error;
+        newPhotoFolder = PHOTO_FOLDER;
+        newPhotoName = fileName;
+        addLog(`Новое фото загружено: ${fullPath}`, 'success');
+      }
+
+      // Обновляем запись в БД
+      const { error } = await supabase
+        .schema(SCHEMA)
+        .from('options')
+        .update({
+          text: newText,
+          description: newDesc,
+          photo_folder: newPhotoFolder,
+          photo_name: newPhotoName
+        })
+        .eq('id', optionId);
+      if (error) { alert('Ошибка обновления: ' + error.message); return; }
+
+      // Обновляем локальный массив
+      const idx = allOptions.findIndex(o => o.id === optionId);
+      if (idx !== -1) {
+        allOptions[idx].text = newText;
+        allOptions[idx].description = newDesc;
+        allOptions[idx].photo_folder = newPhotoFolder;
+        allOptions[idx].photo_name = newPhotoName;
+      }
+      renderOptions();
+      editOptionModal.classList.remove('active');
+      addLog(`Вариант "${newText}" обновлён`, 'success');
+    }
+
+    // --- Копирование вариантов из другого голосования ---
+    async function copyOptionsFromVote(sourceVoteId) {
+      if (!sourceVoteId) {
+        copyStatus.textContent = 'Выберите голосование для копирования';
+        copyStatus.style.color = '#dc3545';
+        return;
+      }
+      if (!currentVoteId) {
+        copyStatus.textContent = 'Сначала сохраните текущее голосование';
+        copyStatus.style.color = '#dc3545';
+        return;
+      }
+      if (!confirm('Все текущие кандидаты/варианты будут заменены. Продолжить?')) return;
+
+      copyStatus.textContent = 'Копирование...';
+      copyStatus.style.color = '#007bff';
+
+      try {
+        // Загружаем варианты из источника
+        const { data: sourceOptions, error } = await supabase
+          .schema(SCHEMA)
+          .from('options')
+          .select('*')
+          .eq('election_id', sourceVoteId)
+          .order('order', { ascending: true });
+        if (error) throw error;
+        if (!sourceOptions || sourceOptions.length === 0) {
+          copyStatus.textContent = 'В выбранном голосовании нет кандидатов';
+          copyStatus.style.color = '#dc3545';
+          return;
+        }
+
+        // Удаляем все текущие варианты
+        await supabase
+          .schema(SCHEMA)
+          .from('options')
+          .delete()
+          .eq('election_id', currentVoteId);
+
+        // Копируем варианты
+        const newOptions = [];
+        for (const opt of sourceOptions) {
+          let newPhotoFolder = null;
+          let newPhotoName = null;
+
+          // Копируем фото, если есть
+          if (opt.photo_folder && opt.photo_name) {
+            const oldPath = opt.photo_folder + opt.photo_name;
+            const ext = opt.photo_name.split('.').pop();
+            const newFileName = `candidate-${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
+            const newPath = PHOTO_FOLDER + newFileName;
+            // Копируем файл
+            const { error: copyErr } = await supabase.storage
+              .from(PHOTO_BUCKET)
+              .copy(oldPath, newPath);
+            if (copyErr) {
+              console.error('Ошибка копирования файла:', copyErr);
+              // Если не удалось скопировать, просто пропускаем фото
+            } else {
+              newPhotoFolder = PHOTO_FOLDER;
+              newPhotoName = newFileName;
+              addLog(`Фото скопировано: ${newPath}`, 'success');
+            }
+          }
+
+          // Создаём новый вариант
+          newOptions.push({
+            election_id: currentVoteId,
+            text: opt.text,
+            description: opt.description,
+            question_text: opt.question_text,
+            photo_folder: newPhotoFolder,
+            photo_name: newPhotoName,
+            order: opt.order || 0
+          });
+        }
+
+        // Вставляем все новые варианты
+        const { error: insertErr } = await supabase
+          .schema(SCHEMA)
+          .from('options')
+          .insert(newOptions);
+        if (insertErr) throw insertErr;
+
+        // Обновляем список
+        const { data: freshOptions } = await supabase
+          .schema(SCHEMA)
+          .from('options')
+          .select('*')
+          .eq('election_id', currentVoteId)
+          .order('order', { ascending: true });
+        allOptions = freshOptions || [];
+        renderOptions();
+        await loadStatistics(currentVoteId);
+
+        copyStatus.textContent = `Скопировано ${newOptions.length} кандидатов!`;
+        copyStatus.style.color = '#28a745';
+        addLog(`Скопировано ${newOptions.length} кандидатов из голосования ${sourceVoteId}`, 'success');
+      } catch (err) {
+        console.error(err);
+        copyStatus.textContent = 'Ошибка копирования: ' + err.message;
+        copyStatus.style.color = '#dc3545';
+      }
     }
 
     // --- Заявления ---
@@ -1390,6 +1692,7 @@
         await loadApplications(currentVoteId);
         await loadElectionStatistics(currentVoteId);
         populateVoteOptions();
+        populateCopyFromVote();
       }
 
       await loadAndRender();
@@ -1454,7 +1757,6 @@
       manualVoteResult.textContent = '';
     });
 
-    // Добавление голоса (исправлена обработка ошибки)
     addManualVoteBtn.addEventListener('click', async () => {
       if (!currentVoteId) {
         manualVoteResult.textContent = 'Ошибка: голосование не выбрано';
@@ -1473,14 +1775,22 @@
         return;
       }
 
-      // Проверяем, не голосовал ли уже пользователь
-      const { data: existing, error: checkErr } = await supabase
-        .schema(SCHEMA)
-        .from('user_votes')
-        .select('id')
-        .eq('user_id', selectedUserId)
-        .eq('election_id', currentVoteId)
-        .maybeSingle();
+      let existing = null;
+      let checkErr = null;
+      try {
+        const result = await supabase
+          .schema(SCHEMA)
+          .from('user_votes')
+          .select('id')
+          .eq('user_id', selectedUserId)
+          .eq('election_id', currentVoteId)
+          .maybeSingle();
+        existing = result.data;
+        checkErr = result.error;
+      } catch (err) {
+        checkErr = err;
+      }
+
       if (checkErr) {
         manualVoteResult.textContent = 'Ошибка проверки: ' + checkErr.message;
         manualVoteResult.style.color = '#dc3545';
@@ -1492,20 +1802,27 @@
         return;
       }
 
-      // Вставляем голос
-      const { error: insertErr } = await supabase
-        .schema(SCHEMA)
-        .from('user_votes')
-        .insert({
-          user_id: selectedUserId,
-          election_id: currentVoteId,
-          option_id: optionId
-        });
+      const insertData = {
+        user_id: selectedUserId,
+        election_id: currentVoteId,
+        option_id: optionId
+      };
+      let insertErr = null;
+      try {
+        const { error } = await supabase
+          .schema(SCHEMA)
+          .from('user_votes')
+          .insert(insertData);
+        insertErr = error;
+      } catch (err) {
+        insertErr = err;
+      }
 
       if (insertErr) {
-        // Проверяем, связана ли ошибка с внешним ключом
         if (insertErr.code === '23503') {
-          manualVoteResult.textContent = 'Ошибка: пользователь не найден в таблице, на которую ссылается внешний ключ. Проверьте, что внешний ключ user_votes.user_id ссылается на public.users (или auth.users) и что пользователь существует.';
+          manualVoteResult.textContent = 'Ошибка внешнего ключа: пользователь не найден в целевой таблице. Проверьте, что внешний ключ user_votes.user_id ссылается на public.users (или auth.users) и пользователь существует.';
+        } else if (insertErr.code === '23505') {
+          manualVoteResult.textContent = 'Этот пользователь уже проголосовал в данном голосовании (конфликт уникальности).';
         } else {
           manualVoteResult.textContent = 'Ошибка добавления голоса: ' + insertErr.message;
         }
@@ -1530,6 +1847,18 @@
     saveStatisticsBtn.addEventListener('click', async () => {
       await saveElectionStatistics(currentVoteId);
     });
+
+    // --- Обработчик копирования ---
+    copyOptionsBtn.addEventListener('click', async () => {
+      const sourceId = copyFromVote.value;
+      await copyOptionsFromVote(sourceId);
+    });
+
+    // --- Обработчики модалки редактирования варианта ---
+    editOptionForm.addEventListener('submit', saveEditOption);
+    closeEditOptionModal.addEventListener('click', () => editOptionModal.classList.remove('active'));
+    cancelEditOptionBtn.addEventListener('click', () => editOptionModal.classList.remove('active'));
+    editOptionModal.addEventListener('click', (e) => { if (e.target === editOptionModal) editOptionModal.classList.remove('active'); });
 
     // --- Загрузка и рендеринг ---
     async function loadAndRender() {
