@@ -40,7 +40,7 @@
     .nav-menu a:hover { background: rgba(255,255,255,0.45); transform: translateY(-2px); }
     .menu-toggle { display: none; }
     .main-content { flex: 1; padding: 2.5rem 1.5rem; }
-    .container { max-width: 800px; margin: 0 auto; }
+    .container { max-width: 900px; margin: 0 auto; }
     .back-pill { display: inline-block; padding: 0.4rem 1.2rem; background: #7b0000; color: white; border-radius: 50px; font-weight: 600; margin-bottom: 1.5rem; cursor: pointer; transition: 0.2s; border: none; }
     .back-pill:hover { opacity: 0.85; }
     .vote-detail { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid #eee; }
@@ -75,9 +75,45 @@
     .vote-actions .already-voted { color: #28a745; font-weight: 600; margin-top: 1rem; }
     .vote-actions .error-message { color: #dc3545; font-weight: 500; margin-top: 1rem; padding: 0.8rem; background: #f8d7da; border-radius: 8px; }
     .vote-actions .info-message { color: #856404; font-weight: 500; margin-top: 1rem; padding: 0.8rem; background: #fff3cd; border-radius: 8px; }
+    .vote-actions .warning-message { color: #721c24; font-weight: 500; margin-top: 1rem; padding: 0.8rem; background: #f8d7da; border-radius: 8px; border-left: 4px solid #dc3545; }
+
+    /* Стили для статистики */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0 2rem;
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid #e9ecef;
+    }
+    .stat-item {
+      text-align: center;
+      padding: 0.5rem;
+    }
+    .stat-item .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #7b0000;
+      line-height: 1.2;
+    }
+    .stat-item .stat-label {
+      font-size: 0.9rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-top: 0.2rem;
+    }
+    .stat-item .stat-number.green { color: #28a745; }
+    .stat-item .stat-number.blue { color: #007bff; }
+    .stat-item .stat-number.orange { color: #fd7e14; }
+    .stat-item .stat-number.purple { color: #6f42c1; }
+
     .footer { background: linear-gradient(135deg, #ff6666, #cc0000); padding: 1.8rem; text-align: center; color: white; margin-top: auto; }
     .footer a { color: #ffdddd; text-decoration: underline; }
     .loading { text-align: center; padding: 3rem; color: #666; }
+
     @media (max-width: 768px) {
       .header-container { flex-direction: row; justify-content: space-between; padding: 0 1rem; }
       .menu-toggle { display: block; background: transparent; border: none; cursor: pointer; padding: 8px; width: 40px; height: 40px; position: relative; }
@@ -93,6 +129,7 @@
       .menu-overlay.active { display: block; opacity: 1; }
       .candidate-item { flex-wrap: wrap; }
       .referendum-options { flex-direction: column; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
     }
   </style>
 </head>
@@ -131,6 +168,27 @@
       <div id="voteDetail" class="vote-detail" style="display: none;">
         <h2 class="vote-title" id="voteTitle"></h2>
         <div class="vote-meta" id="voteMeta"></div>
+
+        <!-- Блок статистики -->
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-item">
+            <div class="stat-number" id="registeredCount">0</div>
+            <div class="stat-label">Зарегистрировано</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number green" id="votedCount">0</div>
+            <div class="stat-label">Проголосовало</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number orange" id="spoiledCount">0</div>
+            <div class="stat-label">Испорченных</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number purple" id="turnoutPercent">0%</div>
+            <div class="stat-label">Явка</div>
+          </div>
+        </div>
+
         <div class="vote-description" id="voteDescription"></div>
 
         <div id="optionsContainer"></div>
@@ -170,6 +228,12 @@
     const voteStatus = document.getElementById('voteStatus');
     const errorMessageEl = document.getElementById('errorMessage');
 
+    // Элементы статистики
+    const registeredCountEl = document.getElementById('registeredCount');
+    const votedCountEl = document.getElementById('votedCount');
+    const spoiledCountEl = document.getElementById('spoiledCount');
+    const turnoutPercentEl = document.getElementById('turnoutPercent');
+
     const urlParams = new URLSearchParams(window.location.search);
     const voteId = urlParams.get('id');
 
@@ -191,6 +255,20 @@
       errorMessageEl.textContent = msg;
     }
 
+    // Заглушка для статистики (позже заменим реальными данными)
+    async function getElectionStatistics(electionId) {
+      // Пока возвращаем тестовые данные
+      // В будущем здесь будут запросы к таблицам:
+      // - registered_voters (количество зарегистрированных)
+      // - user_votes (количество проголосовавших)
+      // - spoiled_ballots (количество испорченных бюллетеней)
+      return {
+        registered: 1250,
+        voted: 847,
+        spoiled: 12
+      };
+    }
+
     async function checkRegion(userId, territory) {
       if (territory === 'Вся территория СФСРЮ') return true;
       const { data: permData } = await supabase
@@ -209,7 +287,6 @@
       return regionData?.name === territory;
     }
 
-    // Проверка типа учётной записи (только account_type, без электронной отметки)
     async function getAccountType(userId) {
       const { data, error } = await supabase
         .from('users')
@@ -220,7 +297,6 @@
       return data.account_type || 'Не подтверждена';
     }
 
-    // НОВАЯ ФУНКЦИЯ: проверка наличия отметки о дистанционном голосовании для данного голосования
     async function checkRemoteVotingApproval(userId, electionId) {
       const { data, error } = await supabase
         .schema(SCHEMA)
@@ -233,14 +309,18 @@
         console.error('Ошибка проверки remote_voting_approvals:', error);
         return false;
       }
-      return !!data; // true, если запись найдена
+      return !!data;
     }
 
-    function disableVoting() {
+    function disableVoting(reason = '') {
       document.querySelectorAll('input[type="radio"]').forEach(r => r.disabled = true);
       document.querySelectorAll('.candidate-item, .referendum-option').forEach(el => el.style.cursor = 'default');
       voteBtn.disabled = true;
-      voteStatus.innerHTML = '<div class="already-voted">Вы уже проголосовали</div>';
+      if (reason) {
+        voteStatus.innerHTML = `<div class="warning-message">${reason}</div>`;
+      } else {
+        voteStatus.innerHTML = '<div class="already-voted">Вы уже проголосовали</div>';
+      }
     }
 
     async function loadVote() {
@@ -264,25 +344,25 @@
           return;
         }
 
-        // 2. Проверка региона
+        // Переменные для блокировки
+        let blockReason = null;
+
+        // 2. Проверка региона – если не подходит, блокируем, но продолжаем
         const regionOk = await checkRegion(user.id, election.territory);
         if (!regionOk) {
-          showError('Ваш регион не соответствует');
-          return;
+          blockReason = 'Ваш регион не соответствует этому голосованию. Голосование недоступно.';
         }
 
         // 3. Проверка типа учётной записи
         const accountType = await getAccountType(user.id);
         if (accountType !== 'Подтверждённая') {
-          showError('Голосование невозможно: учётная запись не подтверждена');
-          return;
+          blockReason = blockReason ? blockReason + ' Учётная запись не подтверждена.' : 'Голосование невозможно: учётная запись не подтверждена.';
         }
 
-        // 4. Проверка отметки о дистанционном голосовании для данного голосования (НОВОЕ)
+        // 4. Проверка отметки о дистанционном голосовании
         const hasApproval = await checkRemoteVotingApproval(user.id, voteId);
         if (!hasApproval) {
-          showError('Голосование невозможно: отсутствует разрешение на дистанционное голосование для этого опроса');
-          return;
+          blockReason = blockReason ? blockReason + ' Отсутствует разрешение на дистанционное голосование.' : 'Голосование невозможно: отсутствует разрешение на дистанционное голосование для этого опроса.';
         }
 
         // 5. Загружаем варианты
@@ -319,7 +399,15 @@
         const counts = {};
         allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // 8. Формируем данные для отображения
+        // 8. Статистика избирателей (заглушка)
+        const stats = await getElectionStatistics(voteId);
+        registeredCountEl.textContent = stats.registered;
+        votedCountEl.textContent = stats.voted;
+        spoiledCountEl.textContent = stats.spoiled;
+        const turnout = stats.registered > 0 ? Math.round((stats.voted / stats.registered) * 100) : 0;
+        turnoutPercentEl.textContent = turnout + '%';
+
+        // 9. Формируем данные для отображения
         const optionsWithPhoto = options.map(opt => {
           let photoUrl = null;
           if (opt.photo_folder && opt.photo_name) {
@@ -330,7 +418,7 @@
           return { ...opt, photoUrl };
         });
 
-        // 9. Заполняем DOM
+        // 10. Заполняем DOM
         voteTitleEl.textContent = election.title;
         voteMetaEl.innerHTML = `
           <span>Регион: ${election.territory}</span>
@@ -353,6 +441,17 @@
         const isAfterEnd = now > end;
         const isActive = election.status === 'active' && !isBeforeStart && !isAfterEnd;
 
+        // Если голосование не активно, блокируем
+        if (!isActive) {
+          if (isBeforeStart) {
+            blockReason = `Голосование начнётся ${formatDate(election.start_date)}`;
+          } else if (isAfterEnd) {
+            blockReason = 'Голосование завершено';
+          } else {
+            blockReason = 'Голосование не активно';
+          }
+        }
+
         if (isElection) {
           const list = document.createElement('div');
           list.className = 'candidate-list';
@@ -362,13 +461,13 @@
             div.className = 'candidate-item';
             const isSelected = hasVoted && userOptionIds.includes(opt.id);
             if (isSelected) div.classList.add('selected');
-            if (hasVoted || !isActive) div.style.cursor = 'default';
+            if (hasVoted || !isActive || blockReason) div.style.cursor = 'default';
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
             if (isSelected) radio.checked = true;
-            if (hasVoted || !isActive) radio.disabled = true;
+            if (hasVoted || !isActive || blockReason) radio.disabled = true;
             const img = document.createElement('img');
             img.src = opt.photoUrl || '/images/default-avatar.png';
             img.alt = opt.text;
@@ -393,14 +492,8 @@
             list.appendChild(div);
             div.addEventListener('click', () => {
               if (radio.disabled) return;
-              if (!isActive) {
-                if (isBeforeStart) {
-                  alert(`Голосование начнётся ${formatDate(election.start_date)}`);
-                } else if (isAfterEnd) {
-                  alert('Голосование завершено');
-                } else {
-                  alert('Голосование не активно');
-                }
+              if (!isActive || blockReason) {
+                alert(blockReason || 'Голосование недоступно');
                 return;
               }
               document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
@@ -436,13 +529,13 @@
               div.className = 'referendum-option';
               const isSelected = hasVoted && userOptionIds.includes(opt.id);
               if (isSelected) div.classList.add('selected');
-              if (hasVoted || !isActive) div.style.cursor = 'default';
+              if (hasVoted || !isActive || blockReason) div.style.cursor = 'default';
               const radio = document.createElement('input');
               radio.type = 'radio';
               radio.name = groupName;
               radio.value = opt.id;
               if (isSelected) radio.checked = true;
-              if (hasVoted || !isActive) radio.disabled = true;
+              if (hasVoted || !isActive || blockReason) radio.disabled = true;
               const answerSpan = document.createElement('div');
               answerSpan.className = 'answer-text';
               answerSpan.textContent = opt.text;
@@ -455,14 +548,8 @@
               optsDiv.appendChild(div);
               div.addEventListener('click', () => {
                 if (radio.disabled) return;
-                if (!isActive) {
-                  if (isBeforeStart) {
-                    alert(`Голосование начнётся ${formatDate(election.start_date)}`);
-                  } else if (isAfterEnd) {
-                    alert('Голосование завершено');
-                  } else {
-                    alert('Голосование не активно');
-                  }
+                if (!isActive || blockReason) {
+                  alert(blockReason || 'Голосование недоступно');
                   return;
                 }
                 optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
@@ -500,13 +587,13 @@
             div.className = 'candidate-item';
             const isSelected = hasVoted && userOptionIds.includes(opt.id);
             if (isSelected) div.classList.add('selected');
-            if (hasVoted || !isActive) div.style.cursor = 'default';
+            if (hasVoted || !isActive || blockReason) div.style.cursor = 'default';
             const radio = document.createElement('input');
             radio.type = 'radio';
             radio.name = 'voteOption';
             radio.value = opt.id;
             if (isSelected) radio.checked = true;
-            if (hasVoted || !isActive) radio.disabled = true;
+            if (hasVoted || !isActive || blockReason) radio.disabled = true;
             const info = document.createElement('div');
             info.className = 'candidate-info';
             const name = document.createElement('div');
@@ -526,14 +613,8 @@
             list.appendChild(div);
             div.addEventListener('click', () => {
               if (radio.disabled) return;
-              if (!isActive) {
-                if (isBeforeStart) {
-                  alert(`Голосование начнётся ${formatDate(election.start_date)}`);
-                } else if (isAfterEnd) {
-                  alert('Голосование завершено');
-                } else {
-                  alert('Голосование не активно');
-                }
+              if (!isActive || blockReason) {
+                alert(blockReason || 'Голосование недоступно');
                 return;
               }
               document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
@@ -547,9 +628,11 @@
           optionsContainer.appendChild(list);
         }
 
-        // Управление кнопкой
+        // Управление кнопкой и статусом
         if (hasVoted) {
           disableVoting();
+        } else if (blockReason) {
+          disableVoting(blockReason);
         } else if (!isActive) {
           voteBtn.disabled = true;
           if (isBeforeStart) {
@@ -565,6 +648,10 @@
         }
 
         voteBtn.onclick = async () => {
+          if (blockReason) {
+            alert(blockReason);
+            return;
+          }
           let optionsToVote = [];
           if (isElection || isPoll) {
             const selectedRadio = document.querySelector('input[name="voteOption"]:checked');
