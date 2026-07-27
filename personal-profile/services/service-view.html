@@ -384,6 +384,19 @@
             return data.title;
         }
 
+        // ---- ИСПРАВЛЕНИЕ: парсинг data ----
+        function parseDataField(app) {
+            if (!app) return app;
+            if (app.data && typeof app.data === 'string') {
+                try {
+                    app.data = JSON.parse(app.data);
+                } catch (e) {
+                    console.warn('Не удалось распарсить data:', e);
+                }
+            }
+            return app;
+        }
+
         async function loadService() {
             const urlParams = new URLSearchParams(window.location.search);
             const id = urlParams.get('id');
@@ -403,7 +416,7 @@
                 let app = null;
                 let source = null;
 
-                // === НОВОЕ: обработка заявлений ЦИК ===
+                // Обработка заявлений ЦИК
                 if (type === 'vote') {
                     const { data, error } = await supabase
                         .schema('votes')
@@ -417,7 +430,7 @@
                         showError('Заявление не найдено');
                         return;
                     }
-                    app = data;
+                    app = parseDataField(data); // парсим data
                     source = 'vote_application';
                 } else if (type === 'passport') {
                     source = 'passport';
@@ -437,7 +450,7 @@
                         .maybeSingle();
 
                     if (appData) {
-                        app = appData;
+                        app = parseDataField(appData);
                         source = 'applications';
                     } else {
                         // может быть старый паспорт
@@ -557,19 +570,24 @@
                 const electionTitle = await getElectionTitle(app.election_id);
                 fields.push(['Голосование', electionTitle]);
 
-                // Выводим содержимое поля data в читаемом виде
+                // Выводим содержимое поля data (уже распарсено)
                 const data = app.data || {};
-                if (data.party_membership !== undefined) {
-                    fields.push(['Член партии', data.party_membership ? 'Да' : 'Нет']);
+                if (data.has_party !== undefined) {
+                    fields.push(['Принадлежит к партии', data.has_party ? 'Да' : 'Нет']);
                 }
                 if (data.party_name) {
                     fields.push(['Название партии', data.party_name]);
                 }
-                if (data.party_nominated !== undefined) {
-                    fields.push(['Выдвинут партией', data.party_nominated ? 'Да' : 'Нет']);
+                if (data.nominated_by_party !== undefined) {
+                    fields.push(['Выдвинут партией', data.nominated_by_party ? 'Да' : 'Нет']);
                 }
-                if (data.voting_method) {
-                    fields.push(['Способ голосования', data.voting_method === 'electronic' ? 'Электронный' : 'Бумажный']);
+                if (data.goal) {
+                    const goalMap = {
+                        'change_polling_station': 'Изменить место голосования',
+                        'electronic_voting': 'Голосование в электронном виде',
+                        'refuse_voting': 'Отказ от голосования'
+                    };
+                    fields.push(['Цель как голосующего', goalMap[data.goal] || data.goal]);
                 }
                 if (data.new_polling_station_id) {
                     fields.push(['Новый участок', data.new_polling_station_id]);
@@ -586,8 +604,9 @@
                 }
                 // Прочие поля выводим как есть
                 const extraKeys = Object.keys(data).filter(k =>
-                    !['party_membership', 'party_name', 'party_nominated', 'voting_method',
-                      'new_polling_station_id', 'reason', 'photo_path', 'voter_change_type'
+                    !['has_party', 'party_name', 'nominated_by_party', 'goal',
+                      'new_polling_station_id', 'reason', 'photo_path', 'voter_change_type',
+                      'full_name', 'personal_code'
                     ].includes(k)
                 );
                 if (extraKeys.length) {

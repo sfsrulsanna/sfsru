@@ -8,7 +8,7 @@ let userProfile = null;
 let userPersonalCode = null;
 let applicationNumber = null;
 let selectedPurpose = null; // 'candidate', 'observer', 'voter'
-let selectedElectionId = null; // новое
+let selectedElectionId = null;
 let selectedVoterGoal = null; // 'change_polling_station', 'electronic_voting', 'refuse_voting'
 let selectedPollingStationId = null;
 let pollingStations = [];
@@ -208,7 +208,7 @@ function getNextStep(step) {
         case 2: {
             if (!purpose) return 2;
             selectedPurpose = purpose.value;
-            return '2.5'; // новый шаг выбора голосования
+            return '2.5';
         }
         case '2.5': {
             if (!selectedElectionId) return '2.5';
@@ -408,7 +408,7 @@ function prepareSummary() {
 }
 
 // ============================================================
-// Отправка заявления
+// Отправка заявления (ИСПРАВЛЕННАЯ ВЕРСИЯ)
 // ============================================================
 async function submitApplication() {
     const { data: { session } } = await supabase.auth.getSession();
@@ -449,13 +449,26 @@ async function submitApplication() {
         };
         appType = 'observer_registration';
     } else if (selectedPurpose === 'voter') {
+        // ===== ИСПРАВЛЕНИЕ: правильные типы для CHECK-ограничения =====
         appData = {
             full_name: `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`,
             personal_code: userPersonalCode,
-            goal: selectedVoterGoal,
-            new_polling_station_id: selectedVoterGoal === 'change_polling_station' ? selectedPollingStationId : null
+            voter_goal: selectedVoterGoal
         };
-        appType = 'voter_request';
+
+        if (selectedVoterGoal === 'electronic_voting') {
+            appType = 'remote_voting_request';
+            appData.voting_method = 'electronic';
+        } else if (selectedVoterGoal === 'change_polling_station') {
+            appType = 'change_polling_station';
+            appData.new_polling_station_id = selectedPollingStationId;
+        } else if (selectedVoterGoal === 'refuse_voting') {
+            appType = 'other';
+            appData.reason = 'Отказ от голосования';
+        } else {
+            // fallback
+            appType = 'other';
+        }
     }
 
     // Вставка в БД

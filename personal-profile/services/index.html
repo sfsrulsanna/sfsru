@@ -196,11 +196,11 @@
                 if (fErr) console.error('Ошибка загрузки загранпаспортов:', fErr);
                 if (aErr) console.error('Ошибка загрузки заявлений из applications:', aErr);
 
-                // 4. ЗАЯВЛЕНИЯ В ЦИК (НОВОЕ)
+                // 4. ЗАЯВЛЕНИЯ В ЦИК (исправлено: без application_number)
                 const { data: voteApps, error: vErr } = await supabase
                     .schema('votes')
                     .from('applications')
-                    .select('id, application_number, created_at, status, type, election_id, data')
+                    .select('id, created_at, status, type, election_id, data')
                     .eq('user_id', currentUserId)
                     .order('created_at', { ascending: false });
 
@@ -222,15 +222,16 @@
                 // Преобразуем заявления ЦИК
                 const formattedVoteApps = (voteApps || []).map(item => {
                     const typeName = voteTypeNames[item.type] || item.type || 'Обращение в ЦИК';
+                    // генерируем номер из ID
+                    const appNumber = `CIC-${String(item.id).slice(0,8)}`;
                     return {
                         id: item.id,
-                        application_number: item.application_number || `CIC-${String(item.id).slice(0,8)}`,
+                        application_number: appNumber,
                         created_at: item.created_at,
                         status: item.status,
                         service_type: 'vote',  // для идентификации
                         _type: 'vote',
                         _displayName: typeName,
-                        // сохраним оригинальные данные для возможного использования
                         _voteData: { type: item.type, election_id: item.election_id, data: item.data }
                     };
                 });
