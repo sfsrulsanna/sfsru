@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Админ — Управление голосованиями</title>
   <style>
+    /* (стили без изменений) */
     * { margin:0; padding:0; box-sizing:border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; }
     a { text-decoration: none; color: inherit; }
@@ -503,7 +504,6 @@
       return map[type] || type;
     }
 
-    // ======== ФУНКЦИЯ ПРОВЕРКИ АДМИНА (восстановлена) ========
     async function checkAdmin() {
       const { data: { user }, error } = await supabase.auth.getUser();
       if (error || !user) {
@@ -615,11 +615,9 @@
       modal.classList.add('active');
     }
 
-    // Вспомогательная функция для преобразования UTC в локальное время для поля datetime-local
     function utcToLocalInput(utcDate) {
       if (!utcDate) return '';
       const d = new Date(utcDate);
-      // Добавляем смещение, чтобы получить локальное время
       const offset = d.getTimezoneOffset();
       const local = new Date(d.getTime() - offset * 60000);
       return local.toISOString().slice(0,16);
@@ -645,8 +643,6 @@
         voteTitle.value = vote.title || '';
         voteDescription.value = vote.description || '';
         voteTerritory.value = vote.territory || '';
-
-        // ===== ИСПРАВЛЕНИЕ ВРЕМЕНИ =====
         voteStart.value = utcToLocalInput(vote.start_date);
         voteEnd.value = utcToLocalInput(vote.end_date);
         if (vote.settings && vote.settings.applications_deadline) {
@@ -654,7 +650,6 @@
         } else {
           voteDeadline.value = '';
         }
-
         voteStatus.value = vote.status || 'draft';
 
         const { data: options, error: optError } = await supabase
@@ -940,7 +935,6 @@
       if (!confirm(`Изменить статус заявления на "${getAppStatusLabel(newStatus)}"?`)) return;
       const { data: { user } } = await supabase.auth.getUser();
       
-      // Обновляем статус в БД
       const { error } = await supabase
         .schema(SCHEMA)
         .from('applications')
@@ -952,14 +946,13 @@
         .eq('id', appId);
       if (error) { alert('Ошибка: ' + error.message); return; }
 
-      // Получаем обновлённое заявление
       const app = allApplications.find(a => a.id === appId);
       if (!app) {
         console.error('Заявление не найдено после обновления');
         return;
       }
 
-      // --- НОВОЕ: Отправка уведомления пользователю ---
+      // Отправка уведомления
       try {
         const statusText = getAppStatusLabel(newStatus);
         const typeLabel = getAppTypeLabel(app.type);
@@ -990,7 +983,7 @@
         console.error('Ошибка при отправке уведомления:', err);
       }
 
-      // === Одобрение дистанционного голосования ===
+      // Одобрение дистанционного голосования
       if (newStatus === 'approved' && app && app.type === 'remote_voting_request') {
         const { data: existing } = await supabase
           .schema(SCHEMA)
@@ -1056,7 +1049,6 @@
         }
       }
 
-      // Обновляем список заявлений
       await loadApplications(currentVoteId);
     }
 
@@ -1094,7 +1086,7 @@
       statsEmpty.style.display = 'none';
     }
 
-    // --- Сохранение голосования (исправлено: убран alert) ---
+    // --- Сохранение голосования (исправлено: модалка не закрывается, нет alert) ---
     async function saveVote(e) {
       e.preventDefault();
       const id = editVoteId.value;
@@ -1112,6 +1104,7 @@
       if (voteDeadline.value) {
         payload.settings.applications_deadline = new Date(voteDeadline.value).toISOString();
       }
+
       let result;
       if (id) {
         result = await supabase
@@ -1126,23 +1119,38 @@
           .insert([payload])
           .select();
       }
+
       if (result.error) {
         alert('Ошибка сохранения: ' + result.error.message);
         return;
       }
+
       if (!id && result.data && result.data.length > 0) {
         currentVoteId = result.data[0].id;
         editVoteId.value = currentVoteId;
         modalTitle.textContent = 'Редактирование голосования';
       }
-      // Убираем alert('Сохранено!');
-      // Просто закрываем модалку и обновляем список
-      modal.classList.remove('active');
-      await loadAndRender();
+
+      // Обновляем данные внутри модалки
       if (currentVoteId) {
-        await loadApplications(currentVoteId);
+        const { data: options, error: optError } = await supabase
+          .schema(SCHEMA)
+          .from('options')
+          .select('*')
+          .eq('election_id', currentVoteId)
+          .order('order', { ascending: true });
+        if (!optError) {
+          allOptions = options || [];
+          renderOptions();
+        }
         await loadStatistics(currentVoteId);
+        await loadApplications(currentVoteId);
       }
+
+      // Обновляем список голосований в фоновом режиме
+      await loadAndRender();
+
+      // Модалка остаётся открытой – никаких alert и закрытий
     }
 
     // --- Загрузка и рендеринг ---
