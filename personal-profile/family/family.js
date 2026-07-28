@@ -101,6 +101,7 @@ async function getUserDataByPersonalCode(personalCode) {
 }
 
 // --- Рендер блока "Брак и развод" ---
+// --- Рендер блока "Брак и развод" ---
 async function renderMarriageBlock() {
   marriageLoading.style.display = 'block';
   marriageContent.style.display = 'none';
@@ -120,6 +121,7 @@ async function renderMarriageBlock() {
     // Определяем, что показывать: если есть брак – показываем его, иначе развод
     let certificate = marriage || divorce;
     let isDivorce = !!divorce && !marriage;
+    let isMarriage = !isDivorce && !!marriage;
 
     // Если нет ни брака, ни развода – пустое состояние
     if (!certificate) {
@@ -135,7 +137,6 @@ async function renderMarriageBlock() {
     }
 
     // Определяем данные для отображения
-    const isMarriage = !isDivorce;
     const myCode = currentUserPersonalCode;
     const partnerCode = certificate.personal_code === myCode 
       ? certificate.wife_personal_code 
@@ -186,40 +187,51 @@ async function renderMarriageBlock() {
       </div>
     `;
 
-    // --- Правая колонка: карточка супруга (если есть связь) ---
-    html += `<div class="spouse-card">`;
-    if (spouseLink) {
-      const spouseId = spouseLink.user1_id === currentUser.id ? spouseLink.user2_id : spouseLink.user1_id;
-      if (spouseId) {
-        const spouseData = await getUserData(spouseId);
-        if (spouseData) {
-          const fullName = `${spouseData.surname} ${spouseData.name} ${spouseData.patronymic || ''}`.trim();
-          const avatarLetter = (spouseData.name?.[0] || '?').toUpperCase();
-          html += `
-            <div class="spouse-info">
-              <div class="spouse-avatar">${avatarLetter}</div>
-              <div class="spouse-details">
-                <div class="spouse-name">${fullName}</div>
-                <div class="spouse-meta">Дата рождения: ${spouseData.date_of_birth ? formatDate(spouseData.date_of_birth) : '—'}</div>
-                <div class="spouse-meta">Место рождения: ${spouseData.place_of_birth || '—'}</div>
-                <div class="spouse-meta">Личный код: ${spouseData.personal_code}</div>
+    // --- Правая колонка: карточка супруга (только если есть брак) ---
+    if (isMarriage) {
+      html += `<div class="spouse-card spouse-active">`;
+      if (spouseLink) {
+        const spouseId = spouseLink.user1_id === currentUser.id ? spouseLink.user2_id : spouseLink.user1_id;
+        if (spouseId) {
+          const spouseData = await getUserData(spouseId);
+          if (spouseData) {
+            const fullName = `${spouseData.surname} ${spouseData.name} ${spouseData.patronymic || ''}`.trim();
+            const avatarLetter = (spouseData.name?.[0] || '?').toUpperCase();
+            html += `
+              <div class="spouse-info">
+                <div class="spouse-avatar">${avatarLetter}</div>
+                <div class="spouse-details">
+                  <div class="spouse-name">${fullName}</div>
+                  <div class="spouse-meta">Дата рождения: ${spouseData.date_of_birth ? formatDate(spouseData.date_of_birth) : '—'}</div>
+                  <div class="spouse-meta">Место рождения: ${spouseData.place_of_birth || '—'}</div>
+                  <div class="spouse-meta">Личный код: ${spouseData.personal_code}</div>
+                </div>
               </div>
-            </div>
-          `;
+            `;
+          } else {
+            html += `<p class="text-muted">Данные супруга не найдены.</p>`;
+          }
         } else {
-          html += `<p class="text-muted">Данные супруга не найдены.</p>`;
+          html += `<p class="text-muted">Связь с супругом не подтверждена.</p>`;
         }
+      } else {
+        // Если связи нет – кнопка для создания
+        html += `
+          <div class="no-data">
+            <p>Нет связи с супругом.</p>
+            <button class="btn-primary" id="createMarriageLinkBtn">Создать связь</button>
+          </div>
+        `;
       }
+      html += `</div>`;
     } else {
-      // Если связи нет – кнопка для создания
+      // Если это развод – показываем заглушку
       html += `
-        <div class="no-data">
-          <p>Нет связи с супругом.</p>
-          <button class="btn-primary" id="createMarriageLinkBtn">Создать связь</button>
+        <div class="spouse-card spouse-empty">
+          <p class="text-muted">Информация о супруге недоступна при разводе.</p>
         </div>
       `;
     }
-    html += `</div>`;
 
     html += `</div>`; // закрываем .marriage-row
     marriageContent.innerHTML = html;
