@@ -106,9 +106,14 @@
           <div class="quick-link-icon">🗳️</div>
           <div class="quick-link-title">Голосования</div>
         </a>
-		<button id="logoutBtn" class="btn btn-danger">
-			<span class="logout-icon">🚪</span> Выйти из аккаунта
-		</button>
+        <!-- Новая кнопка "Дети" -->
+        <a href="children/" class="quick-link">
+          <div class="quick-link-icon">👶</div>
+          <div class="quick-link-title">Дети</div>
+        </a>
+        <button id="logoutBtn" class="btn btn-danger">
+          <span class="logout-icon">🚪</span> Выйти из аккаунта
+        </button>
       </div>
 
       <!-- Дополнительная информация -->
@@ -119,7 +124,7 @@
         </div>
         <div class="info-card">
           <h3>📅 Ближайшие события</h3>
-          <p>Выборы в местные Советы — 15 февраля 2026 г.</p>
+          <p id="eventText">Загрузка...</p>
         </div>
         <div class="info-card">
           <h3>💡 Совет</h3>
@@ -171,6 +176,20 @@
       'Оплатите штрафы и налоги без комиссии.'
     ]
 
+    // --- Список праздников ---
+    const holidays = [
+      { name: 'День СФСРЮ', month: 1, day: 2 }, 
+      { name: 'День рождения Великой Юльсанны', month: 2, day: 12 },
+      { name: 'День защитника Отечества', month: 2, day: 23 },
+      { name: 'Международный женский день', month: 3, day: 8 },
+      { name: 'День труда', month: 5, day: 1 }, // 1 мая (вместо 31 апреля-2 мая)
+      { name: 'День рождения Вечного Президента АР Натуральнова', month: 5, day: 12 },
+      { name: 'День Конституции', month: 8, day: 15 },
+      { name: 'День рождения Вечного президента АР Эйтингон', month: 9, day: 23 },
+      { name: 'День Независимости', month: 11, day: 2 },
+      { name: 'Новый год', month: 12, day: 31 }
+    ]
+
     // --- Функция приветствия в зависимости от времени суток ---
     function getGreeting() {
       const hour = new Date().getHours()
@@ -178,6 +197,67 @@
       if (hour >= 12 && hour < 18) return 'Добрый день'
       if (hour >= 18 && hour < 22) return 'Добрый вечер'
       return 'Доброй ночи'
+    }
+
+    // --- Получение ближайшего события (голосование или праздник) ---
+    async function getNextEvent() {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+      try {
+        // 1. Загружаем голосования (активные и предстоящие)
+        const { data: elections, error } = await supabase
+          .schema('votes')
+          .from('elections')
+          .select('id, title, start_date, end_date, status')
+          .or(`status.eq.active,status.eq.upcoming`) // если статус active или upcoming, или можно просто по датам
+          .order('start_date', { ascending: true })
+
+        if (!error && elections && elections.length > 0) {
+          // Ищем активное голосование (сейчас между start и end)
+          for (const el of elections) {
+            const start = new Date(el.start_date)
+            const end = new Date(el.end_date)
+            if (now >= start && now <= end) {
+              return { type: 'vote', title: `🗳️ Идёт голосование: ${el.title}`, date: now }
+            }
+          }
+          // Если нет активного, берём первое предстоящее (ближайшее)
+          const upcoming = elections.find(el => new Date(el.start_date) > now)
+          if (upcoming) {
+            const start = new Date(upcoming.start_date)
+            return { type: 'vote', title: `🗳️ Ближайшее голосование: ${upcoming.title} — ${start.toLocaleDateString('ru-RU')}`, date: start }
+          }
+        }
+      } catch (e) {
+        console.warn('Не удалось загрузить голосования:', e)
+      }
+
+      // Если голосований нет – ищем ближайший праздник
+      const year = now.getFullYear()
+      let nearestHoliday = null
+      let minDiff = Infinity
+
+      for (const h of holidays) {
+        // Создаём дату праздника в текущем году
+        let date = new Date(year, h.month - 1, h.day)
+        // Если дата уже прошла (раньше сегодня), переносим на следующий год
+        if (date < today) {
+          date = new Date(year + 1, h.month - 1, h.day)
+        }
+        const diff = Math.ceil((date - today) / (1000 * 60 * 60 * 24))
+        if (diff >= 0 && diff < minDiff) {
+          minDiff = diff
+          nearestHoliday = { name: h.name, date: date }
+        }
+      }
+
+      if (nearestHoliday) {
+        const dateStr = nearestHoliday.date.toLocaleDateString('ru-RU')
+        return { type: 'holiday', title: `🎉 ${nearestHoliday.name} — ${dateStr}`, date: nearestHoliday.date }
+      }
+
+      return { type: 'none', title: 'Событий не найдено' }
     }
 
     // --- Загрузка данных пользователя и проверка авторизации ---
@@ -222,10 +302,12 @@
 
         // После успешной загрузки профиля запускаем динамические обновления
         await updateNotifications(currentUserId)
+        await updateEvent()
         updateTip()
 
         // Устанавливаем интервалы
         setInterval(() => updateNotifications(currentUserId), 30000) // каждые 30 сек
+        setInterval(updateEvent, 60000) // каждую минуту
         setInterval(updateTip, 15000) // каждые 15 сек
 
       } catch (error) {
@@ -237,12 +319,12 @@
     // --- Обновление количества непрочитанных уведомлений ---
     async function updateNotifications(userId) {
       try {
-const { count, error } = await supabase
-  .schema('messages')
-  .from('user_messages')
-  .select('*', { count: 'exact', head: true })
-  .eq('user_id', userId)
-  .eq('is_read', false)
+        const { count, error } = await supabase
+          .schema('messages')
+          .from('user_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .eq('is_read', false)
 
         if (error) throw error
 
@@ -260,6 +342,24 @@ const { count, error } = await supabase
         if (notificationEl) {
           notificationEl.textContent = 'Не удалось загрузить уведомления.'
         }
+      }
+    }
+
+    // --- Обновление ближайшего события ---
+    async function updateEvent() {
+      const eventEl = document.getElementById('eventText')
+      if (!eventEl) return
+
+      try {
+        const event = await getNextEvent()
+        if (event.type === 'none') {
+          eventEl.textContent = 'Событий не найдено'
+        } else {
+          eventEl.textContent = event.title
+        }
+      } catch (err) {
+        console.error('Ошибка загрузки события:', err)
+        eventEl.textContent = 'Не удалось загрузить события'
       }
     }
 
