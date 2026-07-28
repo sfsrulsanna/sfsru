@@ -34,14 +34,14 @@ async function loadUser() {
   return true;
 }
 
-// --- Получение последнего активного свидетельства о браке ---
+// --- Получение последнего подтверждённого свидетельства о браке (статус verified) ---
 async function getLastMarriage() {
   const { data, error } = await supabase
     .schema('documents_certificates')
     .from('marriage')
     .select('*')
     .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
-    .eq('status', 'active')
+    .eq('status', 'verified')
     .order('created_at', { ascending: false })
     .limit(1);
   if (error) {
@@ -51,14 +51,14 @@ async function getLastMarriage() {
   return data && data.length > 0 ? data[0] : null;
 }
 
-// --- Получение последнего активного свидетельства о разводе ---
+// --- Получение последнего подтверждённого свидетельства о разводе (статус verified) ---
 async function getLastDivorce() {
   const { data, error } = await supabase
     .schema('documents_certificates')
     .from('divorce')
     .select('*')
     .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
-    .eq('status', 'active')
+    .eq('status', 'verified')
     .order('created_at', { ascending: false })
     .limit(1);
   if (error) {
@@ -92,7 +92,7 @@ async function renderMarriageBlock() {
     if (!certificate) {
       marriageContent.innerHTML = `
         <div class="no-data">
-          <p>У вас нет свидетельства о браке или разводе.</p>
+          <p>У вас нет подтверждённого свидетельства о браке или разводе.</p>
           <div class="no-data-actions">
             <a href="../../services/documents/marriage-certificate/" class="btn-primary">Получить свидетельство о браке</a>
           </div>
@@ -111,8 +111,8 @@ async function renderMarriageBlock() {
     const dateField = isMarriage ? certificate.marriage_date : certificate.divorce_date;
     const dateLabel = isMarriage ? 'Дата заключения брака' : 'Дата развода';
     const title = isMarriage ? 'Свидетельство о браке' : 'Свидетельство о разводе';
-    const statusText = isMarriage ? '✅ Брак действителен' : '❌ Брак расторгнут';
-    const statusClass = isMarriage ? 'active' : 'divorced';
+    const statusText = isMarriage ? '✅ Подтверждено' : '❌ Развод подтверждён';
+    const statusClass = isMarriage ? 'verified' : 'divorced';
 
     // Получаем ФИО супруга
     let partnerName = partnerCode || '—';
