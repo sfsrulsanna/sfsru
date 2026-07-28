@@ -1,346 +1,358 @@
-import { supabase } from '../../js/supabase-config.js';
-
-// --- Глобальные переменные ---
-let currentUser = null;
-let currentUserData = null;
+import { supabase } from '../supabase-config.js';
 
 // --- DOM элементы ---
+const marriageLoading = document.getElementById('marriageLoading');
 const marriageContent = document.getElementById('marriageContent');
+const childrenLoading = document.getElementById('childrenLoading');
 const childrenContent = document.getElementById('childrenContent');
 
+let currentUser = null;
+let currentUserPersonalCode = null;
+
 // --- Вспомогательные функции ---
-function showMarriageLoading() {
-  marriageContent.innerHTML = '<div class="loading-small">Загрузка...</div>';
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  return new Date(dateStr).toLocaleDateString('ru-RU');
 }
 
-function showChildrenLoading() {
-  childrenContent.innerHTML = '<div class="loading-small">Загрузка...</div>';
+function getInitials(fullName) {
+  if (!fullName) return '?';
+  const parts = fullName.trim().split(/\s+/);
+  if (parts.length === 3) {
+    return `${parts[0]} ${parts[1][0]}. ${parts[2][0]}.`;
+  }
+  if (parts.length === 2) {
+    return `${parts[0]} ${parts[1][0]}.`;
+  }
+  return parts[0];
 }
 
-function showError(container, msg) {
-  container.innerHTML = `<div class="no-data-message" style="color: #dc3545;">${msg}</div>`;
+function getGenderIcon(gender) {
+  if (gender === 'male') return '<i class="fas fa-mars" style="color:#007bff;"></i>';
+  if (gender === 'female') return '<i class="fas fa-venus" style="color:#dc3545;"></i>';
+  return '<i class="fas fa-genderless"></i>';
 }
 
-// --- Загрузка профиля ---
-async function loadUserProfile() {
+// --- Загрузка данных пользователя ---
+async function loadUser() {
   const { data: { session } } = await supabase.auth.getSession();
   if (!session) {
     window.location.href = '../../login.html';
     return false;
   }
-  currentUser = session.user;
-
-  // Загружаем данные пользователя (личный код, ФИО)
   const { data, error } = await supabase
     .from('users')
-    .select('surname, name, patronymic, personal_code')
-    .eq('id', currentUser.id)
+    .select('id, personal_code, surname, name, patronymic')
+    .eq('id', session.user.id)
     .single();
   if (error) {
-    console.error('Ошибка загрузки профиля:', error);
+    console.error('Ошибка загрузки пользователя:', error);
     return false;
   }
-  currentUserData = data;
+  currentUser = data;
+  currentUserPersonalCode = data.personal_code;
   return true;
 }
 
-// --- Получение активного брака (самого нового) ---
+// --- Получение активного брака / развода ---
 async function getActiveMarriage() {
-  // Ищем записи, где user1_id или user2_id = currentUser.id, статус active или pending
-  // Сортируем по created_at DESC, берём первую
-  const { data, error } = await supabase
-    .schema('documents_certificates')
-    .from('marriages')
-    .select(`
-      *,
-      user1:user1_id (surname, name, patronymic, personal_code),
-      user2:user2_id (surname, name, patronymic, personal_code)
-    `)
-    .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
-    .in('status', ['pending', 'active', 'divorced'])
-    .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle();
+  try {
+    // 1. Ищем брак, где пользователь - user1 или user2, со статусом 'active' или 'divorced'
+    const { data, error } = await supabase
+      .schema('documents_certificates')
+      .from('marriages')
+      .select('*, user1_id, user2_id')
+      .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
+      .in('status', ['active', 'divorced'])
+      .order('created_at', { ascending: false })
+      .limit(1);
 
+    if (error) {
+      // Если таблицы нет или ошибка, возвращаем null
+      console.warn('Ошибка загрузки брака:', error);
+      return null;
+    }
+    if (!data || data.length === 0) return null;
+    return data[0];
+  } catch (err) {
+    console.error('Ошибка загрузки брака:', err);
+    return null;
+  }
+}
+
+// --- Получение данных пользователя по ID ---
+async function getUserData(userId) {
+  if (!userId) return null;
+  const { data, error } = await supabase
+    .from('users')
+    .select('id, surname, name, patronymic, personal_code')
+    .eq('id', userId)
+    .single();
   if (error) {
-    console.error('Ошибка загрузки брака:', error);
+    console.warn('Не удалось загрузить данные пользователя:', error);
     return null;
   }
   return data;
 }
 
-// --- Получение детей пользователя ---
-async function getChildren() {
-  const personalCode = currentUserData.personal_code;
-  if (!personalCode) return [];
+// --- Рендер блока "Брак и развод" ---
+async function renderMarriageBlock() {
+  marriageLoading.style.display = 'block';
+  marriageContent.style.display = 'none';
+  marriageContent.innerHTML = '';
 
-  const { data, error } = await supabase
-    .from('children')
-    .select('*')
-    .or(`father_personal_code.eq.${personalCode},mother_personal_code.eq.${personalCode},child_personal_code.eq.${personalCode}`)
-    .order('date_of_birth', { ascending: false });
-
-  if (error) {
-    console.error('Ошибка загрузки детей:', error);
-    return [];
-  }
-  return data || [];
-}
-
-// --- Отображение блока "Брак и развод" ---
-async function renderMarriage() {
-  showMarriageLoading();
   try {
     const marriage = await getActiveMarriage();
+    marriageLoading.style.display = 'none';
+    marriageContent.style.display = 'block';
 
     if (!marriage) {
-      // Нет брака — показываем кнопку "Получить свидетельство"
       marriageContent.innerHTML = `
-        <div class="no-data-message">
-          <p>У вас нет активного брака.</p>
-          <a href="../../services/documents/marriage-certificate/" class="btn btn-primary" style="margin-top: 1rem; display: inline-block;">Получить свидетельство о браке</a>
+        <div class="no-data">
+          <p>У вас нет активного брака или развода.</p>
+          <div class="no-data-actions">
+            <a href="../../services/documents/marriage-certificate/" class="btn-primary">Заключить брак</a>
+          </div>
         </div>
       `;
       return;
     }
 
-    // Определяем партнёра
+    // Определяем, кто второй супруг
     const isUser1 = marriage.user1_id === currentUser.id;
-    const partner = isUser1 ? marriage.user2 : marriage.user1;
-    const partnerUser = partner ? partner : null;
-    const partnerPersonalCode = isUser1 ? marriage.partner_personal_code : marriage.user1_personal_code;
+    const partnerId = isUser1 ? marriage.user2_id : marriage.user1_id;
+    const partnerPersonalCode = isUser1 ? marriage.user2_personal_code : marriage.user1_personal_code;
 
-    // Строим карточку
-    let html = `<div class="marriage-card">`;
+    let partnerData = null;
+    if (partnerId) {
+      partnerData = await getUserData(partnerId);
+    }
 
-    // Статус
-    const statusText = marriage.status === 'active' ? 'Состоит в браке' :
-                       marriage.status === 'pending' ? 'Ожидает подтверждения' :
-                       'Брак расторгнут';
-    const statusClass = marriage.status === 'active' ? 'active' :
-                        marriage.status === 'pending' ? 'pending' :
-                        'divorced';
-    html += `<div class="marriage-status ${statusClass}"><i class="fas ${marriage.status === 'active' ? 'fa-heart' : marriage.status === 'pending' ? 'fa-clock' : 'fa-times'}"></i> ${statusText}</div>`;
+    const isActive = marriage.status === 'active';
+    const isDivorced = marriage.status === 'divorced';
 
-    html += `<div class="marriage-info">`;
-    if (marriage.marriage_date) {
-      html += `<div class="marriage-info-item"><strong>Дата брака:</strong> ${new Date(marriage.marriage_date).toLocaleDateString('ru-RU')}</div>`;
+    let html = `<div class="marriage-card ${isDivorced ? 'divorce-card' : ''}">`;
+    html += `<div class="status-badge ${marriage.status}">${isActive ? '✅ В браке' : isDivorced ? '❌ Разведены' : '⏳ На рассмотрении'}</div>`;
+    html += `<p><strong>Дата заключения брака:</strong> ${formatDate(marriage.marriage_date)}</p>`;
+    if (isDivorced) {
+      html += `<p><strong>Дата развода:</strong> ${formatDate(marriage.divorce_date)}</p>`;
     }
-    if (marriage.certificate_number) {
-      html += `<div class="marriage-info-item"><strong>№ свидетельства:</strong> ${marriage.certificate_number}</div>`;
-    }
-    if (marriage.divorce_date) {
-      html += `<div class="marriage-info-item"><strong>Дата расторжения:</strong> ${new Date(marriage.divorce_date).toLocaleDateString('ru-RU')}</div>`;
-    }
-    if (marriage.divorce_certificate_number) {
-      html += `<div class="marriage-info-item"><strong>№ свидетельства о разводе:</strong> ${marriage.divorce_certificate_number}</div>`;
-    }
-    html += `</div>`;
 
-    // Карточка супруга
-    if (partnerUser && marriage.status === 'active') {
-      // Если партнёр подтверждён (есть user2_id)
-      html += `<div class="spouse-card">`;
-      html += `<div class="spouse-avatar"><i class="fas fa-user"></i></div>`;
-      html += `<div class="spouse-info">`;
-      const fullName = `${partnerUser.surname} ${partnerUser.name} ${partnerUser.patronymic || ''}`.trim();
-      html += `<div class="spouse-name">${fullName}</div>`;
-      html += `<div class="spouse-detail">Супруг(а)</div>`;
-      html += `</div></div>`;
-    } else if (marriage.status === 'pending' && !partnerUser) {
-      // Ожидание подтверждения – показываем имя партнёра с сокращённой фамилией
-      // Получаем данные по личному коду из таблицы users
-      let partnerName = null;
-      if (partnerPersonalCode) {
-        const { data: userData } = await supabase
-          .from('users')
-          .select('surname, name, patronymic')
-          .eq('personal_code', partnerPersonalCode)
-          .single();
-        if (userData) {
-          const surnameFirst = userData.surname.charAt(0);
-          const fullName = `${userData.name} ${userData.patronymic || ''} ${surnameFirst}.`.trim();
-          partnerName = fullName;
-        } else {
-          partnerName = `Личный код ${partnerPersonalCode}`;
-        }
+    // Информация о супруге
+    if (partnerData) {
+      // Супруг уже подтверждён (есть user2_id)
+      const fullName = `${partnerData.surname} ${partnerData.name} ${partnerData.patronymic || ''}`.trim();
+      const avatarLetter = (partnerData.name?.[0] || '?').toUpperCase();
+      html += `
+        <div class="partner-info">
+          <div class="partner-avatar">${avatarLetter}</div>
+          <div class="partner-details">
+            <div class="partner-name">${fullName}</div>
+            <div class="partner-code">Личный код: ${partnerData.personal_code || '—'}</div>
+          </div>
+        </div>
+      `;
+    } else if (partnerPersonalCode && isActive) {
+      // Есть личный код супруга, но связь ещё не подтверждена (нет user2_id)
+      // Пытаемся найти пользователя по личному коду
+      const { data: foundUser } = await supabase
+        .from('users')
+        .select('id, surname, name, patronymic, personal_code')
+        .eq('personal_code', partnerPersonalCode)
+        .maybeSingle();
+
+      if (foundUser) {
+        // Показываем имя с сокращённой фамилией
+        const shortName = `${foundUser.name} ${foundUser.patronymic || ''} ${foundUser.surname[0]}.`.trim();
+        html += `
+          <div class="partner-info">
+            <div class="partner-avatar">${(foundUser.name?.[0] || '?').toUpperCase()}</div>
+            <div class="partner-details">
+              <div class="partner-name">${shortName}</div>
+              <div class="partner-code">Личный код: ${foundUser.personal_code}</div>
+            </div>
+          </div>
+          <button class="action-btn btn-success" id="confirmMarriageBtn">Подтвердить супруга</button>
+        `;
+      } else {
+        html += `
+          <div class="partner-info">
+            <div class="partner-details">
+              <div class="partner-name">Супруг(а) не найден(а) в системе</div>
+              <div class="partner-code">Личный код: ${partnerPersonalCode}</div>
+            </div>
+          </div>
+        `;
       }
+    } else if (isActive) {
+      html += `<p class="text-muted">Информация о супруге отсутствует.</p>`;
+    }
 
-      html += `<div style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">`;
-      html += `<div>`;
-      html += `<div class="spouse-name">${partnerName || 'Супруг(а)'}</div>`;
-      html += `<div class="spouse-detail">Ожидается подтверждение связи</div>`;
-      html += `</div>`;
-      // Кнопка подтверждения (если пользователь ещё не подтвердил)
-      html += `<button class="confirm-link-btn" id="confirmMarriageBtn" data-marriage-id="${marriage.id}"><i class="fas fa-link"></i> Подтвердить связь</button>`;
-      html += `</div>`;
+    if (isDivorced) {
+      html += `<p class="text-muted">Брак расторгнут.</p>`;
     }
 
     html += `</div>`;
-
-    // Если есть развод, показываем дополнительную информацию
-    if (marriage.status === 'divorced') {
-      html += `<div style="margin-top: 1rem; padding: 1rem; background: #f8d7da; border-radius: 8px; color: #721c24;">`;
-      html += `<i class="fas fa-exclamation-triangle"></i> Брак расторгнут.`;
-      if (marriage.divorce_reason) {
-        html += ` Причина: ${marriage.divorce_reason}`;
-      }
-      html += `</div>`;
-    }
-
     marriageContent.innerHTML = html;
 
     // Обработчик для кнопки подтверждения
     const confirmBtn = document.getElementById('confirmMarriageBtn');
     if (confirmBtn) {
-      confirmBtn.addEventListener('click', () => {
-        openConfirmModal(confirmBtn.dataset.marriageId);
-      });
+      confirmBtn.addEventListener('click', () => openConfirmModal(marriage, partnerPersonalCode));
     }
 
   } catch (err) {
-    console.error(err);
-    showError(marriageContent, 'Ошибка загрузки данных о браке');
+    console.error('Ошибка рендера брака:', err);
+    marriageLoading.style.display = 'none';
+    marriageContent.style.display = 'block';
+    marriageContent.innerHTML = `<p class="error">Не удалось загрузить данные о браке.</p>`;
   }
 }
 
-// --- Отображение детей ---
-async function renderChildren() {
-  showChildrenLoading();
+// --- Модалка подтверждения супруга ---
+function openConfirmModal(marriage, partnerCode) {
+  const modal = document.getElementById('confirmModal');
+  const body = document.getElementById('confirmModalBody');
+  modal.style.display = 'flex';
+  body.innerHTML = `
+    <p>Вы подтверждаете, что пользователь с личным кодом <strong>${partnerCode}</strong> является вашим супругом/супругой?</p>
+    <p>После подтверждения связь будет установлена.</p>
+  `;
+  document.getElementById('confirmMarriageBtn').onclick = () => confirmMarriage(marriage.id, partnerCode);
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').style.display = 'none';
+}
+
+window.closeConfirmModal = closeConfirmModal;
+
+async function confirmMarriage(marriageId, partnerCode) {
   try {
-    const children = await getChildren();
-    if (children.length === 0) {
+    // 1. Находим пользователя по личному коду
+    const { data: partner, error: findErr } = await supabase
+      .from('users')
+      .select('id')
+      .eq('personal_code', partnerCode)
+      .maybeSingle();
+    if (findErr || !partner) {
+      alert('Пользователь с таким личным кодом не найден.');
+      return;
+    }
+
+    // 2. Обновляем запись о браке: добавляем user2_id (если текущий пользователь user1) или user1_id (если текущий user2)
+    // Определяем, кто текущий пользователь
+    const { data: marriage } = await supabase
+      .schema('documents_certificates')
+      .from('marriages')
+      .select('user1_id, user2_id')
+      .eq('id', marriageId)
+      .single();
+
+    if (!marriage) {
+      alert('Брак не найден.');
+      return;
+    }
+
+    let updateData = {};
+    if (marriage.user1_id === currentUser.id) {
+      updateData.user2_id = partner.id;
+    } else if (marriage.user2_id === currentUser.id) {
+      updateData.user1_id = partner.id;
+    } else {
+      alert('Вы не являетесь стороной этого брака.');
+      return;
+    }
+
+    const { error: updateErr } = await supabase
+      .schema('documents_certificates')
+      .from('marriages')
+      .update(updateData)
+      .eq('id', marriageId);
+
+    if (updateErr) {
+      alert('Ошибка подтверждения: ' + updateErr.message);
+      return;
+    }
+
+    alert('Связь с супругом подтверждена!');
+    closeConfirmModal();
+    await renderMarriageBlock(); // обновляем блок
+
+  } catch (err) {
+    alert('Ошибка: ' + err.message);
+  }
+}
+
+// --- Загрузка детей ---
+async function loadChildren() {
+  childrenLoading.style.display = 'block';
+  childrenContent.style.display = 'none';
+  childrenContent.innerHTML = '';
+
+  try {
+    // Ищем детей, где пользователь является отцом, матерью или самим ребёнком
+    const { data, error } = await supabase
+      .from('children')
+      .select('*')
+      .or(`father_personal_code.eq.${currentUserPersonalCode},mother_personal_code.eq.${currentUserPersonalCode},child_personal_code.eq.${currentUserPersonalCode}`)
+      .order('date_of_birth', { ascending: false });
+
+    childrenLoading.style.display = 'none';
+    childrenContent.style.display = 'block';
+
+    if (!data || data.length === 0) {
       childrenContent.innerHTML = `
-        <div class="no-data-message">
-          <p>У вас нет зарегистрированных детей.</p>
+        <div class="no-data">
+          <p>У вас пока нет детей в системе.</p>
+          <div class="no-data-actions">
+            <a href="../../services/documents/birth-certificate/" class="btn-primary">Добавить ребенка</a>
+          </div>
         </div>
       `;
       return;
     }
 
-    let html = `<div class="children-grid">`;
-    children.forEach(child => {
-      const genderIcon = child.gender === 'male' ? 'fa-mars' : 'fa-venus';
-      const fullName = `${child.surname} ${child.name} ${child.patronymic || ''}`.trim();
+    let html = '<div class="children-grid">';
+    data.forEach(child => {
+      const fullName = `${child.surname || ''} ${child.name || ''} ${child.patronymic || ''}`.trim() || 'Без имени';
+      const genderLabel = child.gender === 'male' ? 'Мужской' : child.gender === 'female' ? 'Женский' : '—';
+      const genderClass = child.gender === 'male' ? 'male' : child.gender === 'female' ? 'female' : '';
       html += `
         <div class="child-card">
-          <div class="child-avatar"><i class="fas ${genderIcon}"></i></div>
-          <div class="child-info">
-            <div class="child-name">${fullName}</div>
-            <div class="child-detail">${child.date_of_birth ? new Date(child.date_of_birth).toLocaleDateString('ru-RU') : ''}</div>
-            <div class="child-detail">${child.place_of_birth || ''}</div>
+          <div class="child-name">${fullName}</div>
+          <div class="child-detail"><i class="fas fa-calendar-alt"></i> ${formatDate(child.date_of_birth)}</div>
+          <div class="child-detail"><i class="fas fa-map-pin"></i> ${child.place_of_birth || '—'}</div>
+          <div class="child-detail"><span class="child-gender ${genderClass}">${genderLabel}</span></div>
+          <div class="child-detail" style="font-size:0.9rem;color:#6c757d;">
+            <i class="fas fa-id-card"></i> Личный код: ${child.child_personal_code || '—'}
           </div>
+          ${child.father_full_name ? `<div class="child-detail">👨 Отец: ${child.father_full_name}</div>` : ''}
+          ${child.mother_full_name ? `<div class="child-detail">👩 Мать: ${child.mother_full_name}</div>` : ''}
         </div>
       `;
     });
-    html += `</div>`;
+    html += '</div>';
     childrenContent.innerHTML = html;
+
   } catch (err) {
-    console.error(err);
-    showError(childrenContent, 'Ошибка загрузки данных о детях');
+    console.error('Ошибка загрузки детей:', err);
+    childrenLoading.style.display = 'none';
+    childrenContent.style.display = 'block';
+    childrenContent.innerHTML = `<p class="error">Не удалось загрузить данные о детях.</p>`;
   }
 }
-
-// --- Модальное окно подтверждения брака ---
-function openConfirmModal(marriageId) {
-  const modal = document.getElementById('confirmModal');
-  const body = document.getElementById('confirmModalBody');
-
-  // Находим брак
-  supabase.schema('documents_certificates')
-    .from('marriages')
-    .select('*, user1:user1_id(surname, name, patronymic, personal_code), user2:user2_id(surname, name, patronymic, personal_code)')
-    .eq('id', marriageId)
-    .single()
-    .then(({ data, error }) => {
-      if (error) {
-        alert('Ошибка загрузки данных брака');
-        return;
-      }
-
-      // Определяем партнёра
-      const isUser1 = data.user1_id === currentUser.id;
-      const partner = isUser1 ? data.user2 : data.user1;
-      const partnerPersonalCode = isUser1 ? data.partner_personal_code : data.user1_personal_code;
-
-      let partnerName = 'неизвестно';
-      if (partner && partner.personal_code) {
-        const fullName = `${partner.surname} ${partner.name} ${partner.patronymic || ''}`.trim();
-        partnerName = fullName;
-      } else if (partnerPersonalCode) {
-        // Ищем по личному коду
-        supabase.from('users')
-          .select('surname, name, patronymic')
-          .eq('personal_code', partnerPersonalCode)
-          .single()
-          .then(({ data: userData }) => {
-            if (userData) {
-              const fullName = `${userData.surname} ${userData.name} ${userData.patronymic || ''}`.trim();
-              document.getElementById('confirmPartnerName').textContent = fullName;
-            }
-          });
-        partnerName = `личный код ${partnerPersonalCode}`;
-      }
-
-      body.innerHTML = `
-        <p>Вы собираетесь подтвердить брачную связь с супругом(ой):</p>
-        <p><strong id="confirmPartnerName">${partnerName}</strong></p>
-        <p>Убедитесь, что данные верны.</p>
-      `;
-
-      modal.style.display = 'flex';
-      document.getElementById('saveConfirmBtn').dataset.marriageId = marriageId;
-    });
-}
-
-// --- Подтверждение брака ---
-async function confirmMarriage(marriageId) {
-  const { data: marriage, error } = await supabase
-    .schema('documents_certificates')
-    .from('marriages')
-    .update({
-      status: 'active',
-      user2_id: currentUser.id, // если второй супруг подтверждает
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', marriageId)
-    .select()
-    .single();
-
-  if (error) {
-    alert('Ошибка подтверждения: ' + error.message);
-    return false;
-  }
-
-  // Если оба супруга подтвердили, можно также обновить другую сторону
-  // Но статус active уже достаточно
-  alert('Связь успешно подтверждена!');
-  document.getElementById('confirmModal').style.display = 'none';
-  renderMarriage(); // обновляем блок
-  return true;
-}
-
-// --- Закрытие модалки ---
-document.getElementById('closeConfirmModal').addEventListener('click', () => {
-  document.getElementById('confirmModal').style.display = 'none';
-});
-document.getElementById('cancelConfirmBtn').addEventListener('click', () => {
-  document.getElementById('confirmModal').style.display = 'none';
-});
-document.getElementById('saveConfirmBtn').addEventListener('click', async (e) => {
-  const marriageId = e.target.dataset.marriageId;
-  if (marriageId) {
-    await confirmMarriage(marriageId);
-  }
-});
 
 // --- Инициализация ---
-async function init() {
-  const loaded = await loadUserProfile();
-  if (!loaded) return;
+document.addEventListener('DOMContentLoaded', async () => {
+  const ok = await loadUser();
+  if (!ok) return;
 
-  await renderMarriage();
-  await renderChildren();
-}
+  await renderMarriageBlock();
+  await loadChildren();
+});
 
-document.addEventListener('DOMContentLoaded', init);
+// Экспортируем функции для глобального использования (для модалки)
+window.confirmMarriage = confirmMarriage;
+window.openConfirmModal = openConfirmModal;
+window.closeConfirmModal = closeConfirmModal;
