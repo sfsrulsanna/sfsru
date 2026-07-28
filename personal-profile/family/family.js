@@ -155,8 +155,8 @@ async function renderMarriageBlock() {
 
     // Ссылка на страницу просмотра
     const viewLink = isMarriage 
-      ? '../../documents/certificates/marriage-certificate.html' 
-      : '../../documents/certificates/divorce-certificate.html';
+      ? '../documents/certificates/marriage-certificate.html' 
+      : '../documents/certificates/divorce-certificate.html';
 
     // --- Генерируем две колонки: свидетельство + супруг ---
     let html = `<div class="marriage-row">`;
