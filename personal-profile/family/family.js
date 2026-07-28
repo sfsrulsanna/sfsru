@@ -54,26 +54,40 @@ async function loadUser() {
   return true;
 }
 
-// --- Получение активного брака / развода ---
+// --- Получение актуального статуса брака (исправлено) ---
 async function getActiveMarriage() {
   try {
-    // 1. Ищем брак, где пользователь - user1 или user2, со статусом 'active' или 'divorced'
-    const { data, error } = await supabase
+    // 1. Сначала ищем активный брак
+    const { data: active, error: activeErr } = await supabase
       .schema('documents_certificates')
       .from('marriages')
       .select('*, user1_id, user2_id')
       .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
-      .in('status', ['active', 'divorced'])
+      .eq('status', 'active')
       .order('created_at', { ascending: false })
       .limit(1);
 
-    if (error) {
-      // Если таблицы нет или ошибка, возвращаем null
-      console.warn('Ошибка загрузки брака:', error);
-      return null;
+    if (activeErr) throw activeErr;
+    if (active && active.length > 0) {
+      return active[0];
     }
-    if (!data || data.length === 0) return null;
-    return data[0];
+
+    // 2. Если активного нет, ищем последний развод
+    const { data: divorced, error: divorcedErr } = await supabase
+      .schema('documents_certificates')
+      .from('marriages')
+      .select('*, user1_id, user2_id')
+      .or(`user1_id.eq.${currentUser.id},user2_id.eq.${currentUser.id}`)
+      .eq('status', 'divorced')
+      .order('created_at', { ascending: false })
+      .limit(1);
+
+    if (divorcedErr) throw divorcedErr;
+    if (divorced && divorced.length > 0) {
+      return divorced[0];
+    }
+
+    return null;
   } catch (err) {
     console.error('Ошибка загрузки брака:', err);
     return null;
@@ -140,7 +154,6 @@ async function renderMarriageBlock() {
 
     // Информация о супруге
     if (partnerData) {
-      // Супруг уже подтверждён (есть user2_id)
       const fullName = `${partnerData.surname} ${partnerData.name} ${partnerData.patronymic || ''}`.trim();
       const avatarLetter = (partnerData.name?.[0] || '?').toUpperCase();
       html += `
@@ -153,8 +166,7 @@ async function renderMarriageBlock() {
         </div>
       `;
     } else if (partnerPersonalCode && isActive) {
-      // Есть личный код супруга, но связь ещё не подтверждена (нет user2_id)
-      // Пытаемся найти пользователя по личному коду
+      // Есть личный код супруга, но связь ещё не подтверждена
       const { data: foundUser } = await supabase
         .from('users')
         .select('id, surname, name, patronymic, personal_code')
@@ -162,7 +174,6 @@ async function renderMarriageBlock() {
         .maybeSingle();
 
       if (foundUser) {
-        // Показываем имя с сокращённой фамилией
         const shortName = `${foundUser.name} ${foundUser.patronymic || ''} ${foundUser.surname[0]}.`.trim();
         html += `
           <div class="partner-info">
@@ -205,7 +216,7 @@ async function renderMarriageBlock() {
     console.error('Ошибка рендера брака:', err);
     marriageLoading.style.display = 'none';
     marriageContent.style.display = 'block';
-    marriageContent.innerHTML = `<p class="error">Не удалось загрузить данные о браке.</p>`;
+    marriageContent.innerHTML = `<p class="error">Не удалось загрузить данные о браке. Проверьте настройки RLS.</p>`;
   }
 }
 
@@ -229,7 +240,6 @@ window.closeConfirmModal = closeConfirmModal;
 
 async function confirmMarriage(marriageId, partnerCode) {
   try {
-    // 1. Находим пользователя по личному коду
     const { data: partner, error: findErr } = await supabase
       .from('users')
       .select('id')
@@ -240,8 +250,6 @@ async function confirmMarriage(marriageId, partnerCode) {
       return;
     }
 
-    // 2. Обновляем запись о браке: добавляем user2_id (если текущий пользователь user1) или user1_id (если текущий user2)
-    // Определяем, кто текущий пользователь
     const { data: marriage } = await supabase
       .schema('documents_certificates')
       .from('marriages')
@@ -277,7 +285,7 @@ async function confirmMarriage(marriageId, partnerCode) {
 
     alert('Связь с супругом подтверждена!');
     closeConfirmModal();
-    await renderMarriageBlock(); // обновляем блок
+    await renderMarriageBlock();
 
   } catch (err) {
     alert('Ошибка: ' + err.message);
@@ -291,7 +299,6 @@ async function loadChildren() {
   childrenContent.innerHTML = '';
 
   try {
-    // Ищем детей, где пользователь является отцом, матерью или самим ребёнком
     const { data, error } = await supabase
       .from('children')
       .select('*')
@@ -352,7 +359,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadChildren();
 });
 
-// Экспортируем функции для глобального использования (для модалки)
 window.confirmMarriage = confirmMarriage;
 window.openConfirmModal = openConfirmModal;
 window.closeConfirmModal = closeConfirmModal;
