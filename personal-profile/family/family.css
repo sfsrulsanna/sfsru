@@ -23,16 +23,28 @@
   margin-bottom: 1.5rem;
 }
 
-.marriage-card, .divorce-card, .child-card {
+.marriage-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 768px) {
+  .marriage-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Карточка свидетельства */
+.certificate-card {
   background: #fff;
   border-radius: 12px;
   padding: 1.5rem;
   box-shadow: 0 2px 8px rgba(0,0,0,0.08);
   border: 1px solid #e9ecef;
-  margin-bottom: 1.5rem;
 }
-
-.marriage-card .status-badge {
+.certificate-card .status-badge {
   display: inline-block;
   padding: 0.2rem 1rem;
   border-radius: 30px;
@@ -40,18 +52,47 @@
   font-weight: 600;
   margin-bottom: 0.5rem;
 }
-.marriage-card .status-badge.active { background: #d4edda; color: #155724; }
-.marriage-card .status-badge.divorced { background: #f8d7da; color: #721c24; }
-.marriage-card .status-badge.pending { background: #fff3cd; color: #856404; }
+.certificate-card .status-badge.verified { background: #d4edda; color: #155724; }
+.certificate-card .status-badge.oncheck { background: #fff3cd; color: #856404; }
+.certificate-card .status-badge.rejected { background: #f8d7da; color: #721c24; }
+.certificate-card h3 {
+  margin: 0.5rem 0;
+}
+.certificate-card p {
+  margin: 0.3rem 0;
+}
+.certificate-actions {
+  margin-top: 1rem;
+}
+.certificate-actions .btn-primary {
+  display: inline-block;
+  padding: 0.5rem 1.2rem;
+  background: #7b091a;
+  color: white;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: 0.2s;
+}
+.certificate-actions .btn-primary:hover {
+  background: #5f0614;
+}
 
-.marriage-card .partner-info {
+/* Карточка супруга */
+.spouse-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid #e9ecef;
+}
+.spouse-card .spouse-info {
   display: flex;
   align-items: center;
   gap: 1.5rem;
   flex-wrap: wrap;
-  margin: 1rem 0;
+  margin: 0.5rem 0;
 }
-.marriage-card .partner-avatar {
+.spouse-card .spouse-avatar {
   width: 60px;
   height: 60px;
   border-radius: 50%;
@@ -64,52 +105,49 @@
   font-weight: 600;
   flex-shrink: 0;
 }
-
-.marriage-card .partner-details {
+.spouse-card .spouse-details {
   flex: 1;
 }
-.marriage-card .partner-name {
+.spouse-card .spouse-name {
   font-size: 1.2rem;
   font-weight: 600;
 }
-.marriage-card .partner-code {
+.spouse-card .spouse-meta {
   color: #6c757d;
   font-size: 0.9rem;
+  margin-top: 0.2rem;
 }
-
-.marriage-card .action-btn {
-  margin-top: 1rem;
+.spouse-card .no-data {
+  text-align: center;
+  color: #6c757d;
+  padding: 1rem 0;
+}
+.spouse-card .btn-primary {
   padding: 0.5rem 1.2rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: 0.2s;
-}
-.marriage-card .btn-primary {
   background: #7b091a;
   color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: 0.2s;
 }
-.marriage-card .btn-primary:hover { background: #5f0614; }
-.marriage-card .btn-secondary {
-  background: #6c757d;
-  color: white;
+.spouse-card .btn-primary:hover {
+  background: #5f0614;
 }
-.marriage-card .btn-secondary:hover { background: #5a6268; }
-.marriage-card .btn-success {
-  background: #28a745;
-  color: white;
-}
-.marriage-card .btn-success:hover { background: #1e7e34; }
 
+/* Дети */
 .children-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
 }
-
 .child-card {
-  margin-bottom: 0;
+  background: #fff;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  border: 1px solid #e9ecef;
 }
 .child-card .child-name {
   font-size: 1.2rem;
@@ -142,231 +180,6 @@
   margin-top: 1rem;
 }
 
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5);
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-.modal-overlay .modal {
-  background: white;
-  border-radius: 16px;
-  padding: 2rem;
-  max-width: 500px;
-  width: 90%;
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-.modal-header h4 {
-  font-size: 1.4rem;
-  margin: 0;
-}
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 2rem;
-  cursor: pointer;
-  color: #999;
-}
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-.btn-secondary, .btn-primary {
-  padding: 0.6rem 1.5rem;
-  border: none;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.btn-secondary { background: #6c757d; color: white; }
-.btn-primary { background: #7b091a; color: white; }
-
-@media (max-width: 600px) {
-  .marriage-card .partner-info {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .children-grid {
-    grid-template-columns: 1fr;
-  }
-}
-/* Две колонки в строке */
-.marriage-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-@media (max-width: 768px) {
-  .marriage-row {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Карточка свидетельства */
-.certificate-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border: 1px solid #e9ecef;
-}
-
-.certificate-card .status-badge {
-  display: inline-block;
-  padding: 0.2rem 1rem;
-  border-radius: 30px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-}
-
-.certificate-card .status-badge.verified {
-  background: #d4edda;
-  color: #155724;
-}
-
-.certificate-card .status-badge.oncheck {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.certificate-card .status-badge.rejected {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-.certificate-card .status-badge.unknown {
-  background: #e2e3e5;
-  color: #383d41;
-}
-
-.certificate-actions {
-  margin-top: 1.2rem;
-}
-
-/* Карточка супруга */
-.spouse-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border: 1px solid #e9ecef;
-}
-
-.spouse-card h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-.spouse-info {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-  margin: 1rem 0;
-}
-
-.spouse-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #7b091a;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.8rem;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.spouse-details {
-  flex: 1;
-}
-
-.spouse-name {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.spouse-meta {
-  color: #6c757d;
-  font-size: 0.9rem;
-  margin-top: 0.2rem;
-}
-
-/* Дети */
-.children-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 1.5rem;
-}
-
-.child-card {
-  background: #fff;
-  border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-  border: 1px solid #e9ecef;
-}
-
-.child-name {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.child-detail {
-  color: #555;
-  margin: 0.2rem 0;
-}
-
-.child-gender {
-  display: inline-block;
-  padding: 0.1rem 0.8rem;
-  border-radius: 30px;
-  font-size: 0.8rem;
-  font-weight: 500;
-}
-
-.child-gender.male {
-  background: #cce5ff;
-  color: #004085;
-}
-
-.child-gender.female {
-  background: #f8d7da;
-  color: #721c24;
-}
-
-/* Общие */
-.no-data {
-  text-align: center;
-  color: #6c757d;
-  padding: 2rem;
-}
-
-.no-data-actions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 1rem;
-}
-
 .btn-primary {
   display: inline-block;
   padding: 0.6rem 1.5rem;
@@ -379,17 +192,17 @@
   text-decoration: none;
   transition: 0.2s;
 }
-
 .btn-primary:hover {
   background: #5f0614;
 }
-
 .text-muted {
   color: #6c757d;
 }
-
 .error {
   color: #dc3545;
+}
+.loading {
   text-align: center;
   padding: 2rem;
+  color: #6c757d;
 }
