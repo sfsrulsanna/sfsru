@@ -1,4 +1,4 @@
-import { supabase } from '../supabase-config.js';
+import { supabase } from '../../js/supabase-config.js';
 
 // --- DOM элементы ---
 const marriageLoading = document.getElementById('marriageLoading');
