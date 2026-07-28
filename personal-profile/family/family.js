@@ -1,11 +1,11 @@
 import { supabase } from '../../js/supabase-config.js';
+
 // --- DOM элементы ---
 const marriageLoading = document.getElementById('marriageLoading');
 const marriageContent = document.getElementById('marriageContent');
 const childrenLoading = document.getElementById('childrenLoading');
 const childrenContent = document.getElementById('childrenContent');
 
-let currentUser = null;
 let currentUserPersonalCode = null;
 
 // --- Вспомогательные функции ---
@@ -23,88 +23,49 @@ async function loadUser() {
   }
   const { data, error } = await supabase
     .from('users')
-    .select('id, personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
+    .select('personal_code')
     .eq('id', session.user.id)
     .single();
   if (error) {
     console.error('Ошибка загрузки пользователя:', error);
     return false;
   }
-  currentUser = data;
   currentUserPersonalCode = data.personal_code;
   return true;
 }
 
 // --- Получение последнего активного свидетельства о браке ---
-async function getLastMarriageCertificate() {
-  try {
-    const { data, error } = await supabase
-      .schema('documents_certificates')
-      .from('marriage')
-      .select('*')
-      .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1);
-    if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
-  } catch (err) {
-    console.error('Ошибка загрузки свидетельства о браке:', err);
+async function getLastMarriage() {
+  const { data, error } = await supabase
+    .schema('documents_certificates')
+    .from('marriage')
+    .select('*')
+    .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1);
+  if (error) {
+    console.error('Ошибка загрузки брака:', error);
     return null;
   }
+  return data && data.length > 0 ? data[0] : null;
 }
 
 // --- Получение последнего активного свидетельства о разводе ---
-async function getLastDivorceCertificate() {
-  try {
-    const { data, error } = await supabase
-      .schema('documents_certificates')
-      .from('divorce')
-      .select('*')
-      .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
-      .eq('status', 'active')
-      .order('created_at', { ascending: false })
-      .limit(1);
-    if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
-  } catch (err) {
-    console.error('Ошибка загрузки свидетельства о разводе:', err);
-    return null;
-  }
-}
-
-// --- Получение связи с супругом (таблица marriages) ---
-async function getSpouseLink() {
-  try {
-    const { data, error } = await supabase
-      .schema('documents_certificates')
-      .from('marriages')
-      .select('*')
-      .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
-      .in('status', ['active', 'divorced'])
-      .order('created_at', { ascending: false })
-      .limit(1);
-    if (error) throw error;
-    return data && data.length > 0 ? data[0] : null;
-  } catch (err) {
-    console.error('Ошибка загрузки связи с супругом:', err);
-    return null;
-  }
-}
-
-// --- Получение данных пользователя по личному коду ---
-async function getUserDataByPersonalCode(personalCode) {
-  if (!personalCode) return null;
+async function getLastDivorce() {
   const { data, error } = await supabase
-    .from('users')
-    .select('id, surname, name, patronymic, date_of_birth, place_of_birth, personal_code, gender')
-    .eq('personal_code', personalCode)
-    .maybeSingle();
+    .schema('documents_certificates')
+    .from('divorce')
+    .select('*')
+    .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
+    .eq('status', 'active')
+    .order('created_at', { ascending: false })
+    .limit(1);
   if (error) {
-    console.warn('Не удалось загрузить данные пользователя:', error);
+    console.error('Ошибка загрузки развода:', error);
     return null;
   }
-  return data;
+  return data && data.length > 0 ? data[0] : null;
 }
 
 // --- Рендер блока "Брак и развод" ---
@@ -114,204 +75,177 @@ async function renderMarriageBlock() {
   marriageContent.innerHTML = '';
 
   try {
-    // 1. Сначала ищем активный брак
-    let certificate = await getLastMarriageCertificate();
+    // 1. Пытаемся получить брак
+    let certificate = await getLastMarriage();
     let isDivorce = false;
+
+    // 2. Если брака нет – ищем развод
     if (!certificate) {
-      certificate = await getLastDivorceCertificate();
-      isDivorce = true;
+      certificate = await getLastDivorce();
+      if (certificate) isDivorce = true;
     }
 
-    // 2. Получаем связь с супругом (таблица marriages)
-    const spouseLink = await getSpouseLink();
+    marriageLoading.style.display = 'none';
+    marriageContent.style.display = 'block';
 
-    let html = '';
-
-    // --- Карточка свидетельства о браке/разводе ---
+    // 3. Если ничего нет – показываем пустое состояние
     if (!certificate) {
-      html += `
-        <div class="certificate-card no-data">
+      marriageContent.innerHTML = `
+        <div class="no-data">
           <p>У вас нет свидетельства о браке или разводе.</p>
           <div class="no-data-actions">
             <a href="../../services/documents/marriage-certificate/" class="btn-primary">Получить свидетельство о браке</a>
           </div>
         </div>
       `;
-    } else {
-      const isMarriage = !isDivorce;
-      const myCode = currentUserPersonalCode;
-      // Определяем код супруга
-      const partnerCode = certificate.personal_code === myCode 
-        ? certificate.wife_personal_code 
-        : certificate.personal_code;
-      
-      const dateField = isMarriage ? certificate.marriage_date : certificate.divorce_date;
-      const dateLabel = isMarriage ? 'Дата заключения брака' : 'Дата развода';
-      const title = isMarriage ? 'Свидетельство о браке' : 'Свидетельство о разводе';
-      const statusText = isMarriage ? '✅ Брак действителен' : '❌ Брак расторгнут';
-      const statusClass = isMarriage ? 'active' : 'divorced';
+      return;
+    }
 
-      // Получаем ФИО супруга
-      let partnerName = partnerCode || '—';
-      const partnerUser = await getUserDataByPersonalCode(partnerCode);
+    // 4. Определяем данные для отображения
+    const isMarriage = !isDivorce;
+    const myCode = currentUserPersonalCode;
+    const partnerCode = certificate.personal_code === myCode 
+      ? certificate.wife_personal_code 
+      : certificate.personal_code;
+
+    const dateField = isMarriage ? certificate.marriage_date : certificate.divorce_date;
+    const dateLabel = isMarriage ? 'Дата заключения брака' : 'Дата развода';
+    const title = isMarriage ? 'Свидетельство о браке' : 'Свидетельство о разводе';
+    const statusText = isMarriage ? '✅ Брак действителен' : '❌ Брак расторгнут';
+    const statusClass = isMarriage ? 'active' : 'divorced';
+
+    // Получаем ФИО супруга
+    let partnerName = partnerCode || '—';
+    if (partnerCode) {
+      const { data: partnerUser } = await supabase
+        .from('users')
+        .select('surname, name, patronymic')
+        .eq('personal_code', partnerCode)
+        .maybeSingle();
       if (partnerUser) {
         partnerName = `${partnerUser.surname} ${partnerUser.name} ${partnerUser.patronymic || ''}`.trim();
       }
-
-      // Ссылка на страницу просмотра
-      const viewLink = isMarriage 
-        ? '../../documents/certificates/marriage-certificate.html' 
-        : '../../documents/certificates/divorce-certificate.html';
-
-      html += `
-        <div class="marriage-card certificate-card ${statusClass}">
-          <div class="status-badge ${statusClass}">${statusText}</div>
-          <h3>${title}</h3>
-          <p><strong>${dateLabel}:</strong> ${formatDate(dateField)}</p>
-          <p><strong>Супруг(а):</strong> ${partnerName}</p>
-          <p><strong>Личный код супруга:</strong> ${partnerCode || '—'}</p>
-          <div class="certificate-actions">
-            <a href="${viewLink}?id=${certificate.id}" class="btn-primary">Просмотреть свидетельство</a>
-          </div>
-        </div>
-      `;
     }
 
-    // --- Карточка связи с супругом (таблица marriages) ---
-    html += `<div class="spouse-link-card">`;
-    html += `<h3>Связь с супругом</h3>`;
+    // Ссылка на страницу просмотра
+    const viewLink = isMarriage 
+      ? '../../documents/certificates/marriage-certificate.html' 
+      : '../../documents/certificates/divorce-certificate.html';
 
-    if (spouseLink) {
-      const isActive = spouseLink.status === 'active';
-      const myCode = currentUserPersonalCode;
-      const partnerCode = spouseLink.personal_code === myCode 
-        ? spouseLink.wife_personal_code 
-        : spouseLink.personal_code;
+    // 5. Генерируем HTML
+    let html = `
+      <div class="marriage-card certificate-card ${statusClass}">
+        <div class="status-badge ${statusClass}">${statusText}</div>
+        <h3>${title}</h3>
+        <p><strong>${dateLabel}:</strong> ${formatDate(dateField)}</p>
+        <p><strong>Супруг(а):</strong> ${partnerName}</p>
+        <p><strong>Личный код супруга:</strong> ${partnerCode || '—'}</p>
+        <div class="certificate-actions">
+          <a href="${viewLink}?id=${certificate.id}" class="btn-primary">Просмотреть свидетельство</a>
+        </div>
+      </div>
+    `;
 
-      // Проверяем, есть ли у нас данные супруга
-      const spouseData = partnerCode ? await getUserDataByPersonalCode(partnerCode) : null;
+    // 6. Добавляем карточку связи (если есть брак)
+    if (isMarriage) {
+      // Пытаемся получить связь из таблицы marriages
+      const { data: spouseLink } = await supabase
+        .schema('documents_certificates')
+        .from('marriages')
+        .select('*')
+        .or(`personal_code.eq.${myCode},wife_personal_code.eq.${myCode}`)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(1);
 
-      if (spouseData) {
-        // Связь подтверждена (есть данные супруга)
-        const fullName = `${spouseData.surname} ${spouseData.name} ${spouseData.patronymic || ''}`.trim();
-        const avatarLetter = (spouseData.name?.[0] || '?').toUpperCase();
-        html += `
-          <div class="spouse-info">
-            <div class="spouse-avatar">${avatarLetter}</div>
-            <div class="spouse-details">
-              <div class="spouse-name">${fullName}</div>
-              <div class="spouse-meta">Дата рождения: ${spouseData.date_of_birth ? formatDate(spouseData.date_of_birth) : '—'}</div>
-              <div class="spouse-meta">Место рождения: ${spouseData.place_of_birth || '—'}</div>
-              <div class="spouse-meta">Личный код: ${spouseData.personal_code}</div>
-            </div>
-          </div>
-        `;
-        if (!isActive) {
-          html += `<p class="text-muted">Брак расторгнут.</p>`;
+      html += `<div class="spouse-link-card">`;
+      html += `<h3>Связь с супругом</h3>`;
+
+      if (spouseLink && spouseLink.length > 0) {
+        const link = spouseLink[0];
+        const spouseCode = link.personal_code === myCode ? link.wife_personal_code : link.personal_code;
+        if (spouseCode) {
+          const { data: spouseData } = await supabase
+            .from('users')
+            .select('surname, name, patronymic, date_of_birth, place_of_birth, personal_code')
+            .eq('personal_code', spouseCode)
+            .maybeSingle();
+
+          if (spouseData) {
+            const fullName = `${spouseData.surname} ${spouseData.name} ${spouseData.patronymic || ''}`.trim();
+            const avatarLetter = (spouseData.name?.[0] || '?').toUpperCase();
+            html += `
+              <div class="spouse-info">
+                <div class="spouse-avatar">${avatarLetter}</div>
+                <div class="spouse-details">
+                  <div class="spouse-name">${fullName}</div>
+                  <div class="spouse-meta">Дата рождения: ${spouseData.date_of_birth ? formatDate(spouseData.date_of_birth) : '—'}</div>
+                  <div class="spouse-meta">Место рождения: ${spouseData.place_of_birth || '—'}</div>
+                  <div class="spouse-meta">Личный код: ${spouseData.personal_code}</div>
+                </div>
+              </div>
+            `;
+          } else {
+            html += `<p class="text-muted">Супруг не зарегистрирован в системе.</p>`;
+          }
         }
-      } else if (partnerCode) {
-        // Есть код супруга, но пользователь не найден в системе – показываем краткую информацию
-        html += `
-          <div class="spouse-info">
-            <div class="spouse-avatar">?</div>
-            <div class="spouse-details">
-              <div class="spouse-name">Супруг не зарегистрирован в системе</div>
-              <div class="spouse-meta">Личный код: ${partnerCode}</div>
-            </div>
-          </div>
-          <p class="text-muted">Для получения полных данных супруг должен зарегистрироваться в системе.</p>
-        `;
       } else {
-        html += `<p class="text-muted">Нет данных о супруге.</p>`;
+        html += `
+          <div class="no-data">
+            <p>Нет активной связи с супругом.</p>
+            <button class="btn-primary" id="createMarriageLinkBtn">Создать связь</button>
+          </div>
+        `;
       }
-    } else {
-      // Нет записи в marriages – предложить создать
-      html += `
-        <div class="no-data">
-          <p>У вас нет активной связи с супругом.</p>
-          <button class="btn-primary" id="createMarriageLinkBtn">Создать связь</button>
-        </div>
-      `;
+      html += `</div>`;
     }
-
-    html += `</div>`;
 
     marriageContent.innerHTML = html;
-    marriageLoading.style.display = 'none';
-    marriageContent.style.display = 'block';
 
-    // --- Обработчики для кнопок ---
-    const createLinkBtn = document.getElementById('createMarriageLinkBtn');
-    if (createLinkBtn) {
-      createLinkBtn.addEventListener('click', () => {
-        const partnerCode = prompt('Введите личный код супруга для создания связи:');
-        if (partnerCode) {
-          createMarriageLink(partnerCode);
+    // Обработчик для кнопки создания связи
+    const createBtn = document.getElementById('createMarriageLinkBtn');
+    if (createBtn) {
+      createBtn.addEventListener('click', async () => {
+        const partnerCode = prompt('Введите личный код супруга:');
+        if (!partnerCode) return;
+        if (partnerCode === currentUserPersonalCode) {
+          alert('Нельзя создать связь с самим собой.');
+          return;
+        }
+        // Проверяем существование пользователя
+        const { data: user } = await supabase
+          .from('users')
+          .select('personal_code')
+          .eq('personal_code', partnerCode)
+          .maybeSingle();
+        if (!user) {
+          alert('Пользователь с таким личным кодом не найден.');
+          return;
+        }
+        // Создаём связь
+        const { error } = await supabase
+          .schema('documents_certificates')
+          .from('marriages')
+          .insert({
+            personal_code: currentUserPersonalCode,
+            wife_personal_code: partnerCode,
+            marriage_date: new Date().toISOString().slice(0,10),
+            status: 'active'
+          });
+        if (error) {
+          alert('Ошибка: ' + error.message);
+        } else {
+          alert('Связь создана!');
+          renderMarriageBlock(); // обновляем
         }
       });
     }
 
   } catch (err) {
-    console.error('Ошибка рендера блока брака:', err);
+    console.error('Ошибка рендера брака:', err);
     marriageLoading.style.display = 'none';
     marriageContent.style.display = 'block';
     marriageContent.innerHTML = `<p class="error">Не удалось загрузить данные.</p>`;
-  }
-}
-
-// --- Создание новой связи (вставка в marriages) ---
-async function createMarriageLink(partnerCode) {
-  try {
-    // Проверяем, что пользователь не пытается создать связь с самим собой
-    if (partnerCode === currentUserPersonalCode) {
-      alert('Нельзя создать связь с самим собой.');
-      return;
-    }
-
-    // Проверяем, существует ли пользователь с таким личным кодом
-    const { data: partner, error: findErr } = await supabase
-      .from('users')
-      .select('personal_code')
-      .eq('personal_code', partnerCode)
-      .maybeSingle();
-    if (findErr || !partner) {
-      alert('Пользователь с таким личным кодом не найден в системе.');
-      return;
-    }
-
-    // Проверяем, нет ли уже активной связи
-    const { data: existing } = await supabase
-      .schema('documents_certificates')
-      .from('marriages')
-      .select('id')
-      .or(`personal_code.eq.${currentUserPersonalCode},wife_personal_code.eq.${currentUserPersonalCode}`)
-      .eq('status', 'active')
-      .maybeSingle();
-    if (existing) {
-      alert('У вас уже есть активная связь с супругом.');
-      return;
-    }
-
-    // Вставляем запись
-    const { error: insertErr } = await supabase
-      .schema('documents_certificates')
-      .from('marriages')
-      .insert({
-        personal_code: currentUserPersonalCode,
-        wife_personal_code: partnerCode,
-        marriage_date: new Date().toISOString().slice(0,10),
-        status: 'active'
-      });
-
-    if (insertErr) {
-      alert('Ошибка создания связи: ' + insertErr.message);
-      return;
-    }
-
-    alert('Связь создана!');
-    await renderMarriageBlock();
-  } catch (err) {
-    alert('Ошибка: ' + err.message);
   }
 }
 
@@ -319,7 +253,6 @@ async function createMarriageLink(partnerCode) {
 async function loadChildren() {
   childrenLoading.style.display = 'block';
   childrenContent.style.display = 'none';
-  childrenContent.innerHTML = '';
 
   try {
     const { data, error } = await supabase
@@ -377,10 +310,6 @@ async function loadChildren() {
 document.addEventListener('DOMContentLoaded', async () => {
   const ok = await loadUser();
   if (!ok) return;
-
   await renderMarriageBlock();
   await loadChildren();
 });
-
-// Экспорт функций (не используется, но для совместимости)
-window.createMarriageLink = createMarriageLink;
