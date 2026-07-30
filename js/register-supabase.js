@@ -367,20 +367,22 @@ async function handleSubmit(e) {
   }
 
   // 3. Вызов Edge Function (обходит RLS)
-  try {
-    const response = await fetch(FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ table: tableName, record }),
-    });
+// 3. Вызов Edge Function (с анонимным ключом)
+try {
+  const response = await fetch(FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`   // <-- добавить
+    },
+    body: JSON.stringify({ table: tableName, record }),
+  });
 
-    const result = await response.json();
+  const result = await response.json();
 
-    if (!response.ok) {
-      throw new Error(result.error || 'Ошибка при сохранении профиля');
-    }
+  if (!response.ok) {
+    throw new Error(result.error || 'Ошибка при сохранении профиля');
+  }
 
     showAlert(
       'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
@@ -394,11 +396,11 @@ async function handleSubmit(e) {
       window.location.href = 'login.html';
     }, 5000);
 
-  } catch (error) {
-    showAlert('Ошибка сохранения профиля: ' + error.message, 'error');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Зарегистрироваться';
-  }
+} catch (error) {
+  showAlert('Ошибка сохранения профиля: ' + error.message, 'error');
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Зарегистрироваться';
+}
 }
 
 // ----------------------------------------------
