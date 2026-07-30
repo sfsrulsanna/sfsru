@@ -5,7 +5,6 @@ const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-export const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-profile`;
 
 // ----------------------------------------------
 // 1. DOM-элементы
@@ -261,7 +260,7 @@ function generateSummary() {
 }
 
 // ----------------------------------------------
-// 7. ОСНОВНАЯ ЛОГИКА: регистрация + Edge Function
+// 7. ОСНОВНАЯ ЛОГИКА: регистрация + прямая вставка в БД
 // ----------------------------------------------
 async function handleSubmit(e) {
   e.preventDefault();
@@ -370,15 +369,17 @@ async function handleSubmit(e) {
     };
   }
 
-  // ШАГ 3: Вызов Edge Function для вставки профиля (с сервисным ключом)
+  // ШАГ 3: Прямая вставка в таблицу через supabase SDK
   try {
-const { data, error: functionError } = await supabase.functions.invoke('create-profile', {
-  body: { table: tableName, record }
-});
+    const { data, error: insertError } = await supabase
+      .from(tableName)
+      .insert(record)
+      .select();
 
-if (functionError) {
-  throw new Error(functionError.message || 'Ошибка при сохранении профиля');
-}
+    if (insertError) {
+      // Если вставка не удалась, можно попробовать удалить созданного пользователя (опционально)
+      throw new Error(insertError.message);
+    }
 
     showAlert(
       'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
