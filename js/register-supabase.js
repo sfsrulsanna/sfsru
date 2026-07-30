@@ -37,7 +37,6 @@ let selectedType = null; // 'citizen', 'subject', 'organization'
 // 2. Инициализация
 // ----------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  // Выбор типа аккаунта
   document.querySelectorAll('.account-type-option').forEach(option => {
     option.addEventListener('click', () => {
       document.querySelectorAll('.account-type-option').forEach(opt => opt.classList.remove('selected'));
@@ -46,11 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // Показ/скрытие пароля
   togglePassword.addEventListener('click', () => togglePasswordVisibility('password', togglePassword));
   toggleConfirm.addEventListener('click', () => togglePasswordVisibility('confirmPassword', toggleConfirm));
 
-  // Отправка формы
   form.addEventListener('submit', handleSubmit);
 });
 
@@ -252,7 +249,6 @@ function generateSummary() {
     html += `<div class="summary-item"><span class="summary-label">Контактное лицо:</span> <span class="summary-value">${document.getElementById('contactPerson').value}</span></div>`;
   }
 
-  // Общие поля
   html += `<div class="summary-item"><span class="summary-label">Email:</span> <span class="summary-value">${document.getElementById('email').value}</span></div>`;
   html += `<div class="summary-item"><span class="summary-label">Телефон:</span> <span class="summary-value">${document.getElementById('phone').value}</span></div>`;
 
@@ -260,7 +256,7 @@ function generateSummary() {
 }
 
 // ----------------------------------------------
-// 7. ОСНОВНАЯ ЛОГИКА: регистрация + прямая вставка в БД
+// 7. ОСНОВНАЯ ЛОГИКА: регистрация + прямая вставка
 // ----------------------------------------------
 async function handleSubmit(e) {
   e.preventDefault();
@@ -276,25 +272,60 @@ async function handleSubmit(e) {
   const phone = document.getElementById('phone').value.trim();
   const password = document.getElementById('password').value;
 
-  // ШАГ 1: Регистрация в Auth (подтверждение email включено)
-  const { data: authData, error: authError } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      emailRedirectTo: window.location.origin + '/profile.html'
-    }
-  });
-
-  if (authError) {
-    showAlert('Ошибка регистрации: ' + authError.message, 'error');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Зарегистрироваться';
-    return;
+  // ШАГ 1: Регистрация в Auth
+const { data: authData, error: authError } = await supabase.auth.signUp({
+  email,
+  password,
+  options: {
+    emailRedirectTo: window.location.origin + '/profile.html'
   }
+});
 
-  const user = authData.user;
-  if (!user) {
-    showAlert('Не удалось создать пользователя', 'error');
+if (authError) {
+  console.error('Auth error details:', authError);
+  showAlert('Ошибка регистрации: ' + authError.message, 'error');
+  // Если есть дополнительные поля, выведите их
+  if (authError.status) showAlert('Код ошибки: ' + authError.status, 'error');
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Зарегистрироваться';
+  return;
+}
+
+  // --------------------------------------------------------------
+  //  ВАЖНО: Ожидаем установки сессии, чтобы RLS пропустил вставку
+  // --------------------------------------------------------------
+  try {
+    // Проверяем, есть ли сессия
+    let { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      // Если сессии нет, ждём события SIGNED_IN (макс. 5 сек)
+      await new Promise((resolve) => {
+        const unsubscribe = supabase.auth.onAuthStateChange((event, newSession) => {
+          if (event === 'SIGNED_IN' || newSession) {
+            unsubscribe();
+            resolve();
+          }
+        });
+        setTimeout(() => {
+          unsubscribe();
+          resolve();
+        }, 5000);
+      });
+      // Повторно проверяем
+      const { data: { session: retrySession } } = await supabase.auth.getSession();
+      if (!retrySession) {
+        throw new Error('Сессия не установлена после регистрации');
+      }
+    }
+
+    // Дополнительно проверяем, что текущий пользователь совпадает с созданным
+    const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
+    if (userError || !currentUser || currentUser.id !== user.id) {
+      throw new Error('Текущий пользователь не совпадает с зарегистрированным');
+    }
+
+  } catch (err) {
+    showAlert('Ошибка аутентификации: ' + err.message, 'error');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Зарегистрироваться';
     return;
@@ -369,7 +400,7 @@ async function handleSubmit(e) {
     };
   }
 
-  // ШАГ 3: Прямая вставка в таблицу через supabase SDK
+  // ШАГ 3: Прямая вставка в таблицу
   try {
     const { data, error: insertError } = await supabase
       .from(tableName)
@@ -377,7 +408,6 @@ async function handleSubmit(e) {
       .select();
 
     if (insertError) {
-      // Если вставка не удалась, можно попробовать удалить созданного пользователя (опционально)
       throw new Error(insertError.message);
     }
 
