@@ -318,7 +318,7 @@ async function handleSubmit(e) {
     password,
     options: {
       data: userMeta,  // все данные отправляются в raw_user_meta_data
-      emailRedirectTo: window.location.origin + '/profile.html'
+	  emailRedirectTo: window.location.origin + '/confirmation.html'
     }
   });
 
