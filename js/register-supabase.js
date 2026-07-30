@@ -4,8 +4,8 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-export const FUNCTION_URL = `${supabaseUrl}/functions/v1/create-profile`;
+export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-profile`;
 
 // ----------------------------------------------
 // 1. DOM-элементы
