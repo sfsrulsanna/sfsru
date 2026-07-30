@@ -372,19 +372,13 @@ async function handleSubmit(e) {
 
   // ШАГ 3: Вызов Edge Function для вставки профиля (с сервисным ключом)
   try {
-    const response = await fetch(FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ table: tableName, record }),
-    });
+const { data, error: functionError } = await supabase.functions.invoke('create-profile', {
+  body: { table: tableName, record }
+});
 
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || 'Ошибка при сохранении профиля');
-    }
+if (functionError) {
+  throw new Error(functionError.message || 'Ошибка при сохранении профиля');
+}
 
     showAlert(
       'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
