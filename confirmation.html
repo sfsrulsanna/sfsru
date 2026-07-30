@@ -103,20 +103,9 @@
 
   <script src="js/mob-menu.js"></script>
 
-<!-- Импорт-карта для Supabase -->
-<script type="importmap">
-{
-  "imports": {
-    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.111.0"
-  }
-}
-</script>
-
 <script type="module">
-  // 1. Импортируем createClient из CDN
   import { createClient } from "@supabase/supabase-js";
 
-  // 2. Создаём клиент с теми же данными, что и в register-supabase.js
   const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
   const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -150,11 +139,28 @@
   }
 
   (async () => {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get('access_token');
-    const refreshToken = params.get('refresh_token');
+    // --- 1. Пытаемся извлечь токены из URL ---
+    // Сначала пробуем из hash (#)
+    let params = new URLSearchParams(window.location.hash.substring(1));
+    let accessToken = params.get('access_token');
+    let refreshToken = params.get('refresh_token');
+    let type = params.get('type');
 
+    // Если не нашли в hash, ищем в query-параметрах (?)
+    if (!accessToken || !refreshToken) {
+      params = new URLSearchParams(window.location.search);
+      accessToken = params.get('access_token');
+      refreshToken = params.get('refresh_token');
+      type = params.get('type');
+    }
+
+    // --- 2. Отладка: выводим в консоль, что пришло ---
+    console.log('🔍 URL:', window.location.href);
+    console.log('🔑 accessToken:', accessToken);
+    console.log('🔑 refreshToken:', refreshToken);
+    console.log('📌 type:', type);
+
+    // --- 3. Если токены есть ---
     if (accessToken && refreshToken) {
       setStatus('⏳', 'Подтверждение...', 'Проверяем ваш email, пожалуйста, подождите.');
 
@@ -190,6 +196,8 @@
         spinner.style.display = 'none';
       }
     } else {
+      // --- 4. Токенов нет ---
+      // Проверяем, может пользователь уже залогинен
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         setStatus('✅', 'Вы уже авторизованы', 
