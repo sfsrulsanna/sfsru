@@ -103,110 +103,111 @@
 
   <script src="js/mob-menu.js"></script>
 
-  <!-- ОСНОВНОЙ СКРИПТ ПОДТВЕРЖДЕНИЯ -->
-  <script type="module">
-    // Импортируем наш клиент supabase (он уже настроен)
-    import { supabase } from '/js/register-supabase.js';
+<!-- Импорт-карта для Supabase -->
+<script type="importmap">
+{
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.111.0"
+  }
+}
+</script>
 
-    // DOM-элементы для обновления интерфейса
-    const icon = document.getElementById('statusIcon');
-    const title = document.getElementById('statusTitle');
-    const message = document.getElementById('statusMessage');
-    const spinner = document.getElementById('spinner');
-    const redirectInfo = document.getElementById('redirectInfo');
-    const countdownEl = document.getElementById('countdown');
+<script type="module">
+  // 1. Импортируем createClient из CDN
+  import { createClient } from "@supabase/supabase-js";
 
-    // Функция для отображения статуса
-    function setStatus(iconChar, titleText, msgText, isError = false) {
-      icon.textContent = iconChar;
-      icon.className = isError ? 'error-icon' : 'success-icon';
-      title.textContent = titleText;
-      message.innerHTML = msgText;
-    }
+  // 2. Создаём клиент с теми же данными, что и в register-supabase.js
+  const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Функция редиректа с таймером
-    function redirectWithTimer(url, delay = 5) {
-      redirectInfo.style.display = 'block';
+  // DOM-элементы
+  const icon = document.getElementById('statusIcon');
+  const title = document.getElementById('statusTitle');
+  const message = document.getElementById('statusMessage');
+  const spinner = document.getElementById('spinner');
+  const redirectInfo = document.getElementById('redirectInfo');
+  const countdownEl = document.getElementById('countdown');
+
+  function setStatus(iconChar, titleText, msgText, isError = false) {
+    icon.textContent = iconChar;
+    icon.className = isError ? 'error-icon' : 'success-icon';
+    title.textContent = titleText;
+    message.innerHTML = msgText;
+  }
+
+  function redirectWithTimer(url, delay = 5) {
+    redirectInfo.style.display = 'block';
+    countdownEl.textContent = delay;
+    const interval = setInterval(() => {
+      delay--;
       countdownEl.textContent = delay;
-      const interval = setInterval(() => {
-        delay--;
-        countdownEl.textContent = delay;
-        if (delay <= 0) {
-          clearInterval(interval);
-          window.location.href = url;
-        }
-      }, 1000);
-    }
-
-    (async () => {
-      // 1. Извлекаем токены из URL-фрагмента (hash)
-      const hash = window.location.hash.substring(1);
-      const params = new URLSearchParams(hash);
-      const accessToken = params.get('access_token');
-      const refreshToken = params.get('refresh_token');
-      const type = params.get('type');
-
-      // 2. Если есть токены и тип 'signup' или 'recovery' и т.п.
-      if (accessToken && refreshToken) {
-        // Показываем ожидание
-        setStatus('⏳', 'Подтверждение...', 'Проверяем ваш email, пожалуйста, подождите.');
-
-        try {
-          // Устанавливаем сессию (это и подтверждает email)
-          const { data, error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
-          });
-
-          if (error) {
-            console.error('Ошибка установки сессии:', error);
-            setStatus('❌', 'Ошибка подтверждения', 
-              `<p>Не удалось подтвердить email.</p><p>${error.message}</p><p>Попробуйте войти позже.</p>`, 
-              true
-            );
-            spinner.style.display = 'none';
-            return;
-          }
-
-          // Успех!
-          setStatus('✅', 'Email подтверждён!', 
-            `<p>Ваш адрес электронной почты успешно подтверждён.</p>
-             <p>Теперь вы можете войти в личный кабинет.</p>`
-          );
-          spinner.style.display = 'none';
-          // Перенаправляем на страницу входа через 5 сек
-          redirectWithTimer('/login.html', 5);
-
-        } catch (err) {
-          console.error('Непредвиденная ошибка:', err);
-          setStatus('⚠️', 'Что-то пошло не так', 
-            `<p>Произошла непредвиденная ошибка.</p><p>${err.message || ''}</p>`, 
-            true
-          );
-          spinner.style.display = 'none';
-        }
-      } else {
-        // Если токенов нет – возможно, пользователь уже авторизован, или перешёл по ссылке без токена
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-          // Если уже есть сессия, значит email уже подтверждён (или пользователь уже залогинен)
-          setStatus('✅', 'Вы уже авторизованы', 
-            `<p>Ваша сессия активна.</p><p>Вы будете перенаправлены в личный кабинет.</p>`
-          );
-          spinner.style.display = 'none';
-          redirectWithTimer('/profile.html', 3);
-        } else {
-          // Совсем нет токенов и нет сессии – возможно, ссылка повреждена
-          setStatus('❓', 'Неизвестный запрос', 
-            `<p>Мы не нашли токен подтверждения в ссылке.</p>
-             <p>Возможно, вы уже подтвердили email или перешли по некорректной ссылке.</p>
-             <p>Попробуйте <a href="/login.html">войти</a> или зарегистрироваться заново.</p>`,
-            true
-          );
-          spinner.style.display = 'none';
-        }
+      if (delay <= 0) {
+        clearInterval(interval);
+        window.location.href = url;
       }
-    })();
-  </script>
+    }, 1000);
+  }
+
+  (async () => {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+
+    if (accessToken && refreshToken) {
+      setStatus('⏳', 'Подтверждение...', 'Проверяем ваш email, пожалуйста, подождите.');
+
+      try {
+        const { data, error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        });
+
+        if (error) {
+          console.error('Ошибка установки сессии:', error);
+          setStatus('❌', 'Ошибка подтверждения', 
+            `<p>Не удалось подтвердить email.</p><p>${error.message}</p><p>Попробуйте войти позже.</p>`, 
+            true
+          );
+          spinner.style.display = 'none';
+          return;
+        }
+
+        setStatus('✅', 'Email подтверждён!', 
+          `<p>Ваш адрес электронной почты успешно подтверждён.</p>
+           <p>Теперь вы можете войти в личный кабинет.</p>`
+        );
+        spinner.style.display = 'none';
+        redirectWithTimer('/login.html', 5);
+
+      } catch (err) {
+        console.error('Непредвиденная ошибка:', err);
+        setStatus('⚠️', 'Что-то пошло не так', 
+          `<p>Произошла непредвиденная ошибка.</p><p>${err.message || ''}</p>`, 
+          true
+        );
+        spinner.style.display = 'none';
+      }
+    } else {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setStatus('✅', 'Вы уже авторизованы', 
+          `<p>Ваша сессия активна.</p><p>Вы будете перенаправлены в личный кабинет.</p>`
+        );
+        spinner.style.display = 'none';
+        redirectWithTimer('/profile.html', 3);
+      } else {
+        setStatus('❓', 'Неизвестный запрос', 
+          `<p>Мы не нашли токен подтверждения в ссылке.</p>
+           <p>Возможно, вы уже подтвердили email или перешли по некорректной ссылке.</p>
+           <p>Попробуйте <a href="/login.html">войти</a> или зарегистрироваться заново.</p>`,
+          true
+        );
+        spinner.style.display = 'none';
+      }
+    }
+  })();
+</script>
 </body>
 </html>
