@@ -5,6 +5,7 @@ const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const FUNCTION_URL = `${SUPABASE_URL}/functions/v1/create-profile`;
 
 // ----------------------------------------------
 // 1. DOM-элементы
@@ -256,7 +257,7 @@ function generateSummary() {
 }
 
 // ----------------------------------------------
-// 7. ОСНОВНАЯ ЛОГИКА: регистрация (без вставки профиля)
+// 7. ОСНОВНАЯ ЛОГИКА: регистрация + Edge Function
 // ----------------------------------------------
 async function handleSubmit(e) {
   e.preventDefault();
@@ -269,56 +270,15 @@ async function handleSubmit(e) {
   showAlert('Отправка данных...', 'info');
 
   const email = document.getElementById('email').value.trim();
+  const phone = document.getElementById('phone').value.trim();
   const password = document.getElementById('password').value;
 
-  // --- Сбор метаданных для передачи в raw_user_meta_data ---
-  let userMeta = {};
-
-  if (selectedType === 'citizen') {
-    userMeta = {
-      surname: document.getElementById('lastName').value.trim(),
-      name: document.getElementById('firstName').value.trim(),
-      patronymic: document.getElementById('middleName').value.trim() || null,
-      gender: document.getElementById('gender').value,
-      date_of_birth: document.getElementById('birthDate').value,
-      place_of_birth: document.getElementById('birthPlace').value.trim() || null,
-      personal_code: document.getElementById('personalCode').value.trim(),
-      phone: document.getElementById('phone').value.trim()
-    };
-  } else if (selectedType === 'subject') {
-    const fullName = document.getElementById('subjectFullName').value.trim().split(' ');
-    userMeta = {
-      surname: fullName[0] || '',
-      name: fullName[1] || '',
-      patronymic: fullName[2] || null,
-      gender: document.getElementById('subjectGender').value,
-      citizenship: document.getElementById('nationality').value.trim(),
-      date_of_birth: document.getElementById('subjectBirthDate').value,
-      place_of_birth: document.getElementById('subjectBirthPlace').value.trim() || null,
-      personal_code: document.getElementById('personalCodeSubject').value.trim(),
-      phone: document.getElementById('phone').value.trim()
-    };
-  } else if (selectedType === 'organization') {
-    userMeta = {
-      organization_name_full: document.getElementById('orgName').value.trim(),
-      organization_name_short: document.getElementById('orgName').value.trim(),
-      organization_type: document.getElementById('orgType').value || null,
-      inn: document.getElementById('inn').value.trim(),
-      kpp: document.getElementById('kpp').value.trim() || null,
-      ogrn: document.getElementById('ogrn').value.trim(),
-      address: document.getElementById('address').value.trim(),
-      phone: document.getElementById('phone').value.trim(),
-      contact_person: document.getElementById('contactPerson').value.trim()
-    };
-  }
-
-  // 1. Регистрация в Auth (передаём метаданные)
+  // 1. Регистрация в Auth
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
-      data: userMeta,  // все данные отправляются в raw_user_meta_data
-	  emailRedirectTo: window.location.origin + '/confirmation.html'
+      emailRedirectTo: window.location.origin + '/confirmation.html'
     }
   });
 
@@ -337,19 +297,108 @@ async function handleSubmit(e) {
     return;
   }
 
-  // 2. Успех — показываем сообщение о подтверждении
-  showAlert(
-    'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
-    'После подтверждения ваш профиль будет создан автоматически, и вы сможете войти.',
-    'success'
-  );
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Зарегистрироваться';
+  // 2. Подготовка данных профиля
+  let tableName, record;
 
-  // 3. Перенаправляем на страницу входа через 5 секунд
-  setTimeout(() => {
-    window.location.href = 'login.html';
-  }, 5000);
+  if (selectedType === 'citizen') {
+    tableName = 'users';
+    record = {
+      id: user.id,
+      surname: document.getElementById('lastName').value.trim(),
+      name: document.getElementById('firstName').value.trim(),
+      patronymic: document.getElementById('middleName').value.trim() || null,
+      gender: document.getElementById('gender').value,
+      date_of_birth: document.getElementById('birthDate').value,
+      place_of_birth: document.getElementById('birthPlace').value.trim() || null,
+      personal_code: document.getElementById('personalCode').value.trim(),
+      email: email,
+      phone: phone,
+      account_type: 'упрощённая',
+      role: 'user',
+      surname_status: 'oncheck',
+      name_status: 'oncheck',
+      patronymic_status: 'oncheck',
+      date_of_birth_status: 'oncheck',
+      place_of_birth_status: 'oncheck',
+      phone_status: 'oncheck',
+      email_status: 'oncheck'
+    };
+  } else if (selectedType === 'subject') {
+    tableName = 'subjects';
+    const fullName = document.getElementById('subjectFullName').value.trim().split(' ');
+    record = {
+      id: user.id,
+      surname: fullName[0] || '',
+      name: fullName[1] || '',
+      patronymic: fullName[2] || null,
+      gender: document.getElementById('subjectGender').value,
+      citizenship: document.getElementById('nationality').value.trim(),
+      date_of_birth: document.getElementById('subjectBirthDate').value,
+      place_of_birth: document.getElementById('subjectBirthPlace').value.trim() || null,
+      personal_code: document.getElementById('personalCodeSubject').value.trim(),
+      email: email,
+      phone: phone,
+      account_type: 'упрощённая',
+      role: 'user',
+      surname_status: 'oncheck',
+      name_status: 'oncheck',
+      patronymic_status: 'oncheck',
+      date_of_birth_status: 'oncheck',
+      place_of_birth_status: 'oncheck',
+      phone_status: 'oncheck',
+      email_status: 'oncheck'
+    };
+  } else if (selectedType === 'organization') {
+    tableName = 'legal_entities';
+    record = {
+      id: user.id,
+      organization_name_full: document.getElementById('orgName').value.trim(),
+      organization_name_short: document.getElementById('orgName').value.trim(),
+      organization_type: document.getElementById('orgType').value || null,
+      inn: document.getElementById('inn').value.trim(),
+      kpp: document.getElementById('kpp').value.trim() || null,
+      ogrn: document.getElementById('ogrn').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      phone: phone,
+      email: email,
+      contact_person: document.getElementById('contactPerson').value.trim(),
+      account_type: 'Упрощённая'
+    };
+  }
+
+  // 3. Вызов Edge Function (обходит RLS)
+  try {
+    const response = await fetch(FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ table: tableName, record }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка при сохранении профиля');
+    }
+
+    showAlert(
+      'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
+      'После подтверждения вы сможете войти.',
+      'success'
+    );
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Зарегистрироваться';
+
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 5000);
+
+  } catch (error) {
+    showAlert('Ошибка сохранения профиля: ' + error.message, 'error');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Зарегистрироваться';
+  }
 }
 
 // ----------------------------------------------
