@@ -256,7 +256,7 @@ function generateSummary() {
 }
 
 // ----------------------------------------------
-// 7. ОСНОВНАЯ ЛОГИКА: регистрация + прямая вставка
+// 7. ОСНОВНАЯ ЛОГИКА: регистрация (без вставки профиля)
 // ----------------------------------------------
 async function handleSubmit(e) {
   e.preventDefault();
@@ -269,14 +269,55 @@ async function handleSubmit(e) {
   showAlert('Отправка данных...', 'info');
 
   const email = document.getElementById('email').value.trim();
-  const phone = document.getElementById('phone').value.trim();
   const password = document.getElementById('password').value;
 
-  // 1. Регистрация в Auth (теперь сессия сразу)
+  // --- Сбор метаданных для передачи в raw_user_meta_data ---
+  let userMeta = {};
+
+  if (selectedType === 'citizen') {
+    userMeta = {
+      surname: document.getElementById('lastName').value.trim(),
+      name: document.getElementById('firstName').value.trim(),
+      patronymic: document.getElementById('middleName').value.trim() || null,
+      gender: document.getElementById('gender').value,
+      date_of_birth: document.getElementById('birthDate').value,
+      place_of_birth: document.getElementById('birthPlace').value.trim() || null,
+      personal_code: document.getElementById('personalCode').value.trim(),
+      phone: document.getElementById('phone').value.trim()
+    };
+  } else if (selectedType === 'subject') {
+    const fullName = document.getElementById('subjectFullName').value.trim().split(' ');
+    userMeta = {
+      surname: fullName[0] || '',
+      name: fullName[1] || '',
+      patronymic: fullName[2] || null,
+      gender: document.getElementById('subjectGender').value,
+      citizenship: document.getElementById('nationality').value.trim(),
+      date_of_birth: document.getElementById('subjectBirthDate').value,
+      place_of_birth: document.getElementById('subjectBirthPlace').value.trim() || null,
+      personal_code: document.getElementById('personalCodeSubject').value.trim(),
+      phone: document.getElementById('phone').value.trim()
+    };
+  } else if (selectedType === 'organization') {
+    userMeta = {
+      organization_name_full: document.getElementById('orgName').value.trim(),
+      organization_name_short: document.getElementById('orgName').value.trim(),
+      organization_type: document.getElementById('orgType').value || null,
+      inn: document.getElementById('inn').value.trim(),
+      kpp: document.getElementById('kpp').value.trim() || null,
+      ogrn: document.getElementById('ogrn').value.trim(),
+      address: document.getElementById('address').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      contact_person: document.getElementById('contactPerson').value.trim()
+    };
+  }
+
+  // 1. Регистрация в Auth (передаём метаданные)
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
     options: {
+      data: userMeta,  // все данные отправляются в raw_user_meta_data
       emailRedirectTo: window.location.origin + '/profile.html'
     }
   });
@@ -296,102 +337,19 @@ async function handleSubmit(e) {
     return;
   }
 
-  // 2. Подготовка данных профиля (как раньше)
-  let tableName, record;
+  // 2. Успех — показываем сообщение о подтверждении
+  showAlert(
+    'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
+    'После подтверждения ваш профиль будет создан автоматически, и вы сможете войти.',
+    'success'
+  );
+  submitBtn.disabled = false;
+  submitBtn.textContent = 'Зарегистрироваться';
 
-  if (selectedType === 'citizen') {
-    tableName = 'users';
-    record = {
-      id: user.id,
-      surname: document.getElementById('lastName').value.trim(),
-      name: document.getElementById('firstName').value.trim(),
-      patronymic: document.getElementById('middleName').value.trim() || null,
-      gender: document.getElementById('gender').value,
-      date_of_birth: document.getElementById('birthDate').value,
-      place_of_birth: document.getElementById('birthPlace').value.trim() || null,
-      personal_code: document.getElementById('personalCode').value.trim(),
-      email: email,
-      phone: phone,
-      account_type: 'упрощённая',
-      role: 'user',
-      surname_status: 'oncheck',
-      name_status: 'oncheck',
-      patronymic_status: 'oncheck',
-      date_of_birth_status: 'oncheck',
-      place_of_birth_status: 'oncheck',
-      phone_status: 'oncheck',
-      email_status: 'oncheck'
-    };
-  } else if (selectedType === 'subject') {
-    tableName = 'subjects';
-    const fullName = document.getElementById('subjectFullName').value.trim().split(' ');
-    record = {
-      id: user.id,
-      surname: fullName[0] || '',
-      name: fullName[1] || '',
-      patronymic: fullName[2] || null,
-      gender: document.getElementById('subjectGender').value,
-      citizenship: document.getElementById('nationality').value.trim(),
-      date_of_birth: document.getElementById('subjectBirthDate').value,
-      place_of_birth: document.getElementById('subjectBirthPlace').value.trim() || null,
-      personal_code: document.getElementById('personalCodeSubject').value.trim(),
-      email: email,
-      phone: phone,
-      account_type: 'упрощённая',
-      role: 'user',
-      surname_status: 'oncheck',
-      name_status: 'oncheck',
-      patronymic_status: 'oncheck',
-      date_of_birth_status: 'oncheck',
-      place_of_birth_status: 'oncheck',
-      phone_status: 'oncheck',
-      email_status: 'oncheck'
-    };
-  } else if (selectedType === 'organization') {
-    tableName = 'legal_entities';
-    record = {
-      id: user.id,
-      organization_name_full: document.getElementById('orgName').value.trim(),
-      organization_name_short: document.getElementById('orgName').value.trim(),
-      organization_type: document.getElementById('orgType').value || null,
-      inn: document.getElementById('inn').value.trim(),
-      kpp: document.getElementById('kpp').value.trim() || null,
-      ogrn: document.getElementById('ogrn').value.trim(),
-      address: document.getElementById('address').value.trim(),
-      phone: phone,
-      email: email,
-      contact_person: document.getElementById('contactPerson').value.trim(),
-      account_type: 'Упрощённая'
-    };
-  }
-
-  // 3. Прямая вставка (сессия уже есть)
-  try {
-    const { data, error: insertError } = await supabase
-      .from(tableName)
-      .insert(record)
-      .select();
-
-    if (insertError) {
-      throw new Error(insertError.message);
-    }
-
-    showAlert(
-      'Регистрация прошла успешно! Теперь вы можете войти.',
-      'success'
-    );
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Зарегистрироваться';
-
-    setTimeout(() => {
-      window.location.href = 'login.html';
-    }, 3000);
-
-  } catch (error) {
-    showAlert('Ошибка сохранения профиля: ' + error.message, 'error');
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Зарегистрироваться';
-  }
+  // 3. Перенаправляем на страницу входа через 5 секунд
+  setTimeout(() => {
+    window.location.href = 'login.html';
+  }, 5000);
 }
 
 // ----------------------------------------------
