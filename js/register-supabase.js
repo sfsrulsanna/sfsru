@@ -1,7 +1,9 @@
 // js/register-supabase.js
 import { supabase, FUNCTION_URL } from './supabase-config.js';
 
-// === DOM-элементы ===
+// ----------------------------------------------
+// 1. DOM-элементы
+// ----------------------------------------------
 const form = document.getElementById('registrationForm');
 const step1Form = document.getElementById('step1Form');
 const step2Form = document.getElementById('step2Form');
@@ -24,11 +26,13 @@ const togglePassword = document.getElementById('togglePassword');
 const toggleConfirm = document.getElementById('toggleConfirmPassword');
 
 let currentStep = 1;
-let selectedType = null;
+let selectedType = null; // 'citizen', 'subject', 'organization'
 
-// === Инициализация ===
+// ----------------------------------------------
+// 2. Инициализация
+// ----------------------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  // Выбор типа
+  // Выбор типа аккаунта
   document.querySelectorAll('.account-type-option').forEach(option => {
     option.addEventListener('click', () => {
       document.querySelectorAll('.account-type-option').forEach(opt => opt.classList.remove('selected'));
@@ -52,7 +56,9 @@ function togglePasswordVisibility(inputId, btn) {
   btn.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
 }
 
-// === Навигация ===
+// ----------------------------------------------
+// 3. Навигация по шагам
+// ----------------------------------------------
 function goToStep(step) {
   [step1Form, step2Form, step3Form, step4Form].forEach(s => s.classList.remove('active'));
   document.getElementById(`step${step}Form`).classList.add('active');
@@ -84,7 +90,9 @@ function updateStep2Fields() {
   else if (selectedType === 'organization') orgFields.style.display = 'block';
 }
 
-// === Валидация шагов ===
+// ----------------------------------------------
+// 4. Валидация шагов
+// ----------------------------------------------
 function validateStep(step) {
   if (step === 1) {
     if (!selectedType) {
@@ -192,7 +200,9 @@ function validateStep(step) {
   return true;
 }
 
-// === Глобальные функции для кнопок "Далее/Назад" ===
+// ----------------------------------------------
+// 5. Кнопки "Далее/Назад" (глобальные для HTML)
+// ----------------------------------------------
 window.selectAccountType = function() {
   if (validateStep(1)) goToStep(2);
 };
@@ -205,7 +215,9 @@ window.prevStep = function(step) {
   goToStep(step - 1);
 };
 
-// === Генерация сводки ===
+// ----------------------------------------------
+// 6. Генерация сводки (шаг 4)
+// ----------------------------------------------
 function generateSummary() {
   const summaryDiv = document.getElementById('registrationSummary');
   let html = '';
@@ -242,7 +254,9 @@ function generateSummary() {
   summaryDiv.innerHTML = html;
 }
 
-// === ОБРАБОТКА ОТПРАВКИ ФОРМЫ (с вызовом Edge Function) ===
+// ----------------------------------------------
+// 7. ОСНОВНАЯ ЛОГИКА: регистрация + Edge Function
+// ----------------------------------------------
 async function handleSubmit(e) {
   e.preventDefault();
 
@@ -257,7 +271,7 @@ async function handleSubmit(e) {
   const phone = document.getElementById('phone').value.trim();
   const password = document.getElementById('password').value;
 
-  // 1. Регистрация в Supabase Auth (подтверждение email включено)
+  // ШАГ 1: Регистрация в Auth (подтверждение email включено)
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -281,7 +295,7 @@ async function handleSubmit(e) {
     return;
   }
 
-  // 2. Подготовка данных профиля
+  // ШАГ 2: Подготовка данных профиля
   let tableName, record;
 
   if (selectedType === 'citizen') {
@@ -322,7 +336,7 @@ async function handleSubmit(e) {
       personal_code: document.getElementById('personalCodeSubject').value.trim(),
       email: email,
       phone: phone,
-      account_type: 'Упрощённая',
+      account_type: 'упрощённая',
       role: 'user',
       surname_status: 'oncheck',
       name_status: 'oncheck',
@@ -350,7 +364,7 @@ async function handleSubmit(e) {
     };
   }
 
-  // 3. Вызов Edge Function для сохранения профиля (с сервисным ключом)
+  // ШАГ 3: Вызов Edge Function для вставки профиля (с сервисным ключом)
   try {
     const response = await fetch(FUNCTION_URL, {
       method: 'POST',
@@ -366,7 +380,6 @@ async function handleSubmit(e) {
       throw new Error(result.error || 'Ошибка при сохранении профиля');
     }
 
-    // Успех
     showAlert(
       'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
       'После подтверждения вы сможете войти в систему.',
@@ -375,7 +388,6 @@ async function handleSubmit(e) {
     submitBtn.disabled = false;
     submitBtn.textContent = 'Зарегистрироваться';
 
-    // Перенаправление на страницу входа через 5 секунд
     setTimeout(() => {
       window.location.href = 'login.html';
     }, 5000);
@@ -387,7 +399,9 @@ async function handleSubmit(e) {
   }
 }
 
-// === Уведомления ===
+// ----------------------------------------------
+// 8. Уведомления
+// ----------------------------------------------
 function showAlert(message, type) {
   alertDiv.textContent = message;
   alertDiv.className = `alert alert-${type}`;
