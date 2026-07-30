@@ -1,7 +1,7 @@
 // js/register-supabase.js
-import { supabase } from './supabase-config.js';
+import { supabase, FUNCTION_URL } from './supabase-config.js';
 
-// Элементы DOM
+// === DOM-элементы ===
 const form = document.getElementById('registrationForm');
 const step1Form = document.getElementById('step1Form');
 const step2Form = document.getElementById('step2Form');
@@ -16,23 +16,19 @@ const steps = {
 };
 const alertDiv = document.getElementById('alertMessage');
 
-// Поля шага 2 по категориям
 const citizenFields = document.getElementById('citizenFields');
 const subjectFields = document.getElementById('subjectFields');
 const orgFields = document.getElementById('orgFields');
 
-// Кнопки показа/скрытия пароля
 const togglePassword = document.getElementById('togglePassword');
 const toggleConfirm = document.getElementById('toggleConfirmPassword');
 
-// Состояние
 let currentStep = 1;
-let selectedType = null; // 'citizen', 'subject', 'organization'
-let formData = {};
+let selectedType = null;
 
-// Инициализация
+// === Инициализация ===
 document.addEventListener('DOMContentLoaded', () => {
-  // Обработчики выбора типа аккаунта
+  // Выбор типа
   document.querySelectorAll('.account-type-option').forEach(option => {
     option.addEventListener('click', () => {
       document.querySelectorAll('.account-type-option').forEach(opt => opt.classList.remove('selected'));
@@ -49,7 +45,6 @@ document.addEventListener('DOMContentLoaded', () => {
   form.addEventListener('submit', handleSubmit);
 });
 
-// Вспомогательные функции
 function togglePasswordVisibility(inputId, btn) {
   const input = document.getElementById(inputId);
   const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
@@ -57,14 +52,14 @@ function togglePasswordVisibility(inputId, btn) {
   btn.textContent = type === 'password' ? '👁️' : '👁️‍🗨️';
 }
 
-// Переключение шагов
+// === Навигация ===
 function goToStep(step) {
   [step1Form, step2Form, step3Form, step4Form].forEach(s => s.classList.remove('active'));
   document.getElementById(`step${step}Form`).classList.add('active');
-  
+
   const progressPercent = (step / 4) * 100;
   progressFill.style.width = `${progressPercent}%`;
-  
+
   Object.keys(steps).forEach(s => {
     const stepEl = steps[s];
     if (s < step) stepEl.classList.add('completed');
@@ -89,7 +84,7 @@ function updateStep2Fields() {
   else if (selectedType === 'organization') orgFields.style.display = 'block';
 }
 
-// Валидация шага
+// === Валидация шагов ===
 function validateStep(step) {
   if (step === 1) {
     if (!selectedType) {
@@ -98,7 +93,7 @@ function validateStep(step) {
     }
     return true;
   }
-  
+
   if (step === 2) {
     let valid = true;
     if (selectedType === 'citizen') {
@@ -118,7 +113,6 @@ function validateStep(step) {
         valid = false;
       }
     } else if (selectedType === 'subject') {
-      // ИСПРАВЛЕНО: используем personalCodeSubject вместо passportNumber
       const required = ['subjectFullName', 'subjectBirthDate', 'personalCodeSubject', 'nationality', 'subjectGender'];
       required.forEach(id => {
         const input = document.getElementById(id);
@@ -159,7 +153,7 @@ function validateStep(step) {
     if (!valid) showAlert('Заполните все обязательные поля корректно', 'error');
     return valid;
   }
-  
+
   if (step === 3) {
     const email = document.getElementById('email').value.trim();
     const phone = document.getElementById('phone').value.trim();
@@ -184,7 +178,7 @@ function validateStep(step) {
     }
     return true;
   }
-  
+
   if (step === 4) {
     const agreeTerms = document.getElementById('agreeTerms').checked;
     const agreePrivacy = document.getElementById('agreePrivacy').checked;
@@ -194,11 +188,11 @@ function validateStep(step) {
     }
     return true;
   }
-  
+
   return true;
 }
 
-// Навигация
+// === Глобальные функции для кнопок "Далее/Назад" ===
 window.selectAccountType = function() {
   if (validateStep(1)) goToStep(2);
 };
@@ -211,7 +205,7 @@ window.prevStep = function(step) {
   goToStep(step - 1);
 };
 
-// Генерация сводки на шаге 4 (ИСПРАВЛЕНО для subject)
+// === Генерация сводки ===
 function generateSummary() {
   const summaryDiv = document.getElementById('registrationSummary');
   let html = '';
@@ -248,13 +242,12 @@ function generateSummary() {
   summaryDiv.innerHTML = html;
 }
 
-// Отправка формы (ИСПРАВЛЕНО: устранены ошибки с полями, добавлена обработка RLS)
+// === ОБРАБОТКА ОТПРАВКИ ФОРМЫ (с вызовом Edge Function) ===
 async function handleSubmit(e) {
   e.preventDefault();
 
   if (!validateStep(4)) return;
 
-  // Блокируем кнопку и показываем загрузку
   const submitBtn = document.querySelector('.btn-submit');
   submitBtn.disabled = true;
   submitBtn.textContent = 'Регистрация...';
@@ -264,7 +257,7 @@ async function handleSubmit(e) {
   const phone = document.getElementById('phone').value.trim();
   const password = document.getElementById('password').value;
 
-  // 1. Регистрация в Supabase Auth
+  // 1. Регистрация в Supabase Auth (подтверждение email включено)
   const { data: authData, error: authError } = await supabase.auth.signUp({
     email,
     password,
@@ -288,7 +281,7 @@ async function handleSubmit(e) {
     return;
   }
 
-  // 2. Подготовка данных для таблицы
+  // 2. Подготовка данных профиля
   let tableName, record;
 
   if (selectedType === 'citizen') {
@@ -326,10 +319,10 @@ async function handleSubmit(e) {
       citizenship: document.getElementById('nationality').value.trim(),
       date_of_birth: document.getElementById('subjectBirthDate').value,
       place_of_birth: document.getElementById('subjectBirthPlace').value.trim() || null,
-      personal_code: document.getElementById('personalCodeSubject').value.trim(), // ИСПРАВЛЕНО
+      personal_code: document.getElementById('personalCodeSubject').value.trim(),
       email: email,
       phone: phone,
-      account_type: 'упрощённая',
+      account_type: 'Упрощённая',
       role: 'user',
       surname_status: 'oncheck',
       name_status: 'oncheck',
@@ -357,35 +350,44 @@ async function handleSubmit(e) {
     };
   }
 
-  // 3. Вставка записи в таблицу
-  const { error: insertError } = await supabase
-    .from(tableName)
-    .insert([record]);
+  // 3. Вызов Edge Function для сохранения профиля (с сервисным ключом)
+  try {
+    const response = await fetch(FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ table: tableName, record }),
+    });
 
-  if (insertError) {
-    // Если ошибка вставки – уведомляем, но аккаунт уже создан.
-    // В идеале нужно удалить пользователя через admin API, но из клиента это невозможно.
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Ошибка при сохранении профиля');
+    }
+
+    // Успех
     showAlert(
-      'Ошибка сохранения данных: ' + insertError.message + 
-      '. Ваш аккаунт создан, но профиль не заполнен. Пожалуйста, обратитесь в поддержку.',
-      'error'
+      'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
+      'После подтверждения вы сможете войти в систему.',
+      'success'
     );
     submitBtn.disabled = false;
     submitBtn.textContent = 'Зарегистрироваться';
-    return;
+
+    // Перенаправление на страницу входа через 5 секунд
+    setTimeout(() => {
+      window.location.href = 'login.html';
+    }, 5000);
+
+  } catch (error) {
+    showAlert('Ошибка сохранения профиля: ' + error.message, 'error');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Зарегистрироваться';
   }
-
-  // Успех
-  showAlert('Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. После подтверждения вы сможете войти.', 'success');
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Зарегистрироваться';
-
-  setTimeout(() => {
-    window.location.href = 'login.html';
-  }, 5000);
 }
 
-// Отображение уведомлений
+// === Уведомления ===
 function showAlert(message, type) {
   alertDiv.textContent = message;
   alertDiv.className = `alert alert-${type}`;
