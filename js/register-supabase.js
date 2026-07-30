@@ -272,66 +272,31 @@ async function handleSubmit(e) {
   const phone = document.getElementById('phone').value.trim();
   const password = document.getElementById('password').value;
 
-  // ШАГ 1: Регистрация в Auth
-const { data: authData, error: authError } = await supabase.auth.signUp({
-  email,
-  password,
-  options: {
-    emailRedirectTo: window.location.origin + '/profile.html'
-  }
-});
-
-if (authError) {
-  console.error('Auth error details:', authError);
-  showAlert('Ошибка регистрации: ' + authError.message, 'error');
-  // Если есть дополнительные поля, выведите их
-  if (authError.status) showAlert('Код ошибки: ' + authError.status, 'error');
-  submitBtn.disabled = false;
-  submitBtn.textContent = 'Зарегистрироваться';
-  return;
-}
-
-  // --------------------------------------------------------------
-  //  ВАЖНО: Ожидаем установки сессии, чтобы RLS пропустил вставку
-  // --------------------------------------------------------------
-  try {
-    // Проверяем, есть ли сессия
-    let { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      // Если сессии нет, ждём события SIGNED_IN (макс. 5 сек)
-      await new Promise((resolve) => {
-        const unsubscribe = supabase.auth.onAuthStateChange((event, newSession) => {
-          if (event === 'SIGNED_IN' || newSession) {
-            unsubscribe();
-            resolve();
-          }
-        });
-        setTimeout(() => {
-          unsubscribe();
-          resolve();
-        }, 5000);
-      });
-      // Повторно проверяем
-      const { data: { session: retrySession } } = await supabase.auth.getSession();
-      if (!retrySession) {
-        throw new Error('Сессия не установлена после регистрации');
-      }
+  // 1. Регистрация в Auth (теперь сессия сразу)
+  const { data: authData, error: authError } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: window.location.origin + '/profile.html'
     }
+  });
 
-    // Дополнительно проверяем, что текущий пользователь совпадает с созданным
-    const { data: { user: currentUser }, error: userError } = await supabase.auth.getUser();
-    if (userError || !currentUser || currentUser.id !== user.id) {
-      throw new Error('Текущий пользователь не совпадает с зарегистрированным');
-    }
-
-  } catch (err) {
-    showAlert('Ошибка аутентификации: ' + err.message, 'error');
+  if (authError) {
+    showAlert('Ошибка регистрации: ' + authError.message, 'error');
     submitBtn.disabled = false;
     submitBtn.textContent = 'Зарегистрироваться';
     return;
   }
 
-  // ШАГ 2: Подготовка данных профиля
+  const user = authData.user;
+  if (!user) {
+    showAlert('Не удалось создать пользователя', 'error');
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Зарегистрироваться';
+    return;
+  }
+
+  // 2. Подготовка данных профиля (как раньше)
   let tableName, record;
 
   if (selectedType === 'citizen') {
@@ -400,7 +365,7 @@ if (authError) {
     };
   }
 
-  // ШАГ 3: Прямая вставка в таблицу
+  // 3. Прямая вставка (сессия уже есть)
   try {
     const { data, error: insertError } = await supabase
       .from(tableName)
@@ -412,8 +377,7 @@ if (authError) {
     }
 
     showAlert(
-      'Регистрация прошла успешно! На вашу почту отправлено письмо с подтверждением. ' +
-      'После подтверждения вы сможете войти в систему.',
+      'Регистрация прошла успешно! Теперь вы можете войти.',
       'success'
     );
     submitBtn.disabled = false;
@@ -421,7 +385,7 @@ if (authError) {
 
     setTimeout(() => {
       window.location.href = 'login.html';
-    }, 5000);
+    }, 3000);
 
   } catch (error) {
     showAlert('Ошибка сохранения профиля: ' + error.message, 'error');
