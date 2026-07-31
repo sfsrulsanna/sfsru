@@ -5,6 +5,7 @@ import { supabase } from '../../../js/supabase-config.js';
 const AGENTS_TABLE_INDIVIDUAL = 'foreign_agents';       // физические лица
 const AGENTS_TABLE_LEGAL = 'foreign_agents_org';        // юридические лица
 const LOGIN_PAGE = '../../login.html';
+const BUCKET_NAME = 'foreign-agent-files';              // имя bucket в Storage
 
 // -------------------- DOM ЭЛЕМЕНТЫ --------------------
 const authSection = document.getElementById('authSection');
@@ -16,6 +17,9 @@ const modalOverlay = document.getElementById('modalOverlay');
 const modalClose = document.getElementById('modalClose');
 const modalTitle = document.getElementById('modalTitle');
 const modalContent = document.getElementById('modalContent');
+const modalMainPhoto = document.getElementById('modalMainPhoto');
+const photoThumbnails = document.getElementById('photoThumbnails');
+const documentsList = document.getElementById('documentsList');
 
 let currentType = 'individual'; // 'individual' или 'legal'
 let currentData = [];
@@ -80,6 +84,28 @@ function hideMessage() {
     if (accessMessageDiv) accessMessageDiv.style.display = 'none';
 }
 
+// Получение подписанных URL для файлов из Storage
+async function getSignedUrls(filePaths, expiresIn = 3600) {
+    if (!filePaths || filePaths.length === 0) return [];
+    const promises = filePaths.map(async (path) => {
+        try {
+            const { data, error } = await supabase.storage
+                .from(BUCKET_NAME)
+                .createSignedUrl(path, expiresIn);
+            if (error) {
+                console.error('Ошибка создания signed URL для', path, error);
+                return null;
+            }
+            return data.signedUrl;
+        } catch (err) {
+            console.error('Исключение при создании signed URL:', err);
+            return null;
+        }
+    });
+    const results = await Promise.all(promises);
+    return results.filter(url => url !== null);
+}
+
 // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
 async function loadData() {
     const tableName = currentType === 'individual' ? AGENTS_TABLE_INDIVIDUAL : AGENTS_TABLE_LEGAL;
@@ -120,7 +146,7 @@ function renderTable(agents) {
     tableHeader.innerHTML = `<tr>${headers.map(h => `<th>${escapeHTML(h)}</th>`).join('')}</tr>`;
 
     agentsTbody.innerHTML = agents.map(agent => {
-        const serialNumber = agent.serial_number || agent.id; // fallback на случай отсутствия
+        const serialNumber = agent.serial_number || agent.id;
         let rowCells = [];
         rowCells.push(`<td>${serialNumber}</td>`);
         if (currentType === 'individual') {
@@ -147,14 +173,16 @@ function renderTable(agents) {
     document.querySelectorAll('#agentsTbody tr').forEach(row => {
         row.addEventListener('click', () => {
             const id = row.getAttribute('data-agent-id');
-            const agent = currentData.find(a => a.id === id);
+            // Приводим к строке для безопасного сравнения
+            const agent = currentData.find(a => String(a.id) === id);
             if (agent) openModal(agent);
         });
     });
 }
 
-// -------------------- МОДАЛЬНОЕ ОКНО --------------------
-function openModal(agent) {
+// -------------------- МОДАЛЬНОЕ ОКНО (ОБНОВЛЕНО) --------------------
+async function openModal(agent) {
+    // Заполняем таблицу с информацией
     let fields = [];
     if (currentType === 'individual') {
         fields = [
@@ -213,6 +241,59 @@ function openModal(agent) {
             <div class="info-value">${f.value}</div>
         </div>
     `).join('');
+
+    // ----- Загрузка фото и документов -----
+    // Получаем signed URL для фото
+    const photoPaths = agent.photo_paths || [];
+    const photoUrls = await getSignedUrls(photoPaths, 7200);
+    
+    // Основное фото
+    if (photoUrls.length > 0) {
+        modalMainPhoto.src = photoUrls[0];
+        modalMainPhoto.alt = agent.full_name || 'Фото';
+        modalMainPhoto.onerror = function() {
+            this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="267" viewBox="0 0 200 267"%3E%3Crect width="200" height="267" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="%23999"%3EНет фото%3C/text%3E%3C/svg%3E';
+        };
+    } else {
+        modalMainPhoto.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="200" height="267" viewBox="0 0 200 267"%3E%3Crect width="200" height="267" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="14" fill="%23999"%3EНет фото%3C/text%3E%3C/svg%3E';
+        modalMainPhoto.alt = 'Нет фото';
+    }
+
+    // Превью (thumbnails)
+    photoThumbnails.innerHTML = '';
+    photoUrls.forEach((url, index) => {
+        const thumb = document.createElement('img');
+        thumb.src = url;
+        thumb.alt = `Фото ${index+1}`;
+        thumb.className = 'thumbnail';
+        thumb.onerror = function() {
+            this.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"%3E%3Crect width="50" height="50" fill="%23f0f0f0"/%3E%3Ctext x="50%25" y="50%25" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="8" fill="%23999"%3Eошибка%3C/text%3E%3C/svg%3E';
+        };
+        if (index === 0) thumb.classList.add('active');
+        thumb.addEventListener('click', () => {
+            modalMainPhoto.src = url;
+            document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+            thumb.classList.add('active');
+        });
+        photoThumbnails.appendChild(thumb);
+    });
+
+    // Документы
+    const docPaths = agent.document_paths || [];
+    const docUrls = await getSignedUrls(docPaths, 7200);
+    documentsList.innerHTML = '';
+    if (docUrls.length > 0) {
+        docUrls.forEach((url, index) => {
+            const link = document.createElement('a');
+            link.href = url;
+            link.target = '_blank';
+            link.className = 'document-link';
+            link.innerHTML = `<i>📄</i> Документ ${index+1}`;
+            documentsList.appendChild(link);
+        });
+    } else {
+        documentsList.innerHTML = '<p>Нет документов</p>';
+    }
 
     modalOverlay.classList.add('active');
     document.body.style.overflow = 'hidden';

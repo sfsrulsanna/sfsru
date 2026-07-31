@@ -104,7 +104,7 @@
     width: 100%;
     border-collapse: collapse;
     background: white;
-    min-width: 600px; /* принудительный скролл на узких экранах */
+    min-width: 600px;
 }
 .registry-table thead tr {
     background: linear-gradient(135deg, #ff6666, #cc0000);
@@ -202,12 +202,56 @@
 }
 .modal-body {
     padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
-
-/* Таблица данных в модальном окне */
+.modal-top {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+.modal-photo-section {
+    flex: 0 0 200px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+.modal-main-photo {
+    width: 100%;
+    aspect-ratio: 3 / 4;
+    object-fit: cover;
+    border-radius: 8px;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+}
+.modal-thumbnails {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.thumbnail {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+.thumbnail.active {
+    border-color: #7b091a;
+}
+.modal-info-table {
+    flex: 1;
+    min-width: 250px;
+}
 .agent-info-table {
     display: grid;
-    grid-template-columns: 1fr 2fr;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem 1rem;
     border: 1px solid #ddd;
     border-radius: 8px;
     overflow: hidden;
@@ -236,14 +280,35 @@
 .info-value a:hover {
     text-decoration: underline;
 }
-/* Убираем нижнюю границу у последней строки */
 .agent-info-table .info-row:last-child .info-label,
 .agent-info-table .info-row:last-child .info-value {
     border-bottom: none;
 }
 
+.documents-section {
+    border-top: 1px solid #e2e8f0;
+    padding-top: 1rem;
+}
+.documents-section h4 {
+    margin: 0 0 0.5rem 0;
+    color: #0f172a;
+}
+.document-link {
+    display: inline-block;
+    margin: 0.25rem 0.5rem 0.25rem 0;
+    padding: 0.3rem 0.8rem;
+    background: #f1f5f9;
+    border-radius: 20px;
+    text-decoration: none;
+    color: #1e293b;
+    font-size: 0.9rem;
+}
+.document-link:hover {
+    background: #e2e8f0;
+}
+
 .modal-footer {
-    margin-top: 1.5rem;
+    margin-top: 0.5rem;
     padding-top: 1rem;
     border-top: 2px solid #ffcccc;
     text-align: right;
@@ -260,6 +325,15 @@
 
 /* Адаптивность для модального окна на мобильных */
 @media (max-width: 768px) {
+    .modal-top {
+        flex-direction: column;
+        align-items: center;
+    }
+    .modal-photo-section {
+        flex: 0 0 auto;
+        width: 60%;
+        max-width: 200px;
+    }
     .agent-info-table {
         grid-template-columns: 1fr;
     }

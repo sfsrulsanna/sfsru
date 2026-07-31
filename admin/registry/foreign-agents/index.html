@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Реестр иностранных агентов — Админ панель СФСРЮ</title>
-    <!-- favicons (полный набор) -->
+    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -26,87 +26,94 @@
     <link rel="stylesheet" href="../../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .container {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 1rem;
+        /* Все стили в одном месте */
+        .container { max-width: 1280px; margin: 0 auto; padding: 1rem; }
+        .page-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; border-left: 4px solid #7b091a; padding-left: 1rem; }
+        .page-description { color: #64748b; margin-bottom: 2rem; font-size: 1rem; }
+        .back-link { margin-bottom: 1.5rem; }
+        .back-link a { color: #7b091a; text-decoration: none; font-weight: 500; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; border-radius: 16px; padding: 1.5rem; text-align: center; box-shadow: 0 4px 20px rgba(0,0,0,0.08); transition: transform 0.2s; }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.12); }
+        .stat-number { font-size: 2.5rem; font-weight: 700; color: #7b091a; margin-bottom: 0.5rem; }
+        .stat-label { color: #475569; font-size: 0.9rem; font-weight: 500; }
+        .action-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 2rem; flex-wrap: wrap; }
+        .btn-large { padding: 0.85rem 2rem; font-size: 1rem; font-weight: 500; border-radius: 40px; }
+        .btn-primary { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-decoration: none; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,123,255,0.2); }
+        .btn-success { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        .btn-success:hover { background: linear-gradient(135deg, #218838, #1a6e2f); }
+        .btn-danger { background: linear-gradient(135deg, #dc3545, #bd2130); }
+        .btn-danger:hover { background: linear-gradient(135deg, #c82333, #a71d2a); }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; border-bottom: 1px solid #e2e8f0; }
+        .tab { padding: 0.75rem 1.5rem; background: none; border: none; font-size: 1rem; font-weight: 500; color: #64748b; cursor: pointer; transition: all 0.2s; border-bottom: 2px solid transparent; }
+        .tab:hover { color: #1e293b; }
+        .tab.active { color: #7b091a; border-bottom-color: #7b091a; }
+
+        .filters { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; align-items: center; background: white; padding: 1rem; border-radius: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .filters input { padding: 0.6rem 1rem; border: 1px solid #cbd5e1; border-radius: 40px; font-size: 0.95rem; min-width: 250px; background: white; }
+        .filters button { background: linear-gradient(135deg, #007bff, #0056b3); border: none; padding: 0.6rem 1.5rem; border-radius: 40px; color: white; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .filters button:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
+        .stats-badge { background: #f1f5f9; padding: 0.4rem 1rem; border-radius: 40px; font-size: 0.9rem; font-weight: 500; color: #1e293b; }
+
+        .app-table { width: 100%; border-collapse: collapse; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .app-table th { background: #f8fafc; padding: 12px 16px; text-align: left; font-weight: 600; color: #0f172a; border-bottom: 1px solid #e2e8f0; }
+        .app-table td { padding: 12px 16px; border-bottom: 1px solid #e2e8f0; color: #1e293b; }
+        .app-table tr:hover td { background: #fef9e3; cursor: pointer; }
+        .app-table .btn-view { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border: none; padding: 6px 16px; border-radius: 40px; cursor: pointer; text-decoration: none; display: inline-block; font-size: 0.9rem; transition: all 0.2s; }
+        .app-table .btn-view:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,123,255,0.2); }
+        .loading, .no-data, .error { text-align: center; padding: 2rem; color: #64748b; font-size: 1rem; }
+        .error { color: #dc3545; background: #fff5f5; border-radius: 12px; }
+
+        .form-card { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); max-width: 800px; margin: 0 auto; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; padding: 0.7rem 1rem; border: 1px solid #cbd5e1; border-radius: 12px; font-size: 0.95rem; transition: border 0.2s; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { outline: none; border-color: #007bff; box-shadow: 0 0 0 3px rgba(0,123,255,0.1); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .btn-submit { background: linear-gradient(135deg, #28a745, #1e7e34); color: white; border: none; padding: 0.8rem 2rem; font-size: 1rem; font-weight: 500; border-radius: 40px; cursor: pointer; transition: all 0.2s; display: inline-flex; align-items: center; gap: 0.5rem; }
+        .btn-submit:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(40,167,69,0.2); }
+        .message { margin-top: 1rem; padding: 0.8rem; border-radius: 12px; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error-msg { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .hidden { display: none; }
+
+        .app-details { background: white; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 2rem; max-width: 800px; margin: 0 auto; }
+        .details-table { width: 100%; border-collapse: collapse; }
+        .details-table th, .details-table td { padding: 12px 16px; border: 1px solid #e2e8f0; vertical-align: top; }
+        .details-table th { background: #f8fafc; font-weight: 600; color: #0f172a; width: 35%; text-align: right; font-size: 0.9rem; }
+        .details-table td { background: white; color: #1e293b; }
+
+        .photo-section { display: flex; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem; }
+        .photo-main { flex: 0 0 150px; aspect-ratio: 3/4; object-fit: cover; border-radius: 8px; border: 1px solid #ddd; background: #f0f0f0; }
+        .photo-thumbnails { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
+        .thumbnail { width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s; }
+        .thumbnail.active { border-color: #7b091a; }
+        .documents-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+        .document-link { display: inline-block; padding: 0.3rem 0.8rem; background: #f1f5f9; border-radius: 20px; text-decoration: none; color: #1e293b; font-size: 0.9rem; }
+        .document-link:hover { background: #e2e8f0; }
+
+        .file-upload { display: flex; flex-direction: column; gap: 0.5rem; }
+        .file-upload input[type="file"] { padding: 0.4rem; border: 1px dashed #cbd5e1; border-radius: 8px; background: #f8fafc; }
+        .file-preview { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+        .file-preview-item { position: relative; display: inline-block; }
+        .file-preview-item img { height: 60px; width: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; }
+        .file-preview-item .remove-file { position: absolute; top: -6px; right: -6px; background: #dc3545; color: white; border: none; border-radius: 50%; width: 20px; height: 20px; font-size: 12px; cursor: pointer; line-height: 1; }
+
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .app-table, .app-table tbody, .app-table tr, .app-table td, .app-table th { display: block; }
+            .app-table tr { margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+            .app-table th { display: none; }
+            .app-table td { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: none; }
+            .app-table td::before { content: attr(data-label); font-weight: 600; color: #0f172a; margin-right: 1rem; }
+            .details-table th, .details-table td { display: block; width: 100%; text-align: left; }
+            .details-table th { border-bottom: none; }
         }
-        .page-title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #1e293b;
-            border-left: 4px solid #7b091a;
-            padding-left: 1rem;
-        }
-        .page-description {
-            color: #64748b;
-            margin-bottom: 2rem;
-            font-size: 1rem;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            background: white;
-            border-radius: 16px;
-            padding: 1.5rem;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            transition: transform 0.2s;
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
-        }
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #7b091a;
-            margin-bottom: 0.5rem;
-        }
-        .stat-label {
-            color: #475569;
-            font-size: 0.9rem;
-            font-weight: 500;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            margin-top: 2rem;
-            flex-wrap: wrap;
-        }
-        .btn-large {
-            padding: 0.85rem 2rem;
-            font-size: 1rem;
-            font-weight: 500;
-            border-radius: 40px;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #007bff, #0056b3);
-            color: white;
-            border: none;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0, 123, 255, 0.2);
-        }
-        .btn-success {
-            background: linear-gradient(135deg, #28a745, #1e7e34);
-        }
-        .btn-success:hover {
-            background: linear-gradient(135deg, #218838, #1a6e2f);
-        }
+        .hidden-page { display: none; }
     </style>
     <script type="importmap">
         {
@@ -148,23 +155,8 @@
     <div class="menu-overlay"></div>
 
     <main class="main-content">
-        <div class="container">
-            <div class="back-link">
-                <a href="../index.html"><i class="fas fa-arrow-left"></i> На главную регистров</a>
-            </div>
-            <h1 class="page-title">Реестр иностранных агентов</h1>
-            <p class="page-description">Управление записями о лицах и организациях, подпадающих под иностранное влияние</p>
-
-            <div class="stats-grid" id="stats">
-                <div class="stat-card"><div class="stat-number" id="totalIndividuals">0</div><div class="stat-label">Физические лица</div></div>
-                <div class="stat-card"><div class="stat-number" id="totalLegal">0</div><div class="stat-label">Юридические лица</div></div>
-            </div>
-
-            <div class="action-buttons">
-                <a href="add.html?type=individual" class="btn-primary btn-large"><i class="fas fa-user-plus"></i> Добавить физ. лицо</a>
-                <a href="add.html?type=legal" class="btn-primary btn-large"><i class="fas fa-building"></i> Добавить юр. лицо</a>
-                <a href="all.html" class="btn-primary btn-large"><i class="fas fa-list"></i> Все записи</a>
-            </div>
+        <div class="container" id="appContainer">
+            <!-- Содержимое будет рендериться здесь -->
         </div>
     </main>
 
@@ -178,31 +170,753 @@
         import { supabase } from '../../../js/supabase-config.js';
         import { requireAdmin } from '../../certificates/js/certificates-common.js';
 
-        async function loadStats() {
-            const { count: individuals, error: e1 } = await supabase
-                .schema('registry')
-                .from('foreign_agents')
-                .select('*', { count: 'exact', head: true });
-            const { count: legal, error: e2 } = await supabase
-                .schema('registry')
-                .from('foreign_agents_org')
-                .select('*', { count: 'exact', head: true });
+        // -------------------- Конфигурация --------------------
+        const BUCKET_NAME = 'foreign-agent-files';
+        const TABLES = {
+            individual: 'foreign_agents',
+            legal: 'foreign_agents_org'
+        };
 
-            if (!e1) document.getElementById('totalIndividuals').textContent = individuals ?? 0;
-            if (!e2) document.getElementById('totalLegal').textContent = legal ?? 0;
+        // -------------------- Состояние --------------------
+        let currentUser = null;
+        let currentPage = 'home'; // home, all, add, edit, view
+        let currentType = 'individual';
+        let currentId = null;
+        let allData = [];
+        let tempFiles = { photos: [], documents: [] }; // для загрузки в add/edit
+
+        // -------------------- DOM ссылки --------------------
+        const container = document.getElementById('appContainer');
+
+        // -------------------- Вспомогательные функции --------------------
+        function escapeHTML(unsafe) {
+            if (!unsafe) return '';
+            return unsafe.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m));
         }
 
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            try { return new Date(dateStr).toLocaleDateString('ru-RU'); } catch { return dateStr; }
+        }
+
+        function linkifyList(text) {
+            if (!text || text === '—') return '—';
+            let items = text.split(',').map(s => s.trim()).filter(s => s);
+            let linked = items.map(item => {
+                if (item.includes('@') && !item.startsWith('http')) return `<a href="mailto:${escapeHTML(item)}">${escapeHTML(item)}</a>`;
+                if (/^[\+]?[\d\s\(\)\-]{5,}$/.test(item.replace(/\s/g, ''))) {
+                    let cleaned = item.replace(/[^\d+]/g, '');
+                    return `<a href="tel:${escapeHTML(cleaned)}">${escapeHTML(item)}</a>`;
+                }
+                if (/^https?:\/\//i.test(item)) return `<a href="${escapeHTML(item)}" target="_blank">${escapeHTML(item)}</a>`;
+                return escapeHTML(item);
+            });
+            return linked.join(', ');
+        }
+
+        function getTable() { return TABLES[currentType]; }
+
+        async function getSignedUrls(paths, expires = 7200) {
+            if (!paths || !paths.length) return [];
+            const results = await Promise.all(paths.map(async p => {
+                const { data, error } = await supabase.storage.from(BUCKET_NAME).createSignedUrl(p, expires);
+                if (error) { console.error('Signed URL error:', error); return null; }
+                return data.signedUrl;
+            }));
+            return results.filter(u => u);
+        }
+
+        function showMessage(msg, type) {
+            const el = document.getElementById('message') || document.createElement('div');
+            if (!el.id) { el.id = 'message'; document.querySelector('.form-card')?.appendChild(el); }
+            el.textContent = msg;
+            el.className = `message ${type}`;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+
+        // -------------------- Навигация --------------------
+        function navigate(page, params = {}) {
+            currentPage = page;
+            if (params.type) currentType = params.type;
+            if (params.id) currentId = params.id;
+            // Обновляем URL без перезагрузки
+            const url = new URL(window.location);
+            url.searchParams.set('page', page);
+            if (params.type) url.searchParams.set('type', params.type);
+            if (params.id) url.searchParams.set('id', params.id);
+            window.history.pushState({ page, params }, '', url);
+            renderPage();
+        }
+
+        // -------------------- Рендеринг страниц --------------------
+        function renderPage() {
+            switch (currentPage) {
+                case 'home': renderHome(); break;
+                case 'all': renderAll(); break;
+                case 'add': renderAdd(); break;
+                case 'edit': renderEdit(); break;
+                case 'view': renderView(); break;
+                default: renderHome();
+            }
+        }
+
+        // -------------------- HOME --------------------
+        function renderHome() {
+            container.innerHTML = `
+                <div class="back-link"><a href="../../registry/index.html"><i class="fas fa-arrow-left"></i> На главную регистров</a></div>
+                <h1 class="page-title">Реестр иностранных агентов</h1>
+                <p class="page-description">Управление записями о лицах и организациях, подпадающих под иностранное влияние</p>
+                <div class="stats-grid">
+                    <div class="stat-card"><div class="stat-number" id="totalIndividuals">0</div><div class="stat-label">Физические лица</div></div>
+                    <div class="stat-card"><div class="stat-number" id="totalLegal">0</div><div class="stat-label">Юридические лица</div></div>
+                </div>
+                <div class="action-buttons">
+                    <a href="#" class="btn-primary btn-large" onclick="window.navigate('add', {type:'individual'})"><i class="fas fa-user-plus"></i> Добавить физ. лицо</a>
+                    <a href="#" class="btn-primary btn-large" onclick="window.navigate('add', {type:'legal'})"><i class="fas fa-building"></i> Добавить юр. лицо</a>
+                    <a href="#" class="btn-primary btn-large" onclick="window.navigate('all')"><i class="fas fa-list"></i> Все записи</a>
+                </div>
+            `;
+            loadStats();
+        }
+
+        async function loadStats() {
+            const { count: individuals } = await supabase.schema('registry').from(TABLES.individual).select('*', { count: 'exact', head: true });
+            const { count: legal } = await supabase.schema('registry').from(TABLES.legal).select('*', { count: 'exact', head: true });
+            document.getElementById('totalIndividuals').textContent = individuals ?? 0;
+            document.getElementById('totalLegal').textContent = legal ?? 0;
+        }
+
+        // -------------------- ALL --------------------
+        async function renderAll() {
+            container.innerHTML = `
+                <div class="back-link"><a href="#" onclick="window.navigate('home')"><i class="fas fa-arrow-left"></i> На главную</a></div>
+                <h1 class="page-title">Все записи</h1>
+                <p class="page-description">Полный список реестра иностранных агентов</p>
+                <div class="tabs">
+                    <button class="tab ${currentType === 'individual' ? 'active' : ''}" data-type="individual">Физические лица</button>
+                    <button class="tab ${currentType === 'legal' ? 'active' : ''}" data-type="legal">Юридические лица</button>
+                </div>
+                <div class="filters">
+                    <input type="text" id="searchInput" placeholder="Поиск по имени, названию, ИНН...">
+                    <button id="applyFilters">Применить</button>
+                    <span id="totalCount" class="stats-badge">Всего: 0</span>
+                </div>
+                <div id="loadingAll" class="loading">Загрузка...</div>
+                <table class="app-table" style="display:none;" id="allTable">
+                    <thead id="tableHeader"></thead>
+                    <tbody id="appsTableBody"></tbody>
+                </table>
+            `;
+            // Обработчики вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentType = tab.dataset.type;
+                    navigate('all', { type: currentType });
+                });
+            });
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('searchInput').addEventListener('keyup', e => { if (e.key === 'Enter') applyFilters(); });
+
+            await loadAllData();
+        }
+
+        async function loadAllData() {
+            const loading = document.getElementById('loadingAll');
+            loading.style.display = 'block';
+            const table = getTable();
+            const { data, error } = await supabase.schema('registry').from(table).select('*').order('serial_number', { ascending: true });
+            loading.style.display = 'none';
+            if (error) {
+                document.getElementById('appsTableBody').innerHTML = `<tr><td colspan="10" class="error">Ошибка: ${error.message}</td></tr>`;
+                return;
+            }
+            allData = data || [];
+            applyFilters();
+            document.getElementById('allTable').style.display = 'table';
+        }
+
+        function applyFilters() {
+            const search = document.getElementById('searchInput').value.trim().toLowerCase();
+            let filtered = allData;
+            if (search) {
+                if (currentType === 'individual') {
+                    filtered = filtered.filter(item =>
+                        (item.full_name && item.full_name.toLowerCase().includes(search)) ||
+                        (item.inn && item.inn.toLowerCase().includes(search)) ||
+                        (item.alias && item.alias.toLowerCase().includes(search))
+                    );
+                } else {
+                    filtered = filtered.filter(item =>
+                        (item.org_name && item.org_name.toLowerCase().includes(search)) ||
+                        (item.org_short_name && item.org_short_name.toLowerCase().includes(search)) ||
+                        (item.inn && item.inn.toLowerCase().includes(search))
+                    );
+                }
+            }
+            document.getElementById('totalCount').textContent = `Всего: ${filtered.length}`;
+            renderAllTable(filtered);
+        }
+
+        function renderAllTable(data) {
+            const tbody = document.getElementById('appsTableBody');
+            const thead = document.getElementById('tableHeader');
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="10" class="no-data">Нет записей</td></tr>';
+                thead.innerHTML = '';
+                return;
+            }
+            let headers = [];
+            if (currentType === 'individual') {
+                headers = ['№ п/п', 'ФИО', 'Псевдоним', 'ИНН', 'Дата включения', 'Дата исключения'];
+            } else {
+                headers = ['№ п/п', 'Краткое название', 'Полное наименование', 'ИНН', 'Дата включения', 'Дата исключения'];
+            }
+            thead.innerHTML = `<tr>${headers.map(h => `<th>${escapeHTML(h)}</th>`).join('')}</tr>`;
+            tbody.innerHTML = data.map(item => {
+                const serial = item.serial_number || item.id;
+                let row = `<tr data-id="${item.id}" data-type="${currentType}">`;
+                row += `<td data-label="№ п/п">${serial}</td>`;
+                if (currentType === 'individual') {
+                    row += `<td data-label="ФИО">${escapeHTML(item.full_name || '')}</td>`;
+                    row += `<td data-label="Псевдоним">${escapeHTML(item.alias || '')}</td>`;
+                    row += `<td data-label="ИНН">${escapeHTML(item.inn || '')}</td>`;
+                } else {
+                    row += `<td data-label="Краткое название">${escapeHTML(item.org_short_name || '')}</td>`;
+                    row += `<td data-label="Полное наименование">${escapeHTML(item.org_name || '')}</td>`;
+                    row += `<td data-label="ИНН">${escapeHTML(item.inn || '')}</td>`;
+                }
+                row += `<td data-label="Дата включения">${formatDate(item.inclusion_date)}</td>`;
+                row += `<td data-label="Дата исключения">${formatDate(item.exclusion_date)}</td>`;
+                row += `</tr>`;
+                return row;
+            }).join('');
+            document.querySelectorAll('#appsTableBody tr').forEach(row => {
+                row.addEventListener('click', () => {
+                    const id = row.dataset.id;
+                    const type = row.dataset.type;
+                    navigate('view', { id, type });
+                });
+            });
+        }
+
+        // -------------------- ADD --------------------
+        function renderAdd() {
+            const type = currentType;
+            container.innerHTML = `
+                <div class="back-link"><a href="#" onclick="window.navigate('home')"><i class="fas fa-arrow-left"></i> На главную</a></div>
+                <h1 class="page-title">Добавление иностранного агента</h1>
+                <p class="page-description">Внесите информацию о лице или организации</p>
+                <div class="form-card">
+                    <div class="tabs">
+                        <button class="tab ${type === 'individual' ? 'active' : ''}" data-type="individual">Физическое лицо</button>
+                        <button class="tab ${type === 'legal' ? 'active' : ''}" data-type="legal">Юридическое лицо</button>
+                    </div>
+                    <form id="addForm">
+                        <div id="individualFields" class="field-group" style="${type === 'individual' ? 'display:block' : 'display:none'}">
+                            ${buildIndividualForm({})}
+                        </div>
+                        <div id="legalFields" class="field-group" style="${type === 'legal' ? 'display:block' : 'display:none'}">
+                            ${buildLegalForm({})}
+                        </div>
+                        <div class="form-group">
+                            <label>Фото (можно несколько)</label>
+                            <div class="file-upload">
+                                <input type="file" id="photoUpload" accept="image/*" multiple>
+                                <div id="photoPreview" class="file-preview"></div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Документы (можно несколько)</label>
+                            <div class="file-upload">
+                                <input type="file" id="docUpload" multiple>
+                                <div id="docPreview" class="file-preview"></div>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Сохранить</button>
+                    </form>
+                    <div id="message" class="message hidden"></div>
+                </div>
+            `;
+            // Обработчики вкладок
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    currentType = tab.dataset.type;
+                    navigate('add', { type: currentType });
+                });
+            });
+            // Загрузка файлов
+            setupFileUpload('photoUpload', 'photoPreview', 'photos');
+            setupFileUpload('docUpload', 'docPreview', 'documents');
+            document.getElementById('addForm').addEventListener('submit', handleAddSubmit);
+        }
+
+        function buildIndividualForm(data) {
+            return `
+                <div class="form-group"><label for="full_name">Полное имя *</label><input type="text" id="full_name" value="${escapeHTML(data.full_name || '')}" required></div>
+                <div class="form-group"><label for="alias">Псевдоним</label><input type="text" id="alias" value="${escapeHTML(data.alias || '')}"></div>
+                <div class="form-group"><label for="reason">Основание включения</label><textarea id="reason" rows="3">${escapeHTML(data.reason || '')}</textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label for="inclusion_date">Дата включения</label><input type="date" id="inclusion_date" value="${data.inclusion_date || ''}"></div>
+                    <div class="form-group"><label for="exclusion_date">Дата исключения</label><input type="date" id="exclusion_date" value="${data.exclusion_date || ''}"></div>
+                </div>
+                <div class="form-group"><label for="domain">Домены (через запятую)</label><input type="text" id="domain" value="${escapeHTML(data.domain || '')}"></div>
+                <div class="form-group"><label for="type">Тип иностранного агента</label><input type="text" id="type" value="${escapeHTML(data.type || '')}"></div>
+                <div class="form-row">
+                    <div class="form-group"><label for="inn">ИНН</label><input type="text" id="inn" value="${escapeHTML(data.inn || '')}"></div>
+                    <div class="form-group"><label for="nss">СНИЛС</label><input type="text" id="nss" value="${escapeHTML(data.nss || '')}"></div>
+                </div>
+                <div class="form-group"><label for="birth_date">Дата рождения</label><input type="date" id="birth_date" value="${data.birth_date || ''}"></div>
+                <div class="form-group"><label for="email">Email (через запятую)</label><input type="text" id="email" value="${escapeHTML(data.email || '')}"></div>
+                <div class="form-group"><label for="phone_number">Телефоны (через запятую)</label><input type="text" id="phone_number" value="${escapeHTML(data.phone_number || '')}"></div>
+                <div class="form-group"><label for="account_number">Номер специального счета</label><input type="text" id="account_number" value="${escapeHTML(data.account_number || '')}"></div>
+                <div class="form-group"><label for="bank_name">Наименование и местонахождение банка</label><input type="text" id="bank_name" value="${escapeHTML(data.bank_name || '')}"></div>
+                <div class="form-row">
+                    <div class="form-group"><label for="bic">БИК</label><input type="text" id="bic" value="${escapeHTML(data.bic || '')}"></div>
+                    <div class="form-group"><label for="corr_account">Корр. счёт</label><input type="text" id="corr_account" value="${escapeHTML(data.corr_account || '')}"></div>
+                </div>
+                <div class="form-group"><label for="account_open_date">Дата открытия счёта</label><input type="date" id="account_open_date" value="${data.account_open_date || ''}"></div>
+                <div class="form-group"><label for="more">Дополнительные данные</label><textarea id="more" rows="4">${escapeHTML(data.more || '')}</textarea></div>
+            `;
+        }
+
+        function buildLegalForm(data) {
+            return `
+                <div class="form-group"><label for="org_name">Полное наименование *</label><input type="text" id="org_name" value="${escapeHTML(data.org_name || '')}" required></div>
+                <div class="form-group"><label for="org_short_name">Краткое название</label><input type="text" id="org_short_name" value="${escapeHTML(data.org_short_name || '')}"></div>
+                <div class="form-group"><label for="inn_legal">ИНН</label><input type="text" id="inn_legal" value="${escapeHTML(data.inn || '')}"></div>
+                <div class="form-group"><label for="ogrn">ОГРН</label><input type="text" id="ogrn" value="${escapeHTML(data.ogrn || '')}"></div>
+                <div class="form-group"><label for="establishment_date">Дата образования</label><input type="date" id="establishment_date" value="${data.establishment_date || ''}"></div>
+                <div class="form-group"><label for="head">Руководитель</label><input type="text" id="head" value="${escapeHTML(data.head || '')}"></div>
+                <div class="form-group"><label for="participants">Участники</label><textarea id="participants" rows="3">${escapeHTML(data.participants || '')}</textarea></div>
+                <div class="form-group"><label for="reason_legal">Основание</label><textarea id="reason_legal" rows="3">${escapeHTML(data.reason || '')}</textarea></div>
+                <div class="form-row">
+                    <div class="form-group"><label for="inclusion_date_legal">Дата включения</label><input type="date" id="inclusion_date_legal" value="${data.inclusion_date || ''}"></div>
+                    <div class="form-group"><label for="exclusion_date_legal">Дата исключения</label><input type="date" id="exclusion_date_legal" value="${data.exclusion_date || ''}"></div>
+                </div>
+                <div class="form-group"><label for="domain_legal">Домены</label><input type="text" id="domain_legal" value="${escapeHTML(data.domain || '')}"></div>
+                <div class="form-group"><label for="type_legal">Тип</label><input type="text" id="type_legal" value="${escapeHTML(data.type || '')}"></div>
+                <div class="form-group"><label for="address">Адрес</label><input type="text" id="address" value="${escapeHTML(data.address || '')}"></div>
+                <div class="form-group"><label for="email_legal">Email</label><input type="text" id="email_legal" value="${escapeHTML(data.email || '')}"></div>
+                <div class="form-group"><label for="phone_number_legal">Телефоны</label><input type="text" id="phone_number_legal" value="${escapeHTML(data.phone_number || '')}"></div>
+                <div class="form-group"><label for="account_number_legal">Спецсчёт</label><input type="text" id="account_number_legal" value="${escapeHTML(data.account_number || '')}"></div>
+                <div class="form-group"><label for="bank_name_legal">Банк</label><input type="text" id="bank_name_legal" value="${escapeHTML(data.bank_name || '')}"></div>
+                <div class="form-row">
+                    <div class="form-group"><label for="bic_legal">БИК</label><input type="text" id="bic_legal" value="${escapeHTML(data.bic || '')}"></div>
+                    <div class="form-group"><label for="corr_account_legal">Корр. счёт</label><input type="text" id="corr_account_legal" value="${escapeHTML(data.corr_account || '')}"></div>
+                </div>
+                <div class="form-group"><label for="account_open_date_legal">Дата открытия счёта</label><input type="date" id="account_open_date_legal" value="${data.account_open_date || ''}"></div>
+                <div class="form-group"><label for="more_legal">Доп. данные</label><textarea id="more_legal" rows="4">${escapeHTML(data.more || '')}</textarea></div>
+            `;
+        }
+
+        function setupFileUpload(inputId, previewId, type) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            if (!input || !preview) return;
+            input.addEventListener('change', () => {
+                const files = Array.from(input.files);
+                // Сохраняем файлы в tempFiles
+                if (type === 'photos') tempFiles.photos = files;
+                else tempFiles.documents = files;
+                renderPreview(preview, files, type);
+            });
+        }
+
+        function renderPreview(container, files, type) {
+            container.innerHTML = '';
+            files.forEach((file, idx) => {
+                const div = document.createElement('div');
+                div.className = 'file-preview-item';
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.alt = file.name;
+                    div.appendChild(img);
+                } else {
+                    const span = document.createElement('span');
+                    span.textContent = file.name;
+                    div.appendChild(span);
+                }
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'remove-file';
+                removeBtn.innerHTML = '&times;';
+                removeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    // Удаляем из tempFiles
+                    const arr = type === 'photos' ? tempFiles.photos : tempFiles.documents;
+                    arr.splice(idx, 1);
+                    // Обновляем input и preview
+                    const input = document.getElementById(type === 'photos' ? 'photoUpload' : 'docUpload');
+                    // Нельзя просто обновить files, поэтому пересоздаём
+                    const dataTransfer = new DataTransfer();
+                    arr.forEach(f => dataTransfer.items.add(f));
+                    input.files = dataTransfer.files;
+                    renderPreview(container, arr, type);
+                });
+                div.appendChild(removeBtn);
+                container.appendChild(div);
+            });
+        }
+
+        // -------------------- Обработка добавления --------------------
+        async function handleAddSubmit(e) {
+            e.preventDefault();
+            const type = currentType;
+            const table = getTable();
+            let data = {};
+            if (type === 'individual') {
+                data = {
+                    full_name: document.getElementById('full_name').value.trim(),
+                    alias: document.getElementById('alias').value.trim() || null,
+                    reason: document.getElementById('reason').value.trim() || null,
+                    inclusion_date: document.getElementById('inclusion_date').value || null,
+                    exclusion_date: document.getElementById('exclusion_date').value || null,
+                    domain: document.getElementById('domain').value.trim() || null,
+                    type: document.getElementById('type').value.trim() || null,
+                    inn: document.getElementById('inn').value.trim() || null,
+                    nss: document.getElementById('nss').value.trim() || null,
+                    birth_date: document.getElementById('birth_date').value || null,
+                    email: document.getElementById('email').value.trim() || null,
+                    phone_number: document.getElementById('phone_number').value.trim() || null,
+                    account_number: document.getElementById('account_number').value.trim() || null,
+                    bank_name: document.getElementById('bank_name').value.trim() || null,
+                    bic: document.getElementById('bic').value.trim() || null,
+                    corr_account: document.getElementById('corr_account').value.trim() || null,
+                    account_open_date: document.getElementById('account_open_date').value || null,
+                    more: document.getElementById('more').value.trim() || null
+                };
+                if (!data.full_name) { showMessage('Полное имя обязательно', 'error-msg'); return; }
+            } else {
+                data = {
+                    org_name: document.getElementById('org_name').value.trim(),
+                    org_short_name: document.getElementById('org_short_name').value.trim() || null,
+                    inn: document.getElementById('inn_legal').value.trim() || null,
+                    ogrn: document.getElementById('ogrn').value.trim() || null,
+                    establishment_date: document.getElementById('establishment_date').value || null,
+                    head: document.getElementById('head').value.trim() || null,
+                    participants: document.getElementById('participants').value.trim() || null,
+                    reason: document.getElementById('reason_legal').value.trim() || null,
+                    inclusion_date: document.getElementById('inclusion_date_legal').value || null,
+                    exclusion_date: document.getElementById('exclusion_date_legal').value || null,
+                    domain: document.getElementById('domain_legal').value.trim() || null,
+                    type: document.getElementById('type_legal').value.trim() || null,
+                    address: document.getElementById('address').value.trim() || null,
+                    email: document.getElementById('email_legal').value.trim() || null,
+                    phone_number: document.getElementById('phone_number_legal').value.trim() || null,
+                    account_number: document.getElementById('account_number_legal').value.trim() || null,
+                    bank_name: document.getElementById('bank_name_legal').value.trim() || null,
+                    bic: document.getElementById('bic_legal').value.trim() || null,
+                    corr_account: document.getElementById('corr_account_legal').value.trim() || null,
+                    account_open_date: document.getElementById('account_open_date_legal').value || null,
+                    more: document.getElementById('more_legal').value.trim() || null
+                };
+                if (!data.org_name) { showMessage('Наименование обязательно', 'error-msg'); return; }
+            }
+            data.created_at = new Date().toISOString();
+            data.updated_at = new Date().toISOString();
+
+            // Загружаем файлы в Storage
+            const photoPaths = await uploadFiles(tempFiles.photos, `photos/${type}`);
+            const docPaths = await uploadFiles(tempFiles.documents, `docs/${type}`);
+            if (photoPaths.length) data.photo_paths = photoPaths;
+            if (docPaths.length) data.document_paths = docPaths;
+
+            const { error } = await supabase.schema('registry').from(table).insert(data);
+            if (error) { showMessage('Ошибка: ' + error.message, 'error-msg'); return; }
+            showMessage('Запись добавлена', 'success');
+            setTimeout(() => navigate('home'), 1500);
+        }
+
+        async function uploadFiles(files, folder) {
+            if (!files || !files.length) return [];
+            const paths = [];
+            for (const file of files) {
+                const ext = file.name.split('.').pop();
+                const path = `${folder}/${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${ext}`;
+                const { error } = await supabase.storage.from(BUCKET_NAME).upload(path, file);
+                if (error) { console.error('Upload error:', error); continue; }
+                paths.push(path);
+            }
+            return paths;
+        }
+
+        // -------------------- EDIT --------------------
+        async function renderEdit() {
+            const id = currentId;
+            const type = currentType;
+            if (!id) { navigate('home'); return; }
+            const table = getTable();
+            const { data, error } = await supabase.schema('registry').from(table).select('*').eq('id', id).single();
+            if (error || !data) { showMessage('Запись не найдена', 'error-msg'); navigate('home'); return; }
+
+            container.innerHTML = `
+                <div class="back-link"><a href="#" onclick="window.navigate('view', {id:'${id}', type:'${type}'})"><i class="fas fa-arrow-left"></i> Назад</a></div>
+                <h1 class="page-title">Редактирование записи</h1>
+                <div class="form-card">
+                    <div class="tabs">
+                        <button class="tab ${type === 'individual' ? 'active' : ''}" data-type="individual">Физическое лицо</button>
+                        <button class="tab ${type === 'legal' ? 'active' : ''}" data-type="legal">Юридическое лицо</button>
+                    </div>
+                    <form id="editForm">
+                        <div id="individualFields" style="${type === 'individual' ? 'display:block' : 'display:none'}">
+                            ${buildIndividualForm(data)}
+                        </div>
+                        <div id="legalFields" style="${type === 'legal' ? 'display:block' : 'display:none'}">
+                            ${buildLegalForm(data)}
+                        </div>
+                        <div class="form-group">
+                            <label>Фото (можно добавить новые)</label>
+                            <div class="file-upload">
+                                <input type="file" id="photoUploadEdit" accept="image/*" multiple>
+                                <div id="photoPreviewEdit" class="file-preview"></div>
+                            </div>
+                            ${data.photo_paths && data.photo_paths.length ? `<div>Существующие фото: ${data.photo_paths.length}</div>` : ''}
+                        </div>
+                        <div class="form-group">
+                            <label>Документы (можно добавить новые)</label>
+                            <div class="file-upload">
+                                <input type="file" id="docUploadEdit" multiple>
+                                <div id="docPreviewEdit" class="file-preview"></div>
+                            </div>
+                            ${data.document_paths && data.document_paths.length ? `<div>Существующие документы: ${data.document_paths.length}</div>` : ''}
+                        </div>
+                        <button type="submit" class="btn-submit"><i class="fas fa-save"></i> Обновить</button>
+                    </form>
+                    <div id="message" class="message hidden"></div>
+                </div>
+            `;
+            // Обработчики вкладок (переключение типа запрещено при редактировании, но оставим)
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Не меняем тип, просто показываем соответствующую форму
+                    const t = tab.dataset.type;
+                    document.getElementById('individualFields').style.display = t === 'individual' ? 'block' : 'none';
+                    document.getElementById('legalFields').style.display = t === 'legal' ? 'block' : 'none';
+                    document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+                    tab.classList.add('active');
+                });
+            });
+            // Загрузка файлов
+            setupFileUpload('photoUploadEdit', 'photoPreviewEdit', 'photos');
+            setupFileUpload('docUploadEdit', 'docPreviewEdit', 'documents');
+            document.getElementById('editForm').addEventListener('submit', (e) => handleEditSubmit(e, data));
+        }
+
+        async function handleEditSubmit(e, oldData) {
+            e.preventDefault();
+            const type = currentType;
+            const table = getTable();
+            let data = {};
+            if (type === 'individual') {
+                data = {
+                    full_name: document.getElementById('full_name').value.trim(),
+                    alias: document.getElementById('alias').value.trim() || null,
+                    reason: document.getElementById('reason').value.trim() || null,
+                    inclusion_date: document.getElementById('inclusion_date').value || null,
+                    exclusion_date: document.getElementById('exclusion_date').value || null,
+                    domain: document.getElementById('domain').value.trim() || null,
+                    type: document.getElementById('type').value.trim() || null,
+                    inn: document.getElementById('inn').value.trim() || null,
+                    nss: document.getElementById('nss').value.trim() || null,
+                    birth_date: document.getElementById('birth_date').value || null,
+                    email: document.getElementById('email').value.trim() || null,
+                    phone_number: document.getElementById('phone_number').value.trim() || null,
+                    account_number: document.getElementById('account_number').value.trim() || null,
+                    bank_name: document.getElementById('bank_name').value.trim() || null,
+                    bic: document.getElementById('bic').value.trim() || null,
+                    corr_account: document.getElementById('corr_account').value.trim() || null,
+                    account_open_date: document.getElementById('account_open_date').value || null,
+                    more: document.getElementById('more').value.trim() || null
+                };
+                if (!data.full_name) { showMessage('Полное имя обязательно', 'error-msg'); return; }
+            } else {
+                data = {
+                    org_name: document.getElementById('org_name').value.trim(),
+                    org_short_name: document.getElementById('org_short_name').value.trim() || null,
+                    inn: document.getElementById('inn_legal').value.trim() || null,
+                    ogrn: document.getElementById('ogrn').value.trim() || null,
+                    establishment_date: document.getElementById('establishment_date').value || null,
+                    head: document.getElementById('head').value.trim() || null,
+                    participants: document.getElementById('participants').value.trim() || null,
+                    reason: document.getElementById('reason_legal').value.trim() || null,
+                    inclusion_date: document.getElementById('inclusion_date_legal').value || null,
+                    exclusion_date: document.getElementById('exclusion_date_legal').value || null,
+                    domain: document.getElementById('domain_legal').value.trim() || null,
+                    type: document.getElementById('type_legal').value.trim() || null,
+                    address: document.getElementById('address').value.trim() || null,
+                    email: document.getElementById('email_legal').value.trim() || null,
+                    phone_number: document.getElementById('phone_number_legal').value.trim() || null,
+                    account_number: document.getElementById('account_number_legal').value.trim() || null,
+                    bank_name: document.getElementById('bank_name_legal').value.trim() || null,
+                    bic: document.getElementById('bic_legal').value.trim() || null,
+                    corr_account: document.getElementById('corr_account_legal').value.trim() || null,
+                    account_open_date: document.getElementById('account_open_date_legal').value || null,
+                    more: document.getElementById('more_legal').value.trim() || null
+                };
+                if (!data.org_name) { showMessage('Наименование обязательно', 'error-msg'); return; }
+            }
+            data.updated_at = new Date().toISOString();
+
+            // Загружаем новые файлы
+            const newPhotos = tempFiles.photos || [];
+            const newDocs = tempFiles.documents || [];
+            const photoPaths = await uploadFiles(newPhotos, `photos/${type}`);
+            const docPaths = await uploadFiles(newDocs, `docs/${type}`);
+            // Объединяем с существующими
+            const existingPhotos = oldData.photo_paths || [];
+            const existingDocs = oldData.document_paths || [];
+            if (photoPaths.length) data.photo_paths = [...existingPhotos, ...photoPaths];
+            if (docPaths.length) data.document_paths = [...existingDocs, ...docPaths];
+
+            const { error } = await supabase.schema('registry').from(table).update(data).eq('id', currentId);
+            if (error) { showMessage('Ошибка: ' + error.message, 'error-msg'); return; }
+            showMessage('Запись обновлена', 'success');
+            setTimeout(() => navigate('view', { id: currentId, type: currentType }), 1500);
+        }
+
+        // -------------------- VIEW --------------------
+        async function renderView() {
+            const id = currentId;
+            const type = currentType;
+            if (!id) { navigate('home'); return; }
+            const table = getTable();
+            const { data, error } = await supabase.schema('registry').from(table).select('*').eq('id', id).single();
+            if (error || !data) { showMessage('Запись не найдена', 'error-msg'); navigate('home'); return; }
+
+            // Получаем signed URL для фото и документов
+            const photoUrls = await getSignedUrls(data.photo_paths || []);
+            const docUrls = await getSignedUrls(data.document_paths || []);
+
+            container.innerHTML = `
+                <div class="back-link"><a href="#" onclick="window.navigate('all')"><i class="fas fa-arrow-left"></i> Вернуться к списку</a></div>
+                <h1 class="page-title">Просмотр записи</h1>
+                <div class="app-details">
+                    <div class="photo-section">
+                        <div>
+                            ${photoUrls.length ? `<img class="photo-main" src="${photoUrls[0]}" alt="Фото" id="viewMainPhoto">` : '<div class="photo-main" style="background:#f0f0f0;display:flex;align-items:center;justify-content:center;color:#999;">Нет фото</div>'}
+                            <div class="photo-thumbnails" id="viewThumbnails">
+                                ${photoUrls.map((url, i) => `<img src="${url}" class="thumbnail ${i===0?'active':''}" data-index="${i}">`).join('')}
+                            </div>
+                        </div>
+                        <div style="flex:1;">
+                            <table class="details-table" id="viewDetailsTable"></table>
+                        </div>
+                    </div>
+                    <div style="margin-top:1.5rem;border-top:1px solid #e2e8f0;padding-top:1rem;">
+                        <h4>📄 Документы</h4>
+                        <div class="documents-list">
+                            ${docUrls.length ? docUrls.map(url => `<a href="${url}" target="_blank" class="document-link"><i class="fas fa-file-pdf"></i> Документ</a>`).join('') : 'Нет документов'}
+                        </div>
+                    </div>
+                    <div class="action-buttons" style="margin-top:1.5rem;">
+                        <a href="#" class="btn btn-primary" onclick="window.navigate('edit', {id:'${id}', type:'${type}'})"><i class="fas fa-edit"></i> Редактировать</a>
+                        <button class="btn btn-danger" id="deleteBtn"><i class="fas fa-trash-alt"></i> Удалить</button>
+                    </div>
+                </div>
+            `;
+
+            // Заполняем таблицу деталей
+            let fields = [];
+            if (type === 'individual') {
+                fields = [
+                    ['№ п/п', data.serial_number || data.id],
+                    ['ФИО', data.full_name],
+                    ['Псевдоним', data.alias || '—'],
+                    ['Основания', data.reason || '—'],
+                    ['Дата включения', formatDate(data.inclusion_date)],
+                    ['Дата исключения', formatDate(data.exclusion_date)],
+                    ['Домены', linkifyList(data.domain || '—')],
+                    ['Тип', data.type || '—'],
+                    ['ИНН', data.inn || '—'],
+                    ['СНИЛС', data.nss || '—'],
+                    ['Дата рождения', data.birth_date ? formatDate(data.birth_date) : '—'],
+                    ['Email', linkifyList(data.email || '—')],
+                    ['Телефоны', linkifyList(data.phone_number || '—')],
+                    ['Спецсчёт', data.account_number || '—'],
+                    ['Банк', data.bank_name || '—'],
+                    ['БИК', data.bic || '—'],
+                    ['Корр. счёт', data.corr_account || '—'],
+                    ['Дата открытия счёта', formatDate(data.account_open_date)],
+                    ['Доп. данные', data.more || '—']
+                ];
+            } else {
+                fields = [
+                    ['№ п/п', data.serial_number || data.id],
+                    ['Полное наименование', data.org_name],
+                    ['Краткое название', data.org_short_name || '—'],
+                    ['ИНН', data.inn || '—'],
+                    ['ОГРН', data.ogrn || '—'],
+                    ['Дата образования', formatDate(data.establishment_date)],
+                    ['Руководитель', data.head || '—'],
+                    ['Участники', data.participants || '—'],
+                    ['Основания', data.reason || '—'],
+                    ['Дата включения', formatDate(data.inclusion_date)],
+                    ['Дата исключения', formatDate(data.exclusion_date)],
+                    ['Домены', linkifyList(data.domain || '—')],
+                    ['Тип', data.type || '—'],
+                    ['Адрес', data.address || '—'],
+                    ['Email', linkifyList(data.email || '—')],
+                    ['Телефоны', linkifyList(data.phone_number || '—')],
+                    ['Спецсчёт', data.account_number || '—'],
+                    ['Банк', data.bank_name || '—'],
+                    ['БИК', data.bic || '—'],
+                    ['Корр. счёт', data.corr_account || '—'],
+                    ['Дата открытия счёта', formatDate(data.account_open_date)],
+                    ['Доп. данные', data.more || '—']
+                ];
+            }
+            const tableEl = document.getElementById('viewDetailsTable');
+            tableEl.innerHTML = fields.map(([label, value]) => `<tr><th>${escapeHTML(label)}</th><td>${value}</td></tr>`).join('');
+
+            // Обработка миниатюр
+            document.querySelectorAll('.thumbnail').forEach(thumb => {
+                thumb.addEventListener('click', () => {
+                    document.querySelectorAll('.thumbnail').forEach(t => t.classList.remove('active'));
+                    thumb.classList.add('active');
+                    document.getElementById('viewMainPhoto').src = thumb.src;
+                });
+            });
+
+            document.getElementById('deleteBtn').addEventListener('click', async () => {
+                if (!confirm('Удалить запись?')) return;
+                const { error } = await supabase.schema('registry').from(table).delete().eq('id', id);
+                if (error) { alert('Ошибка: ' + error.message); return; }
+                alert('Запись удалена');
+                navigate('all');
+            });
+        }
+
+        // -------------------- Инициализация --------------------
+        window.navigate = navigate;
+
         document.addEventListener('DOMContentLoaded', async () => {
+            // Проверка админа
             if (!await requireAdmin()) return;
 
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) document.getElementById('adminEmail').textContent = user.email;
+            currentUser = user;
 
-            await loadStats();
+            // Обработка параметров URL при загрузке
+            const params = new URLSearchParams(window.location.search);
+            const page = params.get('page') || 'home';
+            const type = params.get('type') || 'individual';
+            const id = params.get('id');
+            navigate(page, { type, id });
 
+            // Выход
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
                 window.location.href = '../../login.html';
+            });
+
+            // Обработка истории
+            window.addEventListener('popstate', (e) => {
+                if (e.state) {
+                    const { page, params } = e.state;
+                    navigate(page, params);
+                }
             });
         });
     </script>

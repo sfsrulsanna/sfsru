@@ -26,13 +26,10 @@
     <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
-    <!-- Подключаем внешний CSS -->
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/foreign-agent.css">
-    <!-- Подключаем Supabase JS -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
     <style>
-        /* Дополнительные стили для вкладок */
         .tabs {
             display: flex;
             gap: 0.5rem;
@@ -94,13 +91,59 @@
             text-align: center;
         }
         .modal {
-            max-width: 800px;
+            max-width: 1000px;
+        }
+        .modal-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        .modal-top {
+            display: flex;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .modal-photo-section {
+            flex: 0 0 200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .modal-main-photo {
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            object-fit: cover;
+            border-radius: 8px;
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+        }
+        .modal-thumbnails {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .thumbnail {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: border-color 0.2s;
+        }
+        .thumbnail.active {
+            border-color: #7b091a;
+        }
+        .modal-info-table {
+            flex: 1;
+            min-width: 250px;
         }
         .agent-info-table {
             display: grid;
             grid-template-columns: auto 1fr;
             gap: 0.75rem 1rem;
-            margin-bottom: 1rem;
         }
         .info-row {
             display: contents;
@@ -124,7 +167,37 @@
             border-radius: 20px;
             font-size: 0.8rem;
         }
+        .documents-section {
+            border-top: 1px solid #e2e8f0;
+            padding-top: 1rem;
+        }
+        .documents-section h4 {
+            margin: 0 0 0.5rem 0;
+            color: #0f172a;
+        }
+        .document-link {
+            display: inline-block;
+            margin: 0.25rem 0.5rem 0.25rem 0;
+            padding: 0.3rem 0.8rem;
+            background: #f1f5f9;
+            border-radius: 20px;
+            text-decoration: none;
+            color: #1e293b;
+            font-size: 0.9rem;
+        }
+        .document-link:hover {
+            background: #e2e8f0;
+        }
         @media (max-width: 768px) {
+            .modal-top {
+                flex-direction: column;
+                align-items: center;
+            }
+            .modal-photo-section {
+                flex: 0 0 auto;
+                width: 60%;
+                max-width: 200px;
+            }
             .agent-info-table {
                 grid-template-columns: 1fr;
                 gap: 0.5rem;
@@ -173,25 +246,18 @@
 
             <div id="accessMessage" class="access-message"></div>
 
-            <!-- Вкладки -->
             <div class="tabs">
                 <button class="tab active" data-type="individual">Физические лица</button>
                 <button class="tab" data-type="legal">Юридические лица</button>
             </div>
 
-            <!-- Таблица -->
             <div class="table-wrapper" id="tableWrapper" style="display: none;">
                 <table class="registry-table" id="agentsTable">
-                    <thead id="tableHeader">
-                        <!-- заголовок динамический -->
-                    </thead>
-                    <tbody id="agentsTbody">
-                        <!-- строки динамически -->
-                    </tbody>
+                    <thead id="tableHeader"></thead>
+                    <tbody id="agentsTbody"></tbody>
                 </table>
             </div>
 
-            <!-- Блок авторизации -->
             <div class="auth-section" id="authSection"></div>
         </div>
     </main>
@@ -204,8 +270,22 @@
                 <button class="modal-close" id="modalClose">&times;</button>
             </div>
             <div class="modal-body">
-                <div id="modalContent" class="agent-info-table">
-                    <!-- динамическое содержимое -->
+                <!-- Верхняя часть: фото и информация -->
+                <div class="modal-top">
+                    <div class="modal-photo-section">
+                        <img class="modal-main-photo" id="modalMainPhoto" src="" alt="Фото">
+                        <div class="modal-thumbnails" id="photoThumbnails"></div>
+                    </div>
+                    <div class="modal-info-table">
+                        <div id="modalContent" class="agent-info-table">
+                            <!-- динамическая таблица полей -->
+                        </div>
+                    </div>
+                </div>
+                <!-- Документы -->
+                <div class="documents-section">
+                    <h4>📄 Документы</h4>
+                    <div id="documentsList">Нет документов</div>
                 </div>
                 <div class="modal-footer">
                     <span class="warning-badge">⚠ Информация Министерства юстиции СФСРЮ</span>
