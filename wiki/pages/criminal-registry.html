@@ -22,155 +22,26 @@
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
     <style>
-        /* Дополнительные стили для карточек и модального окна */
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1.5rem;
-            margin-top: 2rem;
-        }
-        .criminal-card {
-            background: #fff;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
-            cursor: pointer;
-        }
-        .criminal-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-        .card-photo {
-            aspect-ratio: 3 / 4;
-            background: #f0f0f0;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .card-photo img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.2s;
-        }
-        .criminal-card:hover .card-photo img {
-            transform: scale(1.03);
-        }
-        .card-info {
-            padding: 1rem;
-        }
-        .card-name {
-            font-size: 1.1rem;
-            font-weight: 600;
-            margin-bottom: 0.25rem;
-            color: #1e293b;
-        }
-        .card-number {
-            font-size: 0.85rem;
+        /* Дополнительные стили (оставляем только необходимые) */
+        .no-data {
+            text-align: center;
+            padding: 3rem;
             color: #64748b;
+            font-size: 1.1rem;
+            grid-column: 1 / -1;
         }
-        .card-article {
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-            color: #7b091a;
-        }
-        .loading-placeholder {
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
-        }
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        .modal-photo-section {
-            flex: 1;
-            min-width: 200px;
-        }
-        .main-photo {
-            aspect-ratio: 3 / 4;
-            background: #f0f0f0;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .main-photo-img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .photo-thumbnails {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            flex-wrap: wrap;
-        }
-        .photo-thumb {
-            width: 60px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 4px;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: border 0.2s;
-        }
-        .photo-thumb:hover {
-            border-color: #7b091a;
-        }
-        .documents-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-        }
-        .doc-button {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #f1f5f9;
-            padding: 0.5rem 1rem;
-            border-radius: 40px;
-            text-decoration: none;
-            color: #1e293b;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            border: none;
-            cursor: pointer;
-            width: fit-content;
-        }
-        .doc-button:hover {
-            background: #e2e8f0;
-            transform: translateY(-2px);
-        }
-        .doc-button i {
-            font-size: 1rem;
-        }
-        .auth-section {
-            margin-top: 2rem;
-            text-align: center;
-        }
-        .access-message {
-            text-align: center;
-            padding: 1rem;
-            background: #fef9e3;
-            border-left: 4px solid #7b091a;
-            margin-bottom: 1rem;
+        /* Стили для модального окна (уже есть в criminal-registry.css, но дублируем на всякий случай) */
+        .modal-content {
+            display: grid;
+            grid-template-columns: 1fr 1.5fr;
+            gap: 2rem;
         }
         @media (max-width: 768px) {
             .modal-content {
-                flex-direction: column;
-            }
-            .photo-thumbnails {
-                justify-content: center;
+                grid-template-columns: 1fr;
             }
         }
     </style>
@@ -257,270 +128,267 @@
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
+
     <script src="../../../js/mob-menu.js"></script>
     <script type="module">
-import { supabase } from '../../../js/supabase-config.js';
+        import { supabase } from '../../../js/supabase-config.js';
 
-// Кэш данных и ссылок
-let recordsCache = null;
-let loadingPromise = null;
+        // Кэш данных и ссылок
+        let recordsCache = null;
+        let loadingPromise = null;
 
-// Инициализация
-document.addEventListener('DOMContentLoaded', async () => {
-    await loadRecords();
-    setupEventListeners();
-});
-
-async function loadRecords() {
-    if (recordsCache) return;
-    if (loadingPromise) return loadingPromise;
-
-    loadingPromise = (async () => {
-        try {
-            const { data, error } = await supabase
-                .schema('registry')
-                .from('criminal')
-                .select('id, record_number, full_name, birth_date, birth_place, gender, citizenship, crime_article, details, photo_paths, document_paths')
-                .order('record_number', { ascending: false });
-
-            if (error) throw error;
-            recordsCache = data || [];
-            renderCards();
-        } catch (err) {
-            console.error('Ошибка загрузки реестра:', err);
-            document.getElementById('accessMessage').innerHTML = '<div class="access-message error">Не удалось загрузить данные. Попробуйте позже.</div>';
-        } finally {
-            loadingPromise = null;
-        }
-    })();
-    return loadingPromise;
-}
-
-function renderCards() {
-    const grid = document.getElementById('cardsGrid');
-    if (!grid) return;
-
-    if (!recordsCache || recordsCache.length === 0) {
-        grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
-        return;
-    }
-
-    grid.innerHTML = recordsCache.map(record => `
-        <div class="criminal-card" data-id="${record.id}">
-            <div class="card-photo">
-                <div class="loading-placeholder"></div>
-                <img data-src="placeholder" alt="Фото" style="display: none;">
-            </div>
-            <div class="card-info">
-                <div class="card-name">${escapeHtml(record.full_name)}</div>
-                <div class="card-number">№ записи: ${record.record_number}</div>
-                <div class="card-article">${escapeHtml(record.crime_article || '—')}</div>
-            </div>
-        </div>
-    `).join('');
-
-    // Ленивая загрузка фото
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const card = entry.target;
-                const id = card.dataset.id;
-                const record = recordsCache.find(r => r.id === id);
-                if (record && record.photo_paths && record.photo_paths.length) {
-                    loadPhotoForCard(card, record.photo_paths[0]);
-                } else {
-                    // Если нет фото, показываем заглушку
-                    const photoDiv = card.querySelector('.card-photo');
-                    if (photoDiv) {
-                        const placeholder = photoDiv.querySelector('.loading-placeholder');
-                        if (placeholder) placeholder.style.display = 'none';
-                        const fallback = document.createElement('div');
-                        fallback.className = 'no-photo';
-                        fallback.textContent = 'Нет фото';
-                        fallback.style.cssText = 'display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;';
-                        photoDiv.appendChild(fallback);
-                    }
-                }
-                observer.unobserve(card);
-            }
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadRecords();
+            setupEventListeners();
         });
-    }, { rootMargin: '0px 0px 200px 0px' });
 
-    document.querySelectorAll('.criminal-card').forEach(card => observer.observe(card));
-}
+        async function loadRecords() {
+            if (recordsCache) return;
+            if (loadingPromise) return loadingPromise;
 
-async function loadPhotoForCard(card, photoPath) {
-    try {
-        const { data, error } = await supabase.storage
-            .from('registry-files')
-            .createSignedUrl(photoPath, 3600);
-        if (error) throw error;
+            loadingPromise = (async () => {
+                try {
+                    const { data, error } = await supabase
+                        .schema('registry')
+                        .from('criminal')
+                        .select('id, record_number, full_name, birth_date, birth_place, gender, citizenship, crime_article, details, photo_paths, document_paths')
+                        .order('record_number', { ascending: false });
 
-        const img = document.createElement('img');
-        img.src = data.signedUrl;
-        img.alt = 'Фото';
-        img.style.width = '100%';
-        img.style.height = '100%';
-        img.style.objectFit = 'cover';
-
-        const photoDiv = card.querySelector('.card-photo');
-        if (photoDiv) {
-            photoDiv.innerHTML = '';
-            photoDiv.appendChild(img);
+                    if (error) throw error;
+                    recordsCache = data || [];
+                    renderCards();
+                } catch (err) {
+                    console.error('Ошибка загрузки реестра:', err);
+                    document.getElementById('accessMessage').innerHTML = '<div class="access-message error">Не удалось загрузить данные. Попробуйте позже.</div>';
+                } finally {
+                    loadingPromise = null;
+                }
+            })();
+            return loadingPromise;
         }
-    } catch (err) {
-        console.error('Ошибка загрузки фото:', err);
-        const photoDiv = card.querySelector('.card-photo');
-        if (photoDiv) {
-            photoDiv.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;">Ошибка</div>';
-        }
-    }
-}
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
+        function renderCards() {
+            const grid = document.getElementById('cardsGrid');
+            if (!grid) return;
 
-async function openModal(recordId) {
-    const record = recordsCache.find(r => r.id === recordId);
-    if (!record) return;
+            if (!recordsCache || recordsCache.length === 0) {
+                grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
+                return;
+            }
 
-    // Заполняем текстовые данные
-    document.getElementById('modalFullName').textContent = record.full_name;
-    document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
-    document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
-    document.getElementById('modalGender').textContent = record.gender || '—';
-    document.getElementById('modalCitizenship').textContent = record.citizenship || '—';
-    document.getElementById('modalCrimeArticle').textContent = record.crime_article || '—';
-    document.getElementById('modalDetails').textContent = record.details || '—';
+            grid.innerHTML = recordsCache.map(record => `
+                <div class="criminal-card" data-id="${record.id}">
+                    <div class="card-photo">
+                        <div class="loading-placeholder"></div>
+                        <img data-src="placeholder" alt="Фото" style="display: none;">
+                    </div>
+                    <div class="card-info">
+                        <div class="card-name">${escapeHtml(record.full_name)}</div>
+                        <div class="card-number">№ записи: ${record.record_number}</div>
+                        <div class="card-article">${escapeHtml(record.crime_article || '—')}</div>
+                    </div>
+                </div>
+            `).join('');
 
-    // Фото
-    const photoPaths = record.photo_paths || [];
-    const mainPhoto = document.getElementById('modalMainPhoto');
-    const thumbnailsContainer = document.getElementById('photoThumbnails');
-    thumbnailsContainer.innerHTML = '';
-
-    if (photoPaths.length) {
-        // Загружаем ссылки на фото
-        const signedUrls = await Promise.all(photoPaths.map(async (path) => {
-            try {
-                const { data } = await supabase.storage.from('registry-files').createSignedUrl(path, 3600);
-                return data.signedUrl;
-            } catch { return null; }
-        }));
-
-        const validUrls = signedUrls.filter(u => u);
-        if (validUrls.length) {
-            mainPhoto.src = validUrls[0];
-            mainPhoto.onerror = () => { mainPhoto.src = ''; };
-
-            validUrls.forEach((url, idx) => {
-                const thumb = document.createElement('img');
-                thumb.src = url;
-                thumb.className = 'photo-thumb';
-                thumb.addEventListener('click', () => {
-                    mainPhoto.src = url;
+            // Ленивая загрузка фото
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const card = entry.target;
+                        const id = card.dataset.id;
+                        const record = recordsCache.find(r => r.id === id);
+                        if (record && record.photo_paths && record.photo_paths.length) {
+                            loadPhotoForCard(card, record.photo_paths[0]);
+                        } else {
+                            // Нет фото – показываем заглушку
+                            const photoDiv = card.querySelector('.card-photo');
+                            if (photoDiv) {
+                                const placeholder = photoDiv.querySelector('.loading-placeholder');
+                                if (placeholder) placeholder.style.display = 'none';
+                                const fallback = document.createElement('div');
+                                fallback.className = 'no-photo';
+                                fallback.textContent = 'Нет фото';
+                                photoDiv.appendChild(fallback);
+                            }
+                        }
+                        observer.unobserve(card);
+                    }
                 });
-                thumbnailsContainer.appendChild(thumb);
-            });
-        } else {
-            mainPhoto.src = '';
-            mainPhoto.alt = 'Нет фото';
+            }, { rootMargin: '0px 0px 200px 0px' });
+
+            document.querySelectorAll('.criminal-card').forEach(card => observer.observe(card));
         }
-    } else {
-        mainPhoto.src = '';
-        mainPhoto.alt = 'Нет фото';
-    }
 
-    // Документы
-    const docPaths = record.document_paths || [];
-    const docsContainer = document.getElementById('documentsList');
-    docsContainer.innerHTML = '';
-
-    if (docPaths.length) {
-        for (const path of docPaths) {
+        async function loadPhotoForCard(card, photoPath) {
             try {
-                const { data } = await supabase.storage.from('registry-files').createSignedUrl(path, 3600);
-                if (data?.signedUrl) {
-                    const fileName = path.split('/').pop().replace(/^\d+_/, '');
-                    const button = document.createElement('a');
-                    button.href = data.signedUrl;
-                    button.download = fileName;
-                    button.target = '_blank';
-                    button.className = 'doc-button';
-                    button.innerHTML = `<i class="fas fa-file-pdf"></i> ${escapeHtml(fileName)}`;
-                    docsContainer.appendChild(button);
+                const { data, error } = await supabase.storage
+                    .from('criminal-files')
+                    .createSignedUrl(photoPath, 3600);
+                if (error) throw error;
+
+                const photoDiv = card.querySelector('.card-photo');
+                if (photoDiv) {
+                    // Очищаем и вставляем img с правильными стилями
+                    photoDiv.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = data.signedUrl;
+                    img.alt = 'Фото';
+                    // Стили уже заданы в CSS для .card-photo img
+                    photoDiv.appendChild(img);
                 }
             } catch (err) {
-                console.error('Ошибка загрузки документа:', err);
+                console.error('Ошибка загрузки фото:', err);
+                const photoDiv = card.querySelector('.card-photo');
+                if (photoDiv) {
+                    photoDiv.innerHTML = '<div class="no-photo" style="display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;">Ошибка</div>';
+                }
             }
         }
-    } else {
-        docsContainer.innerHTML = '<p class="no-docs">Нет прикреплённых документов</p>';
-    }
 
-    // Показать модалку
-    document.getElementById('modalOverlay').classList.add('active');
-    document.body.style.overflow = 'hidden';
-}
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, function(m) {
+                if (m === '&') return '&amp;';
+                if (m === '<') return '&lt;';
+                if (m === '>') return '&gt;';
+                return m;
+            });
+        }
 
-function closeModal() {
-    document.getElementById('modalOverlay').classList.remove('active');
-    document.body.style.overflow = '';
-}
+        async function openModal(recordId) {
+            const record = recordsCache.find(r => r.id === recordId);
+            if (!record) return;
 
-function setupEventListeners() {
-    // Открытие карточек
-    const grid = document.getElementById('cardsGrid');
-    if (grid) {
-        grid.addEventListener('click', (e) => {
-            const card = e.target.closest('.criminal-card');
-            if (card && card.dataset.id) {
-                openModal(card.dataset.id);
+            // Заполняем текстовые данные
+            document.getElementById('modalFullName').textContent = record.full_name;
+            document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
+            document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
+            document.getElementById('modalGender').textContent = record.gender || '—';
+            document.getElementById('modalCitizenship').textContent = record.citizenship || '—';
+            document.getElementById('modalCrimeArticle').textContent = record.crime_article || '—';
+            document.getElementById('modalDetails').textContent = record.details || '—';
+
+            // Фото
+            const photoPaths = record.photo_paths || [];
+            const mainPhoto = document.getElementById('modalMainPhoto');
+            const thumbnailsContainer = document.getElementById('photoThumbnails');
+            thumbnailsContainer.innerHTML = '';
+
+            if (photoPaths.length) {
+                const signedUrls = await Promise.all(photoPaths.map(async (path) => {
+                    try {
+                        const { data } = await supabase.storage.from('criminal-files').createSignedUrl(path, 3600);
+                        return data.signedUrl;
+                    } catch { return null; }
+                }));
+
+                const validUrls = signedUrls.filter(u => u);
+                if (validUrls.length) {
+                    mainPhoto.src = validUrls[0];
+                    mainPhoto.onerror = () => { mainPhoto.src = ''; };
+
+                    validUrls.forEach((url, idx) => {
+                        const thumb = document.createElement('img');
+                        thumb.src = url;
+                        thumb.className = 'photo-thumb';
+                        thumb.addEventListener('click', () => {
+                            mainPhoto.src = url;
+                        });
+                        thumbnailsContainer.appendChild(thumb);
+                    });
+                } else {
+                    mainPhoto.src = '';
+                    mainPhoto.alt = 'Нет фото';
+                }
+            } else {
+                mainPhoto.src = '';
+                mainPhoto.alt = 'Нет фото';
             }
-        });
-    }
 
-    // Закрытие модалки
-    const modalClose = document.getElementById('modalClose');
-    const modalOverlay = document.getElementById('modalOverlay');
-    if (modalClose) modalClose.addEventListener('click', closeModal);
-    if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
-        if (e.target === modalOverlay) closeModal();
-    });
+            // Документы
+            const docPaths = record.document_paths || [];
+            const docsContainer = document.getElementById('documentsList');
+            docsContainer.innerHTML = '';
 
-    // Мобильное меню
-    const menuToggle = document.getElementById('menuToggle');
-    const navMenu = document.getElementById('navMenu');
-    const menuOverlay = document.getElementById('menuOverlay');
-    if (menuToggle && navMenu && menuOverlay) {
-        menuToggle.addEventListener('click', () => {
-            navMenu.classList.toggle('active');
-            menuOverlay.classList.toggle('active');
-            document.body.classList.toggle('menu-open');
-        });
-        menuOverlay.addEventListener('click', () => {
-            navMenu.classList.remove('active');
-            menuOverlay.classList.remove('active');
-            document.body.classList.remove('menu-open');
-        });
-    }
+            if (docPaths.length) {
+                for (const path of docPaths) {
+                    try {
+                        const { data } = await supabase.storage.from('criminal-files').createSignedUrl(path, 3600);
+                        if (data?.signedUrl) {
+                            const fileName = path.split('/').pop().replace(/^\d+_/, '');
+                            const button = document.createElement('a');
+                            button.href = data.signedUrl;
+                            button.download = fileName;
+                            button.target = '_blank';
+                            button.className = 'document-link';
+                            button.innerHTML = `<i class="fas fa-file-pdf"></i> ${escapeHtml(fileName)}`;
+                            docsContainer.appendChild(button);
+                        }
+                    } catch (err) {
+                        console.error('Ошибка загрузки документа:', err);
+                    }
+                }
+            } else {
+                docsContainer.innerHTML = '<p class="no-docs">Нет прикреплённых документов</p>';
+            }
 
-    // Выход (если есть кнопка выхода)
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', async () => {
-            await supabase.auth.signOut();
-            window.location.href = '../../login.html';
-        });
-    }
-}
+            // Показать модалку
+            document.getElementById('modalOverlay').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function setupEventListeners() {
+            // Открытие карточек
+            const grid = document.getElementById('cardsGrid');
+            if (grid) {
+                grid.addEventListener('click', (e) => {
+                    const card = e.target.closest('.criminal-card');
+                    if (card && card.dataset.id) {
+                        openModal(card.dataset.id);
+                    }
+                });
+            }
+
+            // Закрытие модалки
+            const modalClose = document.getElementById('modalClose');
+            const modalOverlay = document.getElementById('modalOverlay');
+            if (modalClose) modalClose.addEventListener('click', closeModal);
+            if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+
+            // Мобильное меню
+            const menuToggle = document.getElementById('menuToggle');
+            const navMenu = document.getElementById('navMenu');
+            const menuOverlay = document.getElementById('menuOverlay');
+            if (menuToggle && navMenu && menuOverlay) {
+                menuToggle.addEventListener('click', () => {
+                    navMenu.classList.toggle('active');
+                    menuOverlay.classList.toggle('active');
+                    document.body.classList.toggle('menu-open');
+                });
+                menuOverlay.addEventListener('click', () => {
+                    navMenu.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                });
+            }
+
+            // Выход (если есть кнопка выхода)
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    await supabase.auth.signOut();
+                    window.location.href = '../../login.html';
+                });
+            }
+        }
     </script>
 </body>
 </html>
