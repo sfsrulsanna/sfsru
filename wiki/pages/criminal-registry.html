@@ -41,8 +41,58 @@
             .modal-content {
                 grid-template-columns: 1fr;
             }
+            .modal-photo-section {
+                flex: 0 0 auto !important;
+                width: 100%;
+                max-width: 300px;
+                margin: 0 auto;
+            }
+            .main-photo {
+                max-width: 100%;
+            }
         }
-        /* Стиль для сообщения об ошибке доступа */
+        /* Улучшенные стили для фото в модалке */
+        .modal-photo-section {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex: 0 0 200px;
+        }
+        .main-photo {
+            aspect-ratio: 3 / 4;
+            background: #f0f0f0;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            max-width: 200px;
+        }
+        .main-photo-img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .photo-thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            justify-content: flex-start;
+        }
+        .photo-thumb {
+            width: 50px;
+            height: 66px;
+            object-fit: cover;
+            border-radius: 4px;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: border 0.2s;
+        }
+        .photo-thumb:hover,
+        .photo-thumb.active {
+            border-color: #cc0000;
+        }
         .access-message.error {
             background: #ffebee;
             color: #c62828;
@@ -185,7 +235,7 @@
         import { supabase } from '../../../js/supabase-config.js';
 
         // -------------------- КОНФИГУРАЦИЯ --------------------
-        const STORAGE_BUCKET = 'registry-files'; // Единый бакет с админкой
+        const STORAGE_BUCKET = 'registry-files';
         const LOGIN_PAGE = '../../login.html';
 
         // -------------------- DOM элементы --------------------
@@ -194,11 +244,12 @@
         const cardsGrid = document.getElementById('cardsGrid');
         const modalOverlay = document.getElementById('modalOverlay');
         const modalClose = document.getElementById('modalClose');
+        const modalMainPhoto = document.getElementById('modalMainPhoto');
+        const photoThumbnails = document.getElementById('photoThumbnails');
 
         // Кэш данных
         let recordsCache = null;
         let loadingPromise = null;
-        let currentUser = null;
 
         // -------------------- Вспомогательные функции --------------------
         function escapeHtml(str) {
@@ -337,7 +388,6 @@
                         if (record && record.photo_paths && record.photo_paths.length) {
                             loadPhotoForCard(card, record.photo_paths[0]);
                         } else {
-                            // Нет фото – показываем заглушку
                             const photoDiv = card.querySelector('.card-photo');
                             if (photoDiv) {
                                 const placeholder = photoDiv.querySelector('.loading-placeholder');
@@ -397,9 +447,7 @@
 
             // Фото
             const photoPaths = record.photo_paths || [];
-            const mainPhoto = document.getElementById('modalMainPhoto');
-            const thumbnailsContainer = document.getElementById('photoThumbnails');
-            thumbnailsContainer.innerHTML = '';
+            photoThumbnails.innerHTML = '';
 
             if (photoPaths.length) {
                 const signedUrls = await Promise.all(photoPaths.map(async (path) => {
@@ -411,25 +459,30 @@
 
                 const validUrls = signedUrls.filter(u => u);
                 if (validUrls.length) {
-                    mainPhoto.src = validUrls[0];
-                    mainPhoto.onerror = () => { mainPhoto.src = ''; };
+                    modalMainPhoto.src = validUrls[0];
+                    modalMainPhoto.onerror = () => { modalMainPhoto.src = ''; };
 
                     validUrls.forEach((url, idx) => {
                         const thumb = document.createElement('img');
                         thumb.src = url;
                         thumb.className = 'photo-thumb';
+                        if (idx === 0) thumb.classList.add('active');
                         thumb.addEventListener('click', () => {
-                            mainPhoto.src = url;
+                            // Сменить основное фото
+                            modalMainPhoto.src = url;
+                            // Обновить активный класс
+                            document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('active'));
+                            thumb.classList.add('active');
                         });
-                        thumbnailsContainer.appendChild(thumb);
+                        photoThumbnails.appendChild(thumb);
                     });
                 } else {
-                    mainPhoto.src = '';
-                    mainPhoto.alt = 'Нет фото';
+                    modalMainPhoto.src = '';
+                    modalMainPhoto.alt = 'Нет фото';
                 }
             } else {
-                mainPhoto.src = '';
-                mainPhoto.alt = 'Нет фото';
+                modalMainPhoto.src = '';
+                modalMainPhoto.alt = 'Нет фото';
             }
 
             // Документы
