@@ -25,7 +25,6 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
     <style>
-        /* Дополнительные стили (оставляем только необходимые) */
         .no-data {
             text-align: center;
             padding: 3rem;
@@ -33,7 +32,6 @@
             font-size: 1.1rem;
             grid-column: 1 / -1;
         }
-        /* Стили для модального окна (уже есть в criminal-registry.css, но дублируем на всякий случай) */
         .modal-content {
             display: grid;
             grid-template-columns: 1fr 1.5fr;
@@ -43,6 +41,59 @@
             .modal-content {
                 grid-template-columns: 1fr;
             }
+        }
+        /* Стиль для сообщения об ошибке доступа */
+        .access-message.error {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        .auth-section {
+            margin-top: 2rem;
+            text-align: center;
+        }
+        .auth-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #ff6666, #cc0000);
+            color: white;
+            padding: 0.75rem 2rem;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .auth-button:hover {
+            transform: scale(1.05);
+        }
+        .user-info {
+            display: inline-flex;
+            align-items: center;
+            gap: 1rem;
+            background: #f8f8f8;
+            padding: 0.5rem 1.5rem;
+            border-radius: 40px;
+            border: 1px solid #ddd;
+        }
+        .user-email {
+            color: #333;
+            font-weight: 500;
+        }
+        .logout-btn {
+            background: none;
+            border: none;
+            color: #cc0000;
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+        }
+        .logout-btn:hover {
+            text-decoration: underline;
         }
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
@@ -133,16 +184,100 @@
     <script type="module">
         import { supabase } from '../../../js/supabase-config.js';
 
-        // Кэш данных и ссылок
+        // -------------------- КОНФИГУРАЦИЯ --------------------
+        const STORAGE_BUCKET = 'registry-files'; // Единый бакет с админкой
+        const LOGIN_PAGE = '../../login.html';
+
+        // -------------------- DOM элементы --------------------
+        const accessMessageDiv = document.getElementById('accessMessage');
+        const authSection = document.getElementById('authSection');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalClose = document.getElementById('modalClose');
+
+        // Кэш данных
         let recordsCache = null;
         let loadingPromise = null;
+        let currentUser = null;
 
-        // Инициализация
-        document.addEventListener('DOMContentLoaded', async () => {
-            await loadRecords();
-            setupEventListeners();
-        });
+        // -------------------- Вспомогательные функции --------------------
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m));
+        }
 
+        function showMessage(text, type = 'info') {
+            if (!accessMessageDiv) return;
+            accessMessageDiv.innerHTML = text;
+            accessMessageDiv.className = `access-message ${type}`;
+            accessMessageDiv.style.display = 'block';
+        }
+        function hideMessage() {
+            if (accessMessageDiv) accessMessageDiv.style.display = 'none';
+        }
+
+        // -------------------- БЛОК АВТОРИЗАЦИИ --------------------
+        function renderAuthSection(session) {
+            if (!authSection) return;
+            if (session) {
+                const user = session.user;
+                authSection.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-email">${escapeHtml(user.email)}</span>
+                        <button class="logout-btn" id="logoutBtn">Выйти</button>
+                    </div>
+                `;
+                document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+                    await supabase.auth.signOut();
+                    window.location.reload();
+                });
+            } else {
+                const currentPath = window.location.pathname;
+                authSection.innerHTML = `<a href="${LOGIN_PAGE}?redirect=${encodeURIComponent(currentPath)}" class="auth-button">Войти</a>`;
+            }
+        }
+
+        // -------------------- ПРОВЕРКА ПАСПОРТА (доступ) --------------------
+        async function checkAccess(session) {
+            if (!session) return false;
+            const user = session.user;
+            let personalCode = user.user_metadata?.personal_code || user.app_metadata?.personal_code;
+            if (!personalCode) {
+                personalCode = localStorage.getItem('personalCode');
+            }
+            if (!personalCode) {
+                const { data: userData, error } = await supabase
+                    .from('users')
+                    .select('personal_code')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                if (!error && userData?.personal_code) {
+                    personalCode = userData.personal_code;
+                    localStorage.setItem('personalCode', personalCode);
+                }
+            }
+            if (!personalCode) {
+                console.error('personal_code не найден');
+                showMessage('Не удалось определить ваш personal_code. Обратитесь в поддержку.', 'error');
+                return false;
+            }
+            const { data: passport, error } = await supabase
+                .schema('documents')
+                .from('passport')
+                .select('status')
+                .eq('personal_code', personalCode)
+                .eq('status', 'verified')
+                .maybeSingle();
+
+            if (error) {
+                console.error('Ошибка при проверке паспорта:', error);
+                showMessage('Ошибка при проверке паспорта. Попробуйте позже.', 'error');
+                return false;
+            }
+            return !!passport;
+        }
+
+        // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
         async function loadRecords() {
             if (recordsCache) return;
             if (loadingPromise) return loadingPromise;
@@ -160,7 +295,7 @@
                     renderCards();
                 } catch (err) {
                     console.error('Ошибка загрузки реестра:', err);
-                    document.getElementById('accessMessage').innerHTML = '<div class="access-message error">Не удалось загрузить данные. Попробуйте позже.</div>';
+                    showMessage('Не удалось загрузить данные. Попробуйте позже.', 'error');
                 } finally {
                     loadingPromise = null;
                 }
@@ -168,8 +303,9 @@
             return loadingPromise;
         }
 
+        // -------------------- ОТРИСОВКА КАРТОЧЕК --------------------
         function renderCards() {
-            const grid = document.getElementById('cardsGrid');
+            const grid = cardsGrid;
             if (!grid) return;
 
             if (!recordsCache || recordsCache.length === 0) {
@@ -209,6 +345,7 @@
                                 const fallback = document.createElement('div');
                                 fallback.className = 'no-photo';
                                 fallback.textContent = 'Нет фото';
+                                fallback.style.cssText = 'display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;';
                                 photoDiv.appendChild(fallback);
                             }
                         }
@@ -223,18 +360,16 @@
         async function loadPhotoForCard(card, photoPath) {
             try {
                 const { data, error } = await supabase.storage
-                    .from('criminal-files')
+                    .from(STORAGE_BUCKET)
                     .createSignedUrl(photoPath, 3600);
                 if (error) throw error;
 
                 const photoDiv = card.querySelector('.card-photo');
                 if (photoDiv) {
-                    // Очищаем и вставляем img с правильными стилями
                     photoDiv.innerHTML = '';
                     const img = document.createElement('img');
                     img.src = data.signedUrl;
                     img.alt = 'Фото';
-                    // Стили уже заданы в CSS для .card-photo img
                     photoDiv.appendChild(img);
                 }
             } catch (err) {
@@ -246,16 +381,7 @@
             }
         }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>]/g, function(m) {
-                if (m === '&') return '&amp;';
-                if (m === '<') return '&lt;';
-                if (m === '>') return '&gt;';
-                return m;
-            });
-        }
-
+        // -------------------- МОДАЛЬНОЕ ОКНО --------------------
         async function openModal(recordId) {
             const record = recordsCache.find(r => r.id === recordId);
             if (!record) return;
@@ -278,8 +404,8 @@
             if (photoPaths.length) {
                 const signedUrls = await Promise.all(photoPaths.map(async (path) => {
                     try {
-                        const { data } = await supabase.storage.from('criminal-files').createSignedUrl(path, 3600);
-                        return data.signedUrl;
+                        const { data } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 3600);
+                        return data?.signedUrl || null;
                     } catch { return null; }
                 }));
 
@@ -314,7 +440,7 @@
             if (docPaths.length) {
                 for (const path of docPaths) {
                     try {
-                        const { data } = await supabase.storage.from('criminal-files').createSignedUrl(path, 3600);
+                        const { data } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 3600);
                         if (data?.signedUrl) {
                             const fileName = path.split('/').pop().replace(/^\d+_/, '');
                             const button = document.createElement('a');
@@ -333,19 +459,19 @@
                 docsContainer.innerHTML = '<p class="no-docs">Нет прикреплённых документов</p>';
             }
 
-            // Показать модалку
-            document.getElementById('modalOverlay').classList.add('active');
+            modalOverlay.classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
+            modalOverlay.classList.remove('active');
             document.body.style.overflow = '';
         }
 
+        // -------------------- ОБРАБОТЧИКИ СОБЫТИЙ --------------------
         function setupEventListeners() {
             // Открытие карточек
-            const grid = document.getElementById('cardsGrid');
+            const grid = cardsGrid;
             if (grid) {
                 grid.addEventListener('click', (e) => {
                     const card = e.target.closest('.criminal-card');
@@ -356,8 +482,6 @@
             }
 
             // Закрытие модалки
-            const modalClose = document.getElementById('modalClose');
-            const modalOverlay = document.getElementById('modalOverlay');
             if (modalClose) modalClose.addEventListener('click', closeModal);
             if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
                 if (e.target === modalOverlay) closeModal();
@@ -379,16 +503,40 @@
                     document.body.classList.remove('menu-open');
                 });
             }
-
-            // Выход (если есть кнопка выхода)
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async () => {
-                    await supabase.auth.signOut();
-                    window.location.href = '../../login.html';
-                });
-            }
         }
+
+        // -------------------- ОСНОВНАЯ ЛОГИКА --------------------
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            renderAuthSection(session);
+
+            if (!session) {
+                showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
+                return;
+            }
+
+            const hasAccess = await checkAccess(session);
+            if (!hasAccess) {
+                showMessage('У вас нет подтверждённого паспорта гражданина СФСРЮ. Доступ запрещён.', 'error');
+                return;
+            }
+
+            hideMessage();
+            await loadRecords();
+
+            supabase.auth.onAuthStateChange((event, session) => {
+                renderAuthSection(session);
+                if (event === 'SIGNED_OUT') {
+                    showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
+                    cardsGrid.innerHTML = '';
+                } else if (event === 'SIGNED_IN') {
+                    window.location.reload();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+        setupEventListeners();
     </script>
 </body>
 </html>
