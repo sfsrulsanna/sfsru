@@ -199,6 +199,19 @@
             try { return new Date(dateStr).toLocaleDateString('ru-RU'); } catch { return dateStr; }
         }
 
+        // Преобразует дату в формат YYYY-MM-DD для input type="date"
+        function formatDateForInput(dateStr) {
+            if (!dateStr) return '';
+            try {
+                const d = new Date(dateStr);
+                if (isNaN(d.getTime())) return '';
+                const year = d.getFullYear();
+                const month = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return `${year}-${month}-${day}`;
+            } catch { return ''; }
+        }
+
         function linkifyList(text) {
             if (!text || text === '—') return '—';
             let items = text.split(',').map(s => s.trim()).filter(s => s);
@@ -457,8 +470,8 @@
                 <div class="form-group"><label for="alias">Псевдоним</label><input type="text" id="alias" value="${escapeHTML(data.alias || '')}"></div>
                 <div class="form-group"><label for="reason">Основание включения</label><textarea id="reason" rows="3">${escapeHTML(data.reason || '')}</textarea></div>
                 <div class="form-row">
-                    <div class="form-group"><label for="inclusion_date">Дата включения</label><input type="date" id="inclusion_date" value="${data.inclusion_date || ''}"></div>
-                    <div class="form-group"><label for="exclusion_date">Дата исключения</label><input type="date" id="exclusion_date" value="${data.exclusion_date || ''}"></div>
+                    <div class="form-group"><label for="inclusion_date">Дата включения</label><input type="date" id="inclusion_date" value="${formatDateForInput(data.inclusion_date)}"></div>
+                    <div class="form-group"><label for="exclusion_date">Дата исключения</label><input type="date" id="exclusion_date" value="${formatDateForInput(data.exclusion_date)}"></div>
                 </div>
                 <div class="form-group"><label for="domain">Домены (через запятую)</label><input type="text" id="domain" value="${escapeHTML(data.domain || '')}"></div>
                 <div class="form-group"><label for="type">Тип иностранного агента</label><input type="text" id="type" value="${escapeHTML(data.type || '')}"></div>
@@ -466,7 +479,7 @@
                     <div class="form-group"><label for="inn">ИНН</label><input type="text" id="inn" value="${escapeHTML(data.inn || '')}"></div>
                     <div class="form-group"><label for="nss">СНИЛС</label><input type="text" id="nss" value="${escapeHTML(data.nss || '')}"></div>
                 </div>
-                <div class="form-group"><label for="birth_date">Дата рождения</label><input type="date" id="birth_date" value="${data.birth_date || ''}"></div>
+                <div class="form-group"><label for="birth_date">Дата рождения</label><input type="date" id="birth_date" value="${formatDateForInput(data.birth_date)}"></div>
                 <div class="form-group"><label for="email">Email (через запятую)</label><input type="text" id="email" value="${escapeHTML(data.email || '')}"></div>
                 <div class="form-group"><label for="phone_number">Телефоны (через запятую)</label><input type="text" id="phone_number" value="${escapeHTML(data.phone_number || '')}"></div>
                 <div class="form-group"><label for="account_number">Номер специального счета</label><input type="text" id="account_number" value="${escapeHTML(data.account_number || '')}"></div>
@@ -475,7 +488,7 @@
                     <div class="form-group"><label for="bic">БИК</label><input type="text" id="bic" value="${escapeHTML(data.bic || '')}"></div>
                     <div class="form-group"><label for="corr_account">Корр. счёт</label><input type="text" id="corr_account" value="${escapeHTML(data.corr_account || '')}"></div>
                 </div>
-                <div class="form-group"><label for="account_open_date">Дата открытия счёта</label><input type="date" id="account_open_date" value="${data.account_open_date || ''}"></div>
+                <div class="form-group"><label for="account_open_date">Дата открытия счёта</label><input type="date" id="account_open_date" value="${formatDateForInput(data.account_open_date)}"></div>
                 <div class="form-group"><label for="more">Дополнительные данные</label><textarea id="more" rows="4">${escapeHTML(data.more || '')}</textarea></div>
             `;
         }
@@ -486,13 +499,13 @@
                 <div class="form-group"><label for="org_short_name">Краткое название</label><input type="text" id="org_short_name" value="${escapeHTML(data.org_short_name || '')}"></div>
                 <div class="form-group"><label for="inn_legal">ИНН</label><input type="text" id="inn_legal" value="${escapeHTML(data.inn || '')}"></div>
                 <div class="form-group"><label for="ogrn">ОГРН</label><input type="text" id="ogrn" value="${escapeHTML(data.ogrn || '')}"></div>
-                <div class="form-group"><label for="establishment_date">Дата образования</label><input type="date" id="establishment_date" value="${data.establishment_date || ''}"></div>
+                <div class="form-group"><label for="establishment_date">Дата образования</label><input type="date" id="establishment_date" value="${formatDateForInput(data.establishment_date)}"></div>
                 <div class="form-group"><label for="head">Руководитель</label><input type="text" id="head" value="${escapeHTML(data.head || '')}"></div>
                 <div class="form-group"><label for="participants">Участники</label><textarea id="participants" rows="3">${escapeHTML(data.participants || '')}</textarea></div>
                 <div class="form-group"><label for="reason_legal">Основание</label><textarea id="reason_legal" rows="3">${escapeHTML(data.reason || '')}</textarea></div>
                 <div class="form-row">
-                    <div class="form-group"><label for="inclusion_date_legal">Дата включения</label><input type="date" id="inclusion_date_legal" value="${data.inclusion_date || ''}"></div>
-                    <div class="form-group"><label for="exclusion_date_legal">Дата исключения</label><input type="date" id="exclusion_date_legal" value="${data.exclusion_date || ''}"></div>
+                    <div class="form-group"><label for="inclusion_date_legal">Дата включения</label><input type="date" id="inclusion_date_legal" value="${formatDateForInput(data.inclusion_date)}"></div>
+                    <div class="form-group"><label for="exclusion_date_legal">Дата исключения</label><input type="date" id="exclusion_date_legal" value="${formatDateForInput(data.exclusion_date)}"></div>
                 </div>
                 <div class="form-group"><label for="domain_legal">Домены</label><input type="text" id="domain_legal" value="${escapeHTML(data.domain || '')}"></div>
                 <div class="form-group"><label for="type_legal">Тип</label><input type="text" id="type_legal" value="${escapeHTML(data.type || '')}"></div>
@@ -505,7 +518,7 @@
                     <div class="form-group"><label for="bic_legal">БИК</label><input type="text" id="bic_legal" value="${escapeHTML(data.bic || '')}"></div>
                     <div class="form-group"><label for="corr_account_legal">Корр. счёт</label><input type="text" id="corr_account_legal" value="${escapeHTML(data.corr_account || '')}"></div>
                 </div>
-                <div class="form-group"><label for="account_open_date_legal">Дата открытия счёта</label><input type="date" id="account_open_date_legal" value="${data.account_open_date || ''}"></div>
+                <div class="form-group"><label for="account_open_date_legal">Дата открытия счёта</label><input type="date" id="account_open_date_legal" value="${formatDateForInput(data.account_open_date)}"></div>
                 <div class="form-group"><label for="more_legal">Доп. данные</label><textarea id="more_legal" rows="4">${escapeHTML(data.more || '')}</textarea></div>
             `;
         }
@@ -516,7 +529,6 @@
             if (!input || !preview) return;
             input.addEventListener('change', () => {
                 const files = Array.from(input.files);
-                // Сохраняем файлы в tempFiles
                 if (type === 'photos') tempFiles.photos = files;
                 else tempFiles.documents = files;
                 renderPreview(preview, files, type);
@@ -543,12 +555,9 @@
                 removeBtn.innerHTML = '&times;';
                 removeBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    // Удаляем из tempFiles
                     const arr = type === 'photos' ? tempFiles.photos : tempFiles.documents;
                     arr.splice(idx, 1);
-                    // Обновляем input и preview
                     const input = document.getElementById(type === 'photos' ? 'photoUpload' : 'docUpload');
-                    // Нельзя просто обновить files, поэтому пересоздаём
                     const dataTransfer = new DataTransfer();
                     arr.forEach(f => dataTransfer.items.add(f));
                     input.files = dataTransfer.files;
@@ -616,7 +625,6 @@
             data.created_at = new Date().toISOString();
             data.updated_at = new Date().toISOString();
 
-            // Загружаем файлы в Storage
             const photoPaths = await uploadFiles(tempFiles.photos, `photos/${type}`);
             const docPaths = await uploadFiles(tempFiles.documents, `docs/${type}`);
             if (photoPaths.length) data.photo_paths = photoPaths;
@@ -686,17 +694,40 @@
                     <div id="message" class="message hidden"></div>
                 </div>
             `;
-            // Обработчики вкладок (переключение типа запрещено при редактировании, но оставим)
+            // Обработчик переключения вкладок в режиме редактирования
             document.querySelectorAll('.tab').forEach(tab => {
                 tab.addEventListener('click', () => {
-                    // Не меняем тип, просто показываем соответствующую форму
                     const t = tab.dataset.type;
+                    // Показываем/скрываем блоки
                     document.getElementById('individualFields').style.display = t === 'individual' ? 'block' : 'none';
                     document.getElementById('legalFields').style.display = t === 'legal' ? 'block' : 'none';
+                    // Убираем/добавляем required у соответствующих полей
+                    const indFields = document.getElementById('individualFields').querySelectorAll('[required]');
+                    const legFields = document.getElementById('legalFields').querySelectorAll('[required]');
+                    if (t === 'individual') {
+                        indFields.forEach(el => el.setAttribute('required', 'required'));
+                        legFields.forEach(el => el.removeAttribute('required'));
+                    } else {
+                        legFields.forEach(el => el.setAttribute('required', 'required'));
+                        indFields.forEach(el => el.removeAttribute('required'));
+                    }
                     document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
                     tab.classList.add('active');
+                    // Обновляем currentType для сохранения
+                    currentType = t;
                 });
             });
+            // При инициализации убедимся, что required установлены правильно
+            const indFields = document.getElementById('individualFields').querySelectorAll('[required]');
+            const legFields = document.getElementById('legalFields').querySelectorAll('[required]');
+            if (type === 'individual') {
+                indFields.forEach(el => el.setAttribute('required', 'required'));
+                legFields.forEach(el => el.removeAttribute('required'));
+            } else {
+                legFields.forEach(el => el.setAttribute('required', 'required'));
+                indFields.forEach(el => el.removeAttribute('required'));
+            }
+
             // Загрузка файлов
             setupFileUpload('photoUploadEdit', 'photoPreviewEdit', 'photos');
             setupFileUpload('docUploadEdit', 'docPreviewEdit', 'documents');
@@ -758,12 +789,10 @@
             }
             data.updated_at = new Date().toISOString();
 
-            // Загружаем новые файлы
             const newPhotos = tempFiles.photos || [];
             const newDocs = tempFiles.documents || [];
             const photoPaths = await uploadFiles(newPhotos, `photos/${type}`);
             const docPaths = await uploadFiles(newDocs, `docs/${type}`);
-            // Объединяем с существующими
             const existingPhotos = oldData.photo_paths || [];
             const existingDocs = oldData.document_paths || [];
             if (photoPaths.length) data.photo_paths = [...existingPhotos, ...photoPaths];
@@ -784,7 +813,6 @@
             const { data, error } = await supabase.schema('registry').from(table).select('*').eq('id', id).single();
             if (error || !data) { showMessage('Запись не найдена', 'error-msg'); navigate('home'); return; }
 
-            // Получаем signed URL для фото и документов
             const photoUrls = await getSignedUrls(data.photo_paths || []);
             const docUrls = await getSignedUrls(data.document_paths || []);
 
@@ -891,27 +919,23 @@
         window.navigate = navigate;
 
         document.addEventListener('DOMContentLoaded', async () => {
-            // Проверка админа
             if (!await requireAdmin()) return;
 
             const { data: { user } } = await supabase.auth.getUser();
             if (user?.email) document.getElementById('adminEmail').textContent = user.email;
             currentUser = user;
 
-            // Обработка параметров URL при загрузке
             const params = new URLSearchParams(window.location.search);
             const page = params.get('page') || 'home';
             const type = params.get('type') || 'individual';
             const id = params.get('id');
             navigate(page, { type, id });
 
-            // Выход
             document.getElementById('logoutBtn').addEventListener('click', async () => {
                 await supabase.auth.signOut();
                 window.location.href = '../../login.html';
             });
 
-            // Обработка истории
             window.addEventListener('popstate', (e) => {
                 if (e.state) {
                     const { page, params } = e.state;
