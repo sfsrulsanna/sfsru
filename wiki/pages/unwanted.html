@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="googlebot" content="noindex">
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, noimageindex">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Реестр нежелательных лиц | СФСРЮ</title>
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/registry/criminal-registry.css"> <!-- переиспользуем стили -->
+    <style>
+        .no-data { text-align: center; padding: 3rem; color: #64748b; font-size: 1.1rem; grid-column: 1 / -1; }
+        .modal-content { display: grid; grid-template-columns: 1fr 1.5fr; gap: 2rem; }
+        @media (max-width: 768px) { .modal-content { grid-template-columns: 1fr; } }
+        .access-message.error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; padding: 1.5rem; border-radius: 8px; text-align: center; font-size: 1.1rem; }
+        .auth-section { margin-top: 2rem; text-align: center; }
+        .auth-button { display: inline-block; background: linear-gradient(135deg, #ff6666, #cc0000); color: white; padding: 0.75rem 2rem; border-radius: 40px; text-decoration: none; font-weight: 600; border: none; cursor: pointer; transition: transform 0.2s; }
+        .auth-button:hover { transform: scale(1.05); }
+        .user-info { display: inline-flex; align-items: center; gap: 1rem; background: #f8f8f8; padding: 0.5rem 1.5rem; border-radius: 40px; border: 1px solid #ddd; }
+        .user-email { color: #333; font-weight: 500; }
+        .logout-btn { background: none; border: none; color: #cc0000; font-weight: 600; cursor: pointer; padding: 0.25rem 0.5rem; }
+        .logout-btn:hover { text-decoration: underline; }
+        /* Стили для миниатюр в модалке */
+        .photo-thumbnails { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .photo-thumb { width: 80px; height: 80px; object-fit: cover; border-radius: 4px; cursor: pointer; border: 2px solid transparent; transition: border 0.2s; }
+        .photo-thumb:hover, .photo-thumb.active { border-color: #cc0000; }
+        .main-photo { aspect-ratio: 3/4; background: #f0f0f0; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        .main-photo-img { width: 100%; height: 100%; object-fit: cover; }
+    </style>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" id="menuToggle">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu" id="navMenu">
+                <ul>
+                    <li><a href="../../index.html">Главная</a></li>
+                    <li><a href="../../news.html">Новости</a></li>
+                    <li><a href="../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../services.html">Услуги</a></li>
+                    <li><a href="../../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+            <div class="menu-overlay" id="menuOverlay"></div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="registry-container">
+            <h1 class="page-title">Реестр нежелательных лиц</h1>
+            <p class="page-subtitle">Лица, которым запрещён въезд или пребывание на территории СФСРЮ</p>
+
+            <div id="accessMessage" class="access-message"></div>
+
+            <div class="cards-grid" id="cardsGrid"></div>
+            <div class="auth-section" id="authSection"></div>
+        </div>
+    </main>
+
+    <!-- Модальное окно -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal modal-large">
+            <div class="modal-header">
+                <h2 class="modal-title" id="modalFullName">Загрузка...</h2>
+                <button class="modal-close" id="modalClose">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-content">
+                    <div class="modal-photo-section">
+                        <div class="main-photo">
+                            <img id="modalMainPhoto" src="" alt="Фото" class="main-photo-img">
+                        </div>
+                        <div class="photo-thumbnails" id="photoThumbnails"></div>
+                    </div>
+                    <div class="modal-info-section">
+                        <div class="info-table">
+                            <div class="info-row"><span class="info-label">Дата рождения</span><span class="info-value" id="modalBirthDate">—</span></div>
+                            <div class="info-row"><span class="info-label">Место рождения</span><span class="info-value" id="modalBirthPlace">—</span></div>
+                            <div class="info-row"><span class="info-label">Пол</span><span class="info-value" id="modalGender">—</span></div>
+                            <div class="info-row"><span class="info-label">Гражданство</span><span class="info-value" id="modalCitizenship">—</span></div>
+                            <div class="info-row"><span class="info-label">Основание</span><span class="info-value" id="modalReason">—</span></div>
+                            <div class="info-row"><span class="info-label">Дата включения</span><span class="info-value" id="modalInclusionDate">—</span></div>
+                            <div class="info-row"><span class="info-label">Дата исключения</span><span class="info-value" id="modalExclusionDate">—</span></div>
+                        </div>
+                        <div class="details-section">
+                            <h3>Дополнительные сведения</h3>
+                            <p id="modalDetails">—</p>
+                        </div>
+                        <div class="documents-section">
+                            <h3>Документы</h3>
+                            <div id="documentsList" class="documents-list"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script src="../../../js/mob-menu.js"></script>
+    <script type="module">
+        import { supabase } from '../../../js/supabase-config.js';
+
+        const STORAGE_BUCKET = 'registry-files';
+        const LOGIN_PAGE = '../../login.html';
+
+        let recordsCache = null;
+        let loadingPromise = null;
+
+        const accessMessageDiv = document.getElementById('accessMessage');
+        const authSection = document.getElementById('authSection');
+        const cardsGrid = document.getElementById('cardsGrid');
+        const modalOverlay = document.getElementById('modalOverlay');
+        const modalClose = document.getElementById('modalClose');
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m));
+        }
+
+        function showMessage(text, type = 'info') {
+            if (!accessMessageDiv) return;
+            accessMessageDiv.innerHTML = text;
+            accessMessageDiv.className = `access-message ${type}`;
+            accessMessageDiv.style.display = 'block';
+        }
+        function hideMessage() {
+            if (accessMessageDiv) accessMessageDiv.style.display = 'none';
+        }
+
+        function renderAuthSection(session) {
+            if (!authSection) return;
+            if (session) {
+                const user = session.user;
+                authSection.innerHTML = `
+                    <div class="user-info">
+                        <span class="user-email">${escapeHtml(user.email)}</span>
+                        <button class="logout-btn" id="logoutBtn">Выйти</button>
+                    </div>
+                `;
+                document.getElementById('logoutBtn')?.addEventListener('click', async () => {
+                    await supabase.auth.signOut();
+                    window.location.reload();
+                });
+            } else {
+                const currentPath = window.location.pathname;
+                authSection.innerHTML = `<a href="${LOGIN_PAGE}?redirect=${encodeURIComponent(currentPath)}" class="auth-button">Войти</a>`;
+            }
+        }
+
+        async function checkAccess(session) {
+            if (!session) return false;
+            const user = session.user;
+            let personalCode = user.user_metadata?.personal_code || user.app_metadata?.personal_code;
+            if (!personalCode) {
+                personalCode = localStorage.getItem('personalCode');
+            }
+            if (!personalCode) {
+                const { data: userData, error } = await supabase
+                    .from('users')
+                    .select('personal_code')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                if (!error && userData?.personal_code) {
+                    personalCode = userData.personal_code;
+                    localStorage.setItem('personalCode', personalCode);
+                }
+            }
+            if (!personalCode) {
+                console.error('personal_code не найден');
+                showMessage('Не удалось определить ваш personal_code. Обратитесь в поддержку.', 'error');
+                return false;
+            }
+            const { data: passport, error } = await supabase
+                .schema('documents')
+                .from('passport')
+                .select('status')
+                .eq('personal_code', personalCode)
+                .eq('status', 'verified')
+                .maybeSingle();
+
+            if (error) {
+                console.error('Ошибка при проверке паспорта:', error);
+                showMessage('Ошибка при проверке паспорта. Попробуйте позже.', 'error');
+                return false;
+            }
+            return !!passport;
+        }
+
+        async function loadRecords() {
+            if (recordsCache) return;
+            if (loadingPromise) return loadingPromise;
+
+            loadingPromise = (async () => {
+                try {
+                    const { data, error } = await supabase
+                        .schema('registry')
+                        .from('unwanted_persons')
+                        .select('id, record_number, full_name, birth_date, birth_place, gender, citizenship, reason, inclusion_date, exclusion_date, details, photo_paths, document_paths')
+                        .order('record_number', { ascending: false });
+
+                    if (error) throw error;
+                    recordsCache = data || [];
+                    renderCards();
+                } catch (err) {
+                    console.error('Ошибка загрузки реестра:', err);
+                    showMessage('Не удалось загрузить данные. Попробуйте позже.', 'error');
+                } finally {
+                    loadingPromise = null;
+                }
+            })();
+            return loadingPromise;
+        }
+
+        function renderCards() {
+            const grid = cardsGrid;
+            if (!grid) return;
+
+            if (!recordsCache || recordsCache.length === 0) {
+                grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
+                return;
+            }
+
+            grid.innerHTML = recordsCache.map(record => `
+                <div class="criminal-card" data-id="${record.id}">
+                    <div class="card-photo">
+                        <div class="loading-placeholder"></div>
+                        <img data-src="placeholder" alt="Фото" style="display: none;">
+                    </div>
+                    <div class="card-info">
+                        <div class="card-name">${escapeHtml(record.full_name)}</div>
+                        <div class="card-number">№ записи: ${record.record_number}</div>
+                        <div class="card-article">${escapeHtml(record.citizenship || '—')}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const card = entry.target;
+                        const id = card.dataset.id;
+                        const record = recordsCache.find(r => r.id === id);
+                        if (record && record.photo_paths && record.photo_paths.length) {
+                            loadPhotoForCard(card, record.photo_paths[0]);
+                        } else {
+                            const photoDiv = card.querySelector('.card-photo');
+                            if (photoDiv) {
+                                const placeholder = photoDiv.querySelector('.loading-placeholder');
+                                if (placeholder) placeholder.style.display = 'none';
+                                const fallback = document.createElement('div');
+                                fallback.className = 'no-photo';
+                                fallback.textContent = 'Нет фото';
+                                fallback.style.cssText = 'display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;';
+                                photoDiv.appendChild(fallback);
+                            }
+                        }
+                        observer.unobserve(card);
+                    }
+                });
+            }, { rootMargin: '0px 0px 200px 0px' });
+
+            document.querySelectorAll('.criminal-card').forEach(card => observer.observe(card));
+        }
+
+        async function loadPhotoForCard(card, photoPath) {
+            try {
+                const { data, error } = await supabase.storage
+                    .from(STORAGE_BUCKET)
+                    .createSignedUrl(photoPath, 3600);
+                if (error) throw error;
+
+                const photoDiv = card.querySelector('.card-photo');
+                if (photoDiv) {
+                    photoDiv.innerHTML = '';
+                    const img = document.createElement('img');
+                    img.src = data.signedUrl;
+                    img.alt = 'Фото';
+                    photoDiv.appendChild(img);
+                }
+            } catch (err) {
+                console.error('Ошибка загрузки фото:', err);
+                const photoDiv = card.querySelector('.card-photo');
+                if (photoDiv) {
+                    photoDiv.innerHTML = '<div class="no-photo" style="display:flex; align-items:center; justify-content:center; height:100%; background:#f0f0f0; color:#999;">Ошибка</div>';
+                }
+            }
+        }
+
+        async function openModal(recordId) {
+            const record = recordsCache.find(r => r.id === recordId);
+            if (!record) return;
+
+            document.getElementById('modalFullName').textContent = record.full_name;
+            document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
+            document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
+            document.getElementById('modalGender').textContent = record.gender || '—';
+            document.getElementById('modalCitizenship').textContent = record.citizenship || '—';
+            document.getElementById('modalReason').textContent = record.reason || '—';
+            document.getElementById('modalInclusionDate').textContent = record.inclusion_date ? new Date(record.inclusion_date).toLocaleDateString('ru-RU') : '—';
+            document.getElementById('modalExclusionDate').textContent = record.exclusion_date ? new Date(record.exclusion_date).toLocaleDateString('ru-RU') : '—';
+            document.getElementById('modalDetails').textContent = record.details || '—';
+
+            // Фото
+            const photoPaths = record.photo_paths || [];
+            const mainPhoto = document.getElementById('modalMainPhoto');
+            const thumbnailsContainer = document.getElementById('photoThumbnails');
+            thumbnailsContainer.innerHTML = '';
+
+            if (photoPaths.length) {
+                const signedUrls = await Promise.all(photoPaths.map(async (path) => {
+                    try {
+                        const { data } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 3600);
+                        return data?.signedUrl || null;
+                    } catch { return null; }
+                }));
+
+                const validUrls = signedUrls.filter(u => u);
+                if (validUrls.length) {
+                    mainPhoto.src = validUrls[0];
+                    mainPhoto.onerror = () => { mainPhoto.src = ''; };
+
+                    validUrls.forEach((url, idx) => {
+                        const thumb = document.createElement('img');
+                        thumb.src = url;
+                        thumb.className = 'photo-thumb';
+                        if (idx === 0) thumb.classList.add('active');
+                        thumb.addEventListener('click', () => {
+                            document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('active'));
+                            thumb.classList.add('active');
+                            mainPhoto.src = url;
+                        });
+                        thumbnailsContainer.appendChild(thumb);
+                    });
+                } else {
+                    mainPhoto.src = '';
+                    mainPhoto.alt = 'Нет фото';
+                }
+            } else {
+                mainPhoto.src = '';
+                mainPhoto.alt = 'Нет фото';
+            }
+
+            // Документы
+            const docPaths = record.document_paths || [];
+            const docsContainer = document.getElementById('documentsList');
+            docsContainer.innerHTML = '';
+
+            if (docPaths.length) {
+                for (const path of docPaths) {
+                    try {
+                        const { data } = await supabase.storage.from(STORAGE_BUCKET).createSignedUrl(path, 3600);
+                        if (data?.signedUrl) {
+                            const fileName = path.split('/').pop().replace(/^\d+_/, '');
+                            const button = document.createElement('a');
+                            button.href = data.signedUrl;
+                            button.download = fileName;
+                            button.target = '_blank';
+                            button.className = 'document-link';
+                            button.innerHTML = `<i class="fas fa-file-pdf"></i> ${escapeHtml(fileName)}`;
+                            docsContainer.appendChild(button);
+                        }
+                    } catch (err) {
+                        console.error('Ошибка загрузки документа:', err);
+                    }
+                }
+            } else {
+                docsContainer.innerHTML = '<p class="no-docs">Нет прикреплённых документов</p>';
+            }
+
+            modalOverlay.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modalOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        function setupEventListeners() {
+            const grid = cardsGrid;
+            if (grid) {
+                grid.addEventListener('click', (e) => {
+                    const card = e.target.closest('.criminal-card');
+                    if (card && card.dataset.id) {
+                        openModal(card.dataset.id);
+                    }
+                });
+            }
+
+            if (modalClose) modalClose.addEventListener('click', closeModal);
+            if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
+                if (e.target === modalOverlay) closeModal();
+            });
+
+            const menuToggle = document.getElementById('menuToggle');
+            const navMenu = document.getElementById('navMenu');
+            const menuOverlay = document.getElementById('menuOverlay');
+            if (menuToggle && navMenu && menuOverlay) {
+                menuToggle.addEventListener('click', () => {
+                    navMenu.classList.toggle('active');
+                    menuOverlay.classList.toggle('active');
+                    document.body.classList.toggle('menu-open');
+                });
+                menuOverlay.addEventListener('click', () => {
+                    navMenu.classList.remove('active');
+                    menuOverlay.classList.remove('active');
+                    document.body.classList.remove('menu-open');
+                });
+            }
+        }
+
+        async function init() {
+            const { data: { session } } = await supabase.auth.getSession();
+            renderAuthSection(session);
+
+            if (!session) {
+                showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
+                return;
+            }
+
+            const hasAccess = await checkAccess(session);
+            if (!hasAccess) {
+                showMessage('У вас нет подтверждённого паспорта гражданина СФСРЮ. Доступ запрещён.', 'error');
+                return;
+            }
+
+            hideMessage();
+            await loadRecords();
+
+            supabase.auth.onAuthStateChange((event, session) => {
+                renderAuthSection(session);
+                if (event === 'SIGNED_OUT') {
+                    showMessage('Для доступа к реестру необходимо авторизоваться.', 'error');
+                    cardsGrid.innerHTML = '';
+                } else if (event === 'SIGNED_IN') {
+                    window.location.reload();
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', init);
+        setupEventListeners();
+    </script>
+</body>
+</html>
