@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
     <style>
-        /* ЧЁРНАЯ ТЕМА (без изменений) */
+        /* ЧЁРНАЯ ТЕМА */
         body { background: #0a0a0a; color: #e0e0e0; }
         .header { background: #000000 !important; border-bottom: 2px solid #cc0000; }
         .header .logo h1 { color: #ffffff !important; }
@@ -71,6 +71,39 @@
         .main-photo { aspect-ratio: 3/4; background: #2a2a2a; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .main-photo-img { width: 100%; height: 100%; object-fit: cover; }
         .no-photo { display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 0.9rem; }
+        /* Переиспользуем стили из уголовного реестра для карточек */
+        .card-photo {
+            aspect-ratio: 3/4;
+            background: #2a2a2a;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .card-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .card-photo .loading-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, #2a2a2a 25%, #3a3a3a 50%, #2a2a2a 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .card-photo .no-photo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #999;
+            font-size: 0.9rem;
+        }
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
@@ -160,20 +193,24 @@
     <script type="module">
         import { supabase } from '../../../js/supabase-config.js';
 
-        const STORAGE_BUCKET = 'registry-files';
+        // -------------------- КОНФИГУРАЦИЯ --------------------
+        const STORAGE_BUCKET = 'registry-files'; // тот же бакет, что и в админке
         const LOGIN_PAGE = '../../login.html';
         const TABLE = 'blacklist_enc';
         const SCHEMA = 'registry';
 
+        // Кэш данных
         let recordsCache = null;
         let loadingPromise = null;
 
+        // DOM элементы
         const accessMessageDiv = document.getElementById('accessMessage');
         const authSection = document.getElementById('authSection');
         const cardsGrid = document.getElementById('cardsGrid');
         const modalOverlay = document.getElementById('modalOverlay');
         const modalClose = document.getElementById('modalClose');
 
+        // -------------------- Вспомогательные функции --------------------
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m));
@@ -189,6 +226,7 @@
             if (accessMessageDiv) accessMessageDiv.style.display = 'none';
         }
 
+        // -------------------- Блок авторизации --------------------
         function renderAuthSection(session) {
             if (!authSection) return;
             if (session) {
@@ -209,6 +247,7 @@
             }
         }
 
+        // -------------------- Проверка доступа (паспорт) --------------------
         async function checkAccess(session) {
             if (!session) return false;
             const user = session.user;
@@ -248,6 +287,7 @@
             return !!passport;
         }
 
+        // -------------------- Загрузка данных --------------------
         async function loadRecords() {
             if (recordsCache) return;
             if (loadingPromise) return loadingPromise;
@@ -273,6 +313,7 @@
             return loadingPromise;
         }
 
+        // -------------------- Отрисовка карточек (как в уголовном реестре) --------------------
         function renderCards() {
             const grid = cardsGrid;
             if (!grid) return;
@@ -296,31 +337,36 @@
                 </div>
             `).join('');
 
-            // --- ИСПРАВЛЕНИЕ: Загружаем фото для ВСЕХ карточек сразу (без ленивой загрузки) ---
-            // Если записей много, можно ограничить количество одновременно загружаемых.
-            // Для небольшого количества (до 50) это нормально.
-            const cards = document.querySelectorAll('.criminal-card');
-            cards.forEach(card => {
-                const id = card.dataset.id;
-                const record = recordsCache.find(r => r.id === id);
-                if (record && record.photo_paths && record.photo_paths.length) {
-                    loadPhotoForCard(card, record.photo_paths[0]);
-                } else {
-                    // Нет фото – показываем заглушку
-                    const photoDiv = card.querySelector('.card-photo');
-                    if (photoDiv) {
-                        const placeholder = photoDiv.querySelector('.loading-placeholder');
-                        if (placeholder) placeholder.style.display = 'none';
-                        const fallback = document.createElement('div');
-                        fallback.className = 'no-photo';
-                        fallback.textContent = 'Нет фото';
-                        fallback.style.cssText = 'display:flex; align-items:center; justify-content:center; height:100%; background:#2a2a2a; color:#999;';
-                        photoDiv.appendChild(fallback);
+            // Ленивая загрузка фото (IntersectionObserver, как в уголовном реестре)
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const card = entry.target;
+                        const id = card.dataset.id;
+                        const record = recordsCache.find(r => r.id === id);
+                        if (record && record.photo_paths && record.photo_paths.length) {
+                            loadPhotoForCard(card, record.photo_paths[0]);
+                        } else {
+                            // Нет фото – показываем заглушку
+                            const photoDiv = card.querySelector('.card-photo');
+                            if (photoDiv) {
+                                const placeholder = photoDiv.querySelector('.loading-placeholder');
+                                if (placeholder) placeholder.style.display = 'none';
+                                const fallback = document.createElement('div');
+                                fallback.className = 'no-photo';
+                                fallback.textContent = 'Нет фото';
+                                photoDiv.appendChild(fallback);
+                            }
+                        }
+                        observer.unobserve(card);
                     }
-                }
-            });
+                });
+            }, { rootMargin: '0px 0px 200px 0px' });
+
+            document.querySelectorAll('.criminal-card').forEach(card => observer.observe(card));
         }
 
+        // -------------------- Загрузка фото для карточки (как в уголовном реестре) --------------------
         async function loadPhotoForCard(card, photoPath) {
             try {
                 const { data, error } = await supabase.storage
@@ -337,16 +383,20 @@
                     photoDiv.appendChild(img);
                 }
             } catch (err) {
-                console.error('Ошибка загрузки фото для карточки:', err);
+                console.error('Ошибка загрузки фото:', err);
                 const photoDiv = card.querySelector('.card-photo');
                 if (photoDiv) {
-                    photoDiv.innerHTML = '<div class="no-photo" style="display:flex; align-items:center; justify-content:center; height:100%; background:#2a2a2a; color:#999;">Ошибка</div>';
+                    photoDiv.innerHTML = '<div class="no-photo">Ошибка</div>';
                 }
             }
         }
 
+        // -------------------- Модальное окно (как в уголовном реестре) --------------------
         async function openModal(recordId) {
+            // Сначала ищем в кэше
             let record = recordsCache?.find(r => r.id === recordId);
+            
+            // Если нет в кэше – делаем прямой запрос
             if (!record) {
                 try {
                     const { data, error } = await supabase
@@ -369,6 +419,7 @@
                 return;
             }
 
+            // Заполняем текстовые данные
             document.getElementById('modalFullName').textContent = record.full_name;
             document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
             document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
@@ -379,13 +430,11 @@
             document.getElementById('modalExclusionDate').textContent = record.exclusion_date ? new Date(record.exclusion_date).toLocaleDateString('ru-RU') : '—';
             document.getElementById('modalDetails').textContent = record.details || '—';
 
-            // Фото
+            // Фото (как в уголовном реестре)
             const photoPaths = record.photo_paths || [];
             const mainPhoto = document.getElementById('modalMainPhoto');
             const thumbnailsContainer = document.getElementById('photoThumbnails');
             thumbnailsContainer.innerHTML = '';
-            mainPhoto.style.display = 'block';
-            mainPhoto.src = '';
 
             if (photoPaths.length) {
                 const signedUrls = await Promise.all(photoPaths.map(async (path) => {
@@ -398,10 +447,7 @@
                 const validUrls = signedUrls.filter(u => u);
                 if (validUrls.length) {
                     mainPhoto.src = validUrls[0];
-                    mainPhoto.onerror = () => {
-                        mainPhoto.style.display = 'none';
-                        mainPhoto.parentElement.innerHTML = '<div class="no-photo">Не удалось загрузить фото</div>';
-                    };
+                    mainPhoto.onerror = () => { mainPhoto.src = ''; };
 
                     validUrls.forEach((url, idx) => {
                         const thumb = document.createElement('img');
@@ -412,20 +458,19 @@
                             document.querySelectorAll('.photo-thumb').forEach(t => t.classList.remove('active'));
                             thumb.classList.add('active');
                             mainPhoto.src = url;
-                            mainPhoto.style.display = 'block';
                         });
                         thumbnailsContainer.appendChild(thumb);
                     });
                 } else {
-                    mainPhoto.style.display = 'none';
-                    mainPhoto.parentElement.innerHTML = '<div class="no-photo">Нет доступных фото</div>';
+                    mainPhoto.src = '';
+                    mainPhoto.alt = 'Нет фото';
                 }
             } else {
-                mainPhoto.style.display = 'none';
-                mainPhoto.parentElement.innerHTML = '<div class="no-photo">Нет фото</div>';
+                mainPhoto.src = '';
+                mainPhoto.alt = 'Нет фото';
             }
 
-            // Документы
+            // Документы (как в уголовном реестре)
             const docPaths = record.document_paths || [];
             const docsContainer = document.getElementById('documentsList');
             docsContainer.innerHTML = '';
@@ -461,7 +506,9 @@
             document.body.style.overflow = '';
         }
 
+        // -------------------- Обработчики событий --------------------
         function setupEventListeners() {
+            // Открытие карточек
             const grid = cardsGrid;
             if (grid) {
                 grid.addEventListener('click', (e) => {
@@ -472,11 +519,13 @@
                 });
             }
 
+            // Закрытие модалки
             if (modalClose) modalClose.addEventListener('click', closeModal);
             if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
                 if (e.target === modalOverlay) closeModal();
             });
 
+            // Мобильное меню
             const menuToggle = document.getElementById('menuToggle');
             const navMenu = document.getElementById('navMenu');
             const menuOverlay = document.getElementById('menuOverlay');
@@ -494,6 +543,7 @@
             }
         }
 
+        // -------------------- Инициализация --------------------
         async function init() {
             const { data: { session } } = await supabase.auth.getSession();
             renderAuthSection(session);
