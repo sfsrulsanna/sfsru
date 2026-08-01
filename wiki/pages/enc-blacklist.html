@@ -71,7 +71,6 @@
         .main-photo { aspect-ratio: 3/4; background: #2a2a2a; border-radius: 8px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         .main-photo-img { width: 100%; height: 100%; object-fit: cover; }
         .no-photo { display: flex; align-items: center; justify-content: center; height: 100%; color: #999; font-size: 0.9rem; }
-        /* Переиспользуем стили из уголовного реестра для карточек */
         .card-photo {
             aspect-ratio: 3/4;
             background: #2a2a2a;
@@ -194,7 +193,7 @@
         import { supabase } from '../../../js/supabase-config.js';
 
         // -------------------- КОНФИГУРАЦИЯ --------------------
-        const STORAGE_BUCKET = 'registry-files'; // тот же бакет, что и в админке
+        const STORAGE_BUCKET = 'registry-files';
         const LOGIN_PAGE = '../../login.html';
         const TABLE = 'blacklist_enc';
         const SCHEMA = 'registry';
@@ -313,7 +312,7 @@
             return loadingPromise;
         }
 
-        // -------------------- Отрисовка карточек (как в уголовном реестре) --------------------
+        // -------------------- Отрисовка карточек (с принудительной загрузкой первых 9) --------------------
         function renderCards() {
             const grid = cardsGrid;
             if (!grid) return;
@@ -337,25 +336,51 @@
                 </div>
             `).join('');
 
-            // Ленивая загрузка фото (IntersectionObserver, как в уголовном реестре)
+            const allCards = document.querySelectorAll('.criminal-card');
+            const firstCards = Array.from(allCards).slice(0, 9);
+
+            // Загружаем фото для первых 9 карточек принудительно
+            firstCards.forEach(card => {
+                const id = card.dataset.id;
+                const record = recordsCache.find(r => r.id === id);
+                if (record && record.photo_paths && record.photo_paths.length) {
+                    loadPhotoForCard(card, record.photo_paths[0]);
+                } else {
+                    // Нет фото – показываем заглушку
+                    const photoDiv = card.querySelector('.card-photo');
+                    if (photoDiv) {
+                        const placeholder = photoDiv.querySelector('.loading-placeholder');
+                        if (placeholder) placeholder.style.display = 'none';
+                        const fallback = document.createElement('div');
+                        fallback.className = 'no-photo';
+                        fallback.textContent = 'Нет фото';
+                        photoDiv.appendChild(fallback);
+                    }
+                }
+            });
+
+            // Для остальных карточек (начиная с 10-й) используем IntersectionObserver
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
                         const card = entry.target;
-                        const id = card.dataset.id;
-                        const record = recordsCache.find(r => r.id === id);
-                        if (record && record.photo_paths && record.photo_paths.length) {
-                            loadPhotoForCard(card, record.photo_paths[0]);
-                        } else {
-                            // Нет фото – показываем заглушку
-                            const photoDiv = card.querySelector('.card-photo');
-                            if (photoDiv) {
-                                const placeholder = photoDiv.querySelector('.loading-placeholder');
-                                if (placeholder) placeholder.style.display = 'none';
-                                const fallback = document.createElement('div');
-                                fallback.className = 'no-photo';
-                                fallback.textContent = 'Нет фото';
-                                photoDiv.appendChild(fallback);
+                        // Проверяем, не загружено ли уже фото (чтобы не дублировать)
+                        const img = card.querySelector('.card-photo img');
+                        if (!img) {
+                            const id = card.dataset.id;
+                            const record = recordsCache.find(r => r.id === id);
+                            if (record && record.photo_paths && record.photo_paths.length) {
+                                loadPhotoForCard(card, record.photo_paths[0]);
+                            } else {
+                                const photoDiv = card.querySelector('.card-photo');
+                                if (photoDiv) {
+                                    const placeholder = photoDiv.querySelector('.loading-placeholder');
+                                    if (placeholder) placeholder.style.display = 'none';
+                                    const fallback = document.createElement('div');
+                                    fallback.className = 'no-photo';
+                                    fallback.textContent = 'Нет фото';
+                                    photoDiv.appendChild(fallback);
+                                }
                             }
                         }
                         observer.unobserve(card);
@@ -363,10 +388,15 @@
                 });
             }, { rootMargin: '0px 0px 200px 0px' });
 
-            document.querySelectorAll('.criminal-card').forEach(card => observer.observe(card));
+            // Наблюдаем только карточки, начиная с индекса 9 (т.е. 10-я и далее)
+            allCards.forEach((card, index) => {
+                if (index >= 9) {
+                    observer.observe(card);
+                }
+            });
         }
 
-        // -------------------- Загрузка фото для карточки (как в уголовном реестре) --------------------
+        // -------------------- Загрузка фото для карточки --------------------
         async function loadPhotoForCard(card, photoPath) {
             try {
                 const { data, error } = await supabase.storage
@@ -391,12 +421,9 @@
             }
         }
 
-        // -------------------- Модальное окно (как в уголовном реестре) --------------------
+        // -------------------- Модальное окно --------------------
         async function openModal(recordId) {
-            // Сначала ищем в кэше
             let record = recordsCache?.find(r => r.id === recordId);
-            
-            // Если нет в кэше – делаем прямой запрос
             if (!record) {
                 try {
                     const { data, error } = await supabase
@@ -419,7 +446,6 @@
                 return;
             }
 
-            // Заполняем текстовые данные
             document.getElementById('modalFullName').textContent = record.full_name;
             document.getElementById('modalBirthDate').textContent = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
             document.getElementById('modalBirthPlace').textContent = record.birth_place || '—';
@@ -430,7 +456,7 @@
             document.getElementById('modalExclusionDate').textContent = record.exclusion_date ? new Date(record.exclusion_date).toLocaleDateString('ru-RU') : '—';
             document.getElementById('modalDetails').textContent = record.details || '—';
 
-            // Фото (как в уголовном реестре)
+            // Фото
             const photoPaths = record.photo_paths || [];
             const mainPhoto = document.getElementById('modalMainPhoto');
             const thumbnailsContainer = document.getElementById('photoThumbnails');
@@ -470,7 +496,7 @@
                 mainPhoto.alt = 'Нет фото';
             }
 
-            // Документы (как в уголовном реестре)
+            // Документы
             const docPaths = record.document_paths || [];
             const docsContainer = document.getElementById('documentsList');
             docsContainer.innerHTML = '';
@@ -508,7 +534,6 @@
 
         // -------------------- Обработчики событий --------------------
         function setupEventListeners() {
-            // Открытие карточек
             const grid = cardsGrid;
             if (grid) {
                 grid.addEventListener('click', (e) => {
@@ -519,13 +544,11 @@
                 });
             }
 
-            // Закрытие модалки
             if (modalClose) modalClose.addEventListener('click', closeModal);
             if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
                 if (e.target === modalOverlay) closeModal();
             });
 
-            // Мобильное меню
             const menuToggle = document.getElementById('menuToggle');
             const navMenu = document.getElementById('navMenu');
             const menuOverlay = document.getElementById('menuOverlay');
