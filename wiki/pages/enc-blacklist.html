@@ -313,50 +313,49 @@
         }
 
         // -------------------- Отрисовка карточек с принудительной загрузкой фото --------------------
-        function renderCards() {
-            const grid = cardsGrid;
-            if (!grid) return;
+function renderCards() {
+    const grid = cardsGrid;
+    if (!grid) return;
 
-            if (!recordsCache || recordsCache.length === 0) {
-                grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
-                return;
+    if (!recordsCache || recordsCache.length === 0) {
+        grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
+        return;
+    }
+
+    grid.innerHTML = recordsCache.map(record => `
+        <div class="criminal-card" data-id="${record.id}">
+            <div class="card-photo">
+                <div class="loading-placeholder"></div>
+                <img data-src="placeholder" alt="Фото" style="display: none;">
+            </div>
+            <div class="card-info">
+                <div class="card-name">${escapeHtml(record.full_name)}</div>
+                <div class="card-number">№ записи: ${record.record_number}</div>
+                <div class="card-article">${escapeHtml(record.citizenship || '—')}</div>
+            </div>
+        </div>
+    `).join('');
+
+    const allCards = document.querySelectorAll('.criminal-card');
+    allCards.forEach(card => {
+        const id = card.dataset.id;
+        // Исправлено: приведение к строке
+        const record = recordsCache.find(r => String(r.id) === String(id));
+        if (record && record.photo_paths && record.photo_paths.length) {
+            loadPhotoForCard(card, record.photo_paths[0]);
+        } else {
+            const photoDiv = card.querySelector('.card-photo');
+            if (photoDiv) {
+                const placeholder = photoDiv.querySelector('.loading-placeholder');
+                if (placeholder) placeholder.style.display = 'none';
+                const fallback = document.createElement('div');
+                fallback.className = 'no-photo';
+                fallback.textContent = 'Нет фото';
+                photoDiv.appendChild(fallback);
             }
-
-            grid.innerHTML = recordsCache.map(record => `
-                <div class="criminal-card" data-id="${record.id}">
-                    <div class="card-photo">
-                        <div class="loading-placeholder"></div>
-                        <img data-src="placeholder" alt="Фото" style="display: none;">
-                    </div>
-                    <div class="card-info">
-                        <div class="card-name">${escapeHtml(record.full_name)}</div>
-                        <div class="card-number">№ записи: ${record.record_number}</div>
-                        <div class="card-article">${escapeHtml(record.citizenship || '—')}</div>
-                    </div>
-                </div>
-            `).join('');
-
-            // Загружаем фото для ВСЕХ карточек принудительно (без observer)
-            const allCards = document.querySelectorAll('.criminal-card');
-            allCards.forEach(card => {
-                const id = card.dataset.id;
-                const record = recordsCache.find(r => r.id === id);
-                if (record && record.photo_paths && record.photo_paths.length) {
-                    loadPhotoForCard(card, record.photo_paths[0]);
-                } else {
-                    // Нет фото – показываем заглушку
-                    const photoDiv = card.querySelector('.card-photo');
-                    if (photoDiv) {
-                        const placeholder = photoDiv.querySelector('.loading-placeholder');
-                        if (placeholder) placeholder.style.display = 'none';
-                        const fallback = document.createElement('div');
-                        fallback.className = 'no-photo';
-                        fallback.textContent = 'Нет фото';
-                        photoDiv.appendChild(fallback);
-                    }
-                }
-            });
         }
+    });
+}
 
         // -------------------- Загрузка фото для карточки --------------------
         async function loadPhotoForCard(card, photoPath) {
@@ -384,25 +383,25 @@
         }
 
         // -------------------- Модальное окно --------------------
-        async function openModal(recordId) {
-            let record = recordsCache?.find(r => r.id === recordId);
-            if (!record) {
-                try {
-                    const { data, error } = await supabase
-                        .schema(SCHEMA)
-                        .from(TABLE)
-                        .select('*')
-                        .eq('id', recordId)
-                        .single();
-                    if (error) throw error;
-                    record = data;
-                } catch (err) {
-                    console.error('Ошибка загрузки записи:', err);
-                    showMessage('Запись не найдена', 'error');
-                    return;
-                }
-            }
-
+async function openModal(recordId) {
+    // Исправлено: приведение к строке
+    let record = recordsCache?.find(r => String(r.id) === String(recordId));
+    if (!record) {
+        try {
+            const { data, error } = await supabase
+                .schema(SCHEMA)
+                .from(TABLE)
+                .select('*')
+                .eq('id', recordId)
+                .single();
+            if (error) throw error;
+            record = data;
+        } catch (err) {
+            console.error('Ошибка загрузки записи:', err);
+            showMessage('Запись не найдена', 'error');
+            return;
+        }
+    }
             if (!record) {
                 showMessage('Запись не найдена', 'error');
                 return;
