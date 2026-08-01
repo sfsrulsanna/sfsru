@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
     <style>
-        /* ЧЁРНАЯ ТЕМА (без изменений) */
+        /* ЧЁРНАЯ ТЕМА */
         body { background: #0a0a0a; color: #e0e0e0; }
         .header { background: #000000 !important; border-bottom: 2px solid #cc0000; }
         .header .logo h1 { color: #ffffff !important; }
@@ -38,7 +38,7 @@
         .registry-container { background: #0a0a0a; }
         .page-title { color: #ffffff; border-bottom-color: #cc0000; }
         .page-subtitle { color: #aaaaaa; }
-        .criminal-card { background: #1a1a1a; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+        .criminal-card { background: #1a1a1a; box-shadow: 0 4px 12px rgba(0,0,0,0.6); cursor: pointer; transition: box-shadow 0.2s; }
         .criminal-card:hover { box-shadow: 0 8px 20px rgba(200,0,0,0.3); }
         .card-name { color: #ffffff; }
         .card-number { color: #999999; }
@@ -103,6 +103,73 @@
             color: #999;
             font-size: 0.9rem;
         }
+
+        /* ---- Переключатель вида ---- */
+        .view-toggle {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            justify-content: flex-end;
+        }
+        .view-toggle button {
+            background: #1a1a1a;
+            color: #aaaaaa;
+            border: 1px solid #444;
+            padding: 0.4rem 1.2rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        .view-toggle button.active {
+            background: #cc0000;
+            color: #fff;
+            border-color: #cc0000;
+        }
+        .view-toggle button:hover:not(.active) {
+            background: #2a2a2a;
+            border-color: #666;
+        }
+
+        /* ---- Табличный вид (список) ---- */
+        .records-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #1a1a1a;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .records-table th {
+            background: #2a2a2a;
+            color: #cccccc;
+            padding: 0.8rem 1rem;
+            text-align: left;
+            font-weight: 500;
+            border-bottom: 2px solid #444;
+        }
+        .records-table td {
+            padding: 0.7rem 1rem;
+            border-bottom: 1px solid #2a2a2a;
+            color: #e0e0e0;
+            cursor: pointer;
+        }
+        .records-table tr:hover td {
+            background: #2a2a2a;
+        }
+        .records-table .record-number {
+            color: #999;
+            font-weight: 300;
+        }
+        .records-table .record-name {
+            font-weight: 500;
+            color: #ffffff;
+        }
+        .records-table .record-citizenship {
+            color: #ff6666;
+        }
+        .records-table .record-date {
+            color: #aaaaaa;
+        }
     </style>
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
@@ -139,12 +206,18 @@
 
             <div id="accessMessage" class="access-message"></div>
 
-            <div class="cards-grid" id="cardsGrid"></div>
+            <!-- Переключатель вида -->
+            <div class="view-toggle">
+                <button id="viewCards" class="active">Карточки</button>
+                <button id="viewList">Список</button>
+            </div>
+
+            <div id="cardsGrid"></div>
             <div class="auth-section" id="authSection"></div>
         </div>
     </main>
 
-    <!-- Модальное окно -->
+    <!-- Модальное окно (без изменений) -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal modal-large">
             <div class="modal-header">
@@ -197,19 +270,23 @@
         const LOGIN_PAGE = '../../login.html';
         const TABLE = 'blacklist_enc';
         const SCHEMA = 'registry';
+        const VIEW_STORAGE_KEY = 'enc_blacklist_view';
 
-        // Кэш данных
+        // -------------------- СОСТОЯНИЕ --------------------
         let recordsCache = null;
         let loadingPromise = null;
+        let currentView = localStorage.getItem(VIEW_STORAGE_KEY) || 'cards'; // 'cards' | 'list'
 
-        // DOM элементы
+        // DOM
         const accessMessageDiv = document.getElementById('accessMessage');
         const authSection = document.getElementById('authSection');
         const cardsGrid = document.getElementById('cardsGrid');
         const modalOverlay = document.getElementById('modalOverlay');
         const modalClose = document.getElementById('modalClose');
+        const viewCardsBtn = document.getElementById('viewCards');
+        const viewListBtn = document.getElementById('viewList');
 
-        // -------------------- Вспомогательные функции --------------------
+        // -------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --------------------
         function escapeHtml(str) {
             if (!str) return '';
             return str.replace(/[&<>]/g, m => (m === '&' ? '&amp;' : m === '<' ? '&lt;' : m === '>' ? '&gt;' : m));
@@ -225,7 +302,7 @@
             if (accessMessageDiv) accessMessageDiv.style.display = 'none';
         }
 
-        // -------------------- Блок авторизации --------------------
+        // -------------------- АВТОРИЗАЦИЯ --------------------
         function renderAuthSection(session) {
             if (!authSection) return;
             if (session) {
@@ -246,7 +323,6 @@
             }
         }
 
-        // -------------------- Проверка доступа (паспорт) --------------------
         async function checkAccess(session) {
             if (!session) return false;
             const user = session.user;
@@ -286,7 +362,7 @@
             return !!passport;
         }
 
-        // -------------------- Загрузка данных --------------------
+        // -------------------- ЗАГРУЗКА ДАННЫХ --------------------
         async function loadRecords() {
             if (recordsCache) return;
             if (loadingPromise) return loadingPromise;
@@ -301,7 +377,7 @@
 
                     if (error) throw error;
                     recordsCache = data || [];
-                    renderCards();
+                    renderView();
                 } catch (err) {
                     console.error('Ошибка загрузки реестра:', err);
                     showMessage('Не удалось загрузить данные. Попробуйте позже.', 'error');
@@ -312,52 +388,67 @@
             return loadingPromise;
         }
 
-        // -------------------- Отрисовка карточек с принудительной загрузкой фото --------------------
-function renderCards() {
-    const grid = cardsGrid;
-    if (!grid) return;
-
-    if (!recordsCache || recordsCache.length === 0) {
-        grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
-        return;
-    }
-
-    grid.innerHTML = recordsCache.map(record => `
-        <div class="criminal-card" data-id="${record.id}">
-            <div class="card-photo">
-                <div class="loading-placeholder"></div>
-                <img data-src="placeholder" alt="Фото" style="display: none;">
-            </div>
-            <div class="card-info">
-                <div class="card-name">${escapeHtml(record.full_name)}</div>
-                <div class="card-number">№ записи: ${record.record_number}</div>
-                <div class="card-article">${escapeHtml(record.citizenship || '—')}</div>
-            </div>
-        </div>
-    `).join('');
-
-    const allCards = document.querySelectorAll('.criminal-card');
-    allCards.forEach(card => {
-        const id = card.dataset.id;
-        // Исправлено: приведение к строке
-        const record = recordsCache.find(r => String(r.id) === String(id));
-        if (record && record.photo_paths && record.photo_paths.length) {
-            loadPhotoForCard(card, record.photo_paths[0]);
-        } else {
-            const photoDiv = card.querySelector('.card-photo');
-            if (photoDiv) {
-                const placeholder = photoDiv.querySelector('.loading-placeholder');
-                if (placeholder) placeholder.style.display = 'none';
-                const fallback = document.createElement('div');
-                fallback.className = 'no-photo';
-                fallback.textContent = 'Нет фото';
-                photoDiv.appendChild(fallback);
+        // -------------------- РЕНДЕРИНГ (единая точка) --------------------
+        function renderView() {
+            if (!recordsCache) return;
+            if (currentView === 'cards') {
+                renderCards();
+                // Кнопки активны
+                viewCardsBtn.classList.add('active');
+                viewListBtn.classList.remove('active');
+            } else {
+                renderList();
+                viewListBtn.classList.add('active');
+                viewCardsBtn.classList.remove('active');
             }
+            // Сохраняем состояние
+            localStorage.setItem(VIEW_STORAGE_KEY, currentView);
         }
-    });
-}
 
-        // -------------------- Загрузка фото для карточки --------------------
+        // -------------------- РЕНДЕРИНГ КАРТОЧЕК (с фото) --------------------
+        function renderCards() {
+            const grid = cardsGrid;
+            if (!grid) return;
+            if (!recordsCache || recordsCache.length === 0) {
+                grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
+                return;
+            }
+
+            grid.innerHTML = recordsCache.map(record => `
+                <div class="criminal-card" data-id="${record.id}">
+                    <div class="card-photo">
+                        <div class="loading-placeholder"></div>
+                        <img data-src="placeholder" alt="Фото" style="display: none;">
+                    </div>
+                    <div class="card-info">
+                        <div class="card-name">${escapeHtml(record.full_name)}</div>
+                        <div class="card-number">№ записи: ${record.record_number}</div>
+                        <div class="card-article">${escapeHtml(record.citizenship || '—')}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Загружаем фото для всех карточек
+            const allCards = document.querySelectorAll('.criminal-card');
+            allCards.forEach(card => {
+                const id = card.dataset.id;
+                const record = recordsCache.find(r => String(r.id) === String(id));
+                if (record && record.photo_paths && record.photo_paths.length) {
+                    loadPhotoForCard(card, record.photo_paths[0]);
+                } else {
+                    const photoDiv = card.querySelector('.card-photo');
+                    if (photoDiv) {
+                        const placeholder = photoDiv.querySelector('.loading-placeholder');
+                        if (placeholder) placeholder.style.display = 'none';
+                        const fallback = document.createElement('div');
+                        fallback.className = 'no-photo';
+                        fallback.textContent = 'Нет фото';
+                        photoDiv.appendChild(fallback);
+                    }
+                }
+            });
+        }
+
         async function loadPhotoForCard(card, photoPath) {
             try {
                 const { data, error } = await supabase.storage
@@ -382,26 +473,62 @@ function renderCards() {
             }
         }
 
-        // -------------------- Модальное окно --------------------
-async function openModal(recordId) {
-    // Исправлено: приведение к строке
-    let record = recordsCache?.find(r => String(r.id) === String(recordId));
-    if (!record) {
-        try {
-            const { data, error } = await supabase
-                .schema(SCHEMA)
-                .from(TABLE)
-                .select('*')
-                .eq('id', recordId)
-                .single();
-            if (error) throw error;
-            record = data;
-        } catch (err) {
-            console.error('Ошибка загрузки записи:', err);
-            showMessage('Запись не найдена', 'error');
-            return;
+        // -------------------- РЕНДЕРИНГ СПИСКА (таблица без фото) --------------------
+        function renderList() {
+            const grid = cardsGrid;
+            if (!grid) return;
+            if (!recordsCache || recordsCache.length === 0) {
+                grid.innerHTML = '<div class="no-data">Записей не найдено</div>';
+                return;
+            }
+
+            let html = `
+                <table class="records-table">
+                    <thead>
+                        <tr>
+                            <th>№ записи</th>
+                            <th>ФИО</th>
+                            <th>Гражданство</th>
+                            <th>Дата рождения</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            recordsCache.forEach(record => {
+                const birthDate = record.birth_date ? new Date(record.birth_date).toLocaleDateString('ru-RU') : '—';
+                html += `
+                    <tr data-id="${record.id}">
+                        <td class="record-number">${record.record_number}</td>
+                        <td class="record-name">${escapeHtml(record.full_name)}</td>
+                        <td class="record-citizenship">${escapeHtml(record.citizenship || '—')}</td>
+                        <td class="record-date">${birthDate}</td>
+                    </tr>
+                `;
+            });
+            html += `</tbody></table>`;
+            grid.innerHTML = html;
         }
-    }
+
+        // -------------------- МОДАЛЬНОЕ ОКНО (без изменений, кроме поиска по id) --------------------
+        async function openModal(recordId) {
+            let record = recordsCache?.find(r => String(r.id) === String(recordId));
+            if (!record) {
+                try {
+                    const { data, error } = await supabase
+                        .schema(SCHEMA)
+                        .from(TABLE)
+                        .select('*')
+                        .eq('id', recordId)
+                        .single();
+                    if (error) throw error;
+                    record = data;
+                } catch (err) {
+                    console.error('Ошибка загрузки записи:', err);
+                    showMessage('Запись не найдена', 'error');
+                    return;
+                }
+            }
+
             if (!record) {
                 showMessage('Запись не найдена', 'error');
                 return;
@@ -493,23 +620,39 @@ async function openModal(recordId) {
             document.body.style.overflow = '';
         }
 
-        // -------------------- Обработчики событий --------------------
+        // -------------------- ОБРАБОТЧИКИ СОБЫТИЙ --------------------
         function setupEventListeners() {
+            // Клик по карточке или строке таблицы (делегирование)
             const grid = cardsGrid;
             if (grid) {
                 grid.addEventListener('click', (e) => {
-                    const card = e.target.closest('.criminal-card');
-                    if (card && card.dataset.id) {
-                        openModal(card.dataset.id);
+                    // Ищем ближайший элемент с data-id (карточка или tr)
+                    const target = e.target.closest('[data-id]');
+                    if (target && target.dataset.id) {
+                        openModal(target.dataset.id);
                     }
                 });
             }
 
+            // Переключатели вида
+            viewCardsBtn.addEventListener('click', () => {
+                if (currentView === 'cards') return;
+                currentView = 'cards';
+                renderView();
+            });
+            viewListBtn.addEventListener('click', () => {
+                if (currentView === 'list') return;
+                currentView = 'list';
+                renderView();
+            });
+
+            // Модалка
             if (modalClose) modalClose.addEventListener('click', closeModal);
             if (modalOverlay) modalOverlay.addEventListener('click', (e) => {
                 if (e.target === modalOverlay) closeModal();
             });
 
+            // Мобильное меню (как было)
             const menuToggle = document.getElementById('menuToggle');
             const navMenu = document.getElementById('navMenu');
             const menuOverlay = document.getElementById('menuOverlay');
@@ -527,7 +670,7 @@ async function openModal(recordId) {
             }
         }
 
-        // -------------------- Инициализация --------------------
+        // -------------------- ИНИЦИАЛИЗАЦИЯ --------------------
         async function init() {
             const { data: { session } } = await supabase.auth.getSession();
             renderAuthSection(session);
@@ -545,6 +688,15 @@ async function openModal(recordId) {
 
             hideMessage();
             await loadRecords();
+
+            // Устанавливаем активную кнопку согласно currentView
+            if (currentView === 'cards') {
+                viewCardsBtn.classList.add('active');
+                viewListBtn.classList.remove('active');
+            } else {
+                viewListBtn.classList.add('active');
+                viewCardsBtn.classList.remove('active');
+            }
 
             supabase.auth.onAuthStateChange((event, session) => {
                 renderAuthSection(session);
