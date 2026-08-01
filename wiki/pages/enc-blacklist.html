@@ -26,7 +26,7 @@
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/registry/criminal-registry.css">
     <style>
-        /* ЧЁРНАЯ ТЕМА */
+        /* ЧЁРНАЯ ТЕМА (без изменений) */
         body { background: #0a0a0a; color: #e0e0e0; }
         .header { background: #000000 !important; border-bottom: 2px solid #cc0000; }
         .header .logo h1 { color: #ffffff !important; }
@@ -312,7 +312,7 @@
             return loadingPromise;
         }
 
-        // -------------------- Отрисовка карточек (с принудительной загрузкой первых 9) --------------------
+        // -------------------- Отрисовка карточек с принудительной загрузкой фото --------------------
         function renderCards() {
             const grid = cardsGrid;
             if (!grid) return;
@@ -336,11 +336,9 @@
                 </div>
             `).join('');
 
+            // Загружаем фото для ВСЕХ карточек принудительно (без observer)
             const allCards = document.querySelectorAll('.criminal-card');
-            const firstCards = Array.from(allCards).slice(0, 9);
-
-            // Загружаем фото для первых 9 карточек принудительно
-            firstCards.forEach(card => {
+            allCards.forEach(card => {
                 const id = card.dataset.id;
                 const record = recordsCache.find(r => r.id === id);
                 if (record && record.photo_paths && record.photo_paths.length) {
@@ -356,42 +354,6 @@
                         fallback.textContent = 'Нет фото';
                         photoDiv.appendChild(fallback);
                     }
-                }
-            });
-
-            // Для остальных карточек (начиная с 10-й) используем IntersectionObserver
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const card = entry.target;
-                        // Проверяем, не загружено ли уже фото (чтобы не дублировать)
-                        const img = card.querySelector('.card-photo img');
-                        if (!img) {
-                            const id = card.dataset.id;
-                            const record = recordsCache.find(r => r.id === id);
-                            if (record && record.photo_paths && record.photo_paths.length) {
-                                loadPhotoForCard(card, record.photo_paths[0]);
-                            } else {
-                                const photoDiv = card.querySelector('.card-photo');
-                                if (photoDiv) {
-                                    const placeholder = photoDiv.querySelector('.loading-placeholder');
-                                    if (placeholder) placeholder.style.display = 'none';
-                                    const fallback = document.createElement('div');
-                                    fallback.className = 'no-photo';
-                                    fallback.textContent = 'Нет фото';
-                                    photoDiv.appendChild(fallback);
-                                }
-                            }
-                        }
-                        observer.unobserve(card);
-                    }
-                });
-            }, { rootMargin: '0px 0px 200px 0px' });
-
-            // Наблюдаем только карточки, начиная с индекса 9 (т.е. 10-я и далее)
-            allCards.forEach((card, index) => {
-                if (index >= 9) {
-                    observer.observe(card);
                 }
             });
         }
@@ -413,7 +375,7 @@
                     photoDiv.appendChild(img);
                 }
             } catch (err) {
-                console.error('Ошибка загрузки фото:', err);
+                console.error('Ошибка загрузки фото для карточки:', err);
                 const photoDiv = card.querySelector('.card-photo');
                 if (photoDiv) {
                     photoDiv.innerHTML = '<div class="no-photo">Ошибка</div>';
