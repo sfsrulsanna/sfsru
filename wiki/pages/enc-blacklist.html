@@ -104,6 +104,19 @@
             font-size: 0.9rem;
         }
 
+        /* ---- Сетка карточек (исправлено) ---- */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* ---- Переключатель вида ---- */
         .view-toggle {
             display: flex;
@@ -217,7 +230,7 @@
         </div>
     </main>
 
-    <!-- Модальное окно (без изменений) -->
+    <!-- Модальное окно -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal modal-large">
             <div class="modal-header">
@@ -393,7 +406,6 @@
             if (!recordsCache) return;
             if (currentView === 'cards') {
                 renderCards();
-                // Кнопки активны
                 viewCardsBtn.classList.add('active');
                 viewListBtn.classList.remove('active');
             } else {
@@ -401,7 +413,6 @@
                 viewListBtn.classList.add('active');
                 viewCardsBtn.classList.remove('active');
             }
-            // Сохраняем состояние
             localStorage.setItem(VIEW_STORAGE_KEY, currentView);
         }
 
@@ -509,7 +520,7 @@
             grid.innerHTML = html;
         }
 
-        // -------------------- МОДАЛЬНОЕ ОКНО (без изменений, кроме поиска по id) --------------------
+        // -------------------- МОДАЛЬНОЕ ОКНО --------------------
         async function openModal(recordId) {
             let record = recordsCache?.find(r => String(r.id) === String(recordId));
             if (!record) {
@@ -626,7 +637,6 @@
             const grid = cardsGrid;
             if (grid) {
                 grid.addEventListener('click', (e) => {
-                    // Ищем ближайший элемент с data-id (карточка или tr)
                     const target = e.target.closest('[data-id]');
                     if (target && target.dataset.id) {
                         openModal(target.dataset.id);
@@ -652,7 +662,7 @@
                 if (e.target === modalOverlay) closeModal();
             });
 
-            // Мобильное меню (как было)
+            // Мобильное меню
             const menuToggle = document.getElementById('menuToggle');
             const navMenu = document.getElementById('navMenu');
             const menuOverlay = document.getElementById('menuOverlay');
