@@ -3,6 +3,26 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+<link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+<link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+<link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+<link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+<link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+<link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+<link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+<link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+<meta name="application-name" content="&nbsp;"/>
+<meta name="msapplication-TileColor" content="#FFFFFF" />
+<meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+<meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+<meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+<meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+<meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
   <title>Электронное голосование — СФСРЮ</title>
   <style>
     * { margin:0; padding:0; box-sizing:border-box; }
@@ -229,7 +249,7 @@
       background: linear-gradient(135deg, #fff5f5, #ffeaea);
       border: 1px solid #ffd0d0;
       border-radius: 16px;
-      margin-bottom: 2rem;
+      margin-bottom: 1.5rem;
     }
     .greeting-avatar {
       width: 60px; height: 60px;
@@ -387,6 +407,7 @@
       font-size: 0.85rem;
       transition: all 0.2s;
       font-family: inherit;
+      white-space: nowrap;
     }
     .btn-outline:hover {
       background: #cc0000;
@@ -726,6 +747,106 @@
       letter-spacing: 0.3px;
     }
 
+    /* ------------ MODAL ------------- */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(30, 0, 0, 0.55);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+    .modal-backdrop.active {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-box {
+      background: #fff;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 440px;
+      padding: 2rem 1.8rem 1.6rem;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.35);
+      text-align: center;
+      transform: translateY(20px) scale(0.96);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .modal-backdrop.active .modal-box {
+      transform: translateY(0) scale(1);
+    }
+    .modal-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 5px;
+      background: linear-gradient(90deg, #ff6666, #cc0000, #7b0000);
+    }
+    .modal-icon {
+      width: 72px; height: 72px;
+      margin: 0 auto 1.2rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6666, #cc0000);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      box-shadow: 0 10px 24px rgba(204,0,0,0.3);
+    }
+    .modal-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #7b0000;
+      margin-bottom: 0.6rem;
+    }
+    .modal-text {
+      color: #555;
+      font-size: 0.98rem;
+      margin-bottom: 1.8rem;
+      line-height: 1.5;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 0.8rem;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .modal-btn {
+      flex: 1;
+      min-width: 130px;
+      padding: 0.85rem 1.2rem;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 0.98rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .modal-btn-cancel {
+      background: #f1f1f1;
+      color: #555;
+    }
+    .modal-btn-cancel:hover {
+      background: #e5e5e5;
+    }
+    .modal-btn-confirm {
+      background: linear-gradient(135deg, #c41e3a, #7b0000);
+      color: #fff;
+      box-shadow: 0 8px 20px rgba(123,0,0,0.3);
+    }
+    .modal-btn-confirm:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 26px rgba(123,0,0,0.4);
+    }
+
     @media (max-width: 640px) {
       .card { padding: 1.8rem 1.4rem; }
       .auth-title { font-size: 1.35rem; }
@@ -737,6 +858,7 @@
       .bulletin-icon { width: 44px; height: 44px; font-size: 1.2rem; }
       .header-container { padding: 0 1rem; }
       .logo h1 { font-size: 1.05rem; }
+      .modal-box { padding: 1.6rem 1.4rem 1.3rem; }
     }
   </style>
 </head>
@@ -748,7 +870,7 @@
         <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
         <h1>СФСРЮ — Электронное голосование</h1>
       </div>
-      <div class="header-badge">Терминал участка №&nbsp;0301</div>
+      <div class="header-badge">Терминал участка №&nbsp;1</div>
     </div>
   </header>
 
@@ -761,7 +883,7 @@
         <h2 class="auth-title">Электронное голосование</h2>
         <p class="auth-subtitle">
           Введите ваш личный код для получения бюллетеня.
-          Личный код указан в вашем удостоверении личности.
+          Личный код указан в вашем удостоверении избирателя.
         </p>
 
         <div class="code-input-wrap">
@@ -864,6 +986,22 @@
 
   </main>
 
+  <!-- ============ МОДАЛКА ПОДТВЕРЖДЕНИЯ ЗАВЕРШЕНИЯ СЕАНСА ============ -->
+  <div class="modal-backdrop" id="endSessionModal">
+    <div class="modal-box">
+      <div class="modal-icon">👋</div>
+      <h3 class="modal-title">Завершить сеанс?</h3>
+      <p class="modal-text">
+        Текущий избиратель будет откреплён от терминала.<br>
+        Для следующего голосующего потребуется ввести личный код заново.
+      </p>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="cancelEndSessionBtn">Отмена</button>
+        <button class="modal-btn modal-btn-confirm" id="confirmEndSessionBtn">Завершить</button>
+      </div>
+    </div>
+  </div>
+
     <footer class="footer">
         <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
@@ -911,11 +1049,15 @@
 
     const successBackBtn = document.getElementById('successBackBtn');
 
+    const endSessionModal = document.getElementById('endSessionModal');
+    const cancelEndSessionBtn = document.getElementById('cancelEndSessionBtn');
+    const confirmEndSessionBtn = document.getElementById('confirmEndSessionBtn');
+
     // --- STATE ---
-    let currentUser = null;       // { id, personal_code, surname, name, patronymic }
-    let currentElection = null;   // объект голосования
-    let currentOptions = [];      // варианты
-    let selectedOptionIds = [];   // выбранные option_id
+    let currentUser = null;
+    let currentElection = null;
+    let currentOptions = [];
+    let selectedOptionIds = [];
     let alreadyVotedIds = new Set();
     let bulletinsList = [];
 
@@ -967,12 +1109,18 @@
       return (s + n).toUpperCase() || '?';
     }
 
+    // "Имя Отчество" — для приветствия
     function getShortName(user) {
-      // "Имя Отчество" — как в требовании
       const parts = [];
       if (user.name) parts.push(user.name);
       if (user.patronymic) parts.push(user.patronymic);
       return parts.join(' ') || user.surname || 'Избиратель';
+    }
+
+    // Полное ФИО — для строки "Активный сеанс"
+    function getFullName(user) {
+      const parts = [user.surname, user.name, user.patronymic].filter(Boolean);
+      return parts.join(' ') || 'Избиратель';
     }
 
     // --- Форматирование кода XXXX-XXXX ---
@@ -1061,11 +1209,10 @@
 
     // --- Сессия избирателя ---
     async function startSession() {
-      const shortName = getShortName(currentUser);
-      greetingHello.textContent = `Здравствуйте, ${shortName}!`;
+      greetingHello.textContent = `Здравствуйте, ${getShortName(currentUser)}!`;
       greetingAvatar.textContent = getInitials(currentUser);
       greetingCode.textContent = currentUser.personal_code || '—';
-      sessionUserName.textContent = shortName;
+      sessionUserName.textContent = getFullName(currentUser);
 
       showScreen('bulletins');
       bulletinsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка бюллетеней…</div>';
@@ -1091,14 +1238,12 @@
         .order('created_at', { ascending: false });
       if (error) throw error;
 
-      // Проверка региона
       const available = [];
       for (const el of (elections || [])) {
         const ok = await checkRegion(currentUser.id, el.territory);
         if (ok) available.push(el);
       }
 
-      // Уже проголосовал?
       const { data: userVotes } = await supabase
         .schema(SCHEMA)
         .from('user_votes')
@@ -1168,7 +1313,6 @@
       optionsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка бюллетеня…</div>';
 
       try {
-        // Опции
         const { data: options, error: optErr } = await supabase
           .schema(SCHEMA)
           .from('options')
@@ -1178,7 +1322,6 @@
         if (optErr) throw optErr;
         currentOptions = options || [];
 
-        // Подсчёт голосов
         const { data: allVotes } = await supabase
           .schema(SCHEMA)
           .from('user_votes')
@@ -1188,7 +1331,6 @@
         const counts = {};
         (allVotes || []).forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // Статистика явки
         const { data: stats } = await supabase
           .schema(SCHEMA)
           .from('election_statistics')
@@ -1206,7 +1348,6 @@
         statVotedPct.textContent = registered > 0 ? Math.round(voted / registered * 100) + '%' : '0%';
         statTurnout.textContent = registered > 0 ? Math.round((voted + spoiled) / registered * 100) + '%' : '0%';
 
-        // Заголовок
         voteTitle.textContent = election.title;
         voteMeta.innerHTML = `
           <span>📍 ${escapeHtml(election.territory || '—')}</span>
@@ -1215,7 +1356,6 @@
         `;
         voteDescription.textContent = election.description || 'Описание отсутствует';
 
-        // Рендер опций
         renderOptions(counts, total);
 
       } catch (err) {
@@ -1241,7 +1381,6 @@
       }
     }
 
-    // --- Список кандидатов (выборы / опрос) ---
     function renderCandidateList(counts, total, withPhoto) {
       const list = document.createElement('div');
       list.className = 'candidate-list';
@@ -1253,7 +1392,6 @@
         div.className = 'candidate-item';
         div.dataset.optionId = opt.id;
 
-        // фото
         let photoUrl = '/images/default-avatar.png';
         if (withPhoto && opt.photo_folder && opt.photo_name) {
           const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(opt.photo_folder + opt.photo_name);
@@ -1286,7 +1424,6 @@
       optionsContainer.appendChild(list);
     }
 
-    // --- Референдум ---
     function renderReferendum(counts, total) {
       const groups = {};
       currentOptions.forEach(opt => {
@@ -1296,10 +1433,9 @@
       });
 
       const totalQuestions = Object.keys(groups).length;
-      let answeredCount = 0;
       selectedOptionIds = [];
 
-      Object.entries(groups).forEach(([question, opts], qIdx) => {
+      Object.entries(groups).forEach(([question, opts]) => {
         const block = document.createElement('div');
         block.className = 'referendum-question';
         block.innerHTML = `<div class="question-text">${escapeHtml(question)}</div>`;
@@ -1324,7 +1460,6 @@
             optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
             optEl.classList.add('selected');
 
-            // Обновим selectedOptionIds: удалим старый ответ на этот вопрос и добавим новый
             const prevIdForQuestion = selectedOptionIds.find(id => {
               const o = currentOptions.find(x => x.id === id);
               return o && o.question_text === question;
@@ -1347,7 +1482,6 @@
       });
     }
 
-    // --- Кнопка "Проголосовать" ---
     voteBtn.addEventListener('click', async () => {
       if (!currentElection || !currentUser) return;
       if (!selectedOptionIds.length) {
@@ -1379,7 +1513,6 @@
           .insert(inserts);
         if (error) throw error;
 
-        // Обновим локальное состояние
         alreadyVotedIds.add(currentElection.id);
 
         showScreen('success');
@@ -1399,7 +1532,6 @@
 
     successBackBtn.addEventListener('click', async () => {
       showScreen('bulletins');
-      // Перезагрузим список, чтобы отметить пройденные
       try {
         await loadBulletins();
       } catch (err) {
@@ -1407,9 +1539,28 @@
       }
     });
 
-    // --- Завершение сеанса ---
-    endSessionBtn.addEventListener('click', () => {
-      if (!confirm('Завершить сеанс текущего избирателя?')) return;
+    // --- Завершение сеанса (модальное окно) ---
+    function openEndSessionModal() {
+      endSessionModal.classList.add('active');
+    }
+    function closeEndSessionModal() {
+      endSessionModal.classList.remove('active');
+    }
+
+    endSessionBtn.addEventListener('click', openEndSessionModal);
+    cancelEndSessionBtn.addEventListener('click', closeEndSessionModal);
+
+    endSessionModal.addEventListener('click', (e) => {
+      if (e.target === endSessionModal) closeEndSessionModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && endSessionModal.classList.contains('active')) {
+        closeEndSessionModal();
+      }
+    });
+
+    confirmEndSessionBtn.addEventListener('click', () => {
       currentUser = null;
       currentElection = null;
       currentOptions = [];
@@ -1419,11 +1570,11 @@
       codeInput.value = '';
       codeNextBtn.disabled = true;
       hideAuthError();
+      closeEndSessionModal();
       showScreen('auth');
       setTimeout(() => codeInput.focus(), 100);
     });
 
-    // Авто-фокус
     setTimeout(() => codeInput.focus(), 100);
   </script>
 </body>
