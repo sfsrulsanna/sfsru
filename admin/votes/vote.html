@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Электронное голосование — СФСРЮ</title>
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #fafafa 0%, #ffeaea 100%);
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    a { text-decoration: none; color: inherit; }
+
+    /* ------------ HEADER ------------- */
+    .header {
+      background: linear-gradient(135deg, #ff6666, #cc0000);
+      padding: 1rem 0;
+      box-shadow: 0 4px 20px rgba(204,0,0,0.25);
+      position: relative;
+      z-index: 10;
+    }
+    .header-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 2rem;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .logo { display: flex; align-items: center; gap: 12px; }
+    .logo img { height: 46px; width: auto; }
+    .logo h1 { font-size: 1.35rem; font-weight: 800; color: white; letter-spacing: 0.5px; }
+    .header-badge {
+      color: white;
+      font-weight: 600;
+      padding: 0.45rem 1.1rem;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 50px;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      backdrop-filter: blur(6px);
+    }
+    .header-badge::before {
+      content: '';
+      width: 8px; height: 8px;
+      background: #7CFC9A;
+      border-radius: 50%;
+      box-shadow: 0 0 8px #7CFC9A;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    /* ------------ MAIN ------------- */
+    .main {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+    }
+
+    .screen {
+      display: none;
+      width: 100%;
+      max-width: 820px;
+      animation: fadeIn 0.45s ease;
+    }
+    .screen.active { display: block; }
+    .screen.wide { max-width: 1000px; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 2.75rem 2.5rem;
+      box-shadow: 0 24px 48px rgba(123,0,0,0.10), 0 6px 16px rgba(0,0,0,0.04);
+      border: 1px solid rgba(204,0,0,0.06);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #ff6666, #cc0000, #7b0000);
+    }
+
+    /* ------------ SCREEN 1: AUTH ------------- */
+    .auth-icon {
+      width: 88px; height: 88px;
+      margin: 0 auto 1.5rem;
+      border-radius: 24px;
+      background: linear-gradient(135deg, #ff6666, #cc0000);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 28px rgba(204,0,0,0.32);
+      color: white;
+      font-size: 2.4rem;
+    }
+    .auth-title {
+      text-align: center;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #7b0000;
+      margin-bottom: 0.5rem;
+    }
+    .auth-subtitle {
+      text-align: center;
+      color: #666;
+      font-size: 0.98rem;
+      margin-bottom: 2rem;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .code-input-wrap {
+      max-width: 360px;
+      margin: 0 auto 1.2rem;
+      position: relative;
+    }
+    .code-input {
+      width: 100%;
+      padding: 1.1rem 1rem;
+      font-size: 1.9rem;
+      font-weight: 700;
+      text-align: center;
+      letter-spacing: 0.35rem;
+      font-family: 'Courier New', monospace;
+      border: 2px solid #eee;
+      border-radius: 14px;
+      background: #fafafa;
+      transition: all 0.25s;
+      color: #7b0000;
+    }
+    .code-input::placeholder {
+      color: #ccc;
+      letter-spacing: 0.2rem;
+      font-weight: 400;
+    }
+    .code-input:focus {
+      outline: none;
+      border-color: #cc0000;
+      background: #fff;
+      box-shadow: 0 0 0 5px rgba(204,0,0,0.12);
+    }
+
+    .btn-main {
+      display: block;
+      width: 100%;
+      max-width: 360px;
+      margin: 1.6rem auto 0;
+      padding: 1rem 2rem;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, #c41e3a, #7b0000);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 8px 20px rgba(123,0,0,0.28);
+      letter-spacing: 0.3px;
+    }
+    .btn-main:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 26px rgba(123,0,0,0.4);
+    }
+    .btn-main:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .auth-error {
+      max-width: 360px;
+      margin: 1rem auto 0;
+      padding: 0.85rem 1.1rem;
+      background: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+      border-radius: 8px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      display: none;
+    }
+    .auth-error.show { display: block; animation: shake 0.4s; }
+    @keyframes shake {
+      0%,100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    .auth-hint {
+      text-align: center;
+      color: #999;
+      font-size: 0.85rem;
+      margin-top: 1.5rem;
+    }
+
+    /* ------------ SCREEN 2: BULLETINS ------------- */
+    .greeting {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      padding: 1.2rem 1.4rem;
+      background: linear-gradient(135deg, #fff5f5, #ffeaea);
+      border: 1px solid #ffd0d0;
+      border-radius: 16px;
+      margin-bottom: 2rem;
+    }
+    .greeting-avatar {
+      width: 60px; height: 60px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ff6666, #cc0000);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      flex-shrink: 0;
+      box-shadow: 0 6px 16px rgba(204,0,0,0.3);
+    }
+    .greeting-text { flex: 1; min-width: 0; }
+    .greeting-text .hello {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #7b0000;
+      line-height: 1.2;
+    }
+    .greeting-text .sub {
+      color: #888;
+      font-size: 0.9rem;
+      margin-top: 0.15rem;
+    }
+
+    .section-label {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 1rem;
+      letter-spacing: 0.3px;
+    }
+
+    .bulletins-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .bulletin-btn {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      padding: 1.2rem 1.4rem;
+      background: #fff;
+      border: 2px solid #eee;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.22s;
+      text-align: left;
+      width: 100%;
+      font-family: inherit;
+      color: inherit;
+      position: relative;
+    }
+    .bulletin-btn:hover:not(:disabled) {
+      border-color: #cc0000;
+      background: #fff7f7;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 24px rgba(204,0,0,0.12);
+    }
+    .bulletin-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      background: #f8f8f8;
+    }
+    .bulletin-icon {
+      width: 52px; height: 52px;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ff6666, #cc0000);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.45rem;
+      flex-shrink: 0;
+      box-shadow: 0 6px 14px rgba(204,0,0,0.25);
+    }
+    .bulletin-info { flex: 1; min-width: 0; }
+    .bulletin-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #222;
+      margin-bottom: 0.25rem;
+      line-height: 1.3;
+    }
+    .bulletin-meta {
+      font-size: 0.85rem;
+      color: #777;
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .bulletin-arrow {
+      color: #cc0000;
+      font-size: 1.4rem;
+      font-weight: 700;
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+    .bulletin-btn:hover:not(:disabled) .bulletin-arrow {
+      transform: translateX(4px);
+    }
+    .bulletin-voted {
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      background: #28a745;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.18rem 0.65rem;
+      border-radius: 50px;
+      letter-spacing: 0.3px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: #888;
+    }
+    .empty-state .icon {
+      font-size: 3rem;
+      margin-bottom: 0.8rem;
+      opacity: 0.5;
+    }
+
+    .session-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.9rem 1.2rem;
+      background: #fff;
+      border-radius: 14px;
+      border: 1px solid #eee;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+    }
+    .session-bar .user {
+      font-size: 0.92rem;
+      color: #444;
+    }
+    .session-bar .user strong { color: #7b0000; }
+    .btn-outline {
+      padding: 0.5rem 1.1rem;
+      background: transparent;
+      border: 1.5px solid #cc0000;
+      color: #cc0000;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-outline:hover {
+      background: #cc0000;
+      color: #fff;
+    }
+
+    /* ------------ SCREEN 3: VOTING ------------- */
+    .vote-header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.1rem;
+      background: #f5f5f5;
+      border: 1px solid #e0e0e0;
+      border-radius: 50px;
+      font-weight: 600;
+      color: #555;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+    .btn-back:hover {
+      background: #ececec;
+      color: #7b0000;
+    }
+
+    .vote-card-title {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #7b0000;
+      margin-bottom: 0.4rem;
+      line-height: 1.25;
+    }
+    .vote-card-meta {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      display: flex;
+      gap: 1.2rem;
+      flex-wrap: wrap;
+    }
+    .vote-card-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .vote-card-desc {
+      background: #fff8f8;
+      border-left: 4px solid #cc0000;
+      padding: 1rem 1.2rem;
+      border-radius: 8px;
+      color: #444;
+      margin-bottom: 1.8rem;
+      font-size: 0.95rem;
+    }
+
+    /* Candidates */
+    .candidate-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.8rem; }
+    .candidate-item {
+      display: flex;
+      flex-direction: column;
+      padding: 1.1rem 1.2rem;
+      border: 2px solid #eee;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fff;
+      position: relative;
+    }
+    .candidate-item:hover:not(.locked) {
+      border-color: #ffb0b0;
+      background: #fffafa;
+      transform: translateY(-1px);
+    }
+    .candidate-item.selected {
+      border-color: #cc0000;
+      background: #fff2f2;
+      box-shadow: 0 8px 20px rgba(204,0,0,0.12);
+    }
+    .candidate-item.locked { cursor: default; opacity: 0.9; }
+    .candidate-item .candidate-top {
+      display: flex;
+      align-items: center;
+      gap: 1.1rem;
+      width: 100%;
+    }
+    .candidate-item .candidate-photo {
+      width: 74px; height: 74px;
+      border-radius: 12px;
+      object-fit: cover;
+      border: 2px solid #eee;
+      flex-shrink: 0;
+      background: #f5f5f5;
+    }
+    .candidate-item .candidate-info { flex: 1; min-width: 0; }
+    .candidate-item .candidate-name {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #222;
+      line-height: 1.3;
+      margin-bottom: 0.2rem;
+    }
+    .candidate-item .candidate-desc { color: #777; font-size: 0.88rem; }
+    .candidate-item .candidate-percent {
+      font-weight: 800;
+      color: #cc0000;
+      font-size: 1.25rem;
+      margin-left: 0.8rem;
+      flex-shrink: 0;
+    }
+    .candidate-progress {
+      width: 100%;
+      height: 6px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      margin-top: 0.85rem;
+      overflow: hidden;
+    }
+    .candidate-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6666, #cc0000);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+    .selected-check {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: #cc0000;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 800;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: all 0.2s;
+    }
+    .candidate-item.selected .selected-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* Referendum */
+    .referendum-question {
+      margin-bottom: 1.5rem;
+      padding: 1.2rem 1.3rem;
+      background: #fafafa;
+      border-radius: 14px;
+      border: 1px solid #eee;
+    }
+    .referendum-question .question-text {
+      font-weight: 700;
+      font-size: 1.08rem;
+      margin-bottom: 0.9rem;
+      color: #333;
+    }
+    .referendum-options { display: flex; flex-direction: column; gap: 0.75rem; }
+    .referendum-option {
+      padding: 0.9rem 1.1rem;
+      border: 2px solid #e5e5e5;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: #fff;
+    }
+    .referendum-option:hover:not(.locked) {
+      border-color: #ffb0b0;
+      background: #fffafa;
+    }
+    .referendum-option.selected {
+      border-color: #cc0000;
+      background: #fff2f2;
+    }
+    .referendum-option.locked { cursor: default; }
+    .referendum-option .answer-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .referendum-option .answer-text { font-weight: 700; font-size: 1.05rem; }
+    .referendum-option .answer-percent { font-weight: 700; color: #cc0000; }
+    .referendum-progress {
+      width: 100%;
+      height: 5px;
+      background: #f0f0f0;
+      border-radius: 3px;
+      margin-top: 0.6rem;
+      overflow: hidden;
+    }
+    .referendum-progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #ff6666, #cc0000);
+      border-radius: 3px;
+      transition: width 0.5s ease;
+    }
+
+    .vote-actions-bar {
+      margin-top: 1.5rem;
+      text-align: center;
+    }
+    .btn-vote {
+      padding: 1rem 3.5rem;
+      border: none;
+      border-radius: 50px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #c41e3a, #7b0000);
+      color: #fff;
+      cursor: pointer;
+      transition: all 0.25s;
+      box-shadow: 0 8px 22px rgba(123,0,0,0.28);
+      letter-spacing: 0.3px;
+      font-family: inherit;
+    }
+    .btn-vote:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .btn-vote:not(:disabled):hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(123,0,0,0.4);
+    }
+    .vote-msg {
+      margin-top: 1rem;
+      padding: 0.85rem 1.1rem;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: none;
+    }
+    .vote-msg.show { display: block; }
+    .vote-msg.error { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    .vote-msg.warning { background: #fff3cd; color: #856404; border-left: 4px solid #ffc107; }
+    .vote-msg.success { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+
+    /* ------------ SCREEN 4: SUCCESS ------------- */
+    .success-icon {
+      width: 110px; height: 110px;
+      margin: 0 auto 1.5rem;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #28a745, #1e7e34);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3.2rem;
+      color: #fff;
+      box-shadow: 0 16px 32px rgba(40,167,69,0.3);
+      animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); }
+      to { transform: scale(1); }
+    }
+    .success-title {
+      text-align: center;
+      font-size: 1.8rem;
+      font-weight: 800;
+      color: #155724;
+      margin-bottom: 0.6rem;
+    }
+    .success-subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    /* Stats inside vote screen */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 0.9rem;
+      margin: 1.2rem 0 1.8rem;
+      padding: 1.2rem;
+      background: #fafafa;
+      border-radius: 14px;
+      border: 1px solid #eee;
+    }
+    .stat-item { text-align: center; padding: 0.3rem; }
+    .stat-item .stat-number {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #7b0000;
+      line-height: 1.2;
+    }
+    .stat-item .stat-label {
+      font-size: 0.72rem;
+      color: #6c757d;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-top: 0.15rem;
+      font-weight: 600;
+    }
+    .stat-item .stat-sub { font-size: 0.75rem; color: #6c757d; font-weight: 600; }
+    .stat-item .stat-number.green { color: #28a745; }
+    .stat-item .stat-number.orange { color: #fd7e14; }
+    .stat-item .stat-number.red { color: #dc3545; }
+    .stat-item .stat-number.purple { color: #6f42c1; }
+
+    /* Loading */
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #999;
+      font-weight: 500;
+    }
+    .spinner {
+      width: 44px; height: 44px;
+      border: 4px solid #ffe0e0;
+      border-top-color: #cc0000;
+      border-radius: 50%;
+      animation: spin 0.9s linear infinite;
+      margin: 0 auto 1rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Footer */
+    .footer {
+      background: linear-gradient(135deg, #ff6666, #cc0000);
+      padding: 1rem 2rem;
+      text-align: center;
+      color: #fff;
+      font-size: 0.82rem;
+      letter-spacing: 0.3px;
+    }
+
+    @media (max-width: 640px) {
+      .card { padding: 1.8rem 1.4rem; }
+      .auth-title { font-size: 1.35rem; }
+      .code-input { font-size: 1.5rem; letter-spacing: 0.2rem; }
+      .greeting-text .hello { font-size: 1.15rem; }
+      .candidate-item .candidate-top { flex-wrap: wrap; }
+      .candidate-item .candidate-percent { margin-left: 0; }
+      .bulletin-btn { padding: 1rem; }
+      .bulletin-icon { width: 44px; height: 44px; font-size: 1.2rem; }
+      .header-container { padding: 0 1rem; }
+      .logo h1 { font-size: 1.05rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
+        <h1>СФСРЮ — Электронное голосование</h1>
+      </div>
+      <div class="header-badge">Терминал участка №&nbsp;0301</div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- ============ ЭКРАН 1: ВВОД КОДА ============ -->
+    <section id="screenAuth" class="screen active">
+      <div class="card">
+        <div class="auth-icon">🗳️</div>
+        <h2 class="auth-title">Электронное голосование</h2>
+        <p class="auth-subtitle">
+          Введите ваш личный код для получения бюллетеня.
+          Личный код указан в вашем удостоверении личности.
+        </p>
+
+        <div class="code-input-wrap">
+          <input
+            type="text"
+            id="codeInput"
+            class="code-input"
+            placeholder="0000-0000"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="9"
+            autofocus
+          />
+        </div>
+
+        <button id="codeNextBtn" class="btn-main" disabled>Далее</button>
+
+        <div id="authError" class="auth-error"></div>
+
+        <p class="auth-hint">
+          Пример: 1234-5678
+        </p>
+      </div>
+    </section>
+
+    <!-- ============ ЭКРАН 2: СПИСОК БЮЛЛЕТЕНЕЙ ============ -->
+    <section id="screenBulletins" class="screen wide">
+      <div class="card">
+        <div class="greeting">
+          <div class="greeting-avatar" id="greetingAvatar">?</div>
+          <div class="greeting-text">
+            <div class="hello" id="greetingHello">Здравствуйте!</div>
+            <div class="sub">Личный код: <span id="greetingCode">—</span></div>
+          </div>
+        </div>
+
+        <div class="session-bar">
+          <div class="user">Активный сеанс: <strong id="sessionUserName">—</strong></div>
+          <button class="btn-outline" id="endSessionBtn">Завершить сеанс</button>
+        </div>
+
+        <span class="section-label">Выберите бюллетень для голосования</span>
+        <div id="bulletinsContainer" class="bulletins-grid">
+          <div class="loading"><div class="spinner"></div>Загрузка бюллетеней…</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ЭКРАН 3: ГОЛОСОВАНИЕ ============ -->
+    <section id="screenVote" class="screen wide">
+      <div class="card">
+        <div class="vote-header">
+          <button class="btn-back" id="backToBulletinsBtn">← К бюллетеням</button>
+        </div>
+
+        <h2 class="vote-card-title" id="voteTitle">—</h2>
+        <div class="vote-card-meta" id="voteMeta"></div>
+        <div class="vote-card-desc" id="voteDescription"></div>
+
+        <div class="stats-grid" id="statsGrid">
+          <div class="stat-item">
+            <div class="stat-number" id="statRegistered">0</div>
+            <div class="stat-label">Зарегистрировано</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number green" id="statVoted">0</div>
+            <div class="stat-label">Проголосовало</div>
+            <div class="stat-sub" id="statVotedPct">0%</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number orange" id="statSpoiled">0</div>
+            <div class="stat-label">Испорчено</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number purple" id="statTurnout">0%</div>
+            <div class="stat-label">Явка</div>
+          </div>
+        </div>
+
+        <div id="optionsContainer"></div>
+
+        <div class="vote-actions-bar">
+          <button class="btn-vote" id="voteBtn" disabled>Проголосовать</button>
+          <div class="vote-msg" id="voteMsg"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ЭКРАН 4: УСПЕХ ============ -->
+    <section id="screenSuccess" class="screen">
+      <div class="card">
+        <div class="success-icon">✓</div>
+        <h2 class="success-title">Голос учтён!</h2>
+        <p class="success-subtitle">
+          Благодарим вас за участие в голосовании. Ваш голос успешно зарегистрирован в системе.
+        </p>
+        <button class="btn-main" id="successBackBtn" style="max-width: 320px;">К списку бюллетеней</button>
+      </div>
+    </section>
+
+  </main>
+
+    <footer class="footer">
+        <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+  <script type="importmap">
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+  </script>
+  <script type="module">
+    import { supabase } from '../../js/supabase-config.js';
+
+    const SCHEMA = 'votes';
+    const PHOTO_BUCKET = 'votes_photo';
+
+    // --- DOM ---
+    const screenAuth = document.getElementById('screenAuth');
+    const screenBulletins = document.getElementById('screenBulletins');
+    const screenVote = document.getElementById('screenVote');
+    const screenSuccess = document.getElementById('screenSuccess');
+
+    const codeInput = document.getElementById('codeInput');
+    const codeNextBtn = document.getElementById('codeNextBtn');
+    const authError = document.getElementById('authError');
+
+    const greetingAvatar = document.getElementById('greetingAvatar');
+    const greetingHello = document.getElementById('greetingHello');
+    const greetingCode = document.getElementById('greetingCode');
+    const sessionUserName = document.getElementById('sessionUserName');
+    const bulletinsContainer = document.getElementById('bulletinsContainer');
+    const endSessionBtn = document.getElementById('endSessionBtn');
+
+    const backToBulletinsBtn = document.getElementById('backToBulletinsBtn');
+    const voteTitle = document.getElementById('voteTitle');
+    const voteMeta = document.getElementById('voteMeta');
+    const voteDescription = document.getElementById('voteDescription');
+    const optionsContainer = document.getElementById('optionsContainer');
+    const voteBtn = document.getElementById('voteBtn');
+    const voteMsg = document.getElementById('voteMsg');
+
+    const statRegistered = document.getElementById('statRegistered');
+    const statVoted = document.getElementById('statVoted');
+    const statVotedPct = document.getElementById('statVotedPct');
+    const statSpoiled = document.getElementById('statSpoiled');
+    const statTurnout = document.getElementById('statTurnout');
+
+    const successBackBtn = document.getElementById('successBackBtn');
+
+    // --- STATE ---
+    let currentUser = null;       // { id, personal_code, surname, name, patronymic }
+    let currentElection = null;   // объект голосования
+    let currentOptions = [];      // варианты
+    let selectedOptionIds = [];   // выбранные option_id
+    let alreadyVotedIds = new Set();
+    let bulletinsList = [];
+
+    // --- HELPERS ---
+    function showScreen(name) {
+      [screenAuth, screenBulletins, screenVote, screenSuccess].forEach(s => s.classList.remove('active'));
+      ({auth: screenAuth, bulletins: screenBulletins, vote: screenVote, success: screenSuccess})[name].classList.add('active');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        return new Date(dateStr).toLocaleString('ru-RU', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+      } catch { return dateStr; }
+    }
+
+    function formatShortDate(dateStr) {
+      if (!dateStr) return '—';
+      try {
+        return new Date(dateStr).toLocaleDateString('ru-RU', {
+          day: '2-digit', month: '2-digit', year: 'numeric'
+        });
+      } catch { return dateStr; }
+    }
+
+    function showAuthError(text) {
+      authError.textContent = text;
+      authError.classList.add('show');
+    }
+    function hideAuthError() {
+      authError.classList.remove('show');
+    }
+
+    function showVoteMessage(text, type = 'error') {
+      voteMsg.textContent = text;
+      voteMsg.className = 'vote-msg show ' + type;
+    }
+    function hideVoteMessage() {
+      voteMsg.className = 'vote-msg';
+      voteMsg.textContent = '';
+    }
+
+    function getInitials(user) {
+      const s = (user.surname || '').charAt(0);
+      const n = (user.name || '').charAt(0);
+      return (s + n).toUpperCase() || '?';
+    }
+
+    function getShortName(user) {
+      // "Имя Отчество" — как в требовании
+      const parts = [];
+      if (user.name) parts.push(user.name);
+      if (user.patronymic) parts.push(user.patronymic);
+      return parts.join(' ') || user.surname || 'Избиратель';
+    }
+
+    // --- Форматирование кода XXXX-XXXX ---
+    codeInput.addEventListener('input', (e) => {
+      let digits = e.target.value.replace(/\D/g, '').slice(0, 8);
+      let formatted = digits;
+      if (digits.length > 4) {
+        formatted = digits.slice(0, 4) + '-' + digits.slice(4);
+      }
+      e.target.value = formatted;
+      codeNextBtn.disabled = digits.length !== 8;
+      hideAuthError();
+    });
+
+    codeInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !codeNextBtn.disabled) {
+        codeNextBtn.click();
+      }
+    });
+
+    // --- Проверка региона ---
+    async function checkRegion(userId, territory) {
+      if (!territory || territory === 'Вся территория СФСРЮ') return true;
+      try {
+        const { data: permData } = await supabase
+          .schema('addresses')
+          .from('permanent_registration')
+          .select('region_id')
+          .eq('user_id', userId)
+          .maybeSingle();
+        if (!permData?.region_id) return false;
+        const { data: regionData } = await supabase
+          .schema('addresses')
+          .from('regions')
+          .select('name')
+          .eq('id', permData.region_id)
+          .single();
+        return regionData?.name === territory;
+      } catch {
+        return false;
+      }
+    }
+
+    // --- Поиск пользователя ---
+    async function findUserByCode(code) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, personal_code, surname, name, patronymic, account_type')
+        .eq('personal_code', code)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    // --- Кнопка "Далее" ---
+    codeNextBtn.addEventListener('click', async () => {
+      const code = codeInput.value.trim();
+      if (!/^\d{4}-\d{4}$/.test(code)) {
+        showAuthError('Неверный формат личного кода. Введите в формате XXXX-XXXX.');
+        return;
+      }
+      hideAuthError();
+      codeNextBtn.disabled = true;
+      codeNextBtn.textContent = 'Поиск…';
+
+      try {
+        const user = await findUserByCode(code);
+        if (!user) {
+          showAuthError('Пользователь с таким личным кодом не найден.');
+          return;
+        }
+        if ((user.account_type || '').toLowerCase() !== 'подтверждённая') {
+          showAuthError('Учётная запись не подтверждена. Обратитесь к члену избирательной комиссии.');
+          return;
+        }
+        currentUser = user;
+        await startSession();
+      } catch (err) {
+        console.error(err);
+        showAuthError('Ошибка поиска: ' + (err.message || 'неизвестная ошибка'));
+      } finally {
+        codeNextBtn.disabled = false;
+        codeNextBtn.textContent = 'Далее';
+      }
+    });
+
+    // --- Сессия избирателя ---
+    async function startSession() {
+      const shortName = getShortName(currentUser);
+      greetingHello.textContent = `Здравствуйте, ${shortName}!`;
+      greetingAvatar.textContent = getInitials(currentUser);
+      greetingCode.textContent = currentUser.personal_code || '—';
+      sessionUserName.textContent = shortName;
+
+      showScreen('bulletins');
+      bulletinsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка бюллетеней…</div>';
+
+      try {
+        await loadBulletins();
+      } catch (err) {
+        console.error(err);
+        bulletinsContainer.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div>Ошибка загрузки бюллетеней</div>';
+      }
+    }
+
+    // --- Загрузка доступных бюллетеней ---
+    async function loadBulletins() {
+      const nowIso = new Date().toISOString();
+      const { data: elections, error } = await supabase
+        .schema(SCHEMA)
+        .from('elections')
+        .select('*')
+        .eq('status', 'active')
+        .lte('start_date', nowIso)
+        .gte('end_date', nowIso)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+
+      // Проверка региона
+      const available = [];
+      for (const el of (elections || [])) {
+        const ok = await checkRegion(currentUser.id, el.territory);
+        if (ok) available.push(el);
+      }
+
+      // Уже проголосовал?
+      const { data: userVotes } = await supabase
+        .schema(SCHEMA)
+        .from('user_votes')
+        .select('election_id')
+        .eq('user_id', currentUser.id);
+      alreadyVotedIds = new Set((userVotes || []).map(v => v.election_id));
+
+      bulletinsList = available;
+      renderBulletins();
+    }
+
+    function renderBulletins() {
+      if (!bulletinsList.length) {
+        bulletinsContainer.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <div style="font-weight:600; color:#555; margin-bottom:0.4rem;">Нет доступных бюллетеней</div>
+            <div style="font-size:0.9rem;">На данный момент для вас нет активных голосований.</div>
+          </div>
+        `;
+        return;
+      }
+
+      bulletinsContainer.innerHTML = '';
+      bulletinsList.forEach(el => {
+        const btn = document.createElement('button');
+        btn.className = 'bulletin-btn';
+        const voted = alreadyVotedIds.has(el.id);
+        if (voted) btn.disabled = true;
+
+        const typeLabel = { election: 'Выборы', referendum: 'Референдум', poll: 'Опрос' }[el.type] || el.type;
+        const icon = { election: '🗳️', referendum: '❓', poll: '📊' }[el.type] || '📄';
+
+        btn.innerHTML = `
+          ${voted ? '<span class="bulletin-voted">✓ ПРОГОЛОСОВАНО</span>' : ''}
+          <div class="bulletin-icon">${icon}</div>
+          <div class="bulletin-info">
+            <div class="bulletin-title">${escapeHtml(el.title)}</div>
+            <div class="bulletin-meta">
+              <span>${typeLabel}</span>
+              <span>${escapeHtml(el.territory || '')}</span>
+              <span>до ${formatShortDate(el.end_date)}</span>
+            </div>
+          </div>
+          <div class="bulletin-arrow">→</div>
+        `;
+        if (!voted) {
+          btn.addEventListener('click', () => openVote(el));
+        }
+        bulletinsContainer.appendChild(btn);
+      });
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    // --- Открыть голосование ---
+    async function openVote(election) {
+      currentElection = election;
+      selectedOptionIds = [];
+      hideVoteMessage();
+
+      showScreen('vote');
+      optionsContainer.innerHTML = '<div class="loading"><div class="spinner"></div>Загрузка бюллетеня…</div>';
+
+      try {
+        // Опции
+        const { data: options, error: optErr } = await supabase
+          .schema(SCHEMA)
+          .from('options')
+          .select('*')
+          .eq('election_id', election.id)
+          .order('order', { ascending: true });
+        if (optErr) throw optErr;
+        currentOptions = options || [];
+
+        // Подсчёт голосов
+        const { data: allVotes } = await supabase
+          .schema(SCHEMA)
+          .from('user_votes')
+          .select('option_id')
+          .eq('election_id', election.id);
+        const total = (allVotes || []).length;
+        const counts = {};
+        (allVotes || []).forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
+
+        // Статистика явки
+        const { data: stats } = await supabase
+          .schema(SCHEMA)
+          .from('election_statistics')
+          .select('*')
+          .eq('election_id', election.id)
+          .maybeSingle();
+
+        const registered = stats?.registered_voters || 0;
+        const voted = stats?.voted || 0;
+        const spoiled = stats?.spoiled_ballots || 0;
+
+        statRegistered.textContent = registered;
+        statVoted.textContent = voted;
+        statSpoiled.textContent = spoiled;
+        statVotedPct.textContent = registered > 0 ? Math.round(voted / registered * 100) + '%' : '0%';
+        statTurnout.textContent = registered > 0 ? Math.round((voted + spoiled) / registered * 100) + '%' : '0%';
+
+        // Заголовок
+        voteTitle.textContent = election.title;
+        voteMeta.innerHTML = `
+          <span>📍 ${escapeHtml(election.territory || '—')}</span>
+          <span>🗓 ${formatDate(election.start_date)}</span>
+          <span>⏱ до ${formatDate(election.end_date)}</span>
+        `;
+        voteDescription.textContent = election.description || 'Описание отсутствует';
+
+        // Рендер опций
+        renderOptions(counts, total);
+
+      } catch (err) {
+        console.error(err);
+        optionsContainer.innerHTML = '<div class="empty-state"><div class="icon">⚠️</div>Ошибка загрузки бюллетеня</div>';
+      }
+    }
+
+    function renderOptions(counts, total) {
+      optionsContainer.innerHTML = '';
+      voteBtn.disabled = true;
+      voteBtn.textContent = 'Проголосовать';
+
+      const type = currentElection.type;
+      if (type === 'election') {
+        renderCandidateList(counts, total, true);
+      } else if (type === 'poll') {
+        renderCandidateList(counts, total, false);
+      } else if (type === 'referendum') {
+        renderReferendum(counts, total);
+      } else {
+        renderCandidateList(counts, total, false);
+      }
+    }
+
+    // --- Список кандидатов (выборы / опрос) ---
+    function renderCandidateList(counts, total, withPhoto) {
+      const list = document.createElement('div');
+      list.className = 'candidate-list';
+
+      currentOptions.forEach(opt => {
+        const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
+
+        const div = document.createElement('div');
+        div.className = 'candidate-item';
+        div.dataset.optionId = opt.id;
+
+        // фото
+        let photoUrl = '/images/default-avatar.png';
+        if (withPhoto && opt.photo_folder && opt.photo_name) {
+          const { data } = supabase.storage.from(PHOTO_BUCKET).getPublicUrl(opt.photo_folder + opt.photo_name);
+          photoUrl = data.publicUrl;
+        }
+
+        div.innerHTML = `
+          <span class="selected-check">✓</span>
+          <div class="candidate-top">
+            ${withPhoto ? `<img class="candidate-photo" src="${photoUrl}" alt="" onerror="this.src='/images/default-avatar.png'">` : ''}
+            <div class="candidate-info">
+              <div class="candidate-name">${escapeHtml(opt.text)}</div>
+              ${opt.description ? `<div class="candidate-desc">${escapeHtml(opt.description)}</div>` : ''}
+            </div>
+            <div class="candidate-percent">${percent}%</div>
+          </div>
+          <div class="candidate-progress"><div class="candidate-progress-bar" style="width:${percent}%"></div></div>
+        `;
+
+        div.addEventListener('click', () => {
+          list.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
+          div.classList.add('selected');
+          selectedOptionIds = [opt.id];
+          voteBtn.disabled = false;
+        });
+
+        list.appendChild(div);
+      });
+
+      optionsContainer.appendChild(list);
+    }
+
+    // --- Референдум ---
+    function renderReferendum(counts, total) {
+      const groups = {};
+      currentOptions.forEach(opt => {
+        const q = opt.question_text || 'Вопрос';
+        if (!groups[q]) groups[q] = [];
+        groups[q].push(opt);
+      });
+
+      const totalQuestions = Object.keys(groups).length;
+      let answeredCount = 0;
+      selectedOptionIds = [];
+
+      Object.entries(groups).forEach(([question, opts], qIdx) => {
+        const block = document.createElement('div');
+        block.className = 'referendum-question';
+        block.innerHTML = `<div class="question-text">${escapeHtml(question)}</div>`;
+
+        const optsDiv = document.createElement('div');
+        optsDiv.className = 'referendum-options';
+
+        opts.forEach(opt => {
+          const percent = total > 0 ? Math.round((counts[opt.id] || 0) / total * 100) : 0;
+          const optEl = document.createElement('div');
+          optEl.className = 'referendum-option';
+          optEl.dataset.question = question;
+          optEl.innerHTML = `
+            <div class="answer-top">
+              <div class="answer-text">${escapeHtml(opt.text)}</div>
+              <div class="answer-percent">${percent}%</div>
+            </div>
+            <div class="referendum-progress"><div class="referendum-progress-bar" style="width:${percent}%"></div></div>
+          `;
+
+          optEl.addEventListener('click', () => {
+            optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
+            optEl.classList.add('selected');
+
+            // Обновим selectedOptionIds: удалим старый ответ на этот вопрос и добавим новый
+            const prevIdForQuestion = selectedOptionIds.find(id => {
+              const o = currentOptions.find(x => x.id === id);
+              return o && o.question_text === question;
+            });
+            if (prevIdForQuestion) {
+              selectedOptionIds = selectedOptionIds.filter(x => x !== prevIdForQuestion);
+            }
+            selectedOptionIds.push(opt.id);
+
+            if (selectedOptionIds.length === totalQuestions) {
+              voteBtn.disabled = false;
+            }
+          });
+
+          optsDiv.appendChild(optEl);
+        });
+
+        block.appendChild(optsDiv);
+        optionsContainer.appendChild(block);
+      });
+    }
+
+    // --- Кнопка "Проголосовать" ---
+    voteBtn.addEventListener('click', async () => {
+      if (!currentElection || !currentUser) return;
+      if (!selectedOptionIds.length) {
+        showVoteMessage('Выберите вариант голосования', 'warning');
+        return;
+      }
+      if (currentElection.type === 'referendum') {
+        const totalQuestions = new Set(currentOptions.map(o => o.question_text || 'Вопрос')).size;
+        if (selectedOptionIds.length !== totalQuestions) {
+          showVoteMessage('Ответьте на все вопросы', 'warning');
+          return;
+        }
+      }
+
+      voteBtn.disabled = true;
+      voteBtn.textContent = 'Отправка…';
+      hideVoteMessage();
+
+      try {
+        const inserts = selectedOptionIds.map(optionId => ({
+          user_id: currentUser.id,
+          election_id: currentElection.id,
+          option_id: optionId
+        }));
+
+        const { error } = await supabase
+          .schema(SCHEMA)
+          .from('user_votes')
+          .insert(inserts);
+        if (error) throw error;
+
+        // Обновим локальное состояние
+        alreadyVotedIds.add(currentElection.id);
+
+        showScreen('success');
+      } catch (err) {
+        console.error(err);
+        showVoteMessage('Ошибка при отправке голоса: ' + (err.message || 'неизвестная ошибка'), 'error');
+        voteBtn.disabled = false;
+        voteBtn.textContent = 'Проголосовать';
+      }
+    });
+
+    // --- Кнопки навигации ---
+    backToBulletinsBtn.addEventListener('click', () => {
+      showScreen('bulletins');
+      renderBulletins();
+    });
+
+    successBackBtn.addEventListener('click', async () => {
+      showScreen('bulletins');
+      // Перезагрузим список, чтобы отметить пройденные
+      try {
+        await loadBulletins();
+      } catch (err) {
+        console.error(err);
+      }
+    });
+
+    // --- Завершение сеанса ---
+    endSessionBtn.addEventListener('click', () => {
+      if (!confirm('Завершить сеанс текущего избирателя?')) return;
+      currentUser = null;
+      currentElection = null;
+      currentOptions = [];
+      selectedOptionIds = [];
+      alreadyVotedIds = new Set();
+      bulletinsList = [];
+      codeInput.value = '';
+      codeNextBtn.disabled = true;
+      hideAuthError();
+      showScreen('auth');
+      setTimeout(() => codeInput.focus(), 100);
+    });
+
+    // Авто-фокус
+    setTimeout(() => codeInput.focus(), 100);
+  </script>
+</body>
+</html>
