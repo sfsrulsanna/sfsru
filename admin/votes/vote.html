@@ -1126,10 +1126,7 @@
 
     const SCHEMA = 'votes';
     const PHOTO_BUCKET = 'votes_photo';
-    // Схема, в которой лежит таблица polling_stations.
-    // Если у вас она в public — оставьте null (тогда .from() идёт в public).
-    // Если в votes — поставьте 'votes'.
-    const STATIONS_SCHEMA = null;
+    const STATIONS_SCHEMA = 'votes'; // <-- таблица polling_stations в схеме votes
 
     // --- DOM ---
     const screenStation = document.getElementById('screenStation');
@@ -1286,13 +1283,11 @@
       }
     }
 
-    // --- Обёртка запроса к таблице участков (учитывает схему) ---
+    // --- Запросы к таблице участков (схема votes) ---
     function stationsQuery() {
-      const q = supabase.from('polling_stations');
-      return STATIONS_SCHEMA ? supabase.schema(STATIONS_SCHEMA).from('polling_stations') : q;
+      return supabase.schema(STATIONS_SCHEMA).from('polling_stations');
     }
 
-    // Диагностика: сколько вообще участков доступно текущему клиенту
     async function probeStationsAccess() {
       try {
         const { data, error, count } = await stationsQuery()
@@ -1309,7 +1304,6 @@
       }
     }
 
-    // --- Поиск участка с несколькими стратегиями ---
     async function findStationByNumber(number) {
       const raw = String(number || '').trim();
       if (!raw) return { station: null, error: null };
@@ -1319,12 +1313,12 @@
       if (res.error) return { station: null, error: res.error };
       if (res.data && res.data.length > 0) return { station: res.data[0], error: null };
 
-      // 2) ILIKE без учёта регистра
+      // 2) ILIKE (без учёта регистра)
       res = await stationsQuery().select('*').ilike('number', raw).limit(1);
       if (res.error) return { station: null, error: res.error };
       if (res.data && res.data.length > 0) return { station: res.data[0], error: null };
 
-      // 3) С ведущими нулями до 4 знаков (0101)
+      // 3) С ведущими нулями до 4 знаков (101 → 0101)
       const padded4 = raw.replace(/\D/g, '').padStart(4, '0');
       if (padded4 && padded4 !== raw) {
         res = await stationsQuery().select('*').eq('number', padded4).limit(1);
@@ -1332,7 +1326,7 @@
         if (res.data && res.data.length > 0) return { station: res.data[0], error: null };
       }
 
-      // 4) Без ведущих нулей (101)
+      // 4) Без ведущих нулей (0101 → 101)
       const stripped = raw.replace(/\D/g, '').replace(/^0+/, '');
       if (stripped && stripped !== raw) {
         res = await stationsQuery().select('*').eq('number', stripped).limit(1);
@@ -1367,21 +1361,16 @@
       stationNextBtn.textContent = 'Поиск…';
 
       try {
-        // Сначала проверим, доступна ли вообще таблица (RLS / схема)
         const probe = await probeStationsAccess();
         if (!probe.ok) {
           showStationError(
-            'Не удалось прочитать таблицу polling_stations: ' +
-            probe.error +
-            '. Проверьте RLS-политику и схему таблицы (см. инструкцию).'
+            'Не удалось прочитать votes.polling_stations: ' + probe.error +
+            '. Проверьте, что схема votes открыта для PostgREST и есть RLS-политика SELECT.'
           );
           return;
         }
         if (probe.count === 0) {
-          showStationError(
-            'Таблица polling_stations доступна, но в ней нет записей. ' +
-            'Добавьте участки в БД.'
-          );
+          showStationError('Схема votes.polling_stations доступна, но таблица пуста.');
           return;
         }
 
@@ -1398,7 +1387,7 @@
             .join(', ');
           showStationError(
             'Участок с номером "' + number + '" не найден. ' +
-            (sampleList ? 'В базе есть номера: ' + sampleList + '…' : '')
+            (sampleList ? 'В базе есть: ' + sampleList + '…' : '')
           );
           return;
         }
@@ -1519,7 +1508,7 @@
       }
     });
 
-    // --- Сессия избирателя ---
+    // --- Сессия ---
     async function startSession() {
       greetingHello.textContent = `Здравствуйте, ${getShortName(currentUser)}!`;
       greetingAvatar.textContent = getInitials(currentUser);
@@ -1537,7 +1526,6 @@
       }
     }
 
-    // --- Загрузка доступных бюллетеней ---
     async function loadBulletins() {
       const nowIso = new Date().toISOString();
       const { data: elections, error } = await supabase
@@ -1654,13 +1642,10 @@
         statRegistered.textContent = registered;
         statVoted.textContent = voted;
         statVotedPct.textContent = registered > 0 ? Math.round(voted / registered * 100) + '%' : '0%';
-
         statNotVoted.textContent = notVoted;
         statNotVotedPct.textContent = registered > 0 ? Math.round(notVoted / registered * 100) + '%' : '0%';
-
         statSpoiled.textContent = spoiled;
         statSpoiledPct.textContent = registered > 0 ? Math.round(spoiled / registered * 100) + '%' : '0%';
-
         statTurnout.textContent = registered > 0 ? Math.round(voted / registered * 100) + '%' : '0%';
 
         voteTitle.textContent = election.title;
@@ -1839,7 +1824,7 @@
       }
     });
 
-    // --- Кнопки навигации ---
+    // --- Навигация ---
     backToBulletinsBtn.addEventListener('click', () => {
       showScreen('bulletins');
       renderBulletins();
@@ -1847,11 +1832,7 @@
 
     successBackBtn.addEventListener('click', async () => {
       showScreen('bulletins');
-      try {
-        await loadBulletins();
-      } catch (err) {
-        console.error(err);
-      }
+      try { await loadBulletins(); } catch (err) { console.error(err); }
     });
 
     // --- Завершение сеанса ---
@@ -1860,7 +1841,6 @@
 
     endSessionBtn.addEventListener('click', openEndSessionModal);
     cancelEndSessionBtn.addEventListener('click', closeEndSessionModal);
-
     endSessionModal.addEventListener('click', (e) => {
       if (e.target === endSessionModal) closeEndSessionModal();
     });
@@ -1887,7 +1867,6 @@
     changeStationBtn.addEventListener('click', openChangeStationModal);
     changeStationFromSessionBtn.addEventListener('click', openChangeStationModal);
     cancelChangeStationBtn.addEventListener('click', closeChangeStationModal);
-
     changeStationModal.addEventListener('click', (e) => {
       if (e.target === changeStationModal) closeChangeStationModal();
     });
@@ -1921,22 +1900,21 @@
       }
     });
 
-    // --- Старт ---
+    // --- Старт + проверка доступа к схеме votes ---
     updateHeaderBadge();
     setTimeout(() => stationInput.focus(), 100);
 
-    // Один раз при загрузке — проверяем доступность таблицы участков
     (async () => {
       const probe = await probeStationsAccess();
       if (!probe.ok) {
         showStationError(
-          'Таблица polling_stations недоступна для чтения: ' + probe.error +
-          '. Проверьте RLS-политику (см. инструкцию) и схему таблицы.'
+          'Схема votes.polling_stations недоступна для чтения: ' + probe.error +
+          '. Убедитесь, что схема votes добавлена в pgrst.db_schemas и есть RLS-политика SELECT.'
         );
       } else if (probe.count === 0) {
-        showStationError('Таблица polling_stations пуста — добавьте участки в БД.');
+        showStationError('votes.polling_stations пуста — добавьте участки в БД.');
       } else {
-        console.log('[polling_stations] доступно записей:', probe.count, 'пример:', probe.sample);
+        console.log('[votes.polling_stations] доступно записей:', probe.count, 'пример:', probe.sample);
       }
     })();
   </script>
