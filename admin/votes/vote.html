@@ -1126,6 +1126,10 @@
 
     const SCHEMA = 'votes';
     const PHOTO_BUCKET = 'votes_photo';
+    // Схема, в которой лежит таблица polling_stations.
+    // Если у вас она в public — оставьте null (тогда .from() идёт в public).
+    // Если в votes — поставьте 'votes'.
+    const STATIONS_SCHEMA = null;
 
     // --- DOM ---
     const screenStation = document.getElementById('screenStation');
@@ -1282,9 +1286,65 @@
       }
     }
 
-    // --- ЭКРАН УЧАСТКА ---
+    // --- Обёртка запроса к таблице участков (учитывает схему) ---
+    function stationsQuery() {
+      const q = supabase.from('polling_stations');
+      return STATIONS_SCHEMA ? supabase.schema(STATIONS_SCHEMA).from('polling_stations') : q;
+    }
+
+    // Диагностика: сколько вообще участков доступно текущему клиенту
+    async function probeStationsAccess() {
+      try {
+        const { data, error, count } = await stationsQuery()
+          .select('id, number', { count: 'exact' })
+          .limit(5);
+        if (error) {
+          console.warn('[polling_stations] ошибка чтения:', error);
+          return { ok: false, error: error.message, count: 0, sample: [] };
+        }
+        return { ok: true, error: null, count: count ?? (data ? data.length : 0), sample: data || [] };
+      } catch (err) {
+        console.error('[polling_stations] исключение:', err);
+        return { ok: false, error: err.message || String(err), count: 0, sample: [] };
+      }
+    }
+
+    // --- Поиск участка с несколькими стратегиями ---
+    async function findStationByNumber(number) {
+      const raw = String(number || '').trim();
+      if (!raw) return { station: null, error: null };
+
+      // 1) Точное совпадение
+      let res = await stationsQuery().select('*').eq('number', raw).limit(1);
+      if (res.error) return { station: null, error: res.error };
+      if (res.data && res.data.length > 0) return { station: res.data[0], error: null };
+
+      // 2) ILIKE без учёта регистра
+      res = await stationsQuery().select('*').ilike('number', raw).limit(1);
+      if (res.error) return { station: null, error: res.error };
+      if (res.data && res.data.length > 0) return { station: res.data[0], error: null };
+
+      // 3) С ведущими нулями до 4 знаков (0101)
+      const padded4 = raw.replace(/\D/g, '').padStart(4, '0');
+      if (padded4 && padded4 !== raw) {
+        res = await stationsQuery().select('*').eq('number', padded4).limit(1);
+        if (res.error) return { station: null, error: res.error };
+        if (res.data && res.data.length > 0) return { station: res.data[0], error: null };
+      }
+
+      // 4) Без ведущих нулей (101)
+      const stripped = raw.replace(/\D/g, '').replace(/^0+/, '');
+      if (stripped && stripped !== raw) {
+        res = await stationsQuery().select('*').eq('number', stripped).limit(1);
+        if (res.error) return { station: null, error: res.error };
+        if (res.data && res.data.length > 0) return { station: res.data[0], error: null };
+      }
+
+      return { station: null, error: null };
+    }
+
+    // --- Экран участка ---
     stationInput.addEventListener('input', (e) => {
-      // Разрешаем цифры (и латиницу/кириллицу на всякий случай) без пробелов
       e.target.value = e.target.value.replace(/\s/g, '').slice(0, 10);
       stationNextBtn.disabled = e.target.value.trim().length === 0;
       hideStationError();
@@ -1295,16 +1355,6 @@
         stationNextBtn.click();
       }
     });
-
-    async function findStationByNumber(number) {
-      const { data, error } = await supabase
-        .from('polling_stations')
-        .select('*')
-        .eq('number', String(number).trim())
-        .maybeSingle();
-      if (error) throw error;
-      return data;
-    }
 
     stationNextBtn.addEventListener('click', async () => {
       const number = stationInput.value.trim();
@@ -1317,11 +1367,42 @@
       stationNextBtn.textContent = 'Поиск…';
 
       try {
-        const station = await findStationByNumber(number);
-        if (!station) {
-          showStationError('Участок с таким номером не найден');
+        // Сначала проверим, доступна ли вообще таблица (RLS / схема)
+        const probe = await probeStationsAccess();
+        if (!probe.ok) {
+          showStationError(
+            'Не удалось прочитать таблицу polling_stations: ' +
+            probe.error +
+            '. Проверьте RLS-политику и схему таблицы (см. инструкцию).'
+          );
           return;
         }
+        if (probe.count === 0) {
+          showStationError(
+            'Таблица polling_stations доступна, но в ней нет записей. ' +
+            'Добавьте участки в БД.'
+          );
+          return;
+        }
+
+        const { station, error } = await findStationByNumber(number);
+        if (error) {
+          showStationError('Ошибка поиска: ' + (error.message || error));
+          return;
+        }
+        if (!station) {
+          const sampleList = probe.sample
+            .map(s => s.number)
+            .filter(Boolean)
+            .slice(0, 5)
+            .join(', ');
+          showStationError(
+            'Участок с номером "' + number + '" не найден. ' +
+            (sampleList ? 'В базе есть номера: ' + sampleList + '…' : '')
+          );
+          return;
+        }
+
         currentStation = station;
         stationInfo.innerHTML = `
           <div class="station-title">${escapeHtml(station.name || ('Участок №' + station.number))}</div>
@@ -1334,7 +1415,6 @@
 
         updateHeaderBadge();
 
-        // Небольшая задержка, чтобы пользователь увидел карточку участка
         setTimeout(() => {
           showScreen('auth');
           setTimeout(() => codeInput.focus(), 100);
@@ -1367,9 +1447,6 @@
     });
 
     // --- Проверка региона ---
-    // Учитываем и регион избирателя, и регион участка.
-    // Голосование доступно, если территория = "Вся территория СФСРЮ",
-    // либо совпадает с регионом участка, либо с регионом избирателя.
     async function checkRegion(userId, territory) {
       if (!territory || territory === 'Вся территория СФСРЮ') return true;
       if (currentStation && currentStation.region && currentStation.region === territory) return true;
@@ -1572,7 +1649,6 @@
         const spoiled = stats?.spoiled_ballots || 0;
         const refused = stats?.refused || 0;
 
-        // Не голосовали = зарегистрировано - проголосовало - испорчено - отказались
         const notVoted = Math.max(0, registered - voted - spoiled - refused);
 
         statRegistered.textContent = registered;
@@ -1585,7 +1661,6 @@
         statSpoiled.textContent = spoiled;
         statSpoiledPct.textContent = registered > 0 ? Math.round(spoiled / registered * 100) + '%' : '0%';
 
-        // ЯВКА — только от числа проголосовавших
         statTurnout.textContent = registered > 0 ? Math.round(voted / registered * 100) + '%' : '0%';
 
         voteTitle.textContent = election.title;
@@ -1779,7 +1854,7 @@
       }
     });
 
-    // --- Завершение сеанса (модальное окно) ---
+    // --- Завершение сеанса ---
     function openEndSessionModal() { endSessionModal.classList.add('active'); }
     function closeEndSessionModal() { endSessionModal.classList.remove('active'); }
 
@@ -1839,7 +1914,6 @@
       setTimeout(() => stationInput.focus(), 100);
     });
 
-    // --- Escape закрывает модалки ---
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (endSessionModal.classList.contains('active')) closeEndSessionModal();
@@ -1850,6 +1924,21 @@
     // --- Старт ---
     updateHeaderBadge();
     setTimeout(() => stationInput.focus(), 100);
+
+    // Один раз при загрузке — проверяем доступность таблицы участков
+    (async () => {
+      const probe = await probeStationsAccess();
+      if (!probe.ok) {
+        showStationError(
+          'Таблица polling_stations недоступна для чтения: ' + probe.error +
+          '. Проверьте RLS-политику (см. инструкцию) и схему таблицы.'
+        );
+      } else if (probe.count === 0) {
+        showStationError('Таблица polling_stations пуста — добавьте участки в БД.');
+      } else {
+        console.log('[polling_stations] доступно записей:', probe.count, 'пример:', probe.sample);
+      }
+    })();
   </script>
 </body>
 </html>
