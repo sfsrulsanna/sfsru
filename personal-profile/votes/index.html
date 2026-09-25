@@ -26,7 +26,6 @@
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
   <title>Голосования и референдумы — СФСРЮ</title>
   <style>
-    /* (стили без изменений, те же что были, добавляем только небольшие правки для вкладок) */
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.6; }
     a { text-decoration: none; color: inherit; }
@@ -54,7 +53,8 @@
 
     .votes-grid { display: flex; flex-direction: column; gap: 1.5rem; }
 
-    .vote-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid #eee; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+    .vote-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid #eee; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; margin-bottom: 0; }
+    .vote-card:not(:last-child) { margin-bottom: 1.5rem; }
     .vote-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.12); }
     .vote-card .vote-title { font-size: 1.3rem; font-weight: 700; color: #7b0000; margin: 0 0 0.3rem 0; }
     .vote-card .vote-territory { font-size: 0.95rem; color: #555; margin-bottom: 0.3rem; }
@@ -65,6 +65,8 @@
     .vote-card .vote-status-badge.active { background: #d4edda; color: #155724; }
     .vote-card .vote-status-badge.completed { background: #cce5ff; color: #004085; }
     .vote-card .vote-status-badge.cancelled { background: #f8d7da; color: #721c24; }
+    .vote-card .vote-status-badge.counting { background: #fff3cd; color: #856404; }
+    .vote-card .vote-status-badge.annulled { background: #e2e3e5; color: #383d41; }
 
     .no-data { text-align: center; padding: 3rem 1rem; color: #888; font-size: 1.1rem; background: #fafafa; border-radius: 16px; border: 1px dashed #ddd; }
     .loading { text-align: center; padding: 3rem; color: #666; font-size: 1.1rem; }
@@ -87,24 +89,6 @@
       .nav-menu a { display: block; padding: 16px 20px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 1.1rem; text-align: left; border: 1px solid rgba(255,255,255,0.2); }
       .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: opacity 0.3s; }
       .menu-overlay.active { display: block; opacity: 1; }
-    }
-    .votes-grid {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-    }
-    .vote-card {
-      background: white;
-      border-radius: 16px;
-      padding: 1.5rem;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
-      border: 1px solid #eee;
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-      margin-bottom: 0;
-    }
-    .vote-card:not(:last-child) {
-      margin-bottom: 1.5rem;
     }
   </style>
 </head>
@@ -199,7 +183,9 @@
         draft: 'Черновик',
         active: 'Активно',
         completed: 'Завершено',
-        cancelled: 'Отменено'
+        cancelled: 'Отменено',
+        counting: 'Подсчет результатов',
+        annulled: 'Аннулировано'
       };
       return map[status] || status;
     }
@@ -317,23 +303,27 @@
 
         const now = new Date();
 
-        // Предстоящие: start_date > now
+        // Статусы, при которых голосование уже неактивно (нельзя голосовать)
+        const finishedStatuses = ['completed', 'cancelled', 'counting', 'annulled'];
+
+        // Предстоящие: start_date > now, статус draft или active
         const upcoming = filtered.filter(v => {
           const start = new Date(v.start_date);
           return start > now && (v.status === 'draft' || v.status === 'active');
         });
 
-        // Текущие: start <= now <= end и status = 'active'
+        // Текущие: start <= now <= end и статус active
         const current = filtered.filter(v => {
           const start = new Date(v.start_date);
           const end = new Date(v.end_date);
           return start <= now && end >= now && v.status === 'active';
         });
 
-        // Завершённые: end < now или status = 'completed' или 'cancelled'
+        // Завершённые: любой из финальных статусов
+        // (включая "Подсчет результатов" и "Аннулировано") ИЛИ окончание уже прошло
         const completed = filtered.filter(v => {
           const end = new Date(v.end_date);
-          return end < now || v.status === 'completed' || v.status === 'cancelled';
+          return finishedStatuses.includes(v.status) || end < now;
         });
 
         upcoming.sort((a, b) => new Date(a.start_date) - new Date(b.start_date));

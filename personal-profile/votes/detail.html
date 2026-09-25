@@ -212,6 +212,11 @@
             <div class="stat-sub" id="refusedPercent">0%</div>
           </div>
           <div class="stat-item">
+            <div class="stat-number teal" id="notVotedCount">0</div>
+            <div class="stat-label">Не голосовали</div>
+            <div class="stat-sub" id="notVotedPercent">0%</div>
+          </div>
+          <div class="stat-item">
             <div class="stat-number purple" id="turnoutPercent">0%</div>
             <div class="stat-label">Явка</div>
           </div>
@@ -264,6 +269,8 @@
     const spoiledPercentEl = document.getElementById('spoiledPercent');
     const refusedCountEl = document.getElementById('refusedCount');
     const refusedPercentEl = document.getElementById('refusedPercent');
+    const notVotedCountEl = document.getElementById('notVotedCount');
+    const notVotedPercentEl = document.getElementById('notVotedPercent');
     const turnoutPercentEl = document.getElementById('turnoutPercent');
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -454,7 +461,14 @@
         const refusedPercent = registered > 0 ? Math.round((refused / registered) * 100) : 0;
         refusedPercentEl.textContent = refusedPercent + '%';
 
-        const turnout = registered > 0 ? Math.round(((voted + spoiled) / registered) * 100) : 0;
+        // «Не голосовали» = зарегистрированные - проголосовавшие - испорченные - отказавшиеся
+        const notVoted = Math.max(0, registered - voted - spoiled - refused);
+        notVotedCountEl.textContent = notVoted;
+        const notVotedPercent = registered > 0 ? Math.round((notVoted / registered) * 100) : 0;
+        notVotedPercentEl.textContent = notVotedPercent + '%';
+
+        // ЯВКА — считается только от числа проголосовавших
+        const turnout = registered > 0 ? Math.round((voted / registered) * 100) : 0;
         turnoutPercentEl.textContent = turnout + '%';
 
         const optionsWithPhoto = options.map(opt => {
@@ -467,12 +481,23 @@
           return { ...opt, photoUrl };
         });
 
+        // Карта статусов (включая «Подсчет результатов» и «Аннулировано»)
+        const statusMap = {
+          active: 'Активно',
+          completed: 'Завершено',
+          cancelled: 'Отменено',
+          counting: 'Подсчет результатов',
+          annulled: 'Аннулировано',
+          draft: 'Черновик'
+        };
+        const statusText = statusMap[election.status] || 'Черновик';
+
         voteTitleEl.textContent = election.title;
         voteMetaEl.innerHTML = `
           <span>Регион: ${election.territory}</span>
           <span>Начало: ${formatDate(election.start_date)}</span>
           <span>Окончание: ${formatDate(election.end_date)}</span>
-          <span>Статус: ${election.status === 'active' ? 'Активно' : election.status === 'completed' ? 'Завершено' : election.status === 'cancelled' ? 'Отменено' : 'Черновик'}</span>
+          <span>Статус: ${statusText}</span>
         `;
         voteDescriptionEl.textContent = election.description || 'Описание отсутствует';
 
@@ -490,7 +515,13 @@
         const isActive = election.status === 'active' && !isBeforeStart && !isAfterEnd;
 
         if (!isActive) {
-          if (isBeforeStart) {
+          if (election.status === 'counting') {
+            blockReason = 'Идёт подсчёт результатов';
+          } else if (election.status === 'annulled') {
+            blockReason = 'Голосование аннулировано';
+          } else if (election.status === 'cancelled') {
+            blockReason = 'Голосование отменено';
+          } else if (isBeforeStart) {
             blockReason = `Голосование начнётся ${formatDate(election.start_date)}`;
           } else if (isAfterEnd) {
             blockReason = 'Голосование завершено';
@@ -739,7 +770,13 @@
           disableVoting(blockReason);
         } else if (!isActive) {
           voteBtn.disabled = true;
-          if (isBeforeStart) {
+          if (election.status === 'counting') {
+            voteStatus.innerHTML = '<div class="info-message">Идёт подсчёт результатов</div>';
+          } else if (election.status === 'annulled') {
+            voteStatus.innerHTML = '<div class="info-message">Голосование аннулировано</div>';
+          } else if (election.status === 'cancelled') {
+            voteStatus.innerHTML = '<div class="info-message">Голосование отменено</div>';
+          } else if (isBeforeStart) {
             voteStatus.innerHTML = `<div class="info-message">Голосование начнётся ${formatDate(election.start_date)}</div>`;
           } else if (isAfterEnd) {
             voteStatus.innerHTML = '<div class="info-message">Голосование завершено</div>';

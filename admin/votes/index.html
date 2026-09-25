@@ -61,6 +61,8 @@
     .status-badge.active { background: #d4edda; color: #155724; }
     .status-badge.completed { background: #cce5ff; color: #004085; }
     .status-badge.cancelled { background: #f8d7da; color: #721c24; }
+    .status-badge.counting { background: #fff3cd; color: #856404; }
+    .status-badge.annulled { background: #e2e3e5; color: #383d41; }
 
     .modal {
       display: none;
@@ -252,7 +254,6 @@
     .app-detail-field .label { font-weight: 600; width: 30%; color: #555; }
     .app-detail-field .value { width: 70%; }
 
-    /* Модалка редактирования варианта */
     .edit-option-modal .modal-content { max-width: 500px; }
     .edit-option-modal .modal-content .current-photo { max-width: 100px; max-height: 100px; border-radius: 8px; display: block; margin: 0.5rem 0; }
 
@@ -362,7 +363,9 @@
 
           <div class="form-group">
             <label for="voteTerritory">Территория</label>
-            <input type="text" id="voteTerritory" required placeholder="Вся территория СФСРЮ или название региона" />
+            <select id="voteTerritory" required>
+              <option value="Вся территория СФСРЮ">Вся территория СФСРЮ</option>
+            </select>
           </div>
 
           <div class="form-row">
@@ -386,16 +389,18 @@
               <select id="voteStatus">
                 <option value="draft">Черновик</option>
                 <option value="active">Активно</option>
+                <option value="counting">Подсчет результатов</option>
                 <option value="completed">Завершено</option>
+                <option value="annulled">Аннулировано</option>
                 <option value="cancelled">Отменено</option>
               </select>
             </div>
           </div>
 
           <div class="tabs">
-            <button class="tab-btn active" data-tab="tabOptions">Кандидаты / Варианты</button>
-            <button class="tab-btn" data-tab="tabApplications">Заявления граждан</button>
-            <button class="tab-btn" data-tab="tabStats">Результаты</button>
+            <button type="button" class="tab-btn active" data-tab="tabOptions">Кандидаты / Варианты</button>
+            <button type="button" class="tab-btn" data-tab="tabApplications">Заявления граждан</button>
+            <button type="button" class="tab-btn" data-tab="tabStats">Результаты</button>
           </div>
 
           <!-- Вкладка: Кандидаты -->
@@ -479,6 +484,10 @@
                   <div class="form-group">
                     <label for="statRefused">Отказавшихся</label>
                     <input type="number" id="statRefused" class="form-control" min="0" value="0" />
+                  </div>
+                  <div class="form-group">
+                    <label for="statNotVoted">Не голосовали</label>
+                    <input type="number" id="statNotVoted" class="form-control" min="0" value="0" />
                   </div>
                 </div>
                 <button type="button" class="btn btn-primary" id="saveStatisticsBtn">Сохранить статистику</button>
@@ -643,6 +652,7 @@
     const statVoted = document.getElementById('statVoted');
     const statSpoiled = document.getElementById('statSpoiled');
     const statRefused = document.getElementById('statRefused');
+    const statNotVoted = document.getElementById('statNotVoted');
     const saveStatisticsBtn = document.getElementById('saveStatisticsBtn');
     const statisticsSaveResult = document.getElementById('statisticsSaveResult');
 
@@ -680,6 +690,7 @@
     const SCHEMA = 'votes';
     const PHOTO_BUCKET = 'votes_photo';
     const PHOTO_FOLDER = 'candidates/';
+    const ALL_TERRITORY = 'Вся территория СФСРЮ';
 
     let currentVoteId = null;
     let allOptions = [];
@@ -687,6 +698,7 @@
     let selectedUserId = null;
     let selectedUserText = '';
     let allVotesList = [];
+    let allRegions = [];
     let sortModeEnabled = false;
 
     // --- Вспомогательные функции ---
@@ -709,7 +721,9 @@
         draft: 'Черновик',
         active: 'Активно',
         completed: 'Завершено',
-        cancelled: 'Отменено'
+        cancelled: 'Отменено',
+        counting: 'Подсчет результатов',
+        annulled: 'Аннулировано'
       };
       return map[status] || status;
     }
@@ -757,6 +771,60 @@
       }
       adminEmail.textContent = userData.email;
       return true;
+    }
+
+    // --- Регионы ---
+    async function loadRegions() {
+      try {
+        const { data, error } = await supabase
+          .schema(SCHEMA)
+          .from('regions')
+          .select('id, name')
+          .order('name');
+        if (error) {
+          console.warn('Не удалось загрузить регионы:', error.message);
+          allRegions = [];
+          return;
+        }
+        allRegions = data || [];
+      } catch (err) {
+        console.error('Ошибка загрузки регионов:', err);
+        allRegions = [];
+      }
+    }
+
+    function populateRegionSelect(selectedValue) {
+      // Сохраняем текущее значение, если оно не передано
+      if (selectedValue === undefined) {
+        selectedValue = voteTerritory.value || ALL_TERRITORY;
+      }
+      voteTerritory.innerHTML = '';
+      const defaultOpt = document.createElement('option');
+      defaultOpt.value = ALL_TERRITORY;
+      defaultOpt.textContent = ALL_TERRITORY;
+      voteTerritory.appendChild(defaultOpt);
+
+      allRegions.forEach(r => {
+        const opt = document.createElement('option');
+        opt.value = r.name;
+        opt.textContent = r.name;
+        voteTerritory.appendChild(opt);
+      });
+
+      // Если пришло значение, которого нет в списке — добавляем его как временную опцию,
+      // чтобы не потерять данные при редактировании старого голосования
+      if (selectedValue) {
+        const exists = Array.from(voteTerritory.options).some(o => o.value === selectedValue);
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = selectedValue;
+          opt.textContent = selectedValue + ' (устаревшее)';
+          voteTerritory.appendChild(opt);
+        }
+        voteTerritory.value = selectedValue;
+      } else {
+        voteTerritory.value = ALL_TERRITORY;
+      }
     }
 
     // --- Загрузка голосований ---
@@ -847,12 +915,14 @@
       statVoted.value = 0;
       statSpoiled.value = 0;
       statRefused.value = 0;
+      statNotVoted.value = 0;
       statisticsSaveResult.textContent = '';
       copyStatus.textContent = '';
       sortStatus.textContent = '';
       sortModeCheckbox.checked = false;
       sortModeEnabled = false;
       applySortBtn.style.display = 'none';
+      populateRegionSelect(ALL_TERRITORY);
       populateCopyFromVote();
     }
 
@@ -887,7 +957,7 @@
           .schema(SCHEMA)
           .from('elections')
           .select('id, title, status')
-          .neq('id', currentVoteId)
+          .neq('id', currentVoteId || '00000000-0000-0000-0000-000000000000')
           .order('title');
         if (error) throw error;
         allVotesList = data || [];
@@ -921,7 +991,7 @@
         voteScope.value = vote.scope || 'federal';
         voteTitle.value = vote.title || '';
         voteDescription.value = vote.description || '';
-        voteTerritory.value = vote.territory || '';
+        populateRegionSelect(vote.territory || ALL_TERRITORY);
         voteStart.value = utcToLocalInput(vote.start_date);
         voteEnd.value = utcToLocalInput(vote.end_date);
         if (vote.settings && vote.settings.applications_deadline) {
@@ -991,17 +1061,12 @@
         }
       } else {
         const sortedOptions = [...allOptions];
-        // При сортировке мы отображаем в текущем порядке
         sortedOptions.forEach((opt, index) => {
           const div = document.createElement('div');
           div.className = 'option-item-admin';
           div.setAttribute('data-id', opt.id);
           div.draggable = isSortMode;
-          if (isSortMode) {
-            div.style.cursor = 'grab';
-          } else {
-            div.style.cursor = 'default';
-          }
+          div.style.cursor = isSortMode ? 'grab' : 'default';
 
           let photoHtml = '';
           if (opt.photo_folder && opt.photo_name) {
@@ -1010,7 +1075,6 @@
             photoHtml = `<img src="${data.publicUrl}" class="option-photo" alt="Фото" />`;
           }
 
-          // Drag handle
           const dragHandle = document.createElement('span');
           dragHandle.className = 'drag-handle';
           dragHandle.textContent = '⠿';
@@ -1040,7 +1104,6 @@
           div.appendChild(actionsDiv);
           optionsList.appendChild(div);
 
-          // Drag events
           if (isSortMode) {
             div.addEventListener('dragstart', (e) => {
               e.dataTransfer.setData('text/plain', opt.id);
@@ -1088,7 +1151,6 @@
       populateVoteOptions();
     }
 
-    // Применение нового порядка
     async function applySortOrder() {
       if (!currentVoteId) {
         sortStatus.textContent = 'Ошибка: голосование не выбрано';
@@ -1096,7 +1158,6 @@
         return;
       }
       try {
-        // Обновляем порядок в БД
         for (let i = 0; i < allOptions.length; i++) {
           const opt = allOptions[i];
           await supabase
@@ -1108,7 +1169,6 @@
         sortStatus.textContent = 'Порядок успешно сохранён!';
         sortStatus.style.color = '#28a745';
         applySortBtn.style.display = 'none';
-        // Перезагружаем варианты, чтобы обновить порядок
         const { data: options } = await supabase
           .schema(SCHEMA)
           .from('options')
@@ -1128,8 +1188,18 @@
     function populateVoteOptions() {
       voteOptionSelect.innerHTML = '<option value="">-- Выберите вариант --</option>';
       allOptions.forEach(opt => {
-        const label = opt.text + (opt.description ? ` (${opt.description})` : '');
-        voteOptionSelect.innerHTML += `<option value="${opt.id}">${label}</option>`;
+        // Формируем подпись: для референдума — с вопросом в скобках,
+        // для выборов/опросов — с описанием (партия/должность) в скобках
+        let label = opt.text;
+        if (opt.question_text) {
+          label += ` (${opt.question_text})`;
+        } else if (opt.description) {
+          label += ` (${opt.description})`;
+        }
+        const optionEl = document.createElement('option');
+        optionEl.value = opt.id;
+        optionEl.textContent = label;
+        voteOptionSelect.appendChild(optionEl);
       });
     }
 
@@ -1498,11 +1568,10 @@
       appDetailModal.classList.add('active');
     }
 
-    // --- Изменение статуса заявления ---
     async function changeAppStatus(appId, newStatus) {
       if (!confirm(`Изменить статус заявления на "${getAppStatusLabel(newStatus)}"?`)) return;
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       const { error } = await supabase
         .schema(SCHEMA)
         .from('applications')
@@ -1526,7 +1595,7 @@
         const title = `Изменение статуса заявления "${typeLabel}"`;
         const appNumber = app.application_number || app.id.slice(0, 8);
         const content = `Ваше заявление "${typeLabel}" (№${appNumber}) изменило статус на "${statusText}".`;
-        
+
         const { error: msgError } = await supabase
           .schema('messages')
           .from('user_messages')
@@ -1671,11 +1740,13 @@
           statVoted.value = data.voted || 0;
           statSpoiled.value = data.spoiled_ballots || 0;
           statRefused.value = data.refused || 0;
+          statNotVoted.value = data.not_voted || 0;
         } else {
           statRegistered.value = 0;
           statVoted.value = 0;
           statSpoiled.value = 0;
           statRefused.value = 0;
+          statNotVoted.value = 0;
         }
       } catch (err) {
         console.error('Ошибка загрузки статистики:', err);
@@ -1693,14 +1764,15 @@
       const voted = parseInt(statVoted.value) || 0;
       const spoiled = parseInt(statSpoiled.value) || 0;
       const refused = parseInt(statRefused.value) || 0;
+      const notVoted = parseInt(statNotVoted.value) || 0;
 
-      if (registered < 0 || voted < 0 || spoiled < 0 || refused < 0) {
+      if (registered < 0 || voted < 0 || spoiled < 0 || refused < 0 || notVoted < 0) {
         statisticsSaveResult.textContent = 'Все значения должны быть >= 0';
         statisticsSaveResult.style.color = '#dc3545';
         return;
       }
 
-      const { data: existing, error: checkErr } = await supabase
+      const { data: existing } = await supabase
         .schema(SCHEMA)
         .from('election_statistics')
         .select('id')
@@ -1708,17 +1780,20 @@
         .maybeSingle();
 
       let result;
+      const payload = {
+        registered_voters: registered,
+        voted: voted,
+        spoiled_ballots: spoiled,
+        refused: refused,
+        not_voted: notVoted,
+        updated_at: new Date().toISOString()
+      };
+
       if (existing) {
         result = await supabase
           .schema(SCHEMA)
           .from('election_statistics')
-          .update({
-            registered_voters: registered,
-            voted: voted,
-            spoiled_ballots: spoiled,
-            refused: refused,
-            updated_at: new Date().toISOString()
-          })
+          .update(payload)
           .eq('id', existing.id);
       } else {
         result = await supabase
@@ -1726,10 +1801,7 @@
           .from('election_statistics')
           .insert({
             election_id: electionId,
-            registered_voters: registered,
-            voted: voted,
-            spoiled_ballots: spoiled,
-            refused: refused
+            ...payload
           });
       }
 
@@ -1932,7 +2004,7 @@
 
       if (insertErr) {
         if (insertErr.code === '23503') {
-          manualVoteResult.textContent = 'Ошибка внешнего ключа: пользователь не найден в целевой таблице. Проверьте, что внешний ключ user_votes.user_id ссылается на public.users (или auth.users) и пользователь существует.';
+          manualVoteResult.textContent = 'Ошибка внешнего ключа: пользователь не найден в целевой таблице.';
         } else if (insertErr.code === '23505') {
           manualVoteResult.textContent = 'Этот пользователь уже проголосовал в данном голосовании (конфликт уникальности).';
         } else {
@@ -1971,7 +2043,6 @@
       if (!sortModeEnabled) {
         applySortBtn.style.display = 'none';
         sortStatus.textContent = '';
-        // Перезагружаем список в исходном порядке
         renderOptions();
       } else {
         renderOptions();
@@ -2009,6 +2080,8 @@
     document.addEventListener('DOMContentLoaded', async () => {
       const isAdmin = await checkAdmin();
       if (!isAdmin) return;
+
+      await loadRegions();
       await loadAndRender();
 
       tabBtns.forEach(btn => {

@@ -60,6 +60,7 @@
     .logo { display: flex; align-items: center; gap: 12px; }
     .logo img { height: 46px; width: auto; }
     .logo h1 { font-size: 1.35rem; font-weight: 800; color: white; letter-spacing: 0.5px; }
+    .header-right { display: flex; align-items: center; gap: 0.6rem; }
     .header-badge {
       color: white;
       font-weight: 600;
@@ -72,8 +73,12 @@
       align-items: center;
       gap: 8px;
       backdrop-filter: blur(6px);
+      max-width: 360px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
-    .header-badge::before {
+    .header-badge.active::before {
       content: '';
       width: 8px; height: 8px;
       background: #7CFC9A;
@@ -85,6 +90,19 @@
       0%, 100% { opacity: 1; }
       50% { opacity: 0.4; }
     }
+    .btn-header-change {
+      padding: 0.4rem 0.9rem;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: #fff;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .btn-header-change:hover { background: rgba(255,255,255,0.35); }
 
     /* ------------ MAIN ------------- */
     .main {
@@ -124,6 +142,30 @@
       top: 0; left: 0; right: 0;
       height: 6px;
       background: linear-gradient(90deg, #ff6666, #cc0000, #7b0000);
+    }
+
+    /* ------------ SCREEN 0: STATION ------------- */
+    .station-info {
+      margin-top: 1.6rem;
+      padding: 1.1rem 1.3rem;
+      background: linear-gradient(135deg, #fff5f5, #ffeaea);
+      border: 1px solid #ffd0d0;
+      border-radius: 14px;
+      display: none;
+      text-align: left;
+    }
+    .station-info.show { display: block; }
+    .station-info .station-line {
+      font-size: 0.9rem;
+      color: #555;
+      padding: 0.15rem 0;
+    }
+    .station-info .station-line strong { color: #7b0000; }
+    .station-info .station-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: #7b0000;
+      margin-bottom: 0.35rem;
     }
 
     /* ------------ SCREEN 1: AUTH ------------- */
@@ -203,6 +245,7 @@
       transition: all 0.25s;
       box-shadow: 0 8px 20px rgba(123,0,0,0.28);
       letter-spacing: 0.3px;
+      font-family: inherit;
     }
     .btn-main:hover:not(:disabled) {
       transform: translateY(-2px);
@@ -396,6 +439,7 @@
       color: #444;
     }
     .session-bar .user strong { color: #7b0000; }
+    .session-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
     .btn-outline {
       padding: 0.5rem 1.1rem;
       background: transparent;
@@ -411,6 +455,14 @@
     }
     .btn-outline:hover {
       background: #cc0000;
+      color: #fff;
+    }
+    .btn-outline.secondary {
+      border-color: #6c757d;
+      color: #6c757d;
+    }
+    .btn-outline.secondary:hover {
+      background: #6c757d;
       color: #fff;
     }
 
@@ -691,7 +743,7 @@
     /* Stats inside vote screen */
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
       gap: 0.9rem;
       margin: 1.2rem 0 1.8rem;
       padding: 1.2rem;
@@ -701,13 +753,13 @@
     }
     .stat-item { text-align: center; padding: 0.3rem; }
     .stat-item .stat-number {
-      font-size: 1.6rem;
+      font-size: 1.5rem;
       font-weight: 800;
       color: #7b0000;
       line-height: 1.2;
     }
     .stat-item .stat-label {
-      font-size: 0.72rem;
+      font-size: 0.7rem;
       color: #6c757d;
       text-transform: uppercase;
       letter-spacing: 0.4px;
@@ -719,6 +771,7 @@
     .stat-item .stat-number.orange { color: #fd7e14; }
     .stat-item .stat-number.red { color: #dc3545; }
     .stat-item .stat-number.purple { color: #6f42c1; }
+    .stat-item .stat-number.teal { color: #20c997; }
 
     /* Loading */
     .loading {
@@ -859,6 +912,7 @@
       .header-container { padding: 0 1rem; }
       .logo h1 { font-size: 1.05rem; }
       .modal-box { padding: 1.6rem 1.4rem 1.3rem; }
+      .header-badge { max-width: 200px; font-size: 0.75rem; }
     }
   </style>
 </head>
@@ -870,14 +924,48 @@
         <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
         <h1>СФСРЮ — Электронное голосование</h1>
       </div>
-      <div class="header-badge">Терминал участка №&nbsp;1</div>
+      <div class="header-right">
+        <div class="header-badge" id="headerBadge">Участок не выбран</div>
+        <button class="btn-header-change" id="changeStationBtn" style="display:none;">Сменить участок</button>
+      </div>
     </div>
   </header>
 
   <main class="main">
 
+    <!-- ============ ЭКРАН 0: ВЫБОР УЧАСТКА ============ -->
+    <section id="screenStation" class="screen active">
+      <div class="card">
+        <div class="auth-icon">🏛️</div>
+        <h2 class="auth-title">Терминал избирательного участка</h2>
+        <p class="auth-subtitle">
+          Введите номер избирательного участка, к которому привязан данный терминал.
+          Номер указан на табличке участка.
+        </p>
+
+        <div class="code-input-wrap">
+          <input
+            type="text"
+            id="stationInput"
+            class="code-input"
+            placeholder="0101"
+            inputmode="numeric"
+            autocomplete="off"
+            maxlength="10"
+            autofocus
+          />
+        </div>
+
+        <button id="stationNextBtn" class="btn-main" disabled>Подтвердить участок</button>
+
+        <div id="stationError" class="auth-error"></div>
+
+        <div id="stationInfo" class="station-info"></div>
+      </div>
+    </section>
+
     <!-- ============ ЭКРАН 1: ВВОД КОДА ============ -->
-    <section id="screenAuth" class="screen active">
+    <section id="screenAuth" class="screen">
       <div class="card">
         <div class="auth-icon">🗳️</div>
         <h2 class="auth-title">Электронное голосование</h2>
@@ -895,7 +983,6 @@
             inputmode="numeric"
             autocomplete="off"
             maxlength="9"
-            autofocus
           />
         </div>
 
@@ -922,7 +1009,10 @@
 
         <div class="session-bar">
           <div class="user">Активный сеанс: <strong id="sessionUserName">—</strong></div>
-          <button class="btn-outline" id="endSessionBtn">Завершить сеанс</button>
+          <div class="session-actions">
+            <button class="btn-outline secondary" id="changeStationFromSessionBtn">Сменить участок</button>
+            <button class="btn-outline" id="endSessionBtn">Завершить сеанс</button>
+          </div>
         </div>
 
         <span class="section-label">Выберите бюллетень для голосования</span>
@@ -954,8 +1044,14 @@
             <div class="stat-sub" id="statVotedPct">0%</div>
           </div>
           <div class="stat-item">
+            <div class="stat-number teal" id="statNotVoted">0</div>
+            <div class="stat-label">Не голосовали</div>
+            <div class="stat-sub" id="statNotVotedPct">0%</div>
+          </div>
+          <div class="stat-item">
             <div class="stat-number orange" id="statSpoiled">0</div>
             <div class="stat-label">Испорчено</div>
+            <div class="stat-sub" id="statSpoiledPct">0%</div>
           </div>
           <div class="stat-item">
             <div class="stat-number purple" id="statTurnout">0%</div>
@@ -1002,6 +1098,21 @@
     </div>
   </div>
 
+  <!-- ============ МОДАЛКА СМЕНЫ УЧАСТКА ============ -->
+  <div class="modal-backdrop" id="changeStationModal">
+    <div class="modal-box">
+      <div class="modal-icon">🏛️</div>
+      <h3 class="modal-title">Сменить участок?</h3>
+      <p class="modal-text">
+        Текущий сеанс избирателя будет сброшен, и потребуется заново ввести номер участка.
+      </p>
+      <div class="modal-actions">
+        <button class="modal-btn modal-btn-cancel" id="cancelChangeStationBtn">Отмена</button>
+        <button class="modal-btn modal-btn-confirm" id="confirmChangeStationBtn">Сменить</button>
+      </div>
+    </div>
+  </div>
+
     <footer class="footer">
         <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
@@ -1017,10 +1128,19 @@
     const PHOTO_BUCKET = 'votes_photo';
 
     // --- DOM ---
+    const screenStation = document.getElementById('screenStation');
     const screenAuth = document.getElementById('screenAuth');
     const screenBulletins = document.getElementById('screenBulletins');
     const screenVote = document.getElementById('screenVote');
     const screenSuccess = document.getElementById('screenSuccess');
+
+    const stationInput = document.getElementById('stationInput');
+    const stationNextBtn = document.getElementById('stationNextBtn');
+    const stationError = document.getElementById('stationError');
+    const stationInfo = document.getElementById('stationInfo');
+
+    const headerBadge = document.getElementById('headerBadge');
+    const changeStationBtn = document.getElementById('changeStationBtn');
 
     const codeInput = document.getElementById('codeInput');
     const codeNextBtn = document.getElementById('codeNextBtn');
@@ -1032,6 +1152,7 @@
     const sessionUserName = document.getElementById('sessionUserName');
     const bulletinsContainer = document.getElementById('bulletinsContainer');
     const endSessionBtn = document.getElementById('endSessionBtn');
+    const changeStationFromSessionBtn = document.getElementById('changeStationFromSessionBtn');
 
     const backToBulletinsBtn = document.getElementById('backToBulletinsBtn');
     const voteTitle = document.getElementById('voteTitle');
@@ -1044,7 +1165,10 @@
     const statRegistered = document.getElementById('statRegistered');
     const statVoted = document.getElementById('statVoted');
     const statVotedPct = document.getElementById('statVotedPct');
+    const statNotVoted = document.getElementById('statNotVoted');
+    const statNotVotedPct = document.getElementById('statNotVotedPct');
     const statSpoiled = document.getElementById('statSpoiled');
+    const statSpoiledPct = document.getElementById('statSpoiledPct');
     const statTurnout = document.getElementById('statTurnout');
 
     const successBackBtn = document.getElementById('successBackBtn');
@@ -1053,7 +1177,12 @@
     const cancelEndSessionBtn = document.getElementById('cancelEndSessionBtn');
     const confirmEndSessionBtn = document.getElementById('confirmEndSessionBtn');
 
+    const changeStationModal = document.getElementById('changeStationModal');
+    const cancelChangeStationBtn = document.getElementById('cancelChangeStationBtn');
+    const confirmChangeStationBtn = document.getElementById('confirmChangeStationBtn');
+
     // --- STATE ---
+    let currentStation = null;
     let currentUser = null;
     let currentElection = null;
     let currentOptions = [];
@@ -1063,8 +1192,14 @@
 
     // --- HELPERS ---
     function showScreen(name) {
-      [screenAuth, screenBulletins, screenVote, screenSuccess].forEach(s => s.classList.remove('active'));
-      ({auth: screenAuth, bulletins: screenBulletins, vote: screenVote, success: screenSuccess})[name].classList.add('active');
+      [screenStation, screenAuth, screenBulletins, screenVote, screenSuccess].forEach(s => s.classList.remove('active'));
+      ({
+        station: screenStation,
+        auth: screenAuth,
+        bulletins: screenBulletins,
+        vote: screenVote,
+        success: screenSuccess
+      })[name].classList.add('active');
     }
 
     function formatDate(dateStr) {
@@ -1084,6 +1219,20 @@
           day: '2-digit', month: '2-digit', year: 'numeric'
         });
       } catch { return dateStr; }
+    }
+
+    function escapeHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]));
+    }
+
+    function showStationError(text) {
+      stationError.textContent = text;
+      stationError.classList.add('show');
+    }
+    function hideStationError() {
+      stationError.classList.remove('show');
     }
 
     function showAuthError(text) {
@@ -1109,7 +1258,6 @@
       return (s + n).toUpperCase() || '?';
     }
 
-    // "Имя Отчество" — для приветствия
     function getShortName(user) {
       const parts = [];
       if (user.name) parts.push(user.name);
@@ -1117,11 +1265,88 @@
       return parts.join(' ') || user.surname || 'Избиратель';
     }
 
-    // Полное ФИО — для строки "Активный сеанс"
     function getFullName(user) {
       const parts = [user.surname, user.name, user.patronymic].filter(Boolean);
       return parts.join(' ') || 'Избиратель';
     }
+
+    function updateHeaderBadge() {
+      if (currentStation) {
+        headerBadge.textContent = `Терминал: ${currentStation.name || ('Участок №' + currentStation.number)}`;
+        headerBadge.classList.add('active');
+        changeStationBtn.style.display = 'inline-block';
+      } else {
+        headerBadge.textContent = 'Участок не выбран';
+        headerBadge.classList.remove('active');
+        changeStationBtn.style.display = 'none';
+      }
+    }
+
+    // --- ЭКРАН УЧАСТКА ---
+    stationInput.addEventListener('input', (e) => {
+      // Разрешаем цифры (и латиницу/кириллицу на всякий случай) без пробелов
+      e.target.value = e.target.value.replace(/\s/g, '').slice(0, 10);
+      stationNextBtn.disabled = e.target.value.trim().length === 0;
+      hideStationError();
+    });
+
+    stationInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !stationNextBtn.disabled) {
+        stationNextBtn.click();
+      }
+    });
+
+    async function findStationByNumber(number) {
+      const { data, error } = await supabase
+        .from('polling_stations')
+        .select('*')
+        .eq('number', String(number).trim())
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    }
+
+    stationNextBtn.addEventListener('click', async () => {
+      const number = stationInput.value.trim();
+      if (!number) {
+        showStationError('Введите номер участка');
+        return;
+      }
+      hideStationError();
+      stationNextBtn.disabled = true;
+      stationNextBtn.textContent = 'Поиск…';
+
+      try {
+        const station = await findStationByNumber(number);
+        if (!station) {
+          showStationError('Участок с таким номером не найден');
+          return;
+        }
+        currentStation = station;
+        stationInfo.innerHTML = `
+          <div class="station-title">${escapeHtml(station.name || ('Участок №' + station.number))}</div>
+          <div class="station-line"><strong>Номер:</strong> ${escapeHtml(station.number)}</div>
+          ${station.address ? `<div class="station-line"><strong>Адрес:</strong> ${escapeHtml(station.address)}</div>` : ''}
+          ${station.region ? `<div class="station-line"><strong>Регион:</strong> ${escapeHtml(station.region)}</div>` : ''}
+          ${station.description ? `<div class="station-line"><strong>Описание:</strong> ${escapeHtml(station.description)}</div>` : ''}
+        `;
+        stationInfo.classList.add('show');
+
+        updateHeaderBadge();
+
+        // Небольшая задержка, чтобы пользователь увидел карточку участка
+        setTimeout(() => {
+          showScreen('auth');
+          setTimeout(() => codeInput.focus(), 100);
+        }, 700);
+      } catch (err) {
+        console.error(err);
+        showStationError('Ошибка поиска: ' + (err.message || 'неизвестная ошибка'));
+      } finally {
+        stationNextBtn.disabled = false;
+        stationNextBtn.textContent = 'Подтвердить участок';
+      }
+    });
 
     // --- Форматирование кода XXXX-XXXX ---
     codeInput.addEventListener('input', (e) => {
@@ -1142,8 +1367,13 @@
     });
 
     // --- Проверка региона ---
+    // Учитываем и регион избирателя, и регион участка.
+    // Голосование доступно, если территория = "Вся территория СФСРЮ",
+    // либо совпадает с регионом участка, либо с регионом избирателя.
     async function checkRegion(userId, territory) {
       if (!territory || territory === 'Вся территория СФСРЮ') return true;
+      if (currentStation && currentStation.region && currentStation.region === territory) return true;
+
       try {
         const { data: permData } = await supabase
           .schema('addresses')
@@ -1180,6 +1410,11 @@
       const code = codeInput.value.trim();
       if (!/^\d{4}-\d{4}$/.test(code)) {
         showAuthError('Неверный формат личного кода. Введите в формате XXXX-XXXX.');
+        return;
+      }
+      if (!currentStation) {
+        showAuthError('Сначала выберите участок.');
+        showScreen('station');
         return;
       }
       hideAuthError();
@@ -1297,12 +1532,6 @@
       });
     }
 
-    function escapeHtml(str) {
-      return String(str ?? '').replace(/[&<>"']/g, c => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[c]));
-    }
-
     // --- Открыть голосование ---
     async function openVote(election) {
       currentElection = election;
@@ -1341,12 +1570,23 @@
         const registered = stats?.registered_voters || 0;
         const voted = stats?.voted || 0;
         const spoiled = stats?.spoiled_ballots || 0;
+        const refused = stats?.refused || 0;
+
+        // Не голосовали = зарегистрировано - проголосовало - испорчено - отказались
+        const notVoted = Math.max(0, registered - voted - spoiled - refused);
 
         statRegistered.textContent = registered;
         statVoted.textContent = voted;
-        statSpoiled.textContent = spoiled;
         statVotedPct.textContent = registered > 0 ? Math.round(voted / registered * 100) + '%' : '0%';
-        statTurnout.textContent = registered > 0 ? Math.round((voted + spoiled) / registered * 100) + '%' : '0%';
+
+        statNotVoted.textContent = notVoted;
+        statNotVotedPct.textContent = registered > 0 ? Math.round(notVoted / registered * 100) + '%' : '0%';
+
+        statSpoiled.textContent = spoiled;
+        statSpoiledPct.textContent = registered > 0 ? Math.round(spoiled / registered * 100) + '%' : '0%';
+
+        // ЯВКА — только от числа проголосовавших
+        statTurnout.textContent = registered > 0 ? Math.round(voted / registered * 100) + '%' : '0%';
 
         voteTitle.textContent = election.title;
         voteMeta.innerHTML = `
@@ -1540,24 +1780,14 @@
     });
 
     // --- Завершение сеанса (модальное окно) ---
-    function openEndSessionModal() {
-      endSessionModal.classList.add('active');
-    }
-    function closeEndSessionModal() {
-      endSessionModal.classList.remove('active');
-    }
+    function openEndSessionModal() { endSessionModal.classList.add('active'); }
+    function closeEndSessionModal() { endSessionModal.classList.remove('active'); }
 
     endSessionBtn.addEventListener('click', openEndSessionModal);
     cancelEndSessionBtn.addEventListener('click', closeEndSessionModal);
 
     endSessionModal.addEventListener('click', (e) => {
       if (e.target === endSessionModal) closeEndSessionModal();
-    });
-
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && endSessionModal.classList.contains('active')) {
-        closeEndSessionModal();
-      }
     });
 
     confirmEndSessionBtn.addEventListener('click', () => {
@@ -1575,7 +1805,51 @@
       setTimeout(() => codeInput.focus(), 100);
     });
 
-    setTimeout(() => codeInput.focus(), 100);
+    // --- Смена участка ---
+    function openChangeStationModal() { changeStationModal.classList.add('active'); }
+    function closeChangeStationModal() { changeStationModal.classList.remove('active'); }
+
+    changeStationBtn.addEventListener('click', openChangeStationModal);
+    changeStationFromSessionBtn.addEventListener('click', openChangeStationModal);
+    cancelChangeStationBtn.addEventListener('click', closeChangeStationModal);
+
+    changeStationModal.addEventListener('click', (e) => {
+      if (e.target === changeStationModal) closeChangeStationModal();
+    });
+
+    confirmChangeStationBtn.addEventListener('click', () => {
+      currentStation = null;
+      currentUser = null;
+      currentElection = null;
+      currentOptions = [];
+      selectedOptionIds = [];
+      alreadyVotedIds = new Set();
+      bulletinsList = [];
+      stationInput.value = '';
+      stationNextBtn.disabled = true;
+      hideStationError();
+      stationInfo.innerHTML = '';
+      stationInfo.classList.remove('show');
+      codeInput.value = '';
+      codeNextBtn.disabled = true;
+      hideAuthError();
+      updateHeaderBadge();
+      closeChangeStationModal();
+      showScreen('station');
+      setTimeout(() => stationInput.focus(), 100);
+    });
+
+    // --- Escape закрывает модалки ---
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        if (endSessionModal.classList.contains('active')) closeEndSessionModal();
+        if (changeStationModal.classList.contains('active')) closeChangeStationModal();
+      }
+    });
+
+    // --- Старт ---
+    updateHeaderBadge();
+    setTimeout(() => stationInput.focus(), 100);
   </script>
 </body>
 </html>
