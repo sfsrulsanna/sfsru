@@ -1968,6 +1968,7 @@
           .select('id')
           .eq('user_id', selectedUserId)
           .eq('election_id', currentVoteId)
+          .eq('option_id', optionId)
           .maybeSingle();
         existing = result.data;
         checkErr = result.error;
@@ -1981,7 +1982,7 @@
         return;
       }
       if (existing) {
-        manualVoteResult.textContent = 'Этот пользователь уже проголосовал в данном голосовании!';
+        manualVoteResult.textContent = 'Этот пользователь уже проголосовал за этот вариант!';
         manualVoteResult.style.color = '#dc3545';
         return;
       }
@@ -2013,6 +2014,10 @@
         manualVoteResult.style.color = '#dc3545';
         return;
       }
+	  
+	  } else if (insertErr.code === '23505') {
+          manualVoteResult.textContent = 'Этот пользователь уже проголосовал за этот вариант (конфликт уникальности).';
+        }
 
       manualVoteResult.textContent = 'Голос успешно добавлен!';
       manualVoteResult.style.color = '#28a745';
