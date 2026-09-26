@@ -1619,11 +1619,13 @@
         const { data: allVotes } = await supabase
           .schema(SCHEMA)
           .from('user_votes')
-          .select('option_id')
+          .select('option_id, user_id')
           .eq('election_id', election.id);
-        const total = (allVotes || []).length;
+        const allVotesArr = allVotes || [];
+        const uniqueVoters = new Set(allVotesArr.map(v => v.user_id)).size;
+        const total = uniqueVoters; // знаменатель — уникальные проголосовавшие
         const counts = {};
-        (allVotes || []).forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
+        allVotesArr.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
         const { data: stats } = await supabase
           .schema(SCHEMA)
@@ -1778,6 +1780,18 @@
         });
 
         block.appendChild(optsDiv);
+		
+		        // Плашка 50/50
+        const groupCounts = opts.map(o => counts[o.id] || 0);
+        const totalForQuestion = groupCounts.reduce((s, c) => s + c, 0);
+        const tied = opts.length === 2 && groupCounts[0] === groupCounts[1] && groupCounts[0] > 0;
+        if (tied) {
+          const tieBanner = document.createElement('div');
+          tieBanner.style.cssText = 'margin-top:0.8rem;padding:0.7rem 1rem;background:#fff3cd;color:#856404;border-left:4px solid #ffc107;border-radius:8px;font-size:0.9rem;font-weight:600;';
+          tieBanner.textContent = '⚖️ Голоса разделились поровну — решение не принято, голосование откладывается.';
+          block.appendChild(tieBanner);
+        }
+		
         optionsContainer.appendChild(block);
       });
     }

@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- favicons (полный набор) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -59,11 +58,9 @@
     .candidate-item .candidate-desc { color: #666; font-size: 0.9rem; }
     .candidate-item .candidate-percent { font-weight: 700; color: #7b0000; font-size: 1.1rem; margin-left: 1rem; flex-shrink: 0; }
     .candidate-item input[type="radio"] { display: none; }
-    /* Прогресс-бар для кандидатов */
     .candidate-progress { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 0.75rem; overflow: hidden; }
     .candidate-progress-bar { height: 100%; background: #7b0000; border-radius: 3px; transition: width 0.4s ease; }
 
-    /* Референдум */
     .referendum-question { margin: 1.5rem 0; padding: 1rem; background: #fafafa; border-radius: 12px; border: 1px solid #eee; }
     .referendum-question:last-child { margin-bottom: 0; }
     .referendum-question .question-text { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.8rem; }
@@ -75,9 +72,19 @@
     .referendum-option .answer-text { font-weight: 600; font-size: 1.1rem; }
     .referendum-option .answer-percent { font-size: 0.9rem; color: #7b0000; font-weight: 600; }
     .referendum-option input[type="radio"] { display: none; }
-    /* Прогресс-бар для референдума */
     .referendum-progress { width: 100%; height: 6px; background: #e9ecef; border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
     .referendum-progress-bar { height: 100%; background: #7b0000; border-radius: 3px; transition: width 0.4s ease; }
+
+    .tie-banner {
+      margin-top: 0.9rem;
+      padding: 0.75rem 1rem;
+      background: #fff3cd;
+      color: #856404;
+      border-left: 4px solid #ffc107;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
 
     .vote-actions { margin-top: 2rem; text-align: center; }
     .vote-actions .btn-vote { padding: 0.8rem 3rem; border: none; border-radius: 50px; font-size: 1.1rem; font-weight: 600; background: linear-gradient(135deg, #7b0000, #c41e3a); color: white; cursor: pointer; transition: 0.2s; }
@@ -88,7 +95,6 @@
     .vote-actions .info-message { color: #856404; font-weight: 500; margin-top: 1rem; padding: 0.8rem; background: #fff3cd; border-radius: 8px; }
     .vote-actions .warning-message { color: #721c24; font-weight: 500; margin-top: 1rem; padding: 0.8rem; background: #f8d7da; border-radius: 8px; border-left: 4px solid #dc3545; }
 
-    /* Стили для статистики */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -99,30 +105,11 @@
       padding: 1.5rem;
       border: 1px solid #e9ecef;
     }
-    .stat-item {
-      text-align: center;
-      padding: 0.5rem;
-    }
-    .stat-item .stat-number {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #7b0000;
-      line-height: 1.2;
-    }
-    .stat-item .stat-label {
-      font-size: 0.85rem;
-      color: #6c757d;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-top: 0.2rem;
-    }
-    .stat-item .stat-sub {
-      font-size: 0.8rem;
-      color: #6c757d;
-      font-weight: 500;
-    }
+    .stat-item { text-align: center; padding: 0.5rem; }
+    .stat-item .stat-number { font-size: 2rem; font-weight: 700; color: #7b0000; line-height: 1.2; }
+    .stat-item .stat-label { font-size: 0.85rem; color: #6c757d; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 0.2rem; }
+    .stat-item .stat-sub { font-size: 0.8rem; color: #6c757d; font-weight: 500; }
     .stat-item .stat-number.green { color: #28a745; }
-    .stat-item .stat-number.blue { color: #007bff; }
     .stat-item .stat-number.orange { color: #fd7e14; }
     .stat-item .stat-number.purple { color: #6f42c1; }
     .stat-item .stat-number.red { color: #dc3545; }
@@ -190,7 +177,6 @@
         <h2 class="vote-title" id="voteTitle"></h2>
         <div class="vote-meta" id="voteMeta"></div>
 
-        <!-- Блок статистики -->
         <div class="stats-grid" id="statsGrid">
           <div class="stat-item">
             <div class="stat-number" id="registeredCount">0</div>
@@ -242,11 +228,7 @@
   </footer>
 
   <script type="importmap">
-    {
-      "imports": {
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-      }
-    }
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
   </script>
   <script type="module">
     import { supabase } from '../../js/supabase-config.js';
@@ -261,7 +243,6 @@
     const voteStatus = document.getElementById('voteStatus');
     const errorMessageEl = document.getElementById('errorMessage');
 
-    // Элементы статистики
     const registeredCountEl = document.getElementById('registeredCount');
     const votedCountEl = document.getElementById('votedCount');
     const votedPercentEl = document.getElementById('votedPercent');
@@ -303,14 +284,10 @@
           .select('*')
           .eq('election_id', electionId)
           .maybeSingle();
-
-        if (error) {
-          console.warn('Не удалось загрузить статистику:', error.message);
-          return null;
-        }
+        if (error) { console.warn('Статистика:', error.message); return null; }
         return data || null;
       } catch (err) {
-        console.error('Ошибка загрузки статистики:', err);
+        console.error('Статистика ошибка:', err);
         return null;
       }
     }
@@ -351,10 +328,7 @@
         .eq('user_id', userId)
         .eq('election_id', electionId)
         .maybeSingle();
-      if (error) {
-        console.error('Ошибка проверки remote_voting_approvals:', error);
-        return false;
-      }
+      if (error) { console.error('remote_voting_approvals:', error); return false; }
       return !!data;
     }
 
@@ -372,12 +346,8 @@
     async function loadVote() {
       try {
         const { data: { user }, error: userError } = await supabase.auth.getUser();
-        if (userError || !user) {
-          showError('Необходимо авторизоваться');
-          return;
-        }
+        if (userError || !user) { showError('Необходимо авторизоваться'); return; }
 
-        // 1. Загружаем голосование
         const { data: election, error: electionError } = await supabase
           .schema(SCHEMA)
           .from('elections')
@@ -385,17 +355,12 @@
           .eq('id', voteId)
           .maybeSingle();
 
-        if (electionError || !election) {
-          showError('Голосование не найдено');
-          return;
-        }
+        if (electionError || !election) { showError('Голосование не найдено'); return; }
 
         let blockReason = null;
 
         const regionOk = await checkRegion(user.id, election.territory);
-        if (!regionOk) {
-          blockReason = 'Ваш регион не соответствует этому голосованию. Голосование недоступно.';
-        }
+        if (!regionOk) blockReason = 'Ваш регион не соответствует этому голосованию.';
 
         const accountType = await getAccountType(user.id);
         if (accountType !== 'Подтверждённая') {
@@ -404,7 +369,7 @@
 
         const hasApproval = await checkRemoteVotingApproval(user.id, voteId);
         if (!hasApproval) {
-          blockReason = blockReason ? blockReason + ' Отсутствует разрешение на дистанционное голосование.' : 'Голосование невозможно: отсутствует разрешение на дистанционное голосование для этого опроса.';
+          blockReason = blockReason ? blockReason + ' Нет разрешения на дистанционное голосование.' : 'Голосование невозможно: нет разрешения на дистанционное голосование.';
         }
 
         const { data: options, error: optErr } = await supabase
@@ -413,11 +378,7 @@
           .select('*')
           .eq('election_id', voteId)
           .order('order', { ascending: true });
-
-        if (optErr) {
-          showError('Ошибка загрузки вариантов');
-          return;
-        }
+        if (optErr) { showError('Ошибка загрузки вариантов'); return; }
 
         const { data: userVotes } = await supabase
           .schema(SCHEMA)
@@ -429,16 +390,18 @@
         const hasVoted = userVotes && userVotes.length > 0;
         const userOptionIds = hasVoted ? userVotes.map(v => v.option_id) : [];
 
+        // ВАЖНО: тянем и option_id, и user_id — чтобы посчитать уникальных проголосовавших
         const { data: allVotes } = await supabase
           .schema(SCHEMA)
           .from('user_votes')
-          .select('option_id')
+          .select('option_id, user_id')
           .eq('election_id', voteId);
-        const total = allVotes?.length || 0;
+        const allVotesArr = allVotes || [];
+        const uniqueVoters = new Set(allVotesArr.map(v => v.user_id)).size;
+        const total = uniqueVoters; // знаменатель для процентов — уникальные проголосовавшие
         const counts = {};
-        allVotes?.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
+        allVotesArr.forEach(v => { counts[v.option_id] = (counts[v.option_id] || 0) + 1; });
 
-        // Загружаем реальную статистику из БД
         const stats = await loadElectionStatistics(voteId);
         let registered = 0, voted = 0, spoiled = 0, refused = 0;
         if (stats) {
@@ -450,26 +413,20 @@
 
         registeredCountEl.textContent = registered;
         votedCountEl.textContent = voted;
-        const votedPercent = registered > 0 ? Math.round((voted / registered) * 100) : 0;
-        votedPercentEl.textContent = votedPercent + '%';
+        votedPercentEl.textContent = (registered > 0 ? Math.round(voted / registered * 100) : 0) + '%';
 
         spoiledCountEl.textContent = spoiled;
-        const spoiledPercent = registered > 0 ? Math.round((spoiled / registered) * 100) : 0;
-        spoiledPercentEl.textContent = spoiledPercent + '%';
+        spoiledPercentEl.textContent = (registered > 0 ? Math.round(spoiled / registered * 100) : 0) + '%';
 
         refusedCountEl.textContent = refused;
-        const refusedPercent = registered > 0 ? Math.round((refused / registered) * 100) : 0;
-        refusedPercentEl.textContent = refusedPercent + '%';
+        refusedPercentEl.textContent = (registered > 0 ? Math.round(refused / registered * 100) : 0) + '%';
 
-        // «Не голосовали» = зарегистрированные - проголосовавшие - испорченные - отказавшиеся
         const notVoted = Math.max(0, registered - voted - spoiled - refused);
         notVotedCountEl.textContent = notVoted;
-        const notVotedPercent = registered > 0 ? Math.round((notVoted / registered) * 100) : 0;
-        notVotedPercentEl.textContent = notVotedPercent + '%';
+        notVotedPercentEl.textContent = (registered > 0 ? Math.round(notVoted / registered * 100) : 0) + '%';
 
-        // ЯВКА — считается только от числа проголосовавших
-        const turnout = registered > 0 ? Math.round((voted / registered) * 100) : 0;
-        turnoutPercentEl.textContent = turnout + '%';
+        // Явка — только от проголосовавших
+        turnoutPercentEl.textContent = (registered > 0 ? Math.round(voted / registered * 100) : 0) + '%';
 
         const optionsWithPhoto = options.map(opt => {
           let photoUrl = null;
@@ -481,7 +438,6 @@
           return { ...opt, photoUrl };
         });
 
-        // Карта статусов (включая «Подсчет результатов» и «Аннулировано»)
         const statusMap = {
           active: 'Активно',
           completed: 'Завершено',
@@ -515,19 +471,12 @@
         const isActive = election.status === 'active' && !isBeforeStart && !isAfterEnd;
 
         if (!isActive) {
-          if (election.status === 'counting') {
-            blockReason = 'Идёт подсчёт результатов';
-          } else if (election.status === 'annulled') {
-            blockReason = 'Голосование аннулировано';
-          } else if (election.status === 'cancelled') {
-            blockReason = 'Голосование отменено';
-          } else if (isBeforeStart) {
-            blockReason = `Голосование начнётся ${formatDate(election.start_date)}`;
-          } else if (isAfterEnd) {
-            blockReason = 'Голосование завершено';
-          } else {
-            blockReason = 'Голосование не активно';
-          }
+          if (election.status === 'counting') blockReason = 'Идёт подсчёт результатов';
+          else if (election.status === 'annulled') blockReason = 'Голосование аннулировано';
+          else if (election.status === 'cancelled') blockReason = 'Голосование отменено';
+          else if (isBeforeStart) blockReason = `Голосование начнётся ${formatDate(election.start_date)}`;
+          else if (isAfterEnd) blockReason = 'Голосование завершено';
+          else blockReason = 'Голосование не активно';
         }
 
         if (isElection) {
@@ -548,7 +497,6 @@
             if (isSelected) radio.checked = true;
             if (hasVoted || !isActive || blockReason) radio.disabled = true;
 
-            // Верхняя часть (фото + инфо + процент)
             const top = document.createElement('div');
             top.className = 'candidate-top';
 
@@ -576,7 +524,6 @@
             top.appendChild(info);
             top.appendChild(percentSpan);
 
-            // Прогресс-бар
             const progressWrap = document.createElement('div');
             progressWrap.className = 'candidate-progress';
             const progressBar = document.createElement('div');
@@ -591,10 +538,7 @@
 
             div.addEventListener('click', () => {
               if (radio.disabled) return;
-              if (!isActive || blockReason) {
-                alert(blockReason || 'Голосование недоступно');
-                return;
-              }
+              if (!isActive || blockReason) { alert(blockReason || 'Голосование недоступно'); return; }
               document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
               div.classList.add('selected');
               radio.checked = true;
@@ -650,7 +594,6 @@
               top.appendChild(answerSpan);
               top.appendChild(percentSpan);
 
-              // Прогресс-бар для референдума
               const progressWrap = document.createElement('div');
               progressWrap.className = 'referendum-progress';
               const progressBar = document.createElement('div');
@@ -665,10 +608,7 @@
 
               div.addEventListener('click', () => {
                 if (radio.disabled) return;
-                if (!isActive || blockReason) {
-                  alert(blockReason || 'Голосование недоступно');
-                  return;
-                }
+                if (!isActive || blockReason) { alert(blockReason || 'Голосование недоступно'); return; }
                 optsDiv.querySelectorAll('.referendum-option').forEach(el => el.classList.remove('selected'));
                 div.classList.add('selected');
                 radio.checked = true;
@@ -684,15 +624,24 @@
                   const opt = optionsWithPhoto.find(o => o.id === id);
                   if (opt && opt.question_text) answeredQuestions.add(opt.question_text);
                 });
-                if (answeredQuestions.size === totalQuestions) {
-                  voteBtn.disabled = false;
-                } else {
-                  voteBtn.disabled = true;
-                }
+                voteBtn.disabled = answeredQuestions.size !== totalQuestions;
               });
             });
 
             block.appendChild(optsDiv);
+
+            // Проверка 50/50 — показываем баннер "Решение не принято"
+            const groupCounts = opts.map(o => counts[o.id] || 0);
+            const totalForQuestion = groupCounts.reduce((s, c) => s + c, 0);
+            const tied = opts.length === 2 && groupCounts[0] === groupCounts[1] && groupCounts[0] > 0;
+
+            if (tied) {
+              const tieBanner = document.createElement('div');
+              tieBanner.className = 'tie-banner';
+              tieBanner.textContent = '⚖️ Голоса разделились поровну — решение не принято, голосование откладывается.';
+              block.appendChild(tieBanner);
+            }
+
             optionsContainer.appendChild(block);
             questionIndex++;
           }
@@ -749,10 +698,7 @@
 
             div.addEventListener('click', () => {
               if (radio.disabled) return;
-              if (!isActive || blockReason) {
-                alert(blockReason || 'Голосование недоступно');
-                return;
-              }
+              if (!isActive || blockReason) { alert(blockReason || 'Голосование недоступно'); return; }
               document.querySelectorAll('.candidate-item').forEach(el => el.classList.remove('selected'));
               div.classList.add('selected');
               radio.checked = true;
@@ -770,29 +716,19 @@
           disableVoting(blockReason);
         } else if (!isActive) {
           voteBtn.disabled = true;
-          if (election.status === 'counting') {
-            voteStatus.innerHTML = '<div class="info-message">Идёт подсчёт результатов</div>';
-          } else if (election.status === 'annulled') {
-            voteStatus.innerHTML = '<div class="info-message">Голосование аннулировано</div>';
-          } else if (election.status === 'cancelled') {
-            voteStatus.innerHTML = '<div class="info-message">Голосование отменено</div>';
-          } else if (isBeforeStart) {
-            voteStatus.innerHTML = `<div class="info-message">Голосование начнётся ${formatDate(election.start_date)}</div>`;
-          } else if (isAfterEnd) {
-            voteStatus.innerHTML = '<div class="info-message">Голосование завершено</div>';
-          } else {
-            voteStatus.innerHTML = '<div class="info-message">Голосование не активно</div>';
-          }
+          if (election.status === 'counting') voteStatus.innerHTML = '<div class="info-message">Идёт подсчёт результатов</div>';
+          else if (election.status === 'annulled') voteStatus.innerHTML = '<div class="info-message">Голосование аннулировано</div>';
+          else if (election.status === 'cancelled') voteStatus.innerHTML = '<div class="info-message">Голосование отменено</div>';
+          else if (isBeforeStart) voteStatus.innerHTML = `<div class="info-message">Голосование начнётся ${formatDate(election.start_date)}</div>`;
+          else if (isAfterEnd) voteStatus.innerHTML = '<div class="info-message">Голосование завершено</div>';
+          else voteStatus.innerHTML = '<div class="info-message">Голосование не активно</div>';
         } else {
           voteBtn.disabled = true;
           voteStatus.innerHTML = '';
         }
 
         voteBtn.onclick = async () => {
-          if (blockReason) {
-            alert(blockReason);
-            return;
-          }
+          if (blockReason) { alert(blockReason); return; }
           let optionsToVote = [];
           if (isElection || isPoll) {
             const selectedRadio = document.querySelector('input[name="voteOption"]:checked');
@@ -802,10 +738,7 @@
             const radios = document.querySelectorAll('.referendum-question input[type="radio"]:checked');
             if (radios.length === 0) { alert('Выберите ответы на все вопросы'); return; }
             const totalQuestions = document.querySelectorAll('.referendum-question').length;
-            if (radios.length !== totalQuestions) {
-              alert('Ответьте на все вопросы');
-              return;
-            }
+            if (radios.length !== totalQuestions) { alert('Ответьте на все вопросы'); return; }
             optionsToVote = Array.from(radios).map(r => r.value);
           }
           const inserts = optionsToVote.map(optionId => ({
@@ -813,14 +746,8 @@
             election_id: voteId,
             option_id: optionId
           }));
-          const { error } = await supabase
-            .schema(SCHEMA)
-            .from('user_votes')
-            .insert(inserts);
-          if (error) {
-            alert('Ошибка: ' + error.message);
-            return;
-          }
+          const { error } = await supabase.schema(SCHEMA).from('user_votes').insert(inserts);
+          if (error) { alert('Ошибка: ' + error.message); return; }
           alert('Голос учтён!');
           disableVoting();
           setTimeout(() => window.location.reload(), 1000);
@@ -828,7 +755,6 @@
 
         loadingEl.style.display = 'none';
         voteDetailEl.style.display = 'block';
-
       } catch (err) {
         console.error(err);
         showError('Произошла ошибка');

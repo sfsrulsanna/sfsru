@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <!-- favicons (полный набор) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -125,22 +124,18 @@
         <p>Активные и завершённые</p>
       </div>
 
-      <!-- Вкладки -->
       <div class="tab-switch">
         <button class="tab-btn" data-tab="upcoming">Предстоящие</button>
         <button class="tab-btn active" data-tab="current">Текущие</button>
         <button class="tab-btn" data-tab="completed">Завершённые</button>
       </div>
 
-      <!-- Загрузка -->
       <div id="loading" class="loading">Загрузка данных...</div>
 
-      <!-- Контейнеры для карточек -->
       <div id="upcomingVotes" class="votes-grid" style="display: none;"></div>
       <div id="currentVotes" class="votes-grid" style="display: none;"></div>
       <div id="completedVotes" class="votes-grid" style="display: none;"></div>
 
-      <!-- Сообщение, если данных нет -->
       <div id="noData" class="no-data" style="display: none;">Нет голосований для отображения</div>
     </div>
   </main>
@@ -151,11 +146,7 @@
   </footer>
 
   <script type="importmap">
-    {
-      "imports": {
-        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-      }
-    }
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
   </script>
 
   <script type="module">
@@ -252,7 +243,6 @@
         btn.classList.toggle('active', btn.dataset.tab === tabId);
       });
 
-      // Показываем/скрываем noData
       const hasData = (isUpcoming && upcomingContainer.children.length > 0) ||
                       (isCurrent && currentContainer.children.length > 0) ||
                       (isCompleted && completedContainer.children.length > 0);
@@ -277,9 +267,7 @@
               .select('name')
               .eq('id', permData.region_id)
               .single();
-            if (!regionError && regionData) {
-              userRegion = regionData.name;
-            }
+            if (!regionError && regionData) userRegion = regionData.name;
           }
         }
 
@@ -302,25 +290,19 @@
         }
 
         const now = new Date();
-
-        // Статусы, при которых голосование уже неактивно (нельзя голосовать)
         const finishedStatuses = ['completed', 'cancelled', 'counting', 'annulled'];
 
-        // Предстоящие: start_date > now, статус draft или active
         const upcoming = filtered.filter(v => {
           const start = new Date(v.start_date);
           return start > now && (v.status === 'draft' || v.status === 'active');
         });
 
-        // Текущие: start <= now <= end и статус active
         const current = filtered.filter(v => {
           const start = new Date(v.start_date);
           const end = new Date(v.end_date);
           return start <= now && end >= now && v.status === 'active';
         });
 
-        // Завершённые: любой из финальных статусов
-        // (включая "Подсчет результатов" и "Аннулировано") ИЛИ окончание уже прошло
         const completed = filtered.filter(v => {
           const end = new Date(v.end_date);
           return finishedStatuses.includes(v.status) || end < now;
@@ -336,23 +318,16 @@
 
         loadingEl.style.display = 'none';
 
-        // Определяем, какую вкладку показать по умолчанию
         let defaultTab = 'upcoming';
-        if (current.length > 0) {
-          defaultTab = 'current';
-        } else if (upcoming.length === 0 && current.length === 0 && completed.length > 0) {
-          defaultTab = 'completed';
-        }
+        if (current.length > 0) defaultTab = 'current';
+        else if (upcoming.length === 0 && current.length === 0 && completed.length > 0) defaultTab = 'completed';
 
-        // Активируем вкладку
         document.querySelector(`.tab-btn[data-tab="${defaultTab}"]`)?.classList.add('active');
         document.querySelectorAll('.tab-btn').forEach(btn => {
           if (btn.dataset.tab !== defaultTab) btn.classList.remove('active');
         });
 
-        // Отображаем контейнеры и noData
         switchTab(defaultTab);
-
       } catch (err) {
         console.error('Ошибка:', err);
         loadingEl.textContent = 'Произошла ошибка. Попробуйте позже.';
@@ -360,9 +335,7 @@
     }
 
     tabBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        switchTab(btn.dataset.tab);
-      });
+      btn.addEventListener('click', () => switchTab(btn.dataset.tab));
     });
 
     document.querySelector('.menu-toggle')?.addEventListener('click', function() {
