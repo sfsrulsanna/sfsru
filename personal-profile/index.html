@@ -1,4 +1,4 @@
-i<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
@@ -30,6 +30,49 @@ i<!DOCTYPE html>
   <!-- Стили -->
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/index.css" />
+
+  <!-- Стили для кликабельных карточек -->
+  <style>
+    .info-sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+    }
+
+    .info-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    /* Кликабельные карточки-кнопки */
+    a.info-card-link {
+      display: block;
+      text-decoration: none;
+      color: inherit;
+      cursor: pointer;
+      position: relative;
+      border: 2px solid transparent;
+    }
+
+    a.info-card-link:hover,
+    a.info-card-link:focus-visible {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 18px rgba(179, 0, 0, 0.18);
+      border-color: #b30000;
+      background-color: #fff5f5;
+      outline: none;
+    }
+
+    a.info-card-link:hover h3,
+    a.info-card-link:focus-visible h3 {
+      color: #b30000;
+    }
+
+    a.info-card-link:active {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(179, 0, 0, 0.15);
+    }
+  </style>
 </head>
 <body>
   <!-- Шапка -->
@@ -123,18 +166,19 @@ i<!DOCTYPE html>
 
       <!-- Дополнительная информация -->
       <div class="info-sections">
-        <div class="info-card">
+        <!-- Уведомления — кликабельная карточка -->
+        <a href="messages.html" class="info-card info-card-link">
           <h3>🔔 Уведомления</h3>
           <p id="notificationText">Загрузка...</p>
-        </div>
-
-        <!-- События теперь кликабельны и ведут на events.html -->
-        <a href="events.html" class="info-card info-card-link" style="text-decoration:none;color:inherit;display:block;">
-          <h3>📅 Ближайшие события</h3>
-          <p id="eventText">Загрузка...</p>
-          <span class="info-card-more">Открыть календарь →</span>
         </a>
 
+        <!-- Ближайшие события — кликабельная карточка -->
+        <a href="events.html" class="info-card info-card-link">
+          <h3>📅 Ближайшие события</h3>
+          <p id="eventText">Загрузка...</p>
+        </a>
+
+        <!-- Совет остаётся обычной карточкой -->
         <div class="info-card">
           <h3>💡 Совет</h3>
           <p id="tipText">Загрузка...</p>
