@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Календарь событий — СФСРЮ</title>
+
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="stylesheet" href="../css/style.css" />
+  <link rel="stylesheet" href="../css/personal-profile/index.css" />
+</head>
+<body>
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../index.html">Главная</a></li>
+          <li><a href="../news.html">Новости</a></li>
+          <li><a href="../wiki/">Википедия</a></li>
+          <li><a href="../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../services.html">Услуги</a></li>
+          <li><a href="../profile.html" class="active">Личный кабинет</a></li>
+          <li><a href="about.html">О сайте</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <div class="menu-overlay"></div>
+
+  <main class="main-content profile-main">
+    <div class="profile-container">
+      <div class="greeting-block">
+        <h1 class="greeting-text">📅 Календарь государственных событий</h1>
+        <p class="greeting-subtitle">Праздники и памятные даты Социалистической Федеративной Советской Республики Юльсанна</p>
+      </div>
+
+      <div class="info-sections">
+        <div class="info-card" id="nextHolidayCard">
+          <h3>⏳ Ближайший праздник</h3>
+          <p id="nextHolidayText">Загрузка...</p>
+        </div>
+      </div>
+
+      <h2 style="margin: 30px 0 16px; color: #b30000;">Все праздники года</h2>
+      <ul id="holidayList" class="holiday-list">
+        <li>Загрузка…</li>
+      </ul>
+
+      <div style="margin-top: 30px;">
+        <a href="index.html" class="btn">← Назад в личный кабинет</a>
+      </div>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>
+      Телефон: +7 (993) 609-81-26 | Почта:
+      <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
+    </p>
+  </footer>
+
+  <script src="../js/mob-menu.js"></script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js'
+
+    // Проверяем авторизацию, если нужно (иначе перенаправляем на логин)
+    ;(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) {
+          window.location.href = '../login.html'
+          return
+        }
+      } catch (e) {
+        console.warn('Ошибка проверки сессии:', e)
+      }
+      renderHolidays()
+    })()
+
+    const holidays = [
+      { name: 'День СФСРЮ', month: 1, day: 2, emoji: '🎉' },
+      { name: 'День рождения Великой Юльсанны', month: 2, day: 12, emoji: '🌹' },
+      { name: 'День защитника Отечества', month: 2, day: 23, emoji: '🎖️' },
+      { name: 'Международный женский день', month: 3, day: 8, emoji: '💐' },
+      { name: 'День труда', month: 5, day: 1, emoji: '⚒️' },
+      { name: 'День рождения Вечного Президента АР Натуральнова', month: 5, day: 12, emoji: '🎂' },
+      { name: 'День Конституции', month: 8, day: 15, emoji: '📜' },
+      { name: 'День рождения Вечного президента АР Эйтингон', month: 9, day: 23, emoji: '🎂' },
+      { name: 'День Независимости', month: 11, day: 2, emoji: '🚩' },
+      { name: 'Новый год', month: 12, day: 31, emoji: '🎄' }
+    ]
+
+    const MONTHS = [
+      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
+    ]
+
+    function formatDate(date) {
+      return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`
+    }
+
+    function daysUntil(date, today) {
+      return Math.ceil((date - today) / (1000 * 60 * 60 * 24))
+    }
+
+    function renderHolidays() {
+      const now = new Date()
+      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+
+      const enriched = holidays.map(h => {
+        let date = new Date(today.getFullYear(), h.month - 1, h.day)
+        if (date < today) {
+          date = new Date(today.getFullYear() + 1, h.month - 1, h.day)
+        }
+        return { ...h, date, diff: daysUntil(date, today) }
+      })
+
+      // Ближайший праздник
+      const nearest = [...enriched].sort((a, b) => a.diff - b.diff)[0]
+      const nextEl = document.getElementById('nextHolidayText')
+      if (nearest) {
+        nextEl.textContent = `${nearest.emoji} ${nearest.name} — ${formatDate(nearest.date)} (через ${nearest.diff} дн.)`
+      }
+
+      // Список всех праздников
+      const list = document.getElementById('holidayList')
+      list.innerHTML = ''
+
+      // Сортируем по дате в текущем году (для отображения календарём)
+      const byYear = [...enriched].sort((a, b) => {
+        const da = new Date(today.getFullYear(), a.month - 1, a.day)
+        const db = new Date(today.getFullYear(), b.month - 1, b.day)
+        return da - db
+      })
+
+      byYear.forEach(h => {
+        const li = document.createElement('li')
+        li.className = 'holiday-item'
+        if (h.diff === 0) li.classList.add('holiday-today')
+        else if (h.diff <= 7) li.classList.add('holiday-soon')
+
+        const dateStr = `${String(h.day).padStart(2, '0')}.${String(h.month).padStart(2, '0')}`
+
+        let badge = ''
+        if (h.diff === 0) badge = '<span class="holiday-badge">Сегодня!</span>'
+        else if (h.diff <= 7) badge = `<span class="holiday-badge">Через ${h.diff} дн.</span>`
+        else badge = `<span class="holiday-days">Через ${h.diff} дн.</span>`
+
+        li.innerHTML = `
+          <span class="holiday-date">${dateStr}</span>
+          <span class="holiday-name">${h.emoji} ${h.name}</span>
+          ${badge}
+        `
+        list.appendChild(li)
+      })
+    }
+  </script>
+
+  <style>
+    .holiday-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .holiday-item {
+      background: #fff;
+      border-left: 4px solid #b30000;
+      padding: 14px 18px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      transition: transform 0.15s ease;
+    }
+    .holiday-item:hover { transform: translateX(3px); }
+    .holiday-item.holiday-soon { border-left-color: #e67e22; background: #fffaf2; }
+    .holiday-item.holiday-today { border-left-color: #27ae60; background: #f2fff6; }
+    .holiday-date {
+      font-weight: 700;
+      color: #b30000;
+      min-width: 60px;
+      font-size: 1.05rem;
+    }
+    .holiday-name { flex: 1; font-size: 1rem; }
+    .holiday-badge {
+      background: #27ae60;
+      color: #fff;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .holiday-days { color: #777; font-size: 0.85rem; }
+    .info-card-link:hover { transform: translateY(-2px); transition: 0.2s; }
+    .info-card-more {
+      display: inline-block;
+      margin-top: 8px;
+      color: #b30000;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+  </style>
+</body>
+</html>
