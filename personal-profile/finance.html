@@ -93,7 +93,7 @@
     .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fafafa; }
     .form-group input:focus, .form-group select:focus { outline: none; border-color: #b30000; background: white; }
     
-    .conversion-hint { font-size: 0.85rem; color: #2e7d32; margin-top: 5px; font-weight: bold; text-align: right; display: none; }
+    .conversion-hint { font-size: 0.85rem; margin-top: 5px; font-weight: bold; text-align: right; display: none; }
     .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
     .error-text { color: #d32f2f; font-size: 0.9rem; margin-top: 10px; min-height: 20px; text-align: center; }
     .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px;}
@@ -163,8 +163,8 @@
         <label for="currencyInput">Валюта</label>
         <select id="currencyInput" required>
           <option value="YUL">Юльсаннский рубль (¥)</option>
-          <option value="RUB">Российский рубль (₽) — курс 1:60</option>
-          <option value="BYN">Белорусский рубль (Br) — курс 1:60</option>
+          <option value="RUB">Российский рубль (₽) — 1 ¥ = 60 ₽</option>
+          <option value="BYN">Белорусский рубль (Br) — 1 Br = 2.16 ¥</option>
         </select>
       </div>
 
@@ -252,7 +252,6 @@
       const formatted = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(numBalance);
       let colorClass = numBalance > 0 ? 'balance-positive' : (numBalance < 0 ? 'balance-negative' : 'balance-zero');
 
-      // Рендер истории БЕЗ кнопок админа
       let transHtml = transactions.length ? transactions.map(t => {
         const isPlus = t.type === 'deposit' || t.type === 'pension';
         const sign = isPlus ? '+' : '-';
@@ -310,9 +309,31 @@
       const updateConversion = () => {
         const amount = parseFloat(amountInput.value);
         const currency = currencySelect.value;
-        if (!amount || amount <= 0 || currency === 'YUL') { hintDiv.style.display = 'none'; return; }
-        const converted = (amount / 60).toFixed(2);
-        hintDiv.textContent = `К зачислению: ${converted} ¥ (Курс 1:60)`;
+        
+        if (!amount || amount <= 0 || currency === 'YUL') { 
+          hintDiv.style.display = 'none'; 
+          return; 
+        }
+        
+        let converted = 0;
+        let rateText = '';
+
+        if (currency === 'RUB') {
+          converted = (amount / 60).toFixed(2);
+          rateText = '1 ¥ = 60 ₽';
+        } else if (currency === 'BYN') {
+          converted = (amount * 2.16).toFixed(2);
+          rateText = '1 Br = 2.16 ¥';
+        }
+
+        if (currentActionType === 'deposit') {
+          hintDiv.textContent = `К зачислению: ${converted} ¥ (${rateText})`;
+          hintDiv.style.color = '#2e7d32'; // Зеленый
+        } else {
+          hintDiv.textContent = `К снятию: ${converted} ¥ (${rateText})`;
+          hintDiv.style.color = '#d32f2f'; // Красный
+        }
+        
         hintDiv.style.display = 'block';
       };
 
