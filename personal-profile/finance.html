@@ -7,25 +7,8 @@
 
   <!-- Favicons -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
-  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
-  <link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
-  <link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
   <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
-  <link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
-  <meta name="application-name" content="&nbsp;"/>
-  <meta name="msapplication-TileColor" content="#FFFFFF" />
-  <meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
-  <meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
-  <meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
-  <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
-  <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
 
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/index.css" />
@@ -76,32 +59,34 @@
     .status-completed { background-color: #e8f5e9; color: #2e7d32; }
     .status-rejected { background-color: #ffebee; color: #c62828; }
 
-    /* --- БАНКОВСКИЕ ПРОДУКТЫ --- */
-    .bank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-    
-    .bank-card {
-      border-radius: 16px; padding: 25px; color: white; position: relative; overflow: hidden;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; min-height: 180px;
+    /* --- БАНКОВСКИЕ ПРОДУКТЫ (НОВЫЙ ДИЗАЙН) --- */
+    .bank-grid { 
+      display: grid; 
+      grid-template-columns: repeat(2, 1fr); /* Две карточки в ряд */
+      gap: 20px; 
     }
-    .bank-card.theme-red { background: linear-gradient(135deg, #b30000, #e53935); }
-    .bank-card.theme-blue { background: linear-gradient(135deg, #1565c0, #42a5f5); }
-    .bank-card.theme-green { background: linear-gradient(135deg, #2e7d32, #66bb6a); }
-    .card-bank-name { font-size: 1.1rem; font-weight: bold; opacity: 0.9; }
-    .card-number { font-size: 1.4rem; letter-spacing: 2px; margin: 20px 0 10px 0; font-family: monospace; }
-    .card-balance { font-size: 1.2rem; font-weight: bold; }
+    @media (max-width: 768px) { .bank-grid { grid-template-columns: 1fr; } }
 
-    .bank-product-item { background: white; border-radius: 12px; padding: 20px; border-left: 4px solid #b30000; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
-    .product-title { font-weight: bold; color: #333; margin-bottom: 10px; }
-    .product-balance { font-size: 1.4rem; color: #2e7d32; font-weight: bold; margin-bottom: 5px; }
-    .product-details { font-size: 0.9rem; color: #666; }
+    .product-card {
+      display: flex; align-items: center; background: white; padding: 20px; border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+      border-left: 4px solid #b30000;
+    }
+    .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    
+    .bank-logo { width: 60px; height: 60px; object-fit: contain; margin-right: 20px; border-radius: 8px; }
+    
+    .product-info { display: flex; flex-direction: column; }
+    .product-bank-name { font-size: 1.2rem; font-weight: bold; color: #333; margin-bottom: 5px; }
+    .product-number { font-size: 1rem; color: #555; font-family: monospace; margin-bottom: 3px; }
+    .product-expiry { font-size: 0.85rem; color: #888; }
+    .product-balance-inline { font-size: 1.1rem; font-weight: bold; color: #2e7d32; margin-top: 5px; }
 
-    /* ================= АНИМАЦИИ И ЦЕНТРИРОВАНИЕ МОДАЛЬНОГО ОКНА ================= */
+    /* Модалка для реквизитов банка */
     dialog {
       border: none; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
-      max-width: 450px; width: 90%;
-      position: fixed; inset: 0; margin: auto; height: fit-content;
-      opacity: 0; transform: translateY(20px); 
-      transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
+      max-width: 400px; width: 90%; position: fixed; inset: 0; margin: auto; height: fit-content;
+      opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
     }
     dialog[open] { opacity: 1; transform: translateY(0); }
     @starting-style { dialog[open] { opacity: 0; transform: translateY(20px); } }
@@ -109,33 +94,24 @@
     dialog[open]::backdrop { background: rgba(0,0,0,0.6); }
     @starting-style { dialog[open]::backdrop { background: rgba(0,0,0,0); } }
     
-    .dialog-header { font-size: 1.5rem; margin-bottom: 20px; color: #b30000; font-weight: bold; text-align: center; }
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: bold; font-size: 0.95rem;}
-    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fafafa; }
-    .form-group input:focus, .form-group select:focus { outline: none; border-color: #b30000; background: white; }
+    .dialog-header { font-size: 1.4rem; margin-bottom: 20px; color: #b30000; font-weight: bold; text-align: center; }
+    .bank-detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+    .bank-detail-row span:first-child { color: #666; }
+    .bank-detail-row span:last-child { font-weight: bold; color: #333; font-family: monospace; }
     
-    .conversion-hint { font-size: 0.85rem; margin-top: 5px; font-weight: bold; text-align: right; display: none; }
-    .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
-    .error-text { color: #d32f2f; font-size: 0.9rem; margin-top: 10px; min-height: 20px; text-align: center; }
-    .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px;}
+    .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px; grid-column: 1 / -1;}
   </style>
 </head>
 <body>
-  <!-- Шапка с мобильным меню -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
         <img src="../images/gerb.png" alt="Герб СФСРЮ" />
         <h1>СФСРЮ</h1>
       </div>
-
       <button class="menu-toggle" aria-label="Открыть меню">
-        <span class="menu-toggle-line"></span>
-        <span class="menu-toggle-line"></span>
-        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span><span class="menu-toggle-line"></span><span class="menu-toggle-line"></span>
       </button>
-
       <nav class="nav-menu">
         <ul>
           <li><a href="../index.html">Главная</a></li>
@@ -165,6 +141,7 @@
       </div>
 
       <h2 class="section-title">Банковские продукты</h2>
+      
       <h3 style="color: #666; margin-bottom: 15px; font-size: 1.2rem;">Мои карты</h3>
       <div class="bank-grid" id="cardsGrid"><p class="empty-state">Загрузка карт...</p></div>
       
@@ -176,21 +153,28 @@
     </div>
   </main>
 
-  <!-- МОДАЛЬНОЕ ОКНО -->
+  <!-- МОДАЛЬНОЕ ОКНО РЕКВИЗИТОВ БАНКА -->
+  <dialog id="bankDetailsDialog">
+    <div class="dialog-header" id="bankDialogTitle">Информация о банке</div>
+    <div id="bankDialogBody">
+      <!-- Заполняется через JS -->
+    </div>
+    <div style="text-align: center; margin-top: 20px;">
+      <button class="btn btn-secondary" onclick="document.getElementById('bankDetailsDialog').close()">Закрыть</button>
+    </div>
+  </dialog>
+
+  <!-- МОДАЛЬНОЕ ОКНО ТРАНЗАКЦИЙ (ОСТАЛОСЬ БЕЗ ИЗМЕНЕНИЙ) -->
   <dialog id="transactionDialog">
     <div class="dialog-header" id="dialogTitle">Пополнение счёта</div>
     <form id="transactionForm" method="dialog">
-      
       <div class="form-group">
         <label for="methodInput">Способ операции</label>
         <select id="methodInput" required>
           <option value="cash">Наличными в Госбанке СФСРЮ</option>
           <option value="card" disabled>Банковская карта онлайн (недоступно)</option>
-          <option value="terminal" disabled>Терминал (недоступно)</option>
-          <option value="crypto" disabled>Криптовалюта (запрещено законом)</option>
         </select>
       </div>
-
       <div class="form-group">
         <label for="currencyInput">Валюта</label>
         <select id="currencyInput" required>
@@ -199,34 +183,26 @@
           <option value="BYN">Белорусский рубль (Br) — 1 ¥ = 2.16 Br</option>
         </select>
       </div>
-
       <div class="form-group">
         <label for="amountInput">Сумма</label>
         <input type="number" id="amountInput" min="1" step="0.01" placeholder="0.00" required />
-        <div id="conversionHint" class="conversion-hint"></div>
+        <div id="conversionHint" class="conversion-hint" style="display:none; margin-top:5px; font-weight:bold;"></div>
       </div>
-
       <div class="form-group">
         <label for="descInput">Назначение</label>
         <input type="text" id="descInput" placeholder="Например: Пополнение" required />
       </div>
-      
-      <div id="dialogError" class="error-text"></div>
-      
-      <div class="dialog-actions">
+      <div id="dialogError" style="color:#d32f2f; font-size:0.9rem; text-align:center;"></div>
+      <div class="dialog-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('transactionDialog').close()">Отмена</button>
         <button type="submit" class="btn btn-primary" id="submitBtn">Оформить заявку</button>
       </div>
     </form>
   </dialog>
 
-  <!-- ПОЛНЫЙ ПОДВАЛ -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-    <p>
-      Телефон: +7 (993) 609-81-26 | Почта:
-      <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
-    </p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
   <script type="importmap">
@@ -251,6 +227,7 @@
       setupDialog();
     });
 
+    // === ГОС СЧЕТ ===
     async function loadGovAccount() {
       const section = document.getElementById('govAccountSection');
       try {
@@ -262,7 +239,7 @@
         const { data: transactions } = await supabase.schema('finance').from('transactions').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(10);
         renderGovAccountView(section, account.balance, transactions || []);
       } catch (err) {
-        section.innerHTML = `<p class="error-text">Ошибка загрузки счёта: ${err.message}</p>`;
+        section.innerHTML = `<p style="color:#d32f2f; text-align:center;">Ошибка загрузки счёта: ${err.message}</p>`;
       }
     }
 
@@ -280,7 +257,7 @@
           const { error } = await supabase.schema('finance').from('accounts').insert([{ user_id: currentUserId, balance: 0.00 }]);
           if (error) throw error;
           await loadGovAccount();
-        } catch (err) { alert('Ошибка открытия: ' + err.message); }
+        } catch (err) { alert('Ошибка: ' + err.message); }
       });
     }
 
@@ -300,21 +277,13 @@
         else if (t.status === 'completed') statusHtml = '<span class="status-badge status-completed">Выдано</span>';
         else if (t.status === 'rejected') statusHtml = '<span class="status-badge status-rejected">Отказано</span>';
 
-        let currencyInfo = '';
-        if (t.currency !== 'YUL') {
-          currencyInfo = `<div class="meta" style="font-size:0.8em; color:#666;">Оригинал: ${new Intl.NumberFormat('ru-RU').format(t.original_amount)} ${t.currency}</div>`;
-        }
-
         return `
           <div class="transaction-item" style="${t.status === 'rejected' ? 'opacity: 0.6;' : ''}">
             <div class="transaction-info">
               <div class="desc">${t.description} ${statusHtml}</div>
-              <div class="meta">${date} • ${t.method === 'cash' ? 'Наличные' : t.method}</div>
-              ${currencyInfo}
+              <div class="meta">${date}</div>
             </div>
-            <div class="transaction-amount ${amtClass}">
-              ${sign} ${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(t.amount)} ¥
-            </div>
+            <div class="transaction-amount ${amtClass}">${sign} ${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(t.amount)} ¥</div>
           </div>
         `;
       }).join('') : '<p class="empty-state">История операций пуста</p>';
@@ -335,6 +304,93 @@
       `;
     }
 
+    // === БАНКОВСКИЕ ДАННЫЕ ===
+    async function loadBankData() {
+      // 1. КАРТЫ
+      const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*, banks(*)').eq('user_id', currentUserId);
+      const cardsGrid = document.getElementById('cardsGrid');
+      if (cards && cards.length > 0) {
+        cardsGrid.innerHTML = cards.map(c => {
+          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(c.balance);
+          const logo = c.banks?.logo_url || '../images/gerb.png';
+          const bName = c.banks?.name || 'Банк СФСРЮ';
+          
+          return `
+            <div class="product-card" onclick="showBankDetails('${bName}', '${c.banks?.bic || '---'}', '${c.banks?.corr_account || '---'}')">
+              <img src="${logo}" class="bank-logo" alt="Логотип">
+              <div class="product-info">
+                <div class="product-bank-name">${bName}</div>
+                <div class="product-number">${c.card_number_masked}</div>
+                <div class="product-expiry">Действует до: ${c.expiry_date}</div>
+                <div class="product-balance-inline">${bal} ¥</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else { cardsGrid.innerHTML = '<p class="empty-state">У вас пока нет привязанных карт.</p>'; }
+
+      // 2. СЧЕТА
+      const { data: accounts } = await supabase.schema('finance').from('bank_accounts').select('*, banks(*)').eq('user_id', currentUserId);
+      const accountsGrid = document.getElementById('accountsGrid');
+      if (accounts && accounts.length > 0) {
+        accountsGrid.innerHTML = accounts.map(a => {
+          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(a.balance);
+          const logo = a.banks?.logo_url || '../images/gerb.png';
+          const bName = a.banks?.name || 'Банк СФСРЮ';
+          
+          return `
+            <div class="product-card" onclick="showBankDetails('${bName}', '${a.banks?.bic || '---'}', '${a.banks?.corr_account || '---'}')">
+              <img src="${logo}" class="bank-logo" alt="Логотип">
+              <div class="product-info">
+                <div class="product-bank-name">${bName}</div>
+                <div class="product-number">${a.account_number_masked}</div>
+                <div class="product-expiry">Расчётный счёт</div>
+                <div class="product-balance-inline">${bal} ¥</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else { accountsGrid.innerHTML = '<p class="empty-state">Нет открытых счетов в других банках.</p>'; }
+
+      // 3. ВКЛАДЫ
+      const { data: deposits } = await supabase.schema('finance').from('bank_deposits').select('*, banks(*)').eq('user_id', currentUserId);
+      const depositsGrid = document.getElementById('depositsGrid');
+      if (deposits && deposits.length > 0) {
+        depositsGrid.innerHTML = deposits.map(d => {
+          const amt = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(d.amount);
+          const date = new Date(d.end_date).toLocaleDateString('ru-RU');
+          const logo = d.banks?.logo_url || '../images/gerb.png';
+          const bName = d.banks?.name || 'Банк СФСРЮ';
+          
+          return `
+            <div class="product-card" onclick="showBankDetails('${bName}', '${d.banks?.bic || '---'}', '${d.banks?.corr_account || '---'}')">
+              <img src="${logo}" class="bank-logo" alt="Логотип">
+              <div class="product-info">
+                <div class="product-bank-name">${bName}</div>
+                <div class="product-number">${d.deposit_name}</div>
+                <div class="product-expiry">Ставка: ${d.interest_rate}% | До: ${date}</div>
+                <div class="product-balance-inline">${amt} ¥</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else { depositsGrid.innerHTML = '<p class="empty-state">Нет активных вкладов.</p>'; }
+    }
+
+    // === ПОКАЗ РЕКВИЗИТОВ БАНКА ===
+    window.showBankDetails = (name, bic, corr) => {
+      document.getElementById('bankDialogTitle').textContent = name;
+      document.getElementById('bankDialogBody').innerHTML = `
+        <div class="bank-detail-row"><span>БИК:</span> <span>${bic}</span></div>
+        <div class="bank-detail-row"><span>Корр. счёт:</span> <span>${corr}</span></div>
+        <div style="margin-top: 15px; font-size: 0.9rem; color: #666; text-align: center;">
+          Для перевода средств используйте реквизиты выше.
+        </div>
+      `;
+      document.getElementById('bankDetailsDialog').showModal();
+    };
+
+    // === МОДАЛКА ТРАНЗАКЦИЙ ===
     function setupDialog() {
       const dialog = document.getElementById('transactionDialog');
       const form = document.getElementById('transactionForm');
@@ -347,30 +403,20 @@
         const amount = parseFloat(amountInput.value);
         const currency = currencySelect.value;
         
-        if (!amount || amount <= 0 || currency === 'YUL') { 
-          hintDiv.style.display = 'none'; 
-          return; 
-        }
+        if (!amount || amount <= 0 || currency === 'YUL') { hintDiv.style.display = 'none'; return; }
         
         let converted = 0;
         let rateText = '';
-
-        if (currency === 'RUB') {
-          converted = (amount / 60).toFixed(2);
-          rateText = '1 ¥ = 60 ₽';
-        } else if (currency === 'BYN') {
-          converted = (amount / 2.16).toFixed(2); // ИСПРАВЛЕНО: делим на 2.16
-          rateText = '1 ¥ = 2.16 Br';
-        }
+        if (currency === 'RUB') { converted = (amount / 60).toFixed(2); rateText = '1 ¥ = 60 ₽'; } 
+        else if (currency === 'BYN') { converted = (amount / 2.16).toFixed(2); rateText = '1 ¥ = 2.16 Br'; }
 
         if (currentActionType === 'deposit') {
           hintDiv.textContent = `К зачислению: ${converted} ¥ (${rateText})`;
-          hintDiv.style.color = '#2e7d32'; // Зеленый
+          hintDiv.style.color = '#2e7d32';
         } else {
           hintDiv.textContent = `К снятию: ${converted} ¥ (${rateText})`;
-          hintDiv.style.color = '#d32f2f'; // Красный
+          hintDiv.style.color = '#d32f2f';
         }
-        
         hintDiv.style.display = 'block';
       };
 
@@ -411,37 +457,6 @@
       document.getElementById('conversionHint').style.display = 'none';
       document.getElementById('transactionDialog').showModal();
     };
-
-    async function loadBankData() {
-      const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*').eq('user_id', currentUserId);
-      const cardsGrid = document.getElementById('cardsGrid');
-      if (cards && cards.length > 0) {
-        cardsGrid.innerHTML = cards.map(c => {
-          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(c.balance);
-          const themeClass = c.color_theme === 'blue' ? 'theme-blue' : (c.color_theme === 'green' ? 'theme-green' : 'theme-red');
-          return `<div class="bank-card ${themeClass}"><div class="card-bank-name">${c.bank_name}</div><div><div class="card-number">${c.card_number_masked}</div><div class="card-balance">${bal} ¥</div></div></div>`;
-        }).join('');
-      } else { cardsGrid.innerHTML = '<p class="empty-state">У вас пока нет привязанных карт.</p>'; }
-
-      const { data: accounts } = await supabase.schema('finance').from('bank_accounts').select('*').eq('user_id', currentUserId);
-      const accountsGrid = document.getElementById('accountsGrid');
-      if (accounts && accounts.length > 0) {
-        accountsGrid.innerHTML = accounts.map(a => {
-          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(a.balance);
-          return `<div class="bank-product-item"><div class="product-title"><span>${a.bank_name}</span></div><div class="product-balance">${bal} ¥</div><div class="product-details">Счёт: ${a.account_number_masked}</div></div>`;
-        }).join('');
-      } else { accountsGrid.innerHTML = '<p class="empty-state">Нет счетов в других банках.</p>'; }
-
-      const { data: deposits } = await supabase.schema('finance').from('bank_deposits').select('*').eq('user_id', currentUserId);
-      const depositsGrid = document.getElementById('depositsGrid');
-      if (deposits && deposits.length > 0) {
-        depositsGrid.innerHTML = deposits.map(d => {
-          const amt = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(d.amount);
-          const date = new Date(d.end_date).toLocaleDateString('ru-RU');
-          return `<div class="bank-product-item" style="border-left-color: #2e7d32;"><div class="product-title"><span>${d.deposit_name}</span></div><div class="product-balance">${amt} ¥</div><div class="product-details"><div>${d.bank_name}</div><div>Ставка: ${d.interest_rate}% | До: ${date}</div></div></div>`;
-        }).join('');
-      } else { depositsGrid.innerHTML = '<p class="empty-state">Нет активных вкладов.</p>'; }
-    }
   </script>
 </body>
 </html>

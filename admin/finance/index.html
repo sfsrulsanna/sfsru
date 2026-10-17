@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Финансы — Администратор СФСРЮ</title>
+    
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+    
+    <script type="importmap">
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+    </script>
+    
+    <style>
+        .admin-main { padding: 40px 20px; }
+        .admin-container { max-width: 1200px; margin: 0 auto; }
+        .page-title { margin-bottom: 10px; color: #b30000; }
+        
+        .finance-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 30px; }
+        @media (max-width: 900px) { .finance-grid { grid-template-columns: 1fr; } }
+        
+        .form-section { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .form-section h3 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        
+        .btn-submit { background: #b30000; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.2s; }
+        .btn-submit:hover { background: #8a0000; }
+        
+        .status-msg { margin-top: 15px; font-weight: bold; font-size: 0.9rem; }
+        .status-success { color: #2e7d32; }
+        .status-error { color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
+                <h1>СФСРЮ — Админ-панель</h1>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="index.html">Главная</a></li>
+                    <li><a href="finance.html" class="active">Финансы</a></li>
+                    <li><a href="../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <main class="admin-main">
+        <div class="admin-container">
+            <h1 class="page-title">Финансовый отдел</h1>
+            <p class="page-description">Управление банками и выдачей продуктов клиентам.</p>
+
+            <div class="finance-grid">
+                <!-- БЛОК 1: ДОБАВЛЕНИЕ БАНКА -->
+                <div class="form-section">
+                    <h3><i class="fas fa-university"></i> Добавить новый банк</h3>
+                    <form id="addBankForm">
+                        <div class="form-group">
+                            <label>Название банка</label>
+                            <input type="text" id="bankName" placeholder="Например: Госбанк СФСРЮ" required>
+                        </div>
+                        <div class="form-group">
+                            <label>БИК</label>
+                            <input type="text" id="bankBic" placeholder="044525225" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Корр. счет</label>
+                            <input type="text" id="bankCorr" placeholder="30101810400000000225" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Логотип (PNG, JPG)</label>
+                            <input type="file" id="bankLogo" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn-submit" id="submitBankBtn">Добавить банк</button>
+                        <div id="bankMsg" class="status-msg"></div>
+                    </form>
+                </div>
+
+                <!-- БЛОК 2: ВЫДАЧА ПРОДУКТА КЛИЕНТУ -->
+                <div class="form-section">
+                    <h3><i class="fas fa-id-card"></i> Выдать продукт клиенту</h3>
+                    <form id="addProductForm">
+                        <div class="form-group">
+                            <label>Пользователь (Email или UUID)</label>
+                            <select id="productUser" required>
+                                <option value="">Загрузка пользователей...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Банк</label>
+                            <select id="productBank" required>
+                                <option value="">Загрузка банков...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Тип продукта</label>
+                            <select id="productType" required>
+                                <option value="card">Банковская карта</option>
+                                <option value="account">Счет</option>
+                                <option value="deposit">Вклад</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Номер карты/счета (маскированный)</label>
+                            <input type="text" id="productNumber" placeholder="**** **** **** 1234" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Срок действия / Дата окончания (ММ/ГГ)</label>
+                            <input type="text" id="productExpiry" placeholder="12/28" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Баланс / Сумма (в ¥)</label>
+                            <input type="number" id="productBalance" placeholder="0.00" step="0.01" required>
+                        </div>
+                        <button type="submit" class="btn-submit" id="submitProductBtn">Выдать продукт</button>
+                        <div id="productMsg" class="status-msg"></div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="admin-footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    </footer>
+
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
+
+        // Проверка админа
+        async function checkAdmin() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../login.html'; return; }
+            const { data: profile } = await supabase.from('users').select('role, email').eq('id', session.user.id).single();
+            if (profile?.role !== 'admin') { await supabase.auth.signOut(); window.location.href = '../login.html'; return; }
+            document.getElementById('adminEmail').textContent = profile.email;
+        }
+        checkAdmin();
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '../login.html';
+        });
+
+        // Загрузка пользователей и банков в выпадающие списки
+        async function loadDropdowns() {
+            // Банки
+            const { data: banks } = await supabase.schema('finance').from('banks').select('id, name');
+            const bankSelect = document.getElementById('productBank');
+            if (banks) {
+                bankSelect.innerHTML = '<option value="">Выберите банк...</option>' + 
+                    banks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            }
+
+            // Пользователи
+            const { data: users } = await supabase.from('users').select('id, email, surname, name');
+            const userSelect = document.getElementById('productUser');
+            if (users) {
+                userSelect.innerHTML = '<option value="">Выберите пользователя...</option>' + 
+                    users.map(u => `<option value="${u.id}">${u.email} (${u.surname} ${u.name})</option>`).join('');
+            }
+        }
+        loadDropdowns();
+
+        // Обработка формы добавления БАНКА
+        document.getElementById('addBankForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBankBtn');
+            const msg = document.getElementById('bankMsg');
+            btn.disabled = true; btn.textContent = 'Загрузка...';
+            msg.textContent = '';
+
+            const name = document.getElementById('bankName').value;
+            const bic = document.getElementById('bankBic').value;
+            const corr = document.getElementById('bankCorr').value;
+            const file = document.getElementById('bankLogo').files[0];
+
+            try {
+                // 1. Загружаем логотип в Storage
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExt}`;
+                
+                const { error: uploadError } = await supabase.storage
+                    .from('bank-logos')
+                    .upload(fileName, file);
+                
+                if (uploadError) throw uploadError;
+
+                // 2. Получаем публичную ссылку
+                const { data: { publicUrl } } = supabase.storage
+                    .from('bank-logos')
+                    .getPublicUrl(fileName);
+
+                // 3. Сохраняем в БД
+                const { error: dbError } = await supabase.schema('finance').from('banks').insert([{
+                    name, bic, corr_account: corr, logo_url: publicUrl
+                }]);
+                if (dbError) throw dbError;
+
+                msg.textContent = 'Банк успешно добавлен!';
+                msg.className = 'status-msg status-success';
+                e.target.reset();
+                loadDropdowns(); // Обновляем список банков
+
+            } catch (err) {
+                msg.textContent = 'Ошибка: ' + err.message;
+                msg.className = 'status-msg status-error';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Добавить банк';
+            }
+        });
+
+        // Обработка формы ВЫДАЧИ ПРОДУКТА
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitProductBtn');
+            const msg = document.getElementById('productMsg');
+            btn.disabled = true; btn.textContent = 'Сохранение...';
+            msg.textContent = '';
+
+            const userId = document.getElementById('productUser').value;
+            const bankId = document.getElementById('productBank').value;
+            const type = document.getElementById('productType').value;
+            const number = document.getElementById('productNumber').value;
+            const expiry = document.getElementById('productExpiry').value;
+            const balance = parseFloat(document.getElementById('productBalance').value);
+
+            try {
+                if (type === 'card') {
+                    await supabase.schema('finance').from('bank_cards').insert([{
+                        user_id: userId, bank_id: bankId, card_number_masked: number, expiry_date: expiry, balance
+                    }]);
+                } else if (type === 'account') {
+                    await supabase.schema('finance').from('bank_accounts').insert([{
+                        user_id: userId, bank_id: bankId, account_number_masked: number, balance
+                    }]);
+                } else if (type === 'deposit') {
+                    await supabase.schema('finance').from('bank_deposits').insert([{
+                        user_id: userId, bank_id: bankId, deposit_name: 'Вклад', amount: balance, interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
+                    }]);
+                }
+                msg.textContent = 'Продукт успешно выдан клиенту!';
+                msg.className = 'status-msg status-success';
+                e.target.reset();
+            } catch (err) {
+                msg.textContent = 'Ошибка: ' + err.message;
+                msg.className = 'status-msg status-error';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Выдать продукт';
+            }
+        });
+    </script>
+</body>
+</html>
