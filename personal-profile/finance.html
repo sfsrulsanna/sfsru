@@ -79,10 +79,20 @@
     .product-balance { font-size: 1.4rem; color: #2e7d32; font-weight: bold; margin-bottom: 5px; }
     .product-details { font-size: 0.9rem; color: #666; }
 
-    /* ================= АНИМАЦИИ МОДАЛЬНОГО ОКНА ================= */
+    /* ================= АНИМАЦИИ И ЦЕНТРИРОВАНИЕ МОДАЛЬНОГО ОКНА ================= */
     dialog {
-      border: none; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.2); max-width: 450px; width: 100%;
-      opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete;
+      border: none; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
+      max-width: 450px; width: 90%;
+      
+      /* Жесткое центрирование */
+      position: fixed;
+      inset: 0;
+      margin: auto;
+      height: fit-content;
+      
+      /* Анимация */
+      opacity: 0; transform: translateY(20px); 
+      transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
     }
     dialog[open] {
       opacity: 1; transform: translateY(0);
@@ -90,10 +100,14 @@
     @starting-style {
       dialog[open] { opacity: 0; transform: translateY(20px); }
     }
-    dialog::backdrop { background: rgba(0,0,0,0); transition: background-color 0.3s ease; }
-    dialog[open]::backdrop { background: rgba(0,0,0,0.5); }
     
-    .dialog-header { font-size: 1.5rem; margin-bottom: 20px; color: #b30000; font-weight: bold; }
+    dialog::backdrop { background: rgba(0,0,0,0); transition: background-color 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete; }
+    dialog[open]::backdrop { background: rgba(0,0,0,0.6); }
+    @starting-style {
+      dialog[open]::backdrop { background: rgba(0,0,0,0); }
+    }
+    
+    .dialog-header { font-size: 1.5rem; margin-bottom: 20px; color: #b30000; font-weight: bold; text-align: center; }
     .form-group { margin-bottom: 20px; }
     .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: bold; font-size: 0.95rem;}
     .form-group input, .form-group select { 
@@ -101,11 +115,9 @@
     }
     .form-group input:focus, .form-group select:focus { outline: none; border-color: #b30000; background: white; }
     
-    /* Подсказка о конвертации */
     .conversion-hint { font-size: 0.85rem; color: #2e7d32; margin-top: 5px; font-weight: bold; text-align: right; display: none; }
-
     .dialog-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 25px; }
-    .error-text { color: #d32f2f; font-size: 0.9rem; margin-top: 10px; min-height: 20px; }
+    .error-text { color: #d32f2f; font-size: 0.9rem; margin-top: 10px; min-height: 20px; text-align: center; }
     .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px;}
   </style>
 </head>
@@ -237,7 +249,6 @@
           throw error;
         }
 
-        // Подтягиваем историю (последние 10 операций)
         const { data: transactions } = await supabase
           .schema('finance').from('transactions').select('*')
           .eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(10);
@@ -279,13 +290,11 @@
         const amtClass = isPlus ? 'amount-plus' : 'amount-minus';
         const date = new Date(t.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
         
-        // Отрисовка статуса
         let statusHtml = '';
         if (t.status === 'pending') statusHtml = '<span class="status-badge status-pending">Заявлено</span>';
         else if (t.status === 'completed') statusHtml = '<span class="status-badge status-completed">Выдано</span>';
         else if (t.status === 'rejected') statusHtml = '<span class="status-badge status-rejected">Отказано</span>';
 
-        // Кнопки админа (для теста)
         let adminBtns = '';
         if (t.status === 'pending') {
           adminBtns = `
@@ -296,7 +305,6 @@
           `;
         }
 
-        // Информация о валюте
         let currencyInfo = '';
         if (t.currency !== 'YUL') {
           currencyInfo = `<div class="meta" style="font-size:0.8em; color:#666;">Оригинал: ${new Intl.NumberFormat('ru-RU').format(t.original_amount)} ${t.currency}</div>`;
@@ -345,7 +353,6 @@
       const currencySelect = document.getElementById('currencyInput');
       const hintDiv = document.getElementById('conversionHint');
 
-      // Калькулятор конвертации
       const updateConversion = () => {
         const amount = parseFloat(amountInput.value);
         const currency = currencySelect.value;
@@ -356,7 +363,6 @@
         }
         
         const converted = (amount / 60).toFixed(2);
-        const symbol = currency === 'RUB' ? '₽' : 'Br';
         hintDiv.textContent = `К зачислению: ${converted} ¥ (Курс 1:60)`;
         hintDiv.style.display = 'block';
       };
@@ -375,14 +381,14 @@
         btn.disabled = true; btn.textContent = 'Отправка...'; errorDiv.textContent = '';
 
         try {
-          // Вызываем новую функцию создания заявки
-          const { error } = await supabase.rpc('create_transaction_request', {
+          // ИСПРАВЛЕНО: вызов RPC через .schema('finance')
+          const { error } = await supabase.schema('finance').rpc('create_transaction_request', {
             p_amount: amount,
             p_type: currentActionType,
             p_description: desc,
             p_method: method,
             p_currency: currency
-          }, { schema: 'finance' });
+          });
 
           if (error) throw error;
 
@@ -411,13 +417,14 @@
       if (!confirm(`Вы уверены, что хотите ${action === 'approve' ? 'одобрить' : 'отклонить'} эту операцию?`)) return;
       
       try {
-        const { error } = await supabase.rpc('admin_process_request', {
+        // ИСПРАВЛЕНО: вызов RPC через .schema('finance')
+        const { error } = await supabase.schema('finance').rpc('admin_process_request', {
           p_transaction_id: transactionId,
           p_action: action
-        }, { schema: 'finance' });
+        });
 
         if (error) throw error;
-        await loadGovAccount(); // Обновляем баланс и историю
+        await loadGovAccount(); 
       } catch (err) {
         alert('Ошибка: ' + err.message);
       }
@@ -425,7 +432,6 @@
 
     // ==================== БАНКОВСКИЕ ДАННЫЕ ====================
     async function loadBankData() {
-      // 1. Карты
       const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*').eq('user_id', currentUserId);
       const cardsGrid = document.getElementById('cardsGrid');
       if (cards && cards.length > 0) {
@@ -441,7 +447,6 @@
         }).join('');
       } else { cardsGrid.innerHTML = '<p class="empty-state">У вас пока нет привязанных карт.</p>'; }
 
-      // 2. Счета
       const { data: accounts } = await supabase.schema('finance').from('bank_accounts').select('*').eq('user_id', currentUserId);
       const accountsGrid = document.getElementById('accountsGrid');
       if (accounts && accounts.length > 0) {
@@ -457,7 +462,6 @@
         }).join('');
       } else { accountsGrid.innerHTML = '<p class="empty-state">Нет счетов в других банках.</p>'; }
 
-      // 3. Вклады
       const { data: deposits } = await supabase.schema('finance').from('bank_deposits').select('*').eq('user_id', currentUserId);
       const depositsGrid = document.getElementById('depositsGrid');
       if (deposits && deposits.length > 0) {
