@@ -53,12 +53,6 @@
     .status-pending { background-color: #fff3e0; color: #e65100; }
     .status-completed { background-color: #e8f5e9; color: #2e7d32; }
     .status-rejected { background-color: #ffebee; color: #c62828; }
-    
-    /* Кнопки админа для теста */
-    .admin-actions { display: flex; gap: 5px; margin-top: 5px; }
-    .btn-admin { padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; cursor: pointer; border: 1px solid #ccc; background: white; }
-    .btn-admin.approve { color: #2e7d32; border-color: #2e7d32; }
-    .btn-admin.reject { color: #d32f2f; border-color: #d32f2f; }
 
     /* --- БАНКОВСКИЕ ПРОДУКТЫ --- */
     .bank-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
@@ -83,36 +77,20 @@
     dialog {
       border: none; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
       max-width: 450px; width: 90%;
-      
-      /* Жесткое центрирование */
-      position: fixed;
-      inset: 0;
-      margin: auto;
-      height: fit-content;
-      
-      /* Анимация */
+      position: fixed; inset: 0; margin: auto; height: fit-content;
       opacity: 0; transform: translateY(20px); 
       transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
     }
-    dialog[open] {
-      opacity: 1; transform: translateY(0);
-    }
-    @starting-style {
-      dialog[open] { opacity: 0; transform: translateY(20px); }
-    }
-    
+    dialog[open] { opacity: 1; transform: translateY(0); }
+    @starting-style { dialog[open] { opacity: 0; transform: translateY(20px); } }
     dialog::backdrop { background: rgba(0,0,0,0); transition: background-color 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete; }
     dialog[open]::backdrop { background: rgba(0,0,0,0.6); }
-    @starting-style {
-      dialog[open]::backdrop { background: rgba(0,0,0,0); }
-    }
+    @starting-style { dialog[open]::backdrop { background: rgba(0,0,0,0); } }
     
     .dialog-header { font-size: 1.5rem; margin-bottom: 20px; color: #b30000; font-weight: bold; text-align: center; }
     .form-group { margin-bottom: 20px; }
     .form-group label { display: block; margin-bottom: 8px; color: #333; font-weight: bold; font-size: 0.95rem;}
-    .form-group input, .form-group select { 
-      width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fafafa; 
-    }
+    .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: #fafafa; }
     .form-group input:focus, .form-group select:focus { outline: none; border-color: #b30000; background: white; }
     
     .conversion-hint { font-size: 0.85rem; color: #2e7d32; margin-top: 5px; font-weight: bold; text-align: right; display: none; }
@@ -236,25 +214,16 @@
       setupDialog();
     });
 
-    // ==================== ГОС СЧЕТ ====================
     async function loadGovAccount() {
       const section = document.getElementById('govAccountSection');
-      
       try {
-        const { data: account, error } = await supabase
-          .schema('finance').from('accounts').select('balance').eq('user_id', currentUserId).single();
-
+        const { data: account, error } = await supabase.schema('finance').from('accounts').select('balance').eq('user_id', currentUserId).single();
         if (error) {
           if (error.code === 'PGRST116') { renderOpenAccountView(section); return; }
           throw error;
         }
-
-        const { data: transactions } = await supabase
-          .schema('finance').from('transactions').select('*')
-          .eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(10);
-
+        const { data: transactions } = await supabase.schema('finance').from('transactions').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(10);
         renderGovAccountView(section, account.balance, transactions || []);
-
       } catch (err) {
         section.innerHTML = `<p class="error-text">Ошибка загрузки счёта: ${err.message}</p>`;
       }
@@ -268,7 +237,6 @@
           <button id="openAccountBtn" class="btn btn-primary" style="margin-top: 15px;">Открыть счёт (бесплатно)</button>
         </div>
       `;
-
       document.getElementById('openAccountBtn').addEventListener('click', async (e) => {
         e.target.disabled = true; e.target.textContent = 'Открываем...';
         try {
@@ -284,6 +252,7 @@
       const formatted = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(numBalance);
       let colorClass = numBalance > 0 ? 'balance-positive' : (numBalance < 0 ? 'balance-negative' : 'balance-zero');
 
+      // Рендер истории БЕЗ кнопок админа
       let transHtml = transactions.length ? transactions.map(t => {
         const isPlus = t.type === 'deposit' || t.type === 'pension';
         const sign = isPlus ? '+' : '-';
@@ -294,16 +263,6 @@
         if (t.status === 'pending') statusHtml = '<span class="status-badge status-pending">Заявлено</span>';
         else if (t.status === 'completed') statusHtml = '<span class="status-badge status-completed">Выдано</span>';
         else if (t.status === 'rejected') statusHtml = '<span class="status-badge status-rejected">Отказано</span>';
-
-        let adminBtns = '';
-        if (t.status === 'pending') {
-          adminBtns = `
-            <div class="admin-actions">
-              <button class="btn-admin approve" onclick="window.adminProcess('${t.id}', 'approve')">Подтвердить</button>
-              <button class="btn-admin reject" onclick="window.adminProcess('${t.id}', 'reject')">Отклонить</button>
-            </div>
-          `;
-        }
 
         let currencyInfo = '';
         if (t.currency !== 'YUL') {
@@ -316,7 +275,6 @@
               <div class="desc">${t.description} ${statusHtml}</div>
               <div class="meta">${date} • ${t.method === 'cash' ? 'Наличные' : t.method}</div>
               ${currencyInfo}
-              ${adminBtns}
             </div>
             <div class="transaction-amount ${amtClass}">
               ${sign} ${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(t.amount)} ¥
@@ -336,15 +294,11 @@
             <button class="btn btn-secondary" onclick="openTransactionDialog('withdrawal')">Снять</button>
           </div>
         </div>
-        
         <h3 style="margin-top: 30px; margin-bottom: 15px; color: #333;">Последние операции</h3>
-        <div class="transactions-list">
-          ${transHtml}
-        </div>
+        <div class="transactions-list">${transHtml}</div>
       `;
     }
 
-    // ==================== МОДАЛЬНОЕ ОКНО ====================
     function setupDialog() {
       const dialog = document.getElementById('transactionDialog');
       const form = document.getElementById('transactionForm');
@@ -356,12 +310,7 @@
       const updateConversion = () => {
         const amount = parseFloat(amountInput.value);
         const currency = currencySelect.value;
-        
-        if (!amount || amount <= 0 || currency === 'YUL') {
-          hintDiv.style.display = 'none';
-          return;
-        }
-        
+        if (!amount || amount <= 0 || currency === 'YUL') { hintDiv.style.display = 'none'; return; }
         const converted = (amount / 60).toFixed(2);
         hintDiv.textContent = `К зачислению: ${converted} ¥ (Курс 1:60)`;
         hintDiv.style.display = 'block';
@@ -381,17 +330,10 @@
         btn.disabled = true; btn.textContent = 'Отправка...'; errorDiv.textContent = '';
 
         try {
-          // ИСПРАВЛЕНО: вызов RPC через .schema('finance')
           const { error } = await supabase.schema('finance').rpc('create_transaction_request', {
-            p_amount: amount,
-            p_type: currentActionType,
-            p_description: desc,
-            p_method: method,
-            p_currency: currency
+            p_amount: amount, p_type: currentActionType, p_description: desc, p_method: method, p_currency: currency
           });
-
           if (error) throw error;
-
           dialog.close();
           await loadGovAccount(); 
         } catch (err) {
@@ -412,25 +354,6 @@
       document.getElementById('transactionDialog').showModal();
     };
 
-    // ==================== ТЕСТОВАЯ ФУНКЦИЯ АДМИНА ====================
-    window.adminProcess = async (transactionId, action) => {
-      if (!confirm(`Вы уверены, что хотите ${action === 'approve' ? 'одобрить' : 'отклонить'} эту операцию?`)) return;
-      
-      try {
-        // ИСПРАВЛЕНО: вызов RPC через .schema('finance')
-        const { error } = await supabase.schema('finance').rpc('admin_process_request', {
-          p_transaction_id: transactionId,
-          p_action: action
-        });
-
-        if (error) throw error;
-        await loadGovAccount(); 
-      } catch (err) {
-        alert('Ошибка: ' + err.message);
-      }
-    };
-
-    // ==================== БАНКОВСКИЕ ДАННЫЕ ====================
     async function loadBankData() {
       const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*').eq('user_id', currentUserId);
       const cardsGrid = document.getElementById('cardsGrid');
@@ -438,12 +361,7 @@
         cardsGrid.innerHTML = cards.map(c => {
           const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(c.balance);
           const themeClass = c.color_theme === 'blue' ? 'theme-blue' : (c.color_theme === 'green' ? 'theme-green' : 'theme-red');
-          return `
-            <div class="bank-card ${themeClass}">
-              <div class="card-bank-name">${c.bank_name}</div>
-              <div><div class="card-number">${c.card_number_masked}</div><div class="card-balance">${bal} ¥</div></div>
-            </div>
-          `;
+          return `<div class="bank-card ${themeClass}"><div class="card-bank-name">${c.bank_name}</div><div><div class="card-number">${c.card_number_masked}</div><div class="card-balance">${bal} ¥</div></div></div>`;
         }).join('');
       } else { cardsGrid.innerHTML = '<p class="empty-state">У вас пока нет привязанных карт.</p>'; }
 
@@ -452,13 +370,7 @@
       if (accounts && accounts.length > 0) {
         accountsGrid.innerHTML = accounts.map(a => {
           const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(a.balance);
-          return `
-            <div class="bank-product-item">
-              <div class="product-title"><span>${a.bank_name}</span></div>
-              <div class="product-balance">${bal} ¥</div>
-              <div class="product-details">Счёт: ${a.account_number_masked}</div>
-            </div>
-          `;
+          return `<div class="bank-product-item"><div class="product-title"><span>${a.bank_name}</span></div><div class="product-balance">${bal} ¥</div><div class="product-details">Счёт: ${a.account_number_masked}</div></div>`;
         }).join('');
       } else { accountsGrid.innerHTML = '<p class="empty-state">Нет счетов в других банках.</p>'; }
 
@@ -468,13 +380,7 @@
         depositsGrid.innerHTML = deposits.map(d => {
           const amt = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(d.amount);
           const date = new Date(d.end_date).toLocaleDateString('ru-RU');
-          return `
-            <div class="bank-product-item" style="border-left-color: #2e7d32;">
-              <div class="product-title"><span>${d.deposit_name}</span></div>
-              <div class="product-balance">${amt} ¥</div>
-              <div class="product-details"><div>${d.bank_name}</div><div>Ставка: ${d.interest_rate}% | До: ${date}</div></div>
-            </div>
-          `;
+          return `<div class="bank-product-item" style="border-left-color: #2e7d32;"><div class="product-title"><span>${d.deposit_name}</span></div><div class="product-balance">${amt} ¥</div><div class="product-details"><div>${d.bank_name}</div><div>Ставка: ${d.interest_rate}% | До: ${date}</div></div></div>`;
         }).join('');
       } else { depositsGrid.innerHTML = '<p class="empty-state">Нет активных вкладов.</p>'; }
     }
