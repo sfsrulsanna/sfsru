@@ -27,12 +27,10 @@
   <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
 
-  <!-- Стили -->
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/index.css" />
 
   <style>
-    /* Стили для кликабельных карточек */
     .info-card {
       transition: transform 0.2s ease, box-shadow 0.2s ease,
                   border-color 0.2s ease, background-color 0.2s ease;
@@ -65,7 +63,6 @@
       box-shadow: 0 3px 10px rgba(179, 0, 0, 0.15);
     }
 
-    /* Стили для виджета счета */
     .balance-value {
       font-size: 1.5rem;
       font-weight: bold;
@@ -73,11 +70,10 @@
       transition: color 0.3s ease;
     }
     
-    .balance-positive { color: #2e7d32; } /* Зеленый */
-    .balance-negative { color: #d32f2f; } /* Красный */
-    .balance-zero     { color: #757575; } /* Серый */
+    .balance-positive { color: #2e7d32; }
+    .balance-negative { color: #d32f2f; }
+    .balance-zero     { color: #757575; }
     
-    /* Сетка для 4-х нижних карточек (2x2) */
     @media (min-width: 768px) {
       .info-sections {
         display: grid;
@@ -88,7 +84,6 @@
   </style>
 </head>
 <body>
-  <!-- Шапка -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -117,7 +112,6 @@
 
   <div class="menu-overlay"></div>
 
-  <!-- ОСНОВНОЙ КОНТЕНТ -->
   <main class="main-content profile-main">
     <div class="profile-container">
       <div class="greeting-block">
@@ -125,7 +119,6 @@
         <p class="greeting-subtitle">Добро пожаловать в ваш личный кабинет гражданина СФСРЮ</p>
       </div>
 
-      <!-- Быстрые ссылки -->
       <div class="quick-links">
         <a href="messages.html" class="quick-link">
           <div class="quick-link-icon">🔔</div>
@@ -139,8 +132,6 @@
           <div class="quick-link-icon">📄</div>
           <div class="quick-link-title">Мои документы</div>
         </a>
-        
-        <!-- НОВЫЕ ПЛИТКИ -->
         <a href="finance.html" class="quick-link">
           <div class="quick-link-icon">💰</div>
           <div class="quick-link-title">Финансы</div>
@@ -153,8 +144,6 @@
           <div class="quick-link-icon">🎓</div>
           <div class="quick-link-title">Образование</div>
         </a>
-        <!-- КОНЕЦ НОВЫХ ПЛИТОК -->
-
         <a href="account.html" class="quick-link">
           <div class="quick-link-icon">⚙️</div>
           <div class="quick-link-title">Учётная запись</div>
@@ -192,27 +181,23 @@
         </button>
       </div>
 
-      <!-- Дополнительная информация -->
       <div class="info-sections">
-        <!-- Уведомления -->
         <a href="messages.html" class="info-card info-card-link">
           <h3>🔔 Уведомления</h3>
           <p id="notificationText">Загрузка...</p>
         </a>
 
-        <!-- Ближайшие события -->
         <a href="events.html" class="info-card info-card-link">
           <h3>📅 Ближайшие события</h3>
           <p id="eventText">Загрузка...</p>
         </a>
 
-        <!-- Мой счёт (Новый блок) -->
-        <div class="info-card">
+        <!-- КАРТОЧКА МОЙ СЧЁТ ТЕПЕРЬ ССЫЛАЕТСЯ НА FINANCE.HTML -->
+        <a href="finance.html" class="info-card info-card-link">
           <h3>💳 Мой счёт</h3>
-          <p id="accountBalance" class="balance-value">Загрузка...</p>
-        </div>
+          <div id="accountBalance" class="balance-value">Загрузка...</div>
+        </a>
 
-        <!-- Совет -->
         <div class="info-card">
           <h3>💡 Совет</h3>
           <p id="tipText">Загрузка...</p>
@@ -221,7 +206,6 @@
     </div>
   </main>
 
-  <!-- ПОДВАЛ -->
   <footer class="footer">
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>
@@ -230,7 +214,6 @@
     </p>
   </footer>
 
-  <!-- ========== SUPABASE ========== -->
   <script type="importmap">
     {
       "imports": {
@@ -282,15 +265,10 @@
     async function getNextEvent() {
       const now = new Date()
       const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-
       try {
         const { data: elections, error } = await supabase
-          .schema('votes')
-          .from('elections')
-          .select('id, title, start_date, end_date, status')
-          .or(`status.eq.active,status.eq.upcoming`)
-          .order('start_date', { ascending: true })
-
+          .schema('votes').from('elections').select('id, title, start_date, end_date, status')
+          .or(`status.eq.active,status.eq.upcoming`).order('start_date', { ascending: true })
         if (!error && elections && elections.length > 0) {
           for (const el of elections) {
             const start = new Date(el.start_date)
@@ -305,69 +283,49 @@
             return { type: 'vote', title: `🗳️ Ближайшее голосование: ${upcoming.title} — ${start.toLocaleDateString('ru-RU')}`, date: start }
           }
         }
-      } catch (e) {
-        console.warn('Не удалось загрузить голосования:', e)
-      }
-
+      } catch (e) {}
       const year = now.getFullYear()
       let nearestHoliday = null
       let minDiff = Infinity
-
       for (const h of holidays) {
         let date = new Date(year, h.month - 1, h.day)
-        if (date < today) {
-          date = new Date(year + 1, h.month - 1, h.day)
-        }
+        if (date < today) date = new Date(year + 1, h.month - 1, h.day)
         const diff = Math.ceil((date - today) / (1000 * 60 * 60 * 24))
         if (diff >= 0 && diff < minDiff) {
           minDiff = diff
           nearestHoliday = { name: h.name, date: date }
         }
       }
-
       if (nearestHoliday) {
         const dateStr = nearestHoliday.date.toLocaleDateString('ru-RU')
         return { type: 'holiday', title: `🎉 ${nearestHoliday.name} — ${dateStr}`, date: nearestHoliday.date }
       }
-
       return { type: 'none', title: 'Событий не найдено' }
     }
 
     async function loadUserProfile() {
       const greetingEl = document.getElementById('greetingText')
-
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         if (sessionError) throw sessionError
-
         if (!session) {
           window.location.href = '../login.html'
           return
         }
-
         currentUserId = session.user.id
-
         const { data: userData, error: userError } = await supabase
-          .from('users')
-          .select('surname, name, patronymic')
-          .eq('id', currentUserId)
-          .single()
-
+          .from('users').select('surname, name, patronymic').eq('id', currentUserId).single()
         if (userError) {
-          console.error('Ошибка загрузки профиля:', userError)
           greetingEl.textContent = 'Добро пожаловать!'
         } else {
           const greeting = getGreeting()
           if (userData?.name && userData?.surname) {
-            const displayName = userData.patronymic
-              ? `${userData.name} ${userData.patronymic}`
-              : userData.name
+            const displayName = userData.patronymic ? `${userData.name} ${userData.patronymic}` : userData.name
             greetingEl.textContent = `${greeting}, ${displayName}!`
           } else {
             greetingEl.textContent = 'Добро пожаловать!'
           }
         }
-
         await updateNotifications(currentUserId)
         await updateEvent()
         await updateAccountBalance(currentUserId)
@@ -377,9 +335,7 @@
         setInterval(updateEvent, 60000)
         setInterval(() => updateAccountBalance(currentUserId), 60000)
         setInterval(updateTip, 15000)
-
       } catch (error) {
-        console.error('Критическая ошибка:', error)
         greetingEl.textContent = 'Добро пожаловать!'
       }
     }
@@ -387,24 +343,16 @@
     async function updateNotifications(userId) {
       try {
         const { count, error } = await supabase
-          .schema('messages')
-          .from('user_messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', userId)
-          .eq('is_read', false)
-
+          .schema('messages').from('user_messages').select('*', { count: 'exact', head: true })
+          .eq('user_id', userId).eq('is_read', false)
         if (error) throw error
-
         const notificationEl = document.getElementById('notificationText')
         if (notificationEl) {
-          notificationEl.textContent = count > 0
-            ? `У вас ${count} непрочитанных сообщений.`
-            : 'Нет новых уведомлений.'
+          notificationEl.textContent = count > 0 ? `У вас ${count} непрочитанных сообщений.` : 'Нет новых уведомлений.'
         }
       } catch (error) {
-        console.error('Ошибка при загрузке уведомлений:', error)
-        const notificationEl = document.getElementById('notificationText')
-        if (notificationEl) notificationEl.textContent = 'Не удалось загрузить уведомления.'
+        const el = document.getElementById('notificationText')
+        if (el) el.textContent = 'Не удалось загрузить уведомления.'
       }
     }
 
@@ -415,53 +363,38 @@
         const event = await getNextEvent()
         eventEl.textContent = event.type === 'none' ? 'Событий не найдено' : event.title
       } catch (err) {
-        console.error('Ошибка загрузки события:', err)
         eventEl.textContent = 'Не удалось загрузить события'
       }
     }
 
-    // НОВАЯ ФУНКЦИЯ ДЛЯ ЗАГРУЗКИ ГОСУДАРСТВЕННОГО СЧЕТА
+    // ОБНОВЛЕНО: Если счета нет, просто пишем "Не открыт", ссылка ведет на finance.html
     async function updateAccountBalance(userId) {
       const balanceEl = document.getElementById('accountBalance')
       if (!balanceEl) return
 
       try {
         const { data, error } = await supabase
-          .schema('finance')
-          .from('accounts')
-          .select('balance')
-          .eq('user_id', userId)
-          .single()
+          .schema('finance').from('accounts').select('balance').eq('user_id', userId).single()
 
-        // Ошибка PGRST116 означает, что записи нет (счет не создан), считаем баланс нулевым
-        if (error && error.code !== 'PGRST116') throw error
-
-        let balance = 0
-        if (data) {
-          balance = Number(data.balance)
+        if (error) {
+          if (error.code === 'PGRST116') { // Счет не найден
+            balanceEl.innerHTML = '<span class="balance-zero" style="font-size: 1rem; font-weight: normal;">Счёт не открыт</span>'
+            return
+          }
+          throw error
         }
 
-        // Форматирование суммы (например, 1500.5 -> 1 500.50)
-        const formattedBalance = new Intl.NumberFormat('ru-RU', { 
-          minimumFractionDigits: 2, 
-          maximumFractionDigits: 2 
-        }).format(balance)
-
+        const balance = Number(data.balance)
+        const formattedBalance = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(balance)
         balanceEl.textContent = `${formattedBalance} ¥`
-
-        // Управление цветом в зависимости от баланса
+        
         balanceEl.classList.remove('balance-positive', 'balance-negative', 'balance-zero')
-        if (balance > 0) {
-          balanceEl.classList.add('balance-positive')
-        } else if (balance < 0) {
-          balanceEl.classList.add('balance-negative')
-        } else {
-          balanceEl.classList.add('balance-zero')
-        }
+        if (balance > 0) balanceEl.classList.add('balance-positive')
+        else if (balance < 0) balanceEl.classList.add('balance-negative')
+        else balanceEl.classList.add('balance-zero')
 
       } catch (err) {
-        console.error('Ошибка загрузки счета:', err)
-        balanceEl.textContent = 'Ошибка загрузки'
+        balanceEl.textContent = 'Ошибка'
         balanceEl.classList.add('balance-zero')
       }
     }
@@ -469,8 +402,7 @@
     function updateTip() {
       const tipEl = document.getElementById('tipText')
       if (tipEl) {
-        const randomIndex = Math.floor(Math.random() * tips.length)
-        tipEl.textContent = tips[randomIndex]
+        tipEl.textContent = tips[Math.floor(Math.random() * tips.length)]
       }
     }
 
@@ -480,21 +412,14 @@
         if (error) throw error
         window.location.href = '../login.html'
       } catch (error) {
-        console.error('Ошибка выхода:', error)
         alert('Не удалось выйти. Попробуйте ещё раз.')
       }
     }
 
     document.addEventListener('DOMContentLoaded', () => {
       loadUserProfile()
-
       const logoutBtn = document.getElementById('logoutBtn')
-      if (logoutBtn) {
-        logoutBtn.addEventListener('click', (e) => {
-          e.preventDefault()
-          handleLogout()
-        })
-      }
+      if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); handleLogout(); })
     })
   </script>
 </body>
