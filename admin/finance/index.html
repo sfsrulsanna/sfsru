@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Финансы — Администратор СФСРЮ</title>
     
-    <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="css/admin.css" />
+    <!-- Пути к CSS оставлены как в вашем admin/index.html -->
+    <link rel="stylesheet" href="../../css/style.css" />
+    <link rel="stylesheet" href="../css/admin.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     
     <script type="importmap">
@@ -55,14 +56,13 @@
     <header class="admin-header">
         <div class="admin-header-container">
             <div class="admin-logo">
-                <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
                 <h1>СФСРЮ — Админ-панель</h1>
             </div>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="index.html">Главная</a></li>
-                    <li><a href="finance.html" class="active">Финансы</a></li>
-                    <li><a href="../index.html">На сайт</a></li>
+                    <li><a href="../index.html">Главная</a></li>
+                    <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
             <div class="admin-user">
@@ -77,9 +77,10 @@
             <h1 class="page-title">Финансовый отдел</h1>
             
             <div class="tabs">
-                <button class="tab-btn active" onclick="openTab('tab-banks')">🏦 Банки</button>
-                <button class="tab-btn" onclick="openTab('tab-products')">💳 Выдача продуктов</button>
-                <button class="tab-btn" onclick="openTab('tab-cashier')">💵 Касса (Наличные)</button>
+                <!-- Передаем this в функцию переключения вкладок -->
+                <button class="tab-btn active" onclick="openTab('tab-banks', this)">🏦 Банки</button>
+                <button class="tab-btn" onclick="openTab('tab-products', this)">💳 Выдача продуктов</button>
+                <button class="tab-btn" onclick="openTab('tab-cashier', this)">💵 Касса (Наличные)</button>
             </div>
 
             <!-- ВКЛАДКА 1: БАНКИ -->
@@ -115,7 +116,7 @@
                     <h3><i class="fas fa-id-card"></i> Выдать продукт клиенту</h3>
                     <form id="addProductForm">
                         <div class="form-group">
-                            <label>Пользователь (Поиск по ФИО или коду)</label>
+                            <label>Пользователь</label>
                             <select id="productUser" required>
                                 <option value="">Загрузка...</option>
                             </select>
@@ -177,8 +178,13 @@
     <script type="module">
         import { supabase } from '../js/supabase-config.js';
 
-        // Глобальные переменные
-        let currentUserRole = null;
+        // 1. Делаем функцию переключения вкладок глобальной
+        window.openTab = (tabId, btn) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
+        };
 
         // Проверка админа
         async function checkAdmin() {
@@ -187,7 +193,6 @@
             const { data: profile } = await supabase.from('users').select('role, email').eq('id', session.user.id).single();
             if (profile?.role !== 'admin') { await supabase.auth.signOut(); window.location.href = '../login.html'; return; }
             document.getElementById('adminEmail').textContent = profile.email;
-            currentUserRole = profile.role;
         }
         checkAdmin();
 
@@ -196,17 +201,8 @@
             window.location.href = '../login.html';
         });
 
-        // Переключение вкладок
-        window.openTab = (tabId) => {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.target.classList.add('active');
-        };
-
         // Загрузка выпадающих списков
         async function loadDropdowns() {
-            // Банки
             const { data: banks } = await supabase.schema('finance').from('banks').select('id, name').order('name');
             const bankSelect = document.getElementById('productBank');
             if (banks) {
@@ -214,7 +210,6 @@
                     banks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
             }
 
-            // Пользователи (с поиском)
             const { data: users } = await supabase.from('users').select('id, email, surname, name, personal_code').order('surname');
             const userSelect = document.getElementById('productUser');
             if (users) {
@@ -224,7 +219,7 @@
         }
         loadDropdowns();
 
-        // === ВКЛАДКА 1: ДОБАВЛЕНИЕ БАНКА (С ЗАГРУЗКОЙ ЛОГО) ===
+        // === ВКЛАДКА 1: ДОБАВЛЕНИЕ БАНКА ===
         document.getElementById('addBankForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBankBtn');
@@ -238,24 +233,20 @@
             const file = document.getElementById('bankLogo').files[0];
 
             try {
-                // 1. Формируем уникальное имя файла (чтобы не перезаписывать старые)
                 const fileExt = file.name.split('.').pop();
                 const fileName = `logo_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                 
-                // 2. Загружаем файл в Storage
                 msg.textContent = 'Загрузка изображения...';
-                const { error: uploadError, data: uploadData } = await supabase.storage
+                const { error: uploadError } = await supabase.storage
                     .from('bank-logos')
                     .upload(fileName, file, { cacheControl: '3600', upsert: false });
                 
                 if (uploadError) throw new Error('Ошибка Storage: ' + uploadError.message);
 
-                // 3. Получаем публичный URL
                 const { data: { publicUrl } } = supabase.storage
                     .from('bank-logos')
                     .getPublicUrl(fileName);
 
-                // 4. Сохраняем в БД
                 msg.textContent = 'Сохранение в базу данных...';
                 const { error: dbError } = await supabase.schema('finance').from('banks').insert([{
                     name, bic, corr_account: corr, logo_url: publicUrl
@@ -265,7 +256,7 @@
                 msg.textContent = '✅ Банк успешно добавлен!';
                 msg.className = 'status-msg status-success';
                 e.target.reset();
-                loadDropdowns(); // Обновляем список банков
+                loadDropdowns();
 
             } catch (err) {
                 msg.textContent = '❌ ' + err.message;
@@ -315,7 +306,7 @@
             }
         });
 
-        // === ВКЛАДКА 3: КАССА (ПОИСК И ОБРАБОТКА) ===
+        // === ВКЛАДКА 3: КАССА ===
         document.getElementById('searchUserBtn').addEventListener('click', async () => {
             const query = document.getElementById('searchUserInput').value.trim();
             const resultsDiv = document.getElementById('searchResults');
@@ -324,7 +315,6 @@
             resultsDiv.innerHTML = '<p>Поиск...</p>';
 
             try {
-                // Ищем по коду или фамилии
                 const { data: users, error } = await supabase
                     .from('users')
                     .select('id, surname, name, patronymic, personal_code, email')
@@ -335,7 +325,6 @@
 
                 let html = '';
                 for (const user of users) {
-                    // Для каждого найденного юзера подтягиваем его pending транзакции
                     const { data: transactions } = await supabase
                         .schema('finance')
                         .from('transactions')
@@ -359,8 +348,9 @@
                                             <div style="font-size:0.8rem; color:#888;">${t.description}</div>
                                         </div>
                                         <div>
-                                            <button onclick="window.processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать/Принять</button>
-                                            <button onclick="window.processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
+                                            <!-- Передаем this для блокировки кнопки -->
+                                            <button onclick="processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать/Принять</button>
+                                            <button onclick="processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
                                         </div>
                                     </div>
                                 `).join('') : '<p style="font-size: 0.9rem; color: #888;">Нет заявок.</p>'}
@@ -375,7 +365,7 @@
             }
         });
 
-        // Функция обработки наличных (Админ)
+        // Делаем функцию обработки наличных глобальной
         window.processCash = async (transactionId, action, btnElement) => {
             const actionText = action === 'approve' ? 'подтвердить' : 'отклонить';
             if (!confirm(`Вы уверены, что хотите ${actionText} операцию?`)) return;
@@ -392,8 +382,7 @@
                 if (error) throw error;
                 
                 alert('Операция успешно обработана!');
-                // Перезапускаем поиск, чтобы обновить список
-                document.getElementById('searchUserBtn').click();
+                document.getElementById('searchUserBtn').click(); // Обновляем список
 
             } catch (err) {
                 alert('Ошибка: ' + err.message);
