@@ -17,38 +17,42 @@
         .admin-main { padding: 40px 20px; }
         .admin-container { max-width: 1200px; margin: 0 auto; }
         
-        /* Вкладки */
-        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap;}
-        .tab-btn { background: none; border: none; font-size: 1.1rem; font-weight: bold; color: #666; cursor: pointer; padding: 10px 20px; border-radius: 6px; transition: 0.2s; }
-        .tab-btn:hover { background: #f5f5f5; color: #333; }
-        .tab-btn.active { background: #b30000; color: white; }
-        
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
+        /* Анимации */
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+        
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap;}
+        .tab-btn { background: none; border: none; font-size: 1.1rem; font-weight: bold; color: #666; cursor: pointer; padding: 10px 20px; border-radius: 6px; transition: all 0.3s ease; }
+        .tab-btn:hover { background: #f5f5f5; color: #333; transform: translateY(-2px); }
+        .tab-btn.active { background: #b30000; color: white; box-shadow: 0 4px 10px rgba(179,0,0,0.3); }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease forwards; }
 
-        /* Формы */
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
         
-        .form-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;}
+        .form-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; transition: box-shadow 0.3s ease; }
+        .form-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,0.1); }
         .form-card h3 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
         
-        .form-group { margin-bottom: 15px; }
+        .form-group { margin-bottom: 15px; animation: slideIn 0.3s ease forwards; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: #555; }
-        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; transition: border-color 0.3s, box-shadow 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #b30000; box-shadow: 0 0 8px rgba(179,0,0,0.2); }
         
-        .btn-submit { background: #b30000; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.2s; }
-        .btn-submit:hover { background: #8a0000; }
-        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+        .btn-submit { background: #b30000; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: all 0.3s ease; }
+        .btn-submit:hover { background: #8a0000; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(179,0,0,0.3); }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
         
-        .status-msg { margin-top: 15px; font-weight: bold; font-size: 0.9rem; }
-        .status-success { color: #2e7d32; }
-        .status-error { color: #d32f2f; }
+        .status-msg { margin-top: 15px; font-weight: bold; font-size: 0.9rem; text-align: center; padding: 10px; border-radius: 6px; opacity: 0; transition: opacity 0.3s ease; }
+        .status-msg.show { opacity: 1; }
+        .status-success { color: #2e7d32; background: #e8f5e9; }
+        .status-error { color: #d32f2f; background: #ffebee; }
 
-        /* Карточки пользователей в кассе */
-        .user-search-result { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #b30000;}
-        .request-item { background: white; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .user-search-result { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #b30000; animation: fadeIn 0.4s ease;}
+        .request-item { background: white; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
+        .request-item:hover { transform: translateX(5px); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
     </style>
 </head>
 <body>
@@ -90,13 +94,25 @@
                             <label>Название банка</label>
                             <input type="text" id="bankName" placeholder="Например: Госбанк СФСРЮ" required>
                         </div>
-                        <div class="form-group">
-                            <label>БИК</label>
-                            <input type="text" id="bankBic" placeholder="044525225" required>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>ИНН (10 цифр)</label>
+                                <input type="text" id="bankInn" placeholder="7700000000" maxlength="10" pattern="\d{10}" title="Введите ровно 10 цифр" required>
+                            </div>
+                            <div class="form-group">
+                                <label>КПП (9 цифр)</label>
+                                <input type="text" id="bankKpp" placeholder="770001001" maxlength="9" pattern="\d{9}" title="Введите ровно 9 цифр" required>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Корр. счет</label>
-                            <input type="text" id="bankCorr" placeholder="30101810400000000225" required>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>БИК</label>
+                                <input type="text" id="bankBic" placeholder="044525225" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Корр. счет</label>
+                                <input type="text" id="bankCorr" placeholder="30101810400000000225" required>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Логотип банка (PNG, JPG, SVG)</label>
@@ -127,26 +143,31 @@
                         </div>
                         <div class="form-group">
                             <label>Тип продукта</label>
-                            <select id="productType" required>
+                            <select id="productType" onchange="toggleProductFields()" required>
                                 <option value="card">Банковская карта</option>
                                 <option value="account">Расчетный счет</option>
                                 <option value="deposit">Вклад</option>
                             </select>
                         </div>
-                        <div class="form-grid">
+                        
+                        <!-- Поля для карты (скрываются для счетов/вкладов) -->
+                        <div id="cardFields">
                             <div class="form-group">
-                                <label>Номер (маскированный)</label>
-                                <input type="text" id="productNumber" placeholder="**** **** **** 1234" required>
-                            </div>
-                            <div class="form-group">
-                                <label>Срок действия (ММ/ГГ)</label>
-                                <input type="text" id="productExpiry" placeholder="12/28">
+                                <label>Номер карты (16 цифр)</label>
+                                <input type="text" id="productCardNum" placeholder="0000000000000000" maxlength="16" pattern="\d{16}" title="Введите 16 цифр">
                             </div>
                         </div>
+
                         <div class="form-group">
-                            <label>Баланс / Сумма (в ¥)</label>
-                            <input type="number" id="productBalance" placeholder="0.00" step="0.01" required>
+                            <label>Номер счета (20 цифр)</label>
+                            <input type="text" id="productAccNum" placeholder="00000000000000000000" maxlength="20" pattern="\d{20}" title="Введите 20 цифр" required>
                         </div>
+
+                        <div class="form-group">
+                            <label>Номер договора</label>
+                            <input type="text" id="productContract" placeholder="Д-123/2026" required>
+                        </div>
+
                         <button type="submit" class="btn-submit" id="submitProductBtn">Выдать продукт</button>
                         <div id="productMsg" class="status-msg"></div>
                     </form>
@@ -158,22 +179,15 @@
                 <div class="form-card">
                     <h3><i class="fas fa-search"></i> Поиск клиента для выдачи/приема наличных</h3>
                     <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                        <input type="text" id="searchUserInput" placeholder="Введите ФИО или личный код (например: 1234-567890)" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                        <input type="text" id="searchUserInput" placeholder="Введите ФИО или личный код" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
                         <button id="searchUserBtn" class="btn-submit" style="width: auto; padding: 10px 20px;">Найти</button>
                     </div>
-                    
                     <div id="searchResults"></div>
                 </div>
             </div>
-
         </div>
     </main>
 
-    <footer class="admin-footer">
-        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-    </footer>
-
-    <!-- 1. ОБЫЧНЫЙ СКРИПТ (без module). Определяет openTab глобально. -->
     <script>
         function openTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -181,13 +195,28 @@
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
         }
+
+        function toggleProductFields() {
+            const type = document.getElementById('productType').value;
+            const cardFields = document.getElementById('cardFields');
+            const cardInput = document.getElementById('productCardNum');
+            
+            if (type === 'card') {
+                cardFields.style.display = 'block';
+                cardInput.required = true;
+            } else {
+                cardFields.style.display = 'none';
+                cardInput.required = false;
+                cardInput.value = ''; // Очищаем при скрытии
+            }
+        }
+        // Вызываем при загрузке, чтобы скрыть если выбрано не "карта"
+        document.addEventListener('DOMContentLoaded', toggleProductFields);
     </script>
 
-    <!-- 2. МОДУЛЬНЫЙ СКРИПТ для Supabase -->
     <script type="module">
         import { supabase } from '../../js/supabase-config.js';
 
-        // Проверка админа
         async function checkAdmin() {
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) { window.location.href = '../../login.html'; return; }
@@ -202,7 +231,6 @@
             window.location.href = '../../login.html';
         });
 
-        // Загрузка выпадающих списков
         async function loadDropdowns() {
             const { data: banks } = await supabase.schema('finance').from('banks').select('id, name').order('name');
             const bankSelect = document.getElementById('productBank');
@@ -220,160 +248,134 @@
         }
         loadDropdowns();
 
-        // === ВКЛАДКА 1: ДОБАВЛЕНИЕ БАНКА ===
+        // БАНКИ
         document.getElementById('addBankForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitBankBtn');
             const msg = document.getElementById('bankMsg');
-            btn.disabled = true; btn.textContent = 'Загрузка данных...';
-            msg.textContent = '';
+            btn.disabled = true; btn.textContent = 'Загрузка...';
+            msg.className = 'status-msg'; msg.textContent = '';
 
             const name = document.getElementById('bankName').value;
+            const inn = document.getElementById('bankInn').value;
+            const kpp = document.getElementById('bankKpp').value;
             const bic = document.getElementById('bankBic').value;
             const corr = document.getElementById('bankCorr').value;
             const file = document.getElementById('bankLogo').files[0];
 
             try {
                 const fileExt = file.name.split('.').pop();
-                const fileName = `logo_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                const fileName = `logo_${Date.now()}.${fileExt}`;
                 
-                msg.textContent = 'Загрузка изображения...';
-                const { error: uploadError } = await supabase.storage
-                    .from('bank-logos')
-                    .upload(fileName, file, { cacheControl: '3600', upsert: false });
-                
+                msg.textContent = 'Загрузка изображения...'; msg.classList.add('show');
+                const { error: uploadError } = await supabase.storage.from('bank-logos').upload(fileName, file);
                 if (uploadError) throw new Error('Ошибка Storage: ' + uploadError.message);
 
-                const { data: { publicUrl } } = supabase.storage
-                    .from('bank-logos')
-                    .getPublicUrl(fileName);
+                const { data: { publicUrl } } = supabase.storage.from('bank-logos').getPublicUrl(fileName);
 
-                msg.textContent = 'Сохранение в базу данных...';
                 const { error: dbError } = await supabase.schema('finance').from('banks').insert([{
-                    name, bic, corr_account: corr, logo_url: publicUrl
+                    name, inn, kpp, bic, corr_account: corr, logo_url: publicUrl
                 }]);
                 if (dbError) throw new Error('Ошибка БД: ' + dbError.message);
 
                 msg.textContent = '✅ Банк успешно добавлен!';
-                msg.className = 'status-msg status-success';
+                msg.className = 'status-msg status-success show';
                 e.target.reset();
                 loadDropdowns();
-
             } catch (err) {
                 msg.textContent = '❌ ' + err.message;
-                msg.className = 'status-msg status-error';
+                msg.className = 'status-msg status-error show';
             } finally {
                 btn.disabled = false; btn.textContent = 'Загрузить банк в систему';
             }
         });
 
-        // === ВКЛАДКА 2: ВЫДАЧА ПРОДУКТА ===
+        // ПРОДУКТЫ
         document.getElementById('addProductForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitProductBtn');
             const msg = document.getElementById('productMsg');
             btn.disabled = true; btn.textContent = 'Сохранение...';
-            msg.textContent = '';
+            msg.className = 'status-msg'; msg.textContent = '';
 
-            // 1. Получаем данные и СРАЗУ проверяем их
             const userId = document.getElementById('productUser').value;
             const bankId = document.getElementById('productBank').value;
             const type = document.getElementById('productType').value;
-            const number = document.getElementById('productNumber').value;
-            const expiry = document.getElementById('productExpiry').value;
-            const balance = parseFloat(document.getElementById('productBalance').value);
+            const cardNum = document.getElementById('productCardNum').value;
+            const accNum = document.getElementById('productAccNum').value;
+            const contract = document.getElementById('productContract').value;
 
-            // ЖЕСТКАЯ ПРОВЕРКА: если ID пустые, ничего не отправляем
             if (!userId || !bankId) {
-                msg.textContent = '❌ Ошибка: Вы не выбрали пользователя или банк!';
-                msg.className = 'status-msg status-error';
-                console.error('Пустые ID:', { userId, bankId });
+                msg.textContent = '❌ Выберите пользователя и банк!';
+                msg.className = 'status-msg status-error show';
                 btn.disabled = false; btn.textContent = 'Выдать продукт';
                 return;
             }
 
-            // Формируем объект для отправки
-            let payload = {};
-            if (type === 'card') {
-                payload = { user_id: userId, bank_id: bankId, card_number_masked: number, expiry_date: expiry || '00/00', balance: balance };
-            } else if (type === 'account') {
-                payload = { user_id: userId, bank_id: bankId, account_number_masked: number, balance: balance };
-            } else if (type === 'deposit') {
-                payload = { user_id: userId, bank_id: bankId, deposit_name: 'Вклад "Стабильность"', amount: balance, interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString() };
-            }
-
-            console.log("ОТПРАВЛЯЕМ В SUPABASE:", payload); // Смотрим, что именно уходит
-
             try {
-                let response;
                 if (type === 'card') {
-                    response = await supabase.schema('finance').from('bank_cards').insert([payload]);
+                    await supabase.schema('finance').from('bank_cards').insert([{
+                        user_id: userId, bank_id: bankId, card_number: cardNum, account_number: accNum, contract_number: contract, balance: 0
+                    }]);
                 } else if (type === 'account') {
-                    response = await supabase.schema('finance').from('bank_accounts').insert([payload]);
+                    await supabase.schema('finance').from('bank_accounts').insert([{
+                        user_id: userId, bank_id: bankId, account_number: accNum, contract_number: contract, balance: 0
+                    }]);
                 } else if (type === 'deposit') {
-                    response = await supabase.schema('finance').from('bank_deposits').insert([payload]);
+                    await supabase.schema('finance').from('bank_deposits').insert([{
+                        user_id: userId, bank_id: bankId, account_number: accNum, contract_number: contract, deposit_name: 'Вклад "Стабильность"', amount: 0, interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
+                    }]);
                 }
-
-                // Если Supabase вернул ошибку, выбрасываем её
-                if (response.error) throw response.error;
-
                 msg.textContent = '✅ Продукт успешно выдан!';
-                msg.className = 'status-msg status-success';
+                msg.className = 'status-msg status-success show';
                 e.target.reset();
+                toggleProductFields();
             } catch (err) {
-                // Выводим ВСЕ возможные детали ошибки
-                console.error('ДЕТАЛИ ОШИБКИ SUPABASE:', err);
-                msg.textContent = '❌ Ошибка: ' + (err.message || err.details || JSON.stringify(err));
-                msg.className = 'status-msg status-error';
+                msg.textContent = '❌ Ошибка: ' + err.message;
+                msg.className = 'status-msg status-error show';
             } finally {
                 btn.disabled = false; btn.textContent = 'Выдать продукт';
             }
         });
 
-        // === ВКЛАДКА 3: КАССА ===
+        // КАССА
         document.getElementById('searchUserBtn').addEventListener('click', async () => {
             const query = document.getElementById('searchUserInput').value.trim();
             const resultsDiv = document.getElementById('searchResults');
-            if (!query) { alert('Введите запрос для поиска'); return; }
-
+            if (!query) { alert('Введите запрос'); return; }
             resultsDiv.innerHTML = '<p>Поиск...</p>';
 
             try {
                 const { data: users, error } = await supabase
-                    .from('users')
-                    .select('id, surname, name, patronymic, personal_code, email')
+                    .from('users').select('id, surname, name, patronymic, personal_code, email')
                     .or(`personal_code.ilike.%${query}%,surname.ilike.%${query}%`);
 
                 if (error) throw error;
-                if (users.length === 0) { resultsDiv.innerHTML = '<p>Пользователи не найдены.</p>'; return; }
+                if (users.length === 0) { resultsDiv.innerHTML = '<p>Не найдено.</p>'; return; }
 
                 let html = '';
                 for (const user of users) {
                     const { data: transactions } = await supabase
-                        .schema('finance')
-                        .from('transactions')
-                        .select('*')
-                        .eq('user_id', user.id)
-                        .eq('status', 'pending');
+                        .schema('finance').from('transactions').select('*')
+                        .eq('user_id', user.id).eq('status', 'pending');
 
                     html += `
                         <div class="user-search-result">
                             <h4>${user.surname} ${user.name} ${user.patronymic || ''}</h4>
-                            <p style="font-size: 0.9rem; color: #666;">Личный код: <b>${user.personal_code || 'Нет'}</b> | Email: ${user.email}</p>
-                            
+                            <p style="font-size: 0.9rem; color: #666;">Код: <b>${user.personal_code || 'Нет'}</b> | Email: ${user.email}</p>
                             <div style="margin-top: 15px;">
-                                <h5>Ожидающие операции:</h5>
+                                <h5>Ожидающие операции (Предзаказы):</h5>
                                 ${transactions && transactions.length > 0 ? transactions.map(t => `
                                     <div class="request-item">
                                         <div>
                                             <span style="font-weight:bold; color:${t.type === 'deposit' ? '#2e7d32' : '#d32f2f'};">
                                                 ${t.type === 'deposit' ? 'Пополнение' : 'Снятие'} на ${new Intl.NumberFormat('ru-RU', {minimumFractionDigits: 2}).format(t.amount)} ¥
                                             </span>
-                                            <div style="font-size:0.8rem; color:#888;">${t.description}</div>
+                                            <div style="font-size:0.8rem; color:#888;">${t.description} (${t.currency})</div>
                                         </div>
                                         <div>
-                                            <button onclick="window.processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать/Принять</button>
-                                            <button onclick="window.processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
+                                            <button onclick="window.processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Выдать</button>
+                                            <button onclick="window.processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Отклонить</button>
                                         </div>
                                     </div>
                                 `).join('') : '<p style="font-size: 0.9rem; color: #888;">Нет заявок.</p>'}
@@ -382,36 +384,24 @@
                     `;
                 }
                 resultsDiv.innerHTML = html;
-
             } catch (err) {
-                resultsDiv.innerHTML = '<p style="color:red;">Ошибка поиска: ' + err.message + '</p>';
+                resultsDiv.innerHTML = '<p style="color:red;">Ошибка: ' + err.message + '</p>';
             }
         });
 
-        // Делаем функцию обработки наличных глобальной (через window)
         window.processCash = async (transactionId, action, btnElement) => {
-            const actionText = action === 'approve' ? 'подтвердить' : 'отклонить';
-            if (!confirm(`Вы уверены, что хотите ${actionText} операцию?`)) return;
-
-            btnElement.disabled = true;
-            btnElement.textContent = '...';
-
+            if (!confirm(`Подтвердить операцию?`)) return;
+            btnElement.disabled = true; btnElement.textContent = '...';
             try {
                 const { error } = await supabase.schema('finance').rpc('admin_process_request', {
-                    p_transaction_id: transactionId,
-                    p_action: action
+                    p_transaction_id: transactionId, p_action: action
                 });
-
                 if (error) throw error;
-                
-                alert('Операция успешно обработана!');
-                document.getElementById('searchUserBtn').click(); // Обновляем список
-
+                alert('Успешно обработано!');
+                document.getElementById('searchUserBtn').click();
             } catch (err) {
-                // ВЫВОДИМ ВСЮ ОШИБКУ В КОНСОЛЬ
-                console.error('Полная ошибка Supabase:', err);
-                msg.textContent = '❌ Ошибка: ' + (err.message || err.details || 'Неизвестная ошибка');
-                msg.className = 'status-msg status-error';
+                alert('Ошибка: ' + err.message);
+                btnElement.disabled = false; btnElement.textContent = 'Повторить';
             }
         };
     </script>

@@ -5,16 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Финансы — Личный кабинет СФСРЮ</title>
 
-  <!-- Favicons -->
-  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-  <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
-  <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
-
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/index.css" />
 
   <style>
-    /* Общие стили */
+    /* Базовые стили */
     .back-link { display: inline-block; margin-bottom: 20px; color: #b30000; text-decoration: none; font-weight: bold; transition: opacity 0.2s; }
     .back-link:hover { opacity: 0.8; }
     .page-header { text-align: center; margin-bottom: 40px; }
@@ -22,12 +17,17 @@
     .page-header p { color: #666; font-size: 1.1rem; }
     .section-title { font-size: 1.5rem; color: #333; margin: 40px 0 20px 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
 
-    /* --- ГОС СЧЕТ --- */
+    /* Анимации */
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes popIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+
+    /* Гос счет */
     .gov-account-card {
       background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
       border: 2px solid #b30000; border-radius: 12px; padding: 30px;
       box-shadow: 0 8px 24px rgba(179, 0, 0, 0.08);
       display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
+      animation: popIn 0.4s ease-out forwards;
     }
     .balance-info h3 { margin: 0 0 5px 0; color: #666; font-weight: normal; }
     .account-balance-large { font-size: 3rem; font-weight: bold; margin: 0; }
@@ -36,16 +36,17 @@
     .balance-zero { color: #757575; }
     .account-actions { display: flex; gap: 15px; flex-wrap: wrap; }
     
-    .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background-color 0.2s, transform 0.1s; }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background-color: #b30000; color: white; }
-    .btn-primary:hover { background-color: #8a0000; }
+    .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; transition: all 0.2s ease; }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background-color: #b30000; color: white; box-shadow: 0 4px 10px rgba(179,0,0,0.2); }
+    .btn-primary:hover { background-color: #8a0000; transform: translateY(-2px); box-shadow: 0 6px 15px rgba(179,0,0,0.3); }
     .btn-secondary { background-color: #f0f0f0; color: #333; border: 1px solid #ccc; }
-    .btn-secondary:hover { background-color: #e0e0e0; }
+    .btn-secondary:hover { background-color: #e0e0e0; transform: translateY(-2px); }
     
-    /* История транзакций */
-    .transactions-list { margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #eee;}
-    .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #eee; }
+    /* История */
+    .transactions-list { margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #eee; animation: slideUp 0.5s ease-out forwards; }
+    .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #eee; transition: background 0.2s; }
+    .transaction-item:hover { background: #fafafa; }
     .transaction-item:last-child { border-bottom: none; }
     .transaction-info .desc { color: #333; font-weight: bold; }
     .transaction-info .meta { font-size: 0.85em; color: #888; margin-top: 4px; }
@@ -53,43 +54,40 @@
     .amount-plus { color: #2e7d32; }
     .amount-minus { color: #d32f2f; }
     
-    /* Статусы транзакций */
     .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-left: 10px; }
     .status-pending { background-color: #fff3e0; color: #e65100; }
     .status-completed { background-color: #e8f5e9; color: #2e7d32; }
     .status-rejected { background-color: #ffebee; color: #c62828; }
 
-    /* --- БАНКОВСКИЕ ПРОДУКТЫ (НОВЫЙ ДИЗАЙН) --- */
-    .bank-grid { 
-      display: grid; 
-      grid-template-columns: repeat(2, 1fr); /* Две карточки в ряд */
-      gap: 20px; 
-    }
+    /* Банковские продукты (2 в ряд) */
+    .bank-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
     @media (max-width: 768px) { .bank-grid { grid-template-columns: 1fr; } }
 
     .product-card {
       display: flex; align-items: center; background: white; padding: 20px; border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; 
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       border-left: 4px solid #b30000;
+      animation: slideUp 0.4s ease-out forwards;
+      opacity: 0; /* Начальное состояние для анимации */
     }
-    .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+    .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     
-    .bank-logo { width: 60px; height: 60px; object-fit: contain; margin-right: 20px; border-radius: 8px; }
+    .bank-logo { width: 60px; height: 60px; object-fit: contain; margin-right: 20px; border-radius: 8px; background: #fff;}
     
-    .product-info { display: flex; flex-direction: column; }
+    .product-info { display: flex; flex-direction: column; flex: 1;}
     .product-bank-name { font-size: 1.2rem; font-weight: bold; color: #333; margin-bottom: 5px; }
-    .product-number { font-size: 1rem; color: #555; font-family: monospace; margin-bottom: 3px; }
+    .product-number { font-size: 1rem; color: #555; font-family: monospace; margin-bottom: 3px; letter-spacing: 1px;}
     .product-expiry { font-size: 0.85rem; color: #888; }
-    .product-balance-inline { font-size: 1.1rem; font-weight: bold; color: #2e7d32; margin-top: 5px; }
 
-    /* Модалка для реквизитов банка */
+    /* Модалка */
     dialog {
       border: none; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
-      max-width: 400px; width: 90%; position: fixed; inset: 0; margin: auto; height: fit-content;
-      opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
+      max-width: 450px; width: 90%; position: fixed; inset: 0; margin: auto; height: fit-content;
+      opacity: 0; transform: translateY(20px) scale(0.95); transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
     }
-    dialog[open] { opacity: 1; transform: translateY(0); }
-    @starting-style { dialog[open] { opacity: 0; transform: translateY(20px); } }
+    dialog[open] { opacity: 1; transform: translateY(0) scale(1); }
+    @starting-style { dialog[open] { opacity: 0; transform: translateY(20px) scale(0.95); } }
     dialog::backdrop { background: rgba(0,0,0,0); transition: background-color 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete; }
     dialog[open]::backdrop { background: rgba(0,0,0,0.6); }
     @starting-style { dialog[open]::backdrop { background: rgba(0,0,0,0); } }
@@ -100,6 +98,10 @@
     .bank-detail-row span:last-child { font-weight: bold; color: #333; font-family: monospace; }
     
     .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px; grid-column: 1 / -1;}
+    
+    /* Стили для радио-кнопок в модалке */
+    .radio-group { display: flex; gap: 15px; margin-bottom: 15px; }
+    .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -153,49 +155,57 @@
     </div>
   </main>
 
-  <!-- МОДАЛЬНОЕ ОКНО РЕКВИЗИТОВ БАНКА -->
+  <!-- МОДАЛЬНОЕ ОКНО: РЕКВИЗИТЫ -->
   <dialog id="bankDetailsDialog">
     <div class="dialog-header" id="bankDialogTitle">Информация о банке</div>
-    <div id="bankDialogBody">
-      <!-- Заполняется через JS -->
-    </div>
+    <div id="bankDialogBody"></div>
     <div style="text-align: center; margin-top: 20px;">
       <button class="btn btn-secondary" onclick="document.getElementById('bankDetailsDialog').close()">Закрыть</button>
     </div>
   </dialog>
 
-  <!-- МОДАЛЬНОЕ ОКНО ТРАНЗАКЦИЙ (ОСТАЛОСЬ БЕЗ ИЗМЕНЕНИЙ) -->
+  <!-- МОДАЛЬНОЕ ОКНО: ТРАНЗАКЦИИ -->
   <dialog id="transactionDialog">
-    <div class="dialog-header" id="dialogTitle">Пополнение счёта</div>
+    <div class="dialog-header" id="dialogTitle">Операция</div>
     <form id="transactionForm" method="dialog">
-      <div class="form-group">
-        <label for="methodInput">Способ операции</label>
-        <select id="methodInput" required>
-          <option value="cash">Наличными в Госбанке СФСРЮ</option>
-          <option value="card" disabled>Банковская карта онлайн (недоступно)</option>
+      
+      <!-- Только для снятия: Выбор типа -->
+      <div id="withdrawalTypeSelector" style="display:none; margin-bottom: 15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Тип снятия</label>
+        <div class="radio-group">
+          <label class="radio-label"><input type="radio" name="wType" value="direct" checked onchange="updateWithdrawalLogic()"> Без предзаказа (до 1000 ¥)</label>
+          <label class="radio-label"><input type="radio" name="wType" value="preorder" onchange="updateWithdrawalLogic()"> По предзаказу</label>
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Валюта</label>
+        <select id="currencyInput" style="width:100%; padding:10px; border-radius:6px;" required onchange="updateConversion()">
+          <option value="YUR">Юльсаннский рубль (¥)</option>
+          <option value="RUB">Российский рубль (₽)</option>
+          <option value="BYN">Белорусский рубль (Br)</option>
+          <option value="YUL">Юль (Yul)</option>
+          <option value="NTL">Натураль (NTL)</option>
+          <option value="ETN">Эйтинг (ETN)</option>
         </select>
       </div>
-      <div class="form-group">
-        <label for="currencyInput">Валюта</label>
-        <select id="currencyInput" required>
-          <option value="YUL">Юльсаннский рубль (¥)</option>
-          <option value="RUB">Российский рубль (₽) — 1 ¥ = 60 ₽</option>
-          <option value="BYN">Белорусский рубль (Br) — 1 ¥ = 2.16 Br</option>
-        </select>
+
+      <div class="form-group" style="margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Сумма</label>
+        <input type="number" id="amountInput" min="1" step="0.01" placeholder="0.00" style="width:100%; padding:10px; border-radius:6px;" required oninput="updateConversion()" />
+        <div id="conversionHint" style="display:none; margin-top:8px; font-weight:bold; font-size: 0.9rem;"></div>
       </div>
-      <div class="form-group">
-        <label for="amountInput">Сумма</label>
-        <input type="number" id="amountInput" min="1" step="0.01" placeholder="0.00" required />
-        <div id="conversionHint" class="conversion-hint" style="display:none; margin-top:5px; font-weight:bold;"></div>
+
+      <div class="form-group" style="margin-bottom:15px;">
+        <label style="display:block; font-weight:bold; margin-bottom:5px;">Назначение</label>
+        <input type="text" id="descInput" placeholder="Например: Пополнение" style="width:100%; padding:10px; border-radius:6px;" required />
       </div>
-      <div class="form-group">
-        <label for="descInput">Назначение</label>
-        <input type="text" id="descInput" placeholder="Например: Пополнение" required />
-      </div>
-      <div id="dialogError" style="color:#d32f2f; font-size:0.9rem; text-align:center;"></div>
+      
+      <div id="dialogError" style="color:#d32f2f; font-size:0.9rem; text-align:center; min-height:20px;"></div>
+      
       <div class="dialog-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('transactionDialog').close()">Отмена</button>
-        <button type="submit" class="btn btn-primary" id="submitBtn">Оформить заявку</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Подтвердить</button>
       </div>
     </form>
   </dialog>
@@ -239,7 +249,7 @@
         const { data: transactions } = await supabase.schema('finance').from('transactions').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(10);
         renderGovAccountView(section, account.balance, transactions || []);
       } catch (err) {
-        section.innerHTML = `<p style="color:#d32f2f; text-align:center;">Ошибка загрузки счёта: ${err.message}</p>`;
+        section.innerHTML = `<p style="color:#d32f2f; text-align:center;">Ошибка: ${err.message}</p>`;
       }
     }
 
@@ -266,7 +276,7 @@
       const formatted = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(numBalance);
       let colorClass = numBalance > 0 ? 'balance-positive' : (numBalance < 0 ? 'balance-negative' : 'balance-zero');
 
-      let transHtml = transactions.length ? transactions.map(t => {
+      let transHtml = transactions.length ? transactions.map((t, index) => {
         const isPlus = t.type === 'deposit' || t.type === 'pension';
         const sign = isPlus ? '+' : '-';
         const amtClass = isPlus ? 'amount-plus' : 'amount-minus';
@@ -278,10 +288,10 @@
         else if (t.status === 'rejected') statusHtml = '<span class="status-badge status-rejected">Отказано</span>';
 
         return `
-          <div class="transaction-item" style="${t.status === 'rejected' ? 'opacity: 0.6;' : ''}">
+          <div class="transaction-item" style="animation-delay: ${index * 0.05}s; ${t.status === 'rejected' ? 'opacity: 0.6;' : ''}">
             <div class="transaction-info">
               <div class="desc">${t.description} ${statusHtml}</div>
-              <div class="meta">${date}</div>
+              <div class="meta">${date} • ${t.currency}</div>
             </div>
             <div class="transaction-amount ${amtClass}">${sign} ${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(t.amount)} ¥</div>
           </div>
@@ -296,7 +306,7 @@
           </div>
           <div class="account-actions">
             <button class="btn btn-primary" onclick="openTransactionDialog('deposit')">Пополнить</button>
-            <button class="btn btn-secondary" onclick="openTransactionDialog('withdrawal')">Снять</button>
+            <button class="btn btn-secondary" onclick="openTransactionDialog('withdrawal')">Снять наличные</button>
           </div>
         </div>
         <h3 style="margin-top: 30px; margin-bottom: 15px; color: #333;">Последние операции</h3>
@@ -310,19 +320,18 @@
       const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*, banks(*)').eq('user_id', currentUserId);
       const cardsGrid = document.getElementById('cardsGrid');
       if (cards && cards.length > 0) {
-        cardsGrid.innerHTML = cards.map(c => {
-          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(c.balance);
+        cardsGrid.innerHTML = cards.map((c, i) => {
           const logo = c.banks?.logo_url || '../images/gerb.png';
           const bName = c.banks?.name || 'Банк СФСРЮ';
-          
+          const formattedCard = c.card_number ? c.card_number.replace(/(\d{4})/g, '$1 ').trim() : '**** **** **** ****';
           return `
-            <div class="product-card" onclick="showBankDetails('${bName}', '${c.banks?.bic || '---'}', '${c.banks?.corr_account || '---'}')">
-              <img src="${logo}" class="bank-logo" alt="Логотип">
+            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${c.banks?.bic || '---'}', '${c.banks?.corr_account || '---'}', '${c.banks?.inn || '---'}', '${c.banks?.kpp || '---'}')">
+              <img src="${logo}" class="bank-logo" alt="Логотип" onerror="this.src='../images/gerb.png'">
               <div class="product-info">
                 <div class="product-bank-name">${bName}</div>
-                <div class="product-number">${c.card_number_masked}</div>
-                <div class="product-expiry">Действует до: ${c.expiry_date}</div>
-                <div class="product-balance-inline">${bal} ¥</div>
+                <div class="product-number">${formattedCard}</div>
+                <div class="product-expiry">Счет: ${c.account_number || '---'}</div>
+                <div class="product-expiry">Договор: ${c.contract_number || '---'}</div>
               </div>
             </div>
           `;
@@ -333,19 +342,17 @@
       const { data: accounts } = await supabase.schema('finance').from('bank_accounts').select('*, banks(*)').eq('user_id', currentUserId);
       const accountsGrid = document.getElementById('accountsGrid');
       if (accounts && accounts.length > 0) {
-        accountsGrid.innerHTML = accounts.map(a => {
-          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(a.balance);
+        accountsGrid.innerHTML = accounts.map((a, i) => {
           const logo = a.banks?.logo_url || '../images/gerb.png';
           const bName = a.banks?.name || 'Банк СФСРЮ';
-          
           return `
-            <div class="product-card" onclick="showBankDetails('${bName}', '${a.banks?.bic || '---'}', '${a.banks?.corr_account || '---'}')">
-              <img src="${logo}" class="bank-logo" alt="Логотип">
+            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${a.banks?.bic || '---'}', '${a.banks?.corr_account || '---'}', '${a.banks?.inn || '---'}', '${a.banks?.kpp || '---'}')">
+              <img src="${logo}" class="bank-logo" alt="Логотип" onerror="this.src='../images/gerb.png'">
               <div class="product-info">
                 <div class="product-bank-name">${bName}</div>
-                <div class="product-number">${a.account_number_masked}</div>
+                <div class="product-number">${a.account_number || '---'}</div>
                 <div class="product-expiry">Расчётный счёт</div>
-                <div class="product-balance-inline">${bal} ¥</div>
+                <div class="product-expiry">Договор: ${a.contract_number || '---'}</div>
               </div>
             </div>
           `;
@@ -356,20 +363,17 @@
       const { data: deposits } = await supabase.schema('finance').from('bank_deposits').select('*, banks(*)').eq('user_id', currentUserId);
       const depositsGrid = document.getElementById('depositsGrid');
       if (deposits && deposits.length > 0) {
-        depositsGrid.innerHTML = deposits.map(d => {
-          const amt = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(d.amount);
-          const date = new Date(d.end_date).toLocaleDateString('ru-RU');
+        depositsGrid.innerHTML = deposits.map((d, i) => {
           const logo = d.banks?.logo_url || '../images/gerb.png';
           const bName = d.banks?.name || 'Банк СФСРЮ';
-          
           return `
-            <div class="product-card" onclick="showBankDetails('${bName}', '${d.banks?.bic || '---'}', '${d.banks?.corr_account || '---'}')">
-              <img src="${logo}" class="bank-logo" alt="Логотип">
+            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${d.banks?.bic || '---'}', '${d.banks?.corr_account || '---'}', '${d.banks?.inn || '---'}', '${d.banks?.kpp || '---'}')">
+              <img src="${logo}" class="bank-logo" alt="Логотип" onerror="this.src='../images/gerb.png'">
               <div class="product-info">
                 <div class="product-bank-name">${bName}</div>
                 <div class="product-number">${d.deposit_name}</div>
-                <div class="product-expiry">Ставка: ${d.interest_rate}% | До: ${date}</div>
-                <div class="product-balance-inline">${amt} ¥</div>
+                <div class="product-expiry">Счет: ${d.account_number || '---'}</div>
+                <div class="product-expiry">Договор: ${d.contract_number || '---'}</div>
               </div>
             </div>
           `;
@@ -378,9 +382,11 @@
     }
 
     // === ПОКАЗ РЕКВИЗИТОВ БАНКА ===
-    window.showBankDetails = (name, bic, corr) => {
+    window.showBankDetails = (name, bic, corr, inn, kpp) => {
       document.getElementById('bankDialogTitle').textContent = name;
       document.getElementById('bankDialogBody').innerHTML = `
+        <div class="bank-detail-row"><span>ИНН:</span> <span>${inn}</span></div>
+        <div class="bank-detail-row"><span>КПП:</span> <span>${kpp}</span></div>
         <div class="bank-detail-row"><span>БИК:</span> <span>${bic}</span></div>
         <div class="bank-detail-row"><span>Корр. счёт:</span> <span>${corr}</span></div>
         <div style="margin-top: 15px; font-size: 0.9rem; color: #666; text-align: center;">
@@ -397,56 +403,93 @@
       const errorDiv = document.getElementById('dialogError');
       const amountInput = document.getElementById('amountInput');
       const currencySelect = document.getElementById('currencyInput');
-      const hintDiv = document.getElementById('conversionHint');
-
-      const updateConversion = () => {
-        const amount = parseFloat(amountInput.value);
-        const currency = currencySelect.value;
-        
-        if (!amount || amount <= 0 || currency === 'YUL') { hintDiv.style.display = 'none'; return; }
-        
-        let converted = 0;
-        let rateText = '';
-        if (currency === 'RUB') { converted = (amount / 60).toFixed(2); rateText = '1 ¥ = 60 ₽'; } 
-        else if (currency === 'BYN') { converted = (amount / 2.16).toFixed(2); rateText = '1 ¥ = 2.16 Br'; }
-
-        if (currentActionType === 'deposit') {
-          hintDiv.textContent = `К зачислению: ${converted} ¥ (${rateText})`;
-          hintDiv.style.color = '#2e7d32';
-        } else {
-          hintDiv.textContent = `К снятию: ${converted} ¥ (${rateText})`;
-          hintDiv.style.color = '#d32f2f';
-        }
-        hintDiv.style.display = 'block';
-      };
-
-      amountInput.addEventListener('input', updateConversion);
-      currencySelect.addEventListener('change', updateConversion);
-
+      
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const amount = parseFloat(amountInput.value);
         const currency = currencySelect.value;
         const desc = document.getElementById('descInput').value;
-        const method = document.getElementById('methodInput').value;
         const btn = document.getElementById('submitBtn');
+        
+        let isDirect = false;
+        let method = 'cash';
+        if (currentActionType === 'withdrawal') {
+          const wType = document.querySelector('input[name="wType"]:checked').value;
+          isDirect = (wType === 'direct');
+          method = isDirect ? 'cash_direct' : 'cash_preorder';
+        }
 
         btn.disabled = true; btn.textContent = 'Отправка...'; errorDiv.textContent = '';
 
         try {
           const { error } = await supabase.schema('finance').rpc('create_transaction_request', {
-            p_amount: amount, p_type: currentActionType, p_description: desc, p_method: method, p_currency: currency
+            p_amount: amount, 
+            p_type: currentActionType, 
+            p_description: desc, 
+            p_method: method, 
+            p_currency: currency,
+            p_is_direct: isDirect
           });
           if (error) throw error;
+          
           dialog.close();
           await loadGovAccount(); 
         } catch (err) {
           errorDiv.textContent = err.message; 
         } finally {
-          btn.disabled = false; btn.textContent = 'Оформить заявку';
+          btn.disabled = false; btn.textContent = 'Подтвердить';
         }
       });
     }
+
+    window.updateWithdrawalLogic = () => {
+      const currencySelect = document.getElementById('currencyInput');
+      const hintDiv = document.getElementById('conversionHint');
+      const amountInput = document.getElementById('amountInput');
+      
+      if (currentActionType === 'withdrawal') {
+        const wType = document.querySelector('input[name="wType"]:checked').value;
+        if (wType === 'direct') {
+          // Для прямого снятия только YUR и макс 1000
+          currencySelect.value = 'YUR';
+          currencySelect.disabled = true;
+          amountInput.max = 1000;
+          hintDiv.textContent = 'Прямое снятие доступно только в юльсаннских рублях (до 1000 ¥)';
+          hintDiv.style.color = '#d32f2f';
+          hintDiv.style.display = 'block';
+        } else {
+          currencySelect.disabled = false;
+          amountInput.removeAttribute('max');
+          updateConversion();
+        }
+      }
+    };
+
+    window.updateConversion = () => {
+      const amount = parseFloat(document.getElementById('amountInput').value);
+      const currency = document.getElementById('currencyInput').value;
+      const hintDiv = document.getElementById('conversionHint');
+      
+      if (!amount || amount <= 0) { hintDiv.style.display = 'none'; return; }
+      
+      let converted = 0;
+      let rateText = '';
+
+      if (currency === 'RUB') { converted = (amount / 60).toFixed(2); rateText = '1 ¥ = 60 ₽'; } 
+      else if (currency === 'BYN') { converted = (amount / 2.16).toFixed(2); rateText = '1 ¥ = 2.16 Br'; }
+      else if (currency === 'YUL') { converted = (amount * 10).toFixed(2); rateText = '1 YUL = 10 ¥'; }
+      else if (currency === 'NTL' || currency === 'ETN') { converted = amount.toFixed(2); rateText = '1:1 к ¥'; }
+      else { hintDiv.style.display = 'none'; return; } // YUR
+
+      if (currentActionType === 'deposit') {
+        hintDiv.textContent = `К зачислению: ${converted} ¥ (${rateText})`;
+        hintDiv.style.color = '#2e7d32';
+      } else {
+        hintDiv.textContent = `К снятию: ${converted} ¥ (${rateText})`;
+        hintDiv.style.color = '#d32f2f';
+      }
+      hintDiv.style.display = 'block';
+    };
 
     window.openTransactionDialog = (type) => {
       currentActionType = type;
@@ -454,7 +497,20 @@
       document.getElementById('amountInput').value = '';
       document.getElementById('descInput').value = type === 'deposit' ? 'Пополнение наличными' : 'Снятие наличных';
       document.getElementById('dialogError').textContent = '';
-      document.getElementById('conversionHint').style.display = 'none';
+      
+      const wSelector = document.getElementById('withdrawalTypeSelector');
+      if (type === 'withdrawal') {
+        wSelector.style.display = 'block';
+        document.querySelector('input[name="wType"][value="direct"]').checked = true;
+        updateWithdrawalLogic();
+      } else {
+        wSelector.style.display = 'none';
+        document.getElementById('currencyInput').disabled = false;
+        document.getElementById('currencyInput').value = 'YUR';
+        document.getElementById('amountInput').removeAttribute('max');
+        document.getElementById('conversionHint').style.display = 'none';
+      }
+      
       document.getElementById('transactionDialog').showModal();
     };
   </script>
