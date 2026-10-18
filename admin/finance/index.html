@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Финансы — Администратор СФСРЮ</title>
     
-    <!-- ИСПРАВЛЕНО: Пути на два уровня вверх для style.css -->
     <link rel="stylesheet" href="../../css/style.css" />
-    <!-- Путь к admin.css остался прежним (на один уровень вверх в admin/css) -->
     <link rel="stylesheet" href="../css/admin.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     
@@ -57,13 +55,11 @@
     <header class="admin-header">
         <div class="admin-header-container">
             <div class="admin-logo">
-                <!-- ИСПРАВЛЕНО: на два уровня вверх до папки images -->
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
                 <h1>СФСРЮ — Админ-панель</h1>
             </div>
             <nav class="nav-menu">
                 <ul>
-                    <!-- ИСПРАВЛЕНО: ссылки навигации -->
                     <li><a href="../index.html">Главная админки</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
@@ -177,17 +173,19 @@
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     </footer>
 
-    <!-- ИСПРАВЛЕНО: путь к supabase-config.js на два уровня вверх -->
-    <script type="module">
-        import { supabase } from '../../js/supabase-config.js';
-
-        // 1. Делаем функцию переключения вкладок глобальной
-        window.openTab = (tabId, btn) => {
+    <!-- 1. ОБЫЧНЫЙ СКРИПТ (без module). Определяет openTab глобально. -->
+    <script>
+        function openTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             btn.classList.add('active');
-        };
+        }
+    </script>
+
+    <!-- 2. МОДУЛЬНЫЙ СКРИПТ для Supabase -->
+    <script type="module">
+        import { supabase } from '../../js/supabase-config.js';
 
         // Проверка админа
         async function checkAdmin() {
@@ -351,8 +349,8 @@
                                             <div style="font-size:0.8rem; color:#888;">${t.description}</div>
                                         </div>
                                         <div>
-                                            <button onclick="processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать/Принять</button>
-                                            <button onclick="processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
+                                            <button onclick="window.processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать/Принять</button>
+                                            <button onclick="window.processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
                                         </div>
                                     </div>
                                 `).join('') : '<p style="font-size: 0.9rem; color: #888;">Нет заявок.</p>'}
@@ -367,7 +365,7 @@
             }
         });
 
-        // Делаем функцию обработки наличных глобальной
+        // Делаем функцию обработки наличных глобальной (через window)
         window.processCash = async (transactionId, action, btnElement) => {
             const actionText = action === 'approve' ? 'подтвердить' : 'отклонить';
             if (!confirm(`Вы уверены, что хотите ${actionText} операцию?`)) return;
