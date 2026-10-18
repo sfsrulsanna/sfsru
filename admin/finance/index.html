@@ -5,8 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Финансы — Администратор СФСРЮ</title>
     
-    <!-- Пути к CSS оставлены как в вашем admin/index.html -->
+    <!-- ИСПРАВЛЕНО: Пути на два уровня вверх для style.css -->
     <link rel="stylesheet" href="../../css/style.css" />
+    <!-- Путь к admin.css остался прежним (на один уровень вверх в admin/css) -->
     <link rel="stylesheet" href="../css/admin.css" />
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     
@@ -56,12 +57,14 @@
     <header class="admin-header">
         <div class="admin-header-container">
             <div class="admin-logo">
-                <img src="../../../images/gerb.png" alt="Герб СФСРЮ" />
+                <!-- ИСПРАВЛЕНО: на два уровня вверх до папки images -->
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
                 <h1>СФСРЮ — Админ-панель</h1>
             </div>
             <nav class="nav-menu">
                 <ul>
-                    <li><a href="../index.html">Главная</a></li>
+                    <!-- ИСПРАВЛЕНО: ссылки навигации -->
+                    <li><a href="../index.html">Главная админки</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
@@ -77,7 +80,6 @@
             <h1 class="page-title">Финансовый отдел</h1>
             
             <div class="tabs">
-                <!-- Передаем this в функцию переключения вкладок -->
                 <button class="tab-btn active" onclick="openTab('tab-banks', this)">🏦 Банки</button>
                 <button class="tab-btn" onclick="openTab('tab-products', this)">💳 Выдача продуктов</button>
                 <button class="tab-btn" onclick="openTab('tab-cashier', this)">💵 Касса (Наличные)</button>
@@ -175,8 +177,9 @@
         <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     </footer>
 
+    <!-- ИСПРАВЛЕНО: путь к supabase-config.js на два уровня вверх -->
     <script type="module">
-        import { supabase } from '../js/supabase-config.js';
+        import { supabase } from '../../js/supabase-config.js';
 
         // 1. Делаем функцию переключения вкладок глобальной
         window.openTab = (tabId, btn) => {
@@ -189,16 +192,16 @@
         // Проверка админа
         async function checkAdmin() {
             const { data: { session } } = await supabase.auth.getSession();
-            if (!session) { window.location.href = '../login.html'; return; }
+            if (!session) { window.location.href = '../../login.html'; return; }
             const { data: profile } = await supabase.from('users').select('role, email').eq('id', session.user.id).single();
-            if (profile?.role !== 'admin') { await supabase.auth.signOut(); window.location.href = '../login.html'; return; }
+            if (profile?.role !== 'admin') { await supabase.auth.signOut(); window.location.href = '../../login.html'; return; }
             document.getElementById('adminEmail').textContent = profile.email;
         }
         checkAdmin();
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await supabase.auth.signOut();
-            window.location.href = '../login.html';
+            window.location.href = '../../login.html';
         });
 
         // Загрузка выпадающих списков
@@ -348,7 +351,6 @@
                                             <div style="font-size:0.8rem; color:#888;">${t.description}</div>
                                         </div>
                                         <div>
-                                            <!-- Передаем this для блокировки кнопки -->
                                             <button onclick="processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать/Принять</button>
                                             <button onclick="processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
                                         </div>
