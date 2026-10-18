@@ -1,462 +1,406 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Финансы — Личный кабинет СФСРЮ</title>
-
-  <!-- Favicons -->
-  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-  <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
-  <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
-
-  <link rel="stylesheet" href="../css/style.css" />
-  <link rel="stylesheet" href="../css/personal-profile/index.css" />
-
-  <style>
-    /* Общие стили */
-    .back-link { display: inline-block; margin-bottom: 20px; color: #b30000; text-decoration: none; font-weight: bold; transition: opacity 0.2s; }
-    .back-link:hover { opacity: 0.8; }
-    .page-header { text-align: center; margin-bottom: 40px; }
-    .page-header h1 { font-size: 2.5rem; margin-bottom: 10px; color: #b30000; }
-    .page-header p { color: #666; font-size: 1.1rem; }
-    .section-title { font-size: 1.5rem; color: #333; margin: 40px 0 20px 0; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-
-    /* --- ГОС СЧЕТ --- */
-    .gov-account-card {
-      background: linear-gradient(135deg, #ffffff 0%, #f9f9f9 100%);
-      border: 2px solid #b30000; border-radius: 12px; padding: 30px;
-      box-shadow: 0 8px 24px rgba(179, 0, 0, 0.08);
-      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;
-    }
-    .balance-info h3 { margin: 0 0 5px 0; color: #666; font-weight: normal; }
-    .account-balance-large { font-size: 3rem; font-weight: bold; margin: 0; }
-    .balance-positive { color: #2e7d32; }
-    .balance-negative { color: #d32f2f; }
-    .balance-zero { color: #757575; }
-    .account-actions { display: flex; gap: 15px; flex-wrap: wrap; }
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Финансы — Администратор СФСРЮ</title>
     
-    .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-size: 1rem; font-weight: bold; transition: background-color 0.2s, transform 0.1s; }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background-color: #b30000; color: white; }
-    .btn-primary:hover { background-color: #8a0000; }
-    .btn-secondary { background-color: #f0f0f0; color: #333; border: 1px solid #ccc; }
-    .btn-secondary:hover { background-color: #e0e0e0; }
+    <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="css/admin.css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
     
-    /* История транзакций */
-    .transactions-list { margin-top: 20px; background: white; border-radius: 8px; overflow: hidden; border: 1px solid #eee;}
-    .transaction-item { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; border-bottom: 1px solid #eee; }
-    .transaction-item:last-child { border-bottom: none; }
-    .transaction-info .desc { color: #333; font-weight: bold; }
-    .transaction-info .meta { font-size: 0.85em; color: #888; margin-top: 4px; }
-    .transaction-amount { font-weight: bold; text-align: right; }
-    .amount-plus { color: #2e7d32; }
-    .amount-minus { color: #d32f2f; }
+    <script type="importmap">
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+    </script>
     
-    /* Статусы транзакций */
-    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.8em; font-weight: bold; margin-left: 10px; }
-    .status-pending { background-color: #fff3e0; color: #e65100; }
-    .status-completed { background-color: #e8f5e9; color: #2e7d32; }
-    .status-rejected { background-color: #ffebee; color: #c62828; }
+    <style>
+        .admin-main { padding: 40px 20px; }
+        .admin-container { max-width: 1200px; margin: 0 auto; }
+        
+        /* Вкладки */
+        .tabs { display: flex; gap: 10px; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px; flex-wrap: wrap;}
+        .tab-btn { background: none; border: none; font-size: 1.1rem; font-weight: bold; color: #666; cursor: pointer; padding: 10px 20px; border-radius: 6px; transition: 0.2s; }
+        .tab-btn:hover { background: #f5f5f5; color: #333; }
+        .tab-btn.active { background: #b30000; color: white; }
+        
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* --- БАНКОВСКИЕ ПРОДУКТЫ (НОВЫЙ ДИЗАЙН) --- */
-    .bank-grid { 
-      display: grid; 
-      grid-template-columns: repeat(2, 1fr); /* Две карточки в ряд */
-      gap: 20px; 
-    }
-    @media (max-width: 768px) { .bank-grid { grid-template-columns: 1fr; } }
+        /* Формы */
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .form-grid { grid-template-columns: 1fr; } }
+        
+        .form-card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px;}
+        .form-card h3 { margin-top: 0; color: #333; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; font-size: 0.9rem; color: #555; }
+        .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        
+        .btn-submit { background: #b30000; color: white; border: none; padding: 12px 20px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: 0.2s; }
+        .btn-submit:hover { background: #8a0000; }
+        .btn-submit:disabled { background: #ccc; cursor: not-allowed; }
+        
+        .status-msg { margin-top: 15px; font-weight: bold; font-size: 0.9rem; }
+        .status-success { color: #2e7d32; }
+        .status-error { color: #d32f2f; }
 
-    .product-card {
-      display: flex; align-items: center; background: white; padding: 20px; border-radius: 12px;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05); cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
-      border-left: 4px solid #b30000;
-    }
-    .product-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-    
-    .bank-logo { width: 60px; height: 60px; object-fit: contain; margin-right: 20px; border-radius: 8px; }
-    
-    .product-info { display: flex; flex-direction: column; }
-    .product-bank-name { font-size: 1.2rem; font-weight: bold; color: #333; margin-bottom: 5px; }
-    .product-number { font-size: 1rem; color: #555; font-family: monospace; margin-bottom: 3px; }
-    .product-expiry { font-size: 0.85rem; color: #888; }
-    .product-balance-inline { font-size: 1.1rem; font-weight: bold; color: #2e7d32; margin-top: 5px; }
-
-    /* Модалка для реквизитов банка */
-    dialog {
-      border: none; border-radius: 12px; padding: 30px; box-shadow: 0 10px 40px rgba(0,0,0,0.3); 
-      max-width: 400px; width: 90%; position: fixed; inset: 0; margin: auto; height: fit-content;
-      opacity: 0; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete;
-    }
-    dialog[open] { opacity: 1; transform: translateY(0); }
-    @starting-style { dialog[open] { opacity: 0; transform: translateY(20px); } }
-    dialog::backdrop { background: rgba(0,0,0,0); transition: background-color 0.3s ease, display 0.3s allow-discrete, overlay 0.3s allow-discrete; }
-    dialog[open]::backdrop { background: rgba(0,0,0,0.6); }
-    @starting-style { dialog[open]::backdrop { background: rgba(0,0,0,0); } }
-    
-    .dialog-header { font-size: 1.4rem; margin-bottom: 20px; color: #b30000; font-weight: bold; text-align: center; }
-    .bank-detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-    .bank-detail-row span:first-child { color: #666; }
-    .bank-detail-row span:last-child { font-weight: bold; color: #333; font-family: monospace; }
-    
-    .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px; grid-column: 1 / -1;}
-  </style>
+        /* Карточки пользователей в кассе */
+        .user-search-result { background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 4px solid #b30000;}
+        .request-item { background: white; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
 </head>
 <body>
-  <header class="header">
-    <div class="header-container">
-      <div class="logo">
-        <img src="../images/gerb.png" alt="Герб СФСРЮ" />
-        <h1>СФСРЮ</h1>
-      </div>
-      <button class="menu-toggle" aria-label="Открыть меню">
-        <span class="menu-toggle-line"></span><span class="menu-toggle-line"></span><span class="menu-toggle-line"></span>
-      </button>
-      <nav class="nav-menu">
-        <ul>
-          <li><a href="../index.html">Главная</a></li>
-          <li><a href="../news.html">Новости</a></li>
-          <li><a href="../wiki/">Википедия</a></li>
-          <li><a href="../healthcare.html">Здравоохранение</a></li>
-          <li><a href="../services.html">Услуги</a></li>
-          <li><a href="index.html" class="active">Личный кабинет</a></li>
-        </ul>
-      </nav>
-    </div>
-  </header>
-
-  <div class="menu-overlay"></div>
-
-  <main class="main-content profile-main">
-    <div class="profile-container">
-      <a href="index.html" class="back-link">← Вернуться в личный кабинет</a>
-
-      <div class="page-header">
-        <h1>Финансы</h1>
-        <p>Управление государственным счётом и вашими активами</p>
-      </div>
-
-      <div id="govAccountSection">
-        <p style="text-align: center; color: #666;">Загрузка данных о счёте...</p>
-      </div>
-
-      <h2 class="section-title">Банковские продукты</h2>
-      
-      <h3 style="color: #666; margin-bottom: 15px; font-size: 1.2rem;">Мои карты</h3>
-      <div class="bank-grid" id="cardsGrid"><p class="empty-state">Загрузка карт...</p></div>
-      
-      <h3 style="color: #666; margin: 30px 0 15px 0; font-size: 1.2rem;">Мои счета</h3>
-      <div class="bank-grid" id="accountsGrid"><p class="empty-state">Загрузка счетов...</p></div>
-      
-      <h3 style="color: #666; margin: 30px 0 15px 0; font-size: 1.2rem;">Мои вклады</h3>
-      <div class="bank-grid" id="depositsGrid"><p class="empty-state">Загрузка вкладов...</p></div>
-    </div>
-  </main>
-
-  <!-- МОДАЛЬНОЕ ОКНО РЕКВИЗИТОВ БАНКА -->
-  <dialog id="bankDetailsDialog">
-    <div class="dialog-header" id="bankDialogTitle">Информация о банке</div>
-    <div id="bankDialogBody">
-      <!-- Заполняется через JS -->
-    </div>
-    <div style="text-align: center; margin-top: 20px;">
-      <button class="btn btn-secondary" onclick="document.getElementById('bankDetailsDialog').close()">Закрыть</button>
-    </div>
-  </dialog>
-
-  <!-- МОДАЛЬНОЕ ОКНО ТРАНЗАКЦИЙ (ОСТАЛОСЬ БЕЗ ИЗМЕНЕНИЙ) -->
-  <dialog id="transactionDialog">
-    <div class="dialog-header" id="dialogTitle">Пополнение счёта</div>
-    <form id="transactionForm" method="dialog">
-      <div class="form-group">
-        <label for="methodInput">Способ операции</label>
-        <select id="methodInput" required>
-          <option value="cash">Наличными в Госбанке СФСРЮ</option>
-          <option value="card" disabled>Банковская карта онлайн (недоступно)</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="currencyInput">Валюта</label>
-        <select id="currencyInput" required>
-          <option value="YUL">Юльсаннский рубль (¥)</option>
-          <option value="RUB">Российский рубль (₽) — 1 ¥ = 60 ₽</option>
-          <option value="BYN">Белорусский рубль (Br) — 1 ¥ = 2.16 Br</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="amountInput">Сумма</label>
-        <input type="number" id="amountInput" min="1" step="0.01" placeholder="0.00" required />
-        <div id="conversionHint" class="conversion-hint" style="display:none; margin-top:5px; font-weight:bold;"></div>
-      </div>
-      <div class="form-group">
-        <label for="descInput">Назначение</label>
-        <input type="text" id="descInput" placeholder="Например: Пополнение" required />
-      </div>
-      <div id="dialogError" style="color:#d32f2f; font-size:0.9rem; text-align:center;"></div>
-      <div class="dialog-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
-        <button type="button" class="btn btn-secondary" onclick="document.getElementById('transactionDialog').close()">Отмена</button>
-        <button type="submit" class="btn btn-primary" id="submitBtn">Оформить заявку</button>
-      </div>
-    </form>
-  </dialog>
-
-  <footer class="footer">
-    <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-  </footer>
-
-  <script type="importmap">
-    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
-  </script>
-  <script type="module" src="../js/supabase-config.js"></script>
-  <script src="../js/mob-menu.js"></script>
-
-  <script type="module">
-    import { supabase } from '../js/supabase-config.js'
-
-    let currentUserId = null;
-    let currentActionType = 'deposit';
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { window.location.href = '../login.html'; return; }
-      currentUserId = session.user.id;
-
-      await loadGovAccount();
-      await loadBankData();
-      setupDialog();
-    });
-
-    // === ГОС СЧЕТ ===
-    async function loadGovAccount() {
-      const section = document.getElementById('govAccountSection');
-      try {
-        const { data: account, error } = await supabase.schema('finance').from('accounts').select('balance').eq('user_id', currentUserId).single();
-        if (error) {
-          if (error.code === 'PGRST116') { renderOpenAccountView(section); return; }
-          throw error;
-        }
-        const { data: transactions } = await supabase.schema('finance').from('transactions').select('*').eq('user_id', currentUserId).order('created_at', { ascending: false }).limit(10);
-        renderGovAccountView(section, account.balance, transactions || []);
-      } catch (err) {
-        section.innerHTML = `<p style="color:#d32f2f; text-align:center;">Ошибка загрузки счёта: ${err.message}</p>`;
-      }
-    }
-
-    function renderOpenAccountView(container) {
-      container.innerHTML = `
-        <div class="gov-account-card" style="justify-content: center; text-align: center; flex-direction: column;">
-          <h3>🏦 Государственный счёт не открыт</h3>
-          <p style="color: #666; max-width: 500px;">Он необходим для получения пенсий, пособий, а также для оплаты налогов и услуг.</p>
-          <button id="openAccountBtn" class="btn btn-primary" style="margin-top: 15px;">Открыть счёт (бесплатно)</button>
+    <header class="admin-header">
+        <div class="admin-header-container">
+            <div class="admin-logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ" />
+                <h1>СФСРЮ — Админ-панель</h1>
+            </div>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="index.html">Главная</a></li>
+                    <li><a href="finance.html" class="active">Финансы</a></li>
+                    <li><a href="../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
         </div>
-      `;
-      document.getElementById('openAccountBtn').addEventListener('click', async (e) => {
-        e.target.disabled = true; e.target.textContent = 'Открываем...';
-        try {
-          const { error } = await supabase.schema('finance').from('accounts').insert([{ user_id: currentUserId, balance: 0.00 }]);
-          if (error) throw error;
-          await loadGovAccount();
-        } catch (err) { alert('Ошибка: ' + err.message); }
-      });
-    }
+    </header>
 
-    function renderGovAccountView(container, balance, transactions) {
-      const numBalance = Number(balance);
-      const formatted = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(numBalance);
-      let colorClass = numBalance > 0 ? 'balance-positive' : (numBalance < 0 ? 'balance-negative' : 'balance-zero');
-
-      let transHtml = transactions.length ? transactions.map(t => {
-        const isPlus = t.type === 'deposit' || t.type === 'pension';
-        const sign = isPlus ? '+' : '-';
-        const amtClass = isPlus ? 'amount-plus' : 'amount-minus';
-        const date = new Date(t.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-        
-        let statusHtml = '';
-        if (t.status === 'pending') statusHtml = '<span class="status-badge status-pending">Заявлено</span>';
-        else if (t.status === 'completed') statusHtml = '<span class="status-badge status-completed">Выдано</span>';
-        else if (t.status === 'rejected') statusHtml = '<span class="status-badge status-rejected">Отказано</span>';
-
-        return `
-          <div class="transaction-item" style="${t.status === 'rejected' ? 'opacity: 0.6;' : ''}">
-            <div class="transaction-info">
-              <div class="desc">${t.description} ${statusHtml}</div>
-              <div class="meta">${date}</div>
+    <main class="admin-main">
+        <div class="admin-container">
+            <h1 class="page-title">Финансовый отдел</h1>
+            
+            <div class="tabs">
+                <button class="tab-btn active" onclick="openTab('tab-banks')">🏦 Банки</button>
+                <button class="tab-btn" onclick="openTab('tab-products')">💳 Выдача продуктов</button>
+                <button class="tab-btn" onclick="openTab('tab-cashier')">💵 Касса (Наличные)</button>
             </div>
-            <div class="transaction-amount ${amtClass}">${sign} ${new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(t.amount)} ¥</div>
-          </div>
-        `;
-      }).join('') : '<p class="empty-state">История операций пуста</p>';
 
-      container.innerHTML = `
-        <div class="gov-account-card">
-          <div class="balance-info">
-            <h3>Государственный счёт СФСРЮ</h3>
-            <div class="account-balance-large ${colorClass}">${formatted} ¥</div>
-          </div>
-          <div class="account-actions">
-            <button class="btn btn-primary" onclick="openTransactionDialog('deposit')">Пополнить</button>
-            <button class="btn btn-secondary" onclick="openTransactionDialog('withdrawal')">Снять</button>
-          </div>
+            <!-- ВКЛАДКА 1: БАНКИ -->
+            <div id="tab-banks" class="tab-content active">
+                <div class="form-card" style="max-width: 600px; margin: 0 auto;">
+                    <h3><i class="fas fa-plus-circle"></i> Добавить новый банк</h3>
+                    <form id="addBankForm">
+                        <div class="form-group">
+                            <label>Название банка</label>
+                            <input type="text" id="bankName" placeholder="Например: Госбанк СФСРЮ" required>
+                        </div>
+                        <div class="form-group">
+                            <label>БИК</label>
+                            <input type="text" id="bankBic" placeholder="044525225" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Корр. счет</label>
+                            <input type="text" id="bankCorr" placeholder="30101810400000000225" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Логотип банка (PNG, JPG, SVG)</label>
+                            <input type="file" id="bankLogo" accept="image/*" required>
+                        </div>
+                        <button type="submit" class="btn-submit" id="submitBankBtn">Загрузить банк в систему</button>
+                        <div id="bankMsg" class="status-msg"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ВКЛАДКА 2: ВЫДАЧА ПРОДУКТОВ -->
+            <div id="tab-products" class="tab-content">
+                <div class="form-card" style="max-width: 600px; margin: 0 auto;">
+                    <h3><i class="fas fa-id-card"></i> Выдать продукт клиенту</h3>
+                    <form id="addProductForm">
+                        <div class="form-group">
+                            <label>Пользователь (Поиск по ФИО или коду)</label>
+                            <select id="productUser" required>
+                                <option value="">Загрузка...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Банк</label>
+                            <select id="productBank" required>
+                                <option value="">Загрузка...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Тип продукта</label>
+                            <select id="productType" required>
+                                <option value="card">Банковская карта</option>
+                                <option value="account">Расчетный счет</option>
+                                <option value="deposit">Вклад</option>
+                            </select>
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Номер (маскированный)</label>
+                                <input type="text" id="productNumber" placeholder="**** **** **** 1234" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Срок действия (ММ/ГГ)</label>
+                                <input type="text" id="productExpiry" placeholder="12/28">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Баланс / Сумма (в ¥)</label>
+                            <input type="number" id="productBalance" placeholder="0.00" step="0.01" required>
+                        </div>
+                        <button type="submit" class="btn-submit" id="submitProductBtn">Выдать продукт</button>
+                        <div id="productMsg" class="status-msg"></div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- ВКЛАДКА 3: КАССА -->
+            <div id="tab-cashier" class="tab-content">
+                <div class="form-card">
+                    <h3><i class="fas fa-search"></i> Поиск клиента для выдачи/приема наличных</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <input type="text" id="searchUserInput" placeholder="Введите ФИО или личный код (например: 1234-567890)" style="flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                        <button id="searchUserBtn" class="btn-submit" style="width: auto; padding: 10px 20px;">Найти</button>
+                    </div>
+                    
+                    <div id="searchResults"></div>
+                </div>
+            </div>
+
         </div>
-        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #333;">Последние операции</h3>
-        <div class="transactions-list">${transHtml}</div>
-      `;
-    }
+    </main>
 
-    // === БАНКОВСКИЕ ДАННЫЕ ===
-    async function loadBankData() {
-      // 1. КАРТЫ
-      const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*, banks(*)').eq('user_id', currentUserId);
-      const cardsGrid = document.getElementById('cardsGrid');
-      if (cards && cards.length > 0) {
-        cardsGrid.innerHTML = cards.map(c => {
-          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(c.balance);
-          const logo = c.banks?.logo_url || '../images/gerb.png';
-          const bName = c.banks?.name || 'Банк СФСРЮ';
-          
-          return `
-            <div class="product-card" onclick="showBankDetails('${bName}', '${c.banks?.bic || '---'}', '${c.banks?.corr_account || '---'}')">
-              <img src="${logo}" class="bank-logo" alt="Логотип">
-              <div class="product-info">
-                <div class="product-bank-name">${bName}</div>
-                <div class="product-number">${c.card_number_masked}</div>
-                <div class="product-expiry">Действует до: ${c.expiry_date}</div>
-                <div class="product-balance-inline">${bal} ¥</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } else { cardsGrid.innerHTML = '<p class="empty-state">У вас пока нет привязанных карт.</p>'; }
+    <footer class="admin-footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    </footer>
 
-      // 2. СЧЕТА
-      const { data: accounts } = await supabase.schema('finance').from('bank_accounts').select('*, banks(*)').eq('user_id', currentUserId);
-      const accountsGrid = document.getElementById('accountsGrid');
-      if (accounts && accounts.length > 0) {
-        accountsGrid.innerHTML = accounts.map(a => {
-          const bal = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(a.balance);
-          const logo = a.banks?.logo_url || '../images/gerb.png';
-          const bName = a.banks?.name || 'Банк СФСРЮ';
-          
-          return `
-            <div class="product-card" onclick="showBankDetails('${bName}', '${a.banks?.bic || '---'}', '${a.banks?.corr_account || '---'}')">
-              <img src="${logo}" class="bank-logo" alt="Логотип">
-              <div class="product-info">
-                <div class="product-bank-name">${bName}</div>
-                <div class="product-number">${a.account_number_masked}</div>
-                <div class="product-expiry">Расчётный счёт</div>
-                <div class="product-balance-inline">${bal} ¥</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } else { accountsGrid.innerHTML = '<p class="empty-state">Нет открытых счетов в других банках.</p>'; }
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
 
-      // 3. ВКЛАДЫ
-      const { data: deposits } = await supabase.schema('finance').from('bank_deposits').select('*, banks(*)').eq('user_id', currentUserId);
-      const depositsGrid = document.getElementById('depositsGrid');
-      if (deposits && deposits.length > 0) {
-        depositsGrid.innerHTML = deposits.map(d => {
-          const amt = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2 }).format(d.amount);
-          const date = new Date(d.end_date).toLocaleDateString('ru-RU');
-          const logo = d.banks?.logo_url || '../images/gerb.png';
-          const bName = d.banks?.name || 'Банк СФСРЮ';
-          
-          return `
-            <div class="product-card" onclick="showBankDetails('${bName}', '${d.banks?.bic || '---'}', '${d.banks?.corr_account || '---'}')">
-              <img src="${logo}" class="bank-logo" alt="Логотип">
-              <div class="product-info">
-                <div class="product-bank-name">${bName}</div>
-                <div class="product-number">${d.deposit_name}</div>
-                <div class="product-expiry">Ставка: ${d.interest_rate}% | До: ${date}</div>
-                <div class="product-balance-inline">${amt} ¥</div>
-              </div>
-            </div>
-          `;
-        }).join('');
-      } else { depositsGrid.innerHTML = '<p class="empty-state">Нет активных вкладов.</p>'; }
-    }
+        // Глобальные переменные
+        let currentUserRole = null;
 
-    // === ПОКАЗ РЕКВИЗИТОВ БАНКА ===
-    window.showBankDetails = (name, bic, corr) => {
-      document.getElementById('bankDialogTitle').textContent = name;
-      document.getElementById('bankDialogBody').innerHTML = `
-        <div class="bank-detail-row"><span>БИК:</span> <span>${bic}</span></div>
-        <div class="bank-detail-row"><span>Корр. счёт:</span> <span>${corr}</span></div>
-        <div style="margin-top: 15px; font-size: 0.9rem; color: #666; text-align: center;">
-          Для перевода средств используйте реквизиты выше.
-        </div>
-      `;
-      document.getElementById('bankDetailsDialog').showModal();
-    };
-
-    // === МОДАЛКА ТРАНЗАКЦИЙ ===
-    function setupDialog() {
-      const dialog = document.getElementById('transactionDialog');
-      const form = document.getElementById('transactionForm');
-      const errorDiv = document.getElementById('dialogError');
-      const amountInput = document.getElementById('amountInput');
-      const currencySelect = document.getElementById('currencyInput');
-      const hintDiv = document.getElementById('conversionHint');
-
-      const updateConversion = () => {
-        const amount = parseFloat(amountInput.value);
-        const currency = currencySelect.value;
-        
-        if (!amount || amount <= 0 || currency === 'YUL') { hintDiv.style.display = 'none'; return; }
-        
-        let converted = 0;
-        let rateText = '';
-        if (currency === 'RUB') { converted = (amount / 60).toFixed(2); rateText = '1 ¥ = 60 ₽'; } 
-        else if (currency === 'BYN') { converted = (amount / 2.16).toFixed(2); rateText = '1 ¥ = 2.16 Br'; }
-
-        if (currentActionType === 'deposit') {
-          hintDiv.textContent = `К зачислению: ${converted} ¥ (${rateText})`;
-          hintDiv.style.color = '#2e7d32';
-        } else {
-          hintDiv.textContent = `К снятию: ${converted} ¥ (${rateText})`;
-          hintDiv.style.color = '#d32f2f';
+        // Проверка админа
+        async function checkAdmin() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../login.html'; return; }
+            const { data: profile } = await supabase.from('users').select('role, email').eq('id', session.user.id).single();
+            if (profile?.role !== 'admin') { await supabase.auth.signOut(); window.location.href = '../login.html'; return; }
+            document.getElementById('adminEmail').textContent = profile.email;
+            currentUserRole = profile.role;
         }
-        hintDiv.style.display = 'block';
-      };
+        checkAdmin();
 
-      amountInput.addEventListener('input', updateConversion);
-      currencySelect.addEventListener('change', updateConversion);
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '../login.html';
+        });
 
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const amount = parseFloat(amountInput.value);
-        const currency = currencySelect.value;
-        const desc = document.getElementById('descInput').value;
-        const method = document.getElementById('methodInput').value;
-        const btn = document.getElementById('submitBtn');
+        // Переключение вкладок
+        window.openTab = (tabId) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        };
 
-        btn.disabled = true; btn.textContent = 'Отправка...'; errorDiv.textContent = '';
+        // Загрузка выпадающих списков
+        async function loadDropdowns() {
+            // Банки
+            const { data: banks } = await supabase.schema('finance').from('banks').select('id, name').order('name');
+            const bankSelect = document.getElementById('productBank');
+            if (banks) {
+                bankSelect.innerHTML = '<option value="">Выберите банк...</option>' + 
+                    banks.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+            }
 
-        try {
-          const { error } = await supabase.schema('finance').rpc('create_transaction_request', {
-            p_amount: amount, p_type: currentActionType, p_description: desc, p_method: method, p_currency: currency
-          });
-          if (error) throw error;
-          dialog.close();
-          await loadGovAccount(); 
-        } catch (err) {
-          errorDiv.textContent = err.message; 
-        } finally {
-          btn.disabled = false; btn.textContent = 'Оформить заявку';
+            // Пользователи (с поиском)
+            const { data: users } = await supabase.from('users').select('id, email, surname, name, personal_code').order('surname');
+            const userSelect = document.getElementById('productUser');
+            if (users) {
+                userSelect.innerHTML = '<option value="">Выберите пользователя...</option>' + 
+                    users.map(u => `<option value="${u.id}">${u.surname} ${u.name} (${u.personal_code || u.email})</option>`).join('');
+            }
         }
-      });
-    }
+        loadDropdowns();
 
-    window.openTransactionDialog = (type) => {
-      currentActionType = type;
-      document.getElementById('dialogTitle').textContent = type === 'deposit' ? 'Пополнение счёта' : 'Снятие средств';
-      document.getElementById('amountInput').value = '';
-      document.getElementById('descInput').value = type === 'deposit' ? 'Пополнение наличными' : 'Снятие наличных';
-      document.getElementById('dialogError').textContent = '';
-      document.getElementById('conversionHint').style.display = 'none';
-      document.getElementById('transactionDialog').showModal();
-    };
-  </script>
+        // === ВКЛАДКА 1: ДОБАВЛЕНИЕ БАНКА (С ЗАГРУЗКОЙ ЛОГО) ===
+        document.getElementById('addBankForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitBankBtn');
+            const msg = document.getElementById('bankMsg');
+            btn.disabled = true; btn.textContent = 'Загрузка данных...';
+            msg.textContent = '';
+
+            const name = document.getElementById('bankName').value;
+            const bic = document.getElementById('bankBic').value;
+            const corr = document.getElementById('bankCorr').value;
+            const file = document.getElementById('bankLogo').files[0];
+
+            try {
+                // 1. Формируем уникальное имя файла (чтобы не перезаписывать старые)
+                const fileExt = file.name.split('.').pop();
+                const fileName = `logo_${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                
+                // 2. Загружаем файл в Storage
+                msg.textContent = 'Загрузка изображения...';
+                const { error: uploadError, data: uploadData } = await supabase.storage
+                    .from('bank-logos')
+                    .upload(fileName, file, { cacheControl: '3600', upsert: false });
+                
+                if (uploadError) throw new Error('Ошибка Storage: ' + uploadError.message);
+
+                // 3. Получаем публичный URL
+                const { data: { publicUrl } } = supabase.storage
+                    .from('bank-logos')
+                    .getPublicUrl(fileName);
+
+                // 4. Сохраняем в БД
+                msg.textContent = 'Сохранение в базу данных...';
+                const { error: dbError } = await supabase.schema('finance').from('banks').insert([{
+                    name, bic, corr_account: corr, logo_url: publicUrl
+                }]);
+                if (dbError) throw new Error('Ошибка БД: ' + dbError.message);
+
+                msg.textContent = '✅ Банк успешно добавлен!';
+                msg.className = 'status-msg status-success';
+                e.target.reset();
+                loadDropdowns(); // Обновляем список банков
+
+            } catch (err) {
+                msg.textContent = '❌ ' + err.message;
+                msg.className = 'status-msg status-error';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Загрузить банк в систему';
+            }
+        });
+
+        // === ВКЛАДКА 2: ВЫДАЧА ПРОДУКТА ===
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submitProductBtn');
+            const msg = document.getElementById('productMsg');
+            btn.disabled = true; btn.textContent = 'Сохранение...';
+            msg.textContent = '';
+
+            const userId = document.getElementById('productUser').value;
+            const bankId = document.getElementById('productBank').value;
+            const type = document.getElementById('productType').value;
+            const number = document.getElementById('productNumber').value;
+            const expiry = document.getElementById('productExpiry').value;
+            const balance = parseFloat(document.getElementById('productBalance').value);
+
+            try {
+                if (type === 'card') {
+                    await supabase.schema('finance').from('bank_cards').insert([{
+                        user_id: userId, bank_id: bankId, card_number_masked: number, expiry_date: expiry || '00/00', balance
+                    }]);
+                } else if (type === 'account') {
+                    await supabase.schema('finance').from('bank_accounts').insert([{
+                        user_id: userId, bank_id: bankId, account_number_masked: number, balance
+                    }]);
+                } else if (type === 'deposit') {
+                    await supabase.schema('finance').from('bank_deposits').insert([{
+                        user_id: userId, bank_id: bankId, deposit_name: 'Вклад "Стабильность"', amount: balance, interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
+                    }]);
+                }
+                msg.textContent = '✅ Продукт успешно выдан!';
+                msg.className = 'status-msg status-success';
+                e.target.reset();
+            } catch (err) {
+                msg.textContent = '❌ Ошибка: ' + err.message;
+                msg.className = 'status-msg status-error';
+            } finally {
+                btn.disabled = false; btn.textContent = 'Выдать продукт';
+            }
+        });
+
+        // === ВКЛАДКА 3: КАССА (ПОИСК И ОБРАБОТКА) ===
+        document.getElementById('searchUserBtn').addEventListener('click', async () => {
+            const query = document.getElementById('searchUserInput').value.trim();
+            const resultsDiv = document.getElementById('searchResults');
+            if (!query) { alert('Введите запрос для поиска'); return; }
+
+            resultsDiv.innerHTML = '<p>Поиск...</p>';
+
+            try {
+                // Ищем по коду или фамилии
+                const { data: users, error } = await supabase
+                    .from('users')
+                    .select('id, surname, name, patronymic, personal_code, email')
+                    .or(`personal_code.ilike.%${query}%,surname.ilike.%${query}%`);
+
+                if (error) throw error;
+                if (users.length === 0) { resultsDiv.innerHTML = '<p>Пользователи не найдены.</p>'; return; }
+
+                let html = '';
+                for (const user of users) {
+                    // Для каждого найденного юзера подтягиваем его pending транзакции
+                    const { data: transactions } = await supabase
+                        .schema('finance')
+                        .from('transactions')
+                        .select('*')
+                        .eq('user_id', user.id)
+                        .eq('status', 'pending');
+
+                    html += `
+                        <div class="user-search-result">
+                            <h4>${user.surname} ${user.name} ${user.patronymic || ''}</h4>
+                            <p style="font-size: 0.9rem; color: #666;">Личный код: <b>${user.personal_code || 'Нет'}</b> | Email: ${user.email}</p>
+                            
+                            <div style="margin-top: 15px;">
+                                <h5>Ожидающие операции:</h5>
+                                ${transactions && transactions.length > 0 ? transactions.map(t => `
+                                    <div class="request-item">
+                                        <div>
+                                            <span style="font-weight:bold; color:${t.type === 'deposit' ? '#2e7d32' : '#d32f2f'};">
+                                                ${t.type === 'deposit' ? 'Пополнение' : 'Снятие'} на ${new Intl.NumberFormat('ru-RU', {minimumFractionDigits: 2}).format(t.amount)} ¥
+                                            </span>
+                                            <div style="font-size:0.8rem; color:#888;">${t.description}</div>
+                                        </div>
+                                        <div>
+                                            <button onclick="window.processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать/Принять</button>
+                                            <button onclick="window.processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
+                                        </div>
+                                    </div>
+                                `).join('') : '<p style="font-size: 0.9rem; color: #888;">Нет заявок.</p>'}
+                            </div>
+                        </div>
+                    `;
+                }
+                resultsDiv.innerHTML = html;
+
+            } catch (err) {
+                resultsDiv.innerHTML = '<p style="color:red;">Ошибка поиска: ' + err.message + '</p>';
+            }
+        });
+
+        // Функция обработки наличных (Админ)
+        window.processCash = async (transactionId, action, btnElement) => {
+            const actionText = action === 'approve' ? 'подтвердить' : 'отклонить';
+            if (!confirm(`Вы уверены, что хотите ${actionText} операцию?`)) return;
+
+            btnElement.disabled = true;
+            btnElement.textContent = '...';
+
+            try {
+                const { error } = await supabase.schema('finance').rpc('admin_process_request', {
+                    p_transaction_id: transactionId,
+                    p_action: action
+                });
+
+                if (error) throw error;
+                
+                alert('Операция успешно обработана!');
+                // Перезапускаем поиск, чтобы обновить список
+                document.getElementById('searchUserBtn').click();
+
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+                btnElement.disabled = false;
+                btnElement.textContent = 'Повторить';
+            }
+        };
+    </script>
 </body>
 </html>
