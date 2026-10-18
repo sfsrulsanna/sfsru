@@ -192,6 +192,10 @@
         </div>
     </main>
 
+    <footer class="admin-footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    </footer>
+
     <script>
         function openTab(tabId, btn) {
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
@@ -293,7 +297,7 @@
             }
         });
 
-        // ПРОДУКТЫ (без баланса)
+        // ПРОДУКТЫ
         document.getElementById('addProductForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitProductBtn');
@@ -367,8 +371,18 @@
                         <div class="user-search-result">
                             <h4>${user.surname} ${user.name} ${user.patronymic || ''}</h4>
                             <p style="font-size: 0.9rem; color: #666;">Код: <b>${user.personal_code || 'Нет'}</b> | Email: ${user.email}</p>
-                            <div style="margin-top: 15px;">
-                                <h5>Ожидающие операции (Предзаказы):</h5>
+                            
+                            <!-- ПРЯМАЯ ВЫДАЧА -->
+                            <div style="background: #fff3e0; padding: 15px; border-radius: 8px; margin-top: 15px; border: 1px solid #ffcc80;">
+                                <h5 style="margin-top:0; color: #e65100;">Выдать наличные без предзаказа (до 1000 ¥)</h5>
+                                <div style="display: flex; gap: 10px;">
+                                    <input type="number" id="directAmount_${user.id}" placeholder="Сумма в ¥" style="flex:1; padding:8px; border-radius:4px; border:1px solid #ccc;">
+                                    <button onclick="window.directWithdrawal('${user.id}', this)" style="background:#e65100; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">Выдать</button>
+                                </div>
+                            </div>
+
+                            <div style="margin-top: 20px;">
+                                <h5>Предзаказы клиента:</h5>
                                 ${transactions && transactions.length > 0 ? transactions.map(t => `
                                     <div class="request-item">
                                         <div>
@@ -378,11 +392,11 @@
                                             <div style="font-size:0.8rem; color:#888;">${t.description} (${t.currency})</div>
                                         </div>
                                         <div>
-                                            <button onclick="window.processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Выдать</button>
-                                            <button onclick="window.processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; transition:0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">Отклонить</button>
+                                            <button onclick="window.processCash('${t.id}', 'approve', this)" style="background:#2e7d32; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer; margin-right:5px;">Выдать</button>
+                                            <button onclick="window.processCash('${t.id}', 'reject', this)" style="background:#d32f2f; color:white; border:none; padding:8px 12px; border-radius:4px; cursor:pointer;">Отклонить</button>
                                         </div>
                                     </div>
-                                `).join('') : '<p style="font-size: 0.9rem; color: #888;">Нет заявок.</p>'}
+                                `).join('') : '<p style="font-size: 0.9rem; color: #888;">Нет активных предзаказов.</p>'}
                             </div>
                         </div>
                     `;
@@ -393,6 +407,7 @@
             }
         });
 
+        // Обработка предзаказов
         window.processCash = async (transactionId, action, btnElement) => {
             if (!confirm(`Подтвердить операцию?`)) return;
             btnElement.disabled = true; btnElement.textContent = '...';
@@ -406,6 +421,32 @@
             } catch (err) {
                 alert('Ошибка: ' + err.message);
                 btnElement.disabled = false; btnElement.textContent = 'Повторить';
+            }
+        };
+
+        // Прямая выдача наличных (до 1000)
+        window.directWithdrawal = async (userId, btnElement) => {
+            const amountInput = document.getElementById(`directAmount_${userId}`);
+            const amount = parseFloat(amountInput.value);
+
+            if (!amount || amount <= 0 || amount > 1000) {
+                alert('Введите корректную сумму от 0.01 до 1000 YUR'); return;
+            }
+            if (!confirm(`Выдать ${amount} ¥ наличными без предзаказа?`)) return;
+
+            btnElement.disabled = true; btnElement.textContent = '...';
+
+            try {
+                const { error } = await supabase.schema('finance').rpc('admin_direct_withdrawal', {
+                    p_user_id: userId,
+                    p_amount: amount
+                });
+                if (error) throw error;
+                alert('Наличные успешно выданы!');
+                document.getElementById('searchUserBtn').click();
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+                btnElement.disabled = false; btnElement.textContent = 'Выдать';
             }
         };
     </script>

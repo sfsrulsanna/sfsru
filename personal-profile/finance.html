@@ -98,10 +98,6 @@
     .bank-detail-row span:last-child { font-weight: bold; color: #333; font-family: monospace; font-size: 0.95rem; text-align: right;}
     
     .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px; grid-column: 1 / -1;}
-    
-    /* Стили для радио-кнопок */
-    .radio-group { display: flex; gap: 15px; margin-bottom: 15px; }
-    .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; font-size: 0.9rem;}
   </style>
 </head>
 <body>
@@ -169,14 +165,6 @@
     <div class="dialog-header" id="dialogTitle">Операция</div>
     <form id="transactionForm" method="dialog">
       
-      <div id="withdrawalTypeSelector" style="display:none; margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;">Тип снятия</label>
-        <div class="radio-group">
-          <label class="radio-label"><input type="radio" name="wType" value="direct" checked onchange="updateWithdrawalLogic()"> Без предзаказа (до 1000 ¥)</label>
-          <label class="radio-label"><input type="radio" name="wType" value="preorder" onchange="updateWithdrawalLogic()"> По предзаказу</label>
-        </div>
-      </div>
-
       <div class="form-group" style="margin-bottom:15px;">
         <label style="display:block; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;">Валюта</label>
         <select id="currencyInput" style="width:100%; padding:10px; border-radius:6px;" required onchange="updateConversion()">
@@ -204,7 +192,7 @@
       
       <div class="dialog-actions" style="display:flex; gap:10px; justify-content:flex-end; margin-top:25px;">
         <button type="button" class="btn btn-secondary" onclick="document.getElementById('transactionDialog').close()">Отмена</button>
-        <button type="submit" class="btn btn-primary" id="submitBtn">Подтвердить</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">Оформить заявку</button>
       </div>
     </form>
   </dialog>
@@ -320,7 +308,7 @@
       `;
     }
 
-    // === БАНКОВСКИЕ ДАННЫЕ (без сумм) ===
+    // === БАНКОВСКИЕ ДАННЫЕ ===
     async function loadBankData() {
       // 1. КАРТЫ
       const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*, banks(*)').eq('user_id', currentUserId);
@@ -425,13 +413,8 @@
         const desc = document.getElementById('descInput').value;
         const btn = document.getElementById('submitBtn');
         
-        let isDirect = false;
-        let method = 'cash';
-        if (currentActionType === 'withdrawal') {
-          const wType = document.querySelector('input[name="wType"]:checked').value;
-          isDirect = (wType === 'direct');
-          method = isDirect ? 'cash_direct' : 'cash_preorder';
-        }
+        // Всегда отправляем как предзаказ (pending)
+        let method = currentActionType === 'withdrawal' ? 'cash_preorder' : 'cash';
 
         btn.disabled = true; btn.textContent = 'Отправка...'; errorDiv.textContent = '';
 
@@ -441,8 +424,7 @@
             p_type: currentActionType, 
             p_description: desc, 
             p_method: method, 
-            p_currency: currency,
-            p_is_direct: isDirect
+            p_currency: currency
           });
           if (error) throw error;
           
@@ -451,32 +433,10 @@
         } catch (err) {
           errorDiv.textContent = err.message; 
         } finally {
-          btn.disabled = false; btn.textContent = 'Подтвердить';
+          btn.disabled = false; btn.textContent = 'Оформить заявку';
         }
       });
     }
-
-    window.updateWithdrawalLogic = () => {
-      const currencySelect = document.getElementById('currencyInput');
-      const hintDiv = document.getElementById('conversionHint');
-      const amountInput = document.getElementById('amountInput');
-      
-      if (currentActionType === 'withdrawal') {
-        const wType = document.querySelector('input[name="wType"]:checked').value;
-        if (wType === 'direct') {
-          currencySelect.value = 'YUR';
-          currencySelect.disabled = true;
-          amountInput.max = 1000;
-          hintDiv.textContent = 'Прямое снятие доступно только в юльсаннских рублях (до 1000 ¥)';
-          hintDiv.style.color = '#d32f2f';
-          hintDiv.style.display = 'block';
-        } else {
-          currencySelect.disabled = false;
-          amountInput.removeAttribute('max');
-          updateConversion();
-        }
-      }
-    };
 
     window.updateConversion = () => {
       const amount = parseFloat(document.getElementById('amountInput').value);
@@ -506,23 +466,14 @@
 
     window.openTransactionDialog = (type) => {
       currentActionType = type;
-      document.getElementById('dialogTitle').textContent = type === 'deposit' ? 'Пополнение счёта' : 'Снятие средств';
+      document.getElementById('dialogTitle').textContent = type === 'deposit' ? 'Пополнение счёта' : 'Заявка на снятие наличных';
       document.getElementById('amountInput').value = '';
       document.getElementById('descInput').value = type === 'deposit' ? 'Пополнение наличными' : 'Снятие наличных';
       document.getElementById('dialogError').textContent = '';
       
-      const wSelector = document.getElementById('withdrawalTypeSelector');
-      if (type === 'withdrawal') {
-        wSelector.style.display = 'block';
-        document.querySelector('input[name="wType"][value="direct"]').checked = true;
-        updateWithdrawalLogic();
-      } else {
-        wSelector.style.display = 'none';
-        document.getElementById('currencyInput').disabled = false;
-        document.getElementById('currencyInput').value = 'YUR';
-        document.getElementById('amountInput').removeAttribute('max');
-        document.getElementById('conversionHint').style.display = 'none';
-      }
+      document.getElementById('currencyInput').disabled = false;
+      document.getElementById('currencyInput').value = 'YUR';
+      document.getElementById('conversionHint').style.display = 'none';
       
       document.getElementById('transactionDialog').showModal();
     };
