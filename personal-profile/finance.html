@@ -69,7 +69,7 @@
       transition: transform 0.3s ease, box-shadow 0.3s ease;
       border-left: 4px solid #b30000;
       animation: slideUp 0.4s ease-out forwards;
-      opacity: 0; /* Начальное состояние для анимации */
+      opacity: 0; 
     }
     .product-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
     
@@ -94,14 +94,14 @@
     
     .dialog-header { font-size: 1.4rem; margin-bottom: 20px; color: #b30000; font-weight: bold; text-align: center; }
     .bank-detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
-    .bank-detail-row span:first-child { color: #666; }
-    .bank-detail-row span:last-child { font-weight: bold; color: #333; font-family: monospace; }
+    .bank-detail-row span:first-child { color: #666; font-size: 0.9rem;}
+    .bank-detail-row span:last-child { font-weight: bold; color: #333; font-family: monospace; font-size: 0.95rem; text-align: right;}
     
     .empty-state { color: #888; text-align: center; padding: 20px; background: #fafafa; border-radius: 8px; grid-column: 1 / -1;}
     
-    /* Стили для радио-кнопок в модалке */
+    /* Стили для радио-кнопок */
     .radio-group { display: flex; gap: 15px; margin-bottom: 15px; }
-    .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; }
+    .radio-label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-weight: bold; font-size: 0.9rem;}
   </style>
 </head>
 <body>
@@ -169,9 +169,8 @@
     <div class="dialog-header" id="dialogTitle">Операция</div>
     <form id="transactionForm" method="dialog">
       
-      <!-- Только для снятия: Выбор типа -->
       <div id="withdrawalTypeSelector" style="display:none; margin-bottom: 15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">Тип снятия</label>
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;">Тип снятия</label>
         <div class="radio-group">
           <label class="radio-label"><input type="radio" name="wType" value="direct" checked onchange="updateWithdrawalLogic()"> Без предзаказа (до 1000 ¥)</label>
           <label class="radio-label"><input type="radio" name="wType" value="preorder" onchange="updateWithdrawalLogic()"> По предзаказу</label>
@@ -179,7 +178,7 @@
       </div>
 
       <div class="form-group" style="margin-bottom:15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">Валюта</label>
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;">Валюта</label>
         <select id="currencyInput" style="width:100%; padding:10px; border-radius:6px;" required onchange="updateConversion()">
           <option value="YUR">Юльсаннский рубль (¥)</option>
           <option value="RUB">Российский рубль (₽)</option>
@@ -191,13 +190,13 @@
       </div>
 
       <div class="form-group" style="margin-bottom:15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">Сумма</label>
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;">Сумма</label>
         <input type="number" id="amountInput" min="1" step="0.01" placeholder="0.00" style="width:100%; padding:10px; border-radius:6px;" required oninput="updateConversion()" />
         <div id="conversionHint" style="display:none; margin-top:8px; font-weight:bold; font-size: 0.9rem;"></div>
       </div>
 
       <div class="form-group" style="margin-bottom:15px;">
-        <label style="display:block; font-weight:bold; margin-bottom:5px;">Назначение</label>
+        <label style="display:block; font-weight:bold; margin-bottom:5px; font-size: 0.9rem;">Назначение</label>
         <input type="text" id="descInput" placeholder="Например: Пополнение" style="width:100%; padding:10px; border-radius:6px;" required />
       </div>
       
@@ -226,11 +225,18 @@
 
     let currentUserId = null;
     let currentActionType = 'deposit';
+    let userFIO = 'Гражданин СФСРЮ';
 
     document.addEventListener('DOMContentLoaded', async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { window.location.href = '../login.html'; return; }
       currentUserId = session.user.id;
+
+      // Получаем ФИО для реквизитов
+      const { data: userData } = await supabase.from('users').select('surname, name, patronymic').eq('id', currentUserId).single();
+      if (userData) {
+          userFIO = `${userData.surname} ${userData.name} ${userData.patronymic || ''}`.trim();
+      }
 
       await loadGovAccount();
       await loadBankData();
@@ -314,7 +320,7 @@
       `;
     }
 
-    // === БАНКОВСКИЕ ДАННЫЕ ===
+    // === БАНКОВСКИЕ ДАННЫЕ (без сумм) ===
     async function loadBankData() {
       // 1. КАРТЫ
       const { data: cards } = await supabase.schema('finance').from('bank_cards').select('*, banks(*)').eq('user_id', currentUserId);
@@ -325,13 +331,13 @@
           const bName = c.banks?.name || 'Банк СФСРЮ';
           const formattedCard = c.card_number ? c.card_number.replace(/(\d{4})/g, '$1 ').trim() : '**** **** **** ****';
           return `
-            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${c.banks?.bic || '---'}', '${c.banks?.corr_account || '---'}', '${c.banks?.inn || '---'}', '${c.banks?.kpp || '---'}')">
+            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${c.banks?.bic || '---'}', '${c.banks?.corr_account || '---'}', '${c.banks?.inn || '---'}', '${c.banks?.kpp || '---'}', '${c.contract_number || '---'}', '${c.expiry_date || '---'}')">
               <img src="${logo}" class="bank-logo" alt="Логотип" onerror="this.src='../images/gerb.png'">
               <div class="product-info">
                 <div class="product-bank-name">${bName}</div>
                 <div class="product-number">${formattedCard}</div>
                 <div class="product-expiry">Счет: ${c.account_number || '---'}</div>
-                <div class="product-expiry">Договор: ${c.contract_number || '---'}</div>
+                <div class="product-expiry">Действует до: ${c.expiry_date || '---'}</div>
               </div>
             </div>
           `;
@@ -346,13 +352,13 @@
           const logo = a.banks?.logo_url || '../images/gerb.png';
           const bName = a.banks?.name || 'Банк СФСРЮ';
           return `
-            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${a.banks?.bic || '---'}', '${a.banks?.corr_account || '---'}', '${a.banks?.inn || '---'}', '${a.banks?.kpp || '---'}')">
+            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${a.banks?.bic || '---'}', '${a.banks?.corr_account || '---'}', '${a.banks?.inn || '---'}', '${a.banks?.kpp || '---'}', '${a.contract_number || '---'}', '${a.expiry_date || '---'}')">
               <img src="${logo}" class="bank-logo" alt="Логотип" onerror="this.src='../images/gerb.png'">
               <div class="product-info">
                 <div class="product-bank-name">${bName}</div>
                 <div class="product-number">${a.account_number || '---'}</div>
                 <div class="product-expiry">Расчётный счёт</div>
-                <div class="product-expiry">Договор: ${a.contract_number || '---'}</div>
+                <div class="product-expiry">Действует до: ${a.expiry_date || '---'}</div>
               </div>
             </div>
           `;
@@ -367,13 +373,13 @@
           const logo = d.banks?.logo_url || '../images/gerb.png';
           const bName = d.banks?.name || 'Банк СФСРЮ';
           return `
-            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${d.banks?.bic || '---'}', '${d.banks?.corr_account || '---'}', '${d.banks?.inn || '---'}', '${d.banks?.kpp || '---'}')">
+            <div class="product-card" style="animation-delay: ${i * 0.1}s" onclick="showBankDetails('${bName}', '${d.banks?.bic || '---'}', '${d.banks?.corr_account || '---'}', '${d.banks?.inn || '---'}', '${d.banks?.kpp || '---'}', '${d.contract_number || '---'}', '${d.expiry_date || '---'}')">
               <img src="${logo}" class="bank-logo" alt="Логотип" onerror="this.src='../images/gerb.png'">
               <div class="product-info">
                 <div class="product-bank-name">${bName}</div>
                 <div class="product-number">${d.deposit_name}</div>
                 <div class="product-expiry">Счет: ${d.account_number || '---'}</div>
-                <div class="product-expiry">Договор: ${d.contract_number || '---'}</div>
+                <div class="product-expiry">Действует до: ${d.expiry_date || '---'}</div>
               </div>
             </div>
           `;
@@ -381,16 +387,24 @@
       } else { depositsGrid.innerHTML = '<p class="empty-state">Нет активных вкладов.</p>'; }
     }
 
-    // === ПОКАЗ РЕКВИЗИТОВ БАНКА ===
-    window.showBankDetails = (name, bic, corr, inn, kpp) => {
+    // === ПОКАЗ РЕКВИЗИТОВ ===
+    window.showBankDetails = (name, bic, corr, inn, kpp, contract, expiry) => {
       document.getElementById('bankDialogTitle').textContent = name;
+      const purpose = `Перевод денежных средств по договору ${contract}, получатель ${userFIO}, НДС не облагается`;
+
       document.getElementById('bankDialogBody').innerHTML = `
+        <div class="bank-detail-row"><span>Банк-получатель:</span> <span>${name}</span></div>
+        <div class="bank-detail-row"><span>Получатель:</span> <span>${userFIO}</span></div>
         <div class="bank-detail-row"><span>ИНН:</span> <span>${inn}</span></div>
         <div class="bank-detail-row"><span>КПП:</span> <span>${kpp}</span></div>
         <div class="bank-detail-row"><span>БИК:</span> <span>${bic}</span></div>
         <div class="bank-detail-row"><span>Корр. счёт:</span> <span>${corr}</span></div>
-        <div style="margin-top: 15px; font-size: 0.9rem; color: #666; text-align: center;">
-          Для перевода средств используйте реквизиты выше.
+        <div class="bank-detail-row"><span>Договор:</span> <span>${contract}</span></div>
+        <div class="bank-detail-row"><span>Срок действия:</span> <span>${expiry}</span></div>
+        
+        <div style="margin-top: 20px; font-size: 0.9rem; color: #333; background: #f9f9f9; padding: 15px; border-radius: 8px; border-left: 4px solid #b30000;">
+          <strong>Назначение:</strong><br>
+          ${purpose}
         </div>
       `;
       document.getElementById('bankDetailsDialog').showModal();
@@ -450,7 +464,6 @@
       if (currentActionType === 'withdrawal') {
         const wType = document.querySelector('input[name="wType"]:checked').value;
         if (wType === 'direct') {
-          // Для прямого снятия только YUR и макс 1000
           currencySelect.value = 'YUR';
           currencySelect.disabled = true;
           amountInput.max = 1000;
@@ -479,7 +492,7 @@
       else if (currency === 'BYN') { converted = (amount / 2.16).toFixed(2); rateText = '1 ¥ = 2.16 Br'; }
       else if (currency === 'YUL') { converted = (amount * 10).toFixed(2); rateText = '1 YUL = 10 ¥'; }
       else if (currency === 'NTL' || currency === 'ETN') { converted = amount.toFixed(2); rateText = '1:1 к ¥'; }
-      else { hintDiv.style.display = 'none'; return; } // YUR
+      else { hintDiv.style.display = 'none'; return; }
 
       if (currentActionType === 'deposit') {
         hintDiv.textContent = `К зачислению: ${converted} ¥ (${rateText})`;

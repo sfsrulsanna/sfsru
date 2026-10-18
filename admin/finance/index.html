@@ -150,7 +150,6 @@
                             </select>
                         </div>
                         
-                        <!-- Поля для карты (скрываются для счетов/вкладов) -->
                         <div id="cardFields">
                             <div class="form-group">
                                 <label>Номер карты (16 цифр)</label>
@@ -166,6 +165,11 @@
                         <div class="form-group">
                             <label>Номер договора</label>
                             <input type="text" id="productContract" placeholder="Д-123/2026" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Срок действия (ДД.ММ.ГГГГ)</label>
+                            <input type="text" id="productExpiry" placeholder="31.12.2030" required>
                         </div>
 
                         <button type="submit" class="btn-submit" id="submitProductBtn">Выдать продукт</button>
@@ -207,10 +211,9 @@
             } else {
                 cardFields.style.display = 'none';
                 cardInput.required = false;
-                cardInput.value = ''; // Очищаем при скрытии
+                cardInput.value = '';
             }
         }
-        // Вызываем при загрузке, чтобы скрыть если выбрано не "карта"
         document.addEventListener('DOMContentLoaded', toggleProductFields);
     </script>
 
@@ -290,7 +293,7 @@
             }
         });
 
-        // ПРОДУКТЫ
+        // ПРОДУКТЫ (без баланса)
         document.getElementById('addProductForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submitProductBtn');
@@ -304,6 +307,7 @@
             const cardNum = document.getElementById('productCardNum').value;
             const accNum = document.getElementById('productAccNum').value;
             const contract = document.getElementById('productContract').value;
+            const expiry = document.getElementById('productExpiry').value;
 
             if (!userId || !bankId) {
                 msg.textContent = '❌ Выберите пользователя и банк!';
@@ -315,15 +319,15 @@
             try {
                 if (type === 'card') {
                     await supabase.schema('finance').from('bank_cards').insert([{
-                        user_id: userId, bank_id: bankId, card_number: cardNum, account_number: accNum, contract_number: contract, balance: 0
+                        user_id: userId, bank_id: bankId, card_number: cardNum, account_number: accNum, contract_number: contract, expiry_date: expiry
                     }]);
                 } else if (type === 'account') {
                     await supabase.schema('finance').from('bank_accounts').insert([{
-                        user_id: userId, bank_id: bankId, account_number: accNum, contract_number: contract, balance: 0
+                        user_id: userId, bank_id: bankId, account_number: accNum, contract_number: contract, expiry_date: expiry
                     }]);
                 } else if (type === 'deposit') {
                     await supabase.schema('finance').from('bank_deposits').insert([{
-                        user_id: userId, bank_id: bankId, account_number: accNum, contract_number: contract, deposit_name: 'Вклад "Стабильность"', amount: 0, interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
+                        user_id: userId, bank_id: bankId, account_number: accNum, contract_number: contract, expiry_date: expiry, deposit_name: 'Вклад "Стабильность"', interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
                     }]);
                 }
                 msg.textContent = '✅ Продукт успешно выдан!';
