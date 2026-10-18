@@ -275,6 +275,7 @@
             btn.disabled = true; btn.textContent = 'Сохранение...';
             msg.textContent = '';
 
+            // 1. Получаем данные и СРАЗУ проверяем их
             const userId = document.getElementById('productUser').value;
             const bankId = document.getElementById('productBank').value;
             const type = document.getElementById('productType').value;
@@ -282,25 +283,47 @@
             const expiry = document.getElementById('productExpiry').value;
             const balance = parseFloat(document.getElementById('productBalance').value);
 
+            // ЖЕСТКАЯ ПРОВЕРКА: если ID пустые, ничего не отправляем
+            if (!userId || !bankId) {
+                msg.textContent = '❌ Ошибка: Вы не выбрали пользователя или банк!';
+                msg.className = 'status-msg status-error';
+                console.error('Пустые ID:', { userId, bankId });
+                btn.disabled = false; btn.textContent = 'Выдать продукт';
+                return;
+            }
+
+            // Формируем объект для отправки
+            let payload = {};
+            if (type === 'card') {
+                payload = { user_id: userId, bank_id: bankId, card_number_masked: number, expiry_date: expiry || '00/00', balance: balance };
+            } else if (type === 'account') {
+                payload = { user_id: userId, bank_id: bankId, account_number_masked: number, balance: balance };
+            } else if (type === 'deposit') {
+                payload = { user_id: userId, bank_id: bankId, deposit_name: 'Вклад "Стабильность"', amount: balance, interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString() };
+            }
+
+            console.log("ОТПРАВЛЯЕМ В SUPABASE:", payload); // Смотрим, что именно уходит
+
             try {
+                let response;
                 if (type === 'card') {
-                    await supabase.schema('finance').from('bank_cards').insert([{
-                        user_id: userId, bank_id: bankId, card_number_masked: number, expiry_date: expiry || '00/00', balance
-                    }]);
+                    response = await supabase.schema('finance').from('bank_cards').insert([payload]);
                 } else if (type === 'account') {
-                    await supabase.schema('finance').from('bank_accounts').insert([{
-                        user_id: userId, bank_id: bankId, account_number_masked: number, balance
-                    }]);
+                    response = await supabase.schema('finance').from('bank_accounts').insert([payload]);
                 } else if (type === 'deposit') {
-                    await supabase.schema('finance').from('bank_deposits').insert([{
-                        user_id: userId, bank_id: bankId, deposit_name: 'Вклад "Стабильность"', amount: balance, interest_rate: 5.0, end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString()
-                    }]);
+                    response = await supabase.schema('finance').from('bank_deposits').insert([payload]);
                 }
+
+                // Если Supabase вернул ошибку, выбрасываем её
+                if (response.error) throw response.error;
+
                 msg.textContent = '✅ Продукт успешно выдан!';
                 msg.className = 'status-msg status-success';
                 e.target.reset();
             } catch (err) {
-                msg.textContent = '❌ Ошибка: ' + err.message;
+                // Выводим ВСЕ возможные детали ошибки
+                console.error('ДЕТАЛИ ОШИБКИ SUPABASE:', err);
+                msg.textContent = '❌ Ошибка: ' + (err.message || err.details || JSON.stringify(err));
                 msg.className = 'status-msg status-error';
             } finally {
                 btn.disabled = false; btn.textContent = 'Выдать продукт';
