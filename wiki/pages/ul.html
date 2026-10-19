@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Юль — Википедия СФСРЮ</title>
+    <!-- favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/president-profile.css">
+    
+    <style>
+        /* ===== Общие стили (как на странице СФСРЮ) ===== */
+        .profile-container {
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+        }
+        .photo-column {
+            position: sticky;
+            top: 2rem;
+            order: 1;
+        }
+        .info-column { order: 2; }
+
+        .history-content-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            border: 1px solid #e0e0e0;
+            line-height: 1.6;
+        }
+        .history-content-card h1 {
+            color: #cc0000;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 1rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+        .history-content-card h2 {
+            color: #cc0000;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .history-content-card h3 {
+            color: #444;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+        .history-content-card p {
+            margin-bottom: 1rem;
+            text-align: justify;
+            color: #333;
+        }
+        .history-content-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+        .history-content-card li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        .history-content-card li::before {
+            content: "•";
+            color: #cc0000;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+            line-height: 1.2rem;
+        }
+
+        /* ===== ТАБЛИЦЫ ===== */
+        .currency-table-wrap {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .currency-table {
+            width: 100%;
+            min-width: 900px;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .currency-table th {
+            background: #cc0000;
+            color: white;
+            padding: 10px 12px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .currency-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .currency-table tr:nth-child(even) { background: #fafafa; }
+        .currency-table tr:hover { background: #f5f0f0; }
+
+        /* Ячейки с изображениями и описанием */
+        .banknote-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 140px;
+        }
+        .banknote-cell .banknote-img {
+            display: block;
+            width: 120px;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            overflow: hidden;
+        }
+        .banknote-cell .banknote-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .banknote-cell .banknote-desc {
+            font-size: 0.75rem;
+            color: #333;
+            line-height: 1.3;
+            text-align: center;
+            max-width: 140px;
+        }
+        .banknote-cell .banknote-desc small {
+            display: block;
+            color: #666;
+            font-size: 0.65rem;
+        }
+
+        /* Для монет – круглые */
+        .coin-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 80px;
+        }
+        .coin-cell .coin-img {
+            display: block;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            overflow: hidden;
+        }
+        .coin-cell .coin-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .coin-cell .coin-desc {
+            font-size: 0.7rem;
+            color: #333;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        /* Левый блок: монета и банкнота */
+        .coin-display {
+            width: 180px;
+            height: 180px;
+            margin: 1rem auto;
+            border: 3px solid #cc0000;
+            border-radius: 50%;
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .coin-display a {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+        .coin-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .banknote-display {
+            width: 100%;
+            aspect-ratio: 159/72;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .banknote-display a {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        .banknote-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .coin-display a, .banknote-display a,
+        .banknote-cell .banknote-img a, .coin-cell .coin-img a {
+            cursor: pointer;
+        }
+
+        .currency-symbol-block {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .currency-symbol-block .symbol {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #cc0000;
+        }
+        .currency-symbol-block .desc {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 0.5rem;
+        }
+
+        .period-nav {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .period-nav-title {
+            font-weight: 600;
+            color: #cc0000;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .period-nav-item {
+            display: block;
+            padding: 0.6rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .period-nav-item:hover {
+            background: #f0f0f0;
+            border-color: #cc0000;
+            transform: translateX(3px);
+        }
+        .period-nav-item .period-code {
+            font-weight: 700;
+            color: #cc0000;
+        }
+        .period-nav-item .period-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 968px) {
+            .profile-container { grid-template-columns: 1fr; }
+            .photo-column { order: -1; position: static; margin-bottom: 2rem; }
+            .history-content-card { padding: 1.5rem; }
+            .coin-display { width: 140px; height: 140px; }
+            .currency-table { min-width: 700px; font-size: 0.8rem; }
+            .banknote-cell .banknote-img { width: 90px; }
+            .coin-cell .coin-img { width: 50px; height: 50px; }
+        }
+        @media (max-width: 480px) {
+            .history-content-card { padding: 1rem; }
+            .coin-display { width: 120px; height: 120px; }
+            .currency-table th, .currency-table td { padding: 6px 8px; font-size: 0.7rem; }
+            .banknote-cell .banknote-img { width: 70px; }
+            .banknote-cell .banknote-desc { font-size: 0.6rem; max-width: 80px; }
+            .coin-cell .coin-img { width: 40px; height: 40px; }
+            .coin-cell .coin-desc { font-size: 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../../index.html">Главная</a></li>
+                    <li><a href="../../../news.html">Новости</a></li>
+                    <li><a href="../../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../../services.html">Услуги</a></li>
+                    <li><a href="../../../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="profile-main">
+        <div class="profile-container">
+            <!-- ЛЕВАЯ КОЛОНКА (инфоблок) -->
+            <aside class="photo-column">
+                <div class="photo-card">
+                    <div class="photo-top-section">
+                        <div class="main-personal-info">
+                            <div class="last-name">Юль</div>
+                            <div class="first-name">валюта</div>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+                    <!-- Банкнота 100 Юлей (пример) -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Банкнота 100 Юлей (2026)</div>
+                        </div>
+                        <div class="banknote-display">
+                            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; background:linear-gradient(135deg, #e60000, #b30000); color:white; font-weight:bold; text-align:center; padding:0.5rem;">
+                                <div style="font-size:2rem;">100</div>
+                                <div style="font-size:0.9rem;">ЮЛЕЙ</div>
+                                <div style="font-size:0.7rem; margin-top:0.5rem;">YUL</div>
+                                <div style="font-size:0.6rem; margin-top:0.2rem;">Геометрический дизайн</div>
+                                <div style="font-size:0.5rem; margin-top:0.5rem;">Изображение условное</div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+                    <!-- Коды валюты -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Коды валюты</div>
+                        </div>
+                        <div class="currency-symbol-block">
+                            <div class="symbol">Ю</div>
+                            <div class="desc">Символ Юля</div>
+                        </div>
+                        <div class="position-details">
+                            <div class="position-detail"><div class="detail-label">ISO (текущий)</div><div class="detail-value-wrapper"><span class="detail-value">YUL</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Эмитент</div><div class="detail-value-wrapper"><span class="detail-value">Центральный банк СФСРЮ</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Дата введения</div><div class="detail-value-wrapper"><span class="detail-value">1 сентября 2026 года</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Соотношение</div><div class="detail-value-wrapper"><span class="detail-value">1 YUL = 10 YUR</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Обеспечение</div><div class="detail-value-wrapper"><span class="detail-value">100% золотовалютные резервы</span></div></div>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <!-- Навигация по разделам -->
+                    <div class="position-block">
+                        <div class="period-nav">
+                            <div class="period-nav-title">Содержание</div>
+                            <a href="#history" class="period-nav-item"><span class="period-code">1.</span> <span class="period-date">История и правовая основа</span></a>
+                            <a href="#legal" class="period-nav-item"><span class="period-code">2.</span> <span class="period-date">Юридический статус</span></a>
+                            <a href="#banknotes" class="period-nav-item"><span class="period-code">3.</span> <span class="period-date">Банкноты</span></a>
+                            <a href="#security" class="period-nav-item"><span class="period-code">4.</span> <span class="period-date">Степени защиты</span></a>
+                            <a href="#exchange" class="period-nav-item"><span class="period-code">5.</span> <span class="period-date">Обмен и обращение</span></a>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <!-- Факты -->
+                    <div class="position-block">
+                        <div class="position-header"><div class="position-title">Факты</div></div>
+                        <div class="position-details">
+                            <div class="position-detail"><div class="detail-label">Тип валюты</div><div class="detail-value-wrapper"><span class="detail-value">Параллельная (второе законное платёжное средство)</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Номиналы банкнот</div><div class="detail-value-wrapper"><span class="detail-value">1, 5, 10, 50, 100, 500, 1000, 10 000 Юлей</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Цветовая гамма</div><div class="detail-value-wrapper"><span class="detail-value">Красная (от светло-алого до тёмно-вишнёвого с золотым тиснением)</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Дизайн</div><div class="detail-value-wrapper"><span class="detail-value">Строгий геометрический, без портретов</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Обязательный приём</div><div class="detail-value-wrapper"><span class="detail-value">От 10 Юлей (эквивалент 100 YUR)</span></div></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ПРАВАЯ КОЛОНКА -->
+            <div class="info-column">
+                <div class="history-content-card">
+                    <h1>Юль</h1>
+
+                    <h2 id="history">1. История и правовая основа</h2>
+                    <p><strong>Юль</strong> (международный код — <strong>YUL</strong>, символ — <strong>Ю</strong>) — параллельная валюта Советской Федеративной Социалистической Республики Юльсанна (СФСРЮ), введённая в обращение с <strong>1 сентября 2026 года</strong> в качестве второго законного платёжного средства на территории всей страны наравне с юльсаннским рублём (YUR). Правовой основой введения Юля является Указ Президента СФСРЮ № 018 «О введении в обращение параллельной валюты «Юль»» от 19 июля 2026 года, изданный в соответствии со статьёй 14 Конституции Юльсанны и Федеральным законом «О Центральном банке СФСРЮ».</p>
+                    <p>Согласно преамбуле Указа № 018, целями введения новой валюты являются: упрощение крупных расчётов, повышение удобства безналичных и наличных транзакций для бизнеса и туристов, а также создание устойчивого инструмента сбережения. Юль задуман как валюта с фиксированным курсом к юльсаннскому рублю и полным обеспечением золотовалютными резервами, что должно обеспечить доверие к нему и стабильность.</p>
+
+                    <h2 id="legal">2. Юридический статус</h2>
+                    <p>В соответствии с пунктом 1 Указа № 018, Юль вводится в обращение с 1 сентября 2026 года как <strong>второе законное платёжное средство</strong> на территории всей СФСРЮ наравне с юльсаннским рублём (YUR). Это означает, что обе валюты имеют равный статус законного платёжного средства, и продавцы обязаны принимать Юли в установленных законом случаях.</p>
+                    <p>Пунктом 2 Указа установлен <strong>фиксированный курс: 1 Юль (YUL) = 10 юльсаннских рублей (YUR)</strong>. Изменение данного курса допускается только решением Центрального банка СФСРЮ при изменении макроэкономических показателей и с обязательным уведомлением Правительства СФСРЮ и Совета Федерации СФСРЮ. Таким образом, курс не является полностью жёстким, но его изменение обставлено процедурными условиями.</p>
+                    <p>Пункт 4 Указа определяет обязательность приёма Юля при расчётах:</p>
+                    <ul>
+                        <li>на сумму <strong>10 Юлей и более</strong> (эквивалент 100 YUR) — во всех организациях и предприятиях независимо от формы собственности;</li>
+                        <li>на сумму <strong>менее 10 Юлей</strong> — по соглашению сторон, но отказ в приёме Юля не может служить основанием для признания сделки недействительной.</li>
+                    </ul>
+                    <p>Таким образом, для крупных платежей Юль является обязательным к приёму, что создаёт правовой механизм его внедрения в хозяйственный оборот. Для мелких платежей приём осуществляется добровольно, однако отказ не влечёт недействительности сделки, что защищает интересы сторон.</p>
+                    <p>Пункт 7 Указа устанавливает, что эмиссия Юля осуществляется Центральным банком СФСРЮ <strong>исключительно под 100% обеспечение золотовалютными резервами</strong> и в пределах утверждённых Правительством СФСРЮ лимитов эмиссии на соответствующий финансовый год. Это одна из ключевых гарантий стабильности валюты.</p>
+
+                    <h2 id="banknotes">3. Банкноты</h2>
+                    <p>Пунктом 3 Указа № 018 утверждён следующий номинальный ряд банкнот Юля:</p>
+                    <ul>
+                        <li><strong>1, 5, 10, 50, 100, 500, 1000, 10 000 Юлей.</strong></li>
+                    </ul>
+                    <p>Пункт 5 Указа устанавливает обязательные требования к дизайну банкнот: они выпускаются <strong>исключительно в красной цветовой гамме</strong> (от светло-алого до тёмно-вишнёвого с золотым тиснением) и имеют <strong>строгий геометрический дизайн без портретов людей</strong>. На лицевой стороне размещаются:</p>
+                    <ul>
+                        <li>номинал прописью на русском языке (крупно);</li>
+                        <li>номинал прописью на юльсаннском языке (внизу);</li>
+                        <li>микротекст на ульсаннском языке (дореформенном) по краям как элемент защиты;</li>
+                        <li>номинал цифрой.</li>
+                    </ul>
+                    <p>Таким образом, дизайн Юля принципиально отличается от юльсаннского рубля, на котором изображены портреты и пейзажи. Юль же представляет собой строгую геометрическую абстракцию в красных тонах, что, вероятно, должно подчеркнуть его как «валюту для расчётов» и инструмент сбережения.</p>
+                    <div class="currency-table-wrap">
+                        <table class="currency-table">
+                            <thead>
+                                <tr>
+                                    <th>Номинал</th>
+                                    <th>Цветовая гамма</th>
+                                    <th>Дизайн лицевой стороны</th>
+                                    <th>Дизайн оборотной стороны*</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1 Юль</td>
+                                    <td>Светло-алый</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра</td>
+                                    <td>Геометрический узор, микротекст</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>5 Юлей</td>
+                                    <td>Алый</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра</td>
+                                    <td>Геометрический узор, микротекст</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>10 Юлей</td>
+                                    <td>Алый с золотым тиснением</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра</td>
+                                    <td>Геометрический узор, микротекст</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>50 Юлей</td>
+                                    <td>Красный</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра</td>
+                                    <td>Геометрический узор, микротекст</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>100 Юлей</td>
+                                    <td>Тёмно-красный</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра</td>
+                                    <td>Геометрический узор, микротекст</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>500 Юлей</td>
+                                    <td>Вишнёвый с золотым тиснением</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра, OVI</td>
+                                    <td>Геометрический узор, микротекст, OVI</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>1000 Юлей</td>
+                                    <td>Тёмно-вишнёвый с золотым тиснением</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра, OVI</td>
+                                    <td>Геометрический узор, микротекст, OVI</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>10 000 Юлей</td>
+                                    <td>Тёмно-вишнёвый с интенсивным золотым тиснением</td>
+                                    <td>Номинал прописью (рус.), номинал прописью (юльсанн.), микротекст, цифра, OVI</td>
+                                    <td>Геометрический узор, микротекст, OVI</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p style="font-size:0.85rem;color:#666;text-align:right;">* Дизайн оборотной стороны в Указе детально не описан; предполагается геометрический узор и элементы защиты.</p>
+
+                    <h2 id="security">4. Степени защиты</h2>
+                    <p>Пункт 6 Указа № 018 утверждает следующие степени защиты банкнот Юля:</p>
+                    <ul>
+                        <li>водяной знак (геометрический узор);</li>
+                        <li>защитная нить с микропечатью «YUL»;</li>
+                        <li>голограмма с меняющимся изображением герба Юльсанны;</li>
+                        <li>микротекст на ульсанниском языке;</li>
+                        <li>УФ-люминесцентные элементы (красное свечение);</li>
+                        <li>кипп-эффект (скрытое изображение);</li>
+                        <li>тактильные метки для слабовидящих;</li>
+                        <li>совмещающееся изображение на просвет;</li>
+                        <li>магнитная краска для серийных номеров;</li>
+                        <li>оптически переменная краска (OVI) на номиналах от 500 Юлей.</li>
+                    </ul>
+                    <p>Таким образом, Юль обладает современным комплексом защиты, включающим как визуальные, так и машиночитаемые признаки. Особенностью является голограмма с гербом Юльсанны и УФ-люминесценция красного цвета, что согласуется с общей красной гаммой банкнот.</p>
+
+                    <h2 id="exchange">5. Обмен и обращение</h2>
+                    <p>Пункт 8 Указа № 018 устанавливает, что обмен Юлей на юльсаннские рубли и обратно производится во всех отделениях Центрального банка и уполномоченных коммерческих банках <strong>без комиссии</strong> по фиксированному курсу <strong>1:10</strong>. Ограничений по сумме обмена не устанавливается. Это создаёт удобный механизм конвертации для граждан и бизнеса.</p>
+                    <p>Пункт 9 Указа предписывает Правительству Юльсанны в трёхдневный срок утвердить описание банкнот Юля (цвета, размеры, изображения, защитные элементы) и довести его до всех финансовых учреждений. Таким образом, детальные характеристики банкнот (точные размеры, оттенки, расположение элементов) определяются подзаконным актом Правительства.</p>
+                    <p>Пункт 10 Указа устанавливает, что Указ вступает в силу с момента официального опубликования. Поскольку Указ датирован 19 июля 2026 года, а введение валюты — 1 сентября 2026 года, между опубликованием и началом обращения предусмотрен подготовительный период.</p>
+                    <p>В отличие от юльсаннского рубля, для Юля не предусмотрено изъятия старых банкнот или обмена с комиссией — это совершенно новая валюта, вводимая параллельно. Граждане и организации могут добровольно использовать Юль наряду с рублём, а для сумм от 10 Юлей продавцы обязаны его принимать.</p>
+
+                    <h3>5.1 Сравнение с юльсаннским рублём (YUR/YLS)</h3>
+                    <div class="currency-table-wrap">
+                        <table class="currency-table">
+                            <thead>
+                                <tr>
+                                    <th>Параметр</th>
+                                    <th>Юль (YUL)</th>
+                                    <th>Юльсаннский рубль (YUR/YLS)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Статус</td>
+                                    <td>Второе законное платёжное средство</td>
+                                    <td>Основная валюта, законное платёжное средство</td>
+                                </tr>
+                                <tr>
+                                    <td>Дата введения</td>
+                                    <td>1 сентября 2026</td>
+                                    <td>7 января 2025 (SUU), реформы 2025, 2026</td>
+                                </tr>
+                                <tr>
+                                    <td>Курс</td>
+                                    <td>1 YUL = 10 YUR (фиксированный, изменяемый ЦБ с уведомлением)</td>
+                                    <td>Плавающий/фиксированный к RUB (60:1)</td>
+                                </tr>
+                                <tr>
+                                    <td>Обеспечение</td>
+                                    <td>100% золотовалютные резервы</td>
+                                    <td>Не указано в указе о Юле; регулируется отдельно</td>
+                                </tr>
+                                <tr>
+                                    <td>Номиналы банкнот</td>
+                                    <td>1, 5, 10, 50, 100, 500, 1000, 10 000</td>
+                                    <td>25, 50 коп., 1, 2, 3, 5, 10, 20, 30, 50, 100, 200, 300, 500 руб.</td>
+                                </tr>
+                                <tr>
+                                    <td>Дизайн</td>
+                                    <td>Красная гамма, геометрический, без портретов</td>
+                                    <td>Разноцветный, с портретами и пейзажами</td>
+                                </tr>
+                                <tr>
+                                    <td>Обязательность приёма</td>
+                                    <td>От 10 Юлей (100 YUR) — обязателен</td>
+                                    <td>Все номиналы обязательны</td>
+                                </tr>
+                                <tr>
+                                    <td>Обмен</td>
+                                    <td>Без комиссии, без ограничений по сумме</td>
+                                    <td>Обмен старых банкнот с ограничениями и комиссией (для безналичных)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3>5.2 Перспективы</h3>
+                    <p>Введение Юля является уникальным экспериментом в денежной системе СФСРЮ: впервые вводится параллельная валюта с полным резервным обеспечением и фиксированным курсом к национальной валюте. Успех Юля будет зависеть от доверия населения и бизнеса, а также от эффективности контроля за эмиссией и соблюдения лимитов, утверждаемых Правительством. В случае успеха Юль может стать инструментом сбережения и удобным средством для крупных расчётов, дополняя юльсаннский рубль.</p>
+
+                    <div style="background:#f9f9f9;border-left:4px solid #cc0000;padding:1rem;margin:1.5rem 0;border-radius:4px;">
+                        <p style="margin:0;font-weight:600;color:#cc0000;">💡 Интересный факт</p>
+                        <p style="margin:0.5rem 0 0 0;font-size:0.95rem;">Юль — единственная валюта СФСРЮ, выпускаемая исключительно в красной цветовой гамме и без портретов. Символ «Ю» и код YUL происходят от названия страны — Юльсанна.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            const overlay = document.querySelector('.menu-overlay');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    menuToggle.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                    if (overlay) overlay.classList.toggle('active');
+                    document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+                });
+            }
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    menuToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+        });
+    </script>
+</body>
+</html>

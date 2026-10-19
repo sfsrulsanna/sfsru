@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эйтинг — Википедия СФСРЮ</title>
+    <!-- favicons (полный набор) -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../../images/favicons/mstile-310x310.png" />
+    
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../../css/president-profile.css">
+    
+    <style>
+        /* ===== Общие стили (как на странице СФСРЮ) ===== */
+        .profile-container {
+            grid-template-columns: 380px 1fr;
+            gap: 2rem;
+        }
+        .photo-column {
+            position: sticky;
+            top: 2rem;
+            order: 1;
+        }
+        .info-column { order: 2; }
+
+        .history-content-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            border: 1px solid #e0e0e0;
+            line-height: 1.6;
+        }
+        .history-content-card h1 {
+            color: #cc0000;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 1rem;
+            margin-top: 0;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: center;
+        }
+        .history-content-card h2 {
+            color: #cc0000;
+            font-size: 1.4rem;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0.5rem;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .history-content-card h3 {
+            color: #444;
+            font-size: 1.1rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+        }
+        .history-content-card p {
+            margin-bottom: 1rem;
+            text-align: justify;
+            color: #333;
+        }
+        .history-content-card ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: 1rem;
+        }
+        .history-content-card li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.5;
+        }
+        .history-content-card li::before {
+            content: "•";
+            color: #cc0000;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+            font-size: 1.2rem;
+            line-height: 1.2rem;
+        }
+
+        /* ===== ТАБЛИЦЫ ===== */
+        .currency-table-wrap {
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        .currency-table {
+            width: 100%;
+            min-width: 900px;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        .currency-table th {
+            background: #cc0000;
+            color: white;
+            padding: 10px 12px;
+            text-align: center;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        .currency-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+            text-align: center;
+        }
+        .currency-table tr:nth-child(even) { background: #fafafa; }
+        .currency-table tr:hover { background: #f5f0f0; }
+
+        /* Ячейки с изображениями и описанием */
+        .banknote-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 140px;
+        }
+        .banknote-cell .banknote-img {
+            display: block;
+            width: 120px;
+            background: #f9f9f9;
+            border: 1px solid #ccc;
+            overflow: hidden;
+        }
+        .banknote-cell .banknote-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+        }
+        .banknote-cell .banknote-desc {
+            font-size: 0.75rem;
+            color: #333;
+            line-height: 1.3;
+            text-align: center;
+            max-width: 140px;
+        }
+        .banknote-cell .banknote-desc small {
+            display: block;
+            color: #666;
+            font-size: 0.65rem;
+        }
+
+        /* Для монет – круглые */
+        .coin-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            min-width: 80px;
+        }
+        .coin-cell .coin-img {
+            display: block;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            overflow: hidden;
+        }
+        .coin-cell .coin-img img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .coin-cell .coin-desc {
+            font-size: 0.7rem;
+            color: #333;
+            line-height: 1.2;
+            text-align: center;
+        }
+
+        /* Левый блок: монета и банкнота */
+        .coin-display {
+            width: 180px;
+            height: 180px;
+            margin: 1rem auto;
+            border: 3px solid #cc0000;
+            border-radius: 50%;
+            overflow: hidden;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .coin-display a {
+            display: flex;
+            width: 100%;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+        }
+        .coin-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .banknote-display {
+            width: 100%;
+            aspect-ratio: 159/72;
+            margin: 1rem 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            overflow: hidden;
+            background: #fff;
+        }
+        .banknote-display a {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+        .banknote-display img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .coin-display a, .banknote-display a,
+        .banknote-cell .banknote-img a, .coin-cell .coin-img a {
+            cursor: pointer;
+        }
+
+        .currency-symbol-block {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1.2rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+        .currency-symbol-block .symbol {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #cc0000;
+        }
+        .currency-symbol-block .desc {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 0.5rem;
+        }
+
+        .period-nav {
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .period-nav-title {
+            font-weight: 600;
+            color: #cc0000;
+            font-size: 0.85rem;
+            margin-bottom: 0.8rem;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .period-nav-item {
+            display: block;
+            padding: 0.6rem;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #333;
+            transition: all 0.2s ease;
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+        .period-nav-item:hover {
+            background: #f0f0f0;
+            border-color: #cc0000;
+            transform: translateX(3px);
+        }
+        .period-nav-item .period-code {
+            font-weight: 700;
+            color: #cc0000;
+        }
+        .period-nav-item .period-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 968px) {
+            .profile-container { grid-template-columns: 1fr; }
+            .photo-column { order: -1; position: static; margin-bottom: 2rem; }
+            .history-content-card { padding: 1.5rem; }
+            .coin-display { width: 140px; height: 140px; }
+            .currency-table { min-width: 700px; font-size: 0.8rem; }
+            .banknote-cell .banknote-img { width: 90px; }
+            .coin-cell .coin-img { width: 50px; height: 50px; }
+        }
+        @media (max-width: 480px) {
+            .history-content-card { padding: 1rem; }
+            .coin-display { width: 120px; height: 120px; }
+            .currency-table th, .currency-table td { padding: 6px 8px; font-size: 0.7rem; }
+            .banknote-cell .banknote-img { width: 70px; }
+            .banknote-cell .banknote-desc { font-size: 0.6rem; max-width: 80px; }
+            .coin-cell .coin-img { width: 40px; height: 40px; }
+            .coin-cell .coin-desc { font-size: 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../../../index.html">Главная</a></li>
+                    <li><a href="../../../news.html">Новости</a></li>
+                    <li><a href="../../../wiki/" class="active">Википедия</a></li>
+                    <li><a href="../../../healthcare.html">Здравоохранение</a></li>
+                    <li><a href="../../../services.html">Услуги</a></li>
+                    <li><a href="../../../profile.html">Личный кабинет</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="profile-main">
+        <div class="profile-container">
+            <!-- ЛЕВАЯ КОЛОНКА (инфоблок) -->
+            <aside class="photo-column">
+                <div class="photo-card">
+                    <div class="photo-top-section">
+                        <div class="main-personal-info">
+                            <div class="last-name">Эйтинг</div>
+                            <div class="first-name">валюта</div>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+                    <!-- Условное изображение банкноты -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Банкнота 100 Эйтингов (2026)</div>
+                        </div>
+                        <div class="banknote-display">
+                            <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:100%; height:100%; background:linear-gradient(135deg, #1565c0, #0d47a1); color:white; font-weight:bold; text-align:center; padding:0.5rem;">
+                                <div style="font-size:2rem;">100</div>
+                                <div style="font-size:0.9rem;">ЭЙТИНГОВ</div>
+                                <div style="font-size:0.7rem; margin-top:0.5rem;">ETN</div>
+                                <div style="font-size:0.6rem; margin-top:0.2rem;">АР Эйтингон</div>
+                                <div style="font-size:0.5rem; margin-top:0.5rem;">Изображение условное</div>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+                    <!-- Коды валюты -->
+                    <div class="position-block">
+                        <div class="position-header">
+                            <div class="position-title">Коды валюты</div>
+                        </div>
+                        <div class="currency-symbol-block">
+                            <div class="symbol">Э</div>
+                            <div class="desc">Символ Эйтинга</div>
+                        </div>
+                        <div class="position-details">
+                            <div class="position-detail"><div class="detail-label">ISO (текущий)</div><div class="detail-value-wrapper"><span class="detail-value">ETN</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Эмитент</div><div class="detail-value-wrapper"><span class="detail-value">Центральный банк СФСРЮ</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Дата введения</div><div class="detail-value-wrapper"><span class="detail-value">1 сентября 2026 года</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Соотношение</div><div class="detail-value-wrapper"><span class="detail-value">1 ETN = 1 YUR</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Обеспечение</div><div class="detail-value-wrapper"><span class="detail-value">100% резервы в YUR на счетах АР</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Территория</div><div class="detail-value-wrapper"><span class="detail-value">АР Эйтингон</span></div></div>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <!-- Навигация по разделам -->
+                    <div class="position-block">
+                        <div class="period-nav">
+                            <div class="period-nav-title">Содержание</div>
+                            <a href="#history" class="period-nav-item"><span class="period-code">1.</span> <span class="period-date">История и правовая основа</span></a>
+                            <a href="#legal" class="period-nav-item"><span class="period-code">2.</span> <span class="period-date">Юридический статус</span></a>
+                            <a href="#banknotes" class="period-nav-item"><span class="period-code">3.</span> <span class="period-date">Банкноты</span></a>
+                            <a href="#coins" class="period-nav-item"><span class="period-code">4.</span> <span class="period-date">Монеты</span></a>
+                            <a href="#exchange" class="period-nav-item"><span class="period-code">5.</span> <span class="period-date">Обмен и обращение</span></a>
+                        </div>
+                    </div>
+                    <hr class="section-divider">
+
+                    <!-- Факты -->
+                    <div class="position-block">
+                        <div class="position-header"><div class="position-title">Факты</div></div>
+                        <div class="position-details">
+                            <div class="position-detail"><div class="detail-label">Тип валюты</div><div class="detail-value-wrapper"><span class="detail-value">Местная (параллельная)</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Номиналы банкнот</div><div class="detail-value-wrapper"><span class="detail-value">1, 5, 10, 25, 50, 100, 500 Эйтингов</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Монеты</div><div class="detail-value-wrapper"><span class="detail-value">1, 10, 25, 50 искр; 1 Эйтинг</span></div></div>
+                            <div class="position-detail"><div class="detail-label">Языки</div><div class="detail-value-wrapper"><span class="detail-value">Региональный (основной), юльсаннский и русский (вспомогательно), ульсаннский (микротекст)</span></div></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ПРАВАЯ КОЛОНКА -->
+            <div class="info-column">
+                <div class="history-content-card">
+                    <h1>Эйтинг</h1>
+
+                    <h2 id="history">1. История и правовая основа</h2>
+                    <p><strong>Эйтинг</strong> (международный код — <strong>ETN</strong>) — местная валюта Автономной Республики Эйтингон в составе Советской Федеративной Социалистической Республики Юльсанна (СФСРЮ), введённая в обращение с <strong>1 сентября 2026 года</strong>. Правовой основой введения является Указ Президента СФСРЮ № 019 «О введении в обращение местных валют Автономной Республики Натуральнова и Автономной Республики Эйтингон» от 19 июля 2026 года, изданный во исполнение Федерального закона «Об автономных республиках» и в целях развития региональной экономики, а также с учётом культурно-исторических особенностей автономных республик.</p>
+                    <p>Эйтинг вводится как параллельная местная валюта, действующая исключительно на территории АР Эйтингон. Его появление продолжает курс на децентрализацию денежной системы СФСРЮ и развитие региональной экономики.</p>
+
+                    <h2 id="legal">2. Юридический статус</h2>
+                    <p>В соответствии с пунктом 2 Указа № 019, установлен <strong>фиксированный курс Эйтинга к юльсаннскому рублю (YUR) на уровне 1 ETN = 1 YUR</strong>. Изменение курса допускается только решением Центрального банка СФСРЮ по согласованию с Правительством республики. Таким образом, курс жёстко привязан к основной валюте, что обеспечивает стабильность.</p>
+                    <p>Пункт 3 Указа определяет, что местные валюты являются <strong>законным платёжным средством исключительно на территории соответствующих республик</strong> и принимаются к оплате наравне с юльсаннским рублём и Юлем. За пределами республик местные валюты к оплате не принимаются, за исключением обменных пунктов Центрального банка СФСРЮ. Следовательно, Эйтинг не является законным платёжным средством за пределами АР Эйтингон.</p>
+                    <p>Пункт 4 Указа устанавливает, что эмиссия Эйтингов производится Центральным банком СФСРЮ по заявкам республик и должна быть <strong>на 100% обеспечена резервами в юльсаннских рублях</strong>, хранящимися на счетах республик в ЦБ. Это создаёт механизм полного резервирования, гарантирующий конвертируемость валюты.</p>
+
+                    <h2 id="banknotes">3. Банкноты</h2>
+                    <p>Пункт 6 Указа № 019 утверждает номинальный ряд банкнот Эйтинга: <strong>1, 5, 10, 25, 50, 100, 500 единиц</strong>. Пункт 5 устанавливает требования к надписям: на банкнотах местных валют размещаются надписи на соответствующем региональном языке в качестве основного текста, а также на юльсанниском и русском (вспомогательно) и ульсанниском (в микротексте).</p>
+                    <p>Детальное описание банкнот (цвета, размеры, изображения, защитные элементы) должно быть утверждено Правительством СФСРЮ в недельный срок (пункт 7 Указа). На момент опубликования указа точные характеристики банкнот не определены.</p>
+                    <div class="currency-table-wrap">
+                        <table class="currency-table">
+                            <thead>
+                                <tr>
+                                    <th>Номинал</th>
+                                    <th>Основной язык</th>
+                                    <th>Вспомогательные языки</th>
+                                    <th>Микротекст</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1 Эйтинг</td>
+                                    <td>Региональный</td>
+                                    <td>Юльсаннский, русский</td>
+                                    <td>Ульсаннский</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>5 Эйтингов</td>
+                                    <td>Региональный</td>
+                                    <td>Юльсаннский, русский</td>
+                                    <td>Ульсаннский</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>10 Эйтингов</td>
+                                    <td>Региональный</td>
+                                    <td>Юльсаннский, русский</td>
+                                    <td>Ульсаннский</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>25 Эйтингов</td>
+                                    <td>Региональный</td>
+                                    <td>Юльсаннский, русский</td>
+                                    <td>Ульсаннский</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>50 Эйтингов</td>
+                                    <td>Региональный</td>
+                                    <td>Юльсаннский, русский</td>
+                                    <td>Ульсаннский</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>100 Эйтингов</td>
+                                    <td>Региональный</td>
+                                    <td>Юльсаннский, русский</td>
+                                    <td>Ульсаннский</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>500 Эйтингов</td>
+                                    <td>Региональный</td>
+                                    <td>Юльсаннский, русский</td>
+                                    <td>Ульсаннский</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h2 id="coins">4. Монеты</h2>
+                    <p>Пункт 6 Указа № 019 утверждает номинальные ряды монет: <strong>1, 10, 25, 50 дробных единиц</strong> (для Эйтингона дробная единица называется <strong>«искра»</strong>) и <strong>1 основная единица</strong> (1 Эйтинг). Таким образом, монетный ряд включает 1, 10, 25, 50 искр и 1 Эйтинг. Материал, размеры и дизайн монет должны быть утверждены Правительством СФСРЮ в недельный срок.</p>
+                    <div class="currency-table-wrap">
+                        <table class="currency-table">
+                            <thead>
+                                <tr>
+                                    <th>Номинал</th>
+                                    <th>Дробная единица</th>
+                                    <th>Статус</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>1 искра</td>
+                                    <td>1/100 Эйтинга</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>10 искр</td>
+                                    <td>10/100 Эйтинга</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>25 искр</td>
+                                    <td>25/100 Эйтинга</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>50 искр</td>
+                                    <td>50/100 Эйтинга</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                                <tr>
+                                    <td>1 Эйтинг</td>
+                                    <td>Основная единица</td>
+                                    <td>В обращении с 01.09.2026</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h2 id="exchange">5. Обмен и обращение</h2>
+                    <p>Указ № 019 не устанавливает детального порядка обмена Эйтинга на другие валюты, однако, исходя из общего правового контекста и аналогии с Указом № 018 (о Юле), обмен, вероятно, будет производиться в отделениях Центрального банка СФСРЮ и уполномоченных коммерческих банках по фиксированному курсу 1:1 к YUR. Ограничения по сумме обмена в указе не упоминаются.</p>
+                    <p>Эйтинг является законным платёжным средством только на территории АР Эйтингон. За её пределами он не обязателен к приёму, но может быть обменян в обменных пунктах ЦБ СФСРЮ. Эмиссия осуществляется по заявкам республики и полностью обеспечивается резервами в юльсаннских рублях на счетах республики в ЦБ.</p>
+
+                    <h3>5.1 Сравнение с другими валютами СФСРЮ</h3>
+                    <div class="currency-table-wrap">
+                        <table class="currency-table">
+                            <thead>
+                                <tr>
+                                    <th>Параметр</th>
+                                    <th>Эйтинг (ETN)</th>
+                                    <th>Юль (YUL)</th>
+                                    <th>Юльсаннский рубль (YUR/YLS)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Статус</td>
+                                    <td>Местная валюта АР Эйтингон</td>
+                                    <td>Параллельная валюта (второе законное платёжное средство)</td>
+                                    <td>Основная валюта</td>
+                                </tr>
+                                <tr>
+                                    <td>Территория</td>
+                                    <td>АР Эйтингон</td>
+                                    <td>Вся СФСРЮ</td>
+                                    <td>Вся СФСРЮ</td>
+                                </tr>
+                                <tr>
+                                    <td>Курс</td>
+                                    <td>1 ETN = 1 YUR (фиксированный, изменяемый ЦБ по согласованию с Правительством АР)</td>
+                                    <td>1 YUL = 10 YUR (фиксированный, изменяемый ЦБ с уведомлением)</td>
+                                    <td>Привязан к RUB (60:1)</td>
+                                </tr>
+                                <tr>
+                                    <td>Обеспечение</td>
+                                    <td>100% резервы в YUR на счетах АР</td>
+                                    <td>100% золотовалютные резервы</td>
+                                    <td>Не указано в Указе № 019</td>
+                                </tr>
+                                <tr>
+                                    <td>Номиналы банкнот</td>
+                                    <td>1, 5, 10, 25, 50, 100, 500</td>
+                                    <td>1, 5, 10, 50, 100, 500, 1000, 10 000</td>
+                                    <td>25, 50 коп., 1, 2, 3, 5, 10, 20, 30, 50, 100, 200, 300, 500 руб.</td>
+                                </tr>
+                                <tr>
+                                    <td>Обязательность приёма</td>
+                                    <td>Только на территории АР Эйтингон</td>
+                                    <td>От 10 Юлей (100 YUR) — на всей территории СФСРЮ</td>
+                                    <td>Все номиналы — на всей территории СФСРЮ</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="background:#f9f9f9;border-left:4px solid #cc0000;padding:1rem;margin:1.5rem 0;border-radius:4px;">
+                        <p style="margin:0;font-weight:600;color:#cc0000;">💡 Интересный факт</p>
+                        <p style="margin:0.5rem 0 0 0;font-size:0.95rem;">Эйтинг — первая местная валюта АР Эйтингон. Его дробная единица называется «искра», что, вероятно, отражает промышленный или энергетический профиль региона.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const menuToggle = document.querySelector('.menu-toggle');
+            const navMenu = document.querySelector('.nav-menu');
+            const overlay = document.querySelector('.menu-overlay');
+            if (menuToggle) {
+                menuToggle.addEventListener('click', () => {
+                    menuToggle.classList.toggle('active');
+                    navMenu.classList.toggle('active');
+                    if (overlay) overlay.classList.toggle('active');
+                    document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+                });
+            }
+            if (overlay) {
+                overlay.addEventListener('click', () => {
+                    menuToggle.classList.remove('active');
+                    navMenu.classList.remove('active');
+                    overlay.classList.remove('active');
+                    document.body.style.overflow = '';
+                });
+            }
+        });
+    </script>
+</body>
+</html>
