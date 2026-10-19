@@ -27,154 +27,341 @@
     <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
 
     <link rel="stylesheet" href="../css/style.css">
-    <link rel="stylesheet" href="../css/index.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/personal-profile/index.css">
+
     <style>
-        /* стили без изменений */
-        .messages-container {
-            max-width: 800px;
-            margin: 2rem auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            padding: 2rem;
+        /* ============================================================
+           Уведомления — оформление в стиле главной страницы профиля
+           ============================================================ */
+
+        .profile-main {
+            background:
+                radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+                #f6f7f9;
+            min-height: calc(100vh - 220px);
+            padding: 34px 16px 64px;
         }
-        .page-title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #7b091a;
-            margin-bottom: 0.25rem;
-            letter-spacing: -0.5px;
+        .profile-container {
+            max-width: 1120px;
+            margin: 0 auto;
         }
-        .page-description {
-            font-size: 1.1rem;
-            color: #6c757d;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 1rem;
-        }
-        .message-item {
-            background: white;
-            border-radius: 14px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            border: 1px solid #e9ecef;
-            transition: all 0.2s ease;
+
+        /* ---------- Приветственный блок (как в профиле) ---------- */
+        .greeting-block {
             position: relative;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            padding: 26px 28px;
+            margin: 0 0 30px;
+            background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+            border: 1px solid #f1d7d7;
+            border-radius: 18px;
+            box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+            overflow: hidden;
         }
-        .message-item:hover {
-            background: #fafbfc;
-            border-color: #ced4da;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        .greeting-block::after {
+            content: "";
+            position: absolute;
+            right: -70px;
+            top: -70px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+            pointer-events: none;
         }
+        .greeting-emoji {
+            flex-shrink: 0;
+            font-size: 3rem;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+        .greeting-content {
+            flex: 1 1 220px;
+            min-width: 0;
+            text-align: left;
+            position: relative;
+            z-index: 1;
+        }
+        .greeting-text {
+            margin: 0 0 6px;
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #1a1a1a;
+            letter-spacing: -0.01em;
+        }
+        .greeting-subtitle {
+            margin: 0;
+            font-size: 1rem;
+            color: #6b6b6b;
+            line-height: 1.45;
+        }
+        .greeting-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            flex-shrink: 0;
+            align-items: stretch;
+            position: relative;
+            z-index: 1;
+        }
+        .greeting-action-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px 18px;
+            border-radius: 10px;
+            background: #ffffff;
+            border: 1px solid #ececec;
+            color: #2a2a2a;
+            text-decoration: none;
+            font-size: 0.92rem;
+            font-weight: 500;
+            white-space: nowrap;
+            transition: transform 0.15s ease, box-shadow 0.2s ease,
+                        border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+        }
+        .greeting-action-link:hover,
+        .greeting-action-link:focus-visible {
+            border-color: #b30000;
+            background: #fff5f5;
+            color: #b30000;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+            outline: none;
+        }
+
+        /* ---------- Список сообщений ---------- */
+        .messages-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        /* ---------- Карточка сообщения (как .info-card) ---------- */
+        .message-item {
+            position: relative;
+            background: #ffffff;
+            border: 1px solid #ececec;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            padding: 22px 24px 26px;
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease,
+                        border-color 0.2s ease, background-color 0.2s ease;
+        }
+
+        /* Цветная полоса по нижней границе на всю ширину */
+        .message-item::before {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: #e0e0e0;
+        }
+
         .message-item.unread {
-            border-left: 4px solid #28a745;
-            background: #f8f9fa;
+            background: #fffafa;
+            border-color: #f1d7d7;
         }
+        .message-item.unread::before {
+            background: linear-gradient(90deg, #b30000, #ff8080);
+        }
+
+        .message-item:hover {
+            transform: translateY(-3px);
+            border-color: #b30000;
+            background: #fff9f9;
+            box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
+        }
+
         .message-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 0.75rem;
+            margin-bottom: 10px;
             flex-wrap: wrap;
-            gap: 0.5rem;
+            gap: 8px;
         }
         .message-title {
-            font-weight: 600;
-            font-size: 1.2rem;
-            color: #7b091a;
+            font-weight: 700;
+            font-size: 1.08rem;
+            color: #1f1f1f;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .message-date {
-            color: #6c757d;
-            font-size: 0.9rem;
+            color: #888;
+            font-size: 0.85rem;
             white-space: nowrap;
         }
         .message-content {
-            margin: 0.75rem 0;
-            line-height: 1.6;
-            color: #333;
+            margin: 10px 0 0;
+            line-height: 1.55;
+            color: #555;
+            font-size: 0.97rem;
         }
-        .message-footer {
-            margin-top: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .message-footer p {
-            margin: 0;
+        .message-content p {
+            margin: 8px 0 0;
             color: #555;
             font-size: 0.95rem;
         }
-        .btn-mark-read {
-            background-color: #007bff;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 30px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.2s;
-            border: 1px solid transparent;
+        .message-content strong {
+            color: #1f1f1f;
         }
-        .btn-mark-read:hover {
-            background-color: #0056b3;
+
+        .message-footer {
+            margin-top: 16px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
         }
+
+        /* ---------- Кнопки ---------- */
+        .btn-mark-read,
         .btn-view-application {
-            background-color: #28a745;
-            color: white;
-            border: none;
-            padding: 0.5rem 1.2rem;
-            border-radius: 30px;
-            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 10px 18px;
+            border-radius: 10px;
+            font-size: 0.92rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background-color 0.2s;
+            white-space: nowrap;
+            transition: transform 0.15s ease, box-shadow 0.2s ease,
+                        border-color 0.2s ease, background-color 0.2s ease,
+                        color 0.2s ease, filter 0.2s ease;
+        }
+
+        .btn-view-application {
+            background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+            color: #ffffff;
+            border: none;
+            box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
             text-decoration: none;
+        }
+        .btn-view-application:hover,
+        .btn-view-application:focus-visible {
+            filter: brightness(1.08);
+            box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+            outline: none;
+        }
+
+        .btn-mark-read {
+            background: #ffffff;
+            border: 1px solid #ececec;
+            color: #2a2a2a;
+        }
+        .btn-mark-read:hover,
+        .btn-mark-read:focus-visible {
+            border-color: #b30000;
+            background: #fff5f5;
+            color: #b30000;
+            outline: none;
+        }
+
+        /* ---------- Статус-бейджи ---------- */
+        .status-badge {
             display: inline-block;
+            padding: 3px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+            white-space: nowrap;
         }
-        .btn-view-application:hover {
-            background-color: #1e7e34;
+        .status-badge.submitted,
+        .status-badge.processing {
+            background: #fff8ec; color: #c2710c; border-color: #f5d9a8;
         }
-        .loading, .no-data {
+        .status-badge.interim,
+        .status-badge.positive,
+        .status-badge.completed,
+        .status-badge.approved {
+            background: #eefaf0; color: #16a34a; border-color: #b8e6c2;
+        }
+        .status-badge.rejected {
+            background: #fff0f0; color: #b30000; border-color: #f5c6c6;
+        }
+        .status-badge.cancelled {
+            background: #f0f0f0; color: #555; border-color: #e0e0e0;
+        }
+        .status-badge.under_review {
+            background: #eef4ff; color: #2563eb; border-color: #c6d8f5;
+        }
+
+        /* ---------- Загрузка / пустое состояние / ошибка ---------- */
+        .loading,
+        .no-data {
             text-align: center;
             padding: 3rem;
             color: #6c757d;
-            font-size: 1.1rem;
+            font-size: 1rem;
+            background: #ffffff;
+            border: 1px solid #ececec;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
         }
         .error {
             text-align: center;
             padding: 2rem;
-            color: #dc3545;
+            color: #b30000;
+            background: #fff5f5;
+            border: 1px solid #f5c6c6;
+            border-radius: 16px;
         }
-        .status-badge {
-            display: inline-block;
-            padding: 0.2rem 0.8rem;
-            border-radius: 30px;
-            font-size: 0.85rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-        }
-        .status-badge.submitted { background: #fff3cd; color: #856404; }
-        .status-badge.processing { background: #fff3cd; color: #856404; }
-        .status-badge.interim { background: #d4edda; color: #155724; }
-        .status-badge.positive { background: #d4edda; color: #155724; }
-        .status-badge.completed { background: #d4edda; color: #155724; }
-        .status-badge.rejected { background: #f8d7da; color: #721c24; }
-        .status-badge.cancelled { background: #e2e3e5; color: #383d41; }
-        .status-badge.under_review { background: #cce5ff; color: #004085; }
-        .status-badge.approved { background: #d4edda; color: #155724; }
 
-        @media (max-width: 600px) {
-            .messages-container { padding: 1.5rem; margin: 1rem; }
+        /* ---------- Адаптивность ---------- */
+        @media (max-width: 640px) {
+            .profile-main { padding: 22px 12px 48px; }
+
+            .greeting-block {
+                padding: 22px 20px;
+                gap: 16px;
+            }
+            .greeting-emoji { font-size: 2.2rem; }
+            .greeting-text { font-size: 1.4rem; }
+            .greeting-subtitle { font-size: 0.9rem; }
+            .greeting-actions {
+                flex-direction: row;
+                flex: 1 1 100%;
+                width: 100%;
+                gap: 8px;
+            }
+            .greeting-actions > * { flex: 1 1 0; }
+            .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+            .message-item { padding: 18px 18px 22px; }
             .message-header { flex-direction: column; align-items: flex-start; }
+            .message-title { font-size: 1rem; }
             .message-date { white-space: normal; }
-            .btn-mark-read, .btn-view-application { width: 100%; text-align: center; }
+
             .message-footer { flex-direction: column; align-items: stretch; }
+            .btn-mark-read,
+            .btn-view-application { width: 100%; text-align: center; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .message-item,
+            .btn-mark-read,
+            .btn-view-application,
+            .greeting-action-link {
+                transition: none !important;
+            }
         }
     </style>
+
     <script type="importmap">
         {
             "imports": {
@@ -209,13 +396,23 @@
     </header>
     <div class="menu-overlay"></div>
 
-    <main class="main-content">
-        <div class="messages-container">
-            <h1 class="page-title">Уведомления</h1>
-            <p class="page-description">Ваши уведомления и сообщения от ведомств</p>
+    <main class="main-content profile-main">
+        <div class="profile-container">
+            <div class="greeting-block">
+                <div class="greeting-emoji" aria-hidden="true">🔔</div>
+                <div class="greeting-content">
+                    <h1 class="greeting-text">Уведомления</h1>
+                    <p class="greeting-subtitle">Ваши уведомления и сообщения от ведомств</p>
+                </div>
+                <div class="greeting-actions">
+                    <a href="index.html" class="greeting-action-link">
+                        <span aria-hidden="true">←</span> В личный кабинет
+                    </a>
+                </div>
+            </div>
 
             <div id="loading" class="loading">Загрузка...</div>
-            <div id="messagesList"></div>
+            <div id="messagesList" class="messages-list"></div>
             <div id="noMessages" class="no-data" style="display: none;">У вас пока нет сообщений.</div>
         </div>
     </main>
@@ -230,7 +427,7 @@
         import { supabase } from '../js/supabase-config.js';
 
         let currentUserId = null;
-        let catalogMap = {}; // service_key → name_ru
+        let catalogMap = {};
         let voteTypeNames = {
             'candidate_registration': 'Регистрация кандидата',
             'observer_registration': 'Регистрация наблюдателя',
@@ -276,7 +473,6 @@
             });
         }
 
-        // Получить название голосования по ID
         async function getElectionTitle(electionId) {
             if (!electionId) return 'голосование';
             const { data, error } = await supabase
@@ -289,21 +485,16 @@
             return data.title;
         }
 
-        // Получить историю статусов заявлений ЦИК для пользователя и преобразовать в "виртуальные" сообщения
         async function loadVoteStatusHistory() {
-            // 1. Получить все заявления пользователя в votes.applications
             const { data: apps, error: appsErr } = await supabase
                 .schema('votes')
                 .from('applications')
                 .select('id, application_number, type, election_id')
                 .eq('user_id', currentUserId);
 
-            if (appsErr || !apps || apps.length === 0) {
-                return [];
-            }
+            if (appsErr || !apps || apps.length === 0) return [];
 
             const appIds = apps.map(a => a.id);
-            // 2. Получить историю статусов для этих заявлений
             const { data: history, error: histErr } = await supabase
                 .schema('votes')
                 .from('application_status_history')
@@ -311,11 +502,8 @@
                 .in('application_id', appIds)
                 .order('created_at', { ascending: false });
 
-            if (histErr || !history || history.length === 0) {
-                return [];
-            }
+            if (histErr || !history || history.length === 0) return [];
 
-            // 3. Для каждого события создаём виртуальное сообщение
             const messages = [];
             for (const item of history) {
                 const app = apps.find(a => a.id === item.application_id);
@@ -331,9 +519,9 @@
                     title: title,
                     content: content,
                     created_at: item.created_at,
-                    is_read: false, // всегда непрочитанное
+                    is_read: false,
                     service_id: app.id,
-                    service_type: 'vote', // специальный тип
+                    service_type: 'vote',
                     application_number: app.application_number || '—',
                     is_virtual: true,
                     status: item.status
@@ -351,7 +539,6 @@
             list.innerHTML = '';
             noMessages.style.display = 'none';
 
-            // 1. Загружаем сообщения из таблицы user_messages
             const { data: dbMessages, error: dbError } = await supabase
                 .schema('messages')
                 .from('user_messages')
@@ -362,17 +549,14 @@
             if (dbError) {
                 console.error('Ошибка загрузки сообщений:', dbError);
                 loading.style.display = 'none';
-                list.innerHTML = '<p class="error">Ошибка загрузки</p>';
+                list.innerHTML = '<p class="error">Ошибка загрузки сообщений</p>';
                 return;
             }
 
-            // 2. Загружаем виртуальные уведомления из истории ЦИК
             const voteNotifications = await loadVoteStatusHistory();
 
-            // 3. Объединяем, преобразуем к единому формату
             let allMessages = [];
 
-            // Сообщения из БД
             if (dbMessages) {
                 allMessages = dbMessages.map(msg => ({
                     id: msg.id,
@@ -388,10 +572,7 @@
                 }));
             }
 
-            // Добавляем виртуальные
             allMessages = [...allMessages, ...voteNotifications];
-
-            // Сортируем по дате (новые сверху)
             allMessages.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             loading.style.display = 'none';
@@ -403,7 +584,6 @@
 
             list.innerHTML = allMessages.map(msg => {
                 const serviceType = msg.service_type || 'unknown';
-                // Название услуги
                 let serviceName = catalogMap[serviceType];
                 if (!serviceName) {
                     if (serviceType === 'vote') {
@@ -415,7 +595,6 @@
                     }
                 }
 
-                // Ссылка на просмотр заявки
                 let viewLink = '#';
                 if (msg.is_virtual || serviceType === 'vote') {
                     viewLink = `services/service-view.html?id=${msg.service_id}&type=vote`;
@@ -425,7 +604,6 @@
                     viewLink = `services/service-view.html?id=${msg.service_id}&type=application`;
                 }
 
-                // Статус-бейдж для виртуальных сообщений
                 let statusBadge = '';
                 if (msg.is_virtual && msg.status) {
                     const statusClass = `status-badge ${msg.status}`;
@@ -433,20 +611,23 @@
                     statusBadge = `<span class="${statusClass}">${statusText}</span>`;
                 }
 
-                // Кнопка "Отметить прочитанным" только для невиртуальных и непрочитанных
                 let markReadBtn = '';
                 if (!msg.is_virtual && !msg.is_read) {
                     markReadBtn = `<button class="btn-mark-read" data-id="${msg.id}">Отметить прочитанным</button>`;
                 }
 
+                // Для виртуальных сообщений контент генерируется доверенным JS и содержит <strong> — выводим как HTML.
+                // Для сообщений из БД контент экранируется.
+                const contentHtml = msg.is_virtual ? msg.content : escapeHTML(msg.content);
+
                 return `
                     <div class="message-item ${msg.is_read ? '' : 'unread'}" data-id="${msg.id}">
                         <div class="message-header">
                             <span class="message-title">${escapeHTML(msg.title)} ${statusBadge}</span>
-                            <span class="message-date">${new Date(msg.created_at).toLocaleString()}</span>
+                            <span class="message-date">${new Date(msg.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                         <div class="message-content">
-                            ${escapeHTML(msg.content)}
+                            ${contentHtml}
                             ${serviceType && serviceType !== 'unknown' ? `<p><strong>Услуга:</strong> ${escapeHTML(serviceName)}</p>` : ''}
                         </div>
                         <div class="message-footer">
@@ -457,7 +638,6 @@
                 `;
             }).join('');
 
-            // Обработчики для кнопок "Отметить прочитанным" (только для реальных сообщений)
             document.querySelectorAll('.btn-mark-read').forEach(btn => {
                 btn.addEventListener('click', async (e) => {
                     const id = e.target.dataset.id;
