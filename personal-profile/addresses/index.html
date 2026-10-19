@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Адреса — СФСРЮ</title>
 
-  <!-- favicons (полный набор) -->
+  <!-- favicons -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -27,12 +27,360 @@
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
 
-    <!-- Стили -->
-    <link rel="stylesheet" href="../../css/style.css" />
-    <link rel="stylesheet" href="addresses.css" />
+  <link rel="stylesheet" href="../../css/style.css" />
+  <link rel="stylesheet" href="addresses.css" />
+
+  <style>
+    /* ============================================================
+       Адреса — оформление в стиле главной страницы профиля
+       ============================================================ */
+
+    /* ---------- Общий фон и контейнер ---------- */
+    .profile-main {
+      background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+      min-height: calc(100vh - 220px);
+      padding: 34px 16px 64px;
+    }
+    .profile-container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Приветственный блок (как в профиле) ---------- */
+    .greeting-block {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 26px 28px;
+      margin: 0 0 26px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border: 1px solid #f1d7d7;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+      overflow: hidden;
+    }
+    .greeting-block::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+      pointer-events: none;
+    }
+    .greeting-emoji {
+      flex-shrink: 0;
+      font-size: 3rem;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-content {
+      flex: 1 1 220px;
+      min-width: 0;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-text {
+      margin: 0 0 6px;
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #1a1a1a;
+      letter-spacing: -0.01em;
+    }
+    .greeting-subtitle {
+      margin: 0;
+      font-size: 1rem;
+      color: #6b6b6b;
+      line-height: 1.45;
+    }
+    .greeting-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      align-items: stretch;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-action-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .greeting-action-link:hover,
+    .greeting-action-link:focus-visible {
+      border-color: #b30000;
+      background: #fff5f5;
+      color: #b30000;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+      outline: none;
+    }
+
+    /* ---------- Переключатель вкладок ---------- */
+    .tab-switch {
+      display: flex;
+      gap: 10px;
+      margin: 0 0 22px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 22px;
+      border-radius: 10px;
+      border: 1px solid #ececec;
+      background: #ffffff;
+      color: #2a2a2a;
+      font-size: 0.92rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease,
+                  color 0.2s ease, filter 0.2s ease;
+    }
+    .tab-btn:hover,
+    .tab-btn:focus-visible {
+      border-color: #b30000;
+      color: #b30000;
+      background: #fff5f5;
+      outline: none;
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+    }
+    .tab-btn.active:hover,
+    .tab-btn.active:focus-visible {
+      filter: brightness(1.08);
+      color: #ffffff;
+      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+      box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+    }
+
+    /* ---------- Сетка адресов ---------- */
+    .addresses-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ---------- Карточка адреса (как .info-card) ---------- */
+    .address-card {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      padding: 22px 24px 26px;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    /* Цветная полоса по нижней границе на всю ширину */
+    .address-card::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #b30000, #ff8080);
+    }
+    .address-card.archived {
+      background: #fafafa;
+    }
+    .address-card.archived::before {
+      background: linear-gradient(90deg, #b0b0b0, #d8d8d8);
+    }
+
+    .address-card:hover {
+      transform: translateY(-2px);
+      border-color: #f1d7d7;
+      box-shadow: 0 10px 26px rgba(179, 0, 0, 0.09);
+    }
+    .address-card.archived:hover {
+      border-color: #e0e0e0;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.07);
+    }
+
+    /* Заголовок карточки — с местом под статус справа */
+    .address-card .card-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #1f1f1f;
+      margin: 0 0 10px;
+      padding-right: 150px;
+      line-height: 1.3;
+    }
+    .address-card.archived .card-title {
+      color: #555;
+    }
+
+    .address-card .card-address {
+      font-size: 0.97rem;
+      color: #555;
+      line-height: 1.5;
+      margin: 0 0 14px;
+      word-break: break-word;
+    }
+
+    .address-card .card-dates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 22px;
+      font-size: 0.88rem;
+      color: #888;
+      padding-top: 12px;
+      border-top: 1px solid #f2f2f2;
+    }
+    .address-card .card-dates span {
+      display: inline-block;
+      line-height: 1.4;
+    }
+
+    /* ---------- Статус-таблетка ---------- */
+    .status-pill {
+      position: absolute;
+      top: 20px;
+      right: 24px;
+      padding: 4px 14px;
+      border-radius: 20px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      background: #f0f0f0;
+      color: #666;
+      border: 1px solid #e0e0e0;
+      white-space: nowrap;
+    }
+    .status-pill.verified {
+      background: #eefaf0;
+      color: #16a34a;
+      border-color: #b8e6c2;
+    }
+    .status-pill.pending {
+      background: #fff8ec;
+      color: #c2710c;
+      border-color: #f5d9a8;
+    }
+    .status-pill.rejected {
+      background: #fff0f0;
+      color: #b30000;
+      border-color: #f5c6c6;
+    }
+    .status-pill.archived {
+      background: #f0f0f0;
+      color: #777;
+      border-color: #d8d8d8;
+    }
+
+    /* ---------- Загрузка / пустое состояние ---------- */
+    .loading,
+    .no-data {
+      text-align: center;
+      padding: 3rem;
+      color: #6c757d;
+      font-size: 1rem;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+    .no-data {
+      color: #888;
+      border-style: dashed;
+      box-shadow: none;
+    }
+
+    /* ---------- Мобильная адаптация ---------- */
+    @media (max-width: 640px) {
+      .profile-main { padding: 22px 12px 48px; }
+
+      .greeting-block {
+        padding: 22px 20px;
+        gap: 16px;
+      }
+      .greeting-emoji { font-size: 2.2rem; }
+      .greeting-text { font-size: 1.4rem; }
+      .greeting-subtitle { font-size: 0.9rem; }
+      .greeting-actions {
+        flex-direction: row;
+        flex: 1 1 100%;
+        width: 100%;
+        gap: 8px;
+      }
+      .greeting-actions > * { flex: 1 1 0; }
+      .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+      .tab-switch { gap: 8px; }
+      .tab-btn {
+        flex: 1 1 0;
+        padding: 10px 14px;
+        font-size: 0.86rem;
+      }
+
+      .address-card {
+        padding: 18px 18px 22px;
+      }
+      .address-card .card-title {
+        font-size: 1rem;
+        padding-right: 0;
+        padding-bottom: 6px;
+      }
+      .status-pill {
+        position: static;
+        display: inline-block;
+        margin-bottom: 8px;
+        font-size: 0.72rem;
+        padding: 3px 10px;
+      }
+      .address-card .card-address { font-size: 0.92rem; }
+      .address-card .card-dates {
+        font-size: 0.82rem;
+        gap: 6px 16px;
+        flex-direction: column;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .address-card,
+      .tab-btn,
+      .greeting-action-link {
+        transition: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
-    <!-- Шапка (без изменений) -->
     <header class="header">
         <div class="header-container">
             <div class="logo">
@@ -58,29 +406,31 @@
     </header>
     <div class="menu-overlay"></div>
 
-    <main class="main-content">
-        <div class="container">
-            <div class="page-header">
-                <h2>Адреса</h2>
-                <p>Ваши зарегистрированные адреса</p>
+    <main class="main-content profile-main">
+        <div class="profile-container">
+            <div class="greeting-block">
+                <div class="greeting-emoji" aria-hidden="true">🗺️</div>
+                <div class="greeting-content">
+                    <h1 class="greeting-text">Адреса</h1>
+                    <p class="greeting-subtitle">Ваши зарегистрированные адреса</p>
+                </div>
+                <div class="greeting-actions">
+                    <a href="../index.html" class="greeting-action-link">
+                        <span aria-hidden="true">←</span> В личный кабинет
+                    </a>
+                </div>
             </div>
 
-            <!-- Переключатель вкладок -->
             <div class="tab-switch">
                 <button class="tab-btn active" data-tab="current">Текущие</button>
                 <button class="tab-btn" data-tab="archived">Архивные</button>
             </div>
 
-            <!-- Загрузка -->
             <div id="loading" class="loading">Загрузка данных...</div>
 
-            <!-- Контейнер для текущих адресов -->
             <div id="currentAddresses" class="addresses-grid" style="display: none;"></div>
-
-            <!-- Контейнер для архивных адресов -->
             <div id="archivedAddresses" class="addresses-grid" style="display: none;"></div>
 
-            <!-- Сообщение, если данных нет -->
             <div id="noData" class="no-data" style="display: none;">Нет адресов для отображения</div>
         </div>
     </main>

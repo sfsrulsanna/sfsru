@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Мои данные — СФСРЮ</title>
 
-  <!-- Favicons (без изменений) -->
+  <!-- Favicons -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
@@ -27,12 +27,498 @@
   <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
 
-  <!-- Стили -->
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/my-data.css" />
+
+  <style>
+    /* ============================================================
+       Мои данные — оформление в стиле главной страницы профиля
+       ============================================================ */
+
+    /* ---------- Общий фон и контейнер ---------- */
+    .profile-main {
+      background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+      min-height: calc(100vh - 220px);
+      padding: 34px 16px 64px;
+    }
+    .profile-container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Приветственный блок (как в профиле) ---------- */
+    .greeting-block {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 26px 28px;
+      margin: 0 0 30px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border: 1px solid #f1d7d7;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+      overflow: hidden;
+    }
+    .greeting-block::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+      pointer-events: none;
+    }
+    .greeting-emoji {
+      flex-shrink: 0;
+      font-size: 3rem;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-content {
+      flex: 1 1 220px;
+      min-width: 0;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-text {
+      margin: 0 0 6px;
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #1a1a1a;
+      letter-spacing: -0.01em;
+    }
+    .greeting-subtitle {
+      margin: 0;
+      font-size: 1rem;
+      color: #6b6b6b;
+      line-height: 1.45;
+    }
+    .greeting-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      align-items: stretch;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-action-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .greeting-action-link:hover,
+    .greeting-action-link:focus-visible {
+      border-color: #b30000;
+      background: #fff5f5;
+      color: #b30000;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+      outline: none;
+    }
+
+    /* ---------- Загрузка ---------- */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #6c757d;
+      font-size: 1rem;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+
+    /* ---------- Сетка секций (2 колонки) ---------- */
+    .data-sections-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    /* ---------- Секция данных (как .info-card) ---------- */
+    .data-section {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      padding: 22px 24px 26px;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    /* Цветные полосы по нижней границе на всю ширину */
+    .data-section::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #e0e0e0;
+    }
+    .data-section.fio-section::before {
+      background: linear-gradient(90deg, #b30000, #ff8080);
+    }
+    .data-section.birth-section::before {
+      background: linear-gradient(90deg, #d9480f, #ffa94d);
+    }
+    .data-section.code-section::before {
+      background: linear-gradient(90deg, #2563eb, #86b6f5);
+    }
+    /* Личный код — на всю ширину обеих колонок */
+    .data-section.code-section {
+      grid-column: 1 / -1;
+    }
+
+    .data-section:hover {
+      box-shadow: 0 10px 26px rgba(179, 0, 0, 0.08);
+    }
+
+    /* ---------- Заголовок секции ---------- */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .section-header h3 {
+      margin: 0;
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #1f1f1f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ---------- Кнопка «Изменить» ---------- */
+    .btn-edit {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 16px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+      font-size: 0.86rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .btn-edit:hover,
+    .btn-edit:focus-visible {
+      border-color: #b30000;
+      color: #b30000;
+      background: #fff5f5;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(179, 0, 0, 0.1);
+      outline: none;
+    }
+
+    /* ---------- Строки полей ---------- */
+    .field-row {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px solid #f2f2f2;
+      flex-wrap: wrap;
+    }
+    .field-row:last-of-type { border-bottom: none; }
+    .label {
+      color: #888;
+      font-size: 0.9rem;
+      min-width: 130px;
+      flex-shrink: 0;
+    }
+    .value {
+      color: #1f1f1f;
+      font-size: 0.97rem;
+      font-weight: 500;
+      word-break: break-word;
+      flex: 1;
+      min-width: 0;
+      line-height: 1.4;
+    }
+
+    /* ---------- Статус-бейджи ---------- */
+    .status-badge {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: #f0f0f0;
+      color: #666;
+      border: 1px solid #e0e0e0;
+      white-space: nowrap;
+    }
+    .status-badge:empty { display: none; }
+    .status-badge.status-verified {
+      background: #eefaf0;
+      color: #16a34a;
+      border-color: #b8e6c2;
+    }
+    .status-badge.status-pending {
+      background: #fff8ec;
+      color: #c2710c;
+      border-color: #f5d9a8;
+    }
+    .status-badge.status-rejected {
+      background: #fff0f0;
+      color: #b30000;
+      border-color: #f5c6c6;
+    }
+
+    /* ============================================================
+       Модальное окно
+       ============================================================ */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(20, 20, 20, 0.5);
+      backdrop-filter: blur(2px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal.active,
+    .modal.show,
+    .modal[open] { display: flex; }
+
+    .modal-content {
+      background: #ffffff;
+      border-radius: 18px;
+      max-width: 500px;
+      width: 100%;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+      animation: modalIn 0.2s ease;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.96); opacity: 0; }
+      to   { transform: scale(1);    opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 20px 24px;
+      border-bottom: 1px solid #f0f0f0;
+      flex-shrink: 0;
+    }
+    .modal-header h4 {
+      margin: 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #1a1a1a;
+    }
+    .close {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: #f5f5f5;
+      color: #666;
+      font-size: 1.4rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .close:hover,
+    .close:focus-visible {
+      background: #ffe5e5;
+      color: #b30000;
+      outline: none;
+    }
+    .modal-body {
+      padding: 22px 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .modal-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      padding: 16px 24px;
+      border-top: 1px solid #f0f0f0;
+      flex-wrap: wrap;
+      flex-shrink: 0;
+    }
+
+    /* ---------- Формы в модалке ---------- */
+    .modal-body .form-group,
+    .modal-body .form-row {
+      margin-bottom: 14px;
+    }
+    .modal-body label {
+      display: block;
+      font-size: 0.86rem;
+      font-weight: 600;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .modal-body input,
+    .modal-body select,
+    .modal-body textarea {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.95rem;
+      color: #1a1a1a;
+      background: #fff;
+      box-sizing: border-box;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .modal-body input:focus,
+    .modal-body select:focus,
+    .modal-body textarea:focus {
+      outline: none;
+      border-color: #b30000;
+      box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.1);
+    }
+
+    /* ---------- Кнопки ---------- */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 20px;
+      border-radius: 10px;
+      font-size: 0.92rem;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      border: 1px solid transparent;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease,
+                  color 0.2s ease, filter 0.2s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+    }
+    .btn-primary:hover,
+    .btn-primary:focus-visible {
+      filter: brightness(1.08);
+      box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+      outline: none;
+    }
+    .btn-secondary {
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+    }
+    .btn-secondary:hover,
+    .btn-secondary:focus-visible {
+      border-color: #b30000;
+      color: #b30000;
+      background: #fff5f5;
+      outline: none;
+    }
+
+    /* ---------- Мобильная адаптация ---------- */
+    @media (max-width: 720px) {
+      .data-sections-grid { grid-template-columns: 1fr; }
+      .data-section.code-section { grid-column: auto; }
+    }
+    @media (max-width: 640px) {
+      .profile-main { padding: 22px 12px 48px; }
+
+      .greeting-block {
+        padding: 22px 20px;
+        gap: 16px;
+      }
+      .greeting-emoji { font-size: 2.2rem; }
+      .greeting-text { font-size: 1.4rem; }
+      .greeting-subtitle { font-size: 0.9rem; }
+      .greeting-actions {
+        flex-direction: row;
+        flex: 1 1 100%;
+        width: 100%;
+        gap: 8px;
+      }
+      .greeting-actions > * { flex: 1 1 0; }
+      .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+      .data-section { padding: 18px 18px 22px; }
+      .section-header h3 { font-size: 1rem; }
+      .btn-edit { padding: 7px 12px; font-size: 0.8rem; }
+      .label { min-width: 0; font-size: 0.84rem; }
+      .value { font-size: 0.92rem; }
+
+      .modal-content { max-width: 100%; }
+      .modal-header { padding: 16px 18px; }
+      .modal-header h4 { font-size: 1.05rem; }
+      .modal-body { padding: 18px; }
+      .modal-footer { padding: 14px 18px; }
+      .modal-footer .btn { flex: 1 1 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .data-section,
+      .btn,
+      .btn-edit,
+      .greeting-action-link,
+      .close,
+      .modal-content {
+        transition: none !important;
+        animation: none !important;
+      }
+    }
+  </style>
 </head>
 <body>
-  <!-- Шапка (без изменений) -->
+  <!-- Шапка -->
   <header class="header">
     <div class="header-container">
       <div class="logo">
@@ -58,62 +544,72 @@
   </header>
   <div class="menu-overlay"></div>
 
-  <main class="main-content">
-    <div class="container">
-      <div class="page-header">
-        <h2>Мои данные</h2>
-        <p>Личная информация</p>
+  <main class="main-content profile-main">
+    <div class="profile-container">
+      <div class="greeting-block">
+        <div class="greeting-emoji" aria-hidden="true">📋</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text">Мои данные</h1>
+          <p class="greeting-subtitle">Личная информация и документы</p>
+        </div>
+        <div class="greeting-actions">
+          <a href="index.html" class="greeting-action-link">
+            <span aria-hidden="true">←</span> В личный кабинет
+          </a>
+        </div>
       </div>
 
       <div id="loading" class="loading">Загрузка данных...</div>
 
       <div id="dataBlocks" style="display: none;">
-        <!-- ФИО -->
-        <div class="data-section">
-          <div class="section-header">
-            <h3>ФИО</h3>
-            <button class="btn-edit" onclick="window.editFioModal?.()">Изменить</button>
+        <div class="data-sections-grid">
+          <!-- ФИО -->
+          <div class="data-section fio-section">
+            <div class="section-header">
+              <h3>ФИО</h3>
+              <button class="btn-edit" onclick="window.editFioModal?.()">Изменить</button>
+            </div>
+            <div class="field-row">
+              <span class="label">Фамилия:</span>
+              <span class="value" id="surnameValue">—</span>
+            </div>
+            <div class="field-row">
+              <span class="label">Имя:</span>
+              <span class="value" id="nameValue">—</span>
+            </div>
+            <div class="field-row">
+              <span class="label">Отчество:</span>
+              <span class="value" id="patronymicValue">—</span>
+            </div>
+            <div class="status-badge" id="surnameStatus"></div>
           </div>
-          <div class="field-row">
-            <span class="label">Фамилия:</span>
-            <span class="value" id="surnameValue">—</span>
-          </div>
-          <div class="field-row">
-            <span class="label">Имя:</span>
-            <span class="value" id="nameValue">—</span>
-          </div>
-          <div class="field-row">
-            <span class="label">Отчество:</span>
-            <span class="value" id="patronymicValue">—</span>
-          </div>
-          <div class="status-badge" id="surnameStatus"></div>
-        </div>
 
-        <!-- Дата и место рождения -->
-        <div class="data-section">
-          <div class="section-header">
-            <h3>Дата и место рождения</h3>
-            <button class="btn-edit" onclick="window.editBirthModal?.()">Изменить</button>
+          <!-- Дата и место рождения -->
+          <div class="data-section birth-section">
+            <div class="section-header">
+              <h3>Дата и место рождения</h3>
+              <button class="btn-edit" onclick="window.editBirthModal?.()">Изменить</button>
+            </div>
+            <div class="field-row">
+              <span class="label">Дата рождения:</span>
+              <span class="value" id="birthDateValue">—</span>
+            </div>
+            <div class="field-row">
+              <span class="label">Место рождения:</span>
+              <span class="value" id="birthPlaceValue">—</span>
+            </div>
+            <div class="status-badge" id="dateOfBirthStatus"></div>
           </div>
-          <div class="field-row">
-            <span class="label">Дата рождения:</span>
-            <span class="value" id="birthDateValue">—</span>
-          </div>
-          <div class="field-row">
-            <span class="label">Место рождения:</span>
-            <span class="value" id="birthPlaceValue">—</span>
-          </div>
-          <div class="status-badge" id="dateOfBirthStatus"></div>
-        </div>
 
-        <!-- Личный код (неизменяем) -->
-        <div class="data-section">
-          <div class="section-header">
-            <h3>Личный код</h3>
-          </div>
-          <div class="field-row">
-            <span class="label">Код:</span>
-            <span class="value" id="personalCodeValue">—</span>
+          <!-- Личный код (неизменяем) -->
+          <div class="data-section code-section">
+            <div class="section-header">
+              <h3>Личный код</h3>
+            </div>
+            <div class="field-row">
+              <span class="label">Код:</span>
+              <span class="value" id="personalCodeValue">—</span>
+            </div>
           </div>
         </div>
       </div>
