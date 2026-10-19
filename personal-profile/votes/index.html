@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Голосования и референдумы — СФСРЮ</title>
+
+  <!-- favicons -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -23,12 +26,14 @@
   <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-  <title>Голосования и референдумы — СФСРЮ</title>
+
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; color: #222; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.6; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f6f7f9; color: #222; min-height: 100vh; display: flex; flex-direction: column; line-height: 1.6; }
     a { text-decoration: none; color: inherit; }
     ul { list-style: none; }
+
+    /* ======= ШАПКА (без изменений) ======= */
     .header { background: linear-gradient(135deg, #ff6666, #cc0000); padding: 1rem 0; position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 16px rgba(0,0,0,0.15); border-bottom: 1px solid rgba(255,180,180,0.3); }
     .header-container { max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; gap: 1.2rem; padding: 0 2rem; position: relative; }
     .logo { display: flex; align-items: center; gap: 12px; justify-content: center; }
@@ -39,41 +44,125 @@
     .nav-menu a.active, .nav-menu a:hover { background: rgba(255,255,255,0.45); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.25); }
     .menu-toggle { display: none; }
 
-    .main-content { flex: 1; padding: 2.5rem 1.5rem; }
-    .container { max-width: 900px; margin: 0 auto; }
-    .page-header { text-align: center; margin-bottom: 2rem; }
-    .page-header h2 { font-size: 2rem; color: #7b0000; margin-bottom: 0.25rem; }
-    .page-header p { color: #666; font-size: 1rem; }
+    /* ======= ОСНОВНОЙ КОНТЕНТ — стиль профиля ======= */
+    .main-content { flex: 1; }
+    .profile-main {
+      background: radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%), #f6f7f9;
+      min-height: calc(100vh - 220px);
+      padding: 34px 16px 64px;
+    }
+    .profile-container { max-width: 1120px; margin: 0 auto; }
 
-    .tab-switch { display: flex; gap: 0.5rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap; }
-    .tab-btn { padding: 0.6rem 2rem; border: 2px solid #7b0000; background: transparent; border-radius: 50px; font-weight: 600; font-size: 1rem; color: #7b0000; cursor: pointer; transition: all 0.25s ease; }
-    .tab-btn.active { background: #7b0000; color: white; }
-    .tab-btn:hover { background: #7b0000; color: white; }
+    /* Приветственный блок */
+    .greeting-block {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 26px 28px;
+      margin: 0 0 26px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border: 1px solid #f1d7d7;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+      overflow: hidden;
+    }
+    .greeting-block::after {
+      content: "";
+      position: absolute;
+      right: -70px; top: -70px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+      pointer-events: none;
+    }
+    .greeting-emoji { flex-shrink: 0; font-size: 3rem; line-height: 1; position: relative; z-index: 1; }
+    .greeting-content { flex: 1 1 220px; min-width: 0; text-align: left; position: relative; z-index: 1; }
+    .greeting-text { margin: 0 0 6px; font-size: 1.9rem; font-weight: 700; line-height: 1.2; color: #1a1a1a; letter-spacing: -0.01em; }
+    .greeting-subtitle { margin: 0; font-size: 1rem; color: #6b6b6b; line-height: 1.45; }
+    .greeting-actions { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; align-items: stretch; position: relative; z-index: 1; }
+    .greeting-action-link {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 18px; border-radius: 10px; background: #ffffff;
+      border: 1px solid #ececec; color: #2a2a2a; text-decoration: none;
+      font-size: 0.92rem; font-weight: 500; white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .greeting-action-link:hover, .greeting-action-link:focus-visible {
+      border-color: #b30000; background: #fff5f5; color: #b30000;
+      transform: translateY(-1px); box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12); outline: none;
+    }
 
-    .votes-grid { display: flex; flex-direction: column; gap: 1.5rem; }
+    /* Вкладки */
+    .tab-switch { display: flex; gap: 10px; margin: 0 0 22px; flex-wrap: wrap; }
+    .tab-btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      padding: 11px 22px; border-radius: 10px; border: 1px solid #ececec;
+      background: #ffffff; color: #2a2a2a; font-size: 0.92rem; font-weight: 500;
+      font-family: inherit; cursor: pointer; white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, filter 0.2s ease;
+    }
+    .tab-btn:hover, .tab-btn:focus-visible { border-color: #b30000; color: #b30000; background: #fff5f5; outline: none; }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+      color: #ffffff; border-color: transparent;
+      box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+    }
+    .tab-btn.active:hover, .tab-btn.active:focus-visible {
+      filter: brightness(1.08); color: #ffffff;
+      box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+    }
 
-    .vote-card { background: white; border-radius: 16px; padding: 1.5rem; box-shadow: 0 6px 16px rgba(0,0,0,0.08); border: 1px solid #eee; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; margin-bottom: 0; }
-    .vote-card:not(:last-child) { margin-bottom: 1.5rem; }
-    .vote-card:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.12); }
-    .vote-card .vote-title { font-size: 1.3rem; font-weight: 700; color: #7b0000; margin: 0 0 0.3rem 0; }
-    .vote-card .vote-territory { font-size: 0.95rem; color: #555; margin-bottom: 0.3rem; }
-    .vote-card .vote-territory span { font-weight: 600; }
-    .vote-card .vote-dates { font-size: 0.95rem; color: #666; }
-    .vote-card .vote-dates span { display: inline-block; margin-right: 1.5rem; }
-    .vote-card .vote-status-badge { display: inline-block; padding: 0.2rem 0.8rem; border-radius: 30px; font-size: 0.75rem; font-weight: 600; background: #e9ecef; color: #6c757d; }
-    .vote-card .vote-status-badge.active { background: #d4edda; color: #155724; }
-    .vote-card .vote-status-badge.completed { background: #cce5ff; color: #004085; }
-    .vote-card .vote-status-badge.cancelled { background: #f8d7da; color: #721c24; }
-    .vote-card .vote-status-badge.counting { background: #fff3cd; color: #856404; }
-    .vote-card .vote-status-badge.annulled { background: #e2e3e5; color: #383d41; }
+    /* Карточки голосований — как .info-card, без полоски */
+    .votes-grid { display: flex; flex-direction: column; gap: 14px; }
+    .vote-card {
+      position: relative; background: #ffffff; border: 1px solid #ececec;
+      border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      padding: 22px 24px 26px; cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    }
+    .vote-card:hover, .vote-card:focus-visible {
+      transform: translateY(-3px); border-color: #b30000; background: #fff9f9;
+      box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16); outline: none;
+    }
+    .vote-card .vote-title {
+      font-size: 1.08rem; font-weight: 700; color: #1f1f1f;
+      margin: 0 0 8px; line-height: 1.3; transition: color 0.2s ease;
+    }
+    .vote-card:hover .vote-title { color: #b30000; }
+    .vote-card .vote-territory { font-size: 0.97rem; color: #555; margin-bottom: 10px; line-height: 1.5; }
+    .vote-card .vote-territory span { font-weight: 600; color: #1f1f1f; }
+    .vote-card .vote-dates {
+      display: flex; flex-wrap: wrap; gap: 8px 20px; align-items: center;
+      padding-top: 12px; border-top: 1px solid #f2f2f2;
+      font-size: 0.88rem; color: #888;
+    }
+    .vote-card .vote-status-badge {
+      display: inline-block; padding: 3px 12px; border-radius: 20px;
+      font-size: 0.76rem; font-weight: 600;
+      background: #f0f0f0; color: #666; border: 1px solid #e0e0e0; white-space: nowrap;
+    }
+    .vote-card .vote-status-badge.active    { background: #eefaf0; color: #16a34a; border-color: #b8e6c2; }
+    .vote-card .vote-status-badge.completed { background: #eef4ff; color: #2563eb; border-color: #c6d8f5; }
+    .vote-card .vote-status-badge.cancelled { background: #fff0f0; color: #b30000; border-color: #f5c6c6; }
+    .vote-card .vote-status-badge.counting  { background: #fff8ec; color: #c2710c; border-color: #f5d9a8; }
+    .vote-card .vote-status-badge.annulled  { background: #f0f0f0; color: #666;    border-color: #e0e0e0; }
 
-    .no-data { text-align: center; padding: 3rem 1rem; color: #888; font-size: 1.1rem; background: #fafafa; border-radius: 16px; border: 1px dashed #ddd; }
-    .loading { text-align: center; padding: 3rem; color: #666; font-size: 1.1rem; }
+    /* Loading / no-data */
+    .loading, .no-data {
+      text-align: center; padding: 3rem; font-size: 1rem;
+      background: #ffffff; border: 1px solid #ececec; border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04); color: #6c757d;
+    }
+    .no-data { border-style: dashed; color: #888; box-shadow: none; }
 
+    /* ======= ПОДВАЛ (без изменений) ======= */
     .footer { background: linear-gradient(135deg, #ff6666, #cc0000); padding: 1.8rem; text-align: center; margin-top: auto; font-size: 0.95rem; color: white; border-top: 1px solid rgba(255,180,180,0.3); }
     .footer a { color: #ffdddd; text-decoration: underline; }
     .footer a:hover { color: #ffffff; }
 
+    /* ======= Мобильные ======= */
     @media (max-width: 768px) {
       .header-container { flex-direction: row; justify-content: space-between; padding: 0 1rem; }
       .logo { justify-content: flex-start; }
@@ -88,6 +177,27 @@
       .nav-menu a { display: block; padding: 16px 20px; margin: 8px 0; background: rgba(255,255,255,0.15); border-radius: 12px; font-size: 1.1rem; text-align: left; border: 1px solid rgba(255,255,255,0.2); }
       .menu-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(3px); z-index: 98; opacity: 0; transition: opacity 0.3s; }
       .menu-overlay.active { display: block; opacity: 1; }
+    }
+    @media (max-width: 640px) {
+      .profile-main { padding: 22px 12px 48px; }
+      .greeting-block { padding: 22px 20px; gap: 16px; }
+      .greeting-emoji { font-size: 2.2rem; }
+      .greeting-text { font-size: 1.4rem; }
+      .greeting-subtitle { font-size: 0.9rem; }
+      .greeting-actions { flex-direction: row; flex: 1 1 100%; width: 100%; gap: 8px; }
+      .greeting-actions > * { flex: 1 1 0; }
+      .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+      .tab-switch { gap: 8px; }
+      .tab-btn { flex: 1 1 0; padding: 10px 14px; font-size: 0.86rem; }
+
+      .vote-card { padding: 18px 18px 22px; }
+      .vote-card .vote-title { font-size: 1rem; }
+      .vote-card .vote-territory { font-size: 0.92rem; }
+      .vote-card .vote-dates { font-size: 0.82rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .vote-card, .tab-btn, .greeting-action-link { transition: none !important; }
     }
   </style>
 </head>
@@ -117,11 +227,19 @@
   </header>
   <div class="menu-overlay"></div>
 
-  <main class="main-content">
-    <div class="container">
-      <div class="page-header">
-        <h2>Голосования и референдумы</h2>
-        <p>Активные и завершённые</p>
+  <main class="main-content profile-main">
+    <div class="profile-container">
+      <div class="greeting-block">
+        <div class="greeting-emoji" aria-hidden="true">🗳️</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text">Голосования и референдумы</h1>
+          <p class="greeting-subtitle">Активные и завершённые</p>
+        </div>
+        <div class="greeting-actions">
+          <a href="../index.html" class="greeting-action-link">
+            <span aria-hidden="true">←</span> В личный кабинет
+          </a>
+        </div>
       </div>
 
       <div class="tab-switch">
