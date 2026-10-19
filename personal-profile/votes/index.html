@@ -95,7 +95,13 @@
     }
 
     /* Вкладки */
-    .tab-switch { display: flex; gap: 10px; margin: 0 0 22px; flex-wrap: wrap; }
+    .tab-switch {
+  display: flex;
+  gap: 10px;
+  margin: 0 0 22px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
     .tab-btn {
       display: inline-flex; align-items: center; justify-content: center;
       padding: 11px 22px; border-radius: 10px; border: 1px solid #ececec;
@@ -115,7 +121,12 @@
     }
 
     /* Карточки голосований — как .info-card, без полоски */
-    .votes-grid { display: flex; flex-direction: column; gap: 14px; }
+    .votes-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.votes-grid > .no-data { grid-column: 1 / -1; }
     .vote-card {
       position: relative; background: #ffffff; border: 1px solid #ececec;
       border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
@@ -199,6 +210,9 @@
     @media (prefers-reduced-motion: reduce) {
       .vote-card, .tab-btn, .greeting-action-link { transition: none !important; }
     }
+	@media (max-width: 860px) {
+  .votes-grid { grid-template-columns: 1fr; }
+}
   </style>
 </head>
 <body>
@@ -353,9 +367,9 @@
       const isCurrent = tabId === 'current';
       const isCompleted = tabId === 'completed';
 
-      upcomingContainer.style.display = isUpcoming ? 'block' : 'none';
-      currentContainer.style.display = isCurrent ? 'block' : 'none';
-      completedContainer.style.display = isCompleted ? 'block' : 'none';
+      upcomingContainer.style.display = isUpcoming ? '' : 'none';
+      currentContainer.style.display = isCurrent ? '' : 'none';
+      completedContainer.style.display = isCompleted ? '' : 'none';
 
       tabBtns.forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tab === tabId);
