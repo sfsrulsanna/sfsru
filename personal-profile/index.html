@@ -31,25 +31,282 @@
   <link rel="stylesheet" href="../css/personal-profile/index.css" />
 
   <style>
-    .info-card {
+    /* ============================================================
+       Улучшенный дизайн страницы личного кабинета
+       (шапка и подвал не изменяются)
+       ============================================================ */
+
+    .profile-main {
+      background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+      min-height: calc(100vh - 220px);
+      padding: 34px 16px 64px;
+    }
+
+    .profile-container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Приветственный блок (hero) ---------- */
+    .greeting-block {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 26px 28px;
+      margin: 0 0 30px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border: 1px solid #f1d7d7;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+      overflow: hidden;
+    }
+
+    .greeting-block::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+      pointer-events: none;
+    }
+
+    .greeting-avatar {
+      flex-shrink: 0;
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+      color: #ffffff;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      box-shadow: 0 8px 22px rgba(179, 0, 0, 0.28);
+      position: relative;
+      z-index: 1;
+    }
+
+    .greeting-content {
+      flex: 1 1 220px;
+      min-width: 0;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+
+    .greeting-text {
+      margin: 0 0 6px;
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #1a1a1a;
+      letter-spacing: -0.01em;
+      text-align: left;
+    }
+
+    .greeting-subtitle {
+      margin: 0;
+      font-size: 1rem;
+      color: #6b6b6b;
+      line-height: 1.45;
+      text-align: left;
+    }
+
+    /* Правая часть блока ФИО: «О сайте» + «Выйти» */
+    .greeting-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      align-items: stretch;
+      position: relative;
+      z-index: 1;
+    }
+
+    .greeting-action-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .greeting-action-link:hover,
+    .greeting-action-link:focus-visible {
+      border-color: #b30000;
+      background: #fff5f5;
+      color: #b30000;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+      outline: none;
+    }
+
+    .greeting-logout {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border: none;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+      color: #ffffff;
+      font-weight: 600;
+      font-size: 0.92rem;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+      transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+    }
+
+    .greeting-logout:hover,
+    .greeting-logout:focus-visible {
+      filter: brightness(1.08);
+      box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+      outline: none;
+    }
+
+    .greeting-logout:active {
+      transform: translateY(1px);
+    }
+
+    /* ---------- Быстрые ссылки ---------- */
+    .quick-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 14px;
+      margin: 0 0 34px;
+    }
+
+    .quick-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 20px 12px 18px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 14px;
+      color: #2a2a2a;
+      text-decoration: none;
+      font-weight: 500;
+      text-align: center;
       transition: transform 0.2s ease, box-shadow 0.2s ease,
                   border-color 0.2s ease, background-color 0.2s ease;
     }
 
+    .quick-link:hover,
+    .quick-link:focus-visible {
+      transform: translateY(-4px);
+      border-color: #b30000;
+      background-color: #fff9f9;
+      box-shadow: 0 10px 24px rgba(179, 0, 0, 0.14);
+      outline: none;
+    }
+
+.quick-link-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  background: transparent;   /* было: градиент-кружок */
+  border-radius: 0;          /* было: 50% */
+  font-size: 1.5rem;
+  line-height: normal;
+  padding: 0;
+  transition: transform 0.25s ease;
+}
+
+.quick-link:hover .quick-link-icon,
+.quick-link:focus-visible .quick-link-icon {
+  transform: scale(1.08) rotate(-4deg);
+  /* убраны background-изменения */
+}
+
+    .quick-link-title {
+      font-size: 0.92rem;
+      line-height: 1.3;
+      color: inherit;
+    }
+
+    /* ---------- Сводка (info cards) ---------- */
+    .info-sections {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 18px;
+    }
+
+    @media (max-width: 720px) {
+      .info-sections { grid-template-columns: 1fr; }
+    }
+
+    .info-card {
+      position: relative;
+      padding: 22px 24px 22px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease;
+    }
+
+    .info-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #1f1f1f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .info-card p {
+      margin: 0;
+      color: #555;
+      line-height: 1.5;
+      font-size: 0.97rem;
+    }
+
+    /* Кликабельные карточки */
     a.info-card-link {
       display: block;
       text-decoration: none;
       color: inherit;
       cursor: pointer;
-      border: 2px solid transparent;
+      border: 1px solid #ececec;
     }
 
     a.info-card-link:hover,
     a.info-card-link:focus-visible {
       transform: translateY(-3px);
-      box-shadow: 0 6px 18px rgba(179, 0, 0, 0.18);
+      box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
       border-color: #b30000;
-      background-color: #fff5f5;
+      background-color: #fff9f9;
       outline: none;
     }
 
@@ -60,25 +317,106 @@
 
     a.info-card-link:active {
       transform: translateY(-1px);
-      box-shadow: 0 3px 10px rgba(179, 0, 0, 0.15);
+      box-shadow: 0 4px 12px rgba(179, 0, 0, 0.12);
     }
 
+    /* Цветные акценты — по нижней границе, на всю ширину */
+    a.info-card-link::before,
+    .info-card:not(.info-card-link)::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      opacity: 1;
+    }
+    /* Уведомления — красный */
+    a.info-card-link:nth-of-type(1)::before {
+      background: linear-gradient(90deg, #b30000, #ff8080);
+    }
+    /* События — оранжевый */
+    a.info-card-link:nth-of-type(2)::before {
+      background: linear-gradient(90deg, #d9480f, #ffa94d);
+    }
+    /* Мой счёт — зелёный */
+    a.info-card-link:nth-of-type(3)::before {
+      background: linear-gradient(90deg, #16a34a, #86efac);
+    }
+    /* Совет — янтарный */
+    .info-card:not(.info-card-link)::before {
+      background: linear-gradient(90deg, #f59e0b, #fde68a);
+    }
+
+    /* ---------- Баланс ---------- */
     .balance-value {
-      font-size: 1.5rem;
-      font-weight: bold;
-      margin: 10px 0 0 0;
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 6px 0 0;
+      letter-spacing: -0.01em;
       transition: color 0.3s ease;
     }
-    
     .balance-positive { color: #2e7d32; }
     .balance-negative { color: #d32f2f; }
     .balance-zero     { color: #757575; }
-    
-    @media (min-width: 768px) {
-      .info-sections {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
+
+    /* ---------- Мобильная адаптация ---------- */
+    @media (max-width: 640px) {
+      .profile-main { padding: 22px 12px 48px; }
+
+      .greeting-block {
+        padding: 22px 20px;
+        gap: 16px;
+      }
+      .greeting-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.35rem;
+      }
+      .greeting-content {
+        text-align: left;
+      }
+      .greeting-text {
+        font-size: 1.4rem;
+        text-align: left;
+      }
+      .greeting-subtitle {
+        font-size: 0.9rem;
+        text-align: left;
+      }
+
+      .greeting-actions {
+        flex-direction: row;
+        flex: 1 1 100%;
+        width: 100%;
+        gap: 8px;
+      }
+      .greeting-actions > * {
+        flex: 1 1 0;
+      }
+      .greeting-action-link,
+      .greeting-logout {
+        padding: 10px 12px;
+        font-size: 0.86rem;
+      }
+
+      .quick-links {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+      }
+      .quick-link { padding: 16px 8px; }
+      .quick-link-icon { width: 44px; height: 44px; font-size: 1.25rem; }
+      .quick-link-title { font-size: 0.82rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .quick-link,
+      .quick-link-icon,
+      .info-card,
+      a.info-card-link,
+      .greeting-action-link,
+      .greeting-logout {
+        transition: none !important;
       }
     }
   </style>
@@ -115,8 +453,19 @@
   <main class="main-content profile-main">
     <div class="profile-container">
       <div class="greeting-block">
-        <h1 id="greetingText" class="greeting-text">Загрузка...</h1>
-        <p class="greeting-subtitle">Добро пожаловать в ваш личный кабинет гражданина СФСРЮ</p>
+        <div class="greeting-avatar" id="greetingAvatar" aria-hidden="true">👤</div>
+        <div class="greeting-content">
+          <h1 id="greetingText" class="greeting-text">Загрузка...</h1>
+          <p class="greeting-subtitle">Добро пожаловать в ваш личный кабинет гражданина СФСРЮ</p>
+        </div>
+        <div class="greeting-actions">
+          <button id="logoutBtn" class="greeting-logout" type="button">
+            <span class="logout-icon" aria-hidden="true">🚪</span> Выйти
+          </button>
+          <a href="about.html" class="greeting-action-link">
+            <span aria-hidden="true">ℹ️</span> О сайте
+          </a>
+        </div>
       </div>
 
       <div class="quick-links">
@@ -172,13 +521,6 @@
           <div class="quick-link-icon">📅</div>
           <div class="quick-link-title">Календарь событий</div>
         </a>
-        <a href="about.html" class="quick-link">
-          <div class="quick-link-icon">ℹ️</div>
-          <div class="quick-link-title">О сайте</div>
-        </a>
-        <button id="logoutBtn" class="btn btn-danger">
-          <span class="logout-icon">🚪</span> Выйти из аккаунта
-        </button>
       </div>
 
       <div class="info-sections">
@@ -192,7 +534,7 @@
           <p id="eventText">Загрузка...</p>
         </a>
 
-        <!-- КАРТОЧКА МОЙ СЧЁТ ТЕПЕРЬ ССЫЛАЕТСЯ НА FINANCE.HTML -->
+        <!-- КАРТОЧКА «МОЙ СЧЁТ» ВЕДЁТ НА FINANCE.HTML -->
         <a href="finance.html" class="info-card info-card-link">
           <h3>💳 Мой счёт</h3>
           <div id="accountBalance" class="balance-value">Загрузка...</div>
@@ -305,6 +647,7 @@
 
     async function loadUserProfile() {
       const greetingEl = document.getElementById('greetingText')
+      const avatarEl = document.getElementById('greetingAvatar')
       try {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession()
         if (sessionError) throw sessionError
@@ -322,6 +665,10 @@
           if (userData?.name && userData?.surname) {
             const displayName = userData.patronymic ? `${userData.name} ${userData.patronymic}` : userData.name
             greetingEl.textContent = `${greeting}, ${displayName}!`
+            if (avatarEl) {
+              const initials = (userData.name.charAt(0) + userData.surname.charAt(0)).toUpperCase()
+              avatarEl.textContent = initials || '👤'
+            }
           } else {
             greetingEl.textContent = 'Добро пожаловать!'
           }
@@ -337,6 +684,7 @@
         setInterval(updateTip, 15000)
       } catch (error) {
         greetingEl.textContent = 'Добро пожаловать!'
+        if (avatarEl) avatarEl.textContent = '👤'
       }
     }
 
@@ -367,7 +715,6 @@
       }
     }
 
-    // ОБНОВЛЕНО: Если счета нет, просто пишем "Не открыт", ссылка ведет на finance.html
     async function updateAccountBalance(userId) {
       const balanceEl = document.getElementById('accountBalance')
       if (!balanceEl) return
@@ -377,7 +724,7 @@
           .schema('finance').from('accounts').select('balance').eq('user_id', userId).single()
 
         if (error) {
-          if (error.code === 'PGRST116') { // Счет не найден
+          if (error.code === 'PGRST116') {
             balanceEl.innerHTML = '<span class="balance-zero" style="font-size: 1rem; font-weight: normal;">Счёт не открыт</span>'
             return
           }
@@ -387,7 +734,7 @@
         const balance = Number(data.balance)
         const formattedBalance = new Intl.NumberFormat('ru-RU', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(balance)
         balanceEl.textContent = `${formattedBalance} ¥`
-        
+
         balanceEl.classList.remove('balance-positive', 'balance-negative', 'balance-zero')
         if (balance > 0) balanceEl.classList.add('balance-positive')
         else if (balance < 0) balanceEl.classList.add('balance-negative')
@@ -419,7 +766,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       loadUserProfile()
       const logoutBtn = document.getElementById('logoutBtn')
-      if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); handleLogout(); })
+      if (logoutBtn) logoutBtn.addEventListener('click', (e) => { e.preventDefault(); handleLogout() })
     })
   </script>
 </body>
