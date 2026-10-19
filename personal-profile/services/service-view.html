@@ -1,814 +1,1062 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Просмотр услуги — СФСРЮ</title>
-    <!-- favicons -->
-    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../../images/favicons/apple-touch-icon-144x144.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../../images/favicons/apple-touch-icon-60x60.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../../images/favicons/apple-touch-icon-120x120.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../../images/favicons/apple-touch-icon-76x76.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../../images/favicons/apple-touch-icon-152x152.png" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-196x196.png" sizes="196x196" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-16x16.png" sizes="16x16" />
-    <link rel="icon" type="image/png" href="../../../images/favicons/favicon-128.png" sizes="128x128" />
-    <meta name="application-name" content="&nbsp;"/>
-    <meta name="msapplication-TileColor" content="#FFFFFF" />
-    <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
-    <link rel="stylesheet" href="../../css/style.css">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <style>
-        .service-container {
-            max-width: 700px;
-            margin: 2rem auto;
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-            padding: 2rem;
-        }
-        .service-title {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #7b091a;
-            margin-bottom: 0.25rem;
-            letter-spacing: -0.5px;
-        }
-        .service-number {
-            font-size: 1rem;
-            color: #6c757d;
-            margin-bottom: 2rem;
-            border-bottom: 2px solid #f0f0f0;
-            padding-bottom: 1rem;
-        }
-        .status-card {
-            background: #f8f9fa;
-            border-radius: 14px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid #e9ecef;
-            transition: all 0.2s ease;
-        }
-        .status-card:hover {
-            background: #ffffff;
-            border-color: #ced4da;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-        }
-        .status-header {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 1rem;
-        }
-        .status-icon {
-            font-size: 1.5rem;
-            line-height: 1;
-            width: 2rem;
-            text-align: center;
-        }
-        .status-name {
-            font-weight: 600;
-            color: #7b091a;
-            flex: 1;
-        }
-        .status-date {
-            color: #666;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-        .status-comment {
-            color: #555;
-            margin-bottom: 1rem;
-            padding-left: 2.75rem;
-        }
-        .files-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 0.5rem;
-            padding-left: 2.75rem;
-        }
-        .file-item {
-            background: #e9ecef;
-            border-radius: 6px;
-            padding: 0.3rem 0.8rem;
-            font-size: 0.9rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.3rem;
-        }
-        .file-item a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        .file-item a:hover {
-            text-decoration: underline;
-        }
-        .section-title {
-            font-weight: 600;
-            margin: 2rem 0 1rem;
-            color: #333;
-            font-size: 1.4rem;
-        }
-        .status-icon .fa-hourglass-half { color: #f0ad4e; }
-        .status-icon .fa-check-circle { color: #28a745; }
-        .status-icon .fa-times-circle { color: #dc3545; }
-        .status-icon .fa-ban { color: #6c757d; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Просмотр услуги — СФСРЮ</title>
 
-        .action-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-            margin-top: 0.5rem;
-        }
-        .toggle-history, .back-link {
-            display: inline-block;
-            width: 100%;
-            text-align: center;
-            padding: 0.75rem 1rem;
-            font-size: 1rem;
-            border-radius: 8px;
-            box-sizing: border-box;
-            transition: background-color 0.2s;
-            border: none;
-            cursor: pointer;
-        }
-        .toggle-history {
-            background-color: #e9ecef;
-            border: 1px solid #ced4da;
-            color: #495057;
-        }
-        .toggle-history:hover {
-            background-color: #dee2e6;
-        }
-        .back-link {
-            background-color: #6c757d;
-            color: white;
-            text-decoration: none;
-        }
-        .back-link:hover {
-            background-color: #5a6268;
-        }
-        .back-link i {
-            margin-right: 0.5rem;
-        }
-        .toggle-history {
-            display: none;
-        }
-        #historyList .status-card:not(:first-child) {
-            display: none;
-        }
-        #historyList.show-all .status-card {
-            display: block;
-        }
-        .loading, .no-data, .error {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-        }
-        .details-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 2rem;
-        }
-        .details-table th, .details-table td {
-            padding: 8px 12px;
-            border: 1px solid #e9ecef;
-            text-align: left;
-        }
-        .details-table th {
-            background: #f8f9fa;
-            width: 30%;
-        }
-        .details-table td {
-            background: white;
-        }
-    </style>
-    <script type="importmap">
-        {
-            "imports": {
-                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
-            }
-        }
-    </script>
+  <!-- Favicons -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* ============================================================
+       Просмотр услуги — оформление в стиле главной страницы профиля
+       ============================================================ */
+
+    .profile-main {
+      background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+      min-height: calc(100vh - 220px);
+      padding: 34px 16px 64px;
+    }
+    .profile-container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Приветственный блок ---------- */
+    .greeting-block {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 26px 28px;
+      margin: 0 0 26px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border: 1px solid #f1d7d7;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+      overflow: hidden;
+    }
+    .greeting-block::after {
+      content: "";
+      position: absolute;
+      right: -70px; top: -70px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+      pointer-events: none;
+    }
+    .greeting-emoji {
+      flex-shrink: 0;
+      font-size: 3rem;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-content {
+      flex: 1 1 220px;
+      min-width: 0;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-text {
+      margin: 0 0 6px;
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #1a1a1a;
+      letter-spacing: -0.01em;
+      word-break: break-word;
+    }
+    .greeting-subtitle {
+      margin: 0;
+      font-size: 0.98rem;
+      color: #6b6b6b;
+      line-height: 1.45;
+      font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+      letter-spacing: 0.02em;
+    }
+    .greeting-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      align-items: stretch;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-action-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .greeting-action-link:hover,
+    .greeting-action-link:focus-visible {
+      border-color: #b30000;
+      background: #fff5f5;
+      color: #b30000;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+      outline: none;
+    }
+
+    /* ---------- Заголовок раздела ---------- */
+    .section-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 26px 0 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::before {
+      content: "";
+      width: 4px;
+      height: 1.1em;
+      background: #b30000;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+    #detailsContainer .section-title:first-child {
+      margin-top: 0;
+    }
+
+    /* ---------- Таблица деталей (карточка как .info-card) ---------- */
+    .details-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      margin-bottom: 22px;
+      position: relative;
+    }
+    .details-table::after {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #b30000, #ff8080);
+      pointer-events: none;
+    }
+    .details-table th,
+    .details-table td {
+      padding: 12px 18px;
+      text-align: left;
+      vertical-align: top;
+      border-bottom: 1px solid #f2f2f2;
+      line-height: 1.5;
+    }
+    .details-table tr:last-child th,
+    .details-table tr:last-child td {
+      border-bottom: none;
+    }
+    .details-table th {
+      background: #fafafa;
+      font-weight: 600;
+      color: #888;
+      width: 35%;
+      font-size: 0.88rem;
+      white-space: normal;
+    }
+    .details-table td {
+      color: #1f1f1f;
+      font-size: 0.95rem;
+      word-break: break-word;
+    }
+    .details-table a {
+      color: #b30000;
+      text-decoration: none;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .details-table a:hover { text-decoration: underline; }
+    .details-table pre {
+      background: #fafafa !important;
+      border: 1px solid #f0f0f0;
+      border-radius: 8px !important;
+      font-size: 0.85rem !important;
+      padding: 10px 12px !important;
+      margin: 0;
+      font-family: 'SFMono-Regular', ui-monospace, Menlo, Consolas, monospace;
+    }
+
+    /* ---------- История статусов ---------- */
+    #historyList { display: flex; flex-direction: column; }
+    .status-card {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 14px;
+      padding: 18px 22px 22px;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .status-card::before {
+      content: "";
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #b30000, #ff8080);
+    }
+    .status-card:hover {
+      transform: translateY(-2px);
+      border-color: #f1d7d7;
+      box-shadow: 0 10px 26px rgba(179, 0, 0, 0.09);
+    }
+
+    .status-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .status-icon {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #fafafa;
+      border: 1px solid #f0f0f0;
+      font-size: 1rem;
+    }
+    .status-name {
+      font-weight: 700;
+      font-size: 1rem;
+      color: #1f1f1f;
+      flex: 1;
+      min-width: 0;
+      line-height: 1.3;
+    }
+    .status-date {
+      color: #888;
+      font-size: 0.82rem;
+      white-space: nowrap;
+    }
+    .status-comment {
+      color: #555;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      margin: 0 0 8px;
+      padding-left: 48px;
+      word-break: break-word;
+    }
+    .status-comment:empty { display: none; }
+
+    .files-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding-left: 48px;
+    }
+    .files-list:empty { display: none; }
+    .file-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #fff5f5;
+      border: 1px solid #f1d7d7;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #b30000;
+    }
+    .file-item a {
+      color: #b30000;
+      text-decoration: none;
+    }
+    .file-item a:hover { text-decoration: underline; }
+
+    /* Цвета иконок статусов (в палитре профиля) */
+    .status-icon .fa-hourglass-half { color: #e09a1c; }
+    .status-icon .fa-check-circle { color: #16a34a; }
+    .status-icon .fa-times-circle { color: #b30000; }
+    .status-icon .fa-ban { color: #888; }
+
+    /* ---------- Кнопки управления ---------- */
+    .action-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 16px;
+    }
+    .toggle-history {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      padding: 11px 20px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+      font-family: inherit;
+      font-size: 0.92rem;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .toggle-history:hover,
+    .toggle-history:focus-visible {
+      border-color: #b30000;
+      color: #b30000;
+      background: #fff5f5;
+      outline: none;
+      box-shadow: 0 4px 12px rgba(179, 0, 0, 0.1);
+    }
+
+    /* Скрытые элементы истории */
+    #historyList .status-card:not(:first-child) { display: none; }
+    #historyList.show-all .status-card { display: block; }
+
+    /* ---------- Загрузка / ошибка ---------- */
+    .loading {
+      text-align: center;
+      padding: 3rem;
+      color: #6c757d;
+      font-size: 1rem;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    }
+    .no-data {
+      text-align: center;
+      padding: 24px;
+      color: #888;
+      font-size: 0.95rem;
+      background: #ffffff;
+      border: 1px dashed #e0e0e0;
+      border-radius: 14px;
+    }
+    .error {
+      text-align: center;
+      padding: 24px;
+      color: #b30000;
+      background: #fff5f5;
+      border: 1px solid #f5c6c6;
+      border-radius: 16px;
+      font-size: 0.95rem;
+    }
+
+    /* ---------- Мобильные ---------- */
+    @media (max-width: 640px) {
+      .profile-main { padding: 22px 12px 48px; }
+
+      .greeting-block {
+        padding: 22px 20px;
+        gap: 16px;
+      }
+      .greeting-emoji { font-size: 2.2rem; }
+      .greeting-text { font-size: 1.2rem; }
+      .greeting-subtitle { font-size: 0.86rem; }
+      .greeting-actions {
+        flex-direction: row;
+        flex: 1 1 100%;
+        width: 100%;
+        gap: 8px;
+      }
+      .greeting-actions > * { flex: 1 1 0; }
+      .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+      .section-title { font-size: 1.1rem; }
+
+      .details-table th,
+      .details-table td {
+        padding: 10px 14px;
+        font-size: 0.88rem;
+      }
+      .details-table th {
+        width: 40%;
+        font-size: 0.82rem;
+      }
+
+      .status-card { padding: 14px 16px 18px; }
+      .status-header { gap: 10px; }
+      .status-icon { width: 30px; height: 30px; font-size: 0.85rem; }
+      .status-name { font-size: 0.94rem; }
+      .status-date { font-size: 0.76rem; width: 100%; }
+      .status-comment,
+      .files-list { padding-left: 0; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .status-card,
+      .greeting-action-link,
+      .toggle-history {
+        transition: none !important;
+      }
+    }
+  </style>
+
+  <script type="importmap">
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+  </script>
 </head>
 <body>
-    <header class="header">
-        <div class="header-container">
-            <div class="logo">
-                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ</h1>
-            </div>
-            <button class="menu-toggle" aria-label="Открыть меню">
-                <span class="menu-toggle-line"></span>
-                <span class="menu-toggle-line"></span>
-                <span class="menu-toggle-line"></span>
-            </button>
-            <nav class="nav-menu">
-                <ul>
-                    <li><a href="../../index.html">Главная</a></li>
-                    <li><a href="../../news.html">Новости</a></li>
-                    <li><a href="../../wiki/">Википедия</a></li>
-                    <li><a href="../../healthcare.html">Здравоохранение</a></li>
-                    <li><a href="../../services.html">Услуги</a></li>
-                    <li><a href="../index.html" class="active">Личный кабинет</a></li>
-                </ul>
-            </nav>
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ</h1>
+      </div>
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../../index.html">Главная</a></li>
+          <li><a href="../../news.html">Новости</a></li>
+          <li><a href="../../wiki/">Википедия</a></li>
+          <li><a href="../../healthcare.html">Здравоохранение</a></li>
+          <li><a href="../../services.html">Услуги</a></li>
+          <li><a href="../index.html" class="active">Личный кабинет</a></li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+  <div class="menu-overlay"></div>
+
+  <main class="main-content profile-main">
+    <div class="profile-container">
+      <div class="greeting-block">
+        <div class="greeting-emoji" aria-hidden="true">📄</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text" id="serviceName">Загрузка...</h1>
+          <p class="greeting-subtitle" id="appNumber"></p>
         </div>
-    </header>
-    <div class="menu-overlay"></div>
-
-    <main class="main-content">
-        <div class="service-container">
-            <div class="service-title" id="serviceName"></div>
-            <div class="service-number" id="appNumber"></div>
-
-            <div id="loading" class="loading">Загрузка...</div>
-            <div id="error" class="error" style="display: none;"></div>
-
-            <div id="content" style="display: none;">
-                <div id="detailsContainer"></div>
-                <div id="historyList"></div>
-                <div class="action-buttons">
-                    <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
-                    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Назад к списку услуг</a>
-                </div>
-            </div>
+        <div class="greeting-actions">
+          <a href="index.html" class="greeting-action-link">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i> К списку услуг
+          </a>
         </div>
-    </main>
+      </div>
 
-    <footer class="footer">
-        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
-        <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
-    </footer>
+      <div id="loading" class="loading">Загрузка...</div>
+      <div id="error" class="error" style="display: none;"></div>
 
-    <script src="../../js/mob-menu.js"></script>
-    <script type="module">
-        import { supabase } from '../../js/supabase-config.js';
+      <div id="content" style="display: none;">
+        <div id="detailsContainer"></div>
+        <div id="historyList"></div>
+        <div class="action-buttons">
+          <button class="toggle-history" id="toggleHistoryBtn">Показать историю</button>
+        </div>
+      </div>
+    </div>
+  </main>
 
-        let currentUserId = null;
-        let currentAppId = null;
-        let currentType = null;
-        let currentSource = null;
-        let fnsMap = {};
+  <footer class="footer">
+    <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
 
-        const statusMap = {
-            'draft': 'Черновик',
-            'submitted': 'Отправлено в ведомство',
-            'processing': 'В работе',
-            'interim': 'Промежуточные результаты',
-            'positive': 'Принято положительное решение',
-            'completed': 'Результат выдан',
-            'rejected': 'Отказано',
-            'cancelled': 'Отменено',
-            'under_review': 'На рассмотрении',
-            'approved': 'Одобрено'
-        };
+  <script src="../../js/mob-menu.js"></script>
+  <script type="module">
+    import { supabase } from '../../js/supabase-config.js';
 
-        const serviceTypeNames = {
-            'passport': 'Внутренний паспорт',
-            'foreign_passport': 'Заграничный паспорт',
-            'inn': 'Получение ИНН'
-        };
+    let currentUserId = null;
+    let currentAppId = null;
+    let currentType = null;
+    let currentSource = null;
+    let fnsMap = {};
 
-        const passportTypeMap = {
-            'biometric': 'Биометрический',
-            'nonbiometric': 'Небиометрический'
-        };
-        const recipientTypeMap = {
-            'self': 'Только себе',
-            'self_children': 'Себе и детям',
-            'children_only': 'Только детям'
-        };
-        const visaTypeMap = {
-            'civil': 'Общегражданский',
-            'diplomatic': 'Дипломатический',
-            'service': 'Служебный'
-        };
+    const statusMap = {
+      'draft': 'Черновик',
+      'submitted': 'Отправлено в ведомство',
+      'processing': 'В работе',
+      'interim': 'Промежуточные результаты',
+      'positive': 'Принято положительное решение',
+      'completed': 'Результат выдан',
+      'rejected': 'Отказано',
+      'cancelled': 'Отменено',
+      'under_review': 'На рассмотрении',
+      'approved': 'Одобрено'
+    };
 
-        const voteTypeNames = {
-            'candidate_registration': 'Регистрация кандидата',
-            'observer_registration': 'Регистрация наблюдателя',
-            'remote_voting_request': 'Дистанционное голосование',
-            'change_polling_station': 'Смена участка голосования',
-            'data_change': 'Изменение данных',
-            'other': 'Другое обращение'
-        };
+    const serviceTypeNames = {
+      'passport': 'Внутренний паспорт',
+      'foreign_passport': 'Заграничный паспорт',
+      'inn': 'Получение ИНН'
+    };
 
-        function getStatusIcon(status) {
-            switch (status) {
-                case 'rejected': return '<i class="fas fa-times-circle"></i>';
-                case 'cancelled': return '<i class="fas fa-ban"></i>';
-                case 'positive':
-                case 'completed':
-                case 'approved': return '<i class="fas fa-check-circle"></i>';
-                default: return '<i class="fas fa-hourglass-half"></i>';
-            }
+    const passportTypeMap = {
+      'biometric': 'Биометрический',
+      'nonbiometric': 'Небиометрический'
+    };
+    const recipientTypeMap = {
+      'self': 'Только себе',
+      'self_children': 'Себе и детям',
+      'children_only': 'Только детям'
+    };
+    const visaTypeMap = {
+      'civil': 'Общегражданский',
+      'diplomatic': 'Дипломатический',
+      'service': 'Служебный'
+    };
+
+    const voteTypeNames = {
+      'candidate_registration': 'Регистрация кандидата',
+      'observer_registration': 'Регистрация наблюдателя',
+      'remote_voting_request': 'Дистанционное голосование',
+      'change_polling_station': 'Смена участка голосования',
+      'data_change': 'Изменение данных',
+      'other': 'Другое обращение'
+    };
+
+    function getStatusIcon(status) {
+      switch (status) {
+        case 'rejected': return '<i class="fas fa-times-circle"></i>';
+        case 'cancelled': return '<i class="fas fa-ban"></i>';
+        case 'positive':
+        case 'completed':
+        case 'approved': return '<i class="fas fa-check-circle"></i>';
+        default: return '<i class="fas fa-hourglass-half"></i>';
+      }
+    }
+
+    async function getSignedUrl(filePath) {
+      if (!filePath) return null;
+      try {
+        const { data, error } = await supabase.storage
+          .from('services-files')
+          .createSignedUrl(filePath, 3600);
+        if (error) throw error;
+        return data.signedUrl;
+      } catch (e) {
+        console.error('Ошибка получения ссылки на файл:', e);
+        return null;
+      }
+    }
+
+    async function loadUserProfile() {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        window.location.href = '../../login.html';
+        return false;
+      }
+      currentUserId = session.user.id;
+      return true;
+    }
+
+    function extractFileName(filePath) {
+      if (!filePath) return 'файл';
+      const parts = filePath.split('/');
+      let name = parts[parts.length - 1];
+      const match = name.match(/^\d+_(.+)$/);
+      return match ? decodeURIComponent(match[1]) : decodeURIComponent(name);
+    }
+
+    async function loadFnsOffices() {
+      const { data, error } = await supabase
+        .schema('services')
+        .from('fns_offices')
+        .select('id, name');
+      if (error) {
+        console.error('Ошибка загрузки ФНС:', error);
+        return;
+      }
+      data.forEach(item => {
+        fnsMap[item.id] = item.name;
+      });
+    }
+
+    async function loadApplicants(passportId) {
+      const { data, error } = await supabase
+        .schema('services')
+        .from('foreign_passport_applicants')
+        .select('*')
+        .eq('passport_id', passportId);
+      if (error) {
+        console.error('Ошибка загрузки получателей:', error);
+        return [];
+      }
+      return data || [];
+    }
+
+    async function getElectionTitle(electionId) {
+      if (!electionId) return '—';
+      const { data, error } = await supabase
+        .schema('votes')
+        .from('elections')
+        .select('title')
+        .eq('id', electionId)
+        .single();
+      if (error || !data) return '—';
+      return data.title;
+    }
+
+    function generateVoteAppNumber(id) {
+      if (!id) return 'CIC-00000000';
+      const short = id.replace(/-/g, '').slice(0, 8).toUpperCase();
+      return `CIC-${short}`;
+    }
+
+    function parseDataField(app) {
+      if (!app) return app;
+      if (app.data && typeof app.data === 'string') {
+        try {
+          app.data = JSON.parse(app.data);
+        } catch (e) {
+          console.warn('Не удалось распарсить data:', e);
         }
+      }
+      return app;
+    }
 
-        async function getSignedUrl(filePath) {
-            if (!filePath) return null;
-            try {
-                const { data, error } = await supabase.storage
-                    .from('services-files')
-                    .createSignedUrl(filePath, 3600);
-                if (error) throw error;
-                return data.signedUrl;
-            } catch (e) {
-                console.error('Ошибка получения ссылки на файл:', e);
-                return null;
-            }
-        }
+    async function loadService() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const id = urlParams.get('id');
+      const type = urlParams.get('type');
 
-        async function loadUserProfile() {
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-            if (sessionError || !session) {
-                window.location.href = '../../login.html';
-                return false;
-            }
-            currentUserId = session.user.id;
-            return true;
-        }
+      if (!id) {
+        showError('Не указан ID заявления');
+        return;
+      }
 
-        function extractFileName(filePath) {
-            if (!filePath) return 'файл';
-            const parts = filePath.split('/');
-            let name = parts[parts.length - 1];
-            const match = name.match(/^\d+_(.+)$/);
-            return match ? decodeURIComponent(match[1]) : decodeURIComponent(name);
-        }
+      currentAppId = id;
+      currentType = type;
 
-        async function loadFnsOffices() {
-            const { data, error } = await supabase
+      await loadFnsOffices();
+
+      try {
+        let app = null;
+        let source = null;
+
+        if (type === 'vote') {
+          const { data, error } = await supabase
+            .schema('votes')
+            .from('applications')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', currentUserId)
+            .maybeSingle();
+
+          if (error || !data) {
+            showError('Заявление не найдено');
+            return;
+          }
+          app = parseDataField(data);
+          source = 'vote_application';
+        } else if (type === 'passport') {
+          source = 'passport';
+        } else if (type === 'foreign_passport') {
+          source = 'foreign_passport';
+        } else {
+          const { data: appData, error: appError } = await supabase
+            .schema('services')
+            .from('applications')
+            .select(`
+              *,
+              catalog:service_id(name_ru, service_key)
+            `)
+            .eq('id', id)
+            .eq('user_id', currentUserId)
+            .maybeSingle();
+
+          if (appData) {
+            app = parseDataField(appData);
+            source = 'applications';
+          } else {
+            const { data: pData, error: pError } = await supabase
+              .schema('services')
+              .from('passport')
+              .select('*')
+              .eq('id', id)
+              .eq('user_id', currentUserId)
+              .maybeSingle();
+            if (pData) {
+              app = pData;
+              source = 'passport';
+            } else {
+              const { data: fpData, error: fpError } = await supabase
                 .schema('services')
-                .from('fns_offices')
-                .select('id, name');
-            if (error) {
-                console.error('Ошибка загрузки ФНС:', error);
-                return;
-            }
-            data.forEach(item => {
-                fnsMap[item.id] = item.name;
-            });
-        }
-
-        async function loadApplicants(passportId) {
-            const { data, error } = await supabase
-                .schema('services')
-                .from('foreign_passport_applicants')
+                .from('foreign_passport')
                 .select('*')
-                .eq('passport_id', passportId);
-            if (error) {
-                console.error('Ошибка загрузки получателей:', error);
-                return [];
+                .eq('id', id)
+                .eq('user_id', currentUserId)
+                .maybeSingle();
+              if (fpData) {
+                app = fpData;
+                source = 'foreign_passport';
+              }
             }
-            return data || [];
+          }
         }
 
-        async function getElectionTitle(electionId) {
-            if (!electionId) return '—';
-            const { data, error } = await supabase
-                .schema('votes')
-                .from('elections')
-                .select('title')
-                .eq('id', electionId)
-                .single();
-            if (error || !data) return '—';
-            return data.title;
+        if (!app) {
+          showError('Заявление не найдено');
+          return;
         }
 
-        // Генерация номера заявления для ЦИК на основе ID
-        function generateVoteAppNumber(id) {
-            if (!id) return 'CIC-00000000';
-            const short = id.replace(/-/g, '').slice(0, 8).toUpperCase();
-            return `CIC-${short}`;
+        currentSource = source;
+
+        let serviceName = '';
+        let appNumber = '';
+
+        if (source === 'vote_application') {
+          serviceName = voteTypeNames[app.type] || app.type || 'Обращение в ЦИК';
+          appNumber = generateVoteAppNumber(app.id);
+        } else if (source === 'applications') {
+          serviceName = app.catalog?.name_ru || serviceTypeNames[app.service_type] || 'Услуга';
+          appNumber = app.application_number || '—';
+        } else {
+          serviceName = serviceTypeNames[app.service_type] || 'Услуга';
+          appNumber = app.application_number || '—';
         }
 
-        // Парсинг поля data
-        function parseDataField(app) {
-            if (!app) return app;
-            if (app.data && typeof app.data === 'string') {
-                try {
-                    app.data = JSON.parse(app.data);
-                } catch (e) {
-                    console.warn('Не удалось распарсить data:', e);
-                }
-            }
-            return app;
+        document.getElementById('serviceName').textContent = serviceName;
+        document.getElementById('appNumber').textContent = `№ ${appNumber}`;
+
+        let applicants = [];
+        if (source === 'foreign_passport') {
+          applicants = await loadApplicants(app.id);
         }
 
-        async function loadService() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const id = urlParams.get('id');
-            const type = urlParams.get('type');
+        await renderDetails(app, source, applicants);
+        await loadHistory(app.id, source, app);
 
-            if (!id) {
-                showError('Не указан ID заявления');
-                return;
-            }
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('content').style.display = 'block';
 
-            currentAppId = id;
-            currentType = type;
+      } catch (err) {
+        console.error(err);
+        showError('Ошибка загрузки данных');
+      }
+    }
 
-            await loadFnsOffices();
+    async function renderDetails(app, source, applicants) {
+      const container = document.getElementById('detailsContainer');
+      let html = '<h3 class="section-title">Детали заявки</h3>';
+      html += '<table class="details-table">';
 
-            try {
-                let app = null;
-                let source = null;
+      let appNumber = '';
+      if (source === 'vote_application') {
+        appNumber = generateVoteAppNumber(app.id);
+      } else {
+        appNumber = app.application_number || '—';
+      }
 
-                // Обработка заявлений ЦИК
-                if (type === 'vote') {
-                    const { data, error } = await supabase
-                        .schema('votes')
-                        .from('applications')
-                        .select('*')
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .maybeSingle();
+      const fields = [
+        ['Номер заявления', appNumber],
+        ['Статус', statusMap[app.status] || app.status],
+        ['Дата создания', new Date(app.created_at).toLocaleString('ru-RU')],
+        ['Личный код', app.personal_code || '—']
+      ];
 
-                    if (error || !data) {
-                        showError('Заявление не найдено');
-                        return;
-                    }
-                    app = parseDataField(data);
-                    source = 'vote_application';
-                } else if (type === 'passport') {
-                    source = 'passport';
-                } else if (type === 'foreign_passport') {
-                    source = 'foreign_passport';
-                } else {
-                    // попытка загрузить из services.applications (услуги)
-                    const { data: appData, error: appError } = await supabase
-                        .schema('services')
-                        .from('applications')
-                        .select(`
-                            *,
-                            catalog:service_id(name_ru, service_key)
-                        `)
-                        .eq('id', id)
-                        .eq('user_id', currentUserId)
-                        .maybeSingle();
+      if (source === 'passport') {
+        fields.push(['Причина', app.reason || '—']);
+        fields.push(['Телефон', app.phone || '—']);
+        fields.push(['Email', app.email || '—']);
+        if (app.photo_path) {
+          const photoUrl = await getSignedUrl(app.photo_path);
+          if (photoUrl) {
+            const fileName = app.photo_path.split('/').pop() || 'photo.jpg';
+            fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
+          }
+        }
+      } else if (source === 'foreign_passport') {
+        fields.push(['Тип паспорта', passportTypeMap[app.passport_type] || app.passport_type || '—']);
+        fields.push(['Кому', recipientTypeMap[app.recipient_type] || app.recipient_type || '—']);
+        fields.push(['Вид', visaTypeMap[app.visa_type] || app.visa_type || '—']);
+        fields.push(['Вписывать детей', app.include_children_in_parent ? 'Да' : 'Нет']);
+      } else if (source === 'vote_application') {
+        const typeName = voteTypeNames[app.type] || app.type;
+        fields.push(['Тип обращения', typeName]);
+        const electionTitle = await getElectionTitle(app.election_id);
+        fields.push(['Голосование', electionTitle]);
 
-                    if (appData) {
-                        app = parseDataField(appData);
-                        source = 'applications';
-                    } else {
-                        // может быть старый паспорт
-                        const { data: pData, error: pError } = await supabase
-                            .schema('services')
-                            .from('passport')
-                            .select('*')
-                            .eq('id', id)
-                            .eq('user_id', currentUserId)
-                            .maybeSingle();
-                        if (pData) {
-                            app = pData;
-                            source = 'passport';
-                        } else {
-                            const { data: fpData, error: fpError } = await supabase
-                                .schema('services')
-                                .from('foreign_passport')
-                                .select('*')
-                                .eq('id', id)
-                                .eq('user_id', currentUserId)
-                                .maybeSingle();
-                            if (fpData) {
-                                app = fpData;
-                                source = 'foreign_passport';
-                            }
-                        }
-                    }
-                }
+        const data = app.data || {};
+        if (data.has_party !== undefined) {
+          fields.push(['Принадлежит к партии', data.has_party ? 'Да' : 'Нет']);
+        }
+        if (data.party_name) {
+          fields.push(['Название партии', data.party_name]);
+        }
+        if (data.nominated_by_party !== undefined) {
+          fields.push(['Выдвинут партией', data.nominated_by_party ? 'Да' : 'Нет']);
+        }
+        if (data.goal) {
+          const goalMap = {
+            'change_polling_station': 'Изменить место голосования',
+            'electronic_voting': 'Голосование в электронном виде',
+            'refuse_voting': 'Отказ от голосования'
+          };
+          fields.push(['Цель как голосующего', goalMap[data.goal] || data.goal]);
+        }
+        if (data.new_polling_station_id) {
+          fields.push(['Новый участок', data.new_polling_station_id]);
+        }
+        if (data.reason) {
+          fields.push(['Причина', data.reason]);
+        }
+        if (data.photo_path) {
+          const photoUrl = await getSignedUrl(data.photo_path);
+          if (photoUrl) {
+            const fileName = data.photo_path.split('/').pop() || 'photo.jpg';
+            fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
+          }
+        }
+        const extraKeys = Object.keys(data).filter(k =>
+          !['has_party', 'party_name', 'nominated_by_party', 'goal',
+            'new_polling_station_id', 'reason', 'photo_path', 'voter_change_type',
+            'full_name', 'personal_code'
+          ].includes(k)
+        );
+        if (extraKeys.length) {
+          fields.push(['Доп. данные', `<pre>${JSON.stringify(extraKeys.reduce((acc, k) => ({...acc, [k]: data[k]}), {}), null, 2)}</pre>`]);
+        }
+      } else if (source === 'applications') {
+        const data = app.data || {};
+        if (data.type) {
+          fields.push(['Способ получения', data.type === 'electronic' ? 'Электронный' : 'Бумажный']);
+        }
+        if (data.fns_office_id) {
+          const fnsName = fnsMap[data.fns_office_id] || data.fns_office_id;
+          fields.push(['Отделение ФНС', fnsName]);
+        }
+      }
 
-                if (!app) {
-                    showError('Заявление не найдено');
-                    return;
-                }
+      for (const [label, value] of fields) {
+        html += `<tr><th>${label}</th><td>${value}</td></tr>`;
+      }
 
-                currentSource = source;
+      html += '</table>';
 
-                let serviceName = '';
-                let appNumber = '';
+      if (source === 'foreign_passport' && applicants && applicants.length > 0) {
+        html += '<h3 class="section-title">Фото получателей</h3>';
+        html += '<table class="details-table">';
+        html += `<tr><th>ФИО</th><th>Дата рождения</th><th>Фото</th></tr>`;
+        for (const applicant of applicants) {
+          const photoUrl = applicant.photo_path ? await getSignedUrl(applicant.photo_path) : null;
+          html += `<tr>
+            <td>${applicant.surname} ${applicant.name} ${applicant.patronymic || ''}</td>
+            <td>${applicant.date_of_birth ? new Date(applicant.date_of_birth).toLocaleDateString('ru-RU') : '—'}</td>
+            <td>${photoUrl ? `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> Фото</a>` : '—'}</td>
+          </tr>`;
+        }
+        html += '</table>';
+      }
 
-                if (source === 'vote_application') {
-                    serviceName = voteTypeNames[app.type] || app.type || 'Обращение в ЦИК';
-                    appNumber = generateVoteAppNumber(app.id);
-                } else if (source === 'applications') {
-                    serviceName = app.catalog?.name_ru || serviceTypeNames[app.service_type] || 'Услуга';
-                    appNumber = app.application_number || '—';
-                } else {
-                    serviceName = serviceTypeNames[app.service_type] || 'Услуга';
-                    appNumber = app.application_number || '—';
-                }
+      container.innerHTML = html;
+    }
 
-                document.getElementById('serviceName').textContent = serviceName;
-                document.getElementById('appNumber').textContent = `№ ${appNumber}`;
+    async function loadHistory(passportId, source, app) {
+      const list = document.getElementById('historyList');
+      const toggleBtn = document.getElementById('toggleHistoryBtn');
 
-                let applicants = [];
-                if (source === 'foreign_passport') {
-                    applicants = await loadApplicants(app.id);
-                }
+      let historyTable = '';
+      let idField = '';
+      let schema = 'services';
 
-                await renderDetails(app, source, applicants);
-                await loadHistory(app.id, source, app);
+      if (source === 'passport') {
+        historyTable = 'passport_status_history';
+        idField = 'passport_id';
+      } else if (source === 'foreign_passport') {
+        historyTable = 'foreign_passport_status_history';
+        idField = 'passport_id';
+      } else if (source === 'applications') {
+        historyTable = 'application_status_history';
+        idField = 'application_id';
+      } else if (source === 'vote_application') {
+        historyTable = 'application_status_history';
+        idField = 'application_id';
+        schema = 'votes';
+      } else {
+        list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
+        toggleBtn.style.display = 'none';
+        return;
+      }
 
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('content').style.display = 'block';
+      try {
+        const { data, error } = await supabase
+          .schema(schema)
+          .from(historyTable)
+          .select('*')
+          .eq(idField, passportId)
+          .order('created_at', { ascending: false });
 
-            } catch (err) {
-                console.error(err);
-                showError('Ошибка загрузки данных');
-            }
+        if (error) {
+          if (error.code === '42501' || error.code === '42P01') {
+            list.innerHTML = '<p class="no-data">История статусов недоступна (нет прав доступа)</p>';
+            toggleBtn.style.display = 'none';
+            return;
+          }
+          console.error('Ошибка загрузки истории:', error);
+          list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
+          toggleBtn.style.display = 'none';
+          return;
         }
 
-        async function renderDetails(app, source, applicants) {
-            const container = document.getElementById('detailsContainer');
-            let html = '<h3 class="section-title">Детали заявки</h3>';
-            html += '<table class="details-table">';
+        if (!data || data.length === 0) {
+          list.innerHTML = '<p class="no-data">История отсутствует</p>';
+          toggleBtn.style.display = 'none';
+          return;
+        }
 
-            let appNumber = '';
-            if (source === 'vote_application') {
-                appNumber = generateVoteAppNumber(app.id);
-            } else {
-                appNumber = app.application_number || '—';
+        let html = '';
+        for (const item of data) {
+          const statusText = statusMap[item.status] || item.status;
+          const iconHtml = getStatusIcon(item.status);
+          const files = item.attachments || [];
+          const fileLinks = [];
+
+          for (const f of files) {
+            const url = await getSignedUrl(f);
+            if (url) {
+              const fileName = extractFileName(f);
+              fileLinks.push(`
+                <div class="file-item">
+                  <span>📎</span>
+                  <a href="${url}" target="_blank">${fileName}</a>
+                </div>
+              `);
             }
+          }
 
-            const fields = [
-                ['Номер заявления', appNumber],
-                ['Статус', statusMap[app.status] || app.status],
-                ['Дата создания', new Date(app.created_at).toLocaleString()],
-                ['Личный код', app.personal_code || '—']
-            ];
-
+          if (source !== 'vote_application' && item.status === 'submitted') {
+            let photoPath = null;
+            if (source === 'passport' && app.photo_path) {
+              photoPath = app.photo_path;
+            }
+            if (photoPath) {
+              const photoUrl = await getSignedUrl(photoPath);
+              if (photoUrl) {
+                const fileName = photoPath.split('/').pop() || 'photo.jpg';
+                fileLinks.push(`
+                  <div class="file-item">
+                    <span>📷</span>
+                    <a href="${photoUrl}" target="_blank">${fileName}</a>
+                  </div>
+                `);
+              }
+            }
+            let statementPath = '';
             if (source === 'passport') {
-                fields.push(['Причина', app.reason || '—']);
-                fields.push(['Телефон', app.phone || '—']);
-                fields.push(['Email', app.email || '—']);
-                if (app.photo_path) {
-                    const photoUrl = await getSignedUrl(app.photo_path);
-                    if (photoUrl) {
-                        const fileName = app.photo_path.split('/').pop() || 'photo.jpg';
-                        fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
-                    }
-                }
+              statementPath = `passport/${app.application_number}/statement.pdf`;
             } else if (source === 'foreign_passport') {
-                fields.push(['Тип паспорта', passportTypeMap[app.passport_type] || app.passport_type || '—']);
-                fields.push(['Кому', recipientTypeMap[app.recipient_type] || app.recipient_type || '—']);
-                fields.push(['Вид', visaTypeMap[app.visa_type] || app.visa_type || '—']);
-                fields.push(['Вписывать детей', app.include_children_in_parent ? 'Да' : 'Нет']);
-            } else if (source === 'vote_application') {
-                const typeName = voteTypeNames[app.type] || app.type;
-                fields.push(['Тип обращения', typeName]);
-                const electionTitle = await getElectionTitle(app.election_id);
-                fields.push(['Голосование', electionTitle]);
-
-                const data = app.data || {};
-                if (data.has_party !== undefined) {
-                    fields.push(['Принадлежит к партии', data.has_party ? 'Да' : 'Нет']);
-                }
-                if (data.party_name) {
-                    fields.push(['Название партии', data.party_name]);
-                }
-                if (data.nominated_by_party !== undefined) {
-                    fields.push(['Выдвинут партией', data.nominated_by_party ? 'Да' : 'Нет']);
-                }
-                if (data.goal) {
-                    const goalMap = {
-                        'change_polling_station': 'Изменить место голосования',
-                        'electronic_voting': 'Голосование в электронном виде',
-                        'refuse_voting': 'Отказ от голосования'
-                    };
-                    fields.push(['Цель как голосующего', goalMap[data.goal] || data.goal]);
-                }
-                if (data.new_polling_station_id) {
-                    fields.push(['Новый участок', data.new_polling_station_id]);
-                }
-                if (data.reason) {
-                    fields.push(['Причина', data.reason]);
-                }
-                if (data.photo_path) {
-                    const photoUrl = await getSignedUrl(data.photo_path);
-                    if (photoUrl) {
-                        const fileName = data.photo_path.split('/').pop() || 'photo.jpg';
-                        fields.push(['Фото', `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> ${fileName}</a>`]);
-                    }
-                }
-                const extraKeys = Object.keys(data).filter(k =>
-                    !['has_party', 'party_name', 'nominated_by_party', 'goal',
-                      'new_polling_station_id', 'reason', 'photo_path', 'voter_change_type',
-                      'full_name', 'personal_code'
-                    ].includes(k)
-                );
-                if (extraKeys.length) {
-                    fields.push(['Доп. данные', `<pre style="background:#f5f5f5;padding:0.5rem;border-radius:4px;font-size:0.85rem;white-space:pre-wrap;">${JSON.stringify(extraKeys.reduce((acc, k) => ({...acc, [k]: data[k]}), {}), null, 2)}</pre>`]);
-                }
-            } else if (source === 'applications') {
-                const data = app.data || {};
-                if (data.type) {
-                    fields.push(['Способ получения', data.type === 'electronic' ? 'Электронный' : 'Бумажный']);
-                }
-                if (data.fns_office_id) {
-                    const fnsName = fnsMap[data.fns_office_id] || data.fns_office_id;
-                    fields.push(['Отделение ФНС', fnsName]);
-                }
+              statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
             }
-
-            for (const [label, value] of fields) {
-                html += `<tr><th>${label}</th><td>${value}</td></tr>`;
+            if (statementPath) {
+              const url = await getSignedUrl(statementPath);
+              if (url) {
+                fileLinks.push(`
+                  <div class="file-item">
+                    <span>📄</span>
+                    <a href="${url}" target="_blank">statement.pdf</a>
+                  </div>
+                `);
+              }
             }
+          }
 
-            html += '</table>';
-
-            if (source === 'foreign_passport' && applicants && applicants.length > 0) {
-                html += '<h3 class="section-title" style="margin-top:1.5rem;">Фото получателей</h3>';
-                html += '<table class="details-table">';
-                html += `<tr><th>ФИО</th><th>Дата рождения</th><th>Фото</th></tr>`;
-                for (const applicant of applicants) {
-                    const photoUrl = applicant.photo_path ? await getSignedUrl(applicant.photo_path) : null;
-                    html += `<tr>
-                        <td>${applicant.surname} ${applicant.name} ${applicant.patronymic || ''}</td>
-                        <td>${applicant.date_of_birth ? new Date(applicant.date_of_birth).toLocaleDateString('ru-RU') : '—'}</td>
-                        <td>${photoUrl ? `<a href="${photoUrl}" target="_blank"><i class="fas fa-image"></i> Фото</a>` : '—'}</td>
-                    </tr>`;
-                }
-                html += '</table>';
-            }
-
-            container.innerHTML = html;
+          html += `
+            <div class="status-card">
+              <div class="status-header">
+                <div class="status-icon">${iconHtml}</div>
+                <span class="status-name">${statusText}</span>
+                <span class="status-date">${new Date(item.created_at).toLocaleString('ru-RU')}</span>
+              </div>
+              <div class="status-comment">${item.comment || ''}</div>
+              <div class="files-list">${fileLinks.join('')}</div>
+            </div>
+          `;
         }
 
-        async function loadHistory(passportId, source, app) {
-            const list = document.getElementById('historyList');
-            const toggleBtn = document.getElementById('toggleHistoryBtn');
+        list.innerHTML = html;
 
-            let historyTable = '';
-            let idField = '';
-            let schema = 'services';
-
-            if (source === 'passport') {
-                historyTable = 'passport_status_history';
-                idField = 'passport_id';
-            } else if (source === 'foreign_passport') {
-                historyTable = 'foreign_passport_status_history';
-                idField = 'passport_id';
-            } else if (source === 'applications') {
-                historyTable = 'application_status_history';
-                idField = 'application_id';
-            } else if (source === 'vote_application') {
-                historyTable = 'application_status_history';
-                idField = 'application_id';
-                schema = 'votes';
-            } else {
-                list.innerHTML = '<p class="no-data">Неизвестный источник данных</p>';
-                toggleBtn.style.display = 'none';
-                return;
-            }
-
-            try {
-                const { data, error } = await supabase
-                    .schema(schema)
-                    .from(historyTable)
-                    .select('*')
-                    .eq(idField, passportId)
-                    .order('created_at', { ascending: false });
-
-                if (error) {
-                    // Если ошибка 403 (нет прав) или таблица не существует – показываем сообщение
-                    if (error.code === '42501' || error.code === '42P01') {
-                        list.innerHTML = '<p class="no-data">История статусов недоступна (нет прав доступа)</p>';
-                        toggleBtn.style.display = 'none';
-                        return;
-                    }
-                    console.error('Ошибка загрузки истории:', error);
-                    list.innerHTML = `<p class="error">Ошибка загрузки истории: ${error.message}</p>`;
-                    toggleBtn.style.display = 'none';
-                    return;
-                }
-
-                if (!data || data.length === 0) {
-                    list.innerHTML = '<p class="no-data">История отсутствует</p>';
-                    toggleBtn.style.display = 'none';
-                    return;
-                }
-
-                let html = '';
-                for (const item of data) {
-                    const statusText = statusMap[item.status] || item.status;
-                    const iconHtml = getStatusIcon(item.status);
-                    const files = item.attachments || [];
-                    const fileLinks = [];
-
-                    for (const f of files) {
-                        const url = await getSignedUrl(f);
-                        if (url) {
-                            const fileName = extractFileName(f);
-                            fileLinks.push(`
-                                <div class="file-item">
-                                    <span>📎</span>
-                                    <a href="${url}" target="_blank">${fileName}</a>
-                                </div>
-                            `);
-                        }
-                    }
-
-                    if (source !== 'vote_application' && item.status === 'submitted') {
-                        let photoPath = null;
-                        if (source === 'passport' && app.photo_path) {
-                            photoPath = app.photo_path;
-                        }
-                        if (photoPath) {
-                            const photoUrl = await getSignedUrl(photoPath);
-                            if (photoUrl) {
-                                const fileName = photoPath.split('/').pop() || 'photo.jpg';
-                                fileLinks.push(`
-                                    <div class="file-item">
-                                        <span>📷</span>
-                                        <a href="${photoUrl}" target="_blank">${fileName}</a>
-                                    </div>
-                                `);
-                            }
-                        }
-                        let statementPath = '';
-                        if (source === 'passport') {
-                            statementPath = `passport/${app.application_number}/statement.pdf`;
-                        } else if (source === 'foreign_passport') {
-                            statementPath = `foreign_passport/${app.application_number}/statement.pdf`;
-                        }
-                        if (statementPath) {
-                            const url = await getSignedUrl(statementPath);
-                            if (url) {
-                                fileLinks.push(`
-                                    <div class="file-item">
-                                        <span>📄</span>
-                                        <a href="${url}" target="_blank">statement.pdf</a>
-                                    </div>
-                                `);
-                            }
-                        }
-                    }
-
-                    html += `
-                        <div class="status-card">
-                            <div class="status-header">
-                                <div class="status-icon">${iconHtml}</div>
-                                <span class="status-name">${statusText}</span>
-                                <span class="status-date">${new Date(item.created_at).toLocaleString()}</span>
-                            </div>
-                            <div class="status-comment">${item.comment || ''}</div>
-                            <div class="files-list">${fileLinks.join('')}</div>
-                        </div>
-                    `;
-                }
-
-                list.innerHTML = html;
-
-                const statusCards = list.querySelectorAll('.status-card');
-                if (statusCards.length > 1) {
-                    toggleBtn.style.display = 'inline-block';
-                    list.classList.remove('show-all');
-                    toggleBtn.textContent = 'Показать историю';
-                } else {
-                    toggleBtn.style.display = 'none';
-                }
-            } catch (err) {
-                console.error('Ошибка при загрузке истории:', err);
-                list.innerHTML = '<p class="error">Не удалось загрузить историю</p>';
-                toggleBtn.style.display = 'none';
-            }
+        const statusCards = list.querySelectorAll('.status-card');
+        if (statusCards.length > 1) {
+          toggleBtn.style.display = 'inline-block';
+          list.classList.remove('show-all');
+          toggleBtn.textContent = 'Показать историю';
+        } else {
+          toggleBtn.style.display = 'none';
         }
+      } catch (err) {
+        console.error('Ошибка при загрузке истории:', err);
+        list.innerHTML = '<p class="error">Не удалось загрузить историю</p>';
+        toggleBtn.style.display = 'none';
+      }
+    }
 
-        function showError(msg) {
-            const loading = document.getElementById('loading');
-            if (loading) loading.style.display = 'none';
-            const err = document.getElementById('error');
-            if (err) {
-                err.textContent = msg;
-                err.style.display = 'block';
-            }
-            const content = document.getElementById('content');
-            if (content) content.style.display = 'none';
-        }
+    function showError(msg) {
+      const loading = document.getElementById('loading');
+      if (loading) loading.style.display = 'none';
+      const err = document.getElementById('error');
+      if (err) {
+        err.textContent = msg;
+        err.style.display = 'block';
+      }
+      const content = document.getElementById('content');
+      if (content) content.style.display = 'none';
+    }
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            if (!await loadUserProfile()) return;
-            await loadService();
+    document.addEventListener('DOMContentLoaded', async () => {
+      if (!await loadUserProfile()) return;
+      await loadService();
 
-            const toggleBtn = document.getElementById('toggleHistoryBtn');
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', () => {
-                    const history = document.getElementById('historyList');
-                    if (history) {
-                        history.classList.toggle('show-all');
-                        toggleBtn.textContent = history.classList.contains('show-all') ? 'Скрыть историю' : 'Показать историю';
-                    }
-                });
-            }
+      const toggleBtn = document.getElementById('toggleHistoryBtn');
+      if (toggleBtn) {
+        toggleBtn.addEventListener('click', () => {
+          const history = document.getElementById('historyList');
+          if (history) {
+            history.classList.toggle('show-all');
+            toggleBtn.textContent = history.classList.contains('show-all') ? 'Скрыть историю' : 'Показать историю';
+          }
         });
-    </script>
+      }
+    });
+  </script>
 </body>
 </html>
