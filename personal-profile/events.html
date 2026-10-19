@@ -5,7 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Календарь событий — СФСРЮ</title>
 
+  <!-- Favicons -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
   <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/index.css" />
 </head>
@@ -41,25 +61,46 @@
   <main class="main-content profile-main">
     <div class="profile-container">
       <div class="greeting-block">
-        <h1 class="greeting-text">📅 Календарь государственных событий</h1>
-        <p class="greeting-subtitle">Праздники и памятные даты Социалистической Федеративной Советской Республики Юльсанна</p>
-      </div>
-
-      <div class="info-sections">
-        <div class="info-card" id="nextHolidayCard">
-          <h3>⏳ Ближайший праздник</h3>
-          <p id="nextHolidayText">Загрузка...</p>
+        <div class="greeting-emoji" aria-hidden="true">📅</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text">Календарь государственных событий</h1>
+          <p class="greeting-subtitle">Праздники и памятные даты Социалистической Федеративной Советской Республики Юльсанна</p>
+        </div>
+        <div class="greeting-actions">
+          <a href="index.html" class="greeting-action-link">
+            <span aria-hidden="true">←</span> В личный кабинет
+          </a>
         </div>
       </div>
 
-      <h2 style="margin: 30px 0 16px; color: #b30000;">Все праздники года</h2>
-      <ul id="holidayList" class="holiday-list">
-        <li>Загрузка…</li>
-      </ul>
+      <!-- Ближайший праздник -->
+      <section class="next-holiday" id="nextHoliday" aria-live="polite">
+        <!-- заполняется скриптом -->
+      </section>
 
-      <div style="margin-top: 30px;">
-        <a href="index.html" class="btn">← Назад в личный кабинет</a>
+      <!-- Календарь + панель с деталями -->
+      <div class="calendar-layout">
+        <section class="calendar-card" data-type="state" aria-label="Календарь праздников">
+          <header class="calendar-header">
+            <button class="cal-nav" id="prevMonth" type="button" aria-label="Предыдущий месяц">‹</button>
+            <h2 class="calendar-title" id="calTitle">—</h2>
+            <button class="cal-nav" id="nextMonth" type="button" aria-label="Следующий месяц">›</button>
+          </header>
+          <div class="calendar-weekdays" id="calWeekdays"></div>
+          <div class="calendar-grid" id="calendarGrid"></div>
+          <button class="cal-today-btn" id="calTodayBtn" type="button">К текущему месяцу</button>
+        </section>
+
+        <aside class="cal-side" id="calSide" data-type="state" aria-live="polite">
+          <!-- детали выбранного праздника -->
+        </aside>
       </div>
+
+      <!-- Список всех праздников года -->
+      <section class="all-holidays">
+        <h2 class="section-title">Все праздники года</h2>
+        <ul id="holidayList" class="holiday-list"></ul>
+      </section>
     </div>
   </main>
 
@@ -71,151 +112,957 @@
     </p>
   </footer>
 
+  <script type="importmap">
+    {
+      "imports": {
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+      }
+    }
+  </script>
+  <script type="module" src="../js/supabase-config.js"></script>
   <script src="../js/mob-menu.js"></script>
 
   <script type="module">
     import { supabase } from '../js/supabase-config.js'
 
-    // Проверяем авторизацию, если нужно (иначе перенаправляем на логин)
-    ;(async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession()
-        if (!session) {
-          window.location.href = '../login.html'
-          return
-        }
-      } catch (e) {
-        console.warn('Ошибка проверки сессии:', e)
-      }
-      renderHolidays()
-    })()
+    /* ============================ DATA ============================ */
 
     const holidays = [
-      { name: 'День СФСРЮ', month: 1, day: 2, emoji: '🎉' },
-      { name: 'День рождения Великой Юльсанны', month: 2, day: 12, emoji: '🌹' },
-      { name: 'День защитника Отечества', month: 2, day: 23, emoji: '🎖️' },
-      { name: 'Международный женский день', month: 3, day: 8, emoji: '💐' },
-      { name: 'День труда', month: 5, day: 1, emoji: '⚒️' },
-      { name: 'День рождения Вечного Президента АР Натуральнова', month: 5, day: 12, emoji: '🎂' },
-      { name: 'День Конституции', month: 8, day: 15, emoji: '📜' },
-      { name: 'День рождения Вечного президента АР Эйтингон', month: 9, day: 23, emoji: '🎂' },
-      { name: 'День Независимости', month: 11, day: 2, emoji: '🚩' },
-      { name: 'Новый год', month: 12, day: 31, emoji: '🎄' }
+      {
+        name: 'Новый год', month: 1, day: 1, emoji: '🥂', type: 'folk',
+        desc: 'Первый день нового года — нерабочий праздничный день. Всенародные гуляния, праздничные мероприятия и семейные торжества по всей республике.'
+      },
+      {
+        name: 'День СФСРЮ', month: 1, day: 2, emoji: '🎉', type: 'state',
+        desc: 'Главный государственный праздник республики. Отмечается в честь основания Социалистической Федеративной Советской Республики Юльсанна. По всей стране проходят парады, торжественные митинги и праздничные концерты.'
+      },
+      {
+        name: 'Новогодние каникулы', month: 1, day: 3, emoji: '🎇', type: 'folk',
+        desc: 'Третий день нового года — нерабочий праздничный день. Продолжение новогодних гуляний, культурные программы и отдых с семьёй.'
+      },
+      {
+        name: 'Рождество', month: 1, day: 7, emoji: '🌟', type: 'state',
+        desc: 'Рождество Христово по юлианскому календарю. Государственный праздник: торжественные богослужения, культурные мероприятия и семейные встречи.'
+      },
+      {
+        name: 'День рождения Великой Юльсанны', month: 2, day: 12, emoji: '🌹', type: 'memorial',
+        desc: 'Памятная дата, посвящённая основательнице республики. Граждане возлагают цветы к памятникам, проходят торжественные собрания трудовых коллективов и культурные программы.'
+      },
+      {
+        name: 'День защитника Отечества', month: 2, day: 23, emoji: '🎖️', type: 'state',
+        desc: 'Праздник вооружённых сил и всех, кто стоит на защите Родины. Военные парады, чествование ветеранов, праздничные салюты в городах республики.'
+      },
+      {
+        name: 'Международный женский день', month: 3, day: 8, emoji: '💐', type: 'international',
+        desc: 'День солидарности женщин в борьбе за равные права. В этот день принято поздравлять женщин, проходят культурные и общественные мероприятия.'
+      },
+      {
+        name: 'День труда', month: 5, day: 1, emoji: '⚒️', type: 'state',
+        desc: 'Праздник весны и труда. Демонстрации трудовых коллективов, шествия, концерты на открытых площадках и народные гуляния.'
+      },
+      {
+        name: 'День рождения Вечного Президента АР Натуральнова', month: 5, day: 12, emoji: '🎂', type: 'memorial',
+        desc: 'Памятная дата в честь Вечного Президента республики. Торжественные церемонии, возложения венков и праздничные культурные программы.'
+      },
+      {
+        name: 'День Конституции', month: 8, day: 15, emoji: '📜', type: 'state',
+        desc: 'День принятия Основного закона СФСРЮ. Правовые форумы, лекции, торжественные заседания и тематические мероприятия в учебных заведениях.'
+      },
+      {
+        name: 'День рождения Вечного президента АР Эйтингон', month: 9, day: 23, emoji: '🎂', type: 'memorial',
+        desc: 'Памятная дата, посвящённая Вечному президенту. Официальные церемонии, концерты и народные гуляния по всей республике.'
+      },
+      {
+        name: 'День Независимости', month: 11, day: 2, emoji: '🚩', type: 'state',
+        desc: 'День провозглашения независимости республики. Главный праздник государственности: парады, торжественные церемонии и вечерние фейерверки.'
+      },
+      {
+        name: 'Рождество', month: 12, day: 25, emoji: '🎄', type: 'state',
+        desc: 'Рождество Христово по григорианскому календарю. Государственный праздник: торжественные богослужения, культурные мероприятия и семейные встречи.'
+      },
+      {
+        name: 'Новый год', month: 12, day: 31, emoji: '🎆', type: 'folk',
+        desc: 'Всенародный праздник. Народные гуляния, ёлки, семейные застолья и праздничное обращение главы государства.'
+      }
     ]
 
-    const MONTHS = [
-      'января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
-      'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'
-    ]
+    const MONTHS_FULL = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь']
+    const MONTHS_GEN  = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря']
+    const WEEKDAYS    = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
-    function formatDate(date) {
-      return `${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`
+    const TYPE_INFO = {
+      state:         { short: 'Государственный', label: 'Государственный праздник' },
+      memorial:      { short: 'Памятная дата',   label: 'Памятная дата' },
+      international: { short: 'Международный',   label: 'Международный праздник' },
+      folk:          { short: 'Всенародный',     label: 'Всенародный праздник' }
     }
 
-    function daysUntil(date, today) {
-      return Math.ceil((date - today) / (1000 * 60 * 60 * 24))
+    /* ============================ STATE ============================ */
+
+    let viewYear = new Date().getFullYear()
+    let viewMonth = new Date().getMonth()
+    let selectedKey = null
+
+    /* ============================ UTIL ============================ */
+
+    const pad = n => String(n).padStart(2, '0')
+
+    function pluralDays(n) {
+      const m10 = n % 10, m100 = n % 100
+      if (m10 === 1 && m100 !== 11) return 'день'
+      if (m10 >= 2 && m10 <= 4 && (m100 < 10 || m100 >= 20)) return 'дня'
+      return 'дней'
     }
 
-    function renderHolidays() {
-      const now = new Date()
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    function formatDateRu(date) {
+      return `${date.getDate()} ${MONTHS_GEN[date.getMonth()]} ${date.getFullYear()}`
+    }
 
-      const enriched = holidays.map(h => {
+    function diffDays(from, to) {
+      const a = new Date(from.getFullYear(), from.getMonth(), from.getDate())
+      const b = new Date(to.getFullYear(), to.getMonth(), to.getDate())
+      return Math.round((b - a) / 86400000)
+    }
+
+    function holidayOn(year, month0, day) {
+      return holidays.find(h => h.month - 1 === month0 && h.day === day)
+    }
+
+    function findNearestHoliday(today) {
+      let best = null
+      for (const h of holidays) {
         let date = new Date(today.getFullYear(), h.month - 1, h.day)
-        if (date < today) {
-          date = new Date(today.getFullYear() + 1, h.month - 1, h.day)
-        }
-        return { ...h, date, diff: daysUntil(date, today) }
-      })
+        if (date < today) date = new Date(today.getFullYear() + 1, h.month - 1, h.day)
+        const diff = diffDays(today, date)
+        if (!best || diff < best.diff) best = { h, date, diff }
+      }
+      return best
+    }
 
-      // Ближайший праздник
-      const nearest = [...enriched].sort((a, b) => a.diff - b.diff)[0]
-      const nextEl = document.getElementById('nextHolidayText')
-      if (nearest) {
-        nextEl.textContent = `${nearest.emoji} ${nearest.name} — ${formatDate(nearest.date)} (через ${nearest.diff} дн.)`
+    /* ============================ RENDER: NEXT ============================ */
+
+    function renderNextHoliday({ h, date, diff }) {
+      const el = document.getElementById('nextHoliday')
+      const whenText = diff === 0 ? 'Сегодня!' : `Через ${diff} ${pluralDays(diff)}`
+      const numBlock = diff === 0
+        ? `<div class="nh-countdown-num">🎊</div><div class="nh-countdown-label">сегодня</div>`
+        : `<div class="nh-countdown-num">${diff}</div><div class="nh-countdown-label">${pluralDays(diff)}</div>`
+
+      el.innerHTML = `
+        <div class="nh-emoji" aria-hidden="true">${h.emoji}</div>
+        <div class="nh-body">
+          <div class="nh-label">Ближайший праздник</div>
+          <div class="nh-name">${h.name}</div>
+          <div class="nh-date">${formatDateRu(date)} · ${whenText}</div>
+        </div>
+        <div class="nh-countdown">${numBlock}</div>
+      `
+    }
+
+    /* ============================ RENDER: CALENDAR ============================ */
+
+    function renderCalendar() {
+      const titleEl = document.getElementById('calTitle')
+      const gridEl  = document.getElementById('calendarGrid')
+
+      titleEl.textContent = `${MONTHS_FULL[viewMonth]} ${viewYear}`
+      gridEl.innerHTML = ''
+
+      const firstDay   = new Date(viewYear, viewMonth, 1)
+      const startDow   = (firstDay.getDay() + 6) % 7
+      const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate()
+
+      const today = new Date()
+      const isCurrentMonth = today.getFullYear() === viewYear && today.getMonth() === viewMonth
+
+      for (let i = 0; i < startDow; i++) {
+        const cell = document.createElement('div')
+        cell.className = 'cal-day cal-day-empty'
+        gridEl.appendChild(cell)
       }
 
-      // Список всех праздников
+      for (let d = 1; d <= daysInMonth; d++) {
+        const holiday = holidayOn(viewYear, viewMonth, d)
+        const cell = document.createElement(holiday ? 'button' : 'div')
+        cell.className = 'cal-day'
+        if (holiday) cell.type = 'button'
+
+        if (isCurrentMonth && today.getDate() === d) cell.classList.add('cal-day-today')
+
+        if (holiday) {
+          cell.classList.add('cal-day-holiday')
+          cell.dataset.type = holiday.type
+        }
+
+        if (holiday && selectedKey === `${viewMonth}-${d}`) {
+          cell.classList.add('cal-day-selected')
+        }
+
+        cell.innerHTML = `
+          <span class="cal-day-num">${d}</span>
+          ${holiday ? `<span class="cal-day-emoji" aria-hidden="true">${holiday.emoji}</span>` : ''}
+        `
+
+        if (holiday) {
+          const dayDate = new Date(viewYear, viewMonth, d)
+          cell.addEventListener('click', () => {
+            selectedKey = `${viewMonth}-${d}`
+            showHolidayDetail(holiday, dayDate)
+            renderCalendar()
+          })
+        }
+
+        gridEl.appendChild(cell)
+      }
+    }
+
+    /* ============================ RENDER: SIDE ============================ */
+
+    function showHolidayDetail(h, date) {
+      const side = document.getElementById('calSide')
+      side.dataset.type = h.type
+
+      const today = new Date()
+      const diff = diffDays(today, date)
+
+      let whenText
+      if (diff === 0) whenText = '🎉 Сегодня!'
+      else if (diff > 0) whenText = `Через ${diff} ${pluralDays(diff)}`
+      else whenText = `${Math.abs(diff)} ${pluralDays(Math.abs(diff))} назад`
+
+      const typeInfo = TYPE_INFO[h.type]
+
+      side.innerHTML = `
+        <div class="side-holiday">
+          <div class="side-emoji" aria-hidden="true">${h.emoji}</div>
+          <h3 class="side-name">${h.name}</h3>
+          <div class="side-date">${formatDateRu(date)}</div>
+          <span class="side-badge">${typeInfo.label}</span>
+          <p class="side-desc">${h.desc}</p>
+          <div class="side-countdown">${whenText}</div>
+        </div>
+      `
+    }
+
+    function showEmptyHint() {
+      const side = document.getElementById('calSide')
+      side.dataset.type = 'state'
+      side.innerHTML = `<div class="side-hint">В этом месяце нет праздников.<br>Выберите другой месяц или праздник из списка ниже.</div>`
+    }
+
+    /* ============================ RENDER: LIST ============================ */
+
+    function renderHolidayList() {
       const list = document.getElementById('holidayList')
       list.innerHTML = ''
 
-      // Сортируем по дате в текущем году (для отображения календарём)
-      const byYear = [...enriched].sort((a, b) => {
-        const da = new Date(today.getFullYear(), a.month - 1, a.day)
-        const db = new Date(today.getFullYear(), b.month - 1, b.day)
-        return da - db
-      })
+      const sorted = [...holidays].sort((a, b) => (a.month - b.month) || (a.day - b.day))
 
-      byYear.forEach(h => {
+      sorted.forEach(h => {
+        const typeInfo = TYPE_INFO[h.type]
         const li = document.createElement('li')
         li.className = 'holiday-item'
-        if (h.diff === 0) li.classList.add('holiday-today')
-        else if (h.diff <= 7) li.classList.add('holiday-soon')
-
-        const dateStr = `${String(h.day).padStart(2, '0')}.${String(h.month).padStart(2, '0')}`
-
-        let badge = ''
-        if (h.diff === 0) badge = '<span class="holiday-badge">Сегодня!</span>'
-        else if (h.diff <= 7) badge = `<span class="holiday-badge">Через ${h.diff} дн.</span>`
-        else badge = `<span class="holiday-days">Через ${h.diff} дн.</span>`
-
+        li.dataset.type = h.type
         li.innerHTML = `
-          <span class="holiday-date">${dateStr}</span>
-          <span class="holiday-name">${h.emoji} ${h.name}</span>
-          ${badge}
+          <div class="hi-emoji" aria-hidden="true">${h.emoji}</div>
+          <div class="hi-body">
+            <div class="hi-top">
+              <span class="hi-date">${pad(h.day)}.${pad(h.month)}</span>
+              <span class="hi-badge">${typeInfo.short}</span>
+            </div>
+            <div class="hi-name">${h.name}</div>
+            <p class="hi-desc">${h.desc}</p>
+          </div>
+          <button class="hi-show" type="button" aria-label="Показать в календаре">→</button>
         `
+        li.addEventListener('click', () => navigateToHoliday(h))
         list.appendChild(li)
       })
     }
+
+    /* ============================ NAVIGATION ============================ */
+
+    function autoSelectInMonth() {
+      const inMonth = holidays.filter(h => h.month - 1 === viewMonth).sort((a, b) => a.day - b.day)
+      if (inMonth.length === 0) {
+        selectedKey = null
+        showEmptyHint()
+        return
+      }
+      const first = inMonth[0]
+      selectedKey = `${viewMonth}-${first.day}`
+      showHolidayDetail(first, new Date(viewYear, viewMonth, first.day))
+    }
+
+    function setViewMonth(year, month) {
+      viewYear = year
+      viewMonth = month
+
+      const selectionInMonth =
+        selectedKey &&
+        holidays.some(h =>
+          `${h.month - 1}-${h.day}` === selectedKey && h.month - 1 === viewMonth
+        )
+
+      if (!selectionInMonth) autoSelectInMonth()
+      renderCalendar()
+    }
+
+    function navigateMonth(delta) {
+      let m = viewMonth + delta
+      let y = viewYear
+      if (m < 0) { m = 11; y-- }
+      else if (m > 11) { m = 0; y++ }
+      setViewMonth(y, m)
+    }
+
+    function navigateToHoliday(h) {
+      const today = new Date()
+      let date = new Date(today.getFullYear(), h.month - 1, h.day)
+      if (date < new Date(today.getFullYear(), today.getMonth(), today.getDate())) {
+        date = new Date(today.getFullYear() + 1, h.month - 1, h.day)
+      }
+      viewYear = date.getFullYear()
+      viewMonth = date.getMonth()
+      selectedKey = `${h.month - 1}-${h.day}`
+      renderCalendar()
+      showHolidayDetail(h, date)
+      document.querySelector('.calendar-layout').scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+
+    /* ============================ INIT ============================ */
+
+    ;(async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (!session) { window.location.href = '../login.html'; return }
+      } catch (e) {
+        console.warn('Ошибка проверки сессии:', e)
+      }
+
+      const wd = document.getElementById('calWeekdays')
+      WEEKDAYS.forEach(w => {
+        const d = document.createElement('div')
+        d.className = 'cal-weekday'
+        d.textContent = w
+        wd.appendChild(d)
+      })
+
+      const today = new Date()
+      const nearest = findNearestHoliday(today)
+
+      viewYear = nearest.date.getFullYear()
+      viewMonth = nearest.date.getMonth()
+      selectedKey = `${viewMonth}-${nearest.h.day}`
+
+      renderNextHoliday(nearest)
+      renderCalendar()
+      showHolidayDetail(nearest.h, nearest.date)
+      renderHolidayList()
+
+      document.getElementById('prevMonth').addEventListener('click', () => navigateMonth(-1))
+      document.getElementById('nextMonth').addEventListener('click', () => navigateMonth(1))
+      document.getElementById('calTodayBtn').addEventListener('click', () => {
+        const now = new Date()
+        setViewMonth(now.getFullYear(), now.getMonth())
+      })
+    })()
   </script>
 
   <style>
+    /* ============================================================
+       Календарь событий — оформление в стиле главной страницы профиля
+       ============================================================ */
+
+    /* ---------- Общий фон и контейнер (как в профиле) ---------- */
+    .profile-main {
+      background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+      min-height: calc(100vh - 220px);
+      padding: 34px 16px 64px;
+    }
+    .profile-container {
+      max-width: 1120px;
+      margin: 0 auto;
+    }
+
+    /* ---------- Цветовые схемы по типу праздника ---------- */
+    [data-type="state"]         { --type-color: #b30000; --type-bg: #fff0f0; --type-border: #f5c6c6; }
+    [data-type="memorial"]      { --type-color: #c2710c; --type-bg: #fff8ec; --type-border: #f5d9a8; }
+    [data-type="international"] { --type-color: #2563eb; --type-bg: #eef4ff; --type-border: #c6d8f5; }
+    [data-type="folk"]          { --type-color: #16a34a; --type-bg: #eefaf0; --type-border: #b8e6c2; }
+
+    /* ---------- Приветственный блок (в точности как в профиле) ---------- */
+    .greeting-block {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 26px 28px;
+      margin: 0 0 30px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border: 1px solid #f1d7d7;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+      overflow: hidden;
+    }
+    .greeting-block::after {
+      content: "";
+      position: absolute;
+      right: -70px;
+      top: -70px;
+      width: 220px;
+      height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+      pointer-events: none;
+    }
+    .greeting-emoji {
+      flex-shrink: 0;
+      font-size: 3rem;
+      line-height: 1;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-content {
+      flex: 1 1 220px;
+      min-width: 0;
+      text-align: left;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-text {
+      margin: 0 0 6px;
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #1a1a1a;
+      letter-spacing: -0.01em;
+    }
+    .greeting-subtitle {
+      margin: 0;
+      font-size: 1rem;
+      color: #6b6b6b;
+      line-height: 1.45;
+    }
+    .greeting-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex-shrink: 0;
+      align-items: stretch;
+      position: relative;
+      z-index: 1;
+    }
+    .greeting-action-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      color: #2a2a2a;
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 500;
+      white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .greeting-action-link:hover,
+    .greeting-action-link:focus-visible {
+      border-color: #b30000;
+      background: #fff5f5;
+      color: #b30000;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+      outline: none;
+    }
+
+    /* ---------- Ближайший праздник ---------- */
+    .next-holiday {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 22px;
+      padding: 24px 28px;
+      margin: 0 0 22px;
+      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+      color: #fff;
+      border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(179, 0, 0, 0.22);
+      overflow: hidden;
+    }
+    .next-holiday::after {
+      content: "";
+      position: absolute;
+      right: -80px;
+      top: -80px;
+      width: 240px;
+      height: 240px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+    }
+    .nh-emoji {
+      font-size: 2.8rem;
+      line-height: 1;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .nh-body {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      z-index: 1;
+    }
+    .nh-label {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      opacity: 0.85;
+      margin-bottom: 6px;
+    }
+    .nh-name {
+      font-size: 1.35rem;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 4px;
+    }
+    .nh-date {
+      font-size: 0.95rem;
+      opacity: 0.92;
+    }
+    .nh-countdown {
+      flex-shrink: 0;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 12px;
+      padding: 10px 18px;
+      position: relative;
+      z-index: 1;
+      min-width: 88px;
+    }
+    .nh-countdown-num {
+      font-size: 1.9rem;
+      font-weight: 700;
+      line-height: 1;
+    }
+    .nh-countdown-label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    /* ---------- Сетка: календарь + панель ---------- */
+    .calendar-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+      gap: 18px;
+      align-items: start;
+      margin-bottom: 30px;
+    }
+
+    /* ---------- Базовый стиль карточек (как .info-card в профиле) ---------- */
+    .calendar-card,
+    .cal-side,
+    .holiday-item {
+      position: relative;
+      background: #ffffff;
+      border: 1px solid #ececec;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease;
+    }
+    /* Цветная полоса по нижней границе на всю ширину */
+    .calendar-card::before,
+    .cal-side::before,
+    .holiday-item::before {
+      content: "";
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--type-color, #b30000);
+      z-index: 1;
+    }
+
+    .calendar-card { padding: 22px 24px 26px; }
+    .cal-side      { padding: 22px 24px 26px; position: sticky; top: 20px; }
+
+    /* ---------- Шапка календаря ---------- */
+    .calendar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .calendar-title {
+      margin: 0;
+      flex: 1;
+      text-align: center;
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: #1f1f1f;
+    }
+    .cal-nav {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      border: 1px solid #ececec;
+      background: #fff;
+      color: #2a2a2a;
+      font-size: 1.35rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      flex-shrink: 0;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+    }
+    .cal-nav:hover,
+    .cal-nav:focus-visible {
+      border-color: #b30000;
+      color: #b30000;
+      background: #fff5f5;
+      outline: none;
+    }
+
+    /* ---------- Дни недели и сетка ---------- */
+    .calendar-weekdays,
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .calendar-weekdays { margin-bottom: 6px; }
+    .cal-weekday {
+      text-align: center;
+      font-size: 0.76rem;
+      font-weight: 600;
+      color: #888;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      padding: 6px 0;
+    }
+
+    .cal-day {
+      aspect-ratio: 1 / 1;
+      border-radius: 10px;
+      border: 1px solid transparent;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1px;
+      padding: 2px;
+      font-family: inherit;
+      font-size: inherit;
+      color: #2a2a2a;
+      min-width: 0;
+      overflow: hidden;
+      transition: transform 0.12s, border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .cal-day-empty { background: transparent; }
+    .cal-day-num {
+      font-size: 0.9rem;
+      font-weight: 600;
+      line-height: 1;
+    }
+    .cal-day-emoji {
+      font-size: 0.95rem;
+      line-height: 1;
+    }
+
+    .cal-day-holiday {
+      background: var(--type-bg);
+      border-color: var(--type-border);
+      cursor: pointer;
+    }
+    .cal-day-holiday:hover,
+    .cal-day-holiday:focus-visible {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+      outline: none;
+    }
+
+    .cal-day-today {
+      outline: 2px solid #b30000;
+      outline-offset: -2px;
+    }
+    .cal-day-today .cal-day-num { color: #b30000; }
+
+    .cal-day-selected {
+      background: var(--type-color) !important;
+      border-color: var(--type-color) !important;
+      color: #fff;
+      box-shadow: 0 6px 16px rgba(179, 0, 0, 0.25);
+      transform: translateY(-1px);
+    }
+    .cal-day-selected .cal-day-num { color: #fff; }
+
+    /* ---------- Кнопка «к текущему месяцу» ---------- */
+    .cal-today-btn {
+      display: block;
+      margin: 14px auto 0;
+      padding: 8px 16px;
+      border: 1px solid #ececec;
+      background: #fff;
+      border-radius: 8px;
+      color: #555;
+      font-size: 0.84rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .cal-today-btn:hover,
+    .cal-today-btn:focus-visible {
+      border-color: #b30000;
+      color: #b30000;
+      background: #fff5f5;
+      outline: none;
+    }
+
+    /* ---------- Панель с деталями ---------- */
+    .side-holiday { text-align: left; }
+    .side-emoji {
+      font-size: 2.6rem;
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+    .side-name {
+      font-size: 1.18rem;
+      font-weight: 700;
+      color: #1a1a1a;
+      margin: 0 0 6px;
+      line-height: 1.25;
+    }
+    .side-date {
+      color: var(--type-color, #b30000);
+      font-weight: 600;
+      font-size: 0.95rem;
+      margin-bottom: 12px;
+    }
+    .side-badge {
+      display: inline-block;
+      padding: 3px 12px;
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--type-bg);
+      color: var(--type-color);
+      border: 1px solid var(--type-border);
+      margin-bottom: 14px;
+    }
+    .side-desc {
+      color: #555;
+      line-height: 1.55;
+      font-size: 0.97rem;
+      margin: 0 0 16px;
+    }
+    .side-countdown {
+      display: block;
+      padding: 12px 16px;
+      background: #fff5f5;
+      color: #b30000;
+      font-weight: 600;
+      font-size: 0.92rem;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .side-hint {
+      color: #888;
+      font-size: 0.95rem;
+      line-height: 1.55;
+      text-align: center;
+      padding: 40px 10px;
+    }
+
+    /* ---------- Заголовок раздела ---------- */
+    .section-title {
+      font-size: 1.35rem;
+      color: #1a1a1a;
+      font-weight: 700;
+      margin: 0 0 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::before {
+      content: "";
+      width: 4px;
+      height: 1.1em;
+      background: #b30000;
+      border-radius: 2px;
+    }
+
+    /* ---------- Список всех праздников ---------- */
     .holiday-list {
       list-style: none;
       padding: 0;
       margin: 0;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 14px;
     }
     .holiday-item {
-      background: #fff;
-      border-left: 4px solid #b30000;
-      padding: 14px 18px;
-      border-radius: 8px;
+      padding: 18px 20px 22px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      cursor: pointer;
+    }
+    .holiday-item:hover,
+    .holiday-item:focus-visible {
+      transform: translateY(-3px);
+      border-color: var(--type-color);
+      background-color: #fff9f9;
+      box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
+      outline: none;
+    }
+    .hi-emoji {
+      font-size: 1.8rem;
+      line-height: 1;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+    .hi-body { flex: 1; min-width: 0; }
+    .hi-top {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 8px;
       flex-wrap: wrap;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.06);
-      transition: transform 0.15s ease;
+      margin-bottom: 4px;
     }
-    .holiday-item:hover { transform: translateX(3px); }
-    .holiday-item.holiday-soon { border-left-color: #e67e22; background: #fffaf2; }
-    .holiday-item.holiday-today { border-left-color: #27ae60; background: #f2fff6; }
-    .holiday-date {
+    .hi-date {
       font-weight: 700;
-      color: #b30000;
-      min-width: 60px;
-      font-size: 1.05rem;
+      color: var(--type-color);
+      font-size: 0.88rem;
     }
-    .holiday-name { flex: 1; font-size: 1rem; }
-    .holiday-badge {
-      background: #27ae60;
-      color: #fff;
-      padding: 3px 10px;
+    .hi-badge {
+      padding: 2px 10px;
       border-radius: 20px;
-      font-size: 0.8rem;
+      font-size: 0.72rem;
       font-weight: 600;
+      background: var(--type-bg);
+      color: var(--type-color);
+      border: 1px solid var(--type-border);
     }
-    .holiday-days { color: #777; font-size: 0.85rem; }
-    .info-card-link:hover { transform: translateY(-2px); transition: 0.2s; }
-    .info-card-more {
-      display: inline-block;
-      margin-top: 8px;
+    .hi-name {
+      font-weight: 700;
+      font-size: 1.08rem;
+      color: #1f1f1f;
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .hi-desc {
+      color: #555;
+      font-size: 0.97rem;
+      line-height: 1.5;
+      margin: 0;
+    }
+    .hi-show {
+      flex-shrink: 0;
+      align-self: center;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      border: 1px solid #ececec;
+      background: #fff;
       color: #b30000;
-      font-size: 0.85rem;
-      font-weight: 600;
+      font-size: 1.05rem;
+      line-height: 1;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      transition: all 0.15s;
+    }
+    .holiday-item:hover .hi-show,
+    .hi-show:hover,
+    .hi-show:focus-visible {
+      background: #b30000;
+      color: #fff;
+      border-color: #b30000;
+      outline: none;
+    }
+
+    /* ---------- Адаптивность ---------- */
+    @media (max-width: 860px) {
+      .calendar-layout { grid-template-columns: 1fr; }
+      .cal-side { position: static; }
+    }
+    @media (max-width: 640px) {
+      .profile-main { padding: 22px 12px 48px; }
+
+      .greeting-block {
+        padding: 22px 20px;
+        gap: 16px;
+      }
+      .greeting-emoji { font-size: 2.2rem; }
+      .greeting-text { font-size: 1.4rem; }
+      .greeting-subtitle { font-size: 0.9rem; }
+      .greeting-actions {
+        flex-direction: row;
+        flex: 1 1 100%;
+        width: 100%;
+        gap: 8px;
+      }
+      .greeting-actions > * { flex: 1 1 0; }
+      .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+      .next-holiday {
+        flex-wrap: wrap;
+        padding: 18px 20px;
+        gap: 14px;
+      }
+      .nh-emoji { font-size: 2.2rem; }
+      .nh-name { font-size: 1.15rem; }
+      .nh-countdown { padding: 8px 14px; min-width: 72px; }
+      .nh-countdown-num { font-size: 1.5rem; }
+
+      .calendar-card { padding: 16px 14px 20px; }
+      .calendar-title { font-size: 1rem; }
+      .cal-nav { width: 32px; height: 32px; font-size: 1.15rem; }
+      .calendar-weekdays,
+      .calendar-grid { gap: 4px; }
+      .cal-day-num { font-size: 0.82rem; }
+      .cal-day-emoji { font-size: 0.85rem; }
+      .cal-weekday { font-size: 0.68rem; padding: 4px 0; }
+
+      .cal-side { padding: 18px 16px 22px; }
+      .holiday-list { grid-template-columns: 1fr; }
+      .holiday-item { padding: 16px 16px 20px; }
+      .hi-name { font-size: 1rem; }
+      .hi-desc { font-size: 0.92rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .cal-day,
+      .cal-day-holiday,
+      .cal-nav,
+      .holiday-item,
+      .hi-show,
+      .cal-today-btn,
+      .greeting-action-link,
+      .greeting-block,
+      .next-holiday {
+        transition: none !important;
+      }
     }
   </style>
 </body>
