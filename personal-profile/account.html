@@ -150,18 +150,24 @@
     }
 
     /* ---------- Секции данных (как .info-card) ---------- */
-    .data-section {
-      position: relative;
-      background: #ffffff;
-      border: 1px solid #ececec;
-      border-radius: 16px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-      padding: 22px 24px 26px;
-      margin-bottom: 18px;
-      overflow: hidden;
-      transition: transform 0.2s ease, box-shadow 0.2s ease,
-                  border-color 0.2s ease, background-color 0.2s ease;
-    }
+.data-section {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  padding: 22px 24px 26px;
+  /* margin-bottom: 18px;  ← убрать */
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, background-color 0.2s ease;
+}
+#accountData {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  align-items: stretch;
+}
     /* Цветные полосы по нижней границе на всю ширину */
     .data-section::before {
       content: "";
@@ -561,6 +567,7 @@
       .modal-body { padding: 18px; }
       .modal-footer { padding: 14px 18px; }
       .modal-footer .btn { flex: 1 1 0; }
+	    #accountData { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -968,7 +975,7 @@
         upgradeBtn.style.display = (accountType === 'Упрощённая') ? 'inline-block' : 'none';
 
         loadingDiv.style.display = 'none';
-        accountDiv.style.display = 'block';
+        accountDiv.style.display = 'grid';
       } catch (err) {
         console.error(err);
         loadingDiv.textContent = 'Ошибка загрузки: ' + err.message;
