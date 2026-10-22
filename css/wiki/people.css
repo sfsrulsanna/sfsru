@@ -1,151 +1,268 @@
-/* Упрощенные стили для страницы людей */
+/* ============================================================
+   People page — улучшенный дизайн в стиле профиля
+   ============================================================ */
 
+/* ---------- Общий фон и отступы ---------- */
 .main-content {
-    padding: 3rem 1.5rem 4rem;
+    padding: 34px 16px 64px;
+    background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+    min-height: calc(100vh - 220px);
 }
 
+/* ============================================================
+   Приветственный блок (people-header)
+   ============================================================ */
 .people-header {
-    max-width: 900px;
-    margin: 0 auto 3rem;
+    max-width: 1120px;
+    margin: 0 auto 26px;
+    padding: 26px 28px;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+    border: 1px solid #f1d7d7;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
     text-align: center;
+    position: relative;
+    overflow: hidden;
 }
-
+.people-header::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -70px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+    pointer-events: none;
+}
 .people-header h1 {
-    font-size: 2rem;
-    margin-bottom: 1.2rem;
-    color: #a00;
+    position: relative;
+    z-index: 1;
+    font-size: 1.9rem;
+    margin: 0 0 8px;
+    color: #1a1a1a;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
 }
-
 .people-header p {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    color: #333;
-    margin-bottom: 1.5rem;
-}
-
-.back-link {
-    display: inline-block;
-    padding: 0.8rem 1.5rem;
-    background: rgba(255, 245, 245, 0.7);
-    border-radius: 50px;
-    border: 1px solid rgba(255, 180, 180, 0.3);
-    color: #a00;
+    position: relative;
+    z-index: 1;
     font-size: 1rem;
-    font-weight: 600;
+    color: #6b6b6b;
+    margin: 0;
+    line-height: 1.45;
+}
+
+/* ============================================================
+   Кнопка «Назад»
+   ============================================================ */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    padding: 10px 18px;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    color: #2a2a2a;
+    font-size: 0.92rem;
+    font-weight: 500;
     text-decoration: none;
-    transition: all 0.2s ease;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.15s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease,
+                color 0.2s ease;
+}
+.back-link:hover,
+.back-link:focus-visible {
+    border-color: #b30000;
+    background: #fff5f5;
+    color: #b30000;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+    outline: none;
 }
 
-.back-link:hover {
-    background: rgba(255, 235, 235, 0.9);
-    transform: translateY(-2px);
-}
-
+/* ============================================================
+   Сетка карточек (2 в ряд на десктопе)
+   ============================================================ */
 .people-container {
-    max-width: 1000px;
+    max-width: 1120px;
     margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
 }
 
-/* Простая карточка без сложных эффектов */
+/* ============================================================
+   Карточка персоны — в стиле .info-card профиля
+   ============================================================ */
 .person-card {
-    display: block;
-    background: #fff8f8;
-    border-radius: 15px;
-    padding: 1.5rem;
+    display: flex;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     text-decoration: none;
     color: inherit;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
-    border: 1px solid #ffd6d6;
-    transition: all 0.2s ease;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease;
 }
-
-.person-card:hover {
+.person-card:hover,
+.person-card:focus-visible {
     transform: translateY(-3px);
-    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.12);
-    background: #fff0f0;
+    border-color: #b30000;
+    background: #fff9f9;
+    box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
+    outline: none;
 }
 
+/* Внутренняя раскладка: фото слева, текст справа */
 .person-content {
     display: flex;
-    align-items: center;
-    gap: 1.5rem;
+    gap: 18px;
+    align-items: flex-start;
+    width: 100%;
 }
 
+/* ---------- Фото ---------- */
 .person-photo {
     flex-shrink: 0;
-    width: 120px;
-    height: 160px;
-    border-radius: 8px;
+    width: 100px;
+    height: 140px;
+    border-radius: 12px;
     overflow: hidden;
     background: #f5f5f5;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
-
 .person-photo img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center center;
+    object-position: center top;
+    display: block;
 }
 
+/* ---------- Информация ---------- */
+.person-info {
+    flex: 1;
+    min-width: 0;
+}
 .person-info h3 {
-    font-size: 1.4rem;
-    margin-bottom: 0.5rem;
-    color: #a00;
+    font-size: 1.08rem;
+    margin: 0 0 8px;
+    color: #1f1f1f;
+    font-weight: 700;
+    line-height: 1.3;
+    transition: color 0.2s ease;
+}
+.person-card:hover h3,
+.person-card:focus-visible h3 {
+    color: #b30000;
 }
 
+/* Должность — бейдж в палитре профиля */
 .person-position {
-    font-size: 1.1rem;
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: #fff0f0;
+    border: 1px solid #f5c6c6;
+    color: #b30000;
+    font-size: 0.78rem;
     font-weight: 600;
-    color: #c00;
-    margin-bottom: 0.8rem;
+    line-height: 1.3;
+    margin-bottom: 10px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
+/* Краткая биография */
 .person-bio {
-    font-size: 1rem;
-    line-height: 1.6;
-    color: #333;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: #555;
+    margin: 0;
+    overflow-wrap: anywhere;
 }
 
-@media (max-width: 768px) {
-    .main-content {
-        padding: 2rem 1rem 3rem;
-    }
-    
-    .people-header h1 {
-        font-size: 1.7rem;
-    }
-    
-    .people-header p {
-        font-size: 1rem;
-    }
-    
+/* ============================================================
+   Адаптивность
+   ============================================================ */
+
+/* На средних экранах — одна колонка */
+@media (max-width: 860px) {
     .people-container {
-        gap: 1.2rem;
+        grid-template-columns: 1fr;
     }
-    
+}
+
+/* Мобильные */
+@media (max-width: 640px) {
+    .main-content {
+        padding: 22px 12px 48px;
+    }
+
+    .people-header {
+        padding: 22px 20px;
+    }
+    .people-header h1 {
+        font-size: 1.4rem;
+    }
+    .people-header p {
+        font-size: 0.9rem;
+    }
+    .back-link {
+        padding: 10px 14px;
+        font-size: 0.86rem;
+    }
+
+    .people-container {
+        gap: 12px;
+    }
+
+    .person-card {
+        padding: 18px;
+    }
     .person-content {
         flex-direction: column;
+        align-items: center;
         text-align: center;
-        gap: 1rem;
+        gap: 14px;
     }
-    
     .person-photo {
-        width: 120px;
-        height: 160px;
+        width: 110px;
+        height: 150px;
     }
-    
+    .person-info {
+        width: 100%;
+        text-align: left;
+    }
     .person-info h3 {
-        font-size: 1.3rem;
-    }
-    
-    .person-position {
         font-size: 1rem;
     }
-    
     .person-bio {
-        font-size: 0.95rem;
+        font-size: 0.88rem;
+    }
+    .person-position {
+        font-size: 0.74rem;
+    }
+}
+
+/* Для пользователей с ограничением анимаций */
+@media (prefers-reduced-motion: reduce) {
+    .person-card,
+    .back-link,
+    .person-info h3 {
+        transition: none !important;
     }
 }
