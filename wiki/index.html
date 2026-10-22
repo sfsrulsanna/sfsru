@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Википедия СФСРЮ</title>
+
     <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
@@ -55,24 +56,29 @@
     </header>
     <div class="menu-overlay"></div>
 
-    <main class="main-content">
-        <div class="wiki-intro">
-            <h1>Википедия СФСРЮ</h1>
-            <p>Свободная энциклопедия о Советской Федеративной Социалистической Республике Юльсанна.</p>
-        </div>
+    <main class="main-content profile-main">
+        <div class="profile-container">
+            <div class="wiki-intro">
+                <div class="greeting-emoji" aria-hidden="true">📖</div>
+                <div class="greeting-content">
+                    <h1>Википедия СФСРЮ</h1>
+                    <p>Свободная энциклопедия о Советской Федеративной Социалистической Республике Юльсанна.</p>
+                </div>
+            </div>
 
-        <div class="search-container">
-            <form id="search-form">
-                <input type="text" id="search-input" placeholder="Поиск по статьям..." />
-                <button type="submit">Найти</button>
-            </form>
-        </div>
+            <div class="search-container">
+                <form id="search-form">
+                    <input type="text" id="search-input" placeholder="Поиск по статьям..." />
+                    <button type="submit">Найти</button>
+                </form>
+            </div>
 
-        <div class="random-pages"></div>
-        <div id="categories-container"></div>
-        <div id="search-results" style="display:none;">
-            <h2>Результаты поиска</h2>
-            <div id="results-list"></div>
+            <div class="random-pages"></div>
+            <div id="categories-container"></div>
+            <div id="search-results" style="display:none;">
+                <h2>Результаты поиска</h2>
+                <div id="results-list"></div>
+            </div>
         </div>
     </main>
 
@@ -82,18 +88,19 @@
     </footer>
 
     <script src="../js/mob-menu.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-      <script type="module">
-	      import { supabase } from '../../js/supabase-config.js';
-	  
+    <script type="importmap">
+        { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+    </script>
+    <script type="module" src="../js/supabase-config.js"></script>
+    <script type="module">
+        import { supabase } from '../js/supabase-config.js';
 
         let allArticles = [];
 
-        // Запрос к таблице wiki.articles с явным указанием схемы
         async function loadArticles() {
             const { data, error } = await supabase
-                .schema('wiki')           // ← явно указываем схему
-                .from('articles')         // ← таблица в этой схеме
+                .schema('wiki')
+                .from('articles')
                 .select('*')
                 .order('title');
             if (error) {
@@ -154,7 +161,7 @@
                 'healthcare': '🏥',
                 'registry': '📃',
                 'currency': '💴',
-				'other': '✨'
+                'other': '✨'
             };
             const nameMap = {
                 'people': 'Люди',
@@ -163,8 +170,8 @@
                 'education': 'Образование',
                 'healthcare': 'Здравоохранение',
                 'registry': 'Реестры',
-				'currency': 'Валюты',
-				'other': 'Другое'
+                'currency': 'Валюты',
+                'other': 'Другое'
             };
             const categoryOrder = ['people', 'countries', 'politics', 'education', 'healthcare', 'registry', 'currency', 'other'];
 
@@ -217,7 +224,7 @@
             resultsList.innerHTML = '';
 
             if (results.length === 0) {
-                resultsList.innerHTML = '<p>Ничего не найдено. Попробуйте изменить запрос.</p>';
+                resultsList.innerHTML = '<p class="wiki-empty">Ничего не найдено. Попробуйте изменить запрос.</p>';
                 return;
             }
 

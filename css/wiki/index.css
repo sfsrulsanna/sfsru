@@ -1,240 +1,407 @@
-/* Стили для страницы Википедии */
+/* ============================================================
+   Википедия — оформление в стиле главной страницы профиля
+   ============================================================ */
 
-.main-content {
-    padding: 3rem 1.5rem 4rem;
+/* ---------- Общий фон и контейнер ---------- */
+.profile-main {
+    background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+    min-height: calc(100vh - 220px);
+    padding: 34px 16px 64px;
+}
+.profile-container {
+    max-width: 1120px;
+    margin: 0 auto;
 }
 
-/* Вводный текст */
+/* ============================================================
+   Приветственный блок (.wiki-intro)
+   ============================================================ */
 .wiki-intro {
-    max-width: 900px;
-    margin: 0 auto 2rem;
-    text-align: center;
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 24px;
+    padding: 26px 28px;
+    margin: 0 0 24px;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+    border: 1px solid #f1d7d7;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+    overflow: hidden;
+    text-align: left;
+    max-width: none;
+}
+.wiki-intro::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -70px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+    pointer-events: none;
+}
+.wiki-intro .greeting-emoji {
+    flex-shrink: 0;
+    font-size: 3rem;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+}
+.wiki-intro .greeting-content {
+    flex: 1 1 220px;
+    min-width: 0;
+    position: relative;
+    z-index: 1;
 }
 .wiki-intro h1 {
-    font-size: 2rem;
-    margin-bottom: 1.2rem;
-    color: #a00;
+    margin: 0 0 6px;
+    font-size: 1.9rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: #1a1a1a;
+    letter-spacing: -0.01em;
 }
 .wiki-intro p {
-    font-size: 1.1rem;
-    line-height: 1.7;
-    color: #333;
-    margin-bottom: 1rem;
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: #6b6b6b;
 }
 
-/* Поиск */
+/* ============================================================
+   Поиск
+   ============================================================ */
 .search-container {
-    max-width: 600px;
-    margin: 0 auto 2.5rem;
+    max-width: 720px;
+    margin: 0 auto 26px;
+}
+.search-container form {
     display: flex;
-    gap: 0.8rem;
+    gap: 10px;
+    width: 100%;
 }
 .search-container input {
     flex: 1;
-    padding: 0.8rem 1.2rem;
-    border: 1px solid #ccc;
-    border-radius: 30px;
-    font-size: 1rem;
+    min-width: 0;
+    padding: 12px 20px;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #1a1a1a;
+    background: #ffffff;
     outline: none;
-    transition: border 0.3s;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .search-container input:focus {
-    border-color: #a00;
+    border-color: #b30000;
+    box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.1);
 }
 .search-container button {
-    padding: 0.8rem 2rem;
-    background: #a00;
-    color: white;
+    flex-shrink: 0;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+    color: #ffffff;
     border: none;
-    border-radius: 30px;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    font-weight: 500;
+    font-family: inherit;
     cursor: pointer;
-    transition: background 0.3s;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+    transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
-.search-container button:hover {
-    background: #c00;
+.search-container button:hover,
+.search-container button:focus-visible {
+    filter: brightness(1.08);
+    box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+    outline: none;
 }
 
-/* Случайные страницы */
+/* ============================================================
+   Случайные страницы
+   ============================================================ */
 .random-pages {
     display: flex;
-    justify-content: center;
-    gap: 2rem;
     flex-wrap: wrap;
-    margin-bottom: 3rem;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 28px;
 }
 .random-card {
-    flex: 1 1 250px;
-    max-width: 300px;
-    min-width: 200px;
-    background: rgba(255, 250, 250, 0.7);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 180, 180, 0.3);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
-    padding: 1.5rem;
-    text-align: center;
-    transition: all 0.35s ease;
+    flex: 1 1 260px;
+    max-width: 340px;
+    min-width: 0;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    padding: 22px 24px 26px;
+    text-align: left;
     text-decoration: none;
-    color: #333;
+    color: inherit;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease;
 }
-.random-card:hover {
-    transform: translateY(-6px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-    background: rgba(255, 245, 245, 0.9);
+.random-card:hover,
+.random-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: #b30000;
+    background: #fff9f9;
+    box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
+    outline: none;
+}
+.random-card .random-label {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: #fff0f0;
+    color: #b30000;
+    border: 1px solid #f5c6c6;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
 }
 .random-card h3 {
-    color: #a00;
-    margin-top: 0;
-    margin-bottom: 0.5rem;
-    font-size: 1.3rem;
+    color: #1f1f1f;
+    margin: 0 0 8px;
+    font-size: 1.08rem;
+    font-weight: 700;
+    line-height: 1.3;
+    transition: color 0.2s ease;
+}
+.random-card:hover h3,
+.random-card:focus-visible h3 {
+    color: #b30000;
 }
 .random-card p {
     font-size: 0.95rem;
     line-height: 1.5;
-    margin: 0;
     color: #555;
-}
-.random-card .random-label {
-    display: inline-block;
-    background: #a00;
-    color: white;
-    font-size: 0.7rem;
-    padding: 0.2rem 0.8rem;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 0.8rem;
+    margin: 0;
 }
 
-/* Категории */
+/* Пустое состояние внутри random-pages */
+.random-pages > p {
+    width: 100%;
+    text-align: center;
+    padding: 28px 20px;
+    color: #888;
+    font-size: 0.95rem;
+    background: #ffffff;
+    border: 1px dashed #e0e0e0;
+    border-radius: 14px;
+    margin: 0;
+}
+
+/* ============================================================
+   Категории
+   ============================================================ */
 #categories-container {
-    max-width: 1000px;
-    margin: 0 auto;
+    margin-bottom: 30px;
 }
 .category-group {
-    margin-bottom: 2.5rem;
+    margin-bottom: 26px;
+}
+.category-group:last-child {
+    margin-bottom: 0;
 }
 .category-title {
-    font-size: 1.6rem;
-    color: #a00;
-    border-bottom: 2px solid #a00;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.2rem;
     display: flex;
     align-items: center;
-    gap: 0.8rem;
+    gap: 10px;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 14px;
+    padding: 0;
+    border: none;
+    letter-spacing: -0.01em;
 }
 .category-title .cat-icon {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
+    line-height: 1;
 }
 .category-articles {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
 }
 .category-articles a {
     display: block;
-    padding: 0.8rem 1rem;
-    background: #fafafa;
-    border-radius: 10px;
-    border: 1px solid #eee;
-    color: #333;
+    padding: 14px 18px;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+    color: #1f1f1f;
     text-decoration: none;
-    transition: all 0.2s;
+    font-weight: 600;
+    font-size: 0.97rem;
+    line-height: 1.35;
+    transition: transform 0.15s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
 }
-.category-articles a:hover {
-    background: #fff0f0;
-    border-color: #a00;
-    color: #a00;
+.category-articles a:hover,
+.category-articles a:focus-visible {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    border-color: #b30000;
+    background: #fff9f9;
+    color: #b30000;
+    box-shadow: 0 8px 18px rgba(179, 0, 0, 0.1);
+    outline: none;
 }
 .category-articles a .article-desc {
     display: block;
-    font-size: 0.8rem;
+    font-size: 0.84rem;
     color: #777;
-    margin-top: 0.2rem;
+    margin-top: 4px;
+    font-weight: 400;
+    line-height: 1.4;
+}
+.category-articles a:hover .article-desc,
+.category-articles a:focus-visible .article-desc {
+    color: #b30000;
+    opacity: 0.85;
 }
 
-/* Результаты поиска */
+/* ============================================================
+   Результаты поиска
+   ============================================================ */
 #search-results {
-    max-width: 900px;
-    margin: 0 auto;
+    margin-bottom: 30px;
 }
 #search-results h2 {
-    font-size: 1.8rem;
-    color: #a00;
-    border-bottom: 2px solid #a00;
-    padding-bottom: 0.5rem;
-    margin-bottom: 1.5rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    margin: 0 0 16px;
+    padding: 0;
+    border: none;
+    letter-spacing: -0.01em;
 }
 #results-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.2rem;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
 }
 .result-item {
-    background: rgba(255, 250, 250, 0.7);
-    border-radius: 15px;
-    padding: 1.2rem;
-    border: 1px solid rgba(255, 180, 180, 0.2);
-    transition: 0.2s;
+    display: block;
+    padding: 16px 20px;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
     text-decoration: none;
-    color: #333;
+    color: #1f1f1f;
+    transition: transform 0.15s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease;
 }
-.result-item:hover {
-    background: rgba(255, 245, 245, 0.9);
-    transform: translateY(-4px);
-    box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+.result-item:hover,
+.result-item:focus-visible {
+    transform: translateY(-2px);
+    border-color: #b30000;
+    background: #fff9f9;
+    box-shadow: 0 8px 18px rgba(179, 0, 0, 0.1);
+    outline: none;
 }
 .result-item h4 {
-    color: #a00;
-    margin: 0 0 0.3rem 0;
+    color: #1f1f1f;
+    margin: 0 0 6px;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.3;
+    transition: color 0.15s ease;
+}
+.result-item:hover h4,
+.result-item:focus-visible h4 {
+    color: #b30000;
 }
 .result-item p {
     margin: 0;
     font-size: 0.9rem;
     color: #555;
+    line-height: 1.5;
 }
 
-/* Адаптивность */
-@media (max-width: 768px) {
-    .main-content {
-        padding: 2rem 1rem 3rem;
+/* Пустое состояние в результатах поиска */
+#results-list .wiki-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 28px 20px;
+    color: #888;
+    font-size: 0.95rem;
+    background: #ffffff;
+    border: 1px dashed #e0e0e0;
+    border-radius: 14px;
+    margin: 0;
+}
+
+/* ============================================================
+   Адаптивность
+   ============================================================ */
+@media (max-width: 640px) {
+    .profile-main { padding: 22px 12px 48px; }
+
+    .wiki-intro {
+        padding: 22px 20px;
+        gap: 16px;
     }
-    .wiki-intro h1 {
-        font-size: 1.7rem;
-    }
-    .search-container {
+    .wiki-intro .greeting-emoji { font-size: 2.2rem; }
+    .wiki-intro h1 { font-size: 1.4rem; }
+    .wiki-intro p { font-size: 0.9rem; }
+
+    .search-container form {
         flex-direction: column;
-        gap: 0.5rem;
+        gap: 8px;
     }
-    .search-container input, .search-container button {
+    .search-container input,
+    .search-container button {
         width: 100%;
-        border-radius: 25px;
     }
-    .random-pages {
-        flex-direction: column;
-        align-items: center;
-    }
+
+    .random-pages { gap: 12px; }
     .random-card {
-        max-width: 100%;
+        flex: 1 1 100%;
+        max-width: none;
         width: 100%;
+        padding: 18px 18px 22px;
     }
+    .random-card h3 { font-size: 1rem; }
+    .random-card p { font-size: 0.9rem; }
+
+    .category-title { font-size: 1.15rem; margin-bottom: 10px; }
+    .category-title .cat-icon { font-size: 1.2rem; }
     .category-articles {
         grid-template-columns: 1fr;
+        gap: 10px;
     }
+    .category-articles a { padding: 12px 16px; font-size: 0.94rem; }
+
+    #search-results h2 { font-size: 1.15rem; }
     #results-list {
         grid-template-columns: 1fr;
+        gap: 10px;
     }
+    .result-item { padding: 14px 16px; }
 }
 
-@media (max-width: 480px) {
-    .wiki-intro h1 {
-        font-size: 1.5rem;
-    }
-    .wiki-intro p {
-        font-size: 0.95rem;
+@media (prefers-reduced-motion: reduce) {
+    .random-card,
+    .category-articles a,
+    .result-item,
+    .search-container button,
+    .search-container input {
+        transition: none !important;
     }
 }
