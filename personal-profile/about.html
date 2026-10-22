@@ -8,6 +8,263 @@
   <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
   <link rel="stylesheet" href="../css/style.css" />
   <link rel="stylesheet" href="../css/personal-profile/index.css" />
+
+  <style>
+    /* ============================================================
+       О сайте — оформление в стиле главной страницы профиля
+       ============================================================ */
+
+    .profile-main {
+      background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+      min-height: calc(100vh - 220px);
+      padding: 34px 16px 64px;
+    }
+    .profile-container { max-width: 1120px; margin: 0 auto; }
+
+    /* ---------- Приветственный блок ---------- */
+    .greeting-block {
+      position: relative;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 24px;
+      padding: 26px 28px;
+      margin: 0 0 26px;
+      background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+      border: 1px solid #f1d7d7;
+      border-radius: 18px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+      overflow: hidden;
+    }
+    .greeting-block::after {
+      content: "";
+      position: absolute;
+      right: -70px; top: -70px;
+      width: 220px; height: 220px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+      pointer-events: none;
+    }
+    .greeting-emoji { flex-shrink: 0; font-size: 3rem; line-height: 1; position: relative; z-index: 1; }
+    .greeting-content { flex: 1 1 220px; min-width: 0; position: relative; z-index: 1; }
+    .greeting-text {
+      margin: 0 0 6px; font-size: 1.9rem; font-weight: 700;
+      line-height: 1.2; color: #1a1a1a; letter-spacing: -0.01em;
+    }
+    .greeting-subtitle { margin: 0; font-size: 1rem; color: #6b6b6b; line-height: 1.45; }
+    .greeting-actions {
+      display: flex; flex-direction: column; gap: 10px;
+      flex-shrink: 0; align-items: stretch; position: relative; z-index: 1;
+    }
+    .greeting-action-link {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 10px 18px; border-radius: 10px; background: #ffffff;
+      border: 1px solid #ececec; color: #2a2a2a; text-decoration: none;
+      font-size: 0.92rem; font-weight: 500; white-space: nowrap;
+      transition: transform 0.15s ease, box-shadow 0.2s ease,
+                  border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+    }
+    .greeting-action-link:hover,
+    .greeting-action-link:focus-visible {
+      border-color: #b30000; background: #fff5f5; color: #b30000;
+      transform: translateY(-1px); box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12); outline: none;
+    }
+
+    /* ---------- Сетка карточек ---------- */
+    .info-sections {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+      margin-bottom: 30px;
+    }
+    .info-card {
+      position: relative; background: #ffffff; border: 1px solid #ececec;
+      border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      padding: 22px 24px 26px; overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+    .info-card.wide { grid-column: 1 / -1; }
+    .info-card:hover { border-color: #f1d7d7; box-shadow: 0 10px 26px rgba(179, 0, 0, 0.08); }
+    .info-card h3 {
+      margin: 0 0 12px; font-size: 1.08rem; font-weight: 700; color: #1f1f1f;
+      display: flex; align-items: center; gap: 8px; line-height: 1.3;
+    }
+    .info-card p { margin: 0; color: #555; line-height: 1.55; font-size: 0.97rem; }
+    .info-card a { color: #b30000; text-decoration: none; font-weight: 500; transition: opacity 0.15s; }
+    .info-card a:hover { opacity: 0.75; }
+
+    .task-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .task-list li { position: relative; padding-left: 26px; color: #555; line-height: 1.5; font-size: 0.97rem; }
+    .task-list li::before {
+      content: ""; position: absolute; left: 0; top: 0.5em;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: linear-gradient(135deg, #b30000, #e53935);
+      box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.08);
+    }
+    .contact-row { display: flex; flex-direction: column; gap: 8px; }
+    .contact-row p { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+    .contact-row span.label { color: #888; font-size: 0.9rem; }
+
+    /* ============================================================
+       Блок «Версия сайта»
+       ============================================================ */
+    .section-title {
+      font-size: 1.35rem; font-weight: 700; color: #1a1a1a;
+      margin: 30px 0 16px; display: flex; align-items: center; gap: 10px;
+    }
+    .version-section .section-title:first-child { margin-top: 0; }
+    .version-section h3.section-title { font-size: 1.15rem; margin: 26px 0 14px; }
+
+    .version-loading,
+    .version-empty {
+      text-align: center; padding: 28px 20px; color: #888;
+      background: #ffffff; border: 1px dashed #e0e0e0;
+      border-radius: 14px; font-size: 0.95rem;
+    }
+    .version-error {
+      padding: 16px 18px; color: #b30000;
+      background: #fff5f5; border: 1px solid #f5c6c6;
+      border-radius: 14px; font-size: 0.95rem;
+    }
+
+    /* Карточка текущей версии */
+    .current-version-card {
+      position: relative; background: #ffffff;
+      border: 1px solid #f1d7d7; border-radius: 16px;
+      box-shadow: 0 10px 28px rgba(179, 0, 0, 0.08);
+      padding: 24px 26px 26px; overflow: hidden;
+    }
+    .current-version-card::after {
+      content: ""; position: absolute; right: -60px; top: -60px;
+      width: 180px; height: 180px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(179, 0, 0, 0.08), transparent 70%);
+      pointer-events: none;
+    }
+    .version-header-row {
+      display: flex; align-items: center; gap: 14px;
+      flex-wrap: wrap; margin-bottom: 14px;
+      position: relative; z-index: 1;
+    }
+    .version-badge {
+      display: inline-flex; align-items: center;
+      padding: 6px 16px; border-radius: 20px;
+      background: linear-gradient(135deg, #b30000, #e53935);
+      color: #ffffff; font-size: 1rem; font-weight: 700;
+      letter-spacing: 0.02em; box-shadow: 0 4px 12px rgba(179, 0, 0, 0.25);
+      white-space: nowrap;
+    }
+    .version-title-info { flex: 1; min-width: 0; }
+    .version-title { font-size: 1.2rem; font-weight: 700; color: #1a1a1a; margin: 0 0 4px; line-height: 1.3; }
+    .version-date { color: #888; font-size: 0.88rem; }
+    .current-label {
+      display: inline-block; padding: 3px 12px; border-radius: 20px;
+      background: #eefaf0; color: #16a34a; border: 1px solid #b8e6c2;
+      font-size: 0.76rem; font-weight: 600; white-space: nowrap;
+    }
+    .version-description {
+      color: #555; line-height: 1.55; font-size: 0.97rem;
+      margin: 0 0 16px; position: relative; z-index: 1;
+    }
+
+    /* Заголовок «Изменения» */
+    .changes-title {
+      font-size: 0.86rem; font-weight: 600; color: #888;
+      text-transform: uppercase; letter-spacing: 0.06em;
+      margin: 16px 0 10px;
+    }
+
+    /* Список изменений */
+    .changes-list-display { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+    .change-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      padding: 10px 14px; background: #fafafa;
+      border: 1px solid #f2f2f2; border-radius: 10px;
+      line-height: 1.5;
+    }
+    .change-type {
+      flex-shrink: 0;
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.03em;
+      text-transform: uppercase; white-space: nowrap;
+    }
+    .change-type-added   { background: #eefaf0; color: #16a34a; border: 1px solid #b8e6c2; }
+    .change-type-changed { background: #eef4ff; color: #2563eb; border: 1px solid #c6d8f5; }
+    .change-type-fixed   { background: #fff8ec; color: #c2710c; border: 1px solid #f5d9a8; }
+    .change-type-removed { background: #fff0f0; color: #b30000; border: 1px solid #f5c6c6; }
+    .change-desc { color: #333; font-size: 0.95rem; word-break: break-word; }
+
+    /* История версий */
+    .changelog { display: flex; flex-direction: column; gap: 10px; }
+    .history-item {
+      background: #ffffff; border: 1px solid #ececec;
+      border-radius: 14px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+      overflow: hidden;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .history-item:hover { border-color: #f1d7d7; box-shadow: 0 6px 18px rgba(179, 0, 0, 0.06); }
+    .history-item[open] { border-color: #f1d7d7; }
+    .history-summary {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px; cursor: pointer;
+      list-style: none; user-select: none; flex-wrap: wrap;
+    }
+    .history-summary::-webkit-details-marker { display: none; }
+    .history-summary::before {
+      content: "▸"; color: #b30000; font-size: 0.9rem;
+      transition: transform 0.15s ease; flex-shrink: 0;
+    }
+    .history-item[open] > .history-summary::before { transform: rotate(90deg); }
+    .version-badge-small {
+      display: inline-block; padding: 2px 10px;
+      border-radius: 12px; background: #fff0f0; color: #b30000;
+      border: 1px solid #f5c6c6; font-size: 0.78rem; font-weight: 700;
+      white-space: nowrap;
+    }
+    .history-title { flex: 1; min-width: 0; font-weight: 600; color: #1f1f1f; font-size: 0.95rem; }
+    .history-date { color: #888; font-size: 0.82rem; white-space: nowrap; }
+    .history-body { padding: 0 18px 18px 42px; }
+    .history-desc { color: #555; font-size: 0.93rem; line-height: 1.5; margin: 0 0 10px; }
+    .no-changes { color: #888; font-size: 0.9rem; font-style: italic; }
+
+    /* ============================================================
+       Мобильная адаптация
+       ============================================================ */
+    @media (max-width: 720px) {
+      .info-sections { grid-template-columns: 1fr; }
+      .info-card.wide { grid-column: auto; }
+    }
+    @media (max-width: 640px) {
+      .profile-main { padding: 22px 12px 48px; }
+      .greeting-block { padding: 22px 20px; gap: 16px; }
+      .greeting-emoji { font-size: 2.2rem; }
+      .greeting-text { font-size: 1.4rem; }
+      .greeting-subtitle { font-size: 0.9rem; }
+      .greeting-actions { flex-direction: row; flex: 1 1 100%; width: 100%; gap: 8px; }
+      .greeting-actions > * { flex: 1 1 0; }
+      .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+      .info-card { padding: 18px 18px 22px; }
+      .info-card h3 { font-size: 1rem; }
+      .info-card p, .task-list li { font-size: 0.93rem; }
+
+      .section-title { font-size: 1.15rem; }
+      .version-section h3.section-title { font-size: 1rem; margin: 20px 0 10px; }
+
+      .current-version-card { padding: 18px 18px 20px; }
+      .version-badge { font-size: 0.9rem; padding: 5px 14px; }
+      .version-title { font-size: 1.08rem; }
+      .change-item { padding: 8px 12px; gap: 8px; flex-wrap: wrap; }
+      .change-desc { font-size: 0.9rem; flex-basis: 100%; }
+      .history-summary { padding: 12px 14px; gap: 8px; }
+      .history-body { padding: 0 14px 16px 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .info-card, .greeting-action-link, .history-item,
+      .history-summary::before { transition: none !important; }
+    }
+  </style>
 </head>
 <body>
   <header class="header">
@@ -16,13 +273,11 @@
         <img src="../images/gerb.png" alt="Герб СФСРЮ">
         <h1>СФСРЮ</h1>
       </div>
-
       <button class="menu-toggle" aria-label="Открыть меню">
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
         <span class="menu-toggle-line"></span>
       </button>
-
       <nav class="nav-menu">
         <ul>
           <li><a href="../index.html">Главная</a></li>
@@ -41,12 +296,20 @@
   <main class="main-content profile-main">
     <div class="profile-container">
       <div class="greeting-block">
-        <h1 class="greeting-text">О сайте</h1>
-        <p class="greeting-subtitle">Государственный портал Социалистической Федеративной Советской Республики Юльсанна</p>
+        <div class="greeting-emoji" aria-hidden="true">ℹ️</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text">О сайте</h1>
+          <p class="greeting-subtitle">Государственный портал Социалистической Федеративной Советской Республики Юльсанна</p>
+        </div>
+        <div class="greeting-actions">
+          <a href="index.html" class="greeting-action-link">
+            <span aria-hidden="true">←</span> В личный кабинет
+          </a>
+        </div>
       </div>
 
       <div class="info-sections">
-        <div class="info-card" style="grid-column: 1 / -1;">
+        <div class="info-card wide">
           <h3>🏛️ О портале</h3>
           <p>
             Официальный государственный портал СФСРЮ создан для предоставления гражданам
@@ -56,17 +319,17 @@
           </p>
         </div>
 
-        <div class="info-card" style="grid-column: 1 / -1;">
+        <div class="info-card">
           <h3>🎯 Наши задачи</h3>
-          <p>
-            • Обеспечение граждан качественными цифровыми услугами.<br>
-            • Свободный доступ к государственной информации.<br>
-            • Развитие электронной демократии и участие граждан в голосованиях.<br>
-            • Защита персональных данных каждого гражданина СФСРЮ.
-          </p>
+          <ul class="task-list">
+            <li>Обеспечение граждан качественными цифровыми услугами.</li>
+            <li>Свободный доступ к государственной информации.</li>
+            <li>Развитие электронной демократии и участие граждан в голосованиях.</li>
+            <li>Защита персональных данных каждого гражданина СФСРЮ.</li>
+          </ul>
         </div>
 
-        <div class="info-card" style="grid-column: 1 / -1;">
+        <div class="info-card">
           <h3>⚙️ Техническая информация</h3>
           <p>
             Портал работает на защищённых каналах связи. Аутентификация пользователей
@@ -75,18 +338,36 @@
           </p>
         </div>
 
-        <div class="info-card" style="grid-column: 1 / -1;">
+        <div class="info-card wide">
           <h3>📞 Контакты</h3>
-          <p>
-            Телефон поддержки: <a href="tel:+79936098126">+7 (993) 609-81-26</a><br>
-            Электронная почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
-          </p>
+          <div class="contact-row">
+            <p>
+              <span class="label">Телефон поддержки:</span>
+              <a href="tel:+79936098126">+7 (993) 609-81-26</a>
+            </p>
+            <p>
+              <span class="label">Электронная почта:</span>
+              <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a>
+            </p>
+          </div>
         </div>
       </div>
 
-      <div style="margin-top: 30px;">
-        <a href="index.html" class="btn">← Назад в личный кабинет</a>
-      </div>
+      <!-- ============================
+           ВЕРСИЯ САЙТА
+           ============================ -->
+      <section class="version-section" id="versionSection" aria-label="Информация о версии сайта">
+        <h2 class="section-title">Версия сайта</h2>
+
+        <div id="versionLoading" class="version-loading">Загрузка информации о версии...</div>
+        <div id="versionError" class="version-error" style="display: none;"></div>
+
+        <div id="versionContent" style="display: none;">
+          <div class="current-version-card" id="currentVersionCard"></div>
+          <h3 class="section-title">История изменений</h3>
+          <div class="changelog" id="changelogList"></div>
+        </div>
+      </section>
     </div>
   </main>
 
@@ -99,5 +380,142 @@
   </footer>
 
   <script src="../js/mob-menu.js"></script>
+
+  <script type="importmap">
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+  </script>
+  <script type="module" src="../js/supabase-config.js"></script>
+
+  <script type="module">
+    import { supabase } from '../js/supabase-config.js'
+
+    const SCHEMA = 'site_info'
+    const TYPE_LABELS = {
+      added: 'Добавлено',
+      changed: 'Изменено',
+      fixed: 'Исправлено',
+      removed: 'Удалено'
+    }
+
+    function escapeHtml(str) {
+      if (!str) return ''
+      return String(str).replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[c]))
+    }
+    function formatDateRu(dateStr) {
+      if (!dateStr) return ''
+      try {
+        return new Date(dateStr).toLocaleDateString('ru-RU', {
+          day: 'numeric', month: 'long', year: 'numeric'
+        })
+      } catch { return dateStr }
+    }
+    function formatDateShort(dateStr) {
+      if (!dateStr) return ''
+      try { return new Date(dateStr).toLocaleDateString('ru-RU') }
+      catch { return dateStr }
+    }
+
+    function renderChanges(changes) {
+      if (!changes || changes.length === 0) {
+        return '<div class="no-changes">Изменения не указаны</div>'
+      }
+      const sorted = [...changes].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0))
+      return `
+        <ul class="changes-list-display">
+          ${sorted.map(c => `
+            <li class="change-item">
+              <span class="change-type change-type-${escapeHtml(c.change_type)}">
+                ${escapeHtml(TYPE_LABELS[c.change_type] || c.change_type)}
+              </span>
+              <span class="change-desc">${escapeHtml(c.description)}</span>
+            </li>
+          `).join('')}
+        </ul>
+      `
+    }
+
+    function renderCurrentVersion(v) {
+      const container = document.getElementById('currentVersionCard')
+      container.innerHTML = `
+        <div class="version-header-row">
+          <div class="version-badge">v${escapeHtml(v.version)}</div>
+          <div class="version-title-info">
+            <h3 class="version-title">${escapeHtml(v.title)}</h3>
+            ${v.release_date ? `<div class="version-date">${formatDateRu(v.release_date)}</div>` : ''}
+          </div>
+          <span class="current-label">Текущая версия</span>
+        </div>
+        ${v.description ? `<p class="version-description">${escapeHtml(v.description)}</p>` : ''}
+        <h4 class="changes-title">Что нового</h4>
+        ${renderChanges(v.version_changes)}
+      `
+    }
+
+    function renderHistory(versions) {
+      const container = document.getElementById('changelogList')
+      if (versions.length === 0) {
+        container.innerHTML = '<div class="version-empty">Других версий пока нет.</div>'
+        return
+      }
+      container.innerHTML = versions.map(v => {
+        const date = v.release_date ? formatDateShort(v.release_date) : ''
+        return `
+          <details class="history-item">
+            <summary class="history-summary">
+              <span class="version-badge-small">v${escapeHtml(v.version)}</span>
+              <span class="history-title">${escapeHtml(v.title)}</span>
+              ${date ? `<span class="history-date">${date}</span>` : ''}
+            </summary>
+            <div class="history-body">
+              ${v.description ? `<p class="history-desc">${escapeHtml(v.description)}</p>` : ''}
+              ${renderChanges(v.version_changes)}
+            </div>
+          </details>
+        `
+      }).join('')
+    }
+
+    async function loadVersionInfo() {
+      const loadingEl = document.getElementById('versionLoading')
+      const contentEl = document.getElementById('versionContent')
+      const errorEl = document.getElementById('versionError')
+
+      try {
+        const { data, error } = await supabase
+          .schema(SCHEMA)
+          .from('versions')
+          .select(`*, version_changes(*)`)
+          .order('release_date', { ascending: false })
+
+        if (error) throw error
+
+        const versions = data || []
+        loadingEl.style.display = 'none'
+
+        if (versions.length === 0) {
+          errorEl.style.display = 'block'
+          errorEl.textContent = 'Информация о версии пока не добавлена.'
+          return
+        }
+
+        contentEl.style.display = 'block'
+
+        const current = versions.find(v => v.is_current) || versions[0]
+        const history = versions.filter(v => v.id !== current.id)
+
+        renderCurrentVersion(current)
+        renderHistory(history)
+      } catch (err) {
+        console.error('Ошибка загрузки версии:', err)
+        loadingEl.style.display = 'none'
+        errorEl.style.display = 'block'
+        errorEl.textContent = 'Не удалось загрузить информацию о версии сайта.'
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadVersionInfo)
+  </script>
 </body>
 </html>
