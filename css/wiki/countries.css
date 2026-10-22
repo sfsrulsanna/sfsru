@@ -1,9 +1,15 @@
 /* ============================================================
-   State Articles — единый стиль для страниц государств
-   (Республика Юльсанна, РЮ в составе СНГ, СФСРЮ)
+   common-profile.css
+   Единый стиль для:
+   - стран (список, countries/index)
+   - государств (статьи, state articles)
+   - профилей персон (people/*.html)
+   Заменяет: president-profile.css, countries.css, inline <style>
    ============================================================ */
 
-/* ---------- 1. Раскладка страницы ---------- */
+/* ============================================================
+   0. Базовая раскладка страницы
+   ============================================================ */
 .profile-main {
     padding: 34px 16px 64px;
     background:
@@ -16,7 +22,7 @@
     max-width: 1120px;
     margin: 0 auto;
     display: grid;
-    grid-template-columns: 360px minmax(0, 1fr);
+    grid-template-columns: minmax(360px, 38%) 1fr;
     gap: 24px;
     align-items: start;
 }
@@ -25,14 +31,210 @@
     position: sticky;
     top: 24px;
     order: 1;
+    min-width: 0;
 }
 
 .info-column {
     order: 2;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
 }
 
-/* ---------- 2. Инфобокс (левая колонка) ---------- */
+/* ============================================================
+   1. Страница-список стран (countries/index.html)
+   ============================================================ */
+.countries-header {
+    max-width: 1120px;
+    margin: 0 auto 26px;
+    padding: 26px 28px;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+    border: 1px solid #f1d7d7;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+.countries-header::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -70px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+    pointer-events: none;
+}
+.countries-header h1 {
+    position: relative;
+    z-index: 1;
+    font-size: 1.9rem;
+    margin: 0 0 8px;
+    color: #1a1a1a;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
+}
+.countries-header p {
+    position: relative;
+    z-index: 1;
+    font-size: 1rem;
+    color: #6b6b6b;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 18px;
+    padding: 10px 18px;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    color: #2a2a2a;
+    font-size: 0.92rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    position: relative;
+    z-index: 1;
+    transition: transform 0.15s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease,
+                color 0.2s ease;
+}
+.back-link:hover,
+.back-link:focus-visible {
+    border-color: #b30000;
+    background: #fff5f5;
+    color: #b30000;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+    outline: none;
+}
+
+.countries-container {
+    max-width: 1120px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+.country-card {
+    display: flex;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    padding: 22px 24px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    text-decoration: none;
+    color: inherit;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease;
+}
+.country-card:hover,
+.country-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: #b30000;
+    background: #fff9f9;
+    box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
+    outline: none;
+}
+
+.country-content {
+    display: flex;
+    gap: 18px;
+    align-items: flex-start;
+    width: 100%;
+}
+
+.country-flag {
+    flex-shrink: 0;
+    width: 130px;
+    height: 87px;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #f5f5f5;
+    border: 1px solid #f0f0f0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.country-flag img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    display: block;
+}
+
+.country-info {
+    flex: 1;
+    min-width: 0;
+}
+.country-info h3 {
+    font-size: 1.08rem;
+    font-weight: 700;
+    color: #1f1f1f;
+    margin: 0 0 8px;
+    line-height: 1.3;
+    transition: color 0.2s ease;
+}
+.country-card:hover h3,
+.country-card:focus-visible h3 {
+    color: #b30000;
+}
+
+.country-period {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: #fff0f0;
+    border: 1px solid #f5c6c6;
+    color: #b30000;
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.3;
+    margin-bottom: 10px;
+    font-style: normal;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.country-desc {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: #555;
+    margin: 0 0 12px;
+    overflow-wrap: anywhere;
+}
+
+.country-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 0;
+}
+.stat {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 20px;
+    background: #fafafa;
+    border: 1px solid #ececec;
+    color: #555;
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+/* ============================================================
+   2. Инфобокс (левая колонка — карточка)
+   Используется и в профилях персон, и в статьях государств
+   ============================================================ */
 .photo-card {
     background: #ffffff;
     border-radius: 16px;
@@ -43,36 +245,66 @@
 }
 
 .photo-top-section {
-    padding: 24px 20px 20px;
+    position: relative;
+    padding: 22px 20px 20px;
     background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
     border-bottom: 1px solid #f5e5e5;
 }
 
+/* Фото (только на страницах персон) */
+.profile-photo-large {
+    width: 100%;
+    max-width: 320px;
+    height: auto;
+    aspect-ratio: 262 / 350;
+    background: #ffffff;
+    border: 2px solid #f1d7d7;
+    box-sizing: border-box;
+    margin: 0 auto 14px auto;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 8px 22px rgba(179, 0, 0, 0.08);
+}
+.profile-photo-large img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center center;
+    display: block;
+}
+
+/* ФИО / название государства под фото */
 .main-personal-info {
     margin: 0;
     text-align: center;
     line-height: 1.25;
 }
-
 .last-name {
-    font-size: 1.15rem;
+    font-size: 1.2rem;
     color: #1a1a1a;
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 4px;
 }
-
 .first-name {
-    font-size: 0.92rem;
+    font-size: 0.95rem;
     color: #666;
     font-weight: 500;
     line-height: 1.35;
 }
 
-/* ---------- 3. Блоки должностей ---------- */
+/* ============================================================
+   3. Блоки должностей / блоки в инфобоксе
+   ============================================================ */
 .position-block {
     padding: 16px 20px;
     text-align: center;
+    line-height: 1.25;
+}
+.info-card .position-block {
+    padding: 0;
+    margin-bottom: 0;
+    text-align: left;
 }
 
 .position-header {
@@ -81,6 +313,11 @@
     justify-content: center;
     gap: 8px;
     margin-bottom: 8px;
+    line-height: 1.15;
+    flex-wrap: nowrap;
+}
+.info-card .position-header {
+    justify-content: flex-start;
 }
 
 .decoration-left,
@@ -92,7 +329,6 @@
     justify-content: center;
     flex-shrink: 0;
 }
-
 .decoration-left img,
 .decoration-right img {
     width: 100%;
@@ -100,7 +336,6 @@
     object-fit: contain;
     display: block;
 }
-
 .decoration-left span,
 .decoration-right span {
     font-size: 0.6rem;
@@ -114,17 +349,25 @@
     color: #1f1f1f;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
+    text-align: center;
     line-height: 1.2;
     flex: 1;
     min-width: 0;
+    word-wrap: break-word;
     overflow-wrap: break-word;
+}
+.info-card .position-title {
+    text-align: left;
+    font-size: 1rem;
+    letter-spacing: 0;
 }
 
 .position-dates {
     font-size: 0.8rem;
     color: #666;
     margin-bottom: 6px;
+    font-weight: 400;
     text-align: center;
     line-height: 1.3;
 }
@@ -141,18 +384,18 @@
 .position-details {
     text-align: left;
     margin-top: 8px;
+    line-height: 1.35;
 }
 
 .position-detail {
     display: grid;
-    grid-template-columns: 110px 1fr;
+    grid-template-columns: minmax(100px, 120px) 1fr;
     gap: 10px;
     margin-bottom: 8px;
     font-size: 0.82rem;
-    line-height: 1.35;
+    line-height: 1.4;
     align-items: start;
 }
-
 .position-detail:last-child {
     margin-bottom: 0;
 }
@@ -161,8 +404,30 @@
     color: #888;
     font-weight: 500;
     font-size: 0.78rem;
-    line-height: 1.35;
+    text-align: left;
+    word-break: break-word;
     overflow-wrap: break-word;
+    white-space: normal;
+    line-height: 1.4;
+    padding-top: 1px;
+    min-width: 0;
+    max-width: 120px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.detail-label-multiline {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 2.4em;
+}
+.detail-label-line {
+    text-align: left;
+    width: 100%;
+    line-height: 1.35;
 }
 
 .detail-value-wrapper {
@@ -171,31 +436,50 @@
     gap: 3px;
     align-items: flex-start;
     min-width: 0;
+    line-height: 1.35;
 }
 
 .detail-value {
     color: #1f1f1f;
+    text-align: left;
     font-weight: 500;
-    line-height: 1.35;
+    word-break: break-word;
     overflow-wrap: break-word;
+    white-space: normal;
+    line-height: 1.35;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
 }
 
 .position-link {
     color: #b30000;
     text-decoration: none;
     font-weight: 500;
-    line-height: 1.35;
+    word-break: break-word;
     overflow-wrap: break-word;
+    line-height: 1.35;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    transition: opacity 0.15s ease;
 }
-
 .position-link:hover {
     text-decoration: underline;
+    opacity: 0.85;
 }
 
-.command-dates {
-    font-size: 0.72rem;
-    color: #888;
-    font-style: italic;
+.label-government {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    max-width: 100px;
+    min-height: 2.4em;
+}
+.label-government-line {
+    text-align: left;
+    width: 100%;
     line-height: 1.35;
 }
 
@@ -206,7 +490,286 @@
     border: none;
 }
 
-/* ---------- 4. Герб / флаг / гимн ---------- */
+/* ============================================================
+   4. Награды
+   ============================================================ */
+.awards-wrapper {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+.award-link {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    gap: 4px;
+    transition: transform 0.2s ease;
+}
+.award-link:hover {
+    transform: translateY(-2px);
+}
+.award-image {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    border-radius: 6px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    padding: 2px;
+}
+.award-year {
+    font-size: 0.72rem;
+    color: #888;
+    font-weight: 500;
+    text-align: center;
+}
+
+/* ============================================================
+   5. Военная служба
+   ============================================================ */
+.military-branch {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.military-flag {
+    width: 20px;
+    height: 14px;
+    object-fit: contain;
+    border-radius: 2px;
+    border: 1px solid #f0f0f0;
+}
+.military-arrow {
+    color: #888;
+    font-weight: 700;
+    margin: 0 4px;
+}
+.military-rank {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.rank-image {
+    width: 30px;
+    height: 20px;
+    object-fit: contain;
+    border-radius: 3px;
+}
+.command-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-bottom: 6px;
+}
+.command-item:last-child {
+    margin-bottom: 0;
+}
+.command-dates {
+    font-size: 0.72rem;
+    color: #888;
+    font-style: italic;
+    text-align: left;
+    line-height: 1.35;
+}
+.military-battles {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.battle-item {
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: #444;
+    position: relative;
+    padding-left: 14px;
+}
+.battle-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.6em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #b30000;
+}
+
+/* ============================================================
+   6. Правая колонка — инфокарточки, биография, достижения
+   Используется на страницах персон
+   ============================================================ */
+.info-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    padding: 22px 24px 26px;
+    border: 1px solid #ececec;
+    line-height: 1.55;
+}
+.info-card .position-details {
+    margin-top: 12px;
+}
+
+.info-card h2 {
+    color: #b30000;
+    margin: 0 0 16px;
+    font-size: 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 12px;
+    line-height: 1.3;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: -0.01em;
+    font-weight: 700;
+}
+
+/* Биография */
+.biography-section {
+    margin-bottom: 18px;
+    line-height: 1.6;
+}
+.biography-content {
+    color: #444;
+    font-size: 0.97rem;
+    line-height: 1.65;
+}
+.biography-content p {
+    margin: 0 0 14px;
+    text-align: left;
+    line-height: 1.65;
+}
+.biography-content p:last-child {
+    margin-bottom: 0;
+}
+
+/* Достижения */
+.achievements-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    line-height: 1.6;
+}
+.achievements-list li {
+    position: relative;
+    padding: 10px 0 10px 20px;
+    border-bottom: 1px solid #f5f5f5;
+    color: #444;
+    font-size: 0.97rem;
+    line-height: 1.55;
+    min-height: 1.5em;
+}
+.achievements-list li:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+.achievements-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 1.05em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #b30000;
+}
+
+/* ============================================================
+   7. Статья государства (history-content-card)
+   Используется на страницах государств
+   ============================================================ */
+.history-content-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    border: 1px solid #ececec;
+    padding: 32px 36px 36px;
+    line-height: 1.65;
+}
+.history-content-card h1 {
+    color: #1a1a1a;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    text-align: left;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 20px;
+    margin: 0 0 24px;
+}
+.history-content-card h2 {
+    color: #b30000;
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    text-transform: none;
+    border: none;
+    padding: 0;
+    margin: 32px 0 14px;
+}
+.history-content-card h2:first-child {
+    margin-top: 0;
+}
+.history-content-card h3 {
+    color: #1f1f1f;
+    font-size: 1.05rem;
+    font-weight: 700;
+    line-height: 1.35;
+    margin: 22px 0 10px;
+}
+.history-content-card p {
+    margin: 0 0 14px;
+    color: #444;
+    font-size: 0.97rem;
+    line-height: 1.65;
+    text-align: left;
+}
+.history-content-card ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0 0 14px;
+}
+.history-content-card li {
+    position: relative;
+    padding-left: 20px;
+    margin-bottom: 8px;
+    color: #444;
+    font-size: 0.97rem;
+    line-height: 1.6;
+}
+.history-content-card li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.62em;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #b30000;
+}
+.history-content-card strong {
+    color: #1f1f1f;
+    font-weight: 700;
+}
+
+a.wiki-link {
+    color: #b30000;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
+}
+a.wiki-link:hover {
+    text-decoration: underline;
+    opacity: 0.85;
+}
+
+/* ============================================================
+   8. Герб / флаг / гимн (используется в инфобоксе государств)
+   ============================================================ */
 .coat-of-arms {
     width: 130px;
     height: 130px;
@@ -220,13 +783,11 @@
     justify-content: center;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
-
 .coat-of-arms img {
     max-width: 86%;
     max-height: 86%;
     object-fit: contain;
 }
-
 .flag-display {
     width: 100%;
     aspect-ratio: 2 / 1;
@@ -237,14 +798,12 @@
     background: #fff;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
 }
-
 .flag-display img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
 }
-
 .hymn-player {
     background: #fafafa;
     border: 1px solid #f0f0f0;
@@ -253,20 +812,20 @@
     margin-top: 12px;
     text-align: center;
 }
-
 .hymn-title {
     font-weight: 600;
     color: #b30000;
     font-size: 0.88rem;
     margin-bottom: 8px;
 }
-
 .hymn-player audio {
     width: 100%;
     display: block;
 }
 
-/* ---------- 5. Навигация «предшественник/преемник» ---------- */
+/* ============================================================
+   9. Навигация «предшественник / преемник» (вики-стиль)
+   ============================================================ */
 .wiki-navigation {
     background: #fafafa;
     border: 1px solid #f0f0f0;
@@ -274,11 +833,9 @@
     padding: 12px;
     margin: 0;
 }
-
 .wiki-navigation + .wiki-navigation {
     margin-top: 8px;
 }
-
 .wiki-nav-title {
     font-weight: 600;
     color: #888;
@@ -288,7 +845,6 @@
     text-transform: uppercase;
     letter-spacing: 0.05em;
 }
-
 .wiki-nav-item {
     display: flex;
     align-items: center;
@@ -303,11 +859,9 @@
     transition: transform 0.15s ease, border-color 0.15s ease,
                 box-shadow 0.2s ease, background-color 0.15s ease;
 }
-
 .wiki-nav-item:last-child {
     margin-bottom: 0;
 }
-
 .wiki-nav-item:hover,
 .wiki-nav-item:focus-visible {
     border-color: #b30000;
@@ -316,7 +870,6 @@
     box-shadow: 0 4px 12px rgba(179, 0, 0, 0.08);
     outline: none;
 }
-
 .wiki-nav-flag {
     width: 40px;
     height: 27px;
@@ -326,18 +879,15 @@
     flex-shrink: 0;
     background: #fff;
 }
-
 .wiki-nav-flag img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
-
 .wiki-nav-content {
     flex: 1;
     min-width: 0;
 }
-
 .wiki-nav-label {
     font-size: 0.62rem;
     color: #888;
@@ -345,7 +895,6 @@
     letter-spacing: 0.03em;
     margin-bottom: 2px;
 }
-
 .wiki-nav-name {
     font-size: 0.82rem;
     font-weight: 600;
@@ -353,122 +902,23 @@
     line-height: 1.25;
     transition: color 0.15s ease;
 }
-
 .wiki-nav-item:hover .wiki-nav-name,
 .wiki-nav-item:focus-visible .wiki-nav-name {
     color: #b30000;
 }
-
 .wiki-nav-arrow {
     font-size: 0.9rem;
     color: #b30000;
     opacity: 0.7;
     flex-shrink: 0;
 }
-
 .wiki-nav-arrow.prev {
     transform: rotate(180deg);
 }
 
-/* ---------- 6. Статья (правая колонка) ---------- */
-.history-content-card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-    border: 1px solid #ececec;
-    padding: 32px 36px 36px;
-    line-height: 1.65;
-}
-
-.history-content-card h1 {
-    color: #1a1a1a;
-    font-size: 1.75rem;
-    font-weight: 700;
-    line-height: 1.25;
-    letter-spacing: -0.01em;
-    text-transform: none;
-    text-align: left;
-    border-bottom: 1px solid #f0f0f0;
-    padding-bottom: 20px;
-    margin: 0 0 24px;
-}
-
-.history-content-card h2 {
-    color: #b30000;
-    font-size: 1.35rem;
-    font-weight: 700;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
-    text-transform: none;
-    border: none;
-    padding: 0;
-    margin: 32px 0 14px;
-}
-
-.history-content-card h2:first-child {
-    margin-top: 0;
-}
-
-.history-content-card h3 {
-    color: #1f1f1f;
-    font-size: 1.05rem;
-    font-weight: 700;
-    line-height: 1.35;
-    margin: 22px 0 10px;
-}
-
-.history-content-card p {
-    margin: 0 0 14px;
-    color: #444;
-    font-size: 0.97rem;
-    line-height: 1.65;
-    text-align: left;
-}
-
-.history-content-card ul {
-    list-style: none;
-    padding-left: 0;
-    margin: 0 0 14px;
-}
-
-.history-content-card li {
-    position: relative;
-    padding-left: 20px;
-    margin-bottom: 8px;
-    color: #444;
-    font-size: 0.97rem;
-    line-height: 1.6;
-}
-
-.history-content-card li::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0.62em;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #b30000;
-}
-
-.history-content-card strong {
-    color: #1f1f1f;
-    font-weight: 700;
-}
-
-a.wiki-link {
-    color: #b30000;
-    text-decoration: none;
-    font-weight: 500;
-    transition: opacity 0.15s ease;
-}
-
-a.wiki-link:hover {
-    text-decoration: underline;
-    opacity: 0.85;
-}
-
-/* ---------- 7. Исторические символы (SFSRU) ---------- */
+/* ============================================================
+   10. Исторические символы (SFSRU.html)
+   ============================================================ */
 .historical-symbols {
     background: #fafafa;
     border: 1px solid #f0f0f0;
@@ -476,7 +926,6 @@ a.wiki-link:hover {
     padding: 22px;
     margin: 20px 0;
 }
-
 .historical-symbols-title {
     font-weight: 700;
     color: #1f1f1f;
@@ -487,14 +936,12 @@ a.wiki-link:hover {
     border: none;
     padding: 0;
 }
-
 .historical-symbols-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 14px;
     margin-top: 14px;
 }
-
 .historical-symbol-item {
     background: #ffffff;
     border: 1px solid #ececec;
@@ -503,18 +950,15 @@ a.wiki-link:hover {
     text-align: center;
     transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.2s ease;
 }
-
 .historical-symbol-item:hover {
     border-color: #b30000;
     transform: translateY(-2px);
     box-shadow: 0 6px 18px rgba(179, 0, 0, 0.08);
 }
-
 .historical-symbol-image {
     width: 100%;
     margin-bottom: 10px;
 }
-
 .historical-symbol-image.coat-of-arms {
     width: 130px;
     height: 130px;
@@ -528,7 +972,6 @@ a.wiki-link:hover {
     justify-content: center;
     box-shadow: none;
 }
-
 .historical-symbol-image.flag {
     width: 100%;
     aspect-ratio: 3 / 2;
@@ -538,31 +981,26 @@ a.wiki-link:hover {
     background: #fff;
     margin-bottom: 12px;
 }
-
 .historical-symbol-image img {
     width: 100%;
     height: 100%;
     object-fit: contain;
 }
-
 .historical-symbol-image.flag img {
     object-fit: cover;
 }
-
 .historical-symbol-name {
     font-size: 0.88rem;
     font-weight: 600;
     color: #1f1f1f;
     margin-bottom: 4px;
 }
-
 .historical-symbol-period {
     font-size: 0.72rem;
     color: #888;
     font-style: normal;
     margin-bottom: 8px;
 }
-
 .historical-symbol-description {
     font-size: 0.8rem;
     color: #555;
@@ -570,17 +1008,16 @@ a.wiki-link:hover {
     margin-top: 0;
 }
 
-/* ---------- 8. Минимум для info-card (запас) ---------- */
-.info-card {
-    background: #ffffff;
-    border-radius: 16px;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-    border: 1px solid #ececec;
-    padding: 22px 24px;
-}
+/* ============================================================
+   11. Адаптивность
+   ============================================================ */
 
-/* ---------- 9. Адаптивность ---------- */
+/* Планшеты и меньше — страны в одну колонку, профиль в одну */
 @media (max-width: 968px) {
+    .countries-container {
+        grid-template-columns: 1fr;
+    }
+
     .profile-container {
         grid-template-columns: 1fr;
         gap: 20px;
@@ -592,6 +1029,30 @@ a.wiki-link:hover {
     .photo-card {
         max-width: 480px;
         margin: 0 auto;
+    }
+    .profile-photo-large {
+        max-width: 300px;
+    }
+    .position-title {
+        font-size: 0.78rem;
+    }
+    .decoration-left,
+    .decoration-right {
+        width: 22px;
+        height: 22px;
+    }
+    .position-detail {
+        grid-template-columns: minmax(85px, 100px) 1fr;
+    }
+    .info-card {
+        padding: 20px 22px 24px;
+    }
+    .awards-wrapper {
+        gap: 10px;
+    }
+    .award-image {
+        width: 38px;
+        height: 38px;
     }
     .history-content-card {
         padding: 24px 22px;
@@ -609,6 +1070,126 @@ a.wiki-link:hover {
     .profile-container {
         gap: 16px;
     }
+
+    /* Страны */
+    .countries-header {
+        padding: 22px 20px;
+    }
+    .countries-header h1 {
+        font-size: 1.4rem;
+    }
+    .countries-header p {
+        font-size: 0.9rem;
+    }
+    .back-link {
+        padding: 10px 14px;
+        font-size: 0.86rem;
+    }
+    .countries-container {
+        gap: 12px;
+    }
+    .country-card {
+        padding: 18px;
+    }
+    .country-content {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 14px;
+    }
+    .country-flag {
+        width: 180px;
+        height: 120px;
+    }
+    .country-info {
+        width: 100%;
+        text-align: left;
+    }
+    .country-info h3 {
+        font-size: 1rem;
+    }
+    .country-desc {
+        font-size: 0.88rem;
+    }
+
+    /* Персоны / государства */
+    .photo-top-section {
+        padding: 18px 16px 16px;
+    }
+    .profile-photo-large {
+        max-width: 240px;
+    }
+    .last-name {
+        font-size: 1.05rem;
+    }
+    .first-name {
+        font-size: 0.88rem;
+    }
+    .position-block {
+        padding: 14px 16px;
+    }
+    .position-header {
+        gap: 6px;
+    }
+    .position-title {
+        font-size: 0.72rem;
+    }
+    .decoration-left,
+    .decoration-right {
+        width: 20px;
+        height: 20px;
+    }
+    .position-detail {
+        grid-template-columns: 1fr;
+        gap: 2px;
+        margin-bottom: 10px;
+    }
+    .detail-label {
+        font-size: 0.74rem;
+        font-weight: 500;
+        max-width: none;
+    }
+    .detail-value,
+    .position-link,
+    .command-dates,
+    .battle-item {
+        font-size: 0.85rem;
+    }
+    .info-card {
+        padding: 18px 18px 22px;
+        border-radius: 14px;
+    }
+    .info-card h2 {
+        font-size: 1.1rem;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+    }
+    .biography-content p,
+    .achievements-list li,
+    .history-content-card p,
+    .history-content-card li {
+        font-size: 0.92rem;
+    }
+    .awards-wrapper {
+        justify-content: flex-start;
+        gap: 8px;
+    }
+    .award-image {
+        width: 34px;
+        height: 34px;
+    }
+    .military-branch {
+        gap: 4px;
+    }
+    .military-flag {
+        width: 16px;
+        height: 11px;
+    }
+    .military-rank {
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
     .history-content-card {
         padding: 20px 18px;
         border-radius: 14px;
@@ -626,21 +1207,6 @@ a.wiki-link:hover {
         font-size: 1rem;
         margin-top: 18px;
     }
-    .history-content-card p,
-    .history-content-card li {
-        font-size: 0.93rem;
-    }
-    .position-detail {
-        grid-template-columns: 1fr;
-        gap: 2px;
-        margin-bottom: 10px;
-    }
-    .detail-label {
-        font-size: 0.75rem;
-    }
-    .detail-value {
-        font-size: 0.85rem;
-    }
     .historical-symbols {
         padding: 16px;
     }
@@ -650,7 +1216,55 @@ a.wiki-link:hover {
     }
 }
 
+@media (max-width: 480px) {
+    .profile-photo-large {
+        max-width: 210px;
+    }
+    .last-name {
+        font-size: 1rem;
+    }
+    .first-name {
+        font-size: 0.84rem;
+    }
+    .position-title {
+        font-size: 0.66rem;
+        letter-spacing: 0;
+    }
+    .decoration-left,
+    .decoration-right {
+        width: 16px;
+        height: 16px;
+    }
+    .info-card {
+        padding: 16px;
+    }
+    .info-card h2 {
+        font-size: 1rem;
+    }
+    .award-image {
+        width: 30px;
+        height: 30px;
+    }
+    .award-year {
+        font-size: 0.66rem;
+    }
+    .military-branch {
+        flex-wrap: wrap;
+    }
+    .section-divider {
+        margin: 0;
+    }
+}
+
+/* ============================================================
+   12. Reduced motion
+   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
+    .country-card,
+    .back-link,
+    .position-link,
+    .awards-link,
+    .award-link,
     .wiki-nav-item,
     .wiki-nav-name,
     .historical-symbol-item,
