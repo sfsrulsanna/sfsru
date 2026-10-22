@@ -1,8 +1,9 @@
 /* ============================================================
    people.css
-   Содержит два независимых набора стилей:
-   Часть 1 — страница-список людей (people/index.html)
-   Часть 2 — страницы профилей персон (people/*.html)
+   Часть 1 — список людей (people/index.html)
+   Часть 2 — профили персон (people/*.html)
+   Размеры/сетка/брейкпоинты — как в оригинале.
+   Улучшены: цвета, тени, рамки, фон, hover, чипы.
    ============================================================ */
 
 /* ============================================================
@@ -11,24 +12,51 @@
 
 .main-content {
     padding: 3rem 1.5rem 4rem;
+    background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+    min-height: calc(100vh - 220px);
 }
 
 .people-header {
     max-width: 900px;
     margin: 0 auto 3rem;
     text-align: center;
+    padding: 26px 28px;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+    border: 1px solid #f1d7d7;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+    position: relative;
+    overflow: hidden;
 }
-
+.people-header::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -70px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+    pointer-events: none;
+}
 .people-header h1 {
+    position: relative;
+    z-index: 1;
     font-size: 2rem;
     margin-bottom: 1.2rem;
-    color: #b30000;
+    color: #1a1a1a;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.2;
 }
-
 .people-header p {
+    position: relative;
+    z-index: 1;
     font-size: 1.1rem;
     line-height: 1.7;
-    color: #444;
+    color: #6b6b6b;
     margin-bottom: 1.5rem;
 }
 
@@ -37,14 +65,15 @@
     padding: 0.8rem 1.5rem;
     background: #ffffff;
     border-radius: 50px;
-    border: 1px solid #f0dede;
+    border: 1px solid #ececec;
     color: #b30000;
     font-size: 1rem;
     font-weight: 600;
     text-decoration: none;
     transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
 }
-
 .back-link:hover {
     background: #fff5f5;
     border-color: #b30000;
@@ -67,14 +96,14 @@
     padding: 1.5rem;
     text-decoration: none;
     color: inherit;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     border: 1px solid #ececec;
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease,
+                border-color 0.2s ease, background-color 0.2s ease;
 }
-
 .person-card:hover {
     transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(179, 0, 0, 0.12);
+    box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
     background: #fff9f9;
     border-color: #b30000;
 }
@@ -94,7 +123,6 @@
     background: #f5f5f5;
     border: 1px solid #f0f0f0;
 }
-
 .person-photo img {
     width: 100%;
     height: 100%;
@@ -106,13 +134,12 @@
 .person-info h3 {
     font-size: 1.4rem;
     margin-bottom: 0.5rem;
-    color: #b30000;
+    color: #1f1f1f;
     line-height: 1.3;
     transition: color 0.2s ease;
 }
-
 .person-card:hover .person-info h3 {
-    color: #8a0000;
+    color: #b30000;
 }
 
 .person-position {
@@ -133,51 +160,36 @@
 .person-bio {
     font-size: 1rem;
     line-height: 1.6;
-    color: #444;
+    color: #555;
     margin: 0;
 }
 
 @media (max-width: 768px) {
-    .main-content {
-        padding: 2rem 1rem 3rem;
-    }
-    .people-header h1 {
-        font-size: 1.7rem;
-    }
-    .people-header p {
-        font-size: 1rem;
-    }
-    .people-container {
-        gap: 1.2rem;
-    }
+    .main-content { padding: 2rem 1rem 3rem; }
+    .people-header { padding: 22px 20px; }
+    .people-header h1 { font-size: 1.7rem; }
+    .people-header p { font-size: 1rem; }
+    .people-container { gap: 1.2rem; }
     .person-content {
         flex-direction: column;
         text-align: center;
         gap: 1rem;
     }
-    .person-photo {
-        width: 120px;
-        height: 160px;
-    }
-    .person-info h3 {
-        font-size: 1.3rem;
-    }
-    .person-position {
-        font-size: 0.95rem;
-    }
-    .person-bio {
-        font-size: 0.95rem;
-    }
+    .person-photo { width: 120px; height: 160px; }
+    .person-info h3 { font-size: 1.3rem; }
+    .person-position { font-size: 0.95rem; }
+    .person-bio { font-size: 0.95rem; }
 }
 
 /* ============================================================
    ЧАСТЬ 2. ПРОФИЛЬ ПЕРСОНЫ
-   Восстановлено из оригинального president-profile.css
    ============================================================ */
 
 .profile-main {
     padding: 2rem 1.5rem 4rem;
-    background: #f5f5f5;
+    background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
     min-height: calc(100vh - 140px);
 }
 
@@ -196,18 +208,18 @@
 }
 
 .photo-card {
-    background: white;
+    background: #ffffff;
     border-radius: 16px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     overflow: hidden;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #ececec;
     text-align: center;
 }
 
 .photo-top-section {
     position: relative;
     padding: 1.5rem 2rem 0.5rem 2rem;
-    background: white;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
     border-radius: 16px 16px 0 0;
 }
 
@@ -216,14 +228,14 @@
     max-width: 320px;
     height: auto;
     aspect-ratio: 262 / 350;
-    background: white;
-    border: 3px solid #cc0000;
+    background: #ffffff;
+    border: 2px solid #f1d7d7;
     box-sizing: border-box;
     margin: 0 auto 0.8rem auto;
-    border-radius: 8px;
+    border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 6px 18px rgba(179, 0, 0, 0.08);
 }
-
 .profile-photo-large img {
     width: 100%;
     height: 100%;
@@ -237,18 +249,16 @@
     text-align: center;
     line-height: 1.2;
 }
-
 .last-name {
     font-size: 1.2rem;
-    color: #000;
+    color: #1a1a1a;
     font-weight: 700;
     line-height: 1.2;
     margin-bottom: 0.1rem;
 }
-
 .first-name {
     font-size: 1rem;
-    color: #000;
+    color: #666;
     font-weight: 600;
     line-height: 1.2;
 }
@@ -278,7 +288,6 @@
     justify-content: center;
     flex-shrink: 0 !important;
 }
-
 .decoration-left img,
 .decoration-right img {
     width: 100%;
@@ -286,18 +295,17 @@
     object-fit: contain;
     display: block;
 }
-
 .decoration-left span,
 .decoration-right span {
     font-size: 0.6rem;
     font-weight: bold;
-    color: #cc0000;
+    color: #b30000;
     text-align: center;
 }
 
 .position-title {
     font-size: 0.85rem;
-    color: #000;
+    color: #1f1f1f;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.3px;
@@ -312,7 +320,7 @@
 
 .position-dates {
     font-size: 0.8rem;
-    color: #000;
+    color: #666;
     margin-bottom: 0.2rem;
     font-weight: 400;
     text-align: center;
@@ -321,7 +329,7 @@
 
 .position-acting {
     font-size: 0.75rem;
-    color: #666;
+    color: #888;
     font-style: italic;
     margin-bottom: 0.3rem;
     text-align: center;
@@ -345,7 +353,7 @@
 }
 
 .detail-label {
-    color: #000;
+    color: #888;
     font-weight: 600;
     text-align: left;
     word-break: break-word;
@@ -366,7 +374,6 @@
     justify-content: center;
     min-height: 2.4em;
 }
-
 .detail-label-line {
     text-align: center;
     width: 100%;
@@ -382,7 +389,7 @@
 }
 
 .detail-value {
-    color: #000;
+    color: #1f1f1f;
     text-align: left;
     font-weight: 400;
     word-break: break-word;
@@ -396,7 +403,7 @@
 }
 
 .position-link {
-    color: #cc0000;
+    color: #b30000;
     text-decoration: none;
     font-weight: 600;
     word-break: break-word;
@@ -407,15 +414,16 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    transition: opacity 0.15s ease;
 }
-
 .position-link:hover {
     text-decoration: underline;
+    opacity: 0.85;
 }
 
 .section-divider {
     height: 1px;
-    background: #e0e0e0;
+    background: #f0f0f0;
     margin: 0.8rem 1rem;
     border: none;
 }
@@ -427,26 +435,16 @@
 }
 
 .info-card {
-    background: white;
+    background: #ffffff;
     border-radius: 16px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
     padding: 1.5rem;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #ececec;
     line-height: 1.2;
 }
-
-.info-card .position-block {
-    margin-bottom: 0;
-    padding: 0;
-}
-
-.info-card .position-header {
-    margin-bottom: 0.5rem;
-}
-
-.info-card .position-details {
-    margin-top: 0.5rem;
-}
+.info-card .position-block { margin-bottom: 0; padding: 0; }
+.info-card .position-header { margin-bottom: 0.5rem; }
+.info-card .position-details { margin-top: 0.5rem; }
 
 .awards-wrapper {
     display: flex;
@@ -454,7 +452,6 @@
     gap: 0.8rem;
     align-items: center;
 }
-
 .award-link {
     display: flex;
     flex-direction: column;
@@ -463,21 +460,19 @@
     gap: 0.3rem;
     transition: transform 0.2s ease;
 }
-
-.award-link:hover {
-    transform: translateY(-2px);
-}
-
+.award-link:hover { transform: translateY(-2px); }
 .award-image {
     width: 40px;
     height: 40px;
     object-fit: contain;
-    border-radius: 4px;
+    border-radius: 6px;
+    background: #fafafa;
+    border: 1px solid #f0f0f0;
+    padding: 2px;
 }
-
 .award-year {
     font-size: 0.7rem;
-    color: #666;
+    color: #888;
     font-weight: 500;
     text-align: center;
 }
@@ -488,26 +483,23 @@
     gap: 0.5rem;
     flex-wrap: wrap;
 }
-
 .military-flag {
     width: 20px;
     height: 15px;
     object-fit: contain;
     border-radius: 2px;
+    border: 1px solid #f0f0f0;
 }
-
 .military-arrow {
-    color: #666;
+    color: #888;
     font-weight: bold;
     margin: 0 0.3rem;
 }
-
 .military-rank {
     display: flex;
     align-items: center;
     gap: 0.5rem;
 }
-
 .rank-image {
     width: 30px;
     height: 20px;
@@ -521,10 +513,9 @@
     gap: 0.1rem;
     margin-bottom: 0.3rem;
 }
-
 .command-dates {
     font-size: 0.7rem;
-    color: #666;
+    color: #888;
     font-style: italic;
     text-align: left;
 }
@@ -534,11 +525,10 @@
     flex-direction: column;
     gap: 0.2rem;
 }
-
 .battle-item {
     font-size: 0.75rem;
     line-height: 1.2;
-    color: #000;
+    color: #444;
     padding: 0.1rem 0;
     position: relative;
     padding-left: 0.8rem;
@@ -546,20 +536,22 @@
     flex-direction: column;
     justify-content: center;
 }
-
 .battle-item:before {
-    content: "•";
-    color: #cc0000;
+    content: "";
     position: absolute;
     left: 0;
-    font-weight: bold;
+    top: 0.55em;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #b30000;
 }
 
 .info-card h2 {
-    color: #cc0000;
+    color: #b30000;
     margin-bottom: 1rem;
     font-size: 1.3rem;
-    border-bottom: 2px solid #f0f0f0;
+    border-bottom: 1px solid #f0f0f0;
     padding-bottom: 0.5rem;
     line-height: 1.2;
     text-align: center;
@@ -571,16 +563,14 @@
     margin-bottom: 2rem;
     line-height: 1.2;
 }
-
 .biography-content {
-    line-height: 1.44;
+    line-height: 1.6;
     color: #444;
 }
-
 .biography-content p {
     margin-bottom: 1rem;
-    text-align: justify;
-    line-height: 1.44;
+    text-align: left;
+    line-height: 1.6;
 }
 
 .achievements-list {
@@ -588,26 +578,27 @@
     padding: 0;
     line-height: 1.2;
 }
-
 .achievements-list li {
     padding: 0.8rem 0;
-    border-bottom: 1px solid #f8f8f8;
+    border-bottom: 1px solid #f5f5f5;
     position: relative;
     padding-left: 1.5rem;
     color: #444;
-    line-height: 1.44;
+    line-height: 1.5;
     display: flex;
     align-items: center;
-    min-height: 1.44em;
+    min-height: 1.5em;
 }
-
 .achievements-list li:before {
-    content: "•";
-    color: #cc0000;
-    font-weight: bold;
+    content: "";
     position: absolute;
     left: 0;
-    font-size: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #b30000;
 }
 
 .label-government {
@@ -618,238 +609,93 @@
     max-width: 100px;
     min-height: 2.4em;
 }
-
 .label-government-line {
     text-align: center;
     width: 100%;
     line-height: 1.2;
 }
 
+/* ---------- Мобильные брейкпоинты (как в оригинале) ---------- */
 @media (max-width: 968px) {
     .profile-container {
         grid-template-columns: 1fr !important;
         gap: 1.5rem;
     }
-    .photo-column {
-        position: static;
-        width: 100%;
-    }
-    .photo-card {
-        max-width: 450px;
-        width: 100%;
-        margin: 0 auto;
-    }
-    .profile-photo-large {
-        max-width: 300px;
-    }
-    .position-header {
-        flex-wrap: nowrap !important;
-        gap: 0.3rem;
-    }
-    .position-title {
-        font-size: 0.75rem;
-    }
-    .decoration-left,
-    .decoration-right {
-        width: 22px;
-        height: 22px;
-    }
-    .position-detail {
-        grid-template-columns: minmax(80px, 100px) 1fr;
-    }
-    .label-government {
-        max-width: 90px;
-    }
-    .info-card {
-        padding: 1.2rem;
-    }
-    .awards-wrapper {
-        gap: 0.6rem;
-    }
-    .award-image {
-        width: 35px;
-        height: 35px;
-    }
+    .photo-column { position: static; width: 100%; }
+    .photo-card { max-width: 450px; width: 100%; margin: 0 auto; }
+    .profile-photo-large { max-width: 300px; }
+    .position-header { flex-wrap: nowrap !important; gap: 0.3rem; }
+    .position-title { font-size: 0.75rem; }
+    .decoration-left, .decoration-right { width: 22px; height: 22px; }
+    .position-detail { grid-template-columns: minmax(80px, 100px) 1fr; }
+    .label-government { max-width: 90px; }
+    .info-card { padding: 1.2rem; }
+    .awards-wrapper { gap: 0.6rem; }
+    .award-image { width: 35px; height: 35px; }
 }
 
 @media (max-width: 768px) {
-    .profile-main {
-        padding: 1rem 1rem 3rem;
-    }
-    .info-card {
-        padding: 1rem;
-    }
-    .photo-top-section {
-        padding: 1rem 1rem 0.3rem 1rem;
-    }
-    .last-name {
-        font-size: 1.1rem;
-    }
-    .first-name {
-        font-size: 0.95rem;
-    }
-    .profile-photo-large {
-        max-width: 262px;
-        margin-bottom: 0.6rem;
-    }
-    .position-title {
-        font-size: 0.7rem;
-    }
-    .decoration-left,
-    .decoration-right {
-        width: 20px;
-        height: 20px;
-    }
-    .main-personal-info {
-        margin-bottom: 0.5rem;
-    }
-    .position-detail {
-        grid-template-columns: minmax(70px, 90px) 1fr;
-    }
-    .section-divider {
-        margin: 0.6rem 1rem;
-    }
-    .label-government {
-        max-width: 80px;
-    }
-    .info-card h2 {
-        font-size: 1.2rem;
-    }
-    .awards-wrapper {
-        justify-content: center;
-        gap: 0.8rem;
-    }
-    .military-branch {
-        gap: 0.3rem;
-    }
-    .military-flag {
-        width: 18px;
-        height: 13px;
-    }
+    .profile-main { padding: 1rem 1rem 3rem; }
+    .info-card { padding: 1rem; }
+    .photo-top-section { padding: 1rem 1rem 0.3rem 1rem; }
+    .last-name { font-size: 1.1rem; }
+    .first-name { font-size: 0.95rem; }
+    .profile-photo-large { max-width: 262px; margin-bottom: 0.6rem; }
+    .position-title { font-size: 0.7rem; }
+    .decoration-left, .decoration-right { width: 20px; height: 20px; }
+    .main-personal-info { margin-bottom: 0.5rem; }
+    .position-detail { grid-template-columns: minmax(70px, 90px) 1fr; }
+    .section-divider { margin: 0.6rem 1rem; }
+    .label-government { max-width: 80px; }
+    .info-card h2 { font-size: 1.2rem; }
+    .awards-wrapper { justify-content: center; gap: 0.8rem; }
+    .military-branch { gap: 0.3rem; }
+    .military-flag { width: 18px; height: 13px; }
 }
 
 @media (max-width: 480px) {
-    .profile-photo-large {
-        max-width: 225px;
-    }
-    .info-card h2 {
-        font-size: 1.1rem;
-    }
-    .photo-top-section {
-        padding: 0.8rem 0.5rem 0.2rem 0.5rem;
-    }
-    .last-name {
-        font-size: 1rem;
-    }
-    .first-name {
-        font-size: 0.9rem;
-    }
-    .position-header {
-        flex-wrap: nowrap !important;
-        gap: 0.2rem;
-    }
-    .position-title {
-        font-size: 0.6rem;
-        line-height: 1.1;
-    }
-    .decoration-left,
-    .decoration-right {
-        width: 16px;
-        height: 16px;
-    }
-    .detail-label,
-    .detail-value {
-        font-size: 0.7rem;
-    }
-    .position-dates {
-        font-size: 0.75rem;
-    }
-    .position-acting {
-        font-size: 0.7rem;
-    }
-    .position-detail {
-        grid-template-columns: 1fr;
-        gap: 0.1rem;
-        margin-bottom: 0.2rem;
-    }
-    .detail-label {
-        font-weight: 600;
-        margin-bottom: 0.1rem;
-        justify-content: flex-start;
-    }
-    .main-personal-info {
-        margin-bottom: 0.4rem;
-    }
-    .position-block {
-        margin-bottom: 0.8rem;
-    }
-    .section-divider {
-        margin: 0.5rem 0.5rem;
-    }
-    .label-government {
-        max-width: 70px;
-        min-height: 2.2em;
-    }
-    .info-card {
-        padding: 0.8rem;
-    }
-    .awards-wrapper {
-        gap: 0.5rem;
-    }
-    .award-image {
-        width: 30px;
-        height: 30px;
-    }
-    .award-year {
-        font-size: 0.65rem;
-    }
-    .military-branch {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.2rem;
-    }
-    .military-arrow {
-        margin: 0 0.2rem;
-    }
+    .profile-photo-large { max-width: 225px; }
+    .info-card h2 { font-size: 1.1rem; }
+    .photo-top-section { padding: 0.8rem 0.5rem 0.2rem 0.5rem; }
+    .last-name { font-size: 1rem; }
+    .first-name { font-size: 0.9rem; }
+    .position-header { flex-wrap: nowrap !important; gap: 0.2rem; }
+    .position-title { font-size: 0.6rem; line-height: 1.1; }
+    .decoration-left, .decoration-right { width: 16px; height: 16px; }
+    .detail-label, .detail-value { font-size: 0.7rem; }
+    .position-dates { font-size: 0.75rem; }
+    .position-acting { font-size: 0.7rem; }
+    .position-detail { grid-template-columns: 1fr; gap: 0.1rem; margin-bottom: 0.2rem; }
+    .detail-label { font-weight: 600; margin-bottom: 0.1rem; justify-content: flex-start; }
+    .main-personal-info { margin-bottom: 0.4rem; }
+    .position-block { margin-bottom: 0.8rem; }
+    .section-divider { margin: 0.5rem 0.5rem; }
+    .label-government { max-width: 70px; min-height: 2.2em; }
+    .info-card { padding: 0.8rem; }
+    .awards-wrapper { gap: 0.5rem; }
+    .award-image { width: 30px; height: 30px; }
+    .award-year { font-size: 0.65rem; }
+    .military-branch { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
+    .military-arrow { margin: 0 0.2rem; }
 }
 
-.position-detail,
-.info-item {
-    align-items: start;
-}
-
-.detail-label,
-.detail-value,
-.info-label,
-.info-value {
+/* ---------- Служебные правила из оригинала (без изменений) ---------- */
+.position-detail, .info-item { align-items: start; }
+.detail-label, .detail-value, .info-label, .info-value {
     word-break: break-word !important;
     overflow-wrap: break-word !important;
     hyphens: auto !important;
     white-space: normal !important;
     line-height: 1.2 !important;
 }
-
-.detail-label {
-    min-width: 0;
-    max-width: 120px;
-}
-
-.detail-label,
-.detail-value,
-.position-link,
-.battle-item,
-.achievements-list li {
+.detail-label { min-width: 0; max-width: 120px; }
+.detail-label, .detail-value, .position-link, .battle-item, .achievements-list li {
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
-
 @media (max-width: 480px) {
-    .detail-label,
-    .detail-value,
-    .position-link,
-    .battle-item,
-    .achievements-list li {
+    .detail-label, .detail-value, .position-link, .battle-item, .achievements-list li {
         justify-content: flex-start;
     }
 }
