@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Новости СФСРЮ</title>
-    <!-- favicons (те же) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -23,40 +22,444 @@
     <meta name="msapplication-TileImage" content="../../../images/favicons/mstile-144x144.png" />
     <link rel="stylesheet" href="../../../css/style.css" />
     <style>
-        .news-container { max-width: 1200px; margin: 0 auto; padding: 20px; }
-        .news-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 30px; margin-top: 30px; }
-        .news-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: 0.3s; }
-        .news-card:hover { transform: translateY(-5px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-        .news-card .news-content { padding: 20px; }
-        .news-card .news-title { font-size: 1.3rem; margin: 0 0 10px; }
-        .news-card .news-title a { color: #a00; text-decoration: none; }
-        .news-card .news-meta { color: #888; font-size: 0.9rem; margin-bottom: 12px; }
-        .news-card .news-excerpt { color: #444; line-height: 1.6; }
-        .news-card .news-readmore { display: inline-block; margin-top: 12px; color: #a00; font-weight: 600; text-decoration: none; }
-        .news-detail { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .news-detail h1 { color: #a00; font-size: 2rem; margin-bottom: 10px; }
-        .news-detail .news-meta { color: #888; font-size: 0.95rem; margin-bottom: 20px; }
-        .news-detail .news-body { font-size: 1.1rem; line-height: 1.8; white-space: pre-wrap; }
-        .news-detail .news-media { margin: 20px 0; display: flex; flex-wrap: wrap; gap: 15px; }
-        .news-detail .news-media img, .news-detail .news-media video { max-width: 100%; max-height: 500px; border-radius: 12px; }
-        .comments-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
-        .comments-section h3 { margin-bottom: 20px; }
-        .comment { padding: 12px 0; border-bottom: 1px solid #f0f0f0; }
-        .comment strong { color: #a00; }
-        .comment .comment-meta { color: #888; font-size: 0.85rem; }
-        .comment-form textarea { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 12px; min-height: 100px; font-family: inherit; font-size: 1rem; }
-        .comment-form button { background: #a00; color: white; border: none; padding: 10px 24px; border-radius: 30px; cursor: pointer; font-weight: 600; margin-top: 10px; }
-        .comment-form button:hover { background: #c00; }
-        .login-to-comment { background: #f5f5f5; padding: 20px; border-radius: 12px; text-align: center; }
-        .login-to-comment a { color: #a00; font-weight: 600; }
-        .error-msg { color: #c00; background: #ffebee; padding: 12px 16px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #c00; }
-        .success-msg { color: #2e7d32; background: #e8f5e9; padding: 12px 16px; border-radius: 8px; margin: 10px 0; border-left: 4px solid #2e7d32; }
-        .loader { text-align: center; padding: 40px; }
-        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #a00; border-radius: 50%; width: 32px; height: 32px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .back-link { display: inline-block; margin-bottom: 20px; color: #a00; font-weight: 600; text-decoration: none; }
-        .back-link:hover { text-decoration: underline; }
-        @media (max-width: 768px) { .news-grid { grid-template-columns: 1fr; } }
+        /* ============================================================
+           news.html — единый дизайн в стиле остальных страниц
+           ============================================================ */
+
+        /* ---------- Обёртка страницы ---------- */
+        .profile-main {
+            background:
+                radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+                #f6f7f9;
+            min-height: calc(100vh - 220px);
+            padding: 34px 16px 64px;
+        }
+        .profile-container {
+            max-width: 1120px;
+            margin: 0 auto;
+        }
+
+        /* ---------- Hero ---------- */
+        .news-hero {
+            position: relative;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 24px;
+            padding: 26px 28px;
+            margin: 0 0 26px;
+            background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+            border: 1px solid #f1d7d7;
+            border-radius: 18px;
+            box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+            overflow: hidden;
+        }
+        .news-hero::after {
+            content: "";
+            position: absolute;
+            right: -70px;
+            top: -70px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+            pointer-events: none;
+        }
+        .news-hero-emoji {
+            flex-shrink: 0;
+            font-size: 3rem;
+            line-height: 1;
+            position: relative;
+            z-index: 1;
+        }
+        .news-hero-content {
+            flex: 1 1 260px;
+            min-width: 0;
+            position: relative;
+            z-index: 1;
+        }
+        .news-hero h1 {
+            margin: 0 0 6px;
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #1a1a1a;
+            letter-spacing: -0.01em;
+        }
+        .news-hero p {
+            margin: 0;
+            font-size: 1rem;
+            color: #6b6b6b;
+            line-height: 1.45;
+        }
+
+        /* ---------- Сетка карточек ---------- */
+        .news-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+            margin-top: 0;
+        }
+
+        /* ---------- Карточка новости ---------- */
+        .news-card {
+            background: #ffffff;
+            border: 1px solid #ececec;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            transition: transform 0.2s ease, box-shadow 0.2s ease,
+                        border-color 0.2s ease, background-color 0.2s ease;
+        }
+        .news-card:hover {
+            transform: translateY(-3px);
+            border-color: #b30000;
+            background: #fff9f9;
+            box-shadow: 0 12px 26px rgba(179, 0, 0, 0.16);
+        }
+        .news-card .news-content {
+            padding: 22px 24px 24px;
+        }
+        .news-card .news-title {
+            font-size: 1.08rem;
+            font-weight: 700;
+            color: #1f1f1f;
+            line-height: 1.35;
+            margin: 0 0 8px;
+        }
+        .news-card .news-title a {
+            color: inherit;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .news-card:hover .news-title a {
+            color: #b30000;
+        }
+        .news-card .news-meta {
+            display: inline-block;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: #b30000;
+            background: #fff0f0;
+            border: 1px solid #f5c6c6;
+            border-radius: 20px;
+            padding: 3px 12px;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+        .news-card .news-excerpt {
+            color: #555;
+            font-size: 0.93rem;
+            line-height: 1.55;
+            margin: 0 0 14px;
+        }
+        .news-card .news-readmore {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #b30000;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: opacity 0.15s ease;
+        }
+        .news-card .news-readmore:hover {
+            opacity: 0.75;
+            text-decoration: underline;
+        }
+
+        /* ---------- Детальный просмотр ---------- */
+        .news-detail {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #ececec;
+            border-radius: 16px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+            padding: 32px 36px 36px;
+        }
+        .news-detail h1 {
+            color: #1a1a1a;
+            font-size: 1.75rem;
+            font-weight: 700;
+            line-height: 1.25;
+            letter-spacing: -0.01em;
+            border-bottom: 1px solid #f0f0f0;
+            padding-bottom: 18px;
+            margin: 0 0 16px;
+        }
+        .news-detail .news-meta {
+            color: #888;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .news-detail .news-body {
+            font-size: 1rem;
+            line-height: 1.75;
+            color: #444;
+            white-space: pre-wrap;
+            overflow-wrap: break-word;
+        }
+        .news-detail .news-media {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 14px;
+            margin: 20px 0;
+        }
+        .news-detail .news-media img,
+        .news-detail .news-media video {
+            width: 100%;
+            max-height: 500px;
+            object-fit: contain;
+            border-radius: 12px;
+            border: 1px solid #f0f0f0;
+            background: #fafafa;
+            display: block;
+        }
+
+        /* ---------- Комментарии ---------- */
+        .comments-section {
+            margin-top: 32px;
+            padding-top: 24px;
+            border-top: 1px solid #f0f0f0;
+        }
+        .comments-section h3 {
+            color: #1a1a1a;
+            font-size: 1.15rem;
+            font-weight: 700;
+            line-height: 1.3;
+            margin: 0 0 16px;
+        }
+        .comments-section > p {
+            color: #888;
+            font-size: 0.93rem;
+            margin: 0 0 12px;
+        }
+        .comment {
+            padding: 14px 0;
+            border-bottom: 1px solid #f5f5f5;
+        }
+        .comment:last-of-type {
+            border-bottom: none;
+        }
+        .comment strong {
+            color: #1f1f1f;
+            font-size: 0.95rem;
+            margin-right: 8px;
+        }
+        .comment .comment-meta {
+            color: #888;
+            font-size: 0.8rem;
+        }
+        .comment p {
+            margin: 8px 0 0;
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.55;
+        }
+
+        /* ---------- Форма комментария ---------- */
+        .comment-form textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            min-height: 100px;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: #1a1a1a;
+            resize: vertical;
+            box-sizing: border-box;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .comment-form textarea:focus {
+            outline: none;
+            border-color: #b30000;
+            box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.1);
+        }
+        .comment-form button {
+            background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+            color: #ffffff;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.92rem;
+            font-family: inherit;
+            margin-top: 12px;
+            box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+            transition: filter 0.2s ease, box-shadow 0.2s ease;
+        }
+        .comment-form button:hover {
+            filter: brightness(1.08);
+            box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+        }
+
+        .login-to-comment {
+            background: #fafafa;
+            border: 1px solid #f0f0f0;
+            padding: 22px;
+            border-radius: 12px;
+            text-align: center;
+            color: #666;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .login-to-comment p { margin: 0; }
+        .login-to-comment a {
+            color: #b30000;
+            font-weight: 500;
+            text-decoration: none;
+        }
+        .login-to-comment a:hover {
+            text-decoration: underline;
+        }
+
+        /* ---------- Сообщения ---------- */
+        .error-msg {
+            color: #b30000;
+            background: #fff5f5;
+            border: 1px solid #f5c6c6;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin: 12px 0;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+        .success-msg {
+            color: #16a34a;
+            background: #eefaf0;
+            border: 1px solid #b8e6c2;
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin: 12px 0;
+            font-size: 0.92rem;
+            line-height: 1.5;
+        }
+
+        /* ---------- Загрузчик ---------- */
+        .loader {
+            text-align: center;
+            padding: 50px 20px;
+            color: #888;
+            font-size: 0.95rem;
+        }
+        .spinner {
+            border: 3px solid #f0f0f0;
+            border-top: 3px solid #b30000;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 12px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ---------- Кнопка «Назад» ---------- */
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            padding: 9px 16px;
+            background: #ffffff;
+            border: 1px solid #ececec;
+            border-radius: 10px;
+            color: #2a2a2a;
+            font-weight: 500;
+            font-size: 0.9rem;
+            text-decoration: none;
+            transition: transform 0.15s ease, box-shadow 0.2s ease,
+                        border-color 0.2s ease, background-color 0.15s ease,
+                        color 0.15s ease;
+        }
+        .back-link:hover {
+            border-color: #b30000;
+            color: #b30000;
+            background: #fff5f5;
+            box-shadow: 0 4px 10px rgba(179, 0, 0, 0.1);
+            transform: translateY(-1px);
+            text-decoration: none;
+        }
+
+        /* ---------- Пустое состояние ---------- */
+        #news-list > p {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
+            font-size: 0.95rem;
+            background: #ffffff;
+            border: 1px dashed #e0e0e0;
+            border-radius: 14px;
+            margin: 20px 0;
+        }
+
+        /* ---------- Адаптивность ---------- */
+        @media (max-width: 768px) {
+            .profile-main {
+                padding: 22px 12px 48px;
+            }
+            .news-hero {
+                padding: 22px 20px;
+                gap: 16px;
+            }
+            .news-hero-emoji {
+                font-size: 2.2rem;
+            }
+            .news-hero h1 {
+                font-size: 1.4rem;
+            }
+            .news-hero p {
+                font-size: 0.9rem;
+            }
+            .news-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .news-card .news-content {
+                padding: 18px 18px 20px;
+            }
+            .news-card .news-title {
+                font-size: 1rem;
+            }
+            .news-card .news-excerpt {
+                font-size: 0.9rem;
+            }
+            .news-detail {
+                padding: 20px 18px 24px;
+            }
+            .news-detail h1 {
+                font-size: 1.35rem;
+                padding-bottom: 14px;
+                margin-bottom: 14px;
+            }
+            .news-detail .news-body {
+                font-size: 0.95rem;
+            }
+            .news-detail .news-media {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            .comment-form button {
+                width: 100%;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .news-card,
+            .back-link,
+            .news-readmore,
+            .comment-form button {
+                transition: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -84,12 +487,24 @@
         </div>
     </header>
 
-    <div class="main-content">
-        <div class="news-container">
+    <main class="main-content profile-main">
+        <div class="profile-container">
+
+            <!-- Hero -->
+            <div class="news-hero">
+                <div class="news-hero-emoji" aria-hidden="true">📰</div>
+                <div class="news-hero-content">
+                    <h1>Новости СФСРЮ</h1>
+                    <p>Последние указы, постановления и достижения трудящихся республики</p>
+                </div>
+            </div>
+
+            <!-- Список / детальная новость -->
             <div id="news-list"></div>
             <div id="news-detail" style="display:none;"></div>
+
         </div>
-    </div>
+    </main>
 
     <footer class="footer">
         <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
@@ -97,7 +512,7 @@
     </footer>
 
     <script src="../../../js/mob-menu.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"
             onerror="this.src='https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js'">
     </script>
     <script>
@@ -106,7 +521,7 @@
 
         const SUPABASE_URL = 'https://qeewwoklmjysactfhrum.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFlZXd3b2tsbWp5c2FjdGZocnVtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA5MTI2MTEsImV4cCI6MjA4NjQ4ODYxMX0.gWzqku1cS08v17kfJHJbOWbm-DRpzwQ9omlQsKxc96A';
-        
+
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             db: { schema: 'news' }
         });
@@ -123,10 +538,9 @@
             return new Date(date).toLocaleDateString('ru-RU', { year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        // Получение подписанного URL для медиа
         async function getMediaSignedUrl(bucket, path) {
             try {
-                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600); // 1 час
+                const { data, error } = await supabase.storage.from(bucket).createSignedUrl(path, 3600);
                 if (error) throw error;
                 return data.signedUrl;
             } catch (err) {
@@ -186,7 +600,6 @@
 
                 await supabase.from('articles').update({ views: (article.views || 0) + 1 }).eq('id', id);
 
-                // Получаем подписанные URL для каждого медиа
                 const mediaWithUrls = [];
                 if (article.media && article.media.length > 0) {
                     for (const m of article.media) {
@@ -195,7 +608,6 @@
                     }
                 }
 
-                // Формируем HTML медиа
                 let mediaHtml = '';
                 if (mediaWithUrls.length > 0) {
                     mediaHtml = '<div class="news-media">';
@@ -209,7 +621,6 @@
                     mediaHtml += '</div>';
                 }
 
-                // Получаем комментарии – в них уже есть author_name и author_surname
                 const { data: comments, error: commentsError } = await supabase
                     .from('comments')
                     .select('*')
@@ -275,7 +686,6 @@
                             return;
                         }
                         try {
-                            // Вставляем комментарий – триггер сам заполнит author_name и author_surname
                             const { error } = await supabase.from('comments').insert({
                                 article_id: id,
                                 user_id: user.id,
