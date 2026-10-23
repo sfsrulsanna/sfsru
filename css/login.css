@@ -1,178 +1,296 @@
-.login-container {
-  max-width: 500px;
-  margin: 3rem auto;
-  padding: 2rem;
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-  border: 1px solid #eee;
+/* ============================================================
+   login.css — страница входа
+   Единый дизайн с остальными страницами (палитра #b30000)
+   ============================================================ */
+
+/* ---------- Обёртка ---------- */
+.auth-main {
+    background:
+        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+        #f6f7f9;
+    min-height: calc(100vh - 220px);
+    padding: 34px 16px 64px;
 }
-.login-title {
-  text-align: center;
-  margin-bottom: 1rem;
-  color: #a00;
-  font-size: 1.6rem;
-  font-weight: 700;
+
+.auth-container {
+    max-width: 480px;
+    margin: 0 auto;
 }
-.login-subtitle {
-  text-align: center;
-  margin-bottom: 1.5rem;
-  color: #555;
-  font-size: 1rem;
+
+/* ---------- Hero ---------- */
+.auth-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 24px 26px;
+    margin: 0 0 18px;
+    background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+    border: 1px solid #f1d7d7;
+    border-radius: 18px;
+    box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+    overflow: hidden;
+    text-align: left;
 }
-.form-group {
-  margin-bottom: 1.2rem;
+.auth-hero::after {
+    content: "";
+    position: absolute;
+    right: -70px;
+    top: -70px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+    pointer-events: none;
 }
-.form-label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 600;
-  color: #333;
+.auth-hero-emoji {
+    flex-shrink: 0;
+    font-size: 2.6rem;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
 }
+.auth-hero-content { position: relative; z-index: 1; }
+.auth-hero-title {
+    margin: 0 0 4px;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1a1a1a;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+}
+.auth-hero-subtitle {
+    margin: 0;
+    font-size: 0.92rem;
+    color: #6b6b6b;
+    line-height: 1.4;
+}
+
+/* ---------- Карточка формы ---------- */
+.auth-card {
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+    padding: 24px 26px 26px;
+}
+
+/* ---------- Табы ---------- */
+.login-tabs {
+    display: flex;
+    margin: 0 0 18px;
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0;
+}
+.tab {
+    flex: 1;
+    padding: 10px 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.92rem;
+    font-weight: 500;
+    color: #888;
+    font-family: inherit;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+.tab:hover,
+.tab:focus-visible {
+    color: #b30000;
+    outline: none;
+}
+.tab.active {
+    color: #b30000;
+    border-bottom-color: #b30000;
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ---------- Формы ---------- */
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+
+.form-group label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+    font-size: 0.86rem;
+    color: #555;
+}
+
 .form-input {
-  width: 100%;
-  padding: 0.7rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
+    width: 100%;
+    padding: 11px 14px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    color: #1a1a1a;
+    background: #ffffff;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .form-input:focus {
-  outline: none;
-  border-color: #c00;
-  box-shadow: 0 0 0 2px rgba(204, 0, 0, 0.15);
+    outline: none;
+    border-color: #b30000;
+    box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.1);
 }
-.login-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #cc0000, #ff6666);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
+
+.form-hint,
+.small-text {
+    font-size: 0.78rem;
+    color: #888;
+    margin-top: 4px;
+    line-height: 1.4;
 }
-.login-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(204, 0, 0, 0.25);
+
+/* ---------- Кнопки ---------- */
+.btn-primary {
+    width: 100%;
+    padding: 11px 20px;
+    background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+    transition: filter 0.2s ease, box-shadow 0.2s ease;
+    margin-top: 8px;
 }
+.btn-primary:hover,
+.btn-primary:focus-visible {
+    filter: brightness(1.08);
+    box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+    outline: none;
+}
+
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #ffffff;
+    border: 1px solid #ececec;
+    border-radius: 10px;
+    color: #2a2a2a;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.15s ease, border-color 0.15s ease,
+                background-color 0.15s ease, color 0.15s ease;
+}
+.btn-secondary:hover,
+.btn-secondary:focus-visible {
+    border-color: #b30000;
+    background: #fff5f5;
+    color: #b30000;
+    outline: none;
+}
+.btn-secondary img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* ---------- Разделитель ---------- */
 .divider {
-  text-align: center;
-  margin: 1.5rem 0;
-  position: relative;
-  color: #888;
-  font-size: 0.9rem;
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+    color: #888;
+    font-size: 0.86rem;
 }
 .divider::before {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: #ddd;
-  z-index: 1;
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #f0f0f0;
 }
 .divider span {
-  background: white;
-  padding: 0 1rem;
-  position: relative;
-  z-index: 2;
+    background: #ffffff;
+    padding: 0 12px;
+    position: relative;
 }
-.google-btn {
-  width: 100%;
-  padding: 0.75rem;
-  background: white;
-  color: #333;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
+
+/* ---------- Соцсети ---------- */
+.provider-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
-.google-btn:hover {
-  background: #f9f9f9;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-}
+
+/* ---------- Ссылки ---------- */
 .login-links {
-  text-align: center;
-  margin-top: 1.2rem;
-  font-size: 0.95rem;
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.9rem;
+    color: #888;
 }
 .login-links a {
-  color: #cc0000;
-  text-decoration: none;
-  margin: 0 0.4rem;
+    color: #b30000;
+    text-decoration: none;
+    font-weight: 500;
+    transition: opacity 0.15s ease;
 }
-.login-links a:hover {
-  text-decoration: underline;
+.login-links a:hover,
+.login-links a:focus-visible {
+    text-decoration: underline;
+    opacity: 0.85;
+    outline: none;
 }
-
-/* Роли */
-.role-selection {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-}
-.role-option {
-  flex: 1;
-  text-align: center;
-  padding: 1rem;
-  border: 2px solid #eee;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.role-option.selected {
-  border-color: #cc0000;
-  background: rgba(204, 0, 0, 0.03);
-}
-.role-icon {
-  font-size: 1.8rem;
-  margin-bottom: 0.5rem;
-  display: block;
-}
-.role-name {
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-.role-desc {
-  font-size: 0.85rem;
-  color: #666;
+.login-links-sep {
+    margin: 0 8px;
+    color: #ccc;
 }
 
-/* Алерты */
+/* ---------- Алерты ---------- */
 .alert {
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.2rem;
+    padding: 12px 16px;
+    border-radius: 10px;
+    margin: 0 0 16px;
+    display: none;
+    font-size: 0.9rem;
+    line-height: 1.45;
 }
 .alert-error {
-  background: rgba(204, 0, 0, 0.1);
-  color: #a00;
-  border: 1px solid rgba(204, 0, 0, 0.2);
+    background: #fff5f5;
+    color: #b30000;
+    border: 1px solid #f5c6c6;
 }
 .alert-success {
-  background: rgba(76, 175, 80, 0.1);
-  color: #2e7d32;
-  border: 1px solid rgba(76, 175, 80, 0.2);
+    background: #eefaf0;
+    color: #16a34a;
+    border: 1px solid #b8e6c2;
 }
 
-/* Мобильные */
-@media (max-width: 768px) {
-  .login-container {
-    margin: 2rem 1rem;
-    padding: 1.5rem;
-  }
-  .role-selection {
-    flex-direction: column;
-  }
+/* ---------- Адаптивность ---------- */
+@media (max-width: 640px) {
+    .auth-main { padding: 22px 12px 48px; }
+    .auth-hero { padding: 20px; gap: 14px; }
+    .auth-hero-emoji { font-size: 2rem; }
+    .auth-hero-title { font-size: 1.25rem; }
+    .auth-hero-subtitle { font-size: 0.86rem; }
+    .auth-card { padding: 20px 18px 22px; }
+    .provider-buttons { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .btn-primary,
+    .btn-secondary,
+    .tab,
+    .login-links a {
+        transition: none !important;
+    }
 }
