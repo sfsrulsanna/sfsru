@@ -162,10 +162,10 @@ async function saveVersion(e) {
     formError.textContent = 'Заполните номер и название версии.'
     return
   }
-if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]*$/.test(version)) {
-  formError.textContent = 'Номер версии может содержать буквы, цифры, точки, дефисы и подчёркивания (например, 1.1.0 или a1.0.0).'
-  return
-}
+  if (!/^\d+\.\d+\.\d+$/.test(version)) {
+    formError.textContent = 'Номер версии должен быть в формате X.Y.Z (например, 1.1.0).'
+    return
+  }
 
   const submitBtn = e.target.querySelector('button[type="submit"]')
   const originalHtml = submitBtn.innerHTML
