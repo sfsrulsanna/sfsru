@@ -174,7 +174,6 @@ function renderInn(data) {
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
-  // Создаём блок статуса и кнопок
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
 
@@ -183,14 +182,12 @@ function renderInn(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  // Кнопка замены (ссылка на получение нового ИНН) — всегда видна
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/inn/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить ИНН'
   statusAndEdit.appendChild(replaceLink)
 
-  // Кнопка изменения данных (только если статус не verified)
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
