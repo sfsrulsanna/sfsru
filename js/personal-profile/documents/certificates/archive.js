@@ -10,11 +10,6 @@ function formatDate(dateString) {
   catch { return dateString }
 }
 
-function getStatusLabel(status) {
-  // Для архивных всегда показываем "Архивный"
-  return '📦 Архивный'
-}
-
 function escapeHTML(str) {
   if (!str) return ''
   return String(str)
@@ -22,14 +17,15 @@ function escapeHTML(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
+    .replace(/'/g, '&#039;')
 }
 
 // ==================== ЗАГРУЗКА ПРОФИЛЯ ====================
 async function loadUserProfile() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
-    window.location.href = '../../login.html'
+    // Поднимаемся на 3 уровня вверх до корня, где лежит login.html
+    window.location.href = '../../../login.html'
     return null
   }
 
@@ -62,8 +58,10 @@ const certificateTypes = [
 async function loadArchivedCertificates() {
   if (!personalCode) return []
 
-  let allArchived = []
+  // Используем Map для исключения дублирования (ключ — уникальный ID документа)
+  const certsMap = new Map()
 
+  // 1. Стандартная загрузка по personal_code
   for (const cert of certificateTypes) {
     const { data, error } = await supabase
       .schema('documents_certificates')
@@ -74,60 +72,50 @@ async function loadArchivedCertificates() {
       .order('created_at', { ascending: false })
 
     if (!error && data) {
-      // Добавляем к каждой записи информацию о типе и URL
-      data.forEach(item => {
-        allArchived.push({
-          ...item,
-          type: cert.title,
-          url: cert.url,
-          id: item.id
-        })
+      data.forEach(doc => {
+        if (!certsMap.has(doc.id)) {
+          certsMap.set(doc.id, {
+            ...doc,
+            type: cert.title,
+            url: cert.url
+          })
+        }
       })
     }
   }
 
-  // Для marriage также ищем записи, где personal_code может быть в husband_personal_code или wife_personal_code
-  // (если статус archived и код соответствует)
-  const { data: marriageArchived, error: marriageError } = await supabase
-    .schema('documents_certificates')
-    .from('marriage')
-    .select('*')
-    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
-    .eq('status', 'archived')
-    .order('created_at', { ascending: false })
+  // 2. Дополнительный поиск для браков и разводов (по husband/wife коду)
+  const specialTables = [
+    { table: 'marriage', title: 'Свидетельство о заключении брака', url: 'marriage-certificate.html' },
+    { table: 'divorce', title: 'Свидетельство о расторжении брака', url: 'divorce-certificate.html' }
+  ]
 
-  if (!marriageError && marriageArchived) {
-    marriageArchived.forEach(item => {
-      allArchived.push({
-        ...item,
-        type: 'Свидетельство о заключении брака',
-        url: 'marriage-certificate.html',
-        id: item.id
+  for (const st of specialTables) {
+    const { data, error } = await supabase
+      .schema('documents_certificates')
+      .from(st.table)
+      .select('*')
+      .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
+      .eq('status', 'archived')
+      .order('created_at', { ascending: false })
+
+    if (!error && data) {
+      data.forEach(doc => {
+        // Добавляем только если такого ID еще нет в Map
+        if (!certsMap.has(doc.id)) {
+          certsMap.set(doc.id, {
+            ...doc,
+            type: st.title,
+            url: st.url
+          })
+        }
       })
-    })
+    }
   }
 
-  // Аналогично для divorce
-  const { data: divorceArchived, error: divorceError } = await supabase
-    .schema('documents_certificates')
-    .from('divorce')
-    .select('*')
-    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
-    .eq('status', 'archived')
-    .order('created_at', { ascending: false })
-
-  if (!divorceError && divorceArchived) {
-    divorceArchived.forEach(item => {
-      allArchived.push({
-        ...item,
-        type: 'Свидетельство о расторжении брака',
-        url: 'divorce-certificate.html',
-        id: item.id
-      })
-    })
-  }
-
-  // Сортируем все записи по дате создания (самые новые сверху)
+  // Преобразуем Map обратно в массив и сортируем по дате создания
+  const allArchived = Array.from(certsMap.values())
+  
   allArchived.sort((a, b) => {
     const dateA = a.created_at ? new Date(a.created_at) : new Date(0)
     const dateB = b.created_at ? new Date(b.created_at) : new Date(0)
@@ -138,13 +126,10 @@ async function loadArchivedCertificates() {
 }
 
 function getCertificateNumber(cert) {
-  // В разных таблицах поле может называться по-разному
   return cert.certificate_series_number || cert.certificate_number || cert.number || '—'
 }
 
 function getCertificateDate(cert) {
-  // Пытаемся получить дату события (например, дату рождения, заключения брака и т.д.)
-  // Приоритет: поле, специфичное для типа
   if (cert.birth_date) return formatDate(cert.birth_date)
   if (cert.marriage_date) return formatDate(cert.marriage_date)
   if (cert.death_date) return formatDate(cert.death_date)
@@ -171,7 +156,6 @@ function renderArchiveGrid(certificates) {
   if (emptyMessage) emptyMessage.style.display = 'none'
 
   certificates.forEach(cert => {
-    const statusLabel = getStatusLabel(cert.status)
     const number = getCertificateNumber(cert)
     const date = getCertificateDate(cert)
 
@@ -181,7 +165,9 @@ function renderArchiveGrid(certificates) {
     card.innerHTML = `
       <div class="certificate-header">
         <div class="certificate-title">${escapeHTML(cert.type)}</div>
-        <span class="certificate-status status-archived">${statusLabel}</span>
+        <div class="certificate-badges">
+          <span class="certificate-status status-archived">📦 Архивный</span>
+        </div>
       </div>
       <div class="certificate-fields">
         <div class="certificate-field">
@@ -206,6 +192,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const archived = await loadArchivedCertificates()
   renderArchiveGrid(archived)
 
-  document.getElementById('loading').style.display = 'none'
-  document.getElementById('content').style.display = 'block'
+  const loadingEl = document.getElementById('loading')
+  const contentEl = document.getElementById('content')
+  if (loadingEl) loadingEl.style.display = 'none'
+  if (contentEl) contentEl.style.display = 'block'
 })

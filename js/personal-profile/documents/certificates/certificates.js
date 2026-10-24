@@ -1,41 +1,27 @@
 import { supabase } from '../../../../js/supabase-config.js'
 
 // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
-let userProfile = null
 let personalCode = null
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-function formatDate(dateString) {
-  if (!dateString) return '—'
-  try { return new Date(dateString).toLocaleDateString('ru-RU') }
-  catch { return dateString }
-}
-
 function getStatusLabel(status) {
   if (status === 'verified') return '✅ Подтверждено'
   if (status === 'oncheck') return '⏳ На проверке'
   if (status === 'rejected') return '❌ Отклонено'
-  // архивные не выводятся, но метка оставлена для возможных других целей
-  if (status === 'archived') return '📦 Архивный'
   return '—'
 }
 
-function safeSetText(id, text) {
-  const el = document.getElementById(id)
-  if (el) el.textContent = text
-}
-
-// ==================== ЗАГРУЗКА ПРОФИЛЯ ====================
+// ==================== ЗАГРУЗКА ПРОФИЛЯ (только personal_code) ====================
 async function loadUserProfile() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
-    window.location.href = '../../login.html'
+    window.location.href = '../../../login.html' // Путь на уровень выше
     return
   }
 
   const { data, error } = await supabase
     .from('users')
-    .select('surname, name, patronymic, date_of_birth, place_of_birth, personal_code, gender')
+    .select('personal_code')
     .eq('id', session.user.id)
     .single()
 
@@ -44,44 +30,7 @@ async function loadUserProfile() {
     return
   }
 
-  userProfile = data
   personalCode = data.personal_code
-  renderUserInfo()
-}
-
-function renderUserInfo() {
-  if (!userProfile) return
-  const fullName = `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() || '—'
-  safeSetText('fullName', fullName)
-  safeSetText('birthDate', formatDate(userProfile.date_of_birth))
-  safeSetText('birthPlace', userProfile.place_of_birth || '—')
-  safeSetText('gender', userProfile.gender || '—')
-  safeSetText('personalCode', userProfile.personal_code || '—')
-
-  // Аватар
-  const avatarImg = document.getElementById('userAvatar')
-  if (avatarImg && personalCode) {
-    const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '')
-    const imgUrl = `../../images/avatars/${safeCode}.jpg`
-    const img = new Image()
-    img.onload = () => { avatarImg.src = imgUrl }
-    img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
-    img.src = imgUrl
-  }
-
-  // QR-код
-  const qrContainer = document.getElementById('userQrCode')
-  if (qrContainer && personalCode) {
-    qrContainer.innerHTML = ''
-    new QRCode(qrContainer, {
-      text: `https://e-pass-sfsru.web.app/${personalCode}/`,
-      width: 72,
-      height: 72,
-      colorDark: '#000',
-      colorLight: '#fff',
-      correctLevel: QRCode.CorrectLevel.L
-    })
-  }
 }
 
 // ==================== ЗАГРУЗКА СВИДЕТЕЛЬСТВ ====================
@@ -98,8 +47,10 @@ const certificateTypes = [
 async function loadAllCertificates() {
   if (!personalCode) return []
 
-  let allCerts = []
+  // Используем Map для предотвращения дублирования по ID
+  const certsMap = new Map()
 
+  // 1. Стандартная загрузка по personal_code
   for (const cert of certificateTypes) {
     const { data, error } = await supabase
       .schema('documents_certificates')
@@ -111,66 +62,51 @@ async function loadAllCertificates() {
       .limit(1)
 
     if (!error && data && data.length > 0) {
-      allCerts.push({
-        ...data[0],
-        type: cert.title,
-        url: cert.url,
-        id: data[0].id
-      })
+      const doc = data[0]
+      if (!certsMap.has(doc.id)) {
+        certsMap.set(doc.id, {
+          ...doc,
+          type: cert.title,
+          url: cert.url
+        })
+      }
     }
   }
 
-  // Для marriage также ищем записи, где personal_code может быть в husband_personal_code или wife_personal_code
-  const { data: marriageData, error: marriageError } = await supabase
-    .schema('documents_certificates')
-    .from('marriage')
-    .select('*')
-    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
-    .neq('status', 'archived')
-    .order('created_at', { ascending: false })
-    .limit(1)
+  // 2. Дополнительная проверка для браков и разводов (поиск по husband/wife)
+  const specialTables = [
+    { table: 'marriage', title: 'Свидетельство о заключении брака', url: 'marriage-certificate.html' },
+    { table: 'divorce', title: 'Свидетельство о расторжении брака', url: 'divorce-certificate.html' }
+  ]
 
-  if (!marriageError && marriageData && marriageData.length > 0) {
-    // Проверяем, не добавили ли мы уже marriage из предыдущего цикла (если personal_code совпадает с husband или wife, то оно могло быть уже добавлено)
-    const alreadyExists = allCerts.some(c => c.url === 'marriage-certificate.html' && c.id === marriageData[0].id)
-    if (!alreadyExists) {
-      allCerts.push({
-        ...marriageData[0],
-        type: 'Свидетельство о заключении брака',
-        url: 'marriage-certificate.html',
-        id: marriageData[0].id
-      })
+  for (const st of specialTables) {
+    const { data, error } = await supabase
+      .schema('documents_certificates')
+      .from(st.table)
+      .select('*')
+      .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
+      .neq('status', 'archived')
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (!error && data && data.length > 0) {
+      const doc = data[0]
+      // Добавляем только если такого ID еще нет в Map
+      if (!certsMap.has(doc.id)) {
+        certsMap.set(doc.id, {
+          ...doc,
+          type: st.title,
+          url: st.url
+        })
+      }
     }
   }
 
-  // Для divorce аналогично
-  const { data: divorceData, error: divorceError } = await supabase
-    .schema('documents_certificates')
-    .from('divorce')
-    .select('*')
-    .or(`husband_personal_code.eq.${personalCode},wife_personal_code.eq.${personalCode}`)
-    .neq('status', 'archived')
-    .order('created_at', { ascending: false })
-    .limit(1)
-
-  if (!divorceError && divorceData && divorceData.length > 0) {
-    const alreadyExists = allCerts.some(c => c.url === 'divorce-certificate.html' && c.id === divorceData[0].id)
-    if (!alreadyExists) {
-      allCerts.push({
-        ...divorceData[0],
-        type: 'Свидетельство о расторжении брака',
-        url: 'divorce-certificate.html',
-        id: divorceData[0].id
-      })
-    }
-  }
-
-  return allCerts
+  // Возвращаем массив уникальных свидетельств
+  return Array.from(certsMap.values())
 }
 
 function getCertificateNumber(cert) {
-  // В таблицах свидетельств поле называется certificate_series_number
-  // На случай других названий оставляем запасные варианты
   return cert.certificate_series_number || cert.certificate_number || cert.number || '—'
 }
 
@@ -180,7 +116,7 @@ function renderCertificatesGrid(certificates) {
 
   grid.innerHTML = ''
 
-  // Статическая карточка для архивных свидетельств (всегда видна)
+  // Статическая карточка для архива
   const archiveCard = document.createElement('a')
   archiveCard.href = 'archive.html'
   archiveCard.className = 'certificate-card'
@@ -190,14 +126,14 @@ function renderCertificatesGrid(certificates) {
     </div>
     <div class="certificate-fields">
       <div class="certificate-field">
-        <span class="field-label">Перейти к архиву </span>
+        <span class="field-label">Перейти к архиву</span>
         <span class="field-value"> →</span>
       </div>
     </div>
   `
   grid.appendChild(archiveCard)
 
-  // Динамические карточки (не архивные)
+  // Динамические карточки
   certificates.forEach(cert => {
     const statusLabel = getStatusLabel(cert.status)
     const statusClass = cert.status === 'verified' ? 'status-verified' : (cert.status === 'oncheck' ? 'status-pending' : 'status-rejected')
@@ -209,7 +145,9 @@ function renderCertificatesGrid(certificates) {
     card.innerHTML = `
       <div class="certificate-header">
         <div class="certificate-title">${cert.type}</div>
-        <span class="certificate-status ${statusClass}">${statusLabel}</span>
+        <div class="certificate-badges">
+          <span class="certificate-status ${statusClass}">${statusLabel}</span>
+        </div>
       </div>
       <div class="certificate-fields">
         <div class="certificate-field">
@@ -225,10 +163,14 @@ function renderCertificatesGrid(certificates) {
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadUserProfile()
+  
   if (personalCode) {
     const certs = await loadAllCertificates()
     renderCertificatesGrid(certs)
   }
-  document.getElementById('loading').style.display = 'none'
-  document.getElementById('content').style.display = 'block'
+  
+  const loadingEl = document.getElementById('loading')
+  const contentEl = document.getElementById('content')
+  if (loadingEl) loadingEl.style.display = 'none'
+  if (contentEl) contentEl.style.display = 'block'
 })
