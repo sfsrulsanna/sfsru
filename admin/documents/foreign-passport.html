@@ -296,6 +296,7 @@
         let sortField = 'surname_cyr';
         let sortDirection = 'asc';
         let allData = [];
+        let currentPersonalCodeForStatus = null;
         
         // Маппинг статусов
         const statusMap = {
@@ -334,7 +335,7 @@
             const { data, error } = await supabase
                 .schema('documents')
                 .from('foreign_passport')
-                .select('id, surname_cyr, name_cyr, patronymic_cyr, series_number, personal_code, status')
+                .select('id, surname_cyr, name_cyr, series_number, personal_code, status')
                 .order(sortField, { ascending: sortDirection === 'asc' });
 
             if (error) {
@@ -357,6 +358,7 @@
             }
 
             tbody.innerHTML = allData.map(item => {
+                // name_cyr уже содержит и имя, и отчество
                 const fullName = `${item.surname_cyr || ''} ${item.name_cyr || ''}`.trim() || '—';
                 const statusClass = `status-${item.status}`;
                 const statusText = statusMap[item.status] || item.status;
@@ -425,7 +427,6 @@
             if (data.passport_type === 'дипломатический') borderColor = '#0d4d26';
             else if (data.passport_type === 'служебный') borderColor = '#0d2a4d';
             
-            // Применяем цвет рамки локально для модалки
             const modalPassportStyle = `border-color: ${borderColor};`;
 
             let docTypeCyr = 'ЗАГРАНИЧНЫЙ ПАСПОРТ';
@@ -499,6 +500,7 @@
                                 <div class="data-field">
                                     <div class="field-label">Имя</div>
                                     <div class="field-label-english">Given names</div>
+                                    <!-- Здесь выводится Имя + Отчество (одно поле) -->
                                     <div class="field-value">${escapeHTML(data.name_cyr || '—')}</div>
                                     <div class="field-value-english">${escapeHTML(data.name_lat || '—')}</div>
                                 </div>
@@ -603,7 +605,6 @@
 
         async function getSignedUrl(personalCode) {
             try {
-                // Фото загранпаспорта хранятся в папке foreign_passport
                 const { data, error } = await supabase.storage
                     .from('documents-files')
                     .createSignedUrl(`foreign_passport/${encodeURIComponent(personalCode)}/photo.jpg`, 3600);
@@ -646,6 +647,7 @@
             // Инициализация массива виз
             const visas = data.visas || [];
 
+            // ВАЖНО: Убраны отдельные поля patronymic_cyr и patronymic_lat
             const html = `
                 <div class="form-section">
                     <h4>ФИО и гражданство</h4>
@@ -654,12 +656,9 @@
                         <div class="form-group"><label>Фамилия (Латиница)</label><input type="text" id="surname_lat" class="form-input" value="${escapeHTML(data.surname_lat || '')}"></div>
                     </div>
                     <div class="form-row">
-                        <div class="form-group"><label>Имя (Кириллица)</label><input type="text" id="name_cyr" class="form-input" value="${escapeHTML(data.name_cyr || '')}"></div>
-                        <div class="form-group"><label>Имя (Латиница)</label><input type="text" id="name_lat" class="form-input" value="${escapeHTML(data.name_lat || '')}"></div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group"><label>Отчество (Кириллица)</label><input type="text" id="patronymic_cyr" class="form-input" value="${escapeHTML(data.patronymic_cyr || '')}"></div>
-                        <div class="form-group"><label>Отчество (Латиница)</label><input type="text" id="patronymic_lat" class="form-input" value="${escapeHTML(data.patronymic_lat || '')}"></div>
+                        <!-- Подсказка для админа писать Имя и Отчество через пробел -->
+                        <div class="form-group"><label>Имя и Отчество (Кириллица)</label><input type="text" id="name_cyr" class="form-input" value="${escapeHTML(data.name_cyr || '')}" placeholder="Иван Иванович"></div>
+                        <div class="form-group"><label>Имя (Латиница)</label><input type="text" id="name_lat" class="form-input" value="${escapeHTML(data.name_lat || '')}" placeholder="Ivan"></div>
                     </div>
                     <div class="form-row">
                         <div class="form-group"><label>Пол (Кириллица)</label><input type="text" id="gender_cyr" class="form-input" value="${escapeHTML(data.gender_cyr || '')}"></div>
@@ -742,9 +741,7 @@
             // Обработчики для виз
             document.getElementById('addVisaBtn').addEventListener('click', () => {
                 document.getElementById('visasContainer').insertAdjacentHTML('beforeend', createVisaBlock({}));
-                attachVisaRemoveHandlers();
             });
-            attachVisaRemoveHandlers();
 
             // Кнопка статуса
             if (currentPassportId) {
@@ -753,7 +750,10 @@
                 statusBtn.className = 'btn-warning';
                 statusBtn.textContent = 'Изменить статус отдельно';
                 statusBtn.style.marginLeft = '10px';
-                statusBtn.addEventListener('click', openStatusModal);
+                statusBtn.addEventListener('click', () => {
+                    currentPersonalCodeForStatus = data.personal_code;
+                    openStatusModal();
+                });
                 document.getElementById('editModalFooter').insertBefore(statusBtn, document.getElementById('savePassportBtn'));
             }
         }
@@ -774,13 +774,9 @@
             `;
         }
 
-        function attachVisaRemoveHandlers() {
-            // Встроено через onclick="this.parentElement.remove()"
-        }
-
         // ==================== СОХРАНЕНИЕ ====================
         document.getElementById('savePassportBtn').addEventListener('click', async () => {
-            // Сбор данных
+            // Сбор данных виз
             const visas = [];
             document.querySelectorAll('#visasContainer .record-block').forEach(block => {
                 visas.push({
@@ -791,13 +787,12 @@
                 });
             });
 
+            // В record больше НЕТ patronymic_cyr и patronymic_lat
             const record = {
                 surname_cyr: document.getElementById('surname_cyr').value.trim(),
                 surname_lat: document.getElementById('surname_lat').value.trim(),
-                name_cyr: document.getElementById('name_cyr').value.trim(),
+                name_cyr: document.getElementById('name_cyr').value.trim(), 
                 name_lat: document.getElementById('name_lat').value.trim(),
-                patronymic_cyr: document.getElementById('patronymic_cyr').value.trim(),
-                patronymic_lat: document.getElementById('patronymic_lat').value.trim(),
                 birth_date: document.getElementById('birth_date').value || null,
                 birth_place_cyr: document.getElementById('birth_place_cyr').value.trim(),
                 birth_place_lat: document.getElementById('birth_place_lat').value.trim(),
@@ -827,7 +822,6 @@
 
             try {
                 if (currentPassportId) {
-                    // Обновление
                     const { error } = await supabase
                         .schema('documents')
                         .from('foreign_passport')
@@ -835,7 +829,6 @@
                         .eq('id', currentPassportId);
                     if (error) throw error;
                 } else {
-                    // Добавление
                     record.created_at = new Date().toISOString();
                     const { error } = await supabase
                         .schema('documents')
@@ -899,7 +892,6 @@
                 return;
             }
 
-            // Проверяем, существует ли такой паспорт
             const { data: existing } = await supabase
                 .schema('documents')
                 .from('foreign_passport')
@@ -912,7 +904,6 @@
                 return;
             }
 
-            // Загружаем в папку foreign_passport
             const { error } = await supabase.storage
                 .from('documents-files')
                 .upload(`foreign_passport/${encodeURIComponent(personalCode)}/photo.jpg`, file, { upsert: true });
@@ -938,14 +929,6 @@
             if (!currentPassportId) return;
 
             try {
-                const { data: passport, error: fetchErr } = await supabase
-                    .schema('documents')
-                    .from('foreign_passport')
-                    .select('personal_code')
-                    .eq('id', currentPassportId)
-                    .single();
-                if (fetchErr) throw fetchErr;
-
                 const { error } = await supabase
                     .schema('documents')
                     .from('foreign_passport')
@@ -953,9 +936,8 @@
                     .eq('id', currentPassportId);
                 if (error) throw error;
 
-                // Опционально: отправка сообщения в user_messages
-                if (passport.personal_code) {
-                    const { data: userData } = await supabase.from('users').select('id').eq('personal_code', passport.personal_code).maybeSingle();
+                if (currentPersonalCodeForStatus) {
+                    const { data: userData } = await supabase.from('users').select('id').eq('personal_code', currentPersonalCodeForStatus).maybeSingle();
                     if (userData) {
                         await supabase.schema('messages').from('user_messages').insert({
                             user_id: userData.id,
