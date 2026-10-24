@@ -247,7 +247,7 @@ a.edit-btn {
 }
 
 /* ============================================================
-   6. БЛОК ID-КАРТЫ (ИСПРАВЛЕННЫЕ ПРОПОРЦИИ)
+   6. БЛОК ID-КАРТЫ (GRID)
    ============================================================ */
 .card-container {
   perspective: 1500px;
@@ -258,8 +258,7 @@ a.edit-btn {
 .card {
   position: relative;
   width: 100%;
-  height: 0;
-  padding-bottom: 63%; /* Пропорции реальной ID-карты (1.58:1) */
+  aspect-ratio: 1.58 / 1; /* Реальные пропорции ID-1 */
   transform-style: preserve-3d;
   transition: transform 0.6s;
   cursor: pointer;
@@ -271,10 +270,7 @@ a.edit-btn {
 
 .card-front, .card-back {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   backface-visibility: hidden;
   border-radius: var(--border-radius);
   background: var(--card-pink);
@@ -283,7 +279,7 @@ a.edit-btn {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: 0.75rem; /* Уменьшено для плотности */
+  font-size: 0.75rem;
 }
 
 .card-back {
@@ -295,6 +291,7 @@ a.edit-btn {
   margin-bottom: 0.4rem;
   border-bottom: 1px solid var(--card-pink-dark);
   padding-bottom: 0.2rem;
+  flex-shrink: 0; /* Заголовок не сжимается */
 }
 .card-header .title {
   font-size: 0.9rem;
@@ -321,9 +318,9 @@ a.edit-btn {
   width: 28%;
   display: flex;
   flex-direction: column;
+  justify-content: space-between; /* Фото сверху, подпись снизу */
   align-items: center;
-  justify-content: flex-start;
-  gap: 0.4rem;
+  gap: 0.2rem;
 }
 
 .photo {
@@ -363,19 +360,34 @@ a.edit-btn {
   object-fit: contain;
 }
 
+/* Сетка для полей: 7 равных строк */
 .right-col {
   width: 72%;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
+  display: grid;
+  grid-template-rows: repeat(7, minmax(0, 1fr));
+  gap: 0.1rem;
 }
 
-.field-block {
+.right-col .field-block,
+.right-col .double-field {
   display: flex;
   flex-direction: column;
+  justify-content: center; /* Центрируем текст по вертикали */
   border-bottom: 1px dashed var(--card-pink-dark);
   padding-bottom: 0.1rem;
+  min-height: 0;
 }
+
+.right-col .double-field {
+  flex-direction: row;
+  gap: 0.5rem;
+  border-bottom: none;
+}
+.right-col .double-field .field-block {
+  flex: 1;
+  border-bottom: 1px dashed var(--card-pink-dark);
+}
+
 .field-label {
   font-weight: 600;
   color: var(--text-dark);
@@ -390,25 +402,46 @@ a.edit-btn {
   word-break: break-word;
 }
 
-.double-field {
-  display: flex;
-  gap: 0.5rem;
-}
-.double-field .field-block {
-  flex: 1;
+/* ---------- Задняя сторона ---------- */
+.card-back {
+  display: grid;
+  grid-template-rows: auto repeat(6, minmax(0, 1fr));
+  gap: 0.1rem;
 }
 
-.card-back {
+.card-back > .back-block,
+.card-back > .double-back,
+.card-back > .address-row {
   display: flex;
   flex-direction: column;
-  gap: 0.2rem;
-}
-.back-block {
-  display: flex;
-  flex-direction: column;
+  justify-content: center;
   border-bottom: 1px dashed var(--card-pink-dark);
   padding-bottom: 0.1rem;
+  min-height: 0;
 }
+
+.card-back > .double-back {
+  flex-direction: row;
+  gap: 0.5rem;
+  border-bottom: none;
+}
+.card-back > .double-back .back-block {
+  flex: 1;
+  border-bottom: 1px dashed var(--card-pink-dark);
+}
+
+.card-back > .address-row {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: none;
+}
+.card-back > .address-row .back-block {
+  flex: 1;
+  border-bottom: 1px dashed var(--card-pink-dark);
+  margin-right: 0.5rem;
+}
+
 .back-label {
   font-weight: 600;
   color: var(--text-dark);
@@ -422,22 +455,7 @@ a.edit-btn {
   line-height: 1.2;
   word-break: break-word;
 }
-.double-back {
-  display: flex;
-  gap: 0.5rem;
-}
-.double-back .back-block {
-  flex: 1;
-}
-.address-row {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-end;
-}
-.address-row .back-block {
-  flex: 1;
-  border-bottom: 1px dashed var(--card-pink-dark);
-}
+
 .qr-code {
   width: 45px;
   height: 45px;
@@ -690,7 +708,7 @@ a.edit-btn {
 }
 
 /* ============================================================
-   10. МОБИЛЬНАЯ АДАПТАЦИЯ
+   10. АДАПТАЦИЯ
    ============================================================ */
 @media (max-width: 768px) {
   .profile-main { padding: 22px 12px 48px; }
@@ -724,11 +742,7 @@ a.edit-btn {
   }
 }
 
-/* Мобильная карта */
 @media (max-width: 600px) {
-  .card {
-    padding-bottom: 72%; /* Немного выше, чтобы влезло больше текста */
-  }
   .card-front, .card-back {
     padding: 0.4rem;
   }
@@ -736,8 +750,13 @@ a.edit-btn {
   .card-header .subtitle { font-size: 0.55rem; }
   
   .front-content { gap: 0.4rem; }
-  .left-col { width: 25%; }
-  .right-col { width: 75%; gap: 0.15rem; }
+  .left-col { width: 25%; gap: 0.15rem; }
+  .right-col { width: 75%; gap: 0.05rem; }
+  
+  .right-col .field-block,
+  .right-col .double-field {
+    padding-bottom: 0.05rem;
+  }
   
   .field-label, .back-label { font-size: 0.45rem; }
   .field-value, .back-value { font-size: 0.6rem; }
