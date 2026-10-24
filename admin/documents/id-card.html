@@ -223,6 +223,7 @@
 
             <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                 <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить ID-карту</button>
+                <button id="uploadPhotoBtn" class="btn-upload"><i class="fas fa-camera"></i> Загрузить фото и подпись</button>
             </div>
 
             <div id="loading" class="loading">Загрузка...</div>
@@ -321,7 +322,7 @@
                     <input type="text" id="uploadPersonalCode" class="form-input" placeholder="Введите личный код" required>
                 </div>
                 <div class="form-group">
-                    <label for="photoFile">Фото (jpg/png)</label>
+                    <label for="photoFile">Фотография (jpg/png)</label>
                     <input type="file" id="photoFile" class="form-input" accept="image/jpeg,image/png">
                 </div>
                 <div class="form-group">
@@ -480,12 +481,12 @@
             renderIdCardView(data, prevCards);
         }
 
-        async function getSignedUrl(personalCode, type) {
+        async function getSignedUrl(personalCode, filename) {
+            if (!personalCode) return null;
             try {
-                const filePath = `idcard/${encodeURIComponent(personalCode)}/${type}.jpg`;
                 const { data, error } = await supabase.storage
                     .from('documents-files')
-                    .createSignedUrl(filePath, 3600);
+                    .createSignedUrl(`id-card/${encodeURIComponent(personalCode)}/${filename}`, 3600);
                 if (error) throw error;
                 return data.signedUrl;
             } catch(e) { return null; }
@@ -494,18 +495,14 @@
         async function renderIdCardView(data, prevCards) {
             const personalCode = data.personal_code || '';
             
-            // Получаем URL фото и подписи (из Storage, либо fallback на статические)
             let photoUrl = '../../images/default-avatar.png';
             let sigUrl = '../../images/default-avatar.png';
             
             if (personalCode) {
-                const sPhoto = await getSignedUrl(personalCode, 'photo');
-                const sSig = await getSignedUrl(personalCode, 'signature');
+                const sPhoto = await getSignedUrl(personalCode, 'photo.jpg');
+                const sSig = await getSignedUrl(personalCode, 'signature.jpg');
                 if (sPhoto) photoUrl = sPhoto;
-                else photoUrl = `../../images/avatars/${personalCode}.jpg`; // fallback
-                
                 if (sSig) sigUrl = sSig;
-                else sigUrl = `../../images/avatars/signatures/${personalCode}.jpg`; // fallback
             }
 
             // Блок ранее выданных карт
@@ -663,7 +660,6 @@
             document.getElementById('idcardContent').innerHTML = html;
             document.getElementById('idcardContent').style.display = 'block';
 
-            // Генерация QR
             if (data.personal_code) {
                 new QRCode(document.getElementById('adminQrCode'), {
                     text: data.personal_code,
@@ -702,7 +698,6 @@
                 return;
             }
 
-            // Парсим массив
             let prevCards = data.previous_id_cards || [];
             if (typeof prevCards === 'string') {
                 try { prevCards = JSON.parse(prevCards); } catch { prevCards = []; }
@@ -783,14 +778,12 @@
 
             document.getElementById('editModalBody').innerHTML = html;
 
-            // Инициализация предыдущих карт
             if (data.previous_id_cards && data.previous_id_cards.length > 0) {
                 data.previous_id_cards.forEach(card => addPrevCardRow(card));
             }
 
             document.getElementById('addPrevCardBtn').addEventListener('click', () => addPrevCardRow());
 
-            // Кнопка быстрой смены статуса
             const footer = document.getElementById('editModalFooter');
             footer.innerHTML = `
                 <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
@@ -915,11 +908,11 @@
 
                 if (error) throw error;
 
-                // Удаляем фото и подпись из Storage
+                // Удаляем фото и подпись из Storage (папка id-card)
                 if (card && card.personal_code) {
                     const paths = [
-                        `idcard/${card.personal_code}/photo.jpg`,
-                        `idcard/${card.personal_code}/signature.jpg`
+                        `id-card/${card.personal_code}/photo.jpg`,
+                        `id-card/${card.personal_code}/signature.jpg`
                     ];
                     await supabase.storage.from('documents-files').remove(paths);
                 }
@@ -996,17 +989,18 @@
             }
 
             try {
+                // Загружаем в папку id-card
                 if (photoFile) {
                     const { error } = await supabase.storage
                         .from('documents-files')
-                        .upload(`idcard/${encodeURIComponent(personalCode)}/photo.jpg`, photoFile, { upsert: true });
+                        .upload(`id-card/${encodeURIComponent(personalCode)}/photo.jpg`, photoFile, { upsert: true });
                     if (error) throw error;
                 }
                 
                 if (sigFile) {
                     const { error } = await supabase.storage
                         .from('documents-files')
-                        .upload(`idcard/${encodeURIComponent(personalCode)}/signature.jpg`, sigFile, { upsert: true });
+                        .upload(`id-card/${encodeURIComponent(personalCode)}/signature.jpg`, sigFile, { upsert: true });
                     if (error) throw error;
                 }
 
