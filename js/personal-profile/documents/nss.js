@@ -114,7 +114,7 @@ function renderNss(data) {
     <div class="document-container">
       <div class="document-header">
         <div class="document-title">НОМЕР СОЦИАЛЬНОГО СЧЁТА</div>
-        <div class="document-subtitle">(НСС)</div>
+        <div class="document-subtitle">ГРАЖДАНИНА СФСРЮ</div>
       </div>
       <div class="document-content">
         <div class="qr-section">
@@ -160,7 +160,7 @@ function renderNss(data) {
     </div>
   `
 
-  document.getElementById('content').innerHTML = html + '<div id="statusAndEditContainer"></div>'
+  document.getElementById('nssContainer').innerHTML = html
 
   const qrContainer = document.getElementById('qrCode')
   if (qrContainer && data.nss_number) {
@@ -188,14 +188,12 @@ function renderNss(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  // Кнопка замены (ссылка на получение нового НСС) — всегда видна
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/nss/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить НСС'
   statusAndEdit.appendChild(replaceLink)
 
-  // Кнопка изменения данных (только если статус не verified)
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
@@ -208,6 +206,7 @@ function renderNss(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
+  document.getElementById('statusAndEditContainer').innerHTML = ''
   document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
 }
 

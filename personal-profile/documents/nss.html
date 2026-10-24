@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>НСС — СФСРЮ</title>
-  <!-- favicons (ваши пути) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -26,11 +25,8 @@
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
   
-  <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
-  <!-- Стили для НСС (зелёная тема) -->
   <link rel="stylesheet" href="../../css/personal-profile/nss.css" />
-  <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body>
@@ -57,26 +53,46 @@
       </nav>
     </div>
   </header>
+  <div class="menu-overlay"></div>
 
-  <main class="main-content">
-    <div class="container">
-      <!-- Сообщение для очень маленьких экранов -->
-      <div class="too-small-message" style="display: none;">
-        ⚠️ Ваше устройство слишком маленькое для отображения документа.
-      </div>
+  <main class="main-content profile-main">
+    <div class="too-small-message">
+      ⚠️ Ваше устройство слишком маленькое для отображения документа.
+    </div>
 
-      <div id="loading" class="loading" style="text-align: center; padding: 3rem;">Загрузка данных...</div>
-      <div id="noData" style="display: none; text-align: center; padding: 3rem;">
-        <p>У вас пока нет НСС.</p>
-        <div class="no-data-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
-          <button class="edit-btn" id="addBtn">Добавить НСС</button>
-          <a href="../../services/documents/nss/" class="edit-btn">Получить НСС</a>
+    <div class="profile-container">
+
+      <!-- Приветственный блок -->
+      <div class="greeting-block">
+        <div class="greeting-emoji" aria-hidden="true">🪪</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text">Номер социального счёта</h1>
+          <p class="greeting-subtitle">Свидетельство НСС</p>
+        </div>
+        <div class="greeting-actions">
+          <a href="../index.html" class="greeting-action-link">
+            <span aria-hidden="true">←</span> К документам
+          </a>
         </div>
       </div>
+
+      <div id="loading" class="loading">Загрузка данных...</div>
+
+      <div id="noData" class="no-data" style="display: none;">
+        <p>У вас пока нет НСС.</p>
+        <div class="no-data-actions">
+          <button class="add-btn" id="addBtn">Добавить НСС</button>
+          <a href="../../services/documents/nss/" class="add-btn">Получить НСС</a>
+        </div>
+      </div>
+
       <div id="content" style="display: none;">
-        <!-- Документ будет вставлен сюда через JS -->
+        <!-- Здесь рендерится свидетельство -->
+        <div id="nssContainer"></div>
+        <!-- Сюда JS добавит кнопки и статус -->
         <div id="statusAndEditContainer"></div>
       </div>
+
     </div>
   </main>
 
@@ -85,7 +101,7 @@
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО -->
+  <!-- Модальное окно -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
