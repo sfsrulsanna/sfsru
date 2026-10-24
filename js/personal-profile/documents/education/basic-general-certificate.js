@@ -12,7 +12,7 @@ function formatDate(dateString) {
   if (!dateString) return '—'
   try {
     const date = new Date(dateString)
-    return date.toLocaleDateString('ru-RU')
+    return date.toLocaleDateString('ru-RU') // DD.MM.YYYY
   } catch {
     return dateString
   }
@@ -49,7 +49,7 @@ async function loadData() {
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session) {
-      window.location.href = '../../../login.html' // Путь на 3 уровня вверх
+      window.location.href = '../../../login.html'
       return
     }
 
@@ -118,26 +118,104 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА ДОКУМЕНТА ====================
 function renderCertificate(data) {
-  // Получаем ФИО
   const fullName = data.full_name || `${userProfile?.surname || ''} ${userProfile?.name || ''} ${userProfile?.patronymic || ''}`.trim() || '—'
 
   // Проверка на "С ОТЛИЧИЕМ"
-  // Предполагаем, что в БД есть поле with_honors (boolean) или honors (boolean)
-  const isHonors = data.with_honors || data.honors || false
+  const isHonors = data.with_honors === true || data.honors === true
   const honorsText = isHonors ? ' С ОТЛИЧИЕМ' : ''
 
-  // Обработка предметов (могут приходить строкой JSON)
+  // Статус документа (Оригинал / Дубликат)
+  const docStatus = data.document_status || '—'
+
+  // Обработка предметов
   let subjects = data.subjects || []
   if (typeof subjects === 'string') {
     try { subjects = JSON.parse(subjects) } catch { subjects = [] }
   }
 
-  // Формируем HTML для приложения
-  let appendixHtml = ''
-  if (subjects.length > 0) {
-    appendixHtml = `
-      <div class="appendix-container">
-        <div class="appendix-header">Приложение к аттестату</div>
+  // --- РЕНДЕР САМОГО АТТЕСТАТА ---
+  let issueDateHtml = ''
+  if (data.issue_date) {
+    issueDateHtml = `
+      <div class="field-block">
+        <div class="field-label">Дата выдачи</div>
+        <div class="field-value">${formatDate(data.issue_date)}</div>
+        <div class="field-line"></div>
+      </div>
+    `
+  }
+
+  const certHtml = `
+    <div class="certificate-header">
+      <div class="title">АТТЕСТАТ</div>
+      <div class="subtitle">ОБ ОСНОВНОМ ОБЩЕМ ОБРАЗОВАНИИ${honorsText}</div>
+    </div>
+    
+    <div class="certificate-content">
+      <div class="field-block">
+        <div class="field-label">ФИО</div>
+        <div class="field-value">${escapeHTML(fullName)}</div>
+        <div class="field-line"></div>
+      </div>
+      
+      <div class="field-block">
+        <div class="field-label">Образовательное учреждение</div>
+        <div class="field-value">${escapeHTML(data.issued_by || '—')}</div>
+        <div class="field-line"></div>
+      </div>
+      
+      <div class="field-block">
+        <div class="field-label">Директор</div>
+        <div class="field-value">${escapeHTML(data.director || '—')}</div>
+        <div class="field-line"></div>
+      </div>
+
+      <div class="double-field">
+        <div class="field-block">
+          <div class="field-label">Регистрационный номер</div>
+          <div class="field-value">${escapeHTML(data.registration_number || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+        <div class="field-block">
+          <div class="field-label">Номер документа</div>
+          <div class="field-value">${escapeHTML(data.document_number || '—')}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+
+      <div class="double-field">
+        <div class="field-block">
+          <div class="field-label">Дата начала обучения</div>
+          <div class="field-value">${formatDate(data.study_start_date)}</div>
+          <div class="field-line"></div>
+        </div>
+        <div class="field-block">
+          <div class="field-label">Дата окончания обучения</div>
+          <div class="field-value">${formatDate(data.study_end_date)}</div>
+          <div class="field-line"></div>
+        </div>
+      </div>
+
+      <div class="double-field">
+        <div class="field-block">
+          <div class="field-label">Статус документа</div>
+          <div class="field-value">${escapeHTML(docStatus)}</div>
+          <div class="field-line"></div>
+        </div>
+        ${issueDateHtml}
+      </div>
+    </div>
+  `
+
+  document.getElementById('certificateContainer').innerHTML = certHtml
+
+  // --- РЕНДЕР ПРИЛОЖЕНИЯ (ОТДЕЛЬНО) ---
+  const appendixContainer = document.getElementById('appendixContainer')
+
+  if (subjects.length > 0 || data.additional_info) {
+    let subjectsTableHtml = ''
+    if (subjects.length > 0) {
+      subjectsTableHtml = `
         <table class="subjects-table">
           <thead>
             <tr>
@@ -154,49 +232,31 @@ function renderCertificate(data) {
             `).join('')}
           </tbody>
         </table>
+      `
+    }
+
+    let additionalInfoHtml = ''
+    if (data.additional_info) {
+      additionalInfoHtml = `
+        <div class="additional-info-block">
+          <div class="additional-info-title">Дополнительная информация</div>
+          <div class="additional-info-text">${escapeHTML(data.additional_info)}</div>
+        </div>
+      `
+    }
+
+    appendixContainer.innerHTML = `
+      <div class="appendix-container">
+        <div class="appendix-header">Приложение к аттестату</div>
+        ${subjectsTableHtml}
+        ${additionalInfoHtml}
       </div>
     `
+  } else {
+    appendixContainer.innerHTML = ''
   }
 
-  const html = `
-    <div class="certificate-header">
-      <div class="title">АТТЕСТАТ</div>
-      <div class="subtitle">ОБ ОСНОВНОМ ОБЩЕМ ОБРАЗОВАНИИ${honorsText}</div>
-    </div>
-    
-    <div class="certificate-content">
-      <div class="field-block">
-        <div class="field-label">ФИО</div>
-        <div class="field-value">${escapeHTML(fullName)}</div>
-        <div class="field-line"></div>
-      </div>
-      
-      <div class="field-block">
-        <div class="field-label">Кем выдан</div>
-        <div class="field-value">${escapeHTML(data.issued_by || '—')}</div>
-        <div class="field-line"></div>
-      </div>
-      
-      <div class="field-block">
-        <div class="field-label">Директор</div>
-        <div class="field-value">${escapeHTML(data.director || '—')}</div>
-        <div class="field-line"></div>
-      </div>
-      
-      <div class="field-block">
-        <div class="field-label">Номер документа</div>
-        <div class="field-value">${escapeHTML(data.document_number || '—')}</div>
-        <div class="field-line"></div>
-      </div>
-
-      <!-- Блок с оценками -->
-      ${appendixHtml}
-    </div>
-  `
-
-  document.getElementById('certificateContainer').innerHTML = html
-
-  // Блок статуса (без кнопки редактирования)
+  // --- РЕНДЕР СТАТУСА (ВНИЗУ) ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
