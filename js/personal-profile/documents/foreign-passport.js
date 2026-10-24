@@ -45,6 +45,20 @@ function escapeHTML(str) {
     .replace(/'/g, '&#039;')
 }
 
+// Получение ссылки из Storage
+async function getSignedUrl(personalCode, filename) {
+  if (!personalCode) return null
+  try {
+    const { data, error } = await supabase.storage
+      .from('documents-files')
+      .createSignedUrl(`foreign-passport/${encodeURIComponent(personalCode)}/${filename}`, 3600)
+    if (error) throw error
+    return data.signedUrl
+  } catch (err) {
+    return null
+  }
+}
+
 /* ---------------- ЗАГРУЗКА ПРОФИЛЯ ---------------- */
 async function loadUserProfile() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
@@ -285,17 +299,35 @@ function renderPassport(data) {
 
   if (personalCode) {
     const safeCode = personalCode.replace(/[^a-zA-Z0-9\-]/g, '')
-    const imgUrl = `../../images/avatars/${safeCode}.jpg`
-    const img = new Image()
-    img.onload = () => { avatarImg.src = imgUrl }
-    img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
-    img.src = imgUrl
 
-    const sigUrl = `../../images/avatars/signatures/${safeCode}.jpg`
-    const sig = new Image()
-    sig.onload = () => { signatureImg.src = sigUrl }
-    sig.onerror = () => { signatureImg.src = '../../images/default-signature.png' }
-    sig.src = sigUrl
+    // Фото
+    getSignedUrl(personalCode, 'photo.jpg').then(url => {
+      if (url) {
+        avatarImg.src = url
+      } else {
+        const staticUrl = `../../images/avatars/${safeCode}.jpg`
+        const img = new Image()
+        img.onload = () => { avatarImg.src = staticUrl }
+        img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
+        img.src = staticUrl
+      }
+    })
+
+    // Подпись
+    getSignedUrl(personalCode, 'signature.jpg').then(url => {
+      if (url) {
+        signatureImg.src = url
+      } else {
+        const staticSig = `../../images/avatars/signatures/${safeCode}.jpg`
+        const sig = new Image()
+        sig.onload = () => { signatureImg.src = staticSig }
+        sig.onerror = () => { signatureImg.src = '../../images/default-signature.png' }
+        sig.src = staticSig
+      }
+    })
+  } else {
+    avatarImg.src = '../../images/default-avatar.png'
+    signatureImg.src = '../../images/default-signature.png'
   }
 
   const qrContainer = document.getElementById('passportQrCode')
@@ -334,7 +366,7 @@ function renderPassport(data) {
   // --- Проверка срока действия ---
   if (data.expiry_date) {
     const expiryDate = new Date(data.expiry_date)
-    expiryDate.setHours(23, 59, 59, 999) // конец дня
+    expiryDate.setHours(23, 59, 59, 999)
     const today = new Date()
 
     const diffTime = expiryDate - today
@@ -443,10 +475,10 @@ function renderStep1() {
       <input type="text" id="surname_cyr" class="form-input" value="${escapeHTML(formData.surname_cyr || '')}"></div>
     <div class="form-group"><label>Фамилия (латиница)</label>
       <input type="text" id="surname_lat" class="form-input" value="${escapeHTML(formData.surname_lat || '')}"></div>
-    <div class="form-group"><label>Имя (кириллица)</label>
-      <input type="text" id="name_cyr" class="form-input" value="${escapeHTML(formData.name_cyr || '')}"></div>
+    <div class="form-group"><label>Имя и Отчество (кириллица)</label>
+      <input type="text" id="name_cyr" class="form-input" value="${escapeHTML(formData.name_cyr || '')}" placeholder="Иван Иванович"></div>
     <div class="form-group"><label>Имя (латиница)</label>
-      <input type="text" id="name_lat" class="form-input" value="${escapeHTML(formData.name_lat || '')}"></div>
+      <input type="text" id="name_lat" class="form-input" value="${escapeHTML(formData.name_lat || '')}" placeholder="Ivan"></div>
     <div class="form-group"><label>Дата рождения</label>
       <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}"></div>
     <div class="form-group"><label>Место рождения (кириллица)</label>

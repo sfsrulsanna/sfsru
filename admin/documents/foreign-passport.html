@@ -169,7 +169,7 @@
 
             <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                 <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить паспорт</button>
-                <button id="uploadPhotoBtn" class="btn-upload-photo"><i class="fas fa-camera"></i> Загрузить фото</button>
+                <button id="uploadPhotoBtn" class="btn-upload-photo"><i class="fas fa-camera"></i> Загрузить фото и подпись</button>
             </div>
 
             <div id="loading" class="loading">Загрузка...</div>
@@ -260,7 +260,7 @@
     <div id="uploadPhotoModal" class="modal-overlay">
         <div class="modal" style="max-width: 500px;">
             <div class="modal-header">
-                <h4>Загрузка фото</h4>
+                <h4>Загрузка фото и подписи</h4>
                 <button type="button" class="close-modal" onclick="closeUploadModal()">&times;</button>
             </div>
             <div class="modal-body">
@@ -269,8 +269,12 @@
                     <input type="text" id="uploadPersonalCode" class="form-input" placeholder="Введите личный код" required>
                 </div>
                 <div class="form-group">
-                    <label for="photoFile">Файл фото (jpg/png)</label>
+                    <label for="photoFile">Фотография (jpg/png)</label>
                     <input type="file" id="photoFile" class="form-input" accept="image/jpeg,image/png">
+                </div>
+                <div class="form-group">
+                    <label for="signatureFile">Подпись (jpg/png)</label>
+                    <input type="file" id="signatureFile" class="form-input" accept="image/jpeg,image/png">
                 </div>
             </div>
             <div class="modal-footer">
@@ -422,7 +426,7 @@
             renderPassportInModal(data);
         }
 
-        function renderPassportInModal(data) {
+        async function renderPassportInModal(data) {
             let borderColor = '#7b091a';
             if (data.passport_type === 'дипломатический') borderColor = '#0d4d26';
             else if (data.passport_type === 'служебный') borderColor = '#0d2a4d';
@@ -487,6 +491,7 @@
                                 </div>
                                 <div class="qr-signature-wrap">
                                     <div id="passportQrCode"></div>
+                                    <img id="adminSignatureImg" src="../../images/default-signature.png" alt="Подпись" class="signature-img" />
                                 </div>
                             </div>
 
@@ -500,7 +505,6 @@
                                 <div class="data-field">
                                     <div class="field-label">Имя</div>
                                     <div class="field-label-english">Given names</div>
-                                    <!-- Здесь выводится Имя + Отчество (одно поле) -->
                                     <div class="field-value">${escapeHTML(data.name_cyr || '—')}</div>
                                     <div class="field-value-english">${escapeHTML(data.name_lat || '—')}</div>
                                 </div>
@@ -536,15 +540,21 @@
             document.getElementById('passportContent').innerHTML = html;
             document.getElementById('passportContent').style.display = 'block';
 
-            // Генерация QR и штрихкода, загрузка фото
             const personalCode = data.personal_code || '';
             if (personalCode) {
                 new QRCode(document.getElementById('passportQrCode'), {
                     text: `https://e-pass-sfsru.web.app/${personalCode}/`,
                     width: 76, height: 76, colorDark: '#000', colorLight: '#fff'
                 });
-                getSignedUrl(personalCode).then(url => {
+                
+                // Загружаем фото
+                getSignedUrl(personalCode, 'photo.jpg').then(url => {
                     if (url) document.getElementById('passportAvatar').src = url;
+                });
+                
+                // Загружаем подпись
+                getSignedUrl(personalCode, 'signature.jpg').then(url => {
+                    if (url) document.getElementById('adminSignatureImg').src = url;
                 });
             }
 
@@ -603,14 +613,17 @@
             document.getElementById('viewLoading').style.display = 'none';
         }
 
-        async function getSignedUrl(personalCode) {
+        async function getSignedUrl(personalCode, filename) {
+            if (!personalCode) return null;
             try {
                 const { data, error } = await supabase.storage
                     .from('documents-files')
-                    .createSignedUrl(`foreign_passport/${encodeURIComponent(personalCode)}/photo.jpg`, 3600);
+                    .createSignedUrl(`foreign-passport/${encodeURIComponent(personalCode)}/${filename}`, 3600);
                 if (error) throw error;
                 return data.signedUrl;
-            } catch(e) { return null; }
+            } catch(e) { 
+                return null; 
+            }
         }
 
         // ==================== РЕДАКТИРОВАНИЕ / ДОБАВЛЕНИЕ ====================
@@ -644,10 +657,8 @@
         }
 
         function renderEditForm(data) {
-            // Инициализация массива виз
             const visas = data.visas || [];
 
-            // ВАЖНО: Убраны отдельные поля patronymic_cyr и patronymic_lat
             const html = `
                 <div class="form-section">
                     <h4>ФИО и гражданство</h4>
@@ -656,7 +667,6 @@
                         <div class="form-group"><label>Фамилия (Латиница)</label><input type="text" id="surname_lat" class="form-input" value="${escapeHTML(data.surname_lat || '')}"></div>
                     </div>
                     <div class="form-row">
-                        <!-- Подсказка для админа писать Имя и Отчество через пробел -->
                         <div class="form-group"><label>Имя и Отчество (Кириллица)</label><input type="text" id="name_cyr" class="form-input" value="${escapeHTML(data.name_cyr || '')}" placeholder="Иван Иванович"></div>
                         <div class="form-group"><label>Имя (Латиница)</label><input type="text" id="name_lat" class="form-input" value="${escapeHTML(data.name_lat || '')}" placeholder="Ivan"></div>
                     </div>
@@ -738,12 +748,10 @@
 
             document.getElementById('editModalBody').innerHTML = html;
 
-            // Обработчики для виз
             document.getElementById('addVisaBtn').addEventListener('click', () => {
                 document.getElementById('visasContainer').insertAdjacentHTML('beforeend', createVisaBlock({}));
             });
 
-            // Кнопка статуса
             if (currentPassportId) {
                 const statusBtn = document.createElement('button');
                 statusBtn.type = 'button';
@@ -776,7 +784,6 @@
 
         // ==================== СОХРАНЕНИЕ ====================
         document.getElementById('savePassportBtn').addEventListener('click', async () => {
-            // Сбор данных виз
             const visas = [];
             document.querySelectorAll('#visasContainer .record-block').forEach(block => {
                 visas.push({
@@ -787,7 +794,6 @@
                 });
             });
 
-            // В record больше НЕТ patronymic_cyr и patronymic_lat
             const record = {
                 surname_cyr: document.getElementById('surname_cyr').value.trim(),
                 surname_lat: document.getElementById('surname_lat').value.trim(),
@@ -865,9 +871,11 @@
                 if (deleteError) throw deleteError;
 
                 if (passport && passport.personal_code) {
-                    await supabase.storage
-                        .from('documents-files')
-                        .remove([`foreign_passport/${encodeURIComponent(passport.personal_code)}/photo.jpg`]);
+                    const paths = [
+                        `foreign-passport/${passport.personal_code}/photo.jpg`,
+                        `foreign-passport/${passport.personal_code}/signature.jpg`
+                    ];
+                    await supabase.storage.from('documents-files').remove(paths);
                 }
 
                 alert('Паспорт успешно удалён');
@@ -885,13 +893,19 @@
 
         document.getElementById('confirmUploadBtn').addEventListener('click', async () => {
             const personalCode = document.getElementById('uploadPersonalCode').value.trim();
-            const file = document.getElementById('photoFile').files[0];
+            const photoFile = document.getElementById('photoFile').files[0];
+            const sigFile = document.getElementById('signatureFile').files[0];
 
-            if (!personalCode || !file) {
-                alert('Введите личный код и выберите файл');
+            if (!personalCode) {
+                alert('Введите личный код');
+                return;
+            }
+            if (!photoFile && !sigFile) {
+                alert('Выберите хотя бы один файл (фото или подпись)');
                 return;
             }
 
+            // Проверяем, существует ли такой паспорт
             const { data: existing } = await supabase
                 .schema('documents')
                 .from('foreign_passport')
@@ -904,15 +918,24 @@
                 return;
             }
 
-            const { error } = await supabase.storage
-                .from('documents-files')
-                .upload(`foreign_passport/${encodeURIComponent(personalCode)}/photo.jpg`, file, { upsert: true });
+            try {
+                if (photoFile) {
+                    const { error: err1 } = await supabase.storage
+                        .from('documents-files')
+                        .upload(`foreign-passport/${encodeURIComponent(personalCode)}/photo.jpg`, photoFile, { upsert: true });
+                    if (err1) throw err1;
+                }
+                if (sigFile) {
+                    const { error: err2 } = await supabase.storage
+                        .from('documents-files')
+                        .upload(`foreign-passport/${encodeURIComponent(personalCode)}/signature.jpg`, sigFile, { upsert: true });
+                    if (err2) throw err2;
+                }
 
-            if (error) {
-                alert('Ошибка загрузки фото: ' + error.message);
-            } else {
-                alert('Фото успешно загружено!');
+                alert('Файлы успешно загружены!');
                 closeUploadModal();
+            } catch (err) {
+                alert('Ошибка загрузки: ' + err.message);
             }
         });
 
@@ -978,6 +1001,7 @@
             document.getElementById('uploadPhotoModal').classList.remove('active');
             document.getElementById('uploadPersonalCode').value = '';
             document.getElementById('photoFile').value = '';
+            document.getElementById('signatureFile').value = '';
         };
     </script>
 </body>
