@@ -1,4 +1,4 @@
-/* ===== marriage-certificate.css – ИСПРАВЛЕННАЯ ВЕРСИЯ ===== */
+/* ===== marriage-certificate.css – розовая тема ===== */
 :root {
   --primary-pink: #c44569;
   --dark-pink: #9e3a55;
@@ -24,18 +24,113 @@ html {
   html { font-size: clamp(12px, 3vw, 16px); }
 }
 
-.main-content {
-  padding: 2rem 0;
-  background: white;
+/* ============================================================
+   1. ОБЁРТКА СТРАНИЦЫ
+   ============================================================ */
+.profile-main {
+  padding: 34px 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
   min-height: 100vh;
 }
-
-.container {
-  max-width: 900px;
+.profile-container {
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 1.5rem;
 }
 
+/* ============================================================
+   2. ПРИВЕТСТВЕННЫЙ БЛОК
+   ============================================================ */
+.greeting-block {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 26px 28px;
+  margin: 0 0 26px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+  border: 1px solid #f1d7d7;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+  overflow: hidden;
+}
+.greeting-block::after {
+  content: "";
+  position: absolute;
+  right: -70px; top: -70px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+  pointer-events: none;
+}
+.greeting-emoji {
+  flex-shrink: 0;
+  font-size: 3rem;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.greeting-content {
+  flex: 1 1 220px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.greeting-text {
+  margin: 0 0 6px;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+}
+.greeting-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #6b6b6b;
+  line-height: 1.45;
+}
+.greeting-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+.greeting-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  color: #2a2a2a;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.greeting-action-link:hover,
+.greeting-action-link:focus-visible {
+  border-color: #b30000;
+  background: #fff5f5;
+  color: #b30000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+  outline: none;
+}
+
+/* ============================================================
+   3. ЗАГРУЗКА
+   ============================================================ */
 .loading, .no-data {
   text-align: center;
   padding: 3rem 1rem;
@@ -43,7 +138,9 @@ html {
   color: #666;
 }
 
-/* ===== КАРТОЧКА ===== */
+/* ============================================================
+   4. КАРТОЧКА
+   ============================================================ */
 .certificate-container {
   max-width: 800px;
   margin: 0 auto 30px;
@@ -112,7 +209,7 @@ html {
   color: var(--primary-pink);
 }
 
-/* ===== АКТОВАЯ ЗАПИСЬ (НОВАЯ ВЕРСИЯ) ===== */
+/* ===== АКТОВАЯ ЗАПИСЬ ===== */
 .act-record {
   margin: 1.5rem 0;
 }
@@ -150,61 +247,6 @@ html {
   margin: 0.1rem 0 0.2rem;
 }
 
-/* ===== АКТОВАЯ ЗАПИСЬ – МОБИЛЬНАЯ ВЕРСИЯ ===== */
-@media (max-width: 600px) {
-  .act-record {
-    margin: 0.5rem 0;
-  }
-
-  /* Основная строка с годом, месяцем, числом */
-  .act-row {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.3rem 0.5rem;
-    margin-bottom: 0.3rem;
-  }
-
-  .act-label {
-    white-space: nowrap;
-    font-size: 0.9rem;
-    color: var(--primary-pink);
-  }
-
-  .act-field {
-    flex: 1 1 0;            /* поле занимает всё свободное пространство */
-    min-width: 50px;         /* минимальная ширина для узких экранов */
-    margin-bottom: 0;
-  }
-
-  .act-field .field-value {
-    font-size: 1.1rem;
-    margin-bottom: 0;
-    text-align: center;      /* значение по центру линии */
-  }
-
-  .act-field .field-line {
-    margin: 0.1rem 0 0;
-    width: 100%;
-  }
-
-  /* Строка с номером актовой записи */
-  .act-row:last-child {
-    flex-wrap: wrap;
-  }
-
-  .act-row:last-child .act-label {
-    white-space: normal;      /* разрешаем перенос длинной надписи */
-    flex: 0 0 auto;           /* не растягиваем */
-  }
-
-  .act-row:last-child .act-field {
-    flex: 1 1 0;              /* поле под номером занимает остаток */
-    min-width: 80px;
-  }
-}
-
 /* ===== ГРАЖДАНСТВО ===== */
 .citizenship-row {
   display: flex;
@@ -217,7 +259,7 @@ html {
   min-width: 120px;
 }
 
-/* ===== ВСЕ СТРОКИ С ПОДПИСЯМИ (ЦЕНТРИРОВАНИЕ ЗНАЧЕНИЙ) ===== */
+/* ===== СТРОКИ С ПОДПИСЯМИ ===== */
 .spouse-row,
 .marriage-row,
 .assigned-row {
@@ -256,7 +298,7 @@ html {
   width: 100%;
 }
 
-/* Исключение для места регистрации и выдачи – они не центрируются */
+/* Широкие блоки */
 .marriage-row.has-wide-label {
   position: static;
   display: block;
@@ -297,8 +339,22 @@ html {
   width: 240px;
 }
 
-/* ===== ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ ===== */
-/* ===== ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ (исправленная) ===== */
+/* ===== ДАТА РОЖДЕНИЯ + ЛИЧНЫЙ КОД ===== */
+.birth-details-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+  align-items: baseline;
+}
+.birth-details-row .field-block {
+  flex: 1;
+  min-width: 120px;
+}
+.birth-details-row .field-block .field-value {
+  text-align: center;
+}
+
+/* ===== ПРАВАЯ ИНФОРМАЦИЯ ===== */
 .right-info-container {
   margin-left: auto;
   width: fit-content;
@@ -310,17 +366,17 @@ html {
   display: flex;
   align-items: baseline;
   gap: 1rem;
-  margin-bottom: 0.6rem; /* уменьшен отступ между строками */
+  margin-bottom: 0.6rem;
 }
 
 .right-label {
   font-size: 0.95rem;
   color: var(--primary-pink);
-  white-space: normal; /* разрешаем перенос длинных слов */
+  white-space: normal;
   text-align: right;
-  width: 200px; /* увеличена ширина для длинной надписи */
+  width: 200px;
   flex-shrink: 0;
-  line-height: 1.2; /* уменьшен межстрочный интервал */
+  line-height: 1.2;
 }
 
 .right-field {
@@ -335,7 +391,7 @@ html {
   color: var(--text-dark);
   word-break: break-word;
   margin-bottom: 0.1rem;
-  line-height: 1.2; /* уменьшен межстрочный интервал */
+  line-height: 1.2;
 }
 
 .right-field .field-line {
@@ -343,33 +399,6 @@ html {
   background: var(--field-bg);
   width: 100%;
   margin: 0.1rem 0 0.2rem;
-}
-
-/* Адаптация для мобильных */
-@media (max-width: 600px) {
-  .right-info-container {
-    margin-left: 0;
-    width: 100%;
-  }
-  .right-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.2rem;
-    margin-bottom: 0.8rem;
-  }
-  .right-label {
-    width: auto;
-    text-align: left;
-    white-space: normal;
-  }
-  .right-field {
-    min-width: auto;
-  }
-}
-@media (max-width: 600px) {
-  .right-field .field-value {
-    font-size: 1rem; /* или другой размер, соответствующий общему шрифту данных */
-  }
 }
 
 /* ===== СЕРИЯ И НОМЕР ===== */
@@ -400,30 +429,12 @@ html {
   line-height: 1.5;
 }
 
-.status-verified {
-  background: rgba(40, 167, 69, 0.15);
-  color: #28a745;
-}
+.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-pending { background: rgba(255, 193, 7, 0.15); color: #856404; }
+.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.status-archived { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
 
-.status-pending {
-  background: rgba(255, 193, 7, 0.15);
-  color: #856404;
-}
-
-.status-rejected {
-  background: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
-}
-
-.status-archived {
-  background: rgba(108, 117, 125, 0.15);
-  color: #6c757d;
-}
-
-.edit-btn,
-.btn-primary,
-.btn-secondary,
-a.edit-btn {
+.edit-btn {
   display: inline-block;
   padding: 0.6rem 1.5rem;
   font-size: 1rem;
@@ -435,36 +446,35 @@ a.edit-btn {
   border: none;
   cursor: pointer;
   transition: opacity 0.2s ease, background 0.2s ease;
-}
-
-.edit-btn,
-.btn-primary,
-a.edit-btn {
   background: var(--primary-pink);
   color: white;
 }
-
-.edit-btn:hover,
-.btn-primary:hover,
-a.edit-btn:hover {
+.edit-btn:hover {
   background: var(--dark-pink);
 }
 
-.btn-secondary {
-  background: var(--secondary-gray) !important;
-  color: white;
-}
-
-.btn-secondary:hover {
-  background: #5a6268 !important;
-}
-
 /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
-@media (max-width: 600px) {
+@media (max-width: 640px) {
+  .profile-main { padding: 22px 12px 48px; }
+
+  /* Приветствие */
+  .greeting-block { padding: 22px 20px; gap: 16px; }
+  .greeting-emoji { font-size: 2.2rem; }
+  .greeting-text { font-size: 1.4rem; }
+  .greeting-subtitle { font-size: 0.9rem; }
+  .greeting-actions {
+    flex-direction: row;
+    flex: 1 1 100%;
+    width: 100%;
+    gap: 8px;
+  }
+  .greeting-actions > * { flex: 1 1 0; }
+  .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
   .certificate-header .title { font-size: 1.5rem; }
   .certificate-header .subtitle { font-size: 1rem; }
   .field-value { font-size: 1rem; }
-  
+
   .spouse-row,
   .marriage-row,
   .assigned-row {
@@ -475,7 +485,7 @@ a.edit-btn:hover {
     min-height: auto;
     margin: 1rem 0;
   }
-  
+
   .spouse-title,
   .marriage-label,
   .assigned-label {
@@ -485,136 +495,76 @@ a.edit-btn:hover {
     margin-bottom: 0.2rem;
     width: auto;
   }
-  
+
   .spouse-row .field-value,
   .marriage-row .field-value,
   .assigned-row .field-value {
     text-align: center !important;
   }
-  
+
   .citizenship-row,
-  .info-row {
+  .info-row,
+  .birth-details-row {
     flex-direction: column;
     align-items: stretch;
     gap: 0.2rem;
   }
-  
-  .right-info {
-    align-items: center;
+
+  .right-info-container {
+    margin-left: 0;
+    width: 100%;
   }
-  
+
+  .right-label {
+    width: auto;
+    text-align: left;
+  }
+
+  .right-field {
+    min-width: auto;
+  }
+
+  .right-field .field-value {
+    font-size: 1rem;
+  }
+
   .series-number {
     font-size: 1.2rem;
   }
-  
+
   .status-and-edit {
     flex-direction: column;
   }
-  
+
   .edit-btn {
     width: 100%;
     text-align: center;
   }
-  
-  .citizenship-row {
-    flex-direction: column;
-    gap: 0.5rem;
+
+  .act-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.5rem;
+    margin-bottom: 0.3rem;
   }
-}
-
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-.modal-overlay.active {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 700px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h4 {
-  margin: 0;
-  color: var(--primary-pink);
-  font-size: 1.25rem;
-}
-
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-}
-
-.close-modal:hover { color: var(--primary-pink); }
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid #eee;
-}
-
-.form-group {
-  margin-bottom: 1.2rem;
-}
-
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  color: var(--primary-pink);
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-
-.form-input[readonly] {
-  background: #f5f5f5;
-  cursor: not-allowed;
+  .act-label {
+    white-space: nowrap;
+  }
+  .act-field {
+    flex: 1 1 0;
+    min-width: 50px;
+  }
+  .act-field .field-value {
+    font-size: 1.1rem;
+  }
+  .act-row:last-child .act-label {
+    white-space: normal;
+    flex: 0 0 auto;
+  }
+  .act-row:last-child .act-field {
+    flex: 1 1 0;
+    min-width: 80px;
+  }
 }
 
 /* ===== СЛИШКОМ МАЛЕНЬКИЙ ЭКРАН ===== */
@@ -636,44 +586,11 @@ a.edit-btn:hover {
   }
   .certificate-container,
   #content,
-  .status-and-edit,
-  .modal-overlay {
+  .status-and-edit {
     display: none !important;
   }
 }
-/* ===== СТРОКА С ДАТОЙ РОЖДЕНИЯ И ЛИЧНЫМ КОДОМ ===== */
-.birth-details-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.8rem;
-  align-items: baseline;
-}
-.birth-details-row .birth-label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--primary-green);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.birth-details-row .field-block {
-  flex: 1;
-  min-width: 120px;
-}
-.birth-details-row .field-block .field-value {
-  text-align: center;
-}
 
-/* Адаптация для мобильных */
-@media (max-width: 600px) {
-  .birth-details-row {
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .birth-details-row .birth-label {
-    text-align: left;
-    margin-bottom: 0.1rem;
-  }
-}
 /* Заголовок для блока присвоенных фамилий */
 .assigned-header {
   margin: 0.5rem 0 0.5rem 0;

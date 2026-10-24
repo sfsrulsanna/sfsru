@@ -7,36 +7,6 @@ let userPersonalCode = null
 let userProfile = null
 let userId = null
 
-let formData = {
-  father_full_name: '',
-  father_birth_date: '',
-  father_birth_place: '',
-  father_citizenship: '',
-  father_nationality: '',
-  father_personal_code: '',
-  child_full_name: '',
-  child_birth_date: '',
-  child_birth_place: '',
-  child_personal_code: '',
-  mother_full_name: '',
-  mother_birth_date: '',
-  mother_birth_place: '',
-  mother_citizenship: '',
-  mother_nationality: '',
-  mother_personal_code: '',
-  registry_act_date: '',
-  registry_act_number: '',
-  new_child_full_name: '',
-  registry_place: '',
-  issue_place: '',
-  registry_official: '',
-  certificate_series_number: '',
-  issue_date: '',
-  owner_full_name: '',
-  personal_code: '',
-  status: 'oncheck'
-}
-
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function formatDate(dateString) {
   if (!dateString) return '—'
@@ -99,7 +69,7 @@ async function loadData() {
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session) {
-      window.location.href = '../../login.html'
+      window.location.href = '../../../login.html' // Путь исправлен на 3 уровня вверх
       return
     }
 
@@ -372,15 +342,15 @@ function renderCertificate(data) {
         </div>
       </div>
 
-<!-- Новое ФИО ребёнка после установления отцовства -->
-<div class="marriage-row has-wide-label">
-  <span class="marriage-label wide-label">после установления отцовства ребенку присвоены</span>
-  <div class="field-block marriage-field">
-    <div class="field-value" style="text-align: center !important;">${escapeHTML(data.new_child_full_name || '—')}</div>
-    <div class="field-line"></div>
-            <div class="field-label">фамилия, имя, отчество</div>
-  </div>
-</div>
+      <!-- Новое ФИО ребёнка после установления отцовства -->
+      <div class="marriage-row has-wide-label">
+        <span class="marriage-label wide-label">после установления отцовства ребенку присвоены</span>
+        <div class="field-block marriage-field">
+          <div class="field-value" style="text-align: center !important;">${escapeHTML(data.new_child_full_name || '—')}</div>
+          <div class="field-line"></div>
+          <div class="field-label">фамилия, имя, отчество</div>
+        </div>
+      </div>
 
       <!-- Место государственной регистрации -->
       <div class="marriage-row has-wide-label">
@@ -427,7 +397,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок (без изменений)
+  // Блок статуса (без кнопок редактирования)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
@@ -440,302 +410,17 @@ function renderCertificate(data) {
   statusAndEdit.appendChild(statusSpan)
   
   const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/fatherhood-certificate/'
+  replaceLink.href = '../../../services/documents/fatherhood-certificate/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить свидетельство'
   statusAndEdit.appendChild(replaceLink)
   
-  if (data.status !== 'verified') {
-    const editBtn = document.createElement('button')
-    editBtn.className = 'edit-btn'
-    editBtn.id = 'editBtn'
-    editBtn.textContent = 'Изменить данные'
-    editBtn.addEventListener('click', () => {
-      formData = { ...data }
-      openEditModal()
-    })
-    statusAndEdit.appendChild(editBtn)
-  }
-  
-  document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
-}
-
-// ==================== МОДАЛЬНОЕ ОКНО ====================
-window.closeModal = function() {
-  document.getElementById('modalOverlay').classList.remove('active')
-}
-
-function openModal(title) {
-  document.getElementById('modalTitle').textContent = title
-  document.getElementById('modalOverlay').classList.add('active')
-  renderModalForm()
-}
-
-function renderModalForm() {
-  const modalBody = document.getElementById('modalBody')
-  if (!modalBody) return
-
-  // Формируем полное имя владельца из профиля
-  const ownerFullName = userProfile ? `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() : ''
-
-  modalBody.innerHTML = `
-    <h4>Отец</h4>
-    <div class="form-group">
-      <label>ФИО отца (полностью)</label>
-      <input type="text" id="edit_father_full_name" class="form-input" value="${escapeHTML(formData.father_full_name || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения отца</label>
-      <input type="date" id="edit_father_birth_date" class="form-input" value="${formData.father_birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения отца</label>
-      <input type="text" id="edit_father_birth_place" class="form-input" value="${escapeHTML(formData.father_birth_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Гражданство отца</label>
-      <input type="text" id="edit_father_citizenship" class="form-input" value="${escapeHTML(formData.father_citizenship || '')}">
-    </div>
-    <div class="form-group">
-      <label>Национальность отца</label>
-      <input type="text" id="edit_father_nationality" class="form-input" value="${escapeHTML(formData.father_nationality || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код отца</label>
-      <input type="text" id="edit_father_personal_code" class="form-input" value="${escapeHTML(formData.father_personal_code || '')}">
-    </div>
-
-    <h4>Ребёнок (до установления отцовства)</h4>
-    <div class="form-group">
-      <label>ФИО ребёнка (полностью)</label>
-      <input type="text" id="edit_child_full_name" class="form-input" value="${escapeHTML(formData.child_full_name || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения ребёнка</label>
-      <input type="date" id="edit_child_birth_date" class="form-input" value="${formData.child_birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения ребёнка</label>
-      <input type="text" id="edit_child_birth_place" class="form-input" value="${escapeHTML(formData.child_birth_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код ребёнка</label>
-      <input type="text" id="edit_child_personal_code" class="form-input" value="${escapeHTML(formData.child_personal_code || '')}">
-    </div>
-
-    <h4>Мать</h4>
-    <div class="form-group">
-      <label>ФИО матери (полностью)</label>
-      <input type="text" id="edit_mother_full_name" class="form-input" value="${escapeHTML(formData.mother_full_name || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения матери</label>
-      <input type="date" id="edit_mother_birth_date" class="form-input" value="${formData.mother_birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения матери</label>
-      <input type="text" id="edit_mother_birth_place" class="form-input" value="${escapeHTML(formData.mother_birth_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Гражданство матери</label>
-      <input type="text" id="edit_mother_citizenship" class="form-input" value="${escapeHTML(formData.mother_citizenship || '')}">
-    </div>
-    <div class="form-group">
-      <label>Национальность матери</label>
-      <input type="text" id="edit_mother_nationality" class="form-input" value="${escapeHTML(formData.mother_nationality || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код матери</label>
-      <input type="text" id="edit_mother_personal_code" class="form-input" value="${escapeHTML(formData.mother_personal_code || '')}">
-    </div>
-
-    <h4>Актовая запись</h4>
-    <div class="form-group">
-      <label>Дата актовой записи</label>
-      <input type="date" id="edit_registry_act_date" class="form-input" value="${formData.registry_act_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Номер актовой записи</label>
-      <input type="text" id="edit_registry_act_number" class="form-input" value="${escapeHTML(formData.registry_act_number || '')}">
-    </div>
-
-    <h4>После установления отцовства</h4>
-    <div class="form-group">
-      <label>Новое ФИО ребёнка (после установления)</label>
-      <input type="text" id="edit_new_child_full_name" class="form-input" value="${escapeHTML(formData.new_child_full_name || '')}">
-    </div>
-
-    <h4>Свидетельство</h4>
-    <div class="form-group">
-      <label>Место регистрации</label>
-      <input type="text" id="edit_registry_place" class="form-input" value="${escapeHTML(formData.registry_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Место выдачи свидетельства</label>
-      <input type="text" id="edit_issue_place" class="form-input" value="${escapeHTML(formData.issue_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Руководитель органа ЗАГС</label>
-      <input type="text" id="edit_registry_official" class="form-input" value="${escapeHTML(formData.registry_official || '')}">
-    </div>
-    <div class="form-group">
-      <label>Серия и номер свидетельства</label>
-      <input type="text" id="edit_certificate_series_number" class="form-input" value="${escapeHTML(formData.certificate_series_number || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата выдачи</label>
-      <input type="date" id="edit_issue_date" class="form-input" value="${formData.issue_date || ''}">
-    </div>
-
-    <h4>Владелец свидетельства</h4>
-    <div class="form-group">
-      <label>ФИО владельца</label>
-      <input type="text" id="edit_owner_full_name" class="form-input" value="${escapeHTML(formData.owner_full_name || ownerFullName)}">
-    </div>
-    <div class="form-group">
-      <label>Личный код владельца</label>
-      <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
-    </div>
-  `
-}
-
-function collectFormData() {
-  const getVal = (id) => (document.getElementById(id)?.value || '').trim()
-  return {
-    father_full_name: getVal('edit_father_full_name'),
-    father_birth_date: getVal('edit_father_birth_date'),
-    father_birth_place: getVal('edit_father_birth_place'),
-    father_citizenship: getVal('edit_father_citizenship'),
-    father_nationality: getVal('edit_father_nationality'),
-    father_personal_code: getVal('edit_father_personal_code'),
-    child_full_name: getVal('edit_child_full_name'),
-    child_birth_date: getVal('edit_child_birth_date'),
-    child_birth_place: getVal('edit_child_birth_place'),
-    child_personal_code: getVal('edit_child_personal_code'),
-    mother_full_name: getVal('edit_mother_full_name'),
-    mother_birth_date: getVal('edit_mother_birth_date'),
-    mother_birth_place: getVal('edit_mother_birth_place'),
-    mother_citizenship: getVal('edit_mother_citizenship'),
-    mother_nationality: getVal('edit_mother_nationality'),
-    mother_personal_code: getVal('edit_mother_personal_code'),
-    registry_act_date: getVal('edit_registry_act_date'),
-    registry_act_number: getVal('edit_registry_act_number'),
-    new_child_full_name: getVal('edit_new_child_full_name'),
-    registry_place: getVal('edit_registry_place'),
-    issue_place: getVal('edit_issue_place'),
-    registry_official: getVal('edit_registry_official'),
-    certificate_series_number: getVal('edit_certificate_series_number'),
-    issue_date: getVal('edit_issue_date'),
-    owner_full_name: getVal('edit_owner_full_name'),
-    personal_code: getVal('edit_personal_code')
-  }
-}
-
-async function saveDocument() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { alert('Ошибка авторизации'); return }
-    if (!userPersonalCode) { alert('Личный код не загружен'); return }
-
-    const newData = collectFormData()
-    
-    if (!newData.certificate_series_number) {
-      alert('Серия и номер свидетельства обязательны')
-      return
-    }
-
-    // Убедимся, что personal_code установлен
-    if (!newData.personal_code) {
-      newData.personal_code = userPersonalCode
-    }
-
-    const cleanData = { ...newData }
-    Object.keys(cleanData).forEach(key => {
-      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
-    })
-
-    const dataToSend = {
-      ...cleanData,
-      status: 'oncheck',
-      updated_at: new Date().toISOString()
-    }
-
-    let result
-    if (currentDocId) {
-      result = await supabase
-        .schema('documents_certificates')
-        .from('fatherhood')
-        .update(dataToSend)
-        .eq('id', currentDocId)
-        .select()
-    } else {
-      dataToSend.created_at = new Date().toISOString()
-      result = await supabase
-        .schema('documents_certificates')
-        .from('fatherhood')
-        .insert([dataToSend])
-        .select()
-    }
-
-    if (result.error) throw result.error
-
-    window.closeModal()
-    const newId = currentDocId || result.data[0].id
-    window.location.href = `fatherhood-certificate.html?id=${newId}`
-  } catch (err) {
-    console.error('Ошибка сохранения:', err)
-    alert('Ошибка сохранения: ' + err.message)
-  }
-}
-
-// ==================== ОТКРЫТИЕ МОДАЛОК ====================
-function openAddModal() {
-  const ownerFullName = userProfile ? `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() : ''
-  formData = {
-    father_full_name: '',
-    father_birth_date: '',
-    father_birth_place: '',
-    father_citizenship: '',
-    father_nationality: '',
-    father_personal_code: '',
-    child_full_name: '',
-    child_birth_date: '',
-    child_birth_place: '',
-    child_personal_code: '',
-    mother_full_name: '',
-    mother_birth_date: '',
-    mother_birth_place: '',
-    mother_citizenship: '',
-    mother_nationality: '',
-    mother_personal_code: '',
-    registry_act_date: '',
-    registry_act_number: '',
-    new_child_full_name: '',
-    registry_place: '',
-    issue_place: '',
-    registry_official: '',
-    certificate_series_number: '',
-    issue_date: '',
-    owner_full_name: ownerFullName,
-    personal_code: userPersonalCode || '',
-    status: 'oncheck'
-  }
-  openModal('Добавление свидетельства об установлении отцовства')
-}
-
-function openEditModal() {
-  formData = { ...documentData }
-  openModal('Редактирование свидетельства об установлении отцовства')
+  const container = document.getElementById('statusAndEditContainer')
+  container.innerHTML = ''
+  container.appendChild(statusAndEdit)
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
-  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
 })
-
-// Экспорт в глобальную область
-window.openAddModal = openAddModal
-window.openEditModal = openEditModal
-window.closeModal = closeModal

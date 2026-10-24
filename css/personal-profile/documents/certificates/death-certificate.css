@@ -1,13 +1,13 @@
 /* ===== death-certificate.css – серо-тёмно-бордовая тема ===== */
 :root {
-  --primary-maroon-gray: #5a3a3a;      /* основной цвет для надписей и кнопок */
-  --dark-maroon-gray: #3d2a2a;         /* тёмный оттенок */
+  --primary-maroon-gray: #5a3a3a;
+  --dark-maroon-gray: #3d2a2a;
   --secondary-gray: #6c757d;
-  --light-gray-bg: #f4f0f0;             /* фон карточки */
-  --border-gray-maroon: #b89b9b;        /* цвет рамки */
-  --field-bg: #e3d9d9;                   /* фон полосок */
+  --light-gray-bg: #f4f0f0;
+  --border-gray-maroon: #b89b9b;
+  --field-bg: #e3d9d9;
   --text-dark: #000;
-  --maroon: #7b091a;                      /* серия и номер (оставляем тёмно-бордовый) */
+  --maroon: #7b091a;
 }
 
 * {
@@ -24,18 +24,113 @@ html {
   html { font-size: clamp(12px, 3vw, 16px); }
 }
 
-.main-content {
-  padding: 2rem 0;
-  background: white;
+/* ============================================================
+   1. ОБЁРТКА СТРАНИЦЫ (точь-в-точь как на других страницах)
+   ============================================================ */
+.profile-main {
+  padding: 34px 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
   min-height: 100vh;
 }
-
-.container {
-  max-width: 900px;
+.profile-container {
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 1.5rem;
 }
 
+/* ============================================================
+   2. ПРИВЕТСТВЕННЫЙ БЛОК
+   ============================================================ */
+.greeting-block {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 26px 28px;
+  margin: 0 0 26px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+  border: 1px solid #f1d7d7;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+  overflow: hidden;
+}
+.greeting-block::after {
+  content: "";
+  position: absolute;
+  right: -70px; top: -70px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+  pointer-events: none;
+}
+.greeting-emoji {
+  flex-shrink: 0;
+  font-size: 3rem;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.greeting-content {
+  flex: 1 1 220px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.greeting-text {
+  margin: 0 0 6px;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+}
+.greeting-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #6b6b6b;
+  line-height: 1.45;
+}
+.greeting-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+.greeting-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  color: #2a2a2a;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.greeting-action-link:hover,
+.greeting-action-link:focus-visible {
+  border-color: #b30000;
+  background: #fff5f5;
+  color: #b30000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+  outline: none;
+}
+
+/* ============================================================
+   3. ЗАГРУЗКА И ОШИБКИ
+   ============================================================ */
 .loading, .no-data {
   text-align: center;
   padding: 3rem 1rem;
@@ -43,7 +138,9 @@ html {
   color: #666;
 }
 
-/* ===== КАРТОЧКА ===== */
+/* ============================================================
+   4. КАРТОЧКА СВИДЕТЕЛЬСТВА
+   ============================================================ */
 .certificate-container {
   max-width: 800px;
   margin: 0 auto 30px;
@@ -199,7 +296,7 @@ html {
   text-align: center;
 }
 
-/* ===== СТРОКИ С ПОДПИСЯМИ (ЦЕНТРИРОВАНИЕ ЗНАЧЕНИЙ) ===== */
+/* ===== СТРОКИ С ПОДПИСЯМИ ===== */
 .spouse-row,
 .marriage-row,
 .assigned-row {
@@ -238,7 +335,7 @@ html {
   width: 100%;
 }
 
-/* Исключение для широких блоков (место регистрации и т.п.) */
+/* Исключение для широких блоков */
 .marriage-row.has-wide-label {
   position: static;
   display: block;
@@ -355,27 +452,12 @@ html {
   line-height: 1.5;
 }
 
-.status-verified {
-  background: rgba(40, 167, 69, 0.15);
-  color: #28a745;
-}
-.status-pending {
-  background: rgba(255, 193, 7, 0.15);
-  color: #856404;
-}
-.status-rejected {
-  background: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
-}
-.status-archived {
-  background: rgba(108, 117, 125, 0.15);
-  color: #6c757d;
-}
+.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-pending { background: rgba(255, 193, 7, 0.15); color: #856404; }
+.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.status-archived { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
 
-.edit-btn,
-.btn-primary,
-.btn-secondary,
-a.edit-btn {
+.edit-btn {
   display: inline-block;
   padding: 0.6rem 1.5rem;
   font-size: 1rem;
@@ -387,30 +469,31 @@ a.edit-btn {
   border: none;
   cursor: pointer;
   transition: opacity 0.2s ease, background 0.2s ease;
-}
-
-.edit-btn,
-.btn-primary,
-a.edit-btn {
   background: var(--primary-maroon-gray);
   color: white;
 }
-.edit-btn:hover,
-.btn-primary:hover,
-a.edit-btn:hover {
+.edit-btn:hover {
   background: var(--dark-maroon-gray);
 }
 
-.btn-secondary {
-  background: var(--secondary-gray) !important;
-  color: white;
-}
-.btn-secondary:hover {
-  background: #5a6268 !important;
-}
-
 /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
-@media (max-width: 600px) {
+@media (max-width: 640px) {
+  .profile-main { padding: 22px 12px 48px; }
+
+  /* Приветствие */
+  .greeting-block { padding: 22px 20px; gap: 16px; }
+  .greeting-emoji { font-size: 2.2rem; }
+  .greeting-text { font-size: 1.4rem; }
+  .greeting-subtitle { font-size: 0.9rem; }
+  .greeting-actions {
+    flex-direction: row;
+    flex: 1 1 100%;
+    width: 100%;
+    gap: 8px;
+  }
+  .greeting-actions > * { flex: 1 1 0; }
+  .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
   .certificate-header .title { font-size: 1.5rem; }
   .certificate-header .subtitle { font-size: 1rem; }
   .field-value { font-size: 1rem; }
@@ -532,97 +615,6 @@ a.edit-btn:hover {
   }
 }
 
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-.modal-overlay.active {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 700px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h4 {
-  margin: 0;
-  color: var(--primary-maroon-gray);
-  font-size: 1.25rem;
-}
-
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-}
-.close-modal:hover { color: var(--primary-maroon-gray); }
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid #eee;
-}
-
-.form-group {
-  margin-bottom: 1.2rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  color: var(--primary-maroon-gray);
-}
-.form-input {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-.form-input[readonly] {
-  background: #f5f5f5;
-  cursor: not-allowed;
-}
-
 /* ===== СЛИШКОМ МАЛЕНЬКИЙ ЭКРАН ===== */
 .too-small-message {
   display: none;
@@ -642,8 +634,7 @@ a.edit-btn:hover {
   }
   .certificate-container,
   #content,
-  .status-and-edit,
-  .modal-overlay {
+  .status-and-edit {
     display: none !important;
   }
 }

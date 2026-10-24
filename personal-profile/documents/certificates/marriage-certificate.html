@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Свидетельство о заключении брака — СФСРЮ</title>
-  <!-- favicons (как в других документах) -->
+  
+  <!-- favicons (полный набор) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../../images/favicons/apple-touch-icon-72x72.png" />
@@ -28,8 +29,8 @@
 
   <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../../css/style.css" />
-  <!-- Стили для свидетельства о браке -->
-  <link rel="stylesheet" href="../../../css/personal-profile/marriage-certificate.css" />
+  <!-- Новый путь к стилям свидетельства -->
+  <link rel="stylesheet" href="../../../css/personal-profile/documents/certificates/marriage-certificate.css" />
   <!-- Иконки -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 </head>
@@ -59,19 +60,38 @@
     </div>
   </header>
 
-  <main class="main-content">
+  <!-- Изменено на profile-main для единого фона -->
+  <main class="main-content profile-main">
     <div class="too-small-message" style="display: none;">
       ⚠️ Ваше устройство слишком маленькое для отображения документа.
     </div>
-    <div class="container">
-      <div id="loading" class="loading">Загрузка данных...</div>
-      <div id="noData" style="display: none; text-align: center; padding: 3rem;">
-        <p>У вас пока нет свидетельства о браке.</p>
-        <div class="no-data-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
-          <button class="edit-btn" id="addBtn">Добавить свидетельство</button>
-          <a href="../../services/documents/marriage-certificate/" class="edit-btn">Получить свидетельство</a>
+    
+    <!-- Изменено на profile-container для единой ширины (1120px) -->
+    <div class="profile-container">
+      
+      <!-- ========== ПРИВЕТСТВЕННЫЙ БЛОК ========== -->
+      <div class="greeting-block">
+        <div class="greeting-emoji" aria-hidden="true">💍</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text">Свидетельство о заключении брака</h1>
+          <p class="greeting-subtitle">Электронная копия официального документа</p>
+        </div>
+        <div class="greeting-actions">
+          <a href="index.html" class="greeting-action-link">
+            <span aria-hidden="true">←</span> К свидетельствам
+          </a>
         </div>
       </div>
+
+      <div id="loading" class="loading">Загрузка данных...</div>
+      
+      <div id="noData" style="display: none; text-align: center; padding: 3rem; background: #fff; border-radius: 16px; border: 1px dashed #ccc;">
+        <p>У вас пока нет свидетельства о браке.</p>
+        <div class="no-data-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
+          <a href="../../../services/documents/marriage-certificate/" class="edit-btn">Получить свидетельство</a>
+        </div>
+      </div>
+      
       <div id="content" style="display: none;">
         <!-- Карточка свидетельства о браке -->
         <div class="certificate-container" id="certificateContainer"></div>
@@ -87,21 +107,6 @@
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО -->
-  <div id="modalOverlay" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h4 id="modalTitle">Добавление свидетельства о браке</h4>
-        <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
-      </div>
-      <div class="modal-body" id="modalBody"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
-        <button type="button" class="btn-primary" id="saveBtn">Сохранить</button>
-      </div>
-    </div>
-  </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
   <script type="importmap">
@@ -109,6 +114,7 @@
   </script>
   <script type="module" src="../../../js/supabase-config.js"></script>
   <script src="../../../js/mob-menu.js"></script>
+  <!-- Основной JS для страницы (новый путь) -->
   <script src="../../../js/personal-profile/documents/certificates/marriage-certificate.js" type="module"></script>
 </body>
 </html>

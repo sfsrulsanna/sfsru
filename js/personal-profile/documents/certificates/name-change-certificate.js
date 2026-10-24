@@ -7,24 +7,6 @@ let userPersonalCode = null
 let userProfile = null
 let userId = null
 
-let formData = {
-  old_full_name: '',
-  birth_date: '',
-  birth_place: '',
-  citizenship: '',
-  nationality: '',
-  personal_code: '',
-  new_full_name: '',
-  registry_act_number: '',
-  registry_act_date: '',
-  registry_place: '',
-  issue_place: '',
-  registry_official: '',
-  certificate_series_number: '',
-  issue_date: '',
-  status: 'oncheck'
-}
-
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function formatDate(dateString) {
   if (!dateString) return '—'
@@ -87,7 +69,7 @@ async function loadData() {
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session) {
-      window.location.href = '../../login.html'
+      window.location.href = '../../../login.html' // Путь исправлен на 3 уровня вверх
       return
     }
 
@@ -233,11 +215,11 @@ function renderCertificate(data) {
         </div>
       </div>
       
-      <!-- Новое ФИО (гарантированное центрирование через инлайн-стиль) -->
+      <!-- Новое ФИО -->
       <div class="new-name-row">
         <span class="new-name-label">переменил(а) фамилию, имя, отчество на</span>
         <div class="field-block new-name-field">
-          <div class="field-value" style="text-align: center !important; display: block; width: 100%;">${escapeHTML(data.new_full_name || '—')}</div>
+          <div class="new-name-value">${escapeHTML(data.new_full_name || '—')}</div>
           <div class="field-line"></div>
         </div>
       </div>
@@ -316,7 +298,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок (без изменений)
+  // Блок статуса и кнопок (без кнопки редактирования)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
@@ -329,220 +311,17 @@ function renderCertificate(data) {
   statusAndEdit.appendChild(statusSpan)
   
   const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/name-change-certificate/'
+  replaceLink.href = '../../../services/documents/name-change-certificate/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить свидетельство'
   statusAndEdit.appendChild(replaceLink)
   
-  if (data.status !== 'verified') {
-    const editBtn = document.createElement('button')
-    editBtn.className = 'edit-btn'
-    editBtn.id = 'editBtn'
-    editBtn.textContent = 'Изменить данные'
-    editBtn.addEventListener('click', () => {
-      formData = { ...data }
-      openEditModal()
-    })
-    statusAndEdit.appendChild(editBtn)
-  }
-  
-  document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
-}
-
-// ==================== МОДАЛЬНОЕ ОКНО ====================
-window.closeModal = function() {
-  document.getElementById('modalOverlay').classList.remove('active')
-}
-
-function openModal(title) {
-  document.getElementById('modalTitle').textContent = title
-  document.getElementById('modalOverlay').classList.add('active')
-  renderModalForm()
-}
-
-function renderModalForm() {
-  const modalBody = document.getElementById('modalBody')
-  if (!modalBody) return
-
-  // Формируем полное имя из профиля для предзаполнения
-  const fullNameFromProfile = userProfile ? `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() : ''
-
-  modalBody.innerHTML = `
-    <h4>Старые данные</h4>
-    <div class="form-group">
-      <label>ФИО до перемены (полностью)</label>
-      <input type="text" id="edit_old_full_name" class="form-input" value="${escapeHTML(formData.old_full_name || fullNameFromProfile)}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения</label>
-      <input type="date" id="edit_birth_date" class="form-input" value="${formData.birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения</label>
-      <input type="text" id="edit_birth_place" class="form-input" value="${escapeHTML(formData.birth_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Гражданство</label>
-      <input type="text" id="edit_citizenship" class="form-input" value="${escapeHTML(formData.citizenship || '')}">
-    </div>
-    <div class="form-group">
-      <label>Национальность</label>
-      <input type="text" id="edit_nationality" class="form-input" value="${escapeHTML(formData.nationality || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код</label>
-      <input type="text" id="edit_personal_code" class="form-input" value="${escapeHTML(formData.personal_code || userPersonalCode || '')}" readonly>
-    </div>
-
-    <h4>Новые данные</h4>
-    <div class="form-group">
-      <label>Новое ФИО (полностью)</label>
-      <input type="text" id="edit_new_full_name" class="form-input" value="${escapeHTML(formData.new_full_name || '')}">
-    </div>
-
-    <h4>Актовая запись</h4>
-    <div class="form-group">
-      <label>Дата актовой записи</label>
-      <input type="date" id="edit_registry_act_date" class="form-input" value="${formData.registry_act_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Номер актовой записи</label>
-      <input type="text" id="edit_registry_act_number" class="form-input" value="${escapeHTML(formData.registry_act_number || '')}">
-    </div>
-
-    <h4>Свидетельство</h4>
-    <div class="form-group">
-      <label>Место регистрации</label>
-      <input type="text" id="edit_registry_place" class="form-input" value="${escapeHTML(formData.registry_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Место выдачи свидетельства</label>
-      <input type="text" id="edit_issue_place" class="form-input" value="${escapeHTML(formData.issue_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Руководитель органа ЗАГС</label>
-      <input type="text" id="edit_registry_official" class="form-input" value="${escapeHTML(formData.registry_official || '')}">
-    </div>
-    <div class="form-group">
-      <label>Серия и номер свидетельства</label>
-      <input type="text" id="edit_certificate_series_number" class="form-input" value="${escapeHTML(formData.certificate_series_number || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата выдачи</label>
-      <input type="date" id="edit_issue_date" class="form-input" value="${formData.issue_date || ''}">
-    </div>
-  `
-}
-
-function collectFormData() {
-  const getVal = (id) => (document.getElementById(id)?.value || '').trim()
-  return {
-    old_full_name: getVal('edit_old_full_name'),
-    birth_date: getVal('edit_birth_date'),
-    birth_place: getVal('edit_birth_place'),
-    citizenship: getVal('edit_citizenship'),
-    nationality: getVal('edit_nationality'),
-    personal_code: getVal('edit_personal_code'),
-    new_full_name: getVal('edit_new_full_name'),
-    registry_act_date: getVal('edit_registry_act_date'),
-    registry_act_number: getVal('edit_registry_act_number'),
-    registry_place: getVal('edit_registry_place'),
-    issue_place: getVal('edit_issue_place'),
-    registry_official: getVal('edit_registry_official'),
-    certificate_series_number: getVal('edit_certificate_series_number'),
-    issue_date: getVal('edit_issue_date')
-  }
-}
-
-async function saveDocument() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { alert('Ошибка авторизации'); return }
-    if (!userPersonalCode) { alert('Личный код не загружен'); return }
-
-    const newData = collectFormData()
-    
-    if (!newData.certificate_series_number) {
-      alert('Серия и номер свидетельства обязательны')
-      return
-    }
-
-    const cleanData = { ...newData }
-    Object.keys(cleanData).forEach(key => {
-      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
-    })
-
-    const dataToSend = {
-      ...cleanData,
-      status: 'oncheck',
-      updated_at: new Date().toISOString()
-    }
-
-    let result
-    if (currentDocId) {
-      result = await supabase
-        .schema('documents_certificates')
-        .from('name_change')
-        .update(dataToSend)
-        .eq('id', currentDocId)
-        .select()
-    } else {
-      dataToSend.created_at = new Date().toISOString()
-      result = await supabase
-        .schema('documents_certificates')
-        .from('name_change')
-        .insert([dataToSend])
-        .select()
-    }
-
-    if (result.error) throw result.error
-
-    window.closeModal()
-    const newId = currentDocId || result.data[0].id
-    window.location.href = `name-change-certificate.html?id=${newId}`
-  } catch (err) {
-    console.error('Ошибка сохранения:', err)
-    alert('Ошибка сохранения: ' + err.message)
-  }
-}
-
-// ==================== ОТКРЫТИЕ МОДАЛОК ====================
-function openAddModal() {
-  // Заполняем некоторые поля из профиля
-  const fullNameFromProfile = userProfile ? `${userProfile.surname || ''} ${userProfile.name || ''} ${userProfile.patronymic || ''}`.trim() : ''
-  formData = {
-    old_full_name: fullNameFromProfile,
-    birth_date: userProfile?.date_of_birth || '',
-    birth_place: userProfile?.place_of_birth || '',
-    citizenship: '',
-    nationality: '',
-    personal_code: userPersonalCode || '',
-    new_full_name: '',
-    registry_act_date: '',
-    registry_act_number: '',
-    registry_place: '',
-    issue_place: '',
-    registry_official: '',
-    certificate_series_number: '',
-    issue_date: '',
-    status: 'oncheck'
-  }
-  openModal('Добавление свидетельства о перемене имени')
-}
-
-function openEditModal() {
-  formData = { ...documentData }
-  openModal('Редактирование свидетельства о перемене имени')
+  const container = document.getElementById('statusAndEditContainer')
+  container.innerHTML = ''
+  container.appendChild(statusAndEdit)
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
-  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
 })
-
-// Экспорт в глобальную область
-window.openAddModal = openAddModal
-window.openEditModal = openEditModal
-window.closeModal = closeModal

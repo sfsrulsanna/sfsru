@@ -7,32 +7,6 @@ let userPersonalCode = null
 let userProfile = null
 let userId = null
 
-let formData = {
-  husband_full_name: '',
-  husband_birth_date: '',
-  husband_birth_place: '',
-  husband_citizenship: '',
-  husband_nationality: '',
-  husband_personal_code: '',
-  wife_full_name: '',
-  wife_birth_date: '',
-  wife_birth_place: '',
-  wife_citizenship: '',
-  wife_nationality: '',
-  wife_personal_code: '',
-  marriage_date: '',
-  registry_act_number: '',
-  registry_act_date: '',
-  assigned_surname_husband: '',
-  assigned_surname_wife: '',
-  registry_place: '',
-  registry_official: '',
-  certificate_series_number: '',
-  issue_date: '',
-  issue_place: '',
-  status: 'oncheck'
-}
-
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function formatDate(dateString) {
   if (!dateString) return '—'
@@ -95,7 +69,7 @@ async function loadData() {
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session) {
-      window.location.href = '../../login.html'
+      window.location.href = '../../../login.html' // Путь исправлен на 3 уровня вверх
       return
     }
 
@@ -244,8 +218,8 @@ function renderCertificate(data) {
               <div class="field-label">национальность</div>
             </div>
           </div>
-        </div> <!-- закрываем spouse-block мужа -->
-      </div> <!-- закрываем spouse-section мужа -->
+        </div>
+      </div>
 
       <!-- ЖЕНА -->
       <div class="spouse-section">
@@ -294,10 +268,10 @@ function renderCertificate(data) {
               <div class="field-label">национальность</div>
             </div>
           </div>
-        </div> <!-- закрываем spouse-block жены -->
-      </div> <!-- закрываем spouse-section жены -->
+        </div>
+      </div>
 
-      <!-- Дата заключения брака (как у "Муж") -->
+      <!-- Дата заключения брака -->
       <div class="marriage-row">
         <span class="marriage-label">заключили брак</span>
         <div class="field-block marriage-field">
@@ -306,7 +280,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Актовая запись (новая структура с линиями) -->
+      <!-- Актовая запись -->
       <div class="act-record">
         <div class="act-row">
           <span class="act-label">о чем</span>
@@ -335,10 +309,9 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- Заголовок присвоенных фамилий -->
+      <!-- Присвоенные фамилии -->
       <div class="assigned-header">После заключения брака присвоены фамилии:</div>
 
-      <!-- Присвоенные фамилии (новый дизайн) -->
       <div class="assigned-section">
         <div class="assigned-row">
           <span class="assigned-label">мужу</span>
@@ -356,7 +329,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ (исключение – не центрируется) -->
+      <!-- МЕСТО ГОСУДАРСТВЕННОЙ РЕГИСТРАЦИИ -->
       <div class="marriage-row has-wide-label">
         <span class="marriage-label wide-label">Место государственной регистрации</span>
         <div class="field-block marriage-field">
@@ -365,7 +338,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА (исключение – не центрируется) -->
+      <!-- МЕСТО ВЫДАЧИ СВИДЕТЕЛЬСТВА -->
       <div class="marriage-row has-wide-label">
         <span class="marriage-label wide-label">Место выдачи свидетельства</span>
         <div class="field-block marriage-field">
@@ -374,7 +347,7 @@ function renderCertificate(data) {
         </div>
       </div>
 
-      <!-- ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ -->
+      <!-- ПРАВАЯ ИНФОРМАЦИЯ -->
       <div class="right-info-container">
         <div class="right-row">
           <span class="right-label">Дата выдачи</span>
@@ -401,7 +374,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок
+  // Блок статуса (без кнопок редактирования)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
@@ -414,267 +387,17 @@ function renderCertificate(data) {
   statusAndEdit.appendChild(statusSpan)
   
   const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/marriage-certificate/'
+  replaceLink.href = '../../../services/documents/marriage-certificate/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить свидетельство'
   statusAndEdit.appendChild(replaceLink)
   
-  if (data.status !== 'verified') {
-    const editBtn = document.createElement('button')
-    editBtn.className = 'edit-btn'
-    editBtn.id = 'editBtn'
-    editBtn.textContent = 'Изменить данные'
-    editBtn.addEventListener('click', () => {
-      formData = { ...data }
-      openEditModal()
-    })
-    statusAndEdit.appendChild(editBtn)
-  }
-  
-  document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
-}
-
-// ==================== МОДАЛЬНОЕ ОКНО ====================
-window.closeModal = function() {
-  document.getElementById('modalOverlay').classList.remove('active')
-}
-
-function openModal(title) {
-  document.getElementById('modalTitle').textContent = title
-  document.getElementById('modalOverlay').classList.add('active')
-  renderModalForm()
-}
-
-function renderModalForm() {
-  const modalBody = document.getElementById('modalBody')
-  if (!modalBody) return
-
-  modalBody.innerHTML = `
-    <h4>Муж</h4>
-    <div class="form-group">
-      <label>ФИО мужа (полностью)</label>
-      <input type="text" id="edit_husband_full_name" class="form-input" value="${escapeHTML(formData.husband_full_name || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения мужа</label>
-      <input type="date" id="edit_husband_birth_date" class="form-input" value="${formData.husband_birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения мужа</label>
-      <input type="text" id="edit_husband_birth_place" class="form-input" value="${escapeHTML(formData.husband_birth_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Гражданство мужа</label>
-      <input type="text" id="edit_husband_citizenship" class="form-input" value="${escapeHTML(formData.husband_citizenship || '')}">
-    </div>
-    <div class="form-group">
-      <label>Национальность мужа</label>
-      <input type="text" id="edit_husband_nationality" class="form-input" value="${escapeHTML(formData.husband_nationality || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код мужа</label>
-      <input type="text" id="edit_husband_personal_code" class="form-input" value="${escapeHTML(formData.husband_personal_code || '')}">
-    </div>
-
-    <h4>Жена</h4>
-    <div class="form-group">
-      <label>ФИО жены (полностью)</label>
-      <input type="text" id="edit_wife_full_name" class="form-input" value="${escapeHTML(formData.wife_full_name || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения жены</label>
-      <input type="date" id="edit_wife_birth_date" class="form-input" value="${formData.wife_birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения жены</label>
-      <input type="text" id="edit_wife_birth_place" class="form-input" value="${escapeHTML(formData.wife_birth_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Гражданство жены</label>
-      <input type="text" id="edit_wife_citizenship" class="form-input" value="${escapeHTML(formData.wife_citizenship || '')}">
-    </div>
-    <div class="form-group">
-      <label>Национальность жены</label>
-      <input type="text" id="edit_wife_nationality" class="form-input" value="${escapeHTML(formData.wife_nationality || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код жены</label>
-      <input type="text" id="edit_wife_personal_code" class="form-input" value="${escapeHTML(formData.wife_personal_code || '')}">
-    </div>
-
-    <h4>Брак</h4>
-    <div class="form-group">
-      <label>Дата заключения брака</label>
-      <input type="date" id="edit_marriage_date" class="form-input" value="${formData.marriage_date || ''}">
-    </div>
-
-    <h4>Актовая запись</h4>
-    <div class="form-group">
-      <label>Дата актовой записи</label>
-      <input type="date" id="edit_registry_act_date" class="form-input" value="${formData.registry_act_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Номер актовой записи</label>
-      <input type="text" id="edit_registry_act_number" class="form-input" value="${escapeHTML(formData.registry_act_number || '')}">
-    </div>
-
-    <h4>Фамилии после брака</h4>
-    <div class="form-group">
-      <label>Присвоенная фамилия мужу</label>
-      <input type="text" id="edit_assigned_surname_husband" class="form-input" value="${escapeHTML(formData.assigned_surname_husband || '')}">
-    </div>
-    <div class="form-group">
-      <label>Присвоенная фамилия жене</label>
-      <input type="text" id="edit_assigned_surname_wife" class="form-input" value="${escapeHTML(formData.assigned_surname_wife || '')}">
-    </div>
-
-    <h4>Свидетельство</h4>
-    <div class="form-group">
-      <label>Место регистрации</label>
-      <input type="text" id="edit_registry_place" class="form-input" value="${escapeHTML(formData.registry_place || '')}">
-    </div>
-    <div class="form-group">
-      <label>Руководитель органа ЗАГС</label>
-      <input type="text" id="edit_registry_official" class="form-input" value="${escapeHTML(formData.registry_official || '')}">
-    </div>
-    <div class="form-group">
-      <label>Серия и номер свидетельства</label>
-      <input type="text" id="edit_certificate_series_number" class="form-input" value="${escapeHTML(formData.certificate_series_number || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата выдачи</label>
-      <input type="date" id="edit_issue_date" class="form-input" value="${formData.issue_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место выдачи свидетельства</label>
-      <input type="text" id="edit_issue_place" class="form-input" value="${escapeHTML(formData.issue_place || '')}">
-    </div>
-  `
-}
-
-function collectFormData() {
-  const getVal = (id) => (document.getElementById(id)?.value || '').trim()
-  return {
-    husband_full_name: getVal('edit_husband_full_name'),
-    husband_birth_date: getVal('edit_husband_birth_date'),
-    husband_birth_place: getVal('edit_husband_birth_place'),
-    husband_citizenship: getVal('edit_husband_citizenship'),
-    husband_nationality: getVal('edit_husband_nationality'),
-    husband_personal_code: getVal('edit_husband_personal_code'),
-    wife_full_name: getVal('edit_wife_full_name'),
-    wife_birth_date: getVal('edit_wife_birth_date'),
-    wife_birth_place: getVal('edit_wife_birth_place'),
-    wife_citizenship: getVal('edit_wife_citizenship'),
-    wife_nationality: getVal('edit_wife_nationality'),
-    wife_personal_code: getVal('edit_wife_personal_code'),
-    marriage_date: getVal('edit_marriage_date'),
-    registry_act_date: getVal('edit_registry_act_date'),
-    registry_act_number: getVal('edit_registry_act_number'),
-    assigned_surname_husband: getVal('edit_assigned_surname_husband'),
-    assigned_surname_wife: getVal('edit_assigned_surname_wife'),
-    registry_place: getVal('edit_registry_place'),
-    registry_official: getVal('edit_registry_official'),
-    certificate_series_number: getVal('edit_certificate_series_number'),
-    issue_date: getVal('edit_issue_date'),
-    issue_place: getVal('edit_issue_place')
-  }
-}
-
-async function saveDocument() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession()
-    if (!session) { alert('Ошибка авторизации'); return }
-    if (!userPersonalCode) { alert('Личный код не загружен'); return }
-
-    const newData = collectFormData()
-    
-    if (!newData.certificate_series_number) {
-      alert('Серия и номер свидетельства обязательны')
-      return
-    }
-
-    const cleanData = { ...newData }
-    Object.keys(cleanData).forEach(key => {
-      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
-    })
-
-    const dataToSend = {
-      ...cleanData,
-      status: 'oncheck',
-      updated_at: new Date().toISOString()
-    }
-
-    let result
-    if (currentDocId) {
-      result = await supabase
-        .schema('documents_certificates')
-        .from('marriage')
-        .update(dataToSend)
-        .eq('id', currentDocId)
-        .select()
-    } else {
-      dataToSend.created_at = new Date().toISOString()
-      result = await supabase
-        .schema('documents_certificates')
-        .from('marriage')
-        .insert([dataToSend])
-        .select()
-    }
-
-    if (result.error) throw result.error
-
-    window.closeModal()
-    const newId = currentDocId || result.data[0].id
-    window.location.href = `marriage-certificate.html?id=${newId}`
-  } catch (err) {
-    console.error('Ошибка сохранения:', err)
-    alert('Ошибка сохранения: ' + err.message)
-  }
-}
-
-// ==================== ОТКРЫТИЕ МОДАЛОК ====================
-function openAddModal() {
-  formData = {
-    husband_full_name: '',
-    husband_birth_date: '',
-    husband_birth_place: '',
-    husband_citizenship: '',
-    husband_nationality: '',
-    husband_personal_code: userPersonalCode || '',
-    wife_full_name: '',
-    wife_birth_date: '',
-    wife_birth_place: '',
-    wife_citizenship: '',
-    wife_nationality: '',
-    wife_personal_code: '',
-    marriage_date: '',
-    registry_act_date: '',
-    registry_act_number: '',
-    assigned_surname_husband: '',
-    assigned_surname_wife: '',
-    registry_place: '',
-    registry_official: '',
-    certificate_series_number: '',
-    issue_date: '',
-    issue_place: '',
-    status: 'oncheck'
-  }
-  openModal('Добавление свидетельства о браке')
-}
-
-function openEditModal() {
-  formData = { ...documentData }
-  openModal('Редактирование свидетельства о браке')
+  const container = document.getElementById('statusAndEditContainer')
+  container.innerHTML = ''
+  container.appendChild(statusAndEdit)
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
-  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
 })
-
-// Экспорт в глобальную область
-window.openAddModal = openAddModal
-window.openEditModal = openEditModal
-window.closeModal = closeModal
