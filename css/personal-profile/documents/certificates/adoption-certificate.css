@@ -1,13 +1,13 @@
 /* ===== adoption-certificate.css – ярко-голубая тема ===== */
 :root {
-  --primary-blue: #3a9bdc;       /* основной ярко-голубой */
-  --dark-blue: #1e6f9f;           /* тёмный оттенок */
+  --primary-blue: #3a9bdc;
+  --dark-blue: #1e6f9f;
   --secondary-gray: #6c757d;
-  --light-bg: #e0f0ff;             /* очень светлый фон */
-  --border-color: #7fc1e8;         /* рамка */
-  --field-bg: #b8d9f5;             /* полоски под текстом */
+  --light-bg: #e0f0ff;
+  --border-color: #7fc1e8;
+  --field-bg: #b8d9f5;
   --text-dark: #000;
-  --maroon: #7b091a;                /* серия и номер */
+  --maroon: #7b091a;
 }
 
 * {
@@ -24,16 +24,18 @@ html {
   html { font-size: clamp(12px, 3vw, 16px); }
 }
 
+/* Обновленный фон в стиле личного кабинета */
 .main-content {
-  padding: 2rem 0;
-  background: white;
+  padding: 2rem 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
   min-height: 100vh;
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 1.5rem;
 }
 
 .loading, .no-data {
@@ -112,7 +114,7 @@ html {
   color: var(--primary-blue);
 }
 
-/* ===== СТРОКИ С МЕТКАМИ (как для супругов) ===== */
+/* ===== СТРОКИ С МЕТКАМИ ===== */
 .guardian-row,
 .marriage-row,
 .assigned-row,
@@ -155,7 +157,6 @@ html {
   width: 100%;
 }
 
-/* Для строк с длинными метками (например, место регистрации) */
 .marriage-row.has-wide-label {
   position: static;
   display: block;
@@ -192,11 +193,6 @@ html {
   width: 100%;
 }
 
-/* Центрирование даты в поле "от" (если используется) */
-.marriage-row.has-wide-label.date-field .field-value {
-  text-align: center !important;
-}
-
 .wide-label {
   width: 240px;
 }
@@ -210,25 +206,10 @@ html {
   margin-bottom: 1.5rem;
 }
 
-/* Для строки с "опекуны" и фамилией отца используем абсолютное позиционирование,
-   чтобы фамилия центрировалась, а метка была поверх слева */
 .guardian-row {
   position: relative;
   margin: 1.5rem 0 0.5rem;
   min-height: 3rem;
-}
-
-.guardian-label {
-  position: absolute;
-  left: 0;
-  top: 0;
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--primary-blue);
-  white-space: nowrap;
-  z-index: 2;
-  background: var(--light-bg);
-  padding-right: 0.5rem;
 }
 
 .guardian-row .field-block {
@@ -382,27 +363,12 @@ html {
   line-height: 1.5;
 }
 
-.status-verified {
-  background: rgba(40, 167, 69, 0.15);
-  color: #28a745;
-}
-.status-pending {
-  background: rgba(255, 193, 7, 0.15);
-  color: #856404;
-}
-.status-rejected {
-  background: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
-}
-.status-archived {
-  background: rgba(108, 117, 125, 0.15);
-  color: #6c757d;
-}
+.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-pending { background: rgba(255, 193, 7, 0.15); color: #856404; }
+.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.status-archived { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
 
-.edit-btn,
-.btn-primary,
-.btn-secondary,
-a.edit-btn {
+.edit-btn {
   display: inline-block;
   padding: 0.6rem 1.5rem;
   font-size: 1rem;
@@ -414,26 +380,11 @@ a.edit-btn {
   border: none;
   cursor: pointer;
   transition: opacity 0.2s ease, background 0.2s ease;
-}
-
-.edit-btn,
-.btn-primary,
-a.edit-btn {
   background: var(--primary-blue);
   color: white;
 }
-.edit-btn:hover,
-.btn-primary:hover,
-a.edit-btn:hover {
+.edit-btn:hover {
   background: var(--dark-blue);
-}
-
-.btn-secondary {
-  background: var(--secondary-gray) !important;
-  color: white;
-}
-.btn-secondary:hover {
-  background: #5a6268 !important;
 }
 
 /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
@@ -524,97 +475,6 @@ a.edit-btn:hover {
   }
 }
 
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-.modal-overlay.active {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 700px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h4 {
-  margin: 0;
-  color: var(--primary-blue);
-  font-size: 1.25rem;
-}
-
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-}
-.close-modal:hover { color: var(--primary-blue); }
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid #eee;
-}
-
-.form-group {
-  margin-bottom: 1.2rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  color: var(--primary-blue);
-}
-.form-input {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-.form-input[readonly] {
-  background: #f5f5f5;
-  cursor: not-allowed;
-}
-
 /* ===== СЛИШКОМ МАЛЕНЬКИЙ ЭКРАН ===== */
 .too-small-message {
   display: none;
@@ -634,8 +494,7 @@ a.edit-btn:hover {
   }
   .certificate-container,
   #content,
-  .status-and-edit,
-  .modal-overlay {
+  .status-and-edit {
     display: none !important;
   }
 }
