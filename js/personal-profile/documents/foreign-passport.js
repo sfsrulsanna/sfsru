@@ -243,7 +243,8 @@ function renderPassport(data) {
           ${data.has_chip ? 'Присутствует' + (data.chip_version ? ` (версия ${escapeHTML(data.chip_version)})` : '') : 'Отсутствует'}
         </div>
       </div>
-  `
+    </div>
+  `;
 
   const visas = data.visas || []
   if (visas.length > 0) {
