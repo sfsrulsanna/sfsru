@@ -42,7 +42,7 @@
     td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
 
     /* ---------- Кнопки ---------- */
-    .btn-view, .btn-edit, .btn-delete, .btn-photos,
+    .btn-view, .btn-edit, .btn-delete,
     .btn-secondary, .btn-primary, .btn-warning, .btn-logout,
     .btn-add, .btn-bracket-upload, .btn-bracket-delete {
       padding: 0.5rem 1rem;
@@ -63,8 +63,6 @@
     .btn-edit:hover { background: #e0a800; }
     .btn-delete { background: #dc3545; color: #fff; }
     .btn-delete:hover { background: #c82333; }
-    .btn-photos { background: #6f42c1; color: #fff; }
-    .btn-photos:hover { background: #5a32a3; }
     .btn-secondary { background: #6c757d; color: #fff; }
     .btn-secondary:hover { background: #5a6268; }
     .btn-primary { background: #007bff; color: #fff; }
@@ -181,12 +179,44 @@
 
     .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
 
-    /* ---------- Сетка фотографий в редактировании ---------- */
+    /* ---------- Блоки фотографий в редактировании ---------- */
+    .current-photo-block {
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #fff9f9;
+      border: 1px solid #e0c0c0;
+      border-radius: 10px;
+    }
+    .history-photos-block {
+      padding: 1rem;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 10px;
+    }
+    .block-title {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+      font-weight: 700;
+      color: #7b091a;
+      font-size: 1rem;
+      margin-bottom: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .block-title i { color: #b30000; }
+    .block-hint {
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: #888;
+    }
+    .current-photo-block .photo-slot {
+      background: #ffffff;
+      max-width: 220px;
+    }
     .photos-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
       gap: 12px;
-      margin-top: 0.5rem;
     }
     .photo-slot {
       border: 1px solid #dee2e6;
@@ -233,8 +263,43 @@
       color: #999;
       text-align: center;
     }
+    .photo-slot.is-current {
+      border-color: #b30000;
+      box-shadow: 0 0 0 1px rgba(179,0,0,0.15);
+    }
 
     /* ---------- Просмотр фото в view-модалке ---------- */
+    .view-photos-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .view-current-block,
+    .view-history-block {
+      padding: 0.75rem;
+      border-radius: 8px;
+    }
+    .view-current-block {
+      background: #fff9f9;
+      border: 1px solid #e0c0c0;
+    }
+    .view-history-block {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+    }
+    .view-current-photo {
+      max-width: 200px;
+      border: 1px solid #e0c0c0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .view-current-photo img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+    }
     .view-photos-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -269,6 +334,7 @@
       color: #888;
     }
 
+    /* ---------- Отказ доступа ---------- */
     .access-denied {
       display: none;
       max-width: 500px;
@@ -315,7 +381,6 @@
 
   <main class="main-content">
     <div class="container">
-      <!-- Блок «Доступ запрещён» -->
       <div id="accessDenied" class="access-denied">
         <h2><i class="fas fa-lock"></i> Доступ запрещён</h2>
         <p>Для просмотра этой страницы требуются права администратора.</p>
@@ -324,7 +389,6 @@
         </p>
       </div>
 
-      <!-- Основной интерфейс -->
       <div id="adminPanel" style="display:none;">
         <h1 class="page-title">Управление E-Pass</h1>
         <p class="page-description">Электронные паспорта граждан и история фотографий</p>
@@ -431,7 +495,10 @@
     // ============================================================
     // КОНСТАНТЫ
     // ============================================================
-    const BRACKETS = ['14-20', '20-45', '45-60', '60+'];
+    // 60+ — «текущее» фото (финальная ступень), остальные — история.
+    const CURRENT_BRACKET = '60+';
+    const HISTORY_BRACKETS = ['14-20', '20-45', '45-60'];
+    const ALL_BRACKETS = [CURRENT_BRACKET, ...HISTORY_BRACKETS];
     const BRACKET_LABEL = {
       '14-20': '14–20 лет',
       '20-45': '20–45 лет',
@@ -452,7 +519,7 @@
     let sortField = 'surname';
     let sortDirection = 'asc';
     let currentId = null;
-    let currentPersonalCode = null;  // personal_code открытой записи
+    let currentPersonalCode = null;
     let statusTargetId = null;
 
     // ============================================================
@@ -480,6 +547,7 @@
         return null;
       }
     }
+    const bracketToSafeId = br => 'file_' + br.replace('+', 'p');
 
     // ============================================================
     // ПРОВЕРКА ПРАВ: role = 'admin'
@@ -500,13 +568,10 @@
       if (error) {
         console.error('Ошибка проверки прав:', error);
         document.getElementById('accessDenied').style.display = 'block';
-        document.getElementById('adminEmail').textContent = '';
         return false;
       }
-
       if (!data || data.role !== 'admin') {
         document.getElementById('accessDenied').style.display = 'block';
-        document.getElementById('adminEmail').textContent = '';
         return false;
       }
 
@@ -516,7 +581,7 @@
     }
 
     // ============================================================
-    // СПИСОК E-PASS
+    // СПИСОК
     // ============================================================
     async function loadList() {
       const loadingEl = document.getElementById('loading');
@@ -585,7 +650,7 @@
     });
 
     // ============================================================
-    // ФОТОГРАФИИ: чтение / загрузка / удаление
+    // ФОТОГРАФИИ: CRUD
     // ============================================================
     async function loadPhotosFor(personalCode) {
       if (!personalCode) return [];
@@ -630,6 +695,124 @@
         .eq('personal_code', personalCode)
         .eq('age_bracket', bracket);
       if (error) throw error;
+    }
+
+    // ============================================================
+    // РЕНДЕР ОДНОГО СЛОТА ФОТО (общая функция)
+    // ============================================================
+    function renderPhotoSlot(bracket, photo, url, options = {}) {
+      const { showActions = true, extraClass = '' } = options;
+      const safeId = bracketToSafeId(bracket);
+      const hasPhoto = !!photo && !!url;
+      const label = BRACKET_LABEL[bracket] || bracket;
+
+      return `
+        <div class="photo-slot ${extraClass}" data-bracket="${bracket}">
+          <div class="photo-slot-label">${label}</div>
+          <div class="photo-slot-preview">
+            ${hasPhoto ? `<img src="${url}" alt="${label}">` : 'Нет фото'}
+          </div>
+          <div class="photo-slot-date">${photo ? formatDate(photo.created_at) : '—'}</div>
+          ${showActions ? `
+            <div class="photo-slot-actions">
+              <input type="file" id="${safeId}" accept="image/*" data-bracket="${bracket}">
+              <button type="button" class="btn-bracket-upload" data-upload="${bracket}">
+                <i class="fas fa-upload"></i> ${hasPhoto ? 'Заменить' : 'Загрузить'}
+              </button>
+              ${hasPhoto ? `<button type="button" class="btn-bracket-delete" data-delete="${bracket}">
+                              <i class="fas fa-trash"></i> Удалить
+                            </button>` : ''}
+            </div>` : ''}
+        </div>
+      `;
+    }
+
+    // ============================================================
+    // РЕНДЕР СЕКЦИИ ФОТО В РЕДАКТИРОВАНИИ
+    // ============================================================
+    async function renderPhotosSection(personalCode) {
+      const container = document.getElementById('photosGrid');
+      if (!container) return;
+
+      const photos = await loadPhotosFor(personalCode);
+      const photoMap = {};
+      photos.forEach(p => { photoMap[p.age_bracket] = p; });
+
+      const urlMap = {};
+      await Promise.all(photos.map(async p => {
+        urlMap[p.age_bracket] = await getSignedUrl(p.storage_path);
+      }));
+
+      const currentHtml = renderPhotoSlot(
+        CURRENT_BRACKET,
+        photoMap[CURRENT_BRACKET],
+        urlMap[CURRENT_BRACKET],
+        { extraClass: 'is-current' }
+      );
+
+      const historyHtml = HISTORY_BRACKETS.map(br =>
+        renderPhotoSlot(br, photoMap[br], urlMap[br])
+      ).join('');
+
+      container.innerHTML = `
+        <div class="current-photo-block">
+          <div class="block-title">
+            <i class="fas fa-id-badge"></i>
+            Текущее фото · 60+
+            <span class="block-hint">Финальная ступень. Отображается как основное в карточке, когда загружено.</span>
+          </div>
+          ${currentHtml}
+        </div>
+        <div class="history-photos-block">
+          <div class="block-title">
+            <i class="fas fa-history"></i>
+            История фотографий
+            <span class="block-hint">Предыдущие возрастные периоды.</span>
+          </div>
+          <div class="photos-grid">
+            ${historyHtml}
+          </div>
+        </div>
+      `;
+
+      attachPhotoActions(container, personalCode);
+    }
+
+    function attachPhotoActions(container, personalCode) {
+      container.querySelectorAll('[data-upload]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const br = btn.dataset.upload;
+          document.getElementById(bracketToSafeId(br))?.click();
+        });
+      });
+
+      container.querySelectorAll('input[type=file]').forEach(inp => {
+        inp.addEventListener('change', async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const br = inp.dataset.bracket;
+          try {
+            await uploadBracketPhoto(personalCode, br, file);
+            await renderPhotosSection(personalCode);
+          } catch (err) {
+            alert('Ошибка загрузки: ' + err.message);
+          }
+          inp.value = '';
+        });
+      });
+
+      container.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const br = btn.dataset.delete;
+          if (!confirm(`Удалить фото для «${BRACKET_LABEL[br]}»?`)) return;
+          try {
+            await deleteBracketPhoto(personalCode, br);
+            await renderPhotosSection(personalCode);
+          } catch (err) {
+            alert('Ошибка удаления: ' + err.message);
+          }
+        });
+      });
     }
 
     // ============================================================
@@ -710,7 +893,6 @@
       `;
       card.style.display = 'block';
 
-      // QR
       if (data.personal_code) {
         const qrEl = document.getElementById('adminViewQr');
         if (qrEl) {
@@ -722,53 +904,82 @@
         }
       }
 
-      // Фото: актуальное + история
       const photos = await loadPhotosFor(data.personal_code);
-      const sorted = photos.slice().sort(
-        (a, b) => BRACKETS.indexOf(b.age_bracket) - BRACKETS.indexOf(a.age_bracket)
-      );
-      const current = sorted[0];
+      const photoMap = {};
+      photos.forEach(p => { photoMap[p.age_bracket] = p; });
+
+      // «Текущая» в карточке — самая старшая ступень с фото (как в клиенте)
+      const sortedByBracket = ALL_BRACKETS
+        .map(b => photoMap[b])
+        .filter(Boolean)
+        .sort((a, b) => ALL_BRACKETS.indexOf(b.age_bracket) - ALL_BRACKETS.indexOf(a.age_bracket));
+      const highest = sortedByBracket[0];
 
       const imgEl = document.getElementById('adminViewPhoto');
-      if (current) {
-        const url = await getSignedUrl(current.storage_path);
+      if (highest) {
+        const url = await getSignedUrl(highest.storage_path);
         if (url) imgEl.src = url;
       } else {
         const legacy = await getSignedUrl(`epass/${data.personal_code}/photo.jpg`);
         if (legacy) imgEl.src = legacy;
       }
 
-      renderViewPhotos(sorted);
+      renderViewPhotos(photoMap);
     }
 
-    function renderViewPhotos(sortedPhotos) {
+    async function renderViewPhotos(photoMap) {
       const section = document.getElementById('viewPhotosSection');
-      if (!sortedPhotos.length) { section.style.display = 'none'; return; }
+      const currentPhoto = photoMap[CURRENT_BRACKET];
+      const currentUrl = currentPhoto ? await getSignedUrl(currentPhoto.storage_path) : null;
+
+      const historyPhotos = HISTORY_BRACKETS.map(br => ({
+        bracket: br,
+        photo: photoMap[br]
+      }));
+
+      const historyItems = await Promise.all(historyPhotos.map(async h => ({
+        bracket: h.bracket,
+        photo: h.photo,
+        url: h.photo ? await getSignedUrl(h.photo.storage_path) : null
+      })));
 
       section.innerHTML = `
         <h3 style="color:#7b091a;margin:0 0 1rem;font-size:1.1rem;">
-          <i class="fas fa-images"></i> Все фотографии E-Pass
+          <i class="fas fa-images"></i> Фотографии E-Pass
         </h3>
-        <div class="view-photos-grid" id="viewPhotosGrid"></div>
-      `;
-      section.style.display = 'block';
-
-      const grid = document.getElementById('viewPhotosGrid');
-      Promise.all(sortedPhotos.map(async p => {
-        const url = await getSignedUrl(p.storage_path);
-        return { ...p, url };
-      })).then(items => {
-        grid.innerHTML = items.map(p => `
-          <div class="view-photo-card">
-            <img src="${p.url || '../../images/default-avatar.png'}"
-                 alt="Фото ${BRACKET_LABEL[p.age_bracket] || p.age_bracket}">
-            <div class="view-photo-card-info">
-              <div class="bracket">${BRACKET_LABEL[p.age_bracket] || p.age_bracket}</div>
-              <div class="date">${formatDate(p.created_at)}</div>
+        <div class="view-photos-wrap">
+          <div class="view-current-block">
+            <div class="block-title">
+              <i class="fas fa-id-badge"></i>
+              Текущее фото · 60+
+            </div>
+            ${currentPhoto
+              ? `<div class="view-current-photo">
+                   <img src="${currentUrl || '../../images/default-avatar.png'}" alt="Фото 60+">
+                 </div>
+                 <div style="font-size:0.78rem;color:#888;margin-top:6px;">Загружено ${formatDate(currentPhoto.created_at)}</div>`
+              : `<div style="color:#888;font-size:0.9rem;">Нет загруженного фото.</div>`}
+          </div>
+          <div class="view-history-block">
+            <div class="block-title">
+              <i class="fas fa-history"></i>
+              История фотографий
+            </div>
+            <div class="view-photos-grid">
+              ${historyItems.map(h => `
+                <div class="view-photo-card">
+                  <img src="${h.url || '../../images/default-avatar.png'}" alt="Фото ${BRACKET_LABEL[h.bracket]}">
+                  <div class="view-photo-card-info">
+                    <div class="bracket">${BRACKET_LABEL[h.bracket]}</div>
+                    <div class="date">${h.photo ? formatDate(h.photo.created_at) : 'нет фото'}</div>
+                  </div>
+                </div>
+              `).join('')}
             </div>
           </div>
-        `).join('');
-      });
+        </div>
+      `;
+      section.style.display = 'block';
     }
 
     // ============================================================
@@ -845,10 +1056,10 @@
         </div>
 
         <div class="form-section">
-          <h4>Фотографии (по возрастным периодам)</h4>
+          <h4>Фотографии</h4>
           ${isNew
             ? '<p style="color:#856404;font-size:.9rem;margin:0;">Сохраните E-Pass — после этого можно будет загружать фотографии.</p>'
-            : '<div class="photos-grid" id="photosGrid">Загрузка...</div>'}
+            : '<div id="photosGrid">Загрузка...</div>'}
         </div>
       `;
 
@@ -856,84 +1067,6 @@
         renderPhotosSection(data.personal_code);
         document.getElementById('openStatusBtn')?.addEventListener('click', () => openStatusModal(data.id));
       }
-    }
-
-    async function renderPhotosSection(personalCode) {
-      const grid = document.getElementById('photosGrid');
-      if (!grid) return;
-
-      const photos = await loadPhotosFor(personalCode);
-      const photoMap = {};
-      photos.forEach(p => { photoMap[p.age_bracket] = p; });
-
-      // Подписанные URL
-      const urlMap = {};
-      await Promise.all(photos.map(async p => {
-        urlMap[p.age_bracket] = await getSignedUrl(p.storage_path);
-      }));
-
-      grid.innerHTML = BRACKETS.map(br => {
-        const p = photoMap[br];
-        const url = urlMap[br];
-        const safeBr = br.replace('+', 'p');
-        return `
-          <div class="photo-slot" data-bracket="${br}">
-            <div class="photo-slot-label">${BRACKET_LABEL[br]}</div>
-            <div class="photo-slot-preview">
-              ${p && url
-                ? `<img src="${url}" alt="${BRACKET_LABEL[br]}">`
-                : 'Нет фото'}
-            </div>
-            <div class="photo-slot-date">${p ? formatDate(p.created_at) : '—'}</div>
-            <div class="photo-slot-actions">
-              <input type="file" id="file_${safeBr}" accept="image/*" data-bracket="${br}">
-              <button type="button" class="btn-bracket-upload" data-upload="${br}">
-                <i class="fas fa-upload"></i> ${p ? 'Заменить' : 'Загрузить'}
-              </button>
-              ${p ? `<button type="button" class="btn-bracket-delete" data-delete="${br}">
-                       <i class="fas fa-trash"></i> Удалить
-                     </button>` : ''}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      // Обработчики
-      grid.querySelectorAll('[data-upload]').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const br = btn.dataset.upload;
-          const safeBr = br.replace('+', 'p');
-          document.getElementById(`file_${safeBr}`).click();
-        });
-      });
-
-      grid.querySelectorAll('input[type=file]').forEach(inp => {
-        inp.addEventListener('change', async (e) => {
-          const file = e.target.files?.[0];
-          if (!file) return;
-          const br = inp.dataset.bracket;
-          try {
-            await uploadBracketPhoto(personalCode, br, file);
-            await renderPhotosSection(personalCode);
-          } catch (err) {
-            alert('Ошибка загрузки: ' + err.message);
-          }
-          inp.value = '';
-        });
-      });
-
-      grid.querySelectorAll('[data-delete]').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const br = btn.dataset.delete;
-          if (!confirm(`Удалить фото для "${BRACKET_LABEL[br]}"?`)) return;
-          try {
-            await deleteBracketPhoto(personalCode, br);
-            await renderPhotosSection(personalCode);
-          } catch (err) {
-            alert('Ошибка удаления: ' + err.message);
-          }
-        });
-      });
     }
 
     // ============================================================
@@ -944,14 +1077,11 @@
       currentPersonalCode = null;
       document.getElementById('editModalTitle').textContent = 'Добавление E-Pass';
       document.getElementById('editModal').classList.add('active');
-      renderEditForm({
-        status: 'oncheck',
-        gender: 'Мужской'
-      });
+      renderEditForm({ status: 'oncheck', gender: 'Мужской' });
     }
 
     // ============================================================
-    // СОХРАНЕНИЕ (add + edit)
+    // СОХРАНЕНИЕ
     // ============================================================
     async function saveEpass() {
       const form = {
@@ -970,14 +1100,12 @@
 
       try {
         if (currentId) {
-          // Редактирование
           const { error } = await supabase
             .schema('documents').from('epass')
             .update({ ...form, updated_at: new Date().toISOString() })
             .eq('id', currentId);
           if (error) throw error;
         } else {
-          // Проверка дубликата по personal_code или epass_number
           const { data: existing, error: chkErr } = await supabase
             .schema('documents').from('epass')
             .select('id, personal_code, epass_number')
@@ -989,7 +1117,6 @@
             return;
           }
 
-          // Вставка
           const { data: inserted, error } = await supabase
             .schema('documents').from('epass')
             .insert([{ ...form, created_at: new Date().toISOString() }])
@@ -997,11 +1124,9 @@
             .single();
           if (error) throw error;
 
-          // Переключаемся в режим редактирования только что созданной записи
           currentId = inserted.id;
           currentPersonalCode = inserted.personal_code;
           document.getElementById('editModalTitle').textContent = 'Редактирование E-Pass';
-          // Перерисовываем форму — появятся слоты фото
           renderEditForm(inserted);
         }
 
@@ -1029,7 +1154,6 @@
       const comment = document.getElementById('statusComment').value.trim();
 
       try {
-        // Достаём текущие поля, чтобы обновить локальную форму
         const { data: row, error: fetchErr } = await supabase
           .schema('documents').from('epass')
           .select('personal_code')
@@ -1043,7 +1167,6 @@
           .eq('id', statusTargetId);
         if (updErr) throw updErr;
 
-        // Пытаемся отправить сообщение пользователю (не критично, если не получится)
         try {
           const { data: userData } = await supabase
             .from('users').select('id').eq('personal_code', row.personal_code).maybeSingle();
@@ -1051,7 +1174,7 @@
             await supabase.schema('messages').from('user_messages').insert({
               user_id: userData.id,
               title: 'Изменение статуса E-Pass',
-              content: `Статус вашего E-Pass изменён на "${statusMap[newStatus]}". Комментарий: ${comment || 'не указан'}`,
+              content: `Статус вашего E-Pass изменён на «${statusMap[newStatus]}». Комментарий: ${comment || 'не указан'}`,
               type: 'status_change',
               document_type: 'epass',
               document_id: statusTargetId,
@@ -1062,7 +1185,6 @@
           console.warn('Сообщение не отправлено:', msgErr.message);
         }
 
-        // Обновляем и локальную форму, и список
         const statusSelect = document.getElementById('f_status');
         if (statusSelect && currentId === statusTargetId) statusSelect.value = newStatus;
 
@@ -1086,23 +1208,19 @@
           .select('personal_code').eq('id', id).single();
         if (fetchErr) throw fetchErr;
 
-        // Storage: 4 брекета + legacy photo.jpg
-        const paths = BRACKETS.map(br => `epass/${row.personal_code}/${br}.jpg`);
+        const paths = ALL_BRACKETS.map(br => `epass/${row.personal_code}/${br}.jpg`);
         paths.push(`epass/${row.personal_code}/photo.jpg`);
         await supabase.storage.from(STORAGE_BUCKET).remove(paths);
 
-        // epass_photos
         await supabase.schema('documents').from('epass_photos')
           .delete().eq('personal_code', row.personal_code);
 
-        // epass
         const { error } = await supabase
           .schema('documents').from('epass')
           .delete().eq('id', id);
         if (error) throw error;
 
-        if (currentId === id) closeViewModal();
-        if (currentId === id) closeEditModal();
+        if (currentId === id) { closeViewModal(); closeEditModal(); }
         loadList();
       } catch (err) {
         console.error('deleteEpass:', err);
@@ -1113,9 +1231,7 @@
     // ============================================================
     // ЗАКРЫТИЕ МОДАЛОК
     // ============================================================
-    window.closeViewModal = () => {
-      document.getElementById('viewModal').classList.remove('active');
-    };
+    window.closeViewModal = () => document.getElementById('viewModal').classList.remove('active');
     window.closeEditModal = () => {
       document.getElementById('editModal').classList.remove('active');
       currentId = null;
@@ -1130,30 +1246,20 @@
     // ИНИЦИАЛИЗАЦИЯ
     // ============================================================
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1) Проверка прав
       const isAdmin = await checkAdminRole();
       if (!isAdmin) {
-        // Прячем таблицу, чтобы не было видно пустого каркаса
         document.getElementById('loading').style.display = 'none';
         return;
       }
 
-      // 2) Кнопка «Добавить»
       document.getElementById('addBtn').addEventListener('click', openAddModal);
-
-      // 3) Кнопка «Сохранить» в форме
       document.getElementById('saveEpassBtn').addEventListener('click', saveEpass);
-
-      // 4) Кнопка «Подтвердить» в модалке статуса
       document.getElementById('confirmStatusBtn').addEventListener('click', confirmStatusChange);
-
-      // 5) Logout
       document.getElementById('logoutBtn').addEventListener('click', async () => {
         await supabase.auth.signOut();
         window.location.href = '../../login.html';
       });
 
-      // 6) Загружаем список
       await loadList();
     });
   </script>
