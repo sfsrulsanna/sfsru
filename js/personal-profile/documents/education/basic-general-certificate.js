@@ -12,7 +12,7 @@ function formatDate(dateString) {
   if (!dateString) return '—'
   try {
     const date = new Date(dateString)
-    return date.toLocaleDateString('ru-RU') // DD.MM.YYYY
+    return date.toLocaleDateString('ru-RU')
   } catch {
     return dateString
   }
@@ -74,19 +74,22 @@ async function loadData() {
     const idFromUrl = urlParams.get('id')
 
     let data = null
+
+    // ИЗМЕНЕНО: обращаемся к отдельной таблице, без фильтра по type
     if (idFromUrl) {
       const { data: doc, error } = await supabase
-        .from('documents_education')
+        .schema('documents_education')
+        .from('basic_general_certificate')
         .select('*')
         .eq('id', idFromUrl)
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
       const { data: docs, error } = await supabase
-        .from('documents_education')
+        .schema('documents_education')
+        .from('basic_general_certificate')
         .select('*')
         .eq('personal_code', userPersonalCode)
-        .eq('type', 'basic_general')
         .order('created_at', { ascending: false })
         .limit(1)
       if (!error && docs && docs.length > 0) {
@@ -117,23 +120,18 @@ async function loadData() {
 }
 
 // ==================== ОТРИСОВКА ДОКУМЕНТА ====================
+// (эта часть без изменений — код из предыдущего ответа)
 function renderCertificate(data) {
   const fullName = data.full_name || `${userProfile?.surname || ''} ${userProfile?.name || ''} ${userProfile?.patronymic || ''}`.trim() || '—'
-
-  // Проверка на "С ОТЛИЧИЕМ"
-  const isHonors = data.with_honors === true || data.honors === true
+  const isHonors = data.with_honors === true
   const honorsText = isHonors ? ' С ОТЛИЧИЕМ' : ''
-
-  // Статус документа (Оригинал / Дубликат)
   const docStatus = data.document_status || '—'
 
-  // Обработка предметов
   let subjects = data.subjects || []
   if (typeof subjects === 'string') {
     try { subjects = JSON.parse(subjects) } catch { subjects = [] }
   }
 
-  // --- РЕНДЕР САМОГО АТТЕСТАТА ---
   let issueDateHtml = ''
   if (data.issue_date) {
     issueDateHtml = `
@@ -209,7 +207,6 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = certHtml
 
-  // --- РЕНДЕР ПРИЛОЖЕНИЯ (ОТДЕЛЬНО) ---
   const appendixContainer = document.getElementById('appendixContainer')
 
   if (subjects.length > 0 || data.additional_info) {
@@ -217,12 +214,7 @@ function renderCertificate(data) {
     if (subjects.length > 0) {
       subjectsTableHtml = `
         <table class="subjects-table">
-          <thead>
-            <tr>
-              <th>Предмет</th>
-              <th>Оценка</th>
-            </tr>
-          </thead>
+          <thead><tr><th>Предмет</th><th>Оценка</th></tr></thead>
           <tbody>
             ${subjects.map(subj => `
               <tr>
@@ -256,7 +248,6 @@ function renderCertificate(data) {
     appendixContainer.innerHTML = ''
   }
 
-  // --- РЕНДЕР СТАТУСА (ВНИЗУ) ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   

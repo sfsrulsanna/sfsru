@@ -3,6 +3,26 @@ import { supabase } from '../../../../js/supabase-config.js'
 // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let personalCode = null
 
+// ==================== КАРТА ТИПОВ → ТАБЛИЦ ====================
+const EDUCATION_TABLES = {
+  preschool: 'preschool_certificate',
+  primary: 'primary_certificate',
+  basic_general: 'basic_general_certificate',
+  secondary_general: 'secondary_general_certificate',
+  secondary_vocational: 'secondary_vocational_diploma',
+  basic_higher: 'basic_higher_diploma',
+  specialized_higher: 'specialized_higher_diploma',
+  qualified_higher: 'qualified_higher_diploma',
+  incomplete_higher: 'incomplete_higher_diploma',
+  professional_retraining: 'professional_retraining_diploma',
+  driving_school: 'driving_school_certificate',
+  candidate_sciences: 'candidate_sciences_diploma',
+  doctor_sciences: 'doctor_sciences_diploma',
+  memorial: 'memorial_certificate',
+  special_school: 'special_school_certificate',
+  school_certificate: 'school_certificate'
+}
+
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function getStatusLabel(status) {
   if (status === 'verified') return '✅ Подтверждено'
@@ -15,7 +35,7 @@ function getStatusLabel(status) {
 async function loadUserProfile() {
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) {
-    window.location.href = '../../../login.html' // Путь на уровень выше
+    window.location.href = '../../../login.html'
     return
   }
 
@@ -29,11 +49,10 @@ async function loadUserProfile() {
     console.error('Ошибка загрузки профиля:', error)
     return
   }
-
   personalCode = data.personal_code
 }
 
-// ==================== ОПРЕДЕЛЕНИЕ ТИПОВ ====================
+// ==================== ОПРЕДЕЛЕНИЕ ГРУПП ====================
 const basicTypes = [
   { type: 'preschool', title: 'Аттестат о дошкольном образовании', url: 'preschool-certificate.html' },
   { type: 'primary', title: 'Аттестат о начальном образовании', url: 'primary-certificate.html' },
@@ -63,28 +82,34 @@ const nonEducationalTypes = [
 ]
 
 // ==================== ЗАГРУЗКА ДОКУМЕНТОВ ====================
+// Запрашиваем каждую таблицу отдельно — берём по 1 свежему неархивному документу
 async function loadAllEducationDocuments() {
   if (!personalCode) return []
 
-  const { data, error } = await supabase
-    .from('documents_education')
-    .select('*')
-    .eq('personal_code', personalCode)
-    .neq('status', 'archived')
-    .order('created_at', { ascending: false })
+  const results = []
 
-  if (error) {
-    console.error('Ошибка загрузки документов:', error)
-    return []
+  for (const [type, table] of Object.entries(EDUCATION_TABLES)) {
+    const { data, error } = await supabase
+      .schema('documents_education')
+      .from(table)
+      .select('*')
+      .eq('personal_code', personalCode)
+      .neq('status', 'archived')
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (!error && data && data.length > 0) {
+      results.push({ ...data[0], type })
+    }
   }
-  return data || []
+
+  return results
 }
 
 // ==================== ОТРИСОВКА ====================
 function getLatestDocsByType(allDocs, typeList) {
   const result = []
   typeList.forEach(t => {
-    // Ищем документы этого типа (они уже отсортированы по дате создания)
     const docsOfType = allDocs.filter(d => d.type === t.type)
     if (docsOfType.length > 0) {
       result.push({ ...docsOfType[0], typeInfo: t })
@@ -140,13 +165,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (personalCode) {
     const allDocs = await loadAllEducationDocuments()
     
-    // Формируем списки документов для каждого блока
     const basicDocs = getLatestDocsByType(allDocs, basicTypes)
     const additionalDocs = getLatestDocsByType(allDocs, additionalTypes)
     const degreeDocs = getLatestDocsByType(allDocs, degreeTypes)
     const nonEducationalDocs = getLatestDocsByType(allDocs, nonEducationalTypes)
 
-    // Отрисовываем секции
     renderSection(basicDocs, 'basicEducationSection', 'basicEducationGrid')
     renderSection(additionalDocs, 'additionalEducationSection', 'additionalEducationGrid')
     renderSection(degreeDocs, 'degreesSection', 'degreesGrid')
