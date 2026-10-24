@@ -127,9 +127,28 @@
     }
   }
 
-  function renderPassport(data) {
-    const statusText = getStatusLabel(data.status);
-    const statusClass = getStatusClass(data.status);
+function renderPassport(data) {
+  const statusText = getStatusLabel(data.status);
+  const statusClass = getStatusClass(data.status);
+
+  // --- Проверка срока действия паспорта ---
+  let expiryBadgesHtml = '';
+  if (data.expiry_date) {
+    const expiryDate = new Date(data.expiry_date);
+    expiryDate.setHours(23, 59, 59, 999); // конец дня
+    const today = new Date();
+
+    const diffTime = expiryDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays < 0) {
+      expiryBadgesHtml +=
+        '<span class="document-status status-expired">❌ Истёк срок действия</span>';
+    } else if (diffDays <= 30) {
+      expiryBadgesHtml +=
+        `<span class="document-status status-warning">⚠️ Истекает срок действия (${diffDays} дн.)</span>`;
+    }
+  }
 
     const html = `
       <div class="passport-template">
@@ -212,8 +231,8 @@
       </div>
     `;
 
-    document.getElementById('passportContent').innerHTML = html;
-    document.getElementById('passportContent').style.display = 'block';
+  document.getElementById('passportContent').innerHTML = html;
+  document.getElementById('passportContent').style.display = 'block';
 
     const personalCode = data.personal_code || '';
     if (personalCode) {
