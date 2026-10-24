@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Аттестаты и дипломы — Админ панель СФСРЮ</title>
+
+  <!-- favicons -->
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+  <meta name="application-name" content="&nbsp;"/>
+  <meta name="msapplication-TileColor" content="#FFFFFF" />
+  <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+  <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+  <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+  <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+  <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <script type="importmap">
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+  </script>
+
+  <style>
+    /* SPA-страницы */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* Таблица */
+    .records-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 1rem;
+    }
+    .records-table th {
+      background: #f8f9fa;
+      padding: 10px;
+      text-align: left;
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    .records-table td {
+      padding: 10px;
+      border-bottom: 1px solid #eee;
+      vertical-align: middle;
+    }
+    .records-table tr:hover { background: #f5f5f5; }
+
+    /* Бейджи */
+    .badge-status {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .badge-verified { background: #d4edda; color: #155724; }
+    .badge-oncheck  { background: #fff3cd; color: #856404; }
+    .badge-rejected { background: #f8d7da; color: #721c24; }
+    .badge-archived { background: #e2e3e5; color: #383d41; }
+
+    /* Детальная таблица */
+    .details-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin: 1rem 0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .details-table th {
+      width: 30%;
+      background: #f8f9fa;
+      padding: 10px;
+      text-align: right;
+      font-weight: 600;
+      border: 1px solid #dee2e6;
+    }
+    .details-table td {
+      padding: 10px;
+      border: 1px solid #dee2e6;
+    }
+
+    /* Кнопки действий */
+    .btn-verify, .btn-reject, .btn-view, .btn-archive, .btn-edit, .btn-delete, .btn-small {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-right: 5px;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-verify  { background: #28a745; color: white; }
+    .btn-reject  { background: #dc3545; color: white; }
+    .btn-view    { background: #6c757d; color: white; }
+    .btn-archive { background: #ffc107; color: #212529; }
+    .btn-edit    { background: #007bff; color: white; }
+    .btn-delete  { background: #dc3545; color: white; }
+    .btn-small   { padding: 4px 10px; font-size: 0.85rem; background: #007bff; color: white; }
+    .btn-verify:hover, .btn-reject:hover, .btn-view:hover,
+    .btn-edit:hover, .btn-delete:hover, .btn-small:hover { opacity: 0.9; }
+    .btn-verify:disabled, .btn-reject:disabled, .btn-archive:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Действия */
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+      flex-wrap: wrap;
+    }
+
+    /* Форма */
+    .form-container {
+      max-width: 900px;
+      margin: 2rem auto;
+      background: white;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: #2c3e50;
+    }
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .form-textarea { min-height: 80px; resize: vertical; }
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1rem;
+    }
+    .form-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+    .form-checkbox input { width: auto; }
+
+    /* Редактор предметов */
+    .subjects-editor { margin-top: 0.5rem; }
+    .subjects-editor table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 0.5rem;
+    }
+    .subjects-editor th,
+    .subjects-editor td {
+      padding: 6px;
+      border: 1px solid #dee2e6;
+    }
+    .subjects-editor th { background: #f8f9fa; font-weight: 600; text-align: left; }
+    .subjects-editor td:last-child { width: 40px; text-align: center; }
+    .subjects-editor .form-input,
+    .subjects-editor .form-select { padding: 0.4rem; font-size: 0.9rem; }
+    .btn-add-subject {
+      background: #17a2b8;
+      color: white;
+      padding: 6px 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .btn-add-subject:hover { background: #138496; }
+    .btn-remove-subject {
+      background: #dc3545;
+      color: white;
+      border: none;
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    /* Уведомление */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 1rem 1.5rem;
+      border-radius: 6px;
+      color: white;
+      z-index: 1000;
+      display: none;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    }
+    .notification.success { background: #28a745; }
+    .notification.error   { background: #dc3545; }
+    .notification.info    { background: #17a2b8; }
+
+    /* Состояния */
+    .loading, .no-data {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+    .error-block {
+      color: #dc3545;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    /* Фильтры */
+    .filters {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+    .filters select,
+    .filters input {
+      padding: 8px 12px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.95rem;
+    }
+    .filters input { flex: 1; min-width: 200px; }
+
+    .btn-primary {
+      background: #007bff;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.95rem;
+    }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      text-decoration: none;
+      display: inline-block;
+    }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-submit {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 0.8rem 2rem;
+      font-size: 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-submit:hover { background: #218838; }
+
+    /* Карточки хаба */
+    .admin-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .admin-card {
+      background: white;
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      text-align: center;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: pointer;
+    }
+    .admin-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    }
+    .admin-card .card-icon {
+      font-size: 2.5rem;
+      color: #007bff;
+      margin-bottom: 1rem;
+    }
+    .admin-card h3 { margin-bottom: 0.5rem; color: #2c3e50; }
+    .admin-card p { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
+
+    .subjects-preview {
+      font-size: 0.85rem;
+      color: #666;
+    }
+    .grade-extended {
+      font-weight: 600;
+      color: #28a745;
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ — Аттестаты</h1>
+      </div>
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../index.html">Главная админки</a></li>
+          <li><a href="#/" class="active">Аттестаты</a></li>
+          <li><a href="../documents/">Документы</a></li>
+          <li><a href="../certificates/">Свидетельства</a></li>
+          <li><a href="../../index.html">На сайт</a></li>
+        </ul>
+      </nav>
+      <div class="admin-user">
+        <span id="adminEmail"></span>
+        <button id="logoutBtn" class="btn-logout" style="background:#dc3545;color:white;border:none;padding:0.5rem 1rem;margin-left:0.5rem;border-radius:4px;cursor:pointer;"><i class="fas fa-sign-out-alt"></i></button>
+      </div>
+    </div>
+  </header>
+  <div class="menu-overlay"></div>
+
+  <main class="main-content">
+    <div class="container">
+
+      <!-- === ХАБ === -->
+      <section id="page-index" class="page">
+        <h1 class="page-title">Аттестаты и дипломы</h1>
+        <p class="page-description">Управление всеми документами об образовании</p>
+
+        <div class="admin-cards">
+          <div class="admin-card" onclick="location.hash='#/list'">
+            <div class="card-icon"><i class="fas fa-list"></i></div>
+            <h3>Все аттестаты</h3>
+            <p>Просмотр, фильтрация и управление всеми документами.</p>
+          </div>
+          <div class="admin-card" onclick="location.hash='#/verify'">
+            <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+            <h3>На проверке</h3>
+            <p>Записи со статусом "oncheck" — требуется модерация.</p>
+          </div>
+          <div class="admin-card" onclick="location.hash='#/add'">
+            <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
+            <h3>Добавить документ</h3>
+            <p>Создание новой записи об образовании.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- === СПИСОК === -->
+      <section id="page-list" class="page">
+        <h1 class="page-title">Все аттестаты</h1>
+        <p class="page-description">Просмотр, фильтрация и управление записями.</p>
+
+        <div class="filters">
+          <select id="listTypeSelect"></select>
+          <select id="listStatusFilter">
+            <option value="">Все статусы</option>
+            <option value="verified">Подтверждено</option>
+            <option value="oncheck">На проверке</option>
+            <option value="rejected">Отклонено</option>
+            <option value="archived">Архивные</option>
+          </select>
+          <input type="text" id="listSearchInput" placeholder="Поиск по номеру или ФИО">
+          <button id="listApplyBtn" class="btn-primary">Применить</button>
+          <button id="listAddBtn" class="btn-primary" style="background:#28a745;">+ Добавить</button>
+        </div>
+
+        <div id="listLoading" class="loading">Загрузка...</div>
+        <div id="listTableContainer"></div>
+
+        <a href="#/" class="btn-secondary" style="margin-top:1.5rem;">← К разделам</a>
+      </section>
+
+      <!-- === ФОРМА (ДОБАВЛЕНИЕ / РЕДАКТИРОВАНИЕ) === -->
+      <section id="page-form" class="page">
+        <h1 id="formTitle" class="page-title">Добавить документ</h1>
+        <p class="page-description">Заполните все необходимые поля.</p>
+
+        <div class="form-container">
+          <div class="form-group" id="formTypeWrapper">
+            <label for="formTypeSelect">Тип документа:</label>
+            <select id="formTypeSelect" class="form-select">
+              <option value="">-- Выберите тип --</option>
+            </select>
+          </div>
+
+          <form id="docForm" style="display: none;">
+            <div id="formFields"></div>
+            <div style="margin-top: 2rem; display:flex; gap:10px;">
+              <button type="button" class="btn-secondary" onclick="history.back()">Отмена</button>
+              <button type="submit" class="btn-submit" id="formSubmitBtn">Сохранить</button>
+            </div>
+          </form>
+
+          <div id="formMessage" class="message" style="display: none; margin-top:1rem; padding:1rem; border-radius:4px;"></div>
+        </div>
+      </section>
+
+      <!-- === ПРОВЕРКА === -->
+      <section id="page-verify" class="page">
+        <h1 class="page-title">На проверке</h1>
+        <p class="page-description">Подтвердите или отклоните каждую запись.</p>
+
+        <div id="verifyNotification" class="notification"></div>
+
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>Тип</th>
+              <th>Личный код</th>
+              <th>ФИО</th>
+              <th>Номер документа</th>
+              <th>Дата выдачи</th>
+              <th>Действия</th>
+            </tr>
+          </thead>
+          <tbody id="verifyTableBody">
+            <tr><td colspan="6" class="loading">Загрузка...</td></tr>
+          </tbody>
+        </table>
+
+        <a href="#/" class="btn-secondary" style="margin-top:1.5rem;">← К разделам</a>
+      </section>
+
+      <!-- === ПРОСМОТР === -->
+      <section id="page-view" class="page">
+        <h1 id="viewTitle" class="page-title">Просмотр документа</h1>
+        <div id="viewLoading" class="loading">Загрузка...</div>
+        <div id="viewError" class="error-block" style="display:none;"></div>
+        <div id="viewDisplay" style="display:none;"></div>
+        <a href="#/list" class="btn-secondary" style="margin-top:20px;">← Назад к списку</a>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
+  </footer>
+
+  <script src="../../js/mob-menu.js"></script>
+
+  <script type="module">
+    import { supabase } from '../../js/supabase-config.js';
+
+    /* ------------------- КОНФИГУРАЦИЯ ТИПОВ ------------------- */
+    const EDUCATION_TABLES = {
+      preschool:               { table: 'preschool_certificate',                title: 'Аттестат о дошкольном образовании' },
+      primary:                 { table: 'primary_certificate',                  title: 'Аттестат о начальном образовании' },
+      basic_general:           { table: 'basic_general_certificate',            title: 'Аттестат об основном общем образовании' },
+      secondary_general:       { table: 'secondary_general_certificate',        title: 'Аттестат о среднем общем образовании' },
+      secondary_vocational:    { table: 'secondary_vocational_diploma',         title: 'Диплом о среднем профессиональном образовании' },
+      basic_higher:            { table: 'basic_higher_diploma',                 title: 'Диплом о базовом высшем образовании' },
+      specialized_higher:      { table: 'specialized_higher_diploma',           title: 'Диплом о специализированном высшем образовании' },
+      qualified_higher:        { table: 'qualified_higher_diploma',             title: 'Диплом о квалифицированном высшем образовании' },
+      incomplete_higher:       { table: 'incomplete_higher_diploma',            title: 'Диплом о неполном высшем образовании' },
+      professional_retraining: { table: 'professional_retraining_diploma',      title: 'Диплом о профессиональной переподготовке' },
+      driving_school:          { table: 'driving_school_certificate',           title: 'Свидетельство об окончании автошколы' },
+      candidate_sciences:      { table: 'candidate_sciences_diploma',           title: 'Диплом кандидата наук' },
+      doctor_sciences:         { table: 'doctor_sciences_diploma',              title: 'Диплом доктора наук' },
+      memorial:                { table: 'memorial_certificate',                 title: 'Памятный аттестат' },
+      special_school:          { table: 'special_school_certificate',           title: 'Свидетельство об окончании спецшколы' },
+      school_certificate:      { table: 'school_certificate',                   title: 'Справка об окончании школы (колледжа)' }
+    };
+
+    /* Поля одинаковые у всех 16 таблиц */
+    const FIELDS = [
+      { name: 'personal_code',      label: 'Личный код владельца',         type: 'text',     required: true },
+      { name: 'full_name',          label: 'ФИО владельца',                type: 'text',     required: true },
+      { name: 'issued_by',          label: 'Образовательное учреждение',   type: 'text' },
+      { name: 'director',           label: 'Директор / руководитель',      type: 'text' },
+      { name: 'document_number',    label: 'Номер документа',              type: 'text' },
+      { name: 'registration_number',label: 'Регистрационный номер',        type: 'text' },
+      { name: 'document_status',    label: 'Статус документа',             type: 'select',   options: ['', 'Оригинал', 'Дубликат'] },
+      { name: 'with_honors',        label: 'С отличием',                   type: 'checkbox' },
+      { name: 'study_start_date',   label: 'Дата начала обучения',         type: 'date' },
+      { name: 'study_end_date',     label: 'Дата окончания обучения',      type: 'date' },
+      { name: 'issue_date',         label: 'Дата выдачи',                  type: 'date' },
+      { name: 'additional_info',    label: 'Дополнительная информация',    type: 'textarea' },
+      { name: 'subjects',           label: 'Приложение: предметы и оценки',type: 'subjects' }
+    ];
+
+    /* ------------------- ХЕЛПЕРЫ ------------------- */
+    function getTypeInfo(type) { return EDUCATION_TABLES[type] || null; }
+
+    function escapeHTML(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '—';
+      try { return new Date(dateStr).toLocaleDateString('ru-RU'); }
+      catch { return dateStr; }
+    }
+
+    function getStatusLabel(status) {
+      const labels = {
+        verified: '✅ Подтверждено',
+        oncheck:  '⏳ На проверке',
+        rejected: '❌ Отклонено',
+        archived: '📦 Архивный'
+      };
+      return labels[status] || status || '—';
+    }
+
+    function formatGrade(grade) {
+      if (grade === null || grade === undefined || grade === '') return '—';
+      const g = String(grade).trim();
+      const map = { '5': 'отлично', '4': 'хорошо', '3': 'удовлетв.', '2': 'неудовлетв.' };
+      return map[g] ? `${g} (${map[g]})` : g;
+    }
+
+    function parseSubjects(value) {
+      if (!value) return [];
+      if (typeof value === 'string') {
+        try { return JSON.parse(value); } catch { return []; }
+      }
+      return Array.isArray(value) ? value : [];
+    }
+
+    function showNotification(msg, type = 'success') {
+      const n = document.getElementById('verifyNotification');
+      if (!n) return;
+      n.textContent = msg;
+      n.className = `notification ${type}`;
+      n.style.display = 'block';
+      setTimeout(() => { n.style.display = 'none'; }, 3000);
+    }
+
+    /* ------------------- ЗАПРОСЫ К БД ------------------- */
+    async function fetchList(type, filters = {}) {
+      const info = getTypeInfo(type);
+      if (!info) throw new Error('Неизвестный тип документа');
+
+      let query = supabase.schema('documents_education').from(info.table).select('*');
+
+      if (filters.status) query = query.eq('status', filters.status);
+      if (filters.search) {
+        const term = `%${filters.search}%`;
+        query = query.or(`document_number.ilike.${term},full_name.ilike.${term},personal_code.ilike.${term}`);
+      }
+      query = query.order('created_at', { ascending: false });
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    }
+
+    async function fetchById(type, id) {
+      const info = getTypeInfo(type);
+      if (!info) throw new Error('Неизвестный тип документа');
+      const { data, error } = await supabase
+        .schema('documents_education').from(info.table)
+        .select('*').eq('id', id).single();
+      if (error) throw error;
+      return data;
+    }
+
+    async function updateStatus(type, id, status) {
+      const info = getTypeInfo(type);
+      const { error } = await supabase
+        .schema('documents_education').from(info.table)
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    }
+
+    async function createDoc(type, payload) {
+      const info = getTypeInfo(type);
+      const record = {
+        ...payload,
+        status: 'oncheck',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      const { data, error } = await supabase
+        .schema('documents_education').from(info.table)
+        .insert([record]).select();
+      if (error) throw error;
+      return data[0];
+    }
+
+    async function updateDoc(type, id, payload) {
+      const info = getTypeInfo(type);
+      const { data, error } = await supabase
+        .schema('documents_education').from(info.table)
+        .update({ ...payload, updated_at: new Date().toISOString() })
+        .eq('id', id).select();
+      if (error) throw error;
+      return data[0];
+    }
+
+    async function deleteDoc(type, id) {
+      const info = getTypeInfo(type);
+      const { error } = await supabase
+        .schema('documents_education').from(info.table)
+        .delete().eq('id', id);
+      if (error) throw error;
+    }
+
+    async function requireAdmin() {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        window.location.href = '../../login.html';
+        return false;
+      }
+      const { data: profile, error } = await supabase
+        .from('users').select('role, email').eq('id', session.user.id).single();
+      if (error || profile?.role !== 'admin') {
+        alert('Доступ запрещён');
+        window.location.href = '../../personal-profile/index.html';
+        return false;
+      }
+      const emailSpan = document.getElementById('adminEmail');
+      if (emailSpan) emailSpan.textContent = profile.email || session.user.email;
+      return true;
+    }
+
+    /* ------------------- РОУТЕР ------------------- */
+    function showPage(id) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      const el = document.getElementById(id);
+      if (el) el.classList.add('active');
+      window.scrollTo(0, 0);
+    }
+
+    function parseHash() {
+      const hash = location.hash.replace(/^#/, '') || '/';
+      const [pathRaw, queryRaw] = hash.split('?');
+      return { route: (pathRaw || '/').trim(), params: new URLSearchParams(queryRaw || '') };
+    }
+
+    async function router() {
+      const { route, params } = parseHash();
+      switch (route) {
+        case '/': case '': showPage('page-index'); break;
+        case '/list':      showPage('page-list');   await initList();  break;
+        case '/add':       showPage('page-form');   await initForm(params, 'add'); break;
+        case '/edit':      showPage('page-form');   await initForm(params, 'edit'); break;
+        case '/verify':    showPage('page-verify'); await initVerify(); break;
+        case '/view':      showPage('page-view');   await initView(params); break;
+        default: showPage('page-index');
+      }
+    }
+
+    /* ------------------- 1. СПИСОК ------------------- */
+    async function initList() {
+      const typeSelect = document.getElementById('listTypeSelect');
+      const statusFilter = document.getElementById('listStatusFilter');
+      const searchInput = document.getElementById('listSearchInput');
+      const applyBtn = document.getElementById('listApplyBtn');
+      const addBtn = document.getElementById('listAddBtn');
+      const loading = document.getElementById('listLoading');
+      const container = document.getElementById('listTableContainer');
+
+      if (typeSelect.options.length === 0) {
+        typeSelect.innerHTML = Object.entries(EDUCATION_TABLES).map(([k, i]) =>
+          `<option value="${k}">${escapeHTML(i.title)}</option>`
+        ).join('');
+      }
+
+      addBtn.onclick = () => {
+        location.hash = `#/add?type=${typeSelect.value}`;
+      };
+
+      async function load() {
+        const type = typeSelect.value;
+        if (!type) return;
+        loading.style.display = 'block';
+        container.innerHTML = '';
+        try {
+          const data = await fetchList(type, {
+            status: statusFilter.value || undefined,
+            search: searchInput.value || undefined
+          });
+          if (!data.length) {
+            container.innerHTML = '<p class="no-data">Нет записей</p>';
+            return;
+          }
+          let html = '<table class="records-table"><thead><tr>' +
+            '<th>ФИО</th><th>Личный код</th><th>Номер</th><th>Дата выдачи</th>' +
+            '<th>С отличием</th><th>Статус</th><th>Действия</th></tr></thead><tbody>';
+
+          data.forEach(rec => {
+            html += `<tr>
+              <td>${escapeHTML(rec.full_name || '—')}</td>
+              <td>${escapeHTML(rec.personal_code || '—')}</td>
+              <td>${escapeHTML(rec.document_number || '—')}</td>
+              <td>${formatDate(rec.issue_date)}</td>
+              <td>${rec.with_honors ? '✔️ Да' : '—'}</td>
+              <td><span class="badge-status badge-${rec.status}">${getStatusLabel(rec.status)}</span></td>
+              <td>
+                <a href="#/view?type=${type}&id=${rec.id}" class="btn-small">👁 Просмотр</a>
+                <a href="#/edit?type=${type}&id=${rec.id}" class="btn-edit btn-small">✎</a>
+                <button class="btn-delete btn-small" data-id="${rec.id}" data-type="${type}">🗑</button>
+              </td>
+            </tr>`;
+          });
+          html += '</tbody></table>';
+          container.innerHTML = html;
+
+          container.querySelectorAll('.btn-delete').forEach(btn => {
+            btn.onclick = async () => {
+              if (!confirm('Удалить эту запись? Действие необратимо.')) return;
+              try {
+                await deleteDoc(btn.dataset.type, btn.dataset.id);
+                showNotification('Запись удалена', 'success');
+                load();
+              } catch (err) {
+                alert('Ошибка удаления: ' + err.message);
+              }
+            };
+          });
+        } catch (err) {
+          alert('Ошибка: ' + err.message);
+        } finally {
+          loading.style.display = 'none';
+        }
+      }
+
+      applyBtn.onclick = load;
+      typeSelect.onchange = load;
+      await load();
+    }
+
+    /* ------------------- 2. ФОРМА (ADD / EDIT) ------------------- */
+    async function initForm(params, mode) {
+      const typeSelect = document.getElementById('formTypeSelect');
+      const typeWrapper = document.getElementById('formTypeWrapper');
+      const form = document.getElementById('docForm');
+      const fieldsDiv = document.getElementById('formFields');
+      const titleEl = document.getElementById('formTitle');
+      const submitBtn = document.getElementById('formSubmitBtn');
+      const msgDiv = document.getElementById('formMessage');
+
+      const typeFromUrl = params.get('type');
+      const idFromUrl = params.get('id');
+
+      if (typeSelect.options.length === 0) {
+        typeSelect.innerHTML = '<option value="">-- Выберите тип --</option>' +
+          Object.entries(EDUCATION_TABLES).map(([k, i]) =>
+            `<option value="${k}">${escapeHTML(i.title)}</option>`
+          ).join('');
+      }
+
+      msgDiv.style.display = 'none';
+      form.style.display = 'none';
+      form.reset();
+      fieldsDiv.innerHTML = '';
+      submitBtn.textContent = mode === 'edit' ? 'Сохранить изменения' : 'Создать';
+      titleEl.textContent = mode === 'edit' ? 'Редактирование документа' : 'Добавление документа';
+
+      let currentData = null;
+
+      // Загружаем данные для редактирования
+      if (mode === 'edit') {
+        if (!typeFromUrl || !idFromUrl) {
+          alert('Неверные параметры');
+          return;
+        }
+        typeSelect.value = typeFromUrl;
+        typeSelect.disabled = true;
+        typeWrapper.style.display = 'block';
+
+        try {
+          currentData = await fetchById(typeFromUrl, idFromUrl);
+        } catch (err) {
+          alert('Ошибка загрузки: ' + err.message);
+          return;
+        }
+      } else {
+        typeSelect.disabled = false;
+        if (typeFromUrl) typeSelect.value = typeFromUrl;
+      }
+
+      const renderFormFields = () => {
+        const type = typeSelect.value;
+        if (!type) { form.style.display = 'none'; return; }
+
+        let html = '';
+        FIELDS.forEach(field => {
+          const val = currentData ? currentData[field.name] : null;
+          const required = field.required ? 'required' : '';
+
+          if (field.type === 'subjects') {
+            const subjects = parseSubjects(val);
+            html += `
+              <div class="form-group">
+                <label>${escapeHTML(field.label)}</label>
+                <div class="subjects-editor">
+                  <table>
+                    <thead><tr><th>Предмет</th><th>Оценка</th><th></th></tr></thead>
+                    <tbody id="subjectsBody"></tbody>
+                  </table>
+                  <button type="button" class="btn-add-subject" id="addSubjectBtn">+ Добавить предмет</button>
+                </div>
+              </div>`;
+          } else if (field.type === 'textarea') {
+            html += `
+              <div class="form-group">
+                <label for="field_${field.name}">${escapeHTML(field.label)} ${field.required ? '*' : ''}</label>
+                <textarea id="field_${field.name}" name="${field.name}" class="form-textarea">${escapeHTML(val || '')}</textarea>
+              </div>`;
+          } else if (field.type === 'select') {
+            const options = field.options.map(opt =>
+              `<option value="${escapeHTML(opt)}" ${opt === val ? 'selected' : ''}>${escapeHTML(opt || '—')}</option>`
+            ).join('');
+            html += `
+              <div class="form-group">
+                <label for="field_${field.name}">${escapeHTML(field.label)} ${field.required ? '*' : ''}</label>
+                <select id="field_${field.name}" name="${field.name}" class="form-select">${options}</select>
+              </div>`;
+          } else if (field.type === 'checkbox') {
+            html += `
+              <div class="form-group">
+                <label class="form-checkbox">
+                  <input type="checkbox" id="field_${field.name}" name="${field.name}" ${val ? 'checked' : ''}>
+                  ${escapeHTML(field.label)}
+                </label>
+              </div>`;
+          } else {
+            const inputType = field.type === 'date' ? 'date' : 'text';
+            const value = field.type === 'date' && val ? String(val).substring(0, 10) : (val || '');
+            html += `
+              <div class="form-group">
+                <label for="field_${field.name}">${escapeHTML(field.label)} ${field.required ? '*' : ''}</label>
+                <input type="${inputType}" id="field_${field.name}" name="${field.name}"
+                       class="form-input" value="${escapeHTML(value)}" ${required}>
+              </div>`;
+          }
+        });
+
+        fieldsDiv.innerHTML = html;
+        form.style.display = 'block';
+
+        // Инициализируем редактор предметов
+        const subjectsBody = document.getElementById('subjectsBody');
+        const addSubjectBtn = document.getElementById('addSubjectBtn');
+        const subjects = parseSubjects(currentData?.subjects);
+
+        function addSubjectRow(subj = {}) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><input type="text" class="form-input subject-name" value="${escapeHTML(subj.name || '')}"></td>
+            <td>
+              <select class="form-select subject-grade">
+                <option value="">—</option>
+                <option value="5" ${subj.grade === '5' ? 'selected' : ''}>5 (отлично)</option>
+                <option value="4" ${subj.grade === '4' ? 'selected' : ''}>4 (хорошо)</option>
+                <option value="3" ${subj.grade === '3' ? 'selected' : ''}>3 (удовлетв.)</option>
+                <option value="2" ${subj.grade === '2' ? 'selected' : ''}>2 (неудовлетв.)</option>
+              </select>
+            </td>
+            <td><button type="button" class="btn-remove-subject">×</button></td>`;
+          tr.querySelector('.btn-remove-subject').onclick = () => tr.remove();
+          subjectsBody.appendChild(tr);
+        }
+
+        if (subjects.length > 0) subjects.forEach(s => addSubjectRow(s));
+        else addSubjectRow();
+
+        addSubjectBtn.onclick = () => addSubjectRow();
+      };
+
+      typeSelect.onchange = renderFormFields;
+
+      if (mode === 'edit' || typeSelect.value) renderFormFields();
+
+      form.onsubmit = async (e) => {
+        e.preventDefault();
+        const type = typeSelect.value;
+        if (!type) { alert('Выберите тип'); return; }
+
+        const payload = {};
+        FIELDS.forEach(field => {
+          if (field.type === 'subjects') return;
+          const input = document.getElementById(`field_${field.name}`);
+          if (!input) return;
+          if (field.type === 'checkbox') {
+            payload[field.name] = input.checked;
+          } else {
+            let v = input.value.trim();
+            if (field.type === 'date' && v === '') v = null;
+            if (field.name === 'document_status' && v === '') v = null;
+            payload[field.name] = v || null;
+          }
+        });
+
+        // Собираем предметы
+        const subjects = [];
+        document.querySelectorAll('#subjectsBody tr').forEach(tr => {
+          const name = tr.querySelector('.subject-name').value.trim();
+          const grade = tr.querySelector('.subject-grade').value;
+          if (name || grade) subjects.push({ name, grade });
+        });
+        payload.subjects = subjects;
+
+        const missing = FIELDS.filter(f => f.required && !payload[f.name]);
+        if (missing.length) {
+          alert('Заполните обязательные поля: ' + missing.map(f => f.label).join(', '));
+          return;
+        }
+
+        try {
+          if (mode === 'edit') {
+            await updateDoc(type, idFromUrl, payload);
+            showFormMsg('Изменения сохранены', 'success');
+            setTimeout(() => location.hash = `#/view?type=${type}&id=${idFromUrl}`, 600);
+          } else {
+            const created = await createDoc(type, payload);
+            showFormMsg('Документ создан (ID: ' + created.id + ')', 'success');
+            setTimeout(() => location.hash = `#/list`, 800);
+          }
+        } catch (err) {
+          showFormMsg('Ошибка: ' + err.message, 'error');
+        }
+      };
+
+      function showFormMsg(text, type) {
+        msgDiv.textContent = text;
+        msgDiv.style.display = 'block';
+        msgDiv.style.background = type === 'error' ? '#f8d7da' : '#d4edda';
+        msgDiv.style.color = type === 'error' ? '#721c24' : '#155724';
+      }
+    }
+
+    /* ------------------- 3. ПРОВЕРКА (oncheck) ------------------- */
+    async function initVerify() {
+      const tbody = document.getElementById('verifyTableBody');
+      tbody.innerHTML = '<tr><td colspan="6" class="loading">Загрузка...</td></tr>';
+
+      try {
+        const all = [];
+        for (const [type, info] of Object.entries(EDUCATION_TABLES)) {
+          const data = await fetchList(type, { status: 'oncheck' });
+          all.push(...data.map(r => ({ ...r, _type: type, _typeTitle: info.title })));
+        }
+
+        if (!all.length) {
+          tbody.innerHTML = '<tr><td colspan="6" class="no-data">Нет записей на проверке</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = all.map(rec => `
+          <tr>
+            <td>${escapeHTML(rec._typeTitle)}</td>
+            <td>${escapeHTML(rec.personal_code || '—')}</td>
+            <td>${escapeHTML(rec.full_name || '—')}</td>
+            <td>${escapeHTML(rec.document_number || '—')}</td>
+            <td>${formatDate(rec.issue_date)}</td>
+            <td>
+              <button class="btn-verify" data-type="${rec._type}" data-id="${rec.id}" data-action="verified">✅ Подтвердить</button>
+              <button class="btn-reject" data-type="${rec._type}" data-id="${rec.id}" data-action="rejected">❌ Отклонить</button>
+              <a href="#/view?type=${rec._type}&id=${rec.id}" class="btn-view">👁</a>
+            </td>
+          </tr>`).join('');
+
+        tbody.querySelectorAll('.btn-verify, .btn-reject').forEach(btn => {
+          btn.onclick = async () => {
+            const { type, id, action } = btn.dataset;
+            if (!confirm(`Изменить статус на "${action === 'verified' ? 'Подтверждено' : 'Отклонено'}"?`)) return;
+            try {
+              await updateStatus(type, id, action);
+              btn.closest('tr').remove();
+              showNotification('Статус обновлён', 'success');
+            } catch (err) {
+              showNotification('Ошибка: ' + err.message, 'error');
+            }
+          };
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="error-block">Ошибка: ${escapeHTML(err.message)}</td></tr>`;
+      }
+    }
+
+    /* ------------------- 4. ПРОСМОТР ------------------- */
+    async function initView(params) {
+      const type = params.get('type');
+      const id = params.get('id');
+      const info = getTypeInfo(type);
+      const loading = document.getElementById('viewLoading');
+      const errorEl = document.getElementById('viewError');
+      const display = document.getElementById('viewDisplay');
+      const titleEl = document.getElementById('viewTitle');
+
+      loading.style.display = 'block';
+      errorEl.style.display = 'none';
+      display.style.display = 'none';
+      display.innerHTML = '';
+
+      if (!type || !id || !info) {
+        loading.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = 'Неверные параметры';
+        return;
+      }
+      titleEl.textContent = `Просмотр: ${info.title}`;
+
+      try {
+        const data = await fetchById(type, id);
+        loading.style.display = 'none';
+        display.style.display = 'block';
+
+        const subjects = parseSubjects(data.subjects);
+
+        let html = `<p><strong>Статус:</strong> <span class="badge-status badge-${data.status}">${getStatusLabel(data.status)}</span></p>`;
+        html += '<table class="details-table"><tbody>';
+
+        const labelMap = {
+          id: 'ID', personal_code: 'Личный код владельца', full_name: 'ФИО владельца',
+          issued_by: 'Образовательное учреждение', director: 'Директор',
+          document_number: 'Номер документа', registration_number: 'Регистрационный номер',
+          document_status: 'Статус документа', with_honors: 'С отличием',
+          study_start_date: 'Дата начала обучения', study_end_date: 'Дата окончания обучения',
+          issue_date: 'Дата выдачи', additional_info: 'Дополнительная информация',
+          status: 'Статус модерации', created_at: 'Создано', updated_at: 'Обновлено'
+        };
+
+        Object.entries(data).forEach(([key, value]) => {
+          if (key === 'subjects') return; // отдельно
+          let disp = value;
+          if (value === null || value === undefined) disp = '—';
+          else if (key === 'with_honors') disp = value ? 'Да' : 'Нет';
+          else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) disp = formatDate(value);
+          html += `<tr><th>${escapeHTML(labelMap[key] || key)}</th><td>${escapeHTML(String(disp))}</td></tr>`;
+        });
+
+        if (subjects.length > 0) {
+          html += `<tr><th>Приложение (предметы)</th><td>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead><tr style="background:#f0f0f0;"><th style="padding:6px;text-align:left;border:1px solid #ddd;">Предмет</th><th style="padding:6px;text-align:left;border:1px solid #ddd;">Оценка</th></tr></thead>
+              <tbody>`;
+          subjects.forEach(s => {
+            html += `<tr><td style="padding:6px;border:1px solid #ddd;">${escapeHTML(s.name || '')}</td>
+                          <td style="padding:6px;border:1px solid #ddd;" class="grade-extended">${escapeHTML(formatGrade(s.grade))}</td></tr>`;
+          });
+          html += '</tbody></table></td></tr>';
+        }
+
+        html += '</tbody></table>';
+        display.innerHTML = html;
+
+        // Кнопки действий
+        const actions = document.createElement('div');
+        actions.className = 'actions';
+
+        // Смена статуса
+        ['verified', 'rejected', 'archived'].forEach(st => {
+          const btn = document.createElement('button');
+          btn.textContent = st === 'verified' ? '✅ Подтвердить' :
+                            st === 'rejected' ? '❌ Отклонить' : '📦 Архивировать';
+          btn.className = st === 'verified' ? 'btn-verify' :
+                          st === 'rejected' ? 'btn-reject' : 'btn-archive';
+          btn.disabled = data.status === st;
+          btn.onclick = async () => {
+            try {
+              await updateStatus(type, id, st);
+              initView(params);
+            } catch (err) {
+              alert('Ошибка: ' + err.message);
+            }
+          };
+          actions.appendChild(btn);
+        });
+
+        // Редактировать
+        const editBtn = document.createElement('a');
+        editBtn.textContent = '✎ Редактировать';
+        editBtn.className = 'btn-edit';
+        editBtn.href = `#/edit?type=${type}&id=${id}`;
+        actions.appendChild(editBtn);
+
+        // Удалить
+        const delBtn = document.createElement('button');
+        delBtn.textContent = '🗑 Удалить';
+        delBtn.className = 'btn-delete';
+        delBtn.onclick = async () => {
+          if (!confirm('Удалить эту запись? Действие необратимо.')) return;
+          try {
+            await deleteDoc(type, id);
+            alert('Удалено');
+            location.hash = '#/list';
+          } catch (err) {
+            alert('Ошибка: ' + err.message);
+          }
+        };
+        actions.appendChild(delBtn);
+
+        // Назад
+        const back = document.createElement('a');
+        back.textContent = '← К списку';
+        back.className = 'btn-secondary';
+        back.href = '#/list';
+        actions.appendChild(back);
+
+        display.appendChild(actions);
+      } catch (err) {
+        loading.style.display = 'none';
+        errorEl.style.display = 'block';
+        errorEl.textContent = err.message;
+      }
+    }
+
+    /* ------------------- СТАРТ ------------------- */
+    async function boot() {
+      if (!await requireAdmin()) return;
+
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '../../login.html';
+      });
+
+      window.addEventListener('hashchange', router);
+      await router();
+    }
+
+    document.addEventListener('DOMContentLoaded', boot);
+  </script>
+</body>
+</html>

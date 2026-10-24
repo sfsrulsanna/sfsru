@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Актовые книги — Админ панель СФСРЮ</title>
+    <title>Управление документами об образовании — Админ панель СФСРЮ</title>
     <!-- favicons (полный набор) -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
@@ -25,11 +25,46 @@
     <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
     <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
     <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
-	
+
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        .document-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        .doc-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-decoration: none;
+            color: inherit;
+        }
+        .doc-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        .doc-icon {
+            font-size: 3rem;
+            color: #7b091a;
+            margin-bottom: 1rem;
+        }
+        .doc-card h3 {
+            margin: 0 0 0.5rem;
+            color: #2c3e50;
+        }
+        .doc-card p {
+            color: #666;
+            margin: 0;
+        }
+    </style>
     <script type="importmap">
         {
             "imports": {
@@ -43,7 +78,7 @@
         <div class="header-container">
             <div class="logo">
                 <img src="../../images/gerb.png" alt="Герб СФСРЮ">
-                <h1>СФСРЮ — Админ-панель</h1>
+                <h1>СФСРЮ / Управление документами</h1>
             </div>
             <button class="menu-toggle" aria-label="Открыть меню">
                 <span class="menu-toggle-line"></span>
@@ -53,11 +88,6 @@
             <nav class="nav-menu">
                 <ul>
                     <li><a href="../index.html">Главная админки</a></li>
-                    <li><a href="index.html" class="active">Свидетельства</a></li>
-                    <li><a href="../documents/">Документы</a></li>
-                    <li><a href="../addresses/">Адреса</a></li>
-                    <li><a href="../registry/">Регистры</a></li>
-                    <li><a href="../laws/">Законы</a></li>
                     <li><a href="../../index.html">На сайт</a></li>
                 </ul>
             </nav>
@@ -71,11 +101,16 @@
 
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Актовые книги</h1>
-            <p class="page-description">Выберите тип актовой книги для просмотра записей.</p>
+            <h1 class="page-title">Документы граждан</h1>
+            <p class="page-description">Управление всеми типами документов</p>
 
-            <div id="loading" class="loading">Загрузка...</div>
-            <div id="booksGrid" class="admin-cards"></div>
+            <div class="document-cards">
+                <a href="basic.html" class="doc-card">
+                    <div class="doc-icon"><i class="fas fa-passport"></i></div>
+                    <h3>Аттестаты</h3>
+                    <p>Просмотр и управление аттестатами</p>
+                </a>
+            </div>
         </div>
     </main>
 
@@ -85,7 +120,18 @@
     </footer>
 
     <script src="../../js/mob-menu.js"></script>
-    <script type="module" src="js/certificates-common.js"></script>
-    <script type="module" src="js/registry-books.js"></script>
+    <script type="module">
+        import { supabase } from '../../../js/supabase-config.js';
+        import { requireAdmin } from '../certificates/js/certificates-common.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            if (!await requireAdmin()) return;
+
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+        });
+    </script>
 </body>
 </html>
