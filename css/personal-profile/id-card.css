@@ -247,20 +247,19 @@ a.edit-btn {
 }
 
 /* ============================================================
-   6. БЛОК ID-КАРТЫ
+   6. БЛОК ID-КАРТЫ (ИСПРАВЛЕННЫЕ ПРОПОРЦИИ)
    ============================================================ */
 .card-container {
   perspective: 1500px;
   margin: 0 auto 24px;
-  max-width: 800px;
+  max-width: 700px;
 }
 
 .card {
   position: relative;
   width: 100%;
   height: 0;
-  /* Увеличено до 65%, чтобы на десктопе точно влезли все поля и QR */
-  padding-bottom: 65%; 
+  padding-bottom: 63%; /* Пропорции реальной ID-карты (1.58:1) */
   transform-style: preserve-3d;
   transition: transform 0.6s;
   cursor: pointer;
@@ -272,16 +271,19 @@ a.edit-btn {
 
 .card-front, .card-back {
   position: absolute;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   backface-visibility: hidden;
   border-radius: var(--border-radius);
   background: var(--card-pink);
   box-shadow: var(--shadow);
-  padding: 1rem 1.2rem;
+  padding: 0.8rem 1rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: 0.85rem; /* Уменьшено с 0.9rem */
+  font-size: 0.75rem; /* Уменьшено для плотности */
 }
 
 .card-back {
@@ -290,64 +292,65 @@ a.edit-btn {
 
 .card-header {
   text-align: center;
-  margin-bottom: 0.5rem;
-  border-bottom: 2px solid var(--card-pink-dark);
+  margin-bottom: 0.4rem;
+  border-bottom: 1px solid var(--card-pink-dark);
   padding-bottom: 0.2rem;
 }
 .card-header .title {
-  font-size: 1rem; /* Уменьшено с 1.1rem */
+  font-size: 0.9rem;
   font-weight: 700;
   color: var(--text-dark);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  line-height: 1.2;
+  line-height: 1.1;
 }
 .card-header .subtitle {
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   color: var(--text-dark);
   margin-top: 0.1rem;
 }
 
 .front-content {
   display: flex;
-  gap: 1rem;
+  gap: 0.8rem;
   flex: 1;
   min-height: 0;
 }
 
 .left-col {
-  width: 28%; /* Увеличено с 25%, чтобы фото было чуть больше */
+  width: 28%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center; /* Центрирует фото и подпись по высоте, убирая пустоту снизу */
+  justify-content: flex-start;
   gap: 0.4rem;
 }
 
 .photo {
   width: 100%;
-  border-radius: 6px;
+  border-radius: 4px;
   overflow: hidden;
   border: 1px solid var(--card-pink-dark);
+  aspect-ratio: 3/4;
 }
 .photo img {
   width: 100%;
-  height: auto;
+  height: 100%;
+  object-fit: cover;
   display: block;
 }
 
 .signature-label {
-  font-size: 0.5rem;
+  font-size: 0.45rem;
   color: var(--text-dark);
   text-transform: uppercase;
-  margin-top: 0.1rem;
 }
 .signature {
-  width: 55px;
-  height: 55px;
+  width: 45px;
+  height: 45px;
   border: 1px solid var(--card-pink-dark);
   border-radius: 4px;
-  padding: 2px;
+  padding: 1px;
   background: white;
   display: flex;
   align-items: center;
@@ -364,7 +367,6 @@ a.edit-btn {
   width: 72%;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Центрирует поля по высоте */
   gap: 0.2rem;
 }
 
@@ -377,20 +379,20 @@ a.edit-btn {
 .field-label {
   font-weight: 600;
   color: var(--text-dark);
-  font-size: 0.65rem; /* Уменьшено с 0.7rem */
+  font-size: 0.55rem;
   text-transform: uppercase;
   line-height: 1.1;
 }
 .field-value {
   font-weight: 500;
-  font-size: 0.8rem; /* Уменьшено с 0.85rem */
+  font-size: 0.7rem;
   line-height: 1.2;
   word-break: break-word;
 }
 
 .double-field {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 .double-field .field-block {
   flex: 1;
@@ -399,7 +401,6 @@ a.edit-btn {
 .card-back {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   gap: 0.2rem;
 }
 .back-block {
@@ -411,19 +412,19 @@ a.edit-btn {
 .back-label {
   font-weight: 600;
   color: var(--text-dark);
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   text-transform: uppercase;
   line-height: 1.1;
 }
 .back-value {
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   line-height: 1.2;
   word-break: break-word;
 }
 .double-back {
   display: flex;
-  gap: 1rem;
+  gap: 0.5rem;
 }
 .double-back .back-block {
   flex: 1;
@@ -438,11 +439,11 @@ a.edit-btn {
   border-bottom: 1px dashed var(--card-pink-dark);
 }
 .qr-code {
-  width: 50px; /* Уменьшено с 60px */
-  height: 50px;
+  width: 45px;
+  height: 45px;
   background: white;
   border: 1px solid var(--card-pink-dark);
-  border-radius: 6px;
+  border-radius: 4px;
   padding: 0;
   flex-shrink: 0;
   display: flex;
@@ -456,7 +457,7 @@ a.edit-btn {
 }
 
 .highlight-number {
-  font-size: 1rem;
+  font-size: 0.9rem;
   font-weight: 700;
   color: #7b091a;
 }
@@ -726,31 +727,26 @@ a.edit-btn {
 /* Мобильная карта */
 @media (max-width: 600px) {
   .card {
-    padding-bottom: 78%; /* Увеличено, чтобы на мобильных точно ничего не обрезалось */
+    padding-bottom: 72%; /* Немного выше, чтобы влезло больше текста */
   }
   .card-front, .card-back {
-    padding: 0.3rem 0.4rem;
+    padding: 0.4rem;
   }
-  .card-header .title { font-size: 0.8rem; }
-  .card-header .subtitle { font-size: 0.65rem; }
+  .card-header .title { font-size: 0.75rem; }
+  .card-header .subtitle { font-size: 0.55rem; }
   
-  .front-content { gap: 0.3rem; }
-  .left-col { width: 25%; gap: 0.2rem; }
-  .right-col { width: 75%; gap: 0.1rem; }
+  .front-content { gap: 0.4rem; }
+  .left-col { width: 25%; }
+  .right-col { width: 75%; gap: 0.15rem; }
   
-  .photo { width: 100%; }
-  .signature { width: 35px; height: 35px; }
-  .signature-label { font-size: 0.3rem; }
-  
-  .field-block, .back-block {
-    padding-bottom: 0.1rem;
-    margin-bottom: 0.1rem;
-  }
-  .field-label, .back-label { font-size: 0.5rem; }
+  .field-label, .back-label { font-size: 0.45rem; }
   .field-value, .back-value { font-size: 0.6rem; }
   
-  .qr-code { width: 30px; height: 30px; }
-  .highlight-number { font-size: 0.8rem; }
+  .signature { width: 30px; height: 30px; }
+  .signature-label { font-size: 0.35rem; }
+  
+  .qr-code { width: 35px; height: 35px; }
+  .highlight-number { font-size: 0.75rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
