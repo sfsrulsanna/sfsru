@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>E-Pass — СФСРЮ</title>
-  <!-- favicons (те же) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -26,11 +25,8 @@
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
 
-  <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
-  <!-- Стили для E-Pass -->
   <link rel="stylesheet" href="../../css/personal-profile/epass.css" />
-  <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
 </head>
 <body>
@@ -71,14 +67,12 @@
         </div>
       </div>
       <div id="content" style="display: none;">
-        <!-- Карточка E-Pass (вертикальная, нормальная) -->
         <div class="epass-card">
           <div class="epass-header">
             <div class="epass-title">ЭЛЕКТРОННЫЙ ПАСПОРТ ГРАЖДАНИНА СФСРЮ</div>
-                <div class="subtitle">E-Pass</div>
+            <div class="subtitle">E-Pass</div>
           </div>
           <div class="epass-body">
-            <!-- Левая колонка: данные -->
             <div class="epass-left">
               <div class="data-row">
                 <span class="data-label">Фамилия</span>
@@ -110,20 +104,21 @@
                 <span class="data-value" id="epassNumber">—</span>
               </div>
             </div>
-            <!-- Правая колонка: фото -->
             <div class="epass-right">
               <div class="photo-container">
                 <img id="userPhoto" src="../../images/default-avatar.png" alt="Фото" class="epass-photo" />
               </div>
             </div>
           </div>
-          <!-- QR-код в правом нижнем углу карточки -->
           <div class="qr-corner" id="qrCorner">
             <div id="qrCode" class="qr-code"></div>
           </div>
         </div>
-        <!-- Блок статуса и кнопок будет вставлен сюда через JS -->
-        <div id="statusAndEditContainer"></div>
+
+        <div id="statusAndEditContainer" class="status-and-edit" style="display: none;"></div>
+
+        <!-- История фотографий (только просмотр) -->
+        <div id="photoHistorySection" class="photo-history-section" style="display: none;"></div>
       </div>
     </div>
   </main>
@@ -132,21 +127,6 @@
     <p>&copy; 2026 СФСРЮ. Все права защищены пролетариатом.</p>
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
-
-  <!-- МОДАЛЬНОЕ ОКНО -->
-  <div id="modalOverlay" class="modal-overlay">
-    <div class="modal">
-      <div class="modal-header">
-        <h4 id="modalTitle">Добавление E-Pass</h4>
-        <button type="button" class="close-modal" onclick="window.closeModal()">&times;</button>
-      </div>
-      <div class="modal-body" id="modalBody"></div>
-      <div class="modal-footer">
-        <button type="button" class="btn-secondary" onclick="window.closeModal()">Отмена</button>
-        <button type="button" class="btn-primary" id="modalSaveBtn">Сохранить</button>
-      </div>
-    </div>
-  </div>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script type="importmap">

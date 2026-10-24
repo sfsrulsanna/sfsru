@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Управление E-Pass — Админ панель СФСРЮ</title>
+
+  <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+  <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+  <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+
+  <link rel="stylesheet" href="../../css/style.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+  <script type="importmap">
+    { "imports": { "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2" } }
+  </script>
+
+  <style>
+    .container { max-width: 1400px; }
+
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      overflow-x: auto;
+    }
+    table { width: 100%; border-collapse: collapse; }
+    th {
+      background: #f8f9fa;
+      padding: 12px;
+      text-align: left;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    th:hover { background: #e9ecef; }
+    td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; }
+
+    /* ---------- Кнопки ---------- */
+    .btn-view, .btn-edit, .btn-delete, .btn-photos,
+    .btn-secondary, .btn-primary, .btn-warning, .btn-logout,
+    .btn-add, .btn-bracket-upload, .btn-bracket-delete {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      border-radius: 4px;
+      cursor: pointer;
+      border: none;
+      display: inline-block;
+      text-align: center;
+      line-height: 1;
+      margin: 0.15rem;
+      transition: background 0.2s;
+      font-family: inherit;
+    }
+    .btn-view { background: #007bff; color: #fff; }
+    .btn-view:hover { background: #0056b3; }
+    .btn-edit { background: #ffc107; color: #212529; }
+    .btn-edit:hover { background: #e0a800; }
+    .btn-delete { background: #dc3545; color: #fff; }
+    .btn-delete:hover { background: #c82333; }
+    .btn-photos { background: #6f42c1; color: #fff; }
+    .btn-photos:hover { background: #5a32a3; }
+    .btn-secondary { background: #6c757d; color: #fff; }
+    .btn-secondary:hover { background: #5a6268; }
+    .btn-primary { background: #007bff; color: #fff; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-warning { background: #ffc107; color: #212529; }
+    .btn-warning:hover { background: #e0a800; }
+    .btn-add { background: #28a745; color: #fff; padding: 0.6rem 1.2rem; font-size: 1rem; }
+    .btn-add:hover { background: #218838; }
+    .btn-logout { background: #dc3545; color: #fff; padding: 0.5rem 1rem; margin-left: 0.5rem; }
+    .btn-logout:hover { background: #c82333; }
+    .btn-bracket-upload { background: #17a2b8; color: #fff; font-size: 0.82rem; padding: 0.4rem 0.7rem; }
+    .btn-bracket-upload:hover { background: #138496; }
+    .btn-bracket-delete { background: #dc3545; color: #fff; font-size: 0.82rem; padding: 0.4rem 0.7rem; }
+    .btn-bracket-delete:hover { background: #c82333; }
+
+    /* ---------- Модалки ---------- */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      padding: 16px;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal {
+      background: white;
+      border-radius: 8px;
+      max-width: 1000px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      display: flex;
+      flex-direction: column;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #dee2e6;
+      position: sticky;
+      top: 0;
+      background: #fff;
+      z-index: 10;
+    }
+    .modal-header h4 { margin: 0; color: #7b091a; }
+    .close-modal {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: #666;
+      line-height: 1;
+    }
+    .close-modal:hover { color: #000; }
+    .modal-body { padding: 1.5rem; }
+    .modal-footer {
+      padding: 1rem 1.5rem;
+      border-top: 1px solid #dee2e6;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      position: sticky;
+      bottom: 0;
+      background: #fff;
+      flex-wrap: wrap;
+    }
+
+    /* ---------- Бейджи статуса ---------- */
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+    .status-verified { background: #d4edda; color: #155724; }
+    .status-oncheck  { background: #fff3cd; color: #856404; }
+    .status-rejected { background: #f8d7da; color: #721c24; }
+
+    /* ---------- Формы ---------- */
+    .form-section {
+      margin-bottom: 1.5rem;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .form-section h4 {
+      margin: 0 0 1rem;
+      color: #7b091a;
+      font-size: 1rem;
+    }
+    .form-group { margin-bottom: 0.9rem; }
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.3rem;
+      font-size: 0.88rem;
+    }
+    .form-input {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 0.95rem;
+      box-sizing: border-box;
+      font-family: inherit;
+    }
+    .form-input[readonly] { background: #f5f5f5; color: #666; cursor: not-allowed; }
+
+    .loading, .no-data, .error { text-align: center; padding: 2rem; color: #666; }
+
+    /* ---------- Сетка фотографий в редактировании ---------- */
+    .photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+    .photo-slot {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 10px;
+      background: #fafafa;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .photo-slot-label {
+      font-weight: 700;
+      color: #7b091a;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    .photo-slot-preview {
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: #fff;
+      border: 1px dashed #ccc;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+      font-size: 0.8rem;
+      overflow: hidden;
+    }
+    .photo-slot-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .photo-slot-actions {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .photo-slot-actions input[type="file"] { display: none; }
+    .photo-slot-date {
+      font-size: 0.72rem;
+      color: #999;
+      text-align: center;
+    }
+
+    /* ---------- Просмотр фото в view-модалке ---------- */
+    .view-photos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 12px;
+      margin-top: 0.5rem;
+    }
+    .view-photo-card {
+      border: 1px solid #e0c0c0;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fff9f9;
+    }
+    .view-photo-card img {
+      width: 100%;
+      aspect-ratio: 3/4;
+      object-fit: cover;
+      display: block;
+      background: #f5f5f5;
+    }
+    .view-photo-card-info {
+      padding: 8px;
+      background: #fff;
+      border-top: 1px solid #e0c0c0;
+    }
+    .view-photo-card-info .bracket {
+      font-weight: 700;
+      color: #7b091a;
+      font-size: 0.85rem;
+    }
+    .view-photo-card-info .date {
+      font-size: 0.72rem;
+      color: #888;
+    }
+
+    .access-denied {
+      display: none;
+      max-width: 500px;
+      margin: 4rem auto;
+      padding: 2rem;
+      text-align: center;
+      background: #fff;
+      border: 1px solid #dc3545;
+      border-radius: 12px;
+      color: #721c24;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .access-denied h2 { margin: 0 0 1rem; color: #dc3545; }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-container">
+      <div class="logo">
+        <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+        <h1>СФСРЮ / E-Pass</h1>
+      </div>
+      <button class="menu-toggle" aria-label="Открыть меню">
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+        <span class="menu-toggle-line"></span>
+      </button>
+      <nav class="nav-menu">
+        <ul>
+          <li><a href="../index.html">Главная админки</a></li>
+          <li><a href="index.html">Документы</a></li>
+          <li><a href="../../index.html">На сайт</a></li>
+        </ul>
+      </nav>
+      <div class="admin-user">
+        <span id="adminEmail"></span>
+        <button id="logoutBtn" class="btn-logout" title="Выйти">
+          <i class="fas fa-sign-out-alt"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+  <div class="menu-overlay"></div>
+
+  <main class="main-content">
+    <div class="container">
+      <!-- Блок «Доступ запрещён» -->
+      <div id="accessDenied" class="access-denied">
+        <h2><i class="fas fa-lock"></i> Доступ запрещён</h2>
+        <p>Для просмотра этой страницы требуются права администратора.</p>
+        <p style="margin-top:1rem;">
+          <a href="../../profile.html" class="btn-primary">Вернуться в личный кабинет</a>
+        </p>
+      </div>
+
+      <!-- Основной интерфейс -->
+      <div id="adminPanel" style="display:none;">
+        <h1 class="page-title">Управление E-Pass</h1>
+        <p class="page-description">Электронные паспорта граждан и история фотографий</p>
+
+        <div style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;">
+          <button id="addBtn" class="btn-add">
+            <i class="fas fa-plus"></i> Добавить E-Pass
+          </button>
+        </div>
+
+        <div id="loading" class="loading">Загрузка...</div>
+
+        <div class="table-container">
+          <table id="epassTable">
+            <thead>
+              <tr>
+                <th data-sort="surname">ФИО <i class="fas fa-sort"></i></th>
+                <th data-sort="epass_number">№ E-Pass <i class="fas fa-sort"></i></th>
+                <th data-sort="personal_code">Личный код <i class="fas fa-sort"></i></th>
+                <th data-sort="status">Статус <i class="fas fa-sort"></i></th>
+                <th>Действия</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr><td colspan="5" class="no-data">Нет данных</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ========== Просмотр ========== -->
+  <div id="viewModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h4 id="viewModalTitle">Просмотр E-Pass</h4>
+        <button type="button" class="close-modal" onclick="closeViewModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="viewLoading" class="loading">Загрузка...</div>
+        <div id="epassCardContainer" style="display:none;"></div>
+        <div id="viewPhotosSection" style="display:none; margin-top:1.5rem;"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeViewModal()">Закрыть</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Редактирование / добавление ========== -->
+  <div id="editModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h4 id="editModalTitle">Добавление E-Pass</h4>
+        <button type="button" class="close-modal" onclick="closeEditModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="editModalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
+        <button type="button" class="btn-primary" id="saveEpassBtn">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== Статус ========== -->
+  <div id="statusModal" class="modal-overlay">
+    <div class="modal" style="max-width: 500px;">
+      <div class="modal-header">
+        <h4>Изменение статуса</h4>
+        <button type="button" class="close-modal" onclick="closeStatusModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label for="statusSelect">Новый статус</label>
+          <select id="statusSelect" class="form-input">
+            <option value="verified">Подтверждено</option>
+            <option value="oncheck">На проверке</option>
+            <option value="rejected">Отклонено</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="statusComment">Комментарий для пользователя</label>
+          <textarea id="statusComment" class="form-input" rows="4" placeholder="Необязательно"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn-secondary" onclick="closeStatusModal()">Отмена</button>
+        <button type="button" class="btn-primary" id="confirmStatusBtn">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+  </footer>
+
+  <script src="../../js/mob-menu.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <script type="module">
+    import { supabase } from '../../js/supabase-config.js';
+
+    // ============================================================
+    // КОНСТАНТЫ
+    // ============================================================
+    const BRACKETS = ['14-20', '20-45', '45-60', '60+'];
+    const BRACKET_LABEL = {
+      '14-20': '14–20 лет',
+      '20-45': '20–45 лет',
+      '45-60': '45–60 лет',
+      '60+':   '60+ лет'
+    };
+    const statusMap = {
+      verified: 'Подтверждено',
+      oncheck: 'На проверке',
+      rejected: 'Отклонено'
+    };
+    const STORAGE_BUCKET = 'documents-files';
+
+    // ============================================================
+    // СОСТОЯНИЕ
+    // ============================================================
+    let allData = [];
+    let sortField = 'surname';
+    let sortDirection = 'asc';
+    let currentId = null;
+    let currentPersonalCode = null;  // personal_code открытой записи
+    let statusTargetId = null;
+
+    // ============================================================
+    // УТИЛИТЫ
+    // ============================================================
+    function escapeHTML(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
+    }
+    function formatDate(s) {
+      if (!s) return '—';
+      try { return new Date(s).toLocaleDateString('ru-RU'); } catch { return s; }
+    }
+    async function getSignedUrl(path) {
+      if (!path) return null;
+      try {
+        const { data, error } = await supabase.storage
+          .from(STORAGE_BUCKET).createSignedUrl(path, 3600);
+        if (error) throw error;
+        return data.signedUrl;
+      } catch (e) {
+        console.warn('signed URL:', e.message);
+        return null;
+      }
+    }
+
+    // ============================================================
+    // ПРОВЕРКА ПРАВ: role = 'admin'
+    // ============================================================
+    async function checkAdminRole() {
+      const { data: { session }, error: sessErr } = await supabase.auth.getSession();
+      if (sessErr || !session) {
+        window.location.href = '../../login.html';
+        return false;
+      }
+
+      const { data, error } = await supabase
+        .from('users')
+        .select('role')
+        .eq('id', session.user.id)
+        .single();
+
+      if (error) {
+        console.error('Ошибка проверки прав:', error);
+        document.getElementById('accessDenied').style.display = 'block';
+        document.getElementById('adminEmail').textContent = '';
+        return false;
+      }
+
+      if (!data || data.role !== 'admin') {
+        document.getElementById('accessDenied').style.display = 'block';
+        document.getElementById('adminEmail').textContent = '';
+        return false;
+      }
+
+      document.getElementById('adminEmail').textContent = session.user.email || '';
+      document.getElementById('adminPanel').style.display = 'block';
+      return true;
+    }
+
+    // ============================================================
+    // СПИСОК E-PASS
+    // ============================================================
+    async function loadList() {
+      const loadingEl = document.getElementById('loading');
+      const tbody = document.getElementById('tableBody');
+      loadingEl.style.display = 'block';
+
+      const { data, error } = await supabase
+        .schema('documents')
+        .from('epass')
+        .select('id, surname, name, patronymic, epass_number, personal_code, status, birth_date')
+        .order(sortField, { ascending: sortDirection === 'asc' });
+
+      if (error) {
+        console.error('loadList:', error);
+        tbody.innerHTML = `<tr><td colspan="5" class="error">Ошибка: ${escapeHTML(error.message)}</td></tr>`;
+        loadingEl.style.display = 'none';
+        return;
+      }
+
+      allData = data || [];
+      renderTable();
+      loadingEl.style.display = 'none';
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('tableBody');
+      if (!allData.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет записей</td></tr>';
+        return;
+      }
+      tbody.innerHTML = allData.map(item => {
+        const fullName = `${item.surname || ''} ${item.name || ''} ${item.patronymic || ''}`.trim() || '—';
+        return `
+          <tr>
+            <td>${escapeHTML(fullName)}</td>
+            <td>${escapeHTML(item.epass_number || '—')}</td>
+            <td>${escapeHTML(item.personal_code || '—')}</td>
+            <td><span class="status-badge status-${item.status || 'oncheck'}">${escapeHTML(statusMap[item.status] || item.status || '—')}</span></td>
+            <td>
+              <button class="btn-view" data-id="${item.id}"><i class="fas fa-eye"></i> Просмотр</button>
+              <button class="btn-edit" data-id="${item.id}"><i class="fas fa-pen"></i> Редактировать</button>
+              <button class="btn-delete" data-id="${item.id}"><i class="fas fa-trash"></i> Удалить</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      tbody.querySelectorAll('.btn-view').forEach(b => b.addEventListener('click', () => viewEpass(b.dataset.id)));
+      tbody.querySelectorAll('.btn-edit').forEach(b => b.addEventListener('click', () => editEpass(b.dataset.id)));
+      tbody.querySelectorAll('.btn-delete').forEach(b => b.addEventListener('click', () => deleteEpass(b.dataset.id)));
+    }
+
+    // ============================================================
+    // СОРТИРОВКА
+    // ============================================================
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const f = th.dataset.sort;
+        if (sortField === f) sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+        else { sortField = f; sortDirection = 'asc'; }
+
+        document.querySelectorAll('th i').forEach(i => i.className = 'fas fa-sort');
+        th.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
+        loadList();
+      });
+    });
+
+    // ============================================================
+    // ФОТОГРАФИИ: чтение / загрузка / удаление
+    // ============================================================
+    async function loadPhotosFor(personalCode) {
+      if (!personalCode) return [];
+      const { data, error } = await supabase
+        .schema('documents')
+        .from('epass_photos')
+        .select('*')
+        .eq('personal_code', personalCode);
+      if (error) { console.error('loadPhotosFor:', error); return []; }
+      return data || [];
+    }
+
+    async function uploadBracketPhoto(personalCode, bracket, file) {
+      if (!file.type.startsWith('image/')) throw new Error('Выберите изображение');
+      if (file.size > 5 * 1024 * 1024) throw new Error('Файл больше 5 МБ');
+
+      const path = `epass/${personalCode}/${bracket}.jpg`;
+
+      const { error: upErr } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(path, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
+      if (upErr) throw upErr;
+
+      const { error: insErr } = await supabase
+        .schema('documents')
+        .from('epass_photos')
+        .upsert({
+          personal_code: personalCode,
+          age_bracket: bracket,
+          storage_path: path
+        }, { onConflict: 'personal_code,age_bracket' });
+      if (insErr) throw insErr;
+    }
+
+    async function deleteBracketPhoto(personalCode, bracket) {
+      const path = `epass/${personalCode}/${bracket}.jpg`;
+      await supabase.storage.from(STORAGE_BUCKET).remove([path]);
+      const { error } = await supabase
+        .schema('documents')
+        .from('epass_photos')
+        .delete()
+        .eq('personal_code', personalCode)
+        .eq('age_bracket', bracket);
+      if (error) throw error;
+    }
+
+    // ============================================================
+    // ПРОСМОТР
+    // ============================================================
+    async function viewEpass(id) {
+      currentId = id;
+      document.getElementById('viewModal').classList.add('active');
+      document.getElementById('viewLoading').style.display = 'block';
+      document.getElementById('epassCardContainer').style.display = 'none';
+      document.getElementById('viewPhotosSection').style.display = 'none';
+
+      const { data, error } = await supabase
+        .schema('documents').from('epass')
+        .select('*').eq('id', id).single();
+
+      if (error || !data) {
+        alert('Ошибка загрузки: ' + (error?.message || 'неизвестно'));
+        closeViewModal();
+        return;
+      }
+
+      currentPersonalCode = data.personal_code;
+      await renderViewCard(data);
+      document.getElementById('viewLoading').style.display = 'none';
+    }
+
+    async function renderViewCard(data) {
+      const card = document.getElementById('epassCardContainer');
+
+      card.innerHTML = `
+        <div style="max-width:700px;margin:0 auto;background:#fff9f9;border:1px solid #e0c0c0;border-radius:16px;padding:1.5rem;position:relative;">
+          <div style="text-align:center;border-bottom:2px solid #e0c0c0;padding-bottom:.5rem;margin-bottom:1rem;">
+            <div style="font-size:1.2rem;font-weight:700;color:#5c3b3b;text-transform:uppercase;">ЭЛЕКТРОННЫЙ ПАСПОРТ ГРАЖДАНИНА СФСРЮ</div>
+            <div style="font-size:.85rem;color:#5c3b3b;">E-Pass</div>
+          </div>
+          <div style="display:flex;gap:1.5rem;">
+            <div style="flex:1;min-width:0;">
+              <div style="border-bottom:1px dashed #e0c0c0;padding-bottom:.2rem;margin-bottom:.6rem;">
+                <div style="font-size:.75rem;color:#5c3b3b;font-weight:600;text-transform:uppercase;">Фамилия</div>
+                <div style="font-size:1rem;color:#000;">${escapeHTML(data.surname || '—')}</div>
+              </div>
+              <div style="border-bottom:1px dashed #e0c0c0;padding-bottom:.2rem;margin-bottom:.6rem;">
+                <div style="font-size:.75rem;color:#5c3b3b;font-weight:600;text-transform:uppercase;">Имя</div>
+                <div style="font-size:1rem;color:#000;">${escapeHTML(data.name || '—')}</div>
+              </div>
+              <div style="border-bottom:1px dashed #e0c0c0;padding-bottom:.2rem;margin-bottom:.6rem;">
+                <div style="font-size:.75rem;color:#5c3b3b;font-weight:600;text-transform:uppercase;">Отчество</div>
+                <div style="font-size:1rem;color:#000;">${escapeHTML(data.patronymic || '—')}</div>
+              </div>
+              <div style="border-bottom:1px dashed #e0c0c0;padding-bottom:.2rem;margin-bottom:.6rem;">
+                <div style="font-size:.75rem;color:#5c3b3b;font-weight:600;text-transform:uppercase;">Дата рождения</div>
+                <div style="font-size:1rem;color:#000;">${formatDate(data.birth_date)}</div>
+              </div>
+              <div style="border-bottom:1px dashed #e0c0c0;padding-bottom:.2rem;margin-bottom:.6rem;">
+                <div style="font-size:.75rem;color:#5c3b3b;font-weight:600;text-transform:uppercase;">Пол</div>
+                <div style="font-size:1rem;color:#000;">${escapeHTML(data.gender || '—')}</div>
+              </div>
+              <div style="border-bottom:1px dashed #e0c0c0;padding-bottom:.2rem;margin-bottom:.6rem;">
+                <div style="font-size:.75rem;color:#5c3b3b;font-weight:600;text-transform:uppercase;">Личный код</div>
+                <div style="font-size:1rem;color:#000;">${escapeHTML(data.personal_code || '—')}</div>
+              </div>
+              <div style="border-bottom:1px dashed #e0c0c0;padding-bottom:.2rem;">
+                <div style="font-size:.75rem;color:#5c3b3b;font-weight:600;text-transform:uppercase;">№ E-Pass</div>
+                <div style="font-size:1rem;color:#000;">${escapeHTML(data.epass_number || '—')}</div>
+              </div>
+            </div>
+            <div style="width:150px;flex-shrink:0;">
+              <img id="adminViewPhoto" src="../../images/default-avatar.png"
+                style="width:100%;border-radius:8px;border:1px solid #e0c0c0;aspect-ratio:3/4;object-fit:cover;">
+            </div>
+          </div>
+          <div id="adminViewQr" style="position:absolute;bottom:1rem;right:1rem;width:70px;height:70px;background:#fff;border:1px solid #e0c0c0;border-radius:6px;padding:2px;"></div>
+        </div>
+        <div style="text-align:center;margin-top:1rem;">
+          <span class="status-badge status-${data.status || 'oncheck'}">${escapeHTML(statusMap[data.status] || data.status || '—')}</span>
+        </div>
+      `;
+      card.style.display = 'block';
+
+      // QR
+      if (data.personal_code) {
+        const qrEl = document.getElementById('adminViewQr');
+        if (qrEl) {
+          new QRCode(qrEl, {
+            text: data.personal_code, width: 70, height: 70,
+            colorDark: '#000', colorLight: '#fff',
+            correctLevel: QRCode.CorrectLevel.L
+          });
+        }
+      }
+
+      // Фото: актуальное + история
+      const photos = await loadPhotosFor(data.personal_code);
+      const sorted = photos.slice().sort(
+        (a, b) => BRACKETS.indexOf(b.age_bracket) - BRACKETS.indexOf(a.age_bracket)
+      );
+      const current = sorted[0];
+
+      const imgEl = document.getElementById('adminViewPhoto');
+      if (current) {
+        const url = await getSignedUrl(current.storage_path);
+        if (url) imgEl.src = url;
+      } else {
+        const legacy = await getSignedUrl(`epass/${data.personal_code}/photo.jpg`);
+        if (legacy) imgEl.src = legacy;
+      }
+
+      renderViewPhotos(sorted);
+    }
+
+    function renderViewPhotos(sortedPhotos) {
+      const section = document.getElementById('viewPhotosSection');
+      if (!sortedPhotos.length) { section.style.display = 'none'; return; }
+
+      section.innerHTML = `
+        <h3 style="color:#7b091a;margin:0 0 1rem;font-size:1.1rem;">
+          <i class="fas fa-images"></i> Все фотографии E-Pass
+        </h3>
+        <div class="view-photos-grid" id="viewPhotosGrid"></div>
+      `;
+      section.style.display = 'block';
+
+      const grid = document.getElementById('viewPhotosGrid');
+      Promise.all(sortedPhotos.map(async p => {
+        const url = await getSignedUrl(p.storage_path);
+        return { ...p, url };
+      })).then(items => {
+        grid.innerHTML = items.map(p => `
+          <div class="view-photo-card">
+            <img src="${p.url || '../../images/default-avatar.png'}"
+                 alt="Фото ${BRACKET_LABEL[p.age_bracket] || p.age_bracket}">
+            <div class="view-photo-card-info">
+              <div class="bracket">${BRACKET_LABEL[p.age_bracket] || p.age_bracket}</div>
+              <div class="date">${formatDate(p.created_at)}</div>
+            </div>
+          </div>
+        `).join('');
+      });
+    }
+
+    // ============================================================
+    // РЕДАКТИРОВАНИЕ
+    // ============================================================
+    async function editEpass(id) {
+      currentId = id;
+      document.getElementById('editModalTitle').textContent = 'Редактирование E-Pass';
+      document.getElementById('editModal').classList.add('active');
+      document.getElementById('editModalBody').innerHTML = '<div class="loading">Загрузка...</div>';
+
+      const { data, error } = await supabase
+        .schema('documents').from('epass')
+        .select('*').eq('id', id).single();
+
+      if (error || !data) {
+        alert('Ошибка загрузки: ' + (error?.message || 'неизвестно'));
+        closeEditModal();
+        return;
+      }
+
+      currentPersonalCode = data.personal_code;
+      renderEditForm(data);
+    }
+
+    function renderEditForm(data) {
+      const isNew = !data.id;
+      const body = document.getElementById('editModalBody');
+
+      body.innerHTML = `
+        <div class="form-section">
+          <h4>Основные данные</h4>
+          <div class="form-group"><label>Фамилия</label>
+            <input type="text" id="f_surname" class="form-input" value="${escapeHTML(data.surname || '')}">
+          </div>
+          <div class="form-group"><label>Имя</label>
+            <input type="text" id="f_name" class="form-input" value="${escapeHTML(data.name || '')}">
+          </div>
+          <div class="form-group"><label>Отчество</label>
+            <input type="text" id="f_patronymic" class="form-input" value="${escapeHTML(data.patronymic || '')}">
+          </div>
+          <div class="form-group"><label>Дата рождения</label>
+            <input type="date" id="f_birth_date" class="form-input" value="${data.birth_date || ''}">
+          </div>
+          <div class="form-group"><label>Пол</label>
+            <select id="f_gender" class="form-input">
+              <option value="Мужской" ${data.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+              <option value="Женский" ${data.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Личный код</label>
+            <input type="text" id="f_personal_code" class="form-input"
+              value="${escapeHTML(data.personal_code || '')}"
+              ${isNew ? '' : 'readonly'}>
+          </div>
+          <div class="form-group"><label>№ E-Pass</label>
+            <input type="text" id="f_epass_number" class="form-input"
+              value="${escapeHTML(data.epass_number || '')}">
+          </div>
+          <div class="form-group"><label>Статус</label>
+            <select id="f_status" class="form-input">
+              <option value="oncheck"  ${data.status === 'oncheck'  ? 'selected' : ''}>На проверке</option>
+              <option value="verified" ${data.status === 'verified' ? 'selected' : ''}>Подтверждено</option>
+              <option value="rejected" ${data.status === 'rejected' ? 'selected' : ''}>Отклонено</option>
+            </select>
+          </div>
+          ${isNew ? '' : `
+            <div class="form-group" style="margin-top:1rem; text-align:right;">
+              <button type="button" class="btn-warning" id="openStatusBtn">
+                <i class="fas fa-exchange-alt"></i> Изменить статус отдельно
+              </button>
+            </div>
+          `}
+        </div>
+
+        <div class="form-section">
+          <h4>Фотографии (по возрастным периодам)</h4>
+          ${isNew
+            ? '<p style="color:#856404;font-size:.9rem;margin:0;">Сохраните E-Pass — после этого можно будет загружать фотографии.</p>'
+            : '<div class="photos-grid" id="photosGrid">Загрузка...</div>'}
+        </div>
+      `;
+
+      if (!isNew) {
+        renderPhotosSection(data.personal_code);
+        document.getElementById('openStatusBtn')?.addEventListener('click', () => openStatusModal(data.id));
+      }
+    }
+
+    async function renderPhotosSection(personalCode) {
+      const grid = document.getElementById('photosGrid');
+      if (!grid) return;
+
+      const photos = await loadPhotosFor(personalCode);
+      const photoMap = {};
+      photos.forEach(p => { photoMap[p.age_bracket] = p; });
+
+      // Подписанные URL
+      const urlMap = {};
+      await Promise.all(photos.map(async p => {
+        urlMap[p.age_bracket] = await getSignedUrl(p.storage_path);
+      }));
+
+      grid.innerHTML = BRACKETS.map(br => {
+        const p = photoMap[br];
+        const url = urlMap[br];
+        const safeBr = br.replace('+', 'p');
+        return `
+          <div class="photo-slot" data-bracket="${br}">
+            <div class="photo-slot-label">${BRACKET_LABEL[br]}</div>
+            <div class="photo-slot-preview">
+              ${p && url
+                ? `<img src="${url}" alt="${BRACKET_LABEL[br]}">`
+                : 'Нет фото'}
+            </div>
+            <div class="photo-slot-date">${p ? formatDate(p.created_at) : '—'}</div>
+            <div class="photo-slot-actions">
+              <input type="file" id="file_${safeBr}" accept="image/*" data-bracket="${br}">
+              <button type="button" class="btn-bracket-upload" data-upload="${br}">
+                <i class="fas fa-upload"></i> ${p ? 'Заменить' : 'Загрузить'}
+              </button>
+              ${p ? `<button type="button" class="btn-bracket-delete" data-delete="${br}">
+                       <i class="fas fa-trash"></i> Удалить
+                     </button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Обработчики
+      grid.querySelectorAll('[data-upload]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const br = btn.dataset.upload;
+          const safeBr = br.replace('+', 'p');
+          document.getElementById(`file_${safeBr}`).click();
+        });
+      });
+
+      grid.querySelectorAll('input[type=file]').forEach(inp => {
+        inp.addEventListener('change', async (e) => {
+          const file = e.target.files?.[0];
+          if (!file) return;
+          const br = inp.dataset.bracket;
+          try {
+            await uploadBracketPhoto(personalCode, br, file);
+            await renderPhotosSection(personalCode);
+          } catch (err) {
+            alert('Ошибка загрузки: ' + err.message);
+          }
+          inp.value = '';
+        });
+      });
+
+      grid.querySelectorAll('[data-delete]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const br = btn.dataset.delete;
+          if (!confirm(`Удалить фото для "${BRACKET_LABEL[br]}"?`)) return;
+          try {
+            await deleteBracketPhoto(personalCode, br);
+            await renderPhotosSection(personalCode);
+          } catch (err) {
+            alert('Ошибка удаления: ' + err.message);
+          }
+        });
+      });
+    }
+
+    // ============================================================
+    // ДОБАВЛЕНИЕ
+    // ============================================================
+    function openAddModal() {
+      currentId = null;
+      currentPersonalCode = null;
+      document.getElementById('editModalTitle').textContent = 'Добавление E-Pass';
+      document.getElementById('editModal').classList.add('active');
+      renderEditForm({
+        status: 'oncheck',
+        gender: 'Мужской'
+      });
+    }
+
+    // ============================================================
+    // СОХРАНЕНИЕ (add + edit)
+    // ============================================================
+    async function saveEpass() {
+      const form = {
+        surname: document.getElementById('f_surname')?.value.trim() || '',
+        name: document.getElementById('f_name')?.value.trim() || '',
+        patronymic: document.getElementById('f_patronymic')?.value.trim() || '',
+        birth_date: document.getElementById('f_birth_date')?.value || null,
+        gender: document.getElementById('f_gender')?.value || '',
+        personal_code: document.getElementById('f_personal_code')?.value.trim() || '',
+        epass_number: document.getElementById('f_epass_number')?.value.trim() || '',
+        status: document.getElementById('f_status')?.value || 'oncheck'
+      };
+
+      if (!form.personal_code) { alert('Личный код обязателен'); return; }
+      if (!form.epass_number) { alert('Номер E-Pass обязателен'); return; }
+
+      try {
+        if (currentId) {
+          // Редактирование
+          const { error } = await supabase
+            .schema('documents').from('epass')
+            .update({ ...form, updated_at: new Date().toISOString() })
+            .eq('id', currentId);
+          if (error) throw error;
+        } else {
+          // Проверка дубликата по personal_code или epass_number
+          const { data: existing, error: chkErr } = await supabase
+            .schema('documents').from('epass')
+            .select('id, personal_code, epass_number')
+            .or(`personal_code.eq.${form.personal_code},epass_number.eq.${form.epass_number}`)
+            .maybeSingle();
+          if (chkErr) throw chkErr;
+          if (existing) {
+            alert('E-Pass с таким личным кодом или номером уже существует');
+            return;
+          }
+
+          // Вставка
+          const { data: inserted, error } = await supabase
+            .schema('documents').from('epass')
+            .insert([{ ...form, created_at: new Date().toISOString() }])
+            .select()
+            .single();
+          if (error) throw error;
+
+          // Переключаемся в режим редактирования только что созданной записи
+          currentId = inserted.id;
+          currentPersonalCode = inserted.personal_code;
+          document.getElementById('editModalTitle').textContent = 'Редактирование E-Pass';
+          // Перерисовываем форму — появятся слоты фото
+          renderEditForm(inserted);
+        }
+
+        loadList();
+      } catch (err) {
+        console.error('saveEpass:', err);
+        alert('Ошибка сохранения: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // СТАТУС
+    // ============================================================
+    function openStatusModal(id) {
+      statusTargetId = id || currentId;
+      if (!statusTargetId) { alert('Не выбран документ'); return; }
+      document.getElementById('statusComment').value = '';
+      document.getElementById('statusSelect').selectedIndex = 0;
+      document.getElementById('statusModal').classList.add('active');
+    }
+
+    async function confirmStatusChange() {
+      if (!statusTargetId) { alert('Не выбран документ'); return; }
+      const newStatus = document.getElementById('statusSelect').value;
+      const comment = document.getElementById('statusComment').value.trim();
+
+      try {
+        // Достаём текущие поля, чтобы обновить локальную форму
+        const { data: row, error: fetchErr } = await supabase
+          .schema('documents').from('epass')
+          .select('personal_code')
+          .eq('id', statusTargetId)
+          .single();
+        if (fetchErr) throw fetchErr;
+
+        const { error: updErr } = await supabase
+          .schema('documents').from('epass')
+          .update({ status: newStatus, updated_at: new Date().toISOString() })
+          .eq('id', statusTargetId);
+        if (updErr) throw updErr;
+
+        // Пытаемся отправить сообщение пользователю (не критично, если не получится)
+        try {
+          const { data: userData } = await supabase
+            .from('users').select('id').eq('personal_code', row.personal_code).maybeSingle();
+          if (userData) {
+            await supabase.schema('messages').from('user_messages').insert({
+              user_id: userData.id,
+              title: 'Изменение статуса E-Pass',
+              content: `Статус вашего E-Pass изменён на "${statusMap[newStatus]}". Комментарий: ${comment || 'не указан'}`,
+              type: 'status_change',
+              document_type: 'epass',
+              document_id: statusTargetId,
+              is_read: false
+            });
+          }
+        } catch (msgErr) {
+          console.warn('Сообщение не отправлено:', msgErr.message);
+        }
+
+        // Обновляем и локальную форму, и список
+        const statusSelect = document.getElementById('f_status');
+        if (statusSelect && currentId === statusTargetId) statusSelect.value = newStatus;
+
+        closeStatusModal();
+        loadList();
+      } catch (err) {
+        console.error('confirmStatusChange:', err);
+        alert('Ошибка: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // УДАЛЕНИЕ
+    // ============================================================
+    async function deleteEpass(id) {
+      if (!confirm('Удалить E-Pass? Все фотографии из хранилища и истории тоже будут удалены.')) return;
+
+      try {
+        const { data: row, error: fetchErr } = await supabase
+          .schema('documents').from('epass')
+          .select('personal_code').eq('id', id).single();
+        if (fetchErr) throw fetchErr;
+
+        // Storage: 4 брекета + legacy photo.jpg
+        const paths = BRACKETS.map(br => `epass/${row.personal_code}/${br}.jpg`);
+        paths.push(`epass/${row.personal_code}/photo.jpg`);
+        await supabase.storage.from(STORAGE_BUCKET).remove(paths);
+
+        // epass_photos
+        await supabase.schema('documents').from('epass_photos')
+          .delete().eq('personal_code', row.personal_code);
+
+        // epass
+        const { error } = await supabase
+          .schema('documents').from('epass')
+          .delete().eq('id', id);
+        if (error) throw error;
+
+        if (currentId === id) closeViewModal();
+        if (currentId === id) closeEditModal();
+        loadList();
+      } catch (err) {
+        console.error('deleteEpass:', err);
+        alert('Ошибка удаления: ' + err.message);
+      }
+    }
+
+    // ============================================================
+    // ЗАКРЫТИЕ МОДАЛОК
+    // ============================================================
+    window.closeViewModal = () => {
+      document.getElementById('viewModal').classList.remove('active');
+    };
+    window.closeEditModal = () => {
+      document.getElementById('editModal').classList.remove('active');
+      currentId = null;
+      currentPersonalCode = null;
+    };
+    window.closeStatusModal = () => {
+      document.getElementById('statusModal').classList.remove('active');
+      statusTargetId = null;
+    };
+
+    // ============================================================
+    // ИНИЦИАЛИЗАЦИЯ
+    // ============================================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1) Проверка прав
+      const isAdmin = await checkAdminRole();
+      if (!isAdmin) {
+        // Прячем таблицу, чтобы не было видно пустого каркаса
+        document.getElementById('loading').style.display = 'none';
+        return;
+      }
+
+      // 2) Кнопка «Добавить»
+      document.getElementById('addBtn').addEventListener('click', openAddModal);
+
+      // 3) Кнопка «Сохранить» в форме
+      document.getElementById('saveEpassBtn').addEventListener('click', saveEpass);
+
+      // 4) Кнопка «Подтвердить» в модалке статуса
+      document.getElementById('confirmStatusBtn').addEventListener('click', confirmStatusChange);
+
+      // 5) Logout
+      document.getElementById('logoutBtn').addEventListener('click', async () => {
+        await supabase.auth.signOut();
+        window.location.href = '../../login.html';
+      });
+
+      // 6) Загружаем список
+      await loadList();
+    });
+  </script>
+</body>
+</html>
