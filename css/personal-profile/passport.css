@@ -544,17 +544,18 @@
     }
 
 @media (max-width: 640px) {
-  /* Ширина на всю доступную */
+
+  /* ---- Контейнер паспорта ---- */
   #passportContent .passport-template {
     width: 100% !important;
     max-width: 100% !important;
-    margin: 0 auto 1.5rem auto !important;
+    margin: 0 auto 1.5rem !important;
     border-width: 6px !important;
     border-radius: 8px !important;
   }
 
-  /* Шапка компактнее */
-  #passportContent .passport-header { padding: 12px 8px !important; }
+  /* ---- Шапка ---- */
+  #passportContent .passport-header { padding: 12px 10px !important; }
   #passportContent .country-name {
     font-size: 1.15rem !important;
     margin: 0 0 2px !important;
@@ -562,65 +563,123 @@
   }
   #passportContent .document-type { font-size: 0.95rem !important; }
 
-  /* ГЛАВНОЕ: 6 полей над divider — в 2 колонки */
+  /* ---- Верхняя часть: сетка 2 колонки ---- */
   #passportContent .passport-content {
     padding: 12px 14px !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
-    gap: 8px 12px !important;
+    gap: 8px 14px !important;
   }
-  #passportContent .passport-divider,
+
+  /* Строка 1: Серия (1) | Личный код (6) */
+  #passportContent .passport-content > .data-field:nth-child(1) { grid-column: 1; grid-row: 1; }
+  #passportContent .passport-content > .data-field:nth-child(6) { grid-column: 2; grid-row: 1; }
+
+  /* Строка 2: Дата выдачи (2) | Срок действия (3) */
+  #passportContent .passport-content > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
+  #passportContent .passport-content > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
+
+  /* Строка 3: Кем выдан (4) — на всю ширину */
+  #passportContent .passport-content > .data-field:nth-child(4) { grid-column: 1 / -1; grid-row: 3; }
+
+  /* Строка 4: Код подразделения (5) — на всю ширину */
+  #passportContent .passport-content > .data-field:nth-child(5) { grid-column: 1 / -1; grid-row: 4; }
+
+  #passportContent .passport-divider {
+    grid-column: 1 / -1 !important;
+    grid-row: 5 !important;
+    margin: 6px 0 !important;
+    height: 1.5px !important;
+  }
+
   #passportContent .passport-lower {
     grid-column: 1 / -1 !important;
-  }
-
-  /* Поля компактные */
-  #passportContent .data-field { margin-bottom: 0 !important; }
-  #passportContent .field-label { font-size: 0.65rem !important; margin: 0 0 1px !important; }
-  #passportContent .field-value { font-size: 0.8rem !important; padding-bottom: 1px !important; }
-  #passportContent .series-number { font-size: 1rem !important; letter-spacing: 1px !important; }
-
-  #passportContent .passport-divider { margin: 6px 0 !important; height: 1.5px !important; }
-
-  /* Нижняя часть: фото слева, ФИО справа, ФИО в 2 колонки */
-  #passportContent .passport-lower {
+    grid-row: 6 !important;
+    display: flex !important;
     flex-direction: row !important;
     gap: 12px !important;
-    margin-top: 6px !important;
+    margin-top: 0 !important;
     align-items: flex-start !important;
   }
+
+  /* ---- Поля верхней части — компактные ---- */
+  #passportContent .passport-content > .data-field { margin-bottom: 0 !important; }
+  #passportContent .field-label {
+    font-size: 0.65rem !important;
+    margin: 0 0 1px !important;
+  }
+  #passportContent .field-value {
+    font-size: 0.78rem !important;
+    padding-bottom: 1px !important;
+  }
+  #passportContent .series-number {
+    font-size: 0.95rem !important;
+    letter-spacing: 0.5px !important;
+  }
+
+  /* ---- Левая колонка низа: фото + штрихкод + QR (плотно) ---- */
   #passportContent .photo-barcode-section {
-    flex: 0 0 38% !important;
+    flex: 0 0 42% !important;
     min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
     align-items: stretch !important;
   }
   #passportContent .passport-photo-container {
     max-width: 100% !important;
-    margin: 0 0 5px !important;
+    margin: 0 0 4px !important;
   }
-  #passportContent .barcode { max-height: 20px !important; }
-  #passportContent #passportQrCode {
-    width: 48px !important;
-    height: 48px !important;
+  #passportContent .barcode-container {
+    width: 100% !important;
+    margin: 0 !important;
+  }
+  #passportContent .barcode {
+    max-height: 22px !important;
+    margin: 0 !important;
+  }
+  /* обёртка QR — уменьшаем инлайновый margin-top: 15px */
+  #passportContent .photo-barcode-section > div:last-child {
     margin-top: 4px !important;
+    text-align: left !important;
+  }
+  #passportContent #passportQrCode {
+    width: 52px !important;
+    height: 52px !important;
+    margin: 0 !important;
   }
   #passportContent #passportQrCode canvas,
   #passportContent #passportQrCode img {
-    width: 48px !important;
-    height: 48px !important;
+    width: 52px !important;
+    height: 52px !important;
   }
 
-  /* 6 полей ФИО — в 2 колонки */
+  /* ---- Правая колонка: ФИО в 2 колонки ---- */
   #passportContent .fio-section {
     flex: 1 !important;
     min-width: 0 !important;
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     gap: 6px 10px !important;
+    align-content: start !important;
   }
+
+  /* Строка 1: Фамилия — на всю ширину */
+  #passportContent .fio-section > .data-field:nth-child(1) { grid-column: 1 / -1; grid-row: 1; }
+
+  /* Строка 2: Имя | Отчество */
+  #passportContent .fio-section > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
+  #passportContent .fio-section > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
+
+  /* Строка 3: Дата рождения (5) | Пол (4) */
+  #passportContent .fio-section > .data-field:nth-child(5) { grid-column: 1; grid-row: 3; }
+  #passportContent .fio-section > .data-field:nth-child(4) { grid-column: 2; grid-row: 3; }
+
+  /* Строка 4: Место рождения — на всю ширину */
+  #passportContent .fio-section > .data-field:nth-child(6) { grid-column: 1 / -1; grid-row: 4; }
+
   #passportContent .fio-section .data-field { margin-bottom: 0 !important; }
   #passportContent .fio-section .field-label { font-size: 0.63rem !important; }
-  #passportContent .fio-section .field-value { font-size: 0.78rem !important; }
+  #passportContent .fio-section .field-value { font-size: 0.76rem !important; }
 }
 
     @media (prefers-reduced-motion: reduce) {
