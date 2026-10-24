@@ -544,25 +544,83 @@
     }
 
 @media (max-width: 640px) {
+  /* Ширина на всю доступную */
   #passportContent .passport-template {
     width: 100% !important;
-    max-width: 366px !important;
-    margin: 0 auto 2rem auto !important;
-    zoom: 0.85;
+    max-width: 100% !important;
+    margin: 0 auto 1.5rem auto !important;
+    border-width: 6px !important;
+    border-radius: 8px !important;
   }
-  /* Оставляем фото и ФИО в строку, а не в столбик — это вдвое уменьшает высоту */
+
+  /* Шапка компактнее */
+  #passportContent .passport-header { padding: 12px 8px !important; }
+  #passportContent .country-name {
+    font-size: 1.15rem !important;
+    margin: 0 0 2px !important;
+    letter-spacing: 0.5px !important;
+  }
+  #passportContent .document-type { font-size: 0.95rem !important; }
+
+  /* ГЛАВНОЕ: 6 полей над divider — в 2 колонки */
+  #passportContent .passport-content {
+    padding: 12px 14px !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px 12px !important;
+  }
+  #passportContent .passport-divider,
+  #passportContent .passport-lower {
+    grid-column: 1 / -1 !important;
+  }
+
+  /* Поля компактные */
+  #passportContent .data-field { margin-bottom: 0 !important; }
+  #passportContent .field-label { font-size: 0.65rem !important; margin: 0 0 1px !important; }
+  #passportContent .field-value { font-size: 0.8rem !important; padding-bottom: 1px !important; }
+  #passportContent .series-number { font-size: 1rem !important; letter-spacing: 1px !important; }
+
+  #passportContent .passport-divider { margin: 6px 0 !important; height: 1.5px !important; }
+
+  /* Нижняя часть: фото слева, ФИО справа, ФИО в 2 колонки */
   #passportContent .passport-lower {
     flex-direction: row !important;
+    gap: 12px !important;
+    margin-top: 6px !important;
+    align-items: flex-start !important;
   }
   #passportContent .photo-barcode-section {
-    flex: 0 0 25% !important;
+    flex: 0 0 38% !important;
     min-width: 0 !important;
-    align-items: flex-start !important;
+    align-items: stretch !important;
   }
   #passportContent .passport-photo-container {
     max-width: 100% !important;
-    margin: 0 0 0.6rem 0 !important;
+    margin: 0 0 5px !important;
   }
+  #passportContent .barcode { max-height: 20px !important; }
+  #passportContent #passportQrCode {
+    width: 48px !important;
+    height: 48px !important;
+    margin-top: 4px !important;
+  }
+  #passportContent #passportQrCode canvas,
+  #passportContent #passportQrCode img {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  /* 6 полей ФИО — в 2 колонки */
+  #passportContent .fio-section {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px 10px !important;
+  }
+  #passportContent .fio-section .data-field { margin-bottom: 0 !important; }
+  #passportContent .fio-section .field-label { font-size: 0.63rem !important; }
+  #passportContent .fio-section .field-value { font-size: 0.78rem !important; }
 }
 
     @media (prefers-reduced-motion: reduce) {
