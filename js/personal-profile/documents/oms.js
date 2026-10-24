@@ -14,9 +14,9 @@ let formData = {
   gender: '',
   oms_number: '',
   issue_date: '',
-  insurance_organizations: [] // массив страховых организаций
+  insurance_organizations: []
 }
-let currentStep = 1 // 1 – основные данные, 2 – страховые организации
+let currentStep = 1
 const totalSteps = 2
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
@@ -114,7 +114,6 @@ async function loadData() {
     if (data) {
       documentData = data
       currentDocId = data.id
-      // Парсим insurance_organizations, если пришло строкой
       if (typeof documentData.insurance_organizations === 'string') {
         try {
           documentData.insurance_organizations = JSON.parse(documentData.insurance_organizations)
@@ -142,7 +141,6 @@ function renderOms(data) {
   const setText = (id, text) => {
     const el = document.getElementById(id)
     if (el) el.textContent = text
-    else console.warn(`Element #${id} not found`)
   }
 
   setText('surname', data.surname || '—')
@@ -153,7 +151,7 @@ function renderOms(data) {
   setText('omsNumber', data.oms_number || '—')
   setText('issueDate', formatDate(data.issue_date))
 
-  // Генерация штрих-кода (номер полиса)
+  // Генерация штрих-кода
   const barcodeContainer = document.getElementById('omsBarcode')
   if (barcodeContainer && data.oms_number) {
     try {
@@ -169,7 +167,7 @@ function renderOms(data) {
     }
   }
 
-  // Отрисовка таблицы страховых организаций
+  // Таблица страховых организаций
   const tbody = document.getElementById('insuranceBody')
   const orgs = data.insurance_organizations || []
   if (orgs.length === 0) {
@@ -214,13 +212,11 @@ function renderOms(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
-  // Вставляем блок после карточки, но перед таблицей
-  const card = document.querySelector('.document-container')
-  const insuranceSection = document.querySelector('.insurance-section')
-  if (insuranceSection) {
-    card.parentNode.insertBefore(statusAndEdit, insuranceSection)
-  } else {
-    card.parentNode.insertBefore(statusAndEdit, card.nextSibling)
+  // Вставляем блок в специальный контейнер
+  const container = document.getElementById('statusAndEditContainer')
+  if (container) {
+    container.innerHTML = ''
+    container.appendChild(statusAndEdit)
   }
 }
 
@@ -242,19 +238,15 @@ function updateStep() {
   if (stepIndicator) stepIndicator.textContent = `Шаг ${currentStep} из ${totalSteps}`
 
   const prevBtn = document.getElementById('prevBtn')
-  if (prevBtn) prevBtn.style.display = currentStep > 1 ? 'inline-block' : 'none'
+  if (prevBtn) prevBtn.style.display = currentStep > 1 ? 'inline-flex' : 'none'
 
   const nextBtn = document.getElementById('nextBtn')
   if (nextBtn) nextBtn.textContent = currentStep === totalSteps ? 'Сохранить' : 'Далее'
 
   let content = ''
   switch (currentStep) {
-    case 1:
-      content = renderStep1()
-      break
-    case 2:
-      content = renderStep2()
-      break
+    case 1: content = renderStep1(); break
+    case 2: content = renderStep2(); break
   }
   const modalBody = document.getElementById('modalBody')
   if (modalBody) modalBody.innerHTML = content
@@ -264,7 +256,6 @@ function updateStep() {
   }
 }
 
-// --- Шаг 1: основные данные ---
 function renderStep1() {
   return `
     <div class="form-group">
@@ -305,7 +296,6 @@ function renderStep1() {
   `
 }
 
-// --- Шаг 2: страховые организации (с формой для добавления) ---
 function renderStep2() {
   return `
     <div class="form-group">
@@ -333,7 +323,6 @@ function renderStep2() {
   `
 }
 
-// --- Отображение списка организаций внутри модального окна ---
 function renderOrganizationsList() {
   const container = document.getElementById('organizationsContainer')
   if (!container) return
@@ -345,7 +334,7 @@ function renderOrganizationsList() {
   }
 
   const table = document.createElement('table')
-  table.className = 'insurance-table'
+  table.className = 'standard-table'
   table.innerHTML = `
     <thead>
       <tr>
@@ -370,7 +359,6 @@ function renderOrganizationsList() {
   container.appendChild(table)
 }
 
-// --- Добавление новой организации из формы ---
 window.addOrganization = function() {
   const name = document.getElementById('org_name')?.value.trim()
   const startDate = document.getElementById('org_start_date')?.value
@@ -390,7 +378,6 @@ window.addOrganization = function() {
   if (!formData.insurance_organizations) formData.insurance_organizations = []
   formData.insurance_organizations.push(newOrg)
 
-  // Очистить поля ввода
   document.getElementById('org_name').value = ''
   document.getElementById('org_start_date').value = ''
   document.getElementById('org_signed_by').value = ''
@@ -398,7 +385,6 @@ window.addOrganization = function() {
   renderOrganizationsList()
 }
 
-// --- Удаление организации ---
 window.removeOrganization = function(index) {
   if (formData.insurance_organizations && index >= 0 && index < formData.insurance_organizations.length) {
     formData.insurance_organizations.splice(index, 1)
@@ -406,7 +392,6 @@ window.removeOrganization = function(index) {
   }
 }
 
-// --- Сбор данных с первого шага ---
 function collectStep1Data() {
   formData.surname = document.getElementById('edit_surname')?.value.trim() || ''
   formData.name = document.getElementById('edit_name')?.value.trim() || ''
@@ -418,7 +403,6 @@ function collectStep1Data() {
   formData.personal_code = document.getElementById('edit_personal_code')?.value.trim() || userPersonalCode
 }
 
-// --- Навигация ---
 window.nextStep = function() {
   if (currentStep === 1) {
     collectStep1Data()
@@ -436,7 +420,6 @@ window.prevStep = function() {
   }
 }
 
-// --- Сохранение документа ---
 async function saveDocument() {
   try {
     const { data: { session } } = await supabase.auth.getSession()
@@ -464,19 +447,10 @@ async function saveDocument() {
 
     let result
     if (currentDocId) {
-      result = await supabase
-        .schema('documents')
-        .from('oms')
-        .update(dataToSend)
-        .eq('id', currentDocId)
-        .select()
+      result = await supabase.schema('documents').from('oms').update(dataToSend).eq('id', currentDocId).select()
     } else {
       dataToSend.created_at = new Date().toISOString()
-      result = await supabase
-        .schema('documents')
-        .from('oms')
-        .insert([dataToSend])
-        .select()
+      result = await supabase.schema('documents').from('oms').insert([dataToSend]).select()
     }
 
     if (result.error) throw result.error
@@ -490,7 +464,6 @@ async function saveDocument() {
   }
 }
 
-// ==================== ОТКРЫТИЕ МОДАЛОК ====================
 function openAddModal() {
   formData = {
     surname: userProfile?.surname || '',
@@ -519,23 +492,19 @@ function openEditModal() {
   openModal('Редактирование полиса ОМС')
 }
 
-// ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
 
   document.getElementById('addBtn')?.addEventListener('click', openAddModal)
 
-  // Обработчики навигации
   document.getElementById('prevBtn')?.addEventListener('click', () => window.prevStep())
   document.getElementById('nextBtn')?.addEventListener('click', () => window.nextStep())
 
-  // Делегирование для кнопки добавления организации
   document.addEventListener('click', (e) => {
     if (e.target.id === 'addOrgBtn') window.addOrganization()
   })
 })
 
-// Экспорт в глобальную область
 window.openAddModal = openAddModal
 window.openEditModal = openEditModal
 window.closeModal = closeModal

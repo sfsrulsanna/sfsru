@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Полис ОМС — СФСРЮ</title>
-  <!-- favicons (скопируйте из вашего проекта) -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
   <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
   <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -26,13 +25,9 @@
   <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
   <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
 
-  <!-- Общие стили сайта -->
   <link rel="stylesheet" href="../../css/style.css" />
-  <!-- Стили для полиса ОМС -->
   <link rel="stylesheet" href="../../css/personal-profile/oms.css" />
-  <!-- Иконки Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
-  <!-- Шрифт PT Serif -->
   <link href="https://fonts.googleapis.com/css2?family=PT+Serif:wght@400;700&display=swap" rel="stylesheet" />
 </head>
 <body>
@@ -59,22 +54,42 @@
       </nav>
     </div>
   </header>
+  <div class="menu-overlay"></div>
 
-  <main class="main-content">
-    <div class="too-small-message" style="display: none;">
+  <main class="main-content profile-main">
+    <div class="too-small-message">
       ⚠️ Ваше устройство слишком маленькое для отображения документа.
     </div>
-    <div class="container">
-      <div id="loading" class="loading" style="text-align: center; padding: 3rem;">Загрузка данных...</div>
-      <div id="noData" style="display: none; text-align: center; padding: 3rem;">
-        <p>У вас пока нет полиса ОМС.</p>
-        <div class="no-data-actions" style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem;">
-          <button class="edit-btn" id="addBtn">Добавить полис</button>
-          <a href="../../services/documents/oms/" class="edit-btn">Получить полис</a>
+
+    <div class="profile-container">
+
+      <!-- Приветственный блок -->
+      <div class="greeting-block">
+        <div class="greeting-emoji" aria-hidden="true">🏥</div>
+        <div class="greeting-content">
+          <h1 class="greeting-text">Полис ОМС</h1>
+          <p class="greeting-subtitle">Обязательное медицинское страхование</p>
+        </div>
+        <div class="greeting-actions">
+          <a href="../index.html" class="greeting-action-link">
+            <span aria-hidden="true">←</span> К документам
+          </a>
         </div>
       </div>
+
+      <div id="loading" class="loading">Загрузка данных...</div>
+
+      <div id="noData" class="no-data" style="display: none;">
+        <p>У вас пока нет полиса ОМС.</p>
+        <div class="no-data-actions">
+          <button class="add-btn" id="addBtn">Добавить полис</button>
+          <a href="../../services/documents/oms/" class="add-btn">Получить полис</a>
+        </div>
+      </div>
+
       <div id="content" style="display: none;">
-        <!-- Карточка полиса ОМС -->
+        
+        <!-- Блок самого полиса -->
         <div class="document-container">
           <div class="document-header">
             <div class="document-title">ПОЛИС</div>
@@ -125,11 +140,14 @@
           </div>
         </div>
 
+        <!-- Контейнер для статуса и кнопок -->
+        <div id="statusAndEditContainer"></div>
+
         <!-- Таблица страховых организаций -->
         <div class="insurance-section">
-          <h3 class="insurance-title">Организации, осуществляющие страхование ОМС</h3>
-          <div class="insurance-table">
-            <table>
+          <h3 class="section-title"><i class="fas fa-building"></i> Страховые организации</h3>
+          <div class="table-responsive">
+            <table class="standard-table">
               <thead>
                 <tr>
                   <th>Наименование организации</th>
@@ -144,8 +162,6 @@
           </div>
         </div>
 
-        <!-- Блок статуса и кнопок (будет вставлен сюда через JS) -->
-        <div id="statusAndEditContainer"></div>
       </div>
     </div>
   </main>
@@ -155,7 +171,6 @@
     <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
   </footer>
 
-  <!-- МОДАЛЬНОЕ ОКНО -->
   <div id="modalOverlay" class="modal-overlay">
     <div class="modal">
       <div class="modal-header">
