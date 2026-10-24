@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Управление НСС — Админ панель СФСРЮ</title>
+    <!-- favicons -->
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
+    <meta name="application-name" content="&nbsp;"/>
+    <meta name="msapplication-TileColor" content="#FFFFFF" />
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="../css/admin.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <script type="importmap">
+        {
+            "imports": {
+                "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2"
+            }
+        }
+    </script>
+    <style>
+        .container { max-width: 1400px; }
+        .table-container {
+            background: white; border-radius: 8px; padding: 1rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; user-select: none; }
+        th:hover { background: #e9ecef; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+
+        /* Кнопки */
+        .btn-add, .btn-view, .btn-edit, .btn-delete, .btn-secondary, .btn-primary, .btn-warning, .btn-logout {
+            padding: 0.6rem 1.2rem; font-size: 1rem; border-radius: 4px; cursor: pointer;
+            transition: background 0.2s; border: none; display: inline-block;
+            text-align: center; line-height: 1; margin: 0.2rem; font-family: inherit;
+        }
+        .btn-add { background: #28a745; color: white; }
+        .btn-add:hover { background: #218838; }
+        .btn-view { background: #007bff; color: white; }
+        .btn-view:hover { background: #0056b3; }
+        .btn-edit { background: #ffc107; color: #212529; }
+        .btn-edit:hover { background: #e0a800; }
+        .btn-delete { background: #dc3545; color: white; }
+        .btn-delete:hover { background: #c82333; }
+        .btn-secondary { background: #6c757d; color: white; }
+        .btn-secondary:hover { background: #5a6268; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-primary:hover { background: #0056b3; }
+        .btn-warning { background: #ffc107; color: #212529; }
+        .btn-warning:hover { background: #e0a800; }
+        .btn-logout { background: #dc3545; color: white; padding: 0.5rem 1rem; margin-left: 0.5rem; }
+
+        /* Модалки */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            justify-content: center; align-items: center; z-index: 1000; padding: 1rem;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white; border-radius: 8px; max-width: 800px; width: 100%;
+            max-height: 90vh; overflow-y: auto; box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column;
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 1.5rem; border-bottom: 1px solid #dee2e6;
+            position: sticky; top: 0; background: white; z-index: 10;
+        }
+        .modal-header h4 { margin: 0; color: #7b091a; }
+        .close-modal { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #666; }
+        .close-modal:hover { color: #000; }
+        .modal-body { padding: 1.5rem; }
+        .modal-footer {
+            padding: 1rem 1.5rem; border-top: 1px solid #dee2e6; display: flex;
+            justify-content: flex-end; gap: 0.5rem; position: sticky; bottom: 0; background: white;
+            flex-wrap: wrap;
+        }
+
+        /* Формы */
+        .form-section {
+            margin-bottom: 1.5rem; border: 1px solid #dee2e6;
+            border-radius: 8px; padding: 1rem; background: #fafafa;
+        }
+        .form-section h4 { margin-top: 0; margin-bottom: 1rem; color: #7b091a; }
+        .form-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; }
+        .form-group { flex: 1; min-width: 200px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.3rem; font-size: 0.9rem; }
+        .form-input {
+            width: 100%; padding: 0.5rem; border: 1px solid #ccc;
+            border-radius: 4px; font-size: 1rem; box-sizing: border-box;
+        }
+        .form-input[readonly] { background: #e9ecef; }
+
+        /* Просмотр НСС */
+        .document-container {
+            border: 2px solid #7b091a; border-radius: 8px; overflow: hidden;
+            background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;
+        }
+        .document-header { background: #7b091a; color: white; text-align: center; padding: 20px; }
+        .document-title { font-size: 1.8rem; font-weight: bold; letter-spacing: 2px; }
+        .document-subtitle { font-size: 0.9rem; margin-top: 5px; }
+        .document-content { display: flex; padding: 20px; gap: 20px; flex-wrap: wrap; }
+        .qr-section { flex: 0 0 200px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .qr-label { font-size: 0.75rem; color: #666; margin-top: 10px; }
+        .data-section { flex: 1; min-width: 250px; }
+        .inn-number { font-size: 2rem; font-weight: bold; color: #7b091a; letter-spacing: 2px; margin-bottom: 15px; text-align: center; }
+        .info-line { display: flex; justify-content: space-between; border-bottom: 1px dashed #ccc; padding: 8px 0; }
+        .info-label { font-weight: 600; color: #555; }
+        .info-value { font-weight: 500; text-align: right; }
+        
+        .status-badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.85rem; }
+        .status-verified { background: #d4edda; color: #155724; }
+        .status-oncheck { background: #fff3cd; color: #856404; }
+        .status-rejected { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="header-container">
+            <div class="logo">
+                <img src="../../images/gerb.png" alt="Герб СФСРЮ">
+                <h1>СФСРЮ / НСС</h1>
+            </div>
+            <button class="menu-toggle" aria-label="Открыть меню">
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+                <span class="menu-toggle-line"></span>
+            </button>
+            <nav class="nav-menu">
+                <ul>
+                    <li><a href="../index.html">Главная админки</a></li>
+                    <li><a href="index.html">Документы</a></li>
+                    <li><a href="../../index.html">На сайт</a></li>
+                </ul>
+            </nav>
+            <div class="admin-user">
+                <span id="adminEmail"></span>
+                <button id="logoutBtn" class="btn-logout"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+    </header>
+    <div class="menu-overlay"></div>
+
+    <main class="main-content">
+        <div class="container">
+            <h1 class="page-title">Управление НСС</h1>
+            <p class="page-description">Все записи номеров социального счёта граждан</p>
+
+            <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить НСС</button>
+            </div>
+
+            <div id="loading" class="loading">Загрузка...</div>
+
+            <div class="table-container">
+                <table id="nssTable">
+                    <thead>
+                        <tr>
+                            <th data-sort="surname">ФИО <i class="fas fa-sort"></i></th>
+                            <th data-sort="nss_number">Номер НСС <i class="fas fa-sort"></i></th>
+                            <th data-sort="personal_code">Личный код <i class="fas fa-sort"></i></th>
+                            <th data-sort="status">Статус <i class="fas fa-sort"></i></th>
+                            <th>Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr><td colspan="5" class="no-data">Нет данных</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <!-- Модальное окно просмотра -->
+    <div id="viewModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h4 id="viewModalTitle">Просмотр НСС</h4>
+                <button type="button" class="close-modal" onclick="closeViewModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="viewModalBody">
+                <div id="viewLoading" class="loading">Загрузка...</div>
+                <div id="nssContent" style="display: none;"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeViewModal()">Закрыть</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования/добавления -->
+    <div id="editModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h4 id="editModalTitle">Добавление НСС</h4>
+                <button type="button" class="close-modal" onclick="closeEditModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="editModalBody">
+                <!-- Форма генерируется динамически -->
+            </div>
+            <div class="modal-footer" id="editModalFooter">
+                <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
+                <button type="button" class="btn-primary" id="saveNssBtn">Сохранить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно статуса -->
+    <div id="statusModal" class="modal-overlay">
+        <div class="modal" style="max-width: 500px;">
+            <div class="modal-header">
+                <h4>Изменение статуса документа</h4>
+                <button type="button" class="close-modal" onclick="closeStatusModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="statusSelect">Новый статус</label>
+                    <select id="statusSelect" class="form-input">
+                        <option value="verified">Подтверждено</option>
+                        <option value="oncheck">На проверке</option>
+                        <option value="rejected">Отклонено</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="statusComment">Комментарий</label>
+                    <textarea id="statusComment" class="form-input" rows="4" placeholder="Введите комментарий для пользователя..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="closeStatusModal()">Отмена</button>
+                <button type="button" class="btn-primary" id="confirmStatusBtn">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <p>© 2026 СФСРЮ. Все права защищены пролетариатом.</p>
+    </footer>
+
+    <script src="../../js/mob-menu.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    
+    <script type="module">
+        import { supabase } from '../../js/supabase-config.js';
+
+        // Глобальные переменные
+        let currentNssId = null;
+        let sortField = 'surname';
+        let sortDirection = 'asc';
+        let allData = [];
+        let currentPersonalCodeForStatus = null;
+
+        const statusMap = {
+            'verified': 'Подтверждено',
+            'oncheck': 'На проверке',
+            'rejected': 'Отклонено'
+        };
+
+        // ==================== ИНИЦИАЛИЗАЦИЯ ====================
+        document.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) { window.location.href = '../../login.html'; return; }
+
+            const { data: user } = await supabase.from('users').select('role').eq('id', session.user.id).single();
+            if (user?.role !== 'admin') {
+                alert('Доступ запрещён. Требуются права администратора.');
+                window.location.href = '../../profile.html';
+                return;
+            }
+
+            document.getElementById('adminEmail').textContent = session.user.email;
+            document.getElementById('logoutBtn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = '../../login.html';
+            });
+
+            await loadNssList();
+        });
+
+        // ==================== ЗАГРУЗКА И ОТОБРАЖЕНИЕ ====================
+        async function loadNssList() {
+            const loading = document.getElementById('loading');
+            const tbody = document.getElementById('tableBody');
+            loading.style.display = 'block';
+
+            const { data, error } = await supabase
+                .schema('documents')
+                .from('nss')
+                .select('id, surname, name, patronymic, nss_number, personal_code, status')
+                .order(sortField, { ascending: sortDirection === 'asc' });
+
+            if (error) {
+                console.error('Ошибка загрузки:', error);
+                tbody.innerHTML = `<tr><td colspan="5" class="error">Ошибка: ${error.message}</td></tr>`;
+                loading.style.display = 'none';
+                return;
+            }
+
+            allData = data || [];
+            renderTable();
+            loading.style.display = 'none';
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            if (allData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="no-data">Нет записей</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = allData.map(item => {
+                const fullName = `${item.surname || ''} ${item.name || ''} ${item.patronymic || ''}`.trim() || '—';
+                const statusClass = `status-${item.status}`;
+                const statusText = statusMap[item.status] || item.status;
+                return `
+                    <tr>
+                        <td>${escapeHTML(fullName)}</td>
+                        <td>${escapeHTML(item.nss_number || '—')}</td>
+                        <td>${escapeHTML(item.personal_code || '—')}</td>
+                        <td><span class="status-badge ${statusClass}">${escapeHTML(statusText)}</span></td>
+                        <td>
+                            <button class="btn-view" data-id="${item.id}">Просмотр</button>
+                            <button class="btn-edit" data-id="${item.id}">Редактировать</button>
+                            <button class="btn-delete" data-id="${item.id}">Удалить</button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.btn-view').forEach(btn => btn.addEventListener('click', () => viewNss(btn.dataset.id)));
+            document.querySelectorAll('.btn-edit').forEach(btn => btn.addEventListener('click', () => editNss(btn.dataset.id)));
+            document.querySelectorAll('.btn-delete').forEach(btn => btn.addEventListener('click', () => deleteNss(btn.dataset.id)));
+        }
+
+        // ==================== СОРТИРОВКА ====================
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                let field = th.dataset.sort;
+                if (sortField === field) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortField = field;
+                    sortDirection = 'asc';
+                }
+                document.querySelectorAll('th i').forEach(i => i.className = 'fas fa-sort');
+                th.querySelector('i').className = `fas fa-sort-${sortDirection === 'asc' ? 'up' : 'down'}`;
+                loadNssList();
+            });
+        });
+
+        // ==================== ПРОСМОТР ====================
+        async function viewNss(id) {
+            currentNssId = id;
+            document.getElementById('viewModal').classList.add('active');
+            document.getElementById('viewLoading').style.display = 'block';
+            document.getElementById('nssContent').style.display = 'none';
+
+            const { data, error } = await supabase
+                .schema('documents')
+                .from('nss')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !data) {
+                alert('Ошибка загрузки данных');
+                closeViewModal();
+                return;
+            }
+
+            renderNssView(data);
+        }
+
+        function renderNssView(data) {
+            const html = `
+                <div class="document-container">
+                    <div class="document-header">
+                        <div class="document-title">НОМЕР СОЦИАЛЬНОГО СЧЁТА</div>
+                        <div class="document-subtitle">ГРАЖДАНИНА СФСРЮ</div>
+                    </div>
+                    <div class="document-content">
+                        <div class="qr-section">
+                            <div id="qrCode" style="width: 180px; height: 180px;"></div>
+                            <div class="qr-label">Отсканируйте QR-код для проверки подлинности</div>
+                        </div>
+                        <div class="data-section">
+                            <div class="inn-number">${escapeHTML(data.nss_number || '—')}</div>
+                            <div class="info-line">
+                                <span class="info-label">Фамилия</span>
+                                <span class="info-value">${escapeHTML(data.surname || '—')}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Имя</span>
+                                <span class="info-value">${escapeHTML(data.name || '—')}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Отчество</span>
+                                <span class="info-value">${escapeHTML(data.patronymic || '—')}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Пол</span>
+                                <span class="info-value">${escapeHTML(data.gender || '—')}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Дата рождения</span>
+                                <span class="info-value">${formatDate(data.birth_date)}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Место рождения</span>
+                                <span class="info-value">${escapeHTML(data.birth_place || '—')}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Дата выдачи</span>
+                                <span class="info-value">${formatDate(data.issue_date)}</span>
+                            </div>
+                            <div class="info-line">
+                                <span class="info-label">Кем выдан</span>
+                                <span class="info-value">${escapeHTML(data.issued_by || '—')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 1.5rem;">
+                    <span class="status-badge status-${data.status}">${escapeHTML(statusMap[data.status] || data.status)}</span>
+                </div>
+            `;
+
+            document.getElementById('nssContent').innerHTML = html;
+            document.getElementById('nssContent').style.display = 'block';
+
+            const qrContainer = document.getElementById('qrCode');
+            if (qrContainer && data.nss_number) {
+                qrContainer.innerHTML = '';
+                try {
+                    new QRCode(qrContainer, {
+                        text: data.nss_number,
+                        width: 180,
+                        height: 180,
+                        colorDark: '#000',
+                        colorLight: '#fff',
+                        correctLevel: QRCode.CorrectLevel.L
+                    });
+                } catch (e) { console.warn('QR error', e); }
+            }
+
+            document.getElementById('viewLoading').style.display = 'none';
+        }
+
+        // ==================== РЕДАКТИРОВАНИЕ / ДОБАВЛЕНИЕ ====================
+        document.getElementById('addBtn').addEventListener('click', () => {
+            currentNssId = null;
+            document.getElementById('editModalTitle').textContent = 'Добавление НСС';
+            renderEditForm({});
+            document.getElementById('editModal').classList.add('active');
+        });
+
+        async function editNss(id) {
+            currentNssId = id;
+            document.getElementById('editModalTitle').textContent = 'Редактирование НСС';
+            document.getElementById('editModalBody').innerHTML = '<div class="loading">Загрузка...</div>';
+            document.getElementById('editModal').classList.add('active');
+
+            const { data, error } = await supabase
+                .schema('documents')
+                .from('nss')
+                .select('*')
+                .eq('id', id)
+                .single();
+
+            if (error || !data) {
+                alert('Ошибка загрузки данных');
+                closeEditModal();
+                return;
+            }
+
+            renderEditForm(data);
+        }
+
+        function renderEditForm(data) {
+            const html = `
+                <div class="form-section">
+                    <h4>Основные данные</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Номер НСС</label>
+                            <input type="text" id="nss_number" class="form-input" value="${escapeHTML(data.nss_number || '')}" placeholder="Введите номер">
+                        </div>
+                        <div class="form-group">
+                            <label>Личный код</label>
+                            <input type="text" id="personal_code" class="form-input" value="${escapeHTML(data.personal_code || '')}" ${currentNssId ? 'readonly' : ''}>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Фамилия</label><input type="text" id="surname" class="form-input" value="${escapeHTML(data.surname || '')}"></div>
+                        <div class="form-group"><label>Имя</label><input type="text" id="name" class="form-input" value="${escapeHTML(data.name || '')}"></div>
+                        <div class="form-group"><label>Отчество</label><input type="text" id="patronymic" class="form-input" value="${escapeHTML(data.patronymic || '')}"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Пол</label>
+                            <select id="gender" class="form-input">
+                                <option value="Мужской" ${data.gender === 'Мужской' ? 'selected' : ''}>Мужской</option>
+                                <option value="Женский" ${data.gender === 'Женский' ? 'selected' : ''}>Женский</option>
+                            </select>
+                        </div>
+                        <div class="form-group"><label>Дата рождения</label><input type="date" id="birth_date" class="form-input" value="${data.birth_date || ''}"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Место рождения</label><input type="text" id="birth_place" class="form-input" value="${escapeHTML(data.birth_place || '')}"></div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h4>Данные документа</h4>
+                    <div class="form-row">
+                        <div class="form-group"><label>Дата выдачи</label><input type="date" id="issue_date" class="form-input" value="${data.issue_date || ''}"></div>
+                        <div class="form-group"><label>Кем выдан</label><input type="text" id="issued_by" class="form-input" value="${escapeHTML(data.issued_by || '')}"></div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Статус</label>
+                            <select id="status" class="form-input">
+                                <option value="oncheck" ${data.status === 'oncheck' ? 'selected' : ''}>На проверке</option>
+                                <option value="verified" ${data.status === 'verified' ? 'selected' : ''}>Подтверждено</option>
+                                <option value="rejected" ${data.status === 'rejected' ? 'selected' : ''}>Отклонено</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('editModalBody').innerHTML = html;
+
+            // Кнопка быстрой смены статуса (для существующих записей)
+            const footer = document.getElementById('editModalFooter');
+            footer.innerHTML = `
+                <button type="button" class="btn-secondary" onclick="closeEditModal()">Отмена</button>
+                <button type="button" class="btn-primary" id="saveNssBtn">Сохранить</button>
+            `;
+            
+            if (currentNssId) {
+                const statusBtn = document.createElement('button');
+                statusBtn.type = 'button';
+                statusBtn.className = 'btn-warning';
+                statusBtn.textContent = 'Изменить статус отдельно';
+                statusBtn.style.marginLeft = '10px';
+                statusBtn.onclick = () => {
+                    currentPersonalCodeForStatus = data.personal_code;
+                    openStatusModal();
+                };
+                footer.insertBefore(statusBtn, document.getElementById('saveNssBtn'));
+            }
+
+            document.getElementById('saveNssBtn').onclick = saveNss;
+        }
+
+        // ==================== СОХРАНЕНИЕ ====================
+        async function saveNss() {
+            const record = {
+                nss_number: document.getElementById('nss_number').value.trim(),
+                personal_code: document.getElementById('personal_code').value.trim(),
+                surname: document.getElementById('surname').value.trim(),
+                name: document.getElementById('name').value.trim(),
+                patronymic: document.getElementById('patronymic').value.trim(),
+                gender: document.getElementById('gender').value,
+                birth_date: document.getElementById('birth_date').value || null,
+                birth_place: document.getElementById('birth_place').value.trim(),
+                issue_date: document.getElementById('issue_date').value || null,
+                issued_by: document.getElementById('issued_by').value.trim(),
+                status: document.getElementById('status').value,
+                updated_at: new Date().toISOString()
+            };
+
+            if (!record.nss_number || !record.personal_code) {
+                alert('Номер НСС и Личный код обязательны!');
+                return;
+            }
+
+            try {
+                if (currentNssId) {
+                    const { error } = await supabase
+                        .schema('documents')
+                        .from('nss')
+                        .update(record)
+                        .eq('id', currentNssId);
+                    if (error) throw error;
+                } else {
+                    record.created_at = new Date().toISOString();
+                    const { error } = await supabase
+                        .schema('documents')
+                        .from('nss')
+                        .insert([record]);
+                    if (error) throw error;
+                }
+                closeEditModal();
+                loadNssList();
+            } catch (err) {
+                console.error('Ошибка сохранения:', err);
+                alert('Ошибка сохранения: ' + err.message);
+            }
+        }
+
+        // ==================== УДАЛЕНИЕ ====================
+        async function deleteNss(id) {
+            if (!confirm('Вы уверены, что хотите удалить это свидетельство НСС? Это действие необратимо.')) return;
+
+            try {
+                const { error } = await supabase
+                    .schema('documents')
+                    .from('nss')
+                    .delete()
+                    .eq('id', id);
+
+                if (error) throw error;
+
+                alert('Запись успешно удалена');
+                loadNssList();
+            } catch (err) {
+                console.error('Ошибка удаления:', err);
+                alert('Ошибка удаления: ' + err.message);
+            }
+        }
+
+        // ==================== СТАТУС ====================
+        function openStatusModal() {
+            document.getElementById('statusComment').value = '';
+            document.getElementById('statusModal').classList.add('active');
+        }
+
+        document.getElementById('confirmStatusBtn').addEventListener('click', async () => {
+            const newStatus = document.getElementById('statusSelect').value;
+            const comment = document.getElementById('statusComment').value.trim();
+            
+            if (!currentNssId) return;
+
+            try {
+                // Обновляем статус
+                const { error } = await supabase
+                    .schema('documents')
+                    .from('nss')
+                    .update({ status: newStatus, updated_at: new Date().toISOString() })
+                    .eq('id', currentNssId);
+                if (error) throw error;
+
+                // Отправляем сообщение пользователю
+                if (currentPersonalCodeForStatus) {
+                    const { data: userData } = await supabase.from('users').select('id').eq('personal_code', currentPersonalCodeForStatus).maybeSingle();
+                    if (userData) {
+                        await supabase.schema('messages').from('user_messages').insert({
+                            user_id: userData.id,
+                            title: `Изменение статуса НСС`,
+                            content: `Статус вашего НСС изменён на "${statusMap[newStatus]}". Комментарий: ${comment || 'не указан'}`,
+                            type: 'status_change',
+                            document_type: 'nss',
+                            document_id: currentNssId,
+                            is_read: false
+                        });
+                    }
+                }
+
+                closeStatusModal();
+                closeEditModal();
+                loadNssList();
+                alert('Статус успешно изменён');
+            } catch (err) {
+                alert('Ошибка: ' + err.message);
+            }
+        });
+
+        // ==================== ВСПОМОГАТЕЛЬНЫЕ ====================
+        function escapeHTML(str) {
+            if (!str) return '';
+            return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '—';
+            try { return new Date(dateStr).toLocaleDateString('ru-RU'); } catch { return dateStr; }
+        }
+
+        window.closeViewModal = () => document.getElementById('viewModal').classList.remove('active');
+        window.closeEditModal = () => document.getElementById('editModal').classList.remove('active');
+        window.closeStatusModal = () => document.getElementById('statusModal').classList.remove('active');
+    </script>
+</body>
+</html>
