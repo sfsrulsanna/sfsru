@@ -331,6 +331,43 @@ function renderPassport(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
+  /* --- Статус и кнопки --- */
+  const statusAndEdit = document.createElement('div')
+  statusAndEdit.className = 'status-and-edit'
+
+  const statusSpan = document.createElement('span')
+  statusSpan.className = statusClass
+  statusSpan.textContent = statusText
+  statusAndEdit.appendChild(statusSpan)
+
+  // --- Проверка срока действия ---
+  if (data.expiry_date) {
+    const expiryDate = new Date(data.expiry_date)
+    expiryDate.setHours(23, 59, 59, 999) // конец дня
+    const today = new Date()
+
+    const diffTime = expiryDate - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    if (diffDays < 0) {
+      const expiredBadge = document.createElement('span')
+      expiredBadge.className = 'document-status status-expired'
+      expiredBadge.textContent = '❌ Истёк срок действия'
+      statusAndEdit.appendChild(expiredBadge)
+    } else if (diffDays <= 30) {
+      const warningBadge = document.createElement('span')
+      warningBadge.className = 'document-status status-warning'
+      warningBadge.textContent = `⚠️ Истекает срок действия (${diffDays} дн.)`
+      statusAndEdit.appendChild(warningBadge)
+    }
+  }
+
+  const replaceLink = document.createElement('a')
+  replaceLink.href = '../../services/documents/passport/'
+  replaceLink.className = 'edit-btn'
+  replaceLink.textContent = 'Заменить паспорт'
+  statusAndEdit.appendChild(replaceLink)
+
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/passport/'
   replaceLink.className = 'edit-btn'
