@@ -1,20 +1,11 @@
 import { supabase } from '../../../../js/supabase-config.js'
 
+// ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let currentDocId = null
 let documentData = {}
 let userPersonalCode = null
 let userProfile = null
 let userId = null
-
-// Начальные данные формы
-let formData = {
-  full_name: '',
-  issued_by: '',
-  director: '',
-  document_number: '',
-  subjects: [], // массив объектов { name, grade }
-  status: 'oncheck'
-}
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function formatDate(dateString) {
@@ -58,7 +49,7 @@ async function loadData() {
   try {
     const { data: { session }, error: sessionError } = await supabase.auth.getSession()
     if (sessionError || !session) {
-      window.location.href = '../../login.html'
+      window.location.href = '../../../login.html' // Путь на 3 уровня вверх
       return
     }
 
@@ -91,7 +82,6 @@ async function loadData() {
         .maybeSingle()
       if (!error && doc) data = doc
     } else {
-      // Если ID нет, ищем последний документ типа 'basic_general' для пользователя
       const { data: docs, error } = await supabase
         .from('documents_education')
         .select('*')
@@ -128,25 +118,50 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА ДОКУМЕНТА ====================
 function renderCertificate(data) {
-  // Получаем ФИО (можно из data.full_name, если есть, или из профиля)
+  // Получаем ФИО
   const fullName = data.full_name || `${userProfile?.surname || ''} ${userProfile?.name || ''} ${userProfile?.patronymic || ''}`.trim() || '—'
 
-  // Формируем HTML для предметов
-  let subjectsHtml = ''
-  if (data.subjects && Array.isArray(data.subjects) && data.subjects.length > 0) {
-    subjectsHtml = '<table class="subjects-table"><thead><tr><th>Предмет</th><th>Оценка</th></tr></thead><tbody>'
-    data.subjects.forEach(subj => {
-      subjectsHtml += `<tr><td>${escapeHTML(subj.name || '')}</td><td>${escapeHTML(subj.grade || '')}</td></tr>`
-    })
-    subjectsHtml += '</tbody></table>'
-  } else {
-    subjectsHtml = '<p>Нет данных о предметах</p>'
+  // Проверка на "С ОТЛИЧИЕМ"
+  // Предполагаем, что в БД есть поле with_honors (boolean) или honors (boolean)
+  const isHonors = data.with_honors || data.honors || false
+  const honorsText = isHonors ? ' С ОТЛИЧИЕМ' : ''
+
+  // Обработка предметов (могут приходить строкой JSON)
+  let subjects = data.subjects || []
+  if (typeof subjects === 'string') {
+    try { subjects = JSON.parse(subjects) } catch { subjects = [] }
+  }
+
+  // Формируем HTML для приложения
+  let appendixHtml = ''
+  if (subjects.length > 0) {
+    appendixHtml = `
+      <div class="appendix-container">
+        <div class="appendix-header">Приложение к аттестату</div>
+        <table class="subjects-table">
+          <thead>
+            <tr>
+              <th>Предмет</th>
+              <th>Оценка</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${subjects.map(subj => `
+              <tr>
+                <td>${escapeHTML(subj.name || '')}</td>
+                <td>${escapeHTML(subj.grade || '')}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    `
   }
 
   const html = `
     <div class="certificate-header">
       <div class="title">АТТЕСТАТ</div>
-      <div class="subtitle">ОБ ОСНОВНОМ ОБЩЕМ ОБРАЗОВАНИИ</div>
+      <div class="subtitle">ОБ ОСНОВНОМ ОБЩЕМ ОБРАЗОВАНИИ${honorsText}</div>
     </div>
     
     <div class="certificate-content">
@@ -173,17 +188,15 @@ function renderCertificate(data) {
         <div class="field-value">${escapeHTML(data.document_number || '—')}</div>
         <div class="field-line"></div>
       </div>
-      
-      <div class="field-block">
-        <div class="field-label">Предметы и оценки</div>
-        <div class="field-value">${subjectsHtml}</div>
-      </div>
+
+      <!-- Блок с оценками -->
+      ${appendixHtml}
     </div>
   `
 
   document.getElementById('certificateContainer').innerHTML = html
 
-  // Блок статуса и кнопок
+  // Блок статуса (без кнопки редактирования)
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
@@ -196,230 +209,16 @@ function renderCertificate(data) {
   statusAndEdit.appendChild(statusSpan)
   
   const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/education/basic-general/'
+  replaceLink.href = '../../../services/documents/education/basic-general/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить аттестат'
   statusAndEdit.appendChild(replaceLink)
   
-  if (data.status !== 'verified') {
-    const editBtn = document.createElement('button')
-    editBtn.className = 'edit-btn'
-    editBtn.id = 'editBtn'
-    editBtn.textContent = 'Изменить данные'
-    editBtn.addEventListener('click', () => {
-      formData = { ...data }
-      // Преобразуем subjects в массив, если это JSON строка
-      if (typeof formData.subjects === 'string') {
-        try {
-          formData.subjects = JSON.parse(formData.subjects)
-        } catch {
-          formData.subjects = []
-        }
-      }
-      openEditModal()
-    })
-    statusAndEdit.appendChild(editBtn)
-  }
-  
+  document.getElementById('statusAndEditContainer').innerHTML = ''
   document.getElementById('statusAndEditContainer').appendChild(statusAndEdit)
-}
-
-// ==================== МОДАЛЬНОЕ ОКНО ====================
-window.closeModal = function() {
-  document.getElementById('modalOverlay').classList.remove('active')
-}
-
-function openModal(title) {
-  document.getElementById('modalTitle').textContent = title
-  document.getElementById('modalOverlay').classList.add('active')
-  renderModalForm()
-}
-
-function renderModalForm() {
-  const modalBody = document.getElementById('modalBody')
-  if (!modalBody) return
-
-  // Подготовим subjects
-  const subjects = formData.subjects || []
-  let subjectsRows = ''
-  subjects.forEach((subj, index) => {
-    subjectsRows += `
-      <tr>
-        <td><input type="text" class="form-input subject-name" data-index="${index}" value="${escapeHTML(subj.name || '')}" placeholder="Предмет"></td>
-        <td><input type="text" class="form-input subject-grade" data-index="${index}" value="${escapeHTML(subj.grade || '')}" placeholder="Оценка"></td>
-        <td><button type="button" class="remove-subject" data-index="${index}">✖</button></td>
-      </tr>
-    `
-  })
-
-  modalBody.innerHTML = `
-    <h4>Основная информация</h4>
-    <div class="form-group">
-      <label>ФИО владельца</label>
-      <input type="text" id="edit_full_name" class="form-input" value="${escapeHTML(formData.full_name || userProfile ? `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`.trim() : '')}">
-    </div>
-    <div class="form-group">
-      <label>Кем выдан (организация)</label>
-      <input type="text" id="edit_issued_by" class="form-input" value="${escapeHTML(formData.issued_by || '')}">
-    </div>
-    <div class="form-group">
-      <label>Директор</label>
-      <input type="text" id="edit_director" class="form-input" value="${escapeHTML(formData.director || '')}">
-    </div>
-    <div class="form-group">
-      <label>Номер документа</label>
-      <input type="text" id="edit_document_number" class="form-input" value="${escapeHTML(formData.document_number || '')}">
-    </div>
-
-    <h4>Предметы и оценки</h4>
-    <table class="subjects-table" id="subjectsTable">
-      <thead>
-        <tr><th>Предмет</th><th>Оценка</th><th></th></tr>
-      </thead>
-      <tbody id="subjectsBody">
-        ${subjectsRows}
-      </tbody>
-    </table>
-    <button type="button" id="addSubjectBtn" class="edit-btn">+ Добавить предмет</button>
-  `
-
-  // Добавляем обработчик для кнопки добавления предмета
-  document.getElementById('addSubjectBtn').addEventListener('click', () => {
-    const tbody = document.getElementById('subjectsBody')
-    const newIndex = subjects.length
-    const row = document.createElement('tr')
-    row.innerHTML = `
-      <td><input type="text" class="form-input subject-name" data-index="${newIndex}" placeholder="Предмет"></td>
-      <td><input type="text" class="form-input subject-grade" data-index="${newIndex}" placeholder="Оценка"></td>
-      <td><button type="button" class="remove-subject" data-index="${newIndex}">✖</button></td>
-    `
-    tbody.appendChild(row)
-    subjects.push({ name: '', grade: '' }) // расширяем массив
-    attachRemoveHandlers()
-  })
-
-  // Обработчики удаления
-  function attachRemoveHandlers() {
-    document.querySelectorAll('.remove-subject').forEach(btn => {
-      btn.removeEventListener('click', removeHandler)
-      btn.addEventListener('click', removeHandler)
-    })
-  }
-
-  function removeHandler(e) {
-    const index = e.target.getAttribute('data-index')
-    if (index !== null) {
-      subjects.splice(index, 1)
-      // Перерендерим форму, чтобы обновить индексы
-      renderModalForm()
-    }
-  }
-
-  attachRemoveHandlers()
-}
-
-function collectFormData() {
-  const getVal = (id) => (document.getElementById(id)?.value || '').trim()
-
-  // Собираем предметы
-  const subjectNames = document.querySelectorAll('.subject-name')
-  const subjectGrades = document.querySelectorAll('.subject-grade')
-  const subjects = []
-  for (let i = 0; i < subjectNames.length; i++) {
-    const name = subjectNames[i].value.trim()
-    const grade = subjectGrades[i].value.trim()
-    if (name || grade) { // добавляем, если хоть что-то заполнено
-      subjects.push({ name, grade })
-    }
-  }
-
-  return {
-    full_name: getVal('edit_full_name'),
-    issued_by: getVal('edit_issued_by'),
-    director: getVal('edit_director'),
-    document_number: getVal('edit_document_number'),
-    subjects: subjects
-  }
-}
-
-async function saveDocument() {
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { alert('Ошибка авторизации'); return; }
-    if (!userPersonalCode) { alert('Личный код не загружен'); return; }
-
-    const newData = collectFormData();
-    
-    if (!newData.document_number) {   // например, обязательное поле
-      alert('Номер документа обязателен');
-      return;
-    }
-
-    const cleanData = { ...newData };
-    Object.keys(cleanData).forEach(key => {
-      if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key];
-    });
-
-    const dataToSend = {
-      ...cleanData,
-      personal_code: userPersonalCode,
-      user_id: userId,          // <-- добавляем user_id
-      status: 'oncheck',
-      updated_at: new Date().toISOString()
-    };
-
-    let result;
-    if (currentDocId) {
-      result = await supabase
-        .from('documents_education')
-        .update(dataToSend)
-        .eq('id', currentDocId)
-        .select();
-    } else {
-      dataToSend.created_at = new Date().toISOString();
-      result = await supabase
-        .from('documents_education')
-        .insert([dataToSend])
-        .select();
-    }
-
-    if (result.error) throw result.error;
-
-    window.closeModal();
-    const newId = currentDocId || result.data[0].id;
-    window.location.href = `basic-general-certificate.html?id=${newId}`;
-  } catch (err) {
-    console.error('Ошибка сохранения:', err);
-    alert('Ошибка сохранения: ' + err.message);
-  }
-}
-
-// ==================== ОТКРЫТИЕ МОДАЛОК ====================
-function openAddModal() {
-  formData = {
-    full_name: userProfile ? `${userProfile.surname} ${userProfile.name} ${userProfile.patronymic}`.trim() : '',
-    issued_by: '',
-    director: '',
-    document_number: '',
-    subjects: [],
-    status: 'oncheck'
-  }
-  openModal('Добавление аттестата об основном общем образовании')
-}
-
-function openEditModal() {
-  // formData уже установлен перед вызовом
-  openModal('Редактирование аттестата об основном общем образовании')
 }
 
 // ==================== ИНИЦИАЛИЗАЦИЯ ====================
 document.addEventListener('DOMContentLoaded', async () => {
   await loadData()
-  document.getElementById('addBtn')?.addEventListener('click', openAddModal)
-  document.getElementById('saveBtn')?.addEventListener('click', saveDocument)
 })
-
-// Экспорт в глобальную область
-window.openAddModal = openAddModal
-window.openEditModal = openEditModal
-window.closeModal = closeModal
