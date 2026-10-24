@@ -3,33 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление свидетельствами — Админ панель СФСРЮ</title>
+    <title>Свидетельства — Админ панель СФСРЮ</title>
+
     <!-- favicons -->
-    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../images/favicons/apple-touch-icon-144x144.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../images/favicons/apple-touch-icon-60x60.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../images/favicons/apple-touch-icon-120x120.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../images/favicons/apple-touch-icon-76x76.png" />
-    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../images/favicons/apple-touch-icon-152x152.png" />
-    <link rel="icon" type="image/png" href="../images/favicons/favicon-196x196.png" sizes="196x196" />
-    <link rel="icon" type="image/png" href="../images/favicons/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/png" href="../images/favicons/favicon-32x32.png" sizes="32x32" />
-    <link rel="icon" type="image/png" href="../images/favicons/favicon-16x16.png" sizes="16x16" />
-    <link rel="icon" type="image/png" href="../images/favicons/favicon-128.png" sizes="128x128" />
+    <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="144x144" href="../../images/favicons/apple-touch-icon-144x144.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="60x60" href="../../images/favicons/apple-touch-icon-60x60.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="120x120" href="../../images/favicons/apple-touch-icon-120x120.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="76x76" href="../../images/favicons/apple-touch-icon-76x76.png" />
+    <link rel="apple-touch-icon-precomposed" sizes="152x152" href="../../images/favicons/apple-touch-icon-152x152.png" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-196x196.png" sizes="196x196" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-32x32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-16x16.png" sizes="16x16" />
+    <link rel="icon" type="image/png" href="../../images/favicons/favicon-128.png" sizes="128x128" />
     <meta name="application-name" content="&nbsp;"/>
     <meta name="msapplication-TileColor" content="#FFFFFF" />
-    <meta name="msapplication-TileImage" content="../images/favicons/mstile-144x144.png" />
-    <meta name="msapplication-square70x70logo" content="../images/favicons/mstile-70x70.png" />
-    <meta name="msapplication-square150x150logo" content="../images/favicons/mstile-150x150.png" />
-    <meta name="msapplication-wide310x150logo" content="../images/favicons/mstile-310x150.png" />
-    <meta name="msapplication-square310x310logo" content="../images/favicons/mstile-310x310.png" />
-	
+    <meta name="msapplication-TileImage" content="../../images/favicons/mstile-144x144.png" />
+    <meta name="msapplication-square70x70logo" content="../../images/favicons/mstile-70x70.png" />
+    <meta name="msapplication-square150x150logo" content="../../images/favicons/mstile-150x150.png" />
+    <meta name="msapplication-wide310x150logo" content="../../images/favicons/mstile-310x150.png" />
+    <meta name="msapplication-square310x310logo" content="../../images/favicons/mstile-310x310.png" />
+
     <link rel="stylesheet" href="../../css/style.css">
     <link rel="stylesheet" href="../../css/index.css">
     <link rel="stylesheet" href="../css/admin.css">
+    <link rel="stylesheet" href="style.css">
+	
+	<style>
+	/* ============================================================
+   Стили модуля «Свидетельства» (админка СФСРЮ)
+   ============================================================ */
+
+/* SPA-страницы */
+.page { display: none; }
+.page.active,
+.page[style*="display: block"] { display: block; }
+
+/* --- Таблица записей книги --- */
+.records-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.records-table th {
+    background: #f8f9fa;
+    padding: 10px;
+    text-align: left;
+}
+.records-table td {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+.records-table tr:hover { background: #f5f5f5; }
+
+/* --- Бейджи статуса (book.js) --- */
+.badge-status {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+.badge-verified { background: #d4edda; color: #155724; }
+.badge-oncheck  { background: #fff3cd; color: #856404; }
+.badge-rejected { background: #f8d7da; color: #721c24; }
+.badge-archived { background: #e2e3e5; color: #383d41; }
+
+/* --- Бейджи статуса (list.js) --- */
+.status-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+}
+.status-verified { background: #d4edda; color: #155724; }
+.status-oncheck  { background: #fff3cd; color: #856404; }
+.status-rejected { background: #f8d7da; color: #721c24; }
+.status-archived { background: #e2e3e5; color: #383d41; }
+
+/* --- Детальная таблица (view.html / record.html) --- */
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    margin: 1rem 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.details-table th {
+    width: 30%;
+    background: #f8f9fa;
+    padding: 10px;
+    text-align: right;
+    font-weight: 600;
+    border: 1px solid #dee2e6;
+}
+.details-table td {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+}
+.spouse-section { background: #f0f0f0; font-weight: bold; }
+.spouse-section td { background: #e9ecef; }
+
+/* --- Таблица модерации (verify.html) --- */
+.certificates-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1.5rem;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.certificates-table th {
+    background: #f8f9fa;
+    padding: 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #2c3e50;
+}
+.certificates-table td {
+    padding: 12px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+.certificates-table tr:hover { background: #f5f5f5; }
+
+/* --- Кнопки действий --- */
+.btn-verify, .btn-reject, .btn-view, .btn-archive, .btn-edit {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    margin-right: 5px;
+    text-decoration: none;
+    display: inline-block;
+}
+.btn-verify  { background: #28a745; color: white; }
+.btn-reject  { background: #dc3545; color: white; }
+.btn-view    { background: #6c757d; color: white; }
+.btn-archive { background: #ffc107; color: #212529; }
+.btn-edit    { background: #007bff; color: white; }
+.btn-verify:hover, .btn-reject:hover, .btn-view:hover { opacity: 0.9; }
+.btn-verify:disabled, .btn-reject:disabled, .btn-archive:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.actions {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+/* --- Общие состояния --- */
+.loading, .no-data {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+}
+.error-block {
+    color: #dc3545;
+    text-align: center;
+    padding: 2rem;
+}
+
+/* --- Уведомление --- */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem;
+    border-radius: 4px;
+    color: white;
+    z-index: 1000;
+    display: none;
+}
+.notification.success { background: #28a745; }
+.notification.error   { background: #dc3545; }
+
+/* --- Форма добавления --- */
+.form-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+.form-group { margin-bottom: 1.5rem; }
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.form-input, .form-select {
+    width: 100%;
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+.form-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+.type-selector { margin-bottom: 2rem; }
+
+.btn-submit {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.btn-submit:hover { background: #218838; }
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 0.8rem 2rem;
+    font-size: 1.1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-right: 1rem;
+}
+.btn-secondary:hover { background: #5a6268; }
+
+.message {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    border-radius: 4px;
+}
+.message.success { background: #d4edda; color: #155724; }
+.message.error   { background: #f8d7da; color: #721c24; }
+</style>
+
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
     <script type="importmap">
         {
             "imports": {
@@ -53,7 +272,7 @@
             <nav class="nav-menu">
                 <ul>
                     <li><a href="../index.html">Главная админки</a></li>
-                    <li><a href="index.html" class="active">Свидетельства</a></li>
+                    <li><a href="#/" class="active">Свидетельства</a></li>
                     <li><a href="../documents/">Документы</a></li>
                     <li><a href="../addresses/">Адреса</a></li>
                     <li><a href="../registry/">Регистры</a></li>
@@ -71,35 +290,156 @@
 
     <main class="main-content">
         <div class="container">
-            <h1 class="page-title">Свидетельства</h1>
-            <p class="page-description">Управление всеми типами свидетельств</p>
 
-            <div class="admin-cards">
-                <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-list"></i></div>
-                    <h3>Все свидетельства</h3>
-                    <p>Просмотр, фильтрация и редактирование всех записей.</p>
-                    <a href="list.html" class="btn-primary">Перейти</a>
+            <!-- === ХАБ === -->
+            <section id="page-index" class="page">
+                <h1 class="page-title">Свидетельства</h1>
+                <p class="page-description">Управление всеми типами свидетельств</p>
+
+                <div class="admin-cards">
+                    <div class="admin-card">
+                        <div class="card-icon"><i class="fas fa-list"></i></div>
+                        <h3>Все свидетельства</h3>
+                        <p>Просмотр, фильтрация и редактирование всех записей.</p>
+                        <a href="#/list" class="btn-primary">Перейти</a>
+                    </div>
+                    <div class="admin-card">
+                        <div class="card-icon"><i class="fas fa-check-circle"></i></div>
+                        <h3>На проверке</h3>
+                        <p>Записи со статусом "oncheck" – требуется модерация.</p>
+                        <a href="#/verify" class="btn-primary">Перейти</a>
+                    </div>
+                    <div class="admin-card">
+                        <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
+                        <h3>Добавить свидетельство</h3>
+                        <p>Создание новой записи.</p>
+                        <a href="#/add" class="btn-primary">Перейти</a>
+                    </div>
+                    <div class="admin-card">
+                        <div class="card-icon"><i class="fas fa-book"></i></div>
+                        <h3>Актовые книги</h3>
+                        <p>Просмотр актовых записей по типам свидетельств.</p>
+                        <a href="#/books" class="btn-primary">Перейти</a>
+                    </div>
                 </div>
-                <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-check-circle"></i></div>
-                    <h3>На проверке</h3>
-                    <p>Записи со статусом "oncheck" – требуется модерация.</p>
-                    <a href="verify.html" class="btn-primary">Перейти</a>
+            </section>
+
+            <!-- === СПИСОК === -->
+            <section id="page-list" class="page">
+                <h1 class="page-title">Все свидетельства</h1>
+                <p class="page-description">Просмотр, фильтрация и управление всеми записями.</p>
+
+                <div class="filters">
+                    <select id="listTypeSelect"></select>
+                    <select id="listStatusFilter">
+                        <option value="">Все статусы</option>
+                        <option value="verified">Подтверждено</option>
+                        <option value="oncheck">На проверке</option>
+                        <option value="rejected">Отклонено</option>
+                        <option value="archived">Архивные</option>
+                    </select>
+                    <input type="text" id="listSearchInput" placeholder="Поиск по серии/номеру или ФИО">
+                    <button id="listApplyBtn" class="btn-primary">Применить</button>
                 </div>
-                <div class="admin-card">
-                    <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
-                    <h3>Добавить свидетельство</h3>
-                    <p>Создание новой записи.</p>
-                    <a href="add.html" class="btn-primary">Перейти</a>
+
+                <div id="listLoading" class="loading">Загрузка...</div>
+                <div id="listTableContainer"></div>
+
+                <a href="#/" class="btn-secondary" style="margin-top:1.5rem;display:inline-block;">← К разделам</a>
+            </section>
+
+            <!-- === ДОБАВЛЕНИЕ === -->
+            <section id="page-add" class="page">
+                <h1 class="page-title">Добавить новое свидетельство</h1>
+                <p class="page-description">Выберите тип и заполните все необходимые поля.</p>
+
+                <div class="form-container">
+                    <div class="type-selector">
+                        <label for="addTypeSelect">Тип свидетельства:</label>
+                        <select id="addTypeSelect" class="form-select">
+                            <option value="">-- Выберите тип --</option>
+                        </select>
+                    </div>
+
+                    <form id="addForm" style="display: none;">
+                        <div id="addFormFields"></div>
+                        <div style="margin-top: 2rem;">
+                            <a href="#/" class="btn-secondary">Отмена</a>
+                            <button type="submit" class="btn-submit">Сохранить свидетельство</button>
+                        </div>
+                    </form>
+
+                    <div id="addMessage" class="message" style="display: none;"></div>
                 </div>
-				<div class="admin-card">
-    <div class="card-icon"><i class="fas fa-book"></i></div>
-    <h3>Актовые книги</h3>
-    <p>Просмотр актовых записей по типам свидетельств.</p>
-    <a href="registry-books.html" class="btn-primary">Перейти</a>
-</div>
-            </div>
+            </section>
+
+            <!-- === ПРОВЕРКА === -->
+            <section id="page-verify" class="page">
+                <h1 class="page-title">Свидетельства на проверке</h1>
+                <p class="page-description">Записи со статусом "oncheck". Подтвердите или отклоните каждую.</p>
+
+                <div id="verifyNotification" class="notification"></div>
+
+                <table class="certificates-table">
+                    <thead>
+                        <tr>
+                            <th>Тип</th>
+                            <th>ID</th>
+                            <th>Владелец (личный код)</th>
+                            <th>Серия/номер</th>
+                            <th>Дата создания</th>
+                            <th>Действия</th>
+                            <th>Просмотр</th>
+                        </tr>
+                    </thead>
+                    <tbody id="verifyTableBody">
+                        <tr><td colspan="7" class="loading">Загрузка...</td></tr>
+                    </tbody>
+                </table>
+
+                <a href="#/" class="btn-secondary" style="margin-top:1.5rem;display:inline-block;">← К разделам</a>
+            </section>
+
+            <!-- === ПРОСМОТР СВИДЕТЕЛЬСТВА === -->
+            <section id="page-view" class="page">
+                <h1 id="viewTitle" class="page-title">Просмотр свидетельства</h1>
+                <div id="viewLoading" class="loading">Загрузка...</div>
+                <div id="viewError" class="error-block" style="display: none;"></div>
+                <div id="viewDisplay" style="display: none;"></div>
+                <a href="#/list" class="btn-secondary" style="margin-top: 20px; display: inline-block;">← Назад к списку</a>
+            </section>
+
+            <!-- === АКТОВЫЕ КНИГИ (СПИСОК) === -->
+            <section id="page-books" class="page">
+                <h1 class="page-title">Актовые книги</h1>
+                <p class="page-description">Выберите тип актовой книги для просмотра записей.</p>
+
+                <div id="booksLoading" class="loading">Загрузка...</div>
+                <div id="booksGrid" class="admin-cards"></div>
+
+                <a href="#/" class="btn-secondary" style="margin-top:1.5rem;display:inline-block;">← К разделам</a>
+            </section>
+
+            <!-- === ЗАПИСИ КНИГИ === -->
+            <section id="page-book" class="page">
+                <h1 id="bookTitle" class="page-title">Записи актовой книги</h1>
+                <p id="bookDescription" class="page-description"></p>
+
+                <div id="bookLoading" class="loading">Загрузка...</div>
+                <div id="bookRecordsContainer"></div>
+
+                <a href="#/books" class="btn-secondary" style="margin-top:1.5rem;display:inline-block;">← К списку книг</a>
+            </section>
+
+            <!-- === ПРОСМОТР ЗАПИСИ КНИГИ === -->
+            <section id="page-record" class="page">
+                <h1 id="recordTitle" class="page-title">Запись актовой книги</h1>
+                <div id="recordLoading" class="loading">Загрузка...</div>
+                <div id="recordError" class="error-block" style="display: none;"></div>
+                <div id="recordDisplay" style="display: none;"></div>
+                <a href="#" id="recordBackLink" class="btn-secondary" style="margin-top:1.5rem;display:inline-block;">← Назад к книге</a>
+            </section>
+
         </div>
     </main>
 
@@ -110,16 +450,863 @@
 
     <script src="../../js/mob-menu.js"></script>
     <script type="module">
-        import { supabase } from '../../js/supabase-config.js';
-        import { requireAdmin } from './js/certificates-common.js';
+    // =============================================================
+    //  СВИДЕТЕЛЬСТВА — единый модуль (SPA-роутинг)
+    // =============================================================
+    import { supabase } from '../../js/supabase-config.js';
 
-        (async () => {
-            if (!await requireAdmin()) return;
-            document.getElementById('logoutBtn').addEventListener('click', async () => {
-                await supabase.auth.signOut();
-                window.location.href = '../../login.html';
+    /* ------------------- КОНФИГУРАЦИЯ ------------------- */
+
+    const CERTIFICATE_TABLES = {
+        adoption:    { table: 'adoption',    title: 'Свидетельство об усыновлении',            hasTwoCodes: false },
+        birth:       { table: 'birth',       title: 'Свидетельство о рождении',                 hasTwoCodes: false },
+        death:       { table: 'death',       title: 'Свидетельство о смерти',                   hasTwoCodes: false },
+        divorce:     { table: 'divorce',     title: 'Свидетельство о расторжении брака',        hasTwoCodes: true  },
+        fatherhood:  { table: 'fatherhood',  title: 'Свидетельство об установлении отцовства',  hasTwoCodes: false },
+        marriage:    { table: 'marriage',    title: 'Свидетельство о браке',                    hasTwoCodes: true  },
+        name_change: { table: 'name_change', title: 'Свидетельство о перемене имени',           hasTwoCodes: false }
+    };
+
+    const CERTIFICATE_FIELDS = {
+        adoption: [
+            { name: 'child_surname', label: 'Фамилия ребёнка', type: 'text', required: true },
+            { name: 'child_name', label: 'Имя ребёнка', type: 'text', required: true },
+            { name: 'child_patronymic', label: 'Отчество ребёнка', type: 'text' },
+            { name: 'child_birth_date', label: 'Дата рождения ребёнка', type: 'date' },
+            { name: 'child_personal_code', label: 'Личный код ребёнка', type: 'text' },
+            { name: 'child_birth_place', label: 'Место рождения ребёнка', type: 'text' },
+            { name: 'guardian1_full_name', label: 'ФИО отца (полностью)', type: 'text' },
+            { name: 'guardian1_citizenship', label: 'Гражданство отца', type: 'text' },
+            { name: 'guardian1_nationality', label: 'Национальность отца', type: 'text' },
+            { name: 'guardian1_personal_code', label: 'Личный код отца', type: 'text' },
+            { name: 'guardian2_full_name', label: 'ФИО матери (полностью)', type: 'text' },
+            { name: 'guardian2_citizenship', label: 'Гражданство матери', type: 'text' },
+            { name: 'guardian2_nationality', label: 'Национальность матери', type: 'text' },
+            { name: 'guardian2_personal_code', label: 'Личный код матери', type: 'text' },
+            { name: 'new_full_name', label: 'Новое ФИО после усыновления', type: 'text' },
+            { name: 'new_birth_date', label: 'Новая дата рождения', type: 'date' },
+            { name: 'new_birth_place', label: 'Новое место рождения', type: 'text' },
+            { name: 'registry_act_date', label: 'Дата актовой записи', type: 'date' },
+            { name: 'registry_act_number', label: 'Номер актовой записи', type: 'text' },
+            { name: 'registry_place', label: 'Место регистрации', type: 'text' },
+            { name: 'issue_place', label: 'Место выдачи свидетельства', type: 'text' },
+            { name: 'registry_official', label: 'Руководитель органа ЗАГС', type: 'text' },
+            { name: 'certificate_series_number', label: 'Серия и номер свидетельства', type: 'text', required: true },
+            { name: 'issue_date', label: 'Дата выдачи', type: 'date' },
+            { name: 'owner_full_name', label: 'ФИО владельца свидетельства', type: 'text' },
+            { name: 'personal_code', label: 'Личный код владельца', type: 'text', required: true }
+        ],
+        birth: [
+            { name: 'child_full_name', label: 'ФИО ребёнка (полностью)', type: 'text', required: true },
+            { name: 'child_birth_date', label: 'Дата рождения', type: 'date', required: true },
+            { name: 'child_birth_place', label: 'Место рождения', type: 'text' },
+            { name: 'child_personal_code', label: 'Личный код ребёнка', type: 'text', required: true },
+            { name: 'father_full_name', label: 'ФИО отца', type: 'text' },
+            { name: 'father_citizenship', label: 'Гражданство отца', type: 'text' },
+            { name: 'father_nationality', label: 'Национальность отца', type: 'text' },
+            { name: 'father_personal_code', label: 'Личный код отца', type: 'text' },
+            { name: 'mother_full_name', label: 'ФИО матери', type: 'text' },
+            { name: 'mother_citizenship', label: 'Гражданство матери', type: 'text' },
+            { name: 'mother_nationality', label: 'Национальность матери', type: 'text' },
+            { name: 'mother_personal_code', label: 'Личный код матери', type: 'text' },
+            { name: 'registry_act_number', label: 'Номер актовой записи', type: 'text' },
+            { name: 'registry_act_date', label: 'Дата актовой записи', type: 'date' },
+            { name: 'registry_place', label: 'Место регистрации', type: 'text' },
+            { name: 'registry_official', label: 'Руководитель органа ЗАГС', type: 'text' },
+            { name: 'certificate_series_number', label: 'Серия и номер свидетельства', type: 'text', required: true },
+            { name: 'issue_date', label: 'Дата выдачи', type: 'date' },
+            { name: 'issue_place', label: 'Место выдачи свидетельства', type: 'text' }
+        ],
+        death: [
+            { name: 'surname', label: 'Фамилия умершего', type: 'text', required: true },
+            { name: 'first_patronymic', label: 'Имя отчество', type: 'text', required: true },
+            { name: 'birth_date', label: 'Дата рождения', type: 'date', required: true },
+            { name: 'birth_place', label: 'Место рождения', type: 'text' },
+            { name: 'citizenship', label: 'Гражданство', type: 'text' },
+            { name: 'nationality', label: 'Национальность', type: 'text' },
+            { name: 'personal_code', label: 'Личный код', type: 'text', required: true },
+            { name: 'death_date', label: 'Дата смерти', type: 'date', required: true },
+            { name: 'death_time', label: 'Время смерти', type: 'time' },
+            { name: 'death_place', label: 'Место смерти', type: 'text' },
+            { name: 'registry_act_date', label: 'Дата актовой записи', type: 'date' },
+            { name: 'registry_act_number', label: 'Номер актовой записи', type: 'text' },
+            { name: 'registry_place', label: 'Место регистрации', type: 'text' },
+            { name: 'issue_place', label: 'Место выдачи свидетельства', type: 'text' },
+            { name: 'registry_official', label: 'Руководитель органа ЗАГС', type: 'text' },
+            { name: 'certificate_series_number', label: 'Серия и номер свидетельства', type: 'text', required: true },
+            { name: 'issue_date', label: 'Дата выдачи', type: 'date' },
+            { name: 'owner_full_name', label: 'ФИО владельца свидетельства', type: 'text' }
+        ],
+        divorce: [
+            { name: 'husband_full_name', label: 'ФИО мужа', type: 'text', required: true },
+            { name: 'husband_birth_date', label: 'Дата рождения мужа', type: 'date' },
+            { name: 'husband_birth_place', label: 'Место рождения мужа', type: 'text' },
+            { name: 'husband_citizenship', label: 'Гражданство мужа', type: 'text' },
+            { name: 'husband_nationality', label: 'Национальность мужа', type: 'text' },
+            { name: 'husband_personal_code', label: 'Личный код мужа', type: 'text' },
+            { name: 'wife_full_name', label: 'ФИО жены', type: 'text', required: true },
+            { name: 'wife_birth_date', label: 'Дата рождения жены', type: 'date' },
+            { name: 'wife_birth_place', label: 'Место рождения жены', type: 'text' },
+            { name: 'wife_citizenship', label: 'Гражданство жены', type: 'text' },
+            { name: 'wife_nationality', label: 'Национальность жены', type: 'text' },
+            { name: 'wife_personal_code', label: 'Личный код жены', type: 'text' },
+            { name: 'divorce_date', label: 'Дата расторжения брака', type: 'date' },
+            { name: 'divorce_basis', label: 'Основание расторжения', type: 'text' },
+            { name: 'basis_date', label: 'Дата документа-основания', type: 'date' },
+            { name: 'registry_act_number', label: 'Номер актовой записи', type: 'text' },
+            { name: 'registry_act_date', label: 'Дата актовой записи', type: 'date' },
+            { name: 'assigned_surname_owner', label: 'Присвоенная фамилия владельцу', type: 'text' },
+            { name: 'registry_place', label: 'Место регистрации', type: 'text' },
+            { name: 'issue_place', label: 'Место выдачи свидетельства', type: 'text' },
+            { name: 'registry_official', label: 'Руководитель органа ЗАГС', type: 'text' },
+            { name: 'certificate_series_number', label: 'Серия и номер свидетельства', type: 'text', required: true },
+            { name: 'issue_date', label: 'Дата выдачи', type: 'date' },
+            { name: 'owner_full_name', label: 'ФИО владельца', type: 'text' },
+            { name: 'personal_code', label: 'Личный код владельца', type: 'text', required: true }
+        ],
+        fatherhood: [
+            { name: 'father_full_name', label: 'ФИО отца', type: 'text', required: true },
+            { name: 'father_birth_date', label: 'Дата рождения отца', type: 'date' },
+            { name: 'father_birth_place', label: 'Место рождения отца', type: 'text' },
+            { name: 'father_citizenship', label: 'Гражданство отца', type: 'text' },
+            { name: 'father_nationality', label: 'Национальность отца', type: 'text' },
+            { name: 'father_personal_code', label: 'Личный код отца', type: 'text' },
+            { name: 'child_full_name', label: 'ФИО ребёнка (до установления)', type: 'text', required: true },
+            { name: 'child_birth_date', label: 'Дата рождения ребёнка', type: 'date' },
+            { name: 'child_birth_place', label: 'Место рождения ребёнка', type: 'text' },
+            { name: 'child_personal_code', label: 'Личный код ребёнка', type: 'text' },
+            { name: 'mother_full_name', label: 'ФИО матери', type: 'text' },
+            { name: 'mother_birth_date', label: 'Дата рождения матери', type: 'date' },
+            { name: 'mother_birth_place', label: 'Место рождения матери', type: 'text' },
+            { name: 'mother_citizenship', label: 'Гражданство матери', type: 'text' },
+            { name: 'mother_nationality', label: 'Национальность матери', type: 'text' },
+            { name: 'mother_personal_code', label: 'Личный код матери', type: 'text' },
+            { name: 'registry_act_date', label: 'Дата актовой записи', type: 'date' },
+            { name: 'registry_act_number', label: 'Номер актовой записи', type: 'text' },
+            { name: 'new_child_full_name', label: 'Новое ФИО ребёнка после установления', type: 'text' },
+            { name: 'registry_place', label: 'Место регистрации', type: 'text' },
+            { name: 'issue_place', label: 'Место выдачи свидетельства', type: 'text' },
+            { name: 'registry_official', label: 'Руководитель органа ЗАГС', type: 'text' },
+            { name: 'certificate_series_number', label: 'Серия и номер свидетельства', type: 'text', required: true },
+            { name: 'issue_date', label: 'Дата выдачи', type: 'date' },
+            { name: 'owner_full_name', label: 'ФИО владельца', type: 'text' },
+            { name: 'personal_code', label: 'Личный код владельца', type: 'text', required: true }
+        ],
+        marriage: [
+            { name: 'husband_full_name', label: 'ФИО мужа', type: 'text', required: true },
+            { name: 'husband_birth_date', label: 'Дата рождения мужа', type: 'date' },
+            { name: 'husband_birth_place', label: 'Место рождения мужа', type: 'text' },
+            { name: 'husband_citizenship', label: 'Гражданство мужа', type: 'text' },
+            { name: 'husband_nationality', label: 'Национальность мужа', type: 'text' },
+            { name: 'husband_personal_code', label: 'Личный код мужа', type: 'text' },
+            { name: 'wife_full_name', label: 'ФИО жены', type: 'text', required: true },
+            { name: 'wife_birth_date', label: 'Дата рождения жены', type: 'date' },
+            { name: 'wife_birth_place', label: 'Место рождения жены', type: 'text' },
+            { name: 'wife_citizenship', label: 'Гражданство жены', type: 'text' },
+            { name: 'wife_nationality', label: 'Национальность жены', type: 'text' },
+            { name: 'wife_personal_code', label: 'Личный код жены', type: 'text' },
+            { name: 'marriage_date', label: 'Дата заключения брака', type: 'date' },
+            { name: 'registry_act_number', label: 'Номер актовой записи', type: 'text' },
+            { name: 'registry_act_date', label: 'Дата актовой записи', type: 'date' },
+            { name: 'assigned_surname_husband', label: 'Присвоенная фамилия мужу', type: 'text' },
+            { name: 'assigned_surname_wife', label: 'Присвоенная фамилия жене', type: 'text' },
+            { name: 'registry_place', label: 'Место регистрации', type: 'text' },
+            { name: 'registry_official', label: 'Руководитель органа ЗАГС', type: 'text' },
+            { name: 'certificate_series_number', label: 'Серия и номер свидетельства', type: 'text', required: true },
+            { name: 'issue_date', label: 'Дата выдачи', type: 'date' },
+            { name: 'issue_place', label: 'Место выдачи свидетельства', type: 'text' }
+        ],
+        name_change: [
+            { name: 'old_full_name', label: 'ФИО до перемены', type: 'text', required: true },
+            { name: 'birth_date', label: 'Дата рождения', type: 'date', required: true },
+            { name: 'birth_place', label: 'Место рождения', type: 'text' },
+            { name: 'citizenship', label: 'Гражданство', type: 'text' },
+            { name: 'nationality', label: 'Национальность', type: 'text' },
+            { name: 'personal_code', label: 'Личный код', type: 'text', required: true },
+            { name: 'new_full_name', label: 'Новое ФИО', type: 'text', required: true },
+            { name: 'registry_act_number', label: 'Номер актовой записи', type: 'text' },
+            { name: 'registry_act_date', label: 'Дата актовой записи', type: 'date' },
+            { name: 'registry_place', label: 'Место регистрации', type: 'text' },
+            { name: 'issue_place', label: 'Место выдачи свидетельства', type: 'text' },
+            { name: 'registry_official', label: 'Руководитель органа ЗАГС', type: 'text' },
+            { name: 'certificate_series_number', label: 'Серия и номер свидетельства', type: 'text', required: true },
+            { name: 'issue_date', label: 'Дата выдачи', type: 'date' }
+        ]
+    };
+
+    /* ------------------- ХЕЛПЕРЫ ------------------- */
+
+    function getTypeInfo(type) { return CERTIFICATE_TABLES[type] || null; }
+
+    function escapeHTML(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '—';
+        return new Date(dateStr).toLocaleDateString('ru-RU');
+    }
+
+    function getStatusLabel(status) {
+        const labels = {
+            verified: '✅ Подтверждено',
+            oncheck:  '⏳ На проверке',
+            rejected: '❌ Отклонено',
+            archived: '📦 Архивный'
+        };
+        return labels[status] || status;
+    }
+
+    async function fetchCertificates(type, filters = {}) {
+        const typeInfo = getTypeInfo(type);
+        if (!typeInfo) throw new Error('Неизвестный тип свидетельства');
+
+        let query = supabase.schema('documents_certificates').from(typeInfo.table).select('*');
+
+        if (filters.status) query = query.eq('status', filters.status);
+        if (filters.personal_code) {
+            if (typeInfo.hasTwoCodes) {
+                query = query.or(`husband_personal_code.eq.${filters.personal_code},wife_personal_code.eq.${filters.personal_code}`);
+            } else {
+                query = query.eq('personal_code', filters.personal_code);
+            }
+        }
+        if (filters.search) {
+            const term = `%${filters.search}%`;
+            if (typeInfo.hasTwoCodes) {
+                query = query.or(`certificate_series_number.ilike.${term},husband_full_name.ilike.${term},wife_full_name.ilike.${term}`);
+            } else {
+                query = query.or(`certificate_series_number.ilike.${term},owner_full_name.ilike.${term}`);
+            }
+        }
+        query = query.order('created_at', { ascending: false });
+
+        const { data, error } = await query;
+        if (error) throw error;
+        return data || [];
+    }
+
+    async function fetchCertificateById(type, id) {
+        const typeInfo = getTypeInfo(type);
+        if (!typeInfo) throw new Error('Неизвестный тип свидетельства');
+        const { data, error } = await supabase
+            .schema('documents_certificates').from(typeInfo.table)
+            .select('*').eq('id', id).single();
+        if (error) throw error;
+        return data;
+    }
+
+    async function updateCertificateStatus(type, id, status) {
+        const typeInfo = getTypeInfo(type);
+        if (!typeInfo) throw new Error('Неизвестный тип свидетельства');
+        const { error } = await supabase
+            .schema('documents_certificates').from(typeInfo.table)
+            .update({ status, updated_at: new Date().toISOString() })
+            .eq('id', id);
+        if (error) throw error;
+    }
+
+    async function createCertificate(type, data) {
+        const typeInfo = getTypeInfo(type);
+        if (!typeInfo) throw new Error('Неизвестный тип свидетельства');
+        const record = {
+            ...data,
+            status: 'oncheck',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+        };
+        const { data: inserted, error } = await supabase
+            .schema('documents_certificates').from(typeInfo.table)
+            .insert([record]).select();
+        if (error) throw error;
+        return inserted[0];
+    }
+
+    async function requireAdmin() {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            window.location.href = '../../login.html';
+            return false;
+        }
+        const { data: profile, error } = await supabase
+            .from('users').select('role, email').eq('id', session.user.id).single();
+        if (error || profile?.role !== 'admin') {
+            alert('Доступ запрещён');
+            window.location.href = '../../personal-profile/index.html';
+            return false;
+        }
+        const emailSpan = document.getElementById('adminEmail');
+        if (emailSpan) emailSpan.textContent = profile.email || session.user.email;
+        return true;
+    }
+
+    /* ------------------- РОУТЕР ------------------- */
+
+    function showPage(id) {
+        document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'block';
+        window.scrollTo(0, 0);
+    }
+
+    function parseHash() {
+        const hash = location.hash.replace(/^#/, '') || '/';
+        const [pathRaw, queryRaw] = hash.split('?');
+        const route = (pathRaw || '/').trim();
+        const params = new URLSearchParams(queryRaw || '');
+        return { route, params };
+    }
+
+    async function router() {
+        const { route, params } = parseHash();
+        switch (route) {
+            case '/':
+            case '':
+                showPage('page-index');
+                break;
+            case '/list':
+                showPage('page-list');
+                await initList();
+                break;
+            case '/add':
+                showPage('page-add');
+                initAdd();
+                break;
+            case '/verify':
+                showPage('page-verify');
+                await initVerify();
+                break;
+            case '/view':
+                showPage('page-view');
+                await initView(params);
+                break;
+            case '/books':
+                showPage('page-books');
+                await initBooks();
+                break;
+            case '/book':
+                showPage('page-book');
+                await initBook(params);
+                break;
+            case '/record':
+                showPage('page-record');
+                await initRecord(params);
+                break;
+            default:
+                showPage('page-index');
+        }
+    }
+
+    /* ============================================================
+       ИНИЦИАЛИЗАТОРЫ СТРАНИЦ
+       ============================================================ */
+
+    /* --- 1. СПИСОК ВСЕХ СВИДЕТЕЛЬСТВ --- */
+    async function initList() {
+        const typeSelect = document.getElementById('listTypeSelect');
+        const statusFilter = document.getElementById('listStatusFilter');
+        const searchInput = document.getElementById('listSearchInput');
+        const applyBtn = document.getElementById('listApplyBtn');
+        const loading = document.getElementById('listLoading');
+        const tableContainer = document.getElementById('listTableContainer');
+
+        // Заполняем селект типов (только один раз)
+        if (typeSelect.options.length === 0) {
+            typeSelect.innerHTML = Object.entries(CERTIFICATE_TABLES).map(([key, info]) =>
+                `<option value="${key}">${escapeHTML(info.title)}</option>`
+            ).join('');
+        }
+
+        async function loadCertificates() {
+            const type = typeSelect.value;
+            if (!type) return;
+            loading.style.display = 'block';
+            tableContainer.innerHTML = '';
+            try {
+                const filters = {
+                    status: statusFilter.value || undefined,
+                    search: searchInput.value || undefined
+                };
+                const data = await fetchCertificates(type, filters);
+                if (data.length === 0) {
+                    tableContainer.innerHTML = '<p class="no-data">Нет записей</p>';
+                    return;
+                }
+                let html = '<table class="admin-table"><thead><tr><th>ID</th><th>Владелец (личный код)</th><th>Серия/номер</th><th>Статус</th><th>Дата создания</th><th>Действия</th></tr></thead><tbody>';
+                const typeInfo = getTypeInfo(type);
+                data.forEach(rec => {
+                    let owner = '';
+                    if (typeInfo?.hasTwoCodes) {
+                        const codes = [rec.husband_personal_code, rec.wife_personal_code].filter(Boolean);
+                        owner = codes.join(', ') || '—';
+                    } else {
+                        owner = rec.personal_code || '—';
+                    }
+                    const number = rec.certificate_series_number || '—';
+                    const statusLabel = getStatusLabel(rec.status);
+                    const created = formatDate(rec.created_at);
+                    html += `<tr>
+                        <td>${escapeHTML(rec.id)}</td>
+                        <td>${escapeHTML(owner)}</td>
+                        <td>${escapeHTML(number)}</td>
+                        <td><span class="status-badge status-${rec.status}">${escapeHTML(statusLabel)}</span></td>
+                        <td>${escapeHTML(created)}</td>
+                        <td><a href="#/view?type=${type}&id=${rec.id}" class="btn-small">Просмотр</a></td>
+                    </tr>`;
+                });
+                html += '</tbody></table>';
+                tableContainer.innerHTML = html;
+            } catch (err) {
+                alert('Ошибка загрузки: ' + err.message);
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        applyBtn.onclick = loadCertificates;
+        typeSelect.onchange = loadCertificates;
+        await loadCertificates();
+    }
+
+    /* --- 2. ДОБАВЛЕНИЕ --- */
+    function initAdd() {
+        const typeSelect = document.getElementById('addTypeSelect');
+        const form = document.getElementById('addForm');
+        const formFields = document.getElementById('addFormFields');
+        const messageDiv = document.getElementById('addMessage');
+
+        typeSelect.innerHTML = '<option value="">-- Выберите тип --</option>' +
+            Object.entries(CERTIFICATE_TABLES).map(([key, info]) =>
+                `<option value="${key}">${escapeHTML(info.title)}</option>`
+            ).join('');
+
+        form.style.display = 'none';
+        messageDiv.style.display = 'none';
+        formFields.innerHTML = '';
+
+        typeSelect.onchange = () => {
+            const type = typeSelect.value;
+            if (!type) { form.style.display = 'none'; return; }
+            const fields = CERTIFICATE_FIELDS[type];
+            if (!fields) { alert('Для этого типа пока не описаны поля'); form.style.display = 'none'; return; }
+            let html = '';
+            fields.forEach(field => {
+                const required = field.required ? 'required' : '';
+                if (field.type === 'select') {
+                    html += `
+                        <div class="form-group">
+                            <label for="field_${field.name}">${escapeHTML(field.label)} ${field.required ? '*' : ''}</label>
+                            <select id="field_${field.name}" name="${field.name}" class="form-input" ${required}>
+                                ${field.options ? field.options.map(opt => `<option value="${opt}">${opt}</option>`).join('') : ''}
+                            </select>
+                        </div>`;
+                } else {
+                    html += `
+                        <div class="form-group">
+                            <label for="field_${field.name}">${escapeHTML(field.label)} ${field.required ? '*' : ''}</label>
+                            <input type="${field.type}" id="field_${field.name}" name="${field.name}" class="form-input" value="" ${required}>
+                        </div>`;
+                }
             });
-        })();
+            formFields.innerHTML = html;
+            form.style.display = 'block';
+            messageDiv.style.display = 'none';
+        };
+
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const type = typeSelect.value;
+            if (!type) { alert('Выберите тип свидетельства'); return; }
+            const fields = CERTIFICATE_FIELDS[type];
+            if (!fields) return;
+
+            const formData = {};
+            fields.forEach(field => {
+                const input = document.getElementById(`field_${field.name}`);
+                if (input) {
+                    let value = input.value.trim();
+                    if ((field.type === 'date' || field.type === 'time') && value === '') value = null;
+                    formData[field.name] = value;
+                }
+            });
+
+            const missing = fields.filter(f => f.required && !formData[f.name]);
+            if (missing.length > 0) {
+                alert(`Заполните обязательные поля: ${missing.map(f => f.label).join(', ')}`);
+                return;
+            }
+
+            try {
+                const result = await createCertificate(type, formData);
+                messageDiv.className = 'message success';
+                messageDiv.textContent = `Свидетельство успешно создано! ID: ${result.id}`;
+                messageDiv.style.display = 'block';
+                form.reset();
+            } catch (err) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Ошибка: ' + err.message;
+                messageDiv.style.display = 'block';
+            }
+        };
+    }
+
+    /* --- 3. ПРОВЕРКА (ONCHECK) --- */
+    async function initVerify() {
+        const tbody = document.getElementById('verifyTableBody');
+        const notif = document.getElementById('verifyNotification');
+        let currentData = [];
+
+        const showNotification = (msg, type) => {
+            notif.textContent = msg;
+            notif.className = `notification ${type}`;
+            notif.style.display = 'block';
+            setTimeout(() => notif.style.display = 'none', 3000);
+        };
+
+        const renderTable = (records) => {
+            if (!records.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="no-data">Нет записей на проверке</td></tr>';
+                return;
+            }
+            tbody.innerHTML = records.map(rec => {
+                const typeInfo = getTypeInfo(rec.type_key);
+                let owner = '';
+                if (typeInfo?.hasTwoCodes) {
+                    const codes = [rec.husband_personal_code, rec.wife_personal_code].filter(Boolean);
+                    owner = codes.join(', ') || '—';
+                } else {
+                    owner = rec.personal_code || '—';
+                }
+                const number = rec.certificate_series_number || '—';
+                const created = formatDate(rec.created_at);
+                return `
+                    <tr>
+                        <td>${escapeHTML(rec.certificate_type)}</td>
+                        <td>${escapeHTML(rec.id)}</td>
+                        <td>${escapeHTML(owner)}</td>
+                        <td>${escapeHTML(number)}</td>
+                        <td>${escapeHTML(created)}</td>
+                        <td>
+                            <button class="btn-verify" data-type="${rec.type_key}" data-id="${rec.id}" data-action="verified">✅ Подтвердить</button>
+                            <button class="btn-reject" data-type="${rec.type_key}" data-id="${rec.id}" data-action="rejected">❌ Отклонить</button>
+                        </td>
+                        <td>
+                            <a href="#/view?type=${rec.type_key}&id=${rec.id}" class="btn-view">👁️ Просмотр</a>
+                        </td>
+                    </tr>`;
+            }).join('');
+
+            tbody.querySelectorAll('.btn-verify, .btn-reject').forEach(btn => {
+                btn.onclick = async () => {
+                    const type = btn.dataset.type;
+                    const id = btn.dataset.id;
+                    const newStatus = btn.dataset.action;
+                    if (!confirm(`Изменить статус на "${newStatus === 'verified' ? 'Подтверждено' : 'Отклонено'}"?`)) return;
+                    try {
+                        await updateCertificateStatus(type, id, newStatus);
+                        currentData = currentData.filter(r => !(r.type_key === type && r.id === id));
+                        renderTable(currentData);
+                        showNotification('Статус обновлён', 'success');
+                    } catch (err) {
+                        console.error(err);
+                        showNotification('Ошибка обновления статуса', 'error');
+                    }
+                };
+            });
+        };
+
+        tbody.innerHTML = '<tr><td colspan="7" class="loading">Загрузка...</td></tr>';
+        try {
+            const allRecords = [];
+            for (const [type, info] of Object.entries(CERTIFICATE_TABLES)) {
+                const data = await fetchCertificates(type, { status: 'oncheck' });
+                allRecords.push(...data.map(r => ({ ...r, certificate_type: info.title, type_key: type })));
+            }
+            currentData = allRecords;
+            renderTable(allRecords);
+        } catch (err) {
+            console.error(err);
+            tbody.innerHTML = '<tr><td colspan="7" class="error-block">Ошибка загрузки данных</td></tr>';
+        }
+    }
+
+    /* --- 4. ПРОСМОТР СВИДЕТЕЛЬСТВА --- */
+    async function initView(params) {
+        const type = params.get('type');
+        const id = params.get('id');
+        const typeInfo = getTypeInfo(type);
+        const loadingEl = document.getElementById('viewLoading');
+        const errorEl = document.getElementById('viewError');
+        const displayEl = document.getElementById('viewDisplay');
+        const titleEl = document.getElementById('viewTitle');
+
+        // Сброс
+        loadingEl.style.display = 'block';
+        errorEl.style.display = 'none';
+        displayEl.style.display = 'none';
+        displayEl.innerHTML = '';
+
+        if (!type || !id || !typeInfo) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorEl.textContent = 'Неверные параметры';
+            return;
+        }
+        titleEl.textContent = `Просмотр: ${typeInfo.title}`;
+
+        try {
+            const data = await fetchCertificateById(type, id);
+            loadingEl.style.display = 'none';
+            displayEl.style.display = 'block';
+
+            let html = `<p><strong>Статус:</strong> ${getStatusLabel(data.status)}</p>`;
+            html += '<table class="details-table"><tbody>';
+            for (const [key, value] of Object.entries(data)) {
+                let displayValue = value;
+                if (value === null || value === undefined) displayValue = '—';
+                else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) displayValue = formatDate(value);
+                else if (typeof value === 'object') displayValue = JSON.stringify(value);
+                else displayValue = String(value);
+                html += `<tr><th>${escapeHTML(key)}</th><td>${escapeHTML(displayValue)}</td></tr>`;
+            }
+            html += '</tbody></table>';
+            displayEl.innerHTML = html;
+
+            // Кнопки смены статуса
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'actions';
+
+            const statuses = [
+                { status: 'verified', label: 'Подтвердить', class: 'btn-verify', disabled: data.status === 'verified' },
+                { status: 'rejected', label: 'Отклонить', class: 'btn-reject', disabled: data.status === 'rejected' },
+                { status: 'archived', label: 'Архивировать', class: 'btn-archive', disabled: data.status === 'archived' }
+            ];
+            statuses.forEach(s => {
+                const btn = document.createElement('button');
+                btn.textContent = s.label;
+                btn.className = s.class;
+                btn.disabled = s.disabled;
+                btn.onclick = async () => {
+                    try {
+                        await updateCertificateStatus(type, id, s.status);
+                        alert('Статус обновлён');
+                        initView(params);
+                    } catch (err) {
+                        alert('Ошибка: ' + err.message);
+                    }
+                };
+                actionsDiv.appendChild(btn);
+            });
+
+            const backBtn = document.createElement('button');
+            backBtn.textContent = 'Назад';
+            backBtn.className = 'btn-secondary';
+            backBtn.onclick = () => history.back();
+            actionsDiv.appendChild(backBtn);
+
+            displayEl.appendChild(actionsDiv);
+        } catch (err) {
+            loadingEl.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorEl.textContent = err.message;
+        }
+    }
+
+    /* --- 5. СПИСОК АКТОВЫХ КНИГ --- */
+    async function initBooks() {
+        const loading = document.getElementById('booksLoading');
+        const grid = document.getElementById('booksGrid');
+        loading.style.display = 'block';
+        grid.innerHTML = '';
+
+        try {
+            const counts = {};
+            for (const [key, info] of Object.entries(CERTIFICATE_TABLES)) {
+                const { count, error } = await supabase
+                    .schema('documents_certificates')
+                    .from(info.table)
+                    .select('*', { count: 'exact', head: true });
+                if (!error) counts[key] = count;
+            }
+            loading.style.display = 'none';
+            grid.innerHTML = Object.entries(CERTIFICATE_TABLES).map(([key, info]) => {
+                const count = counts[key] !== undefined ? counts[key] : 0;
+                return `
+                    <a href="#/book?type=${key}" class="admin-card" style="text-decoration: none; color: inherit;">
+                        <div class="card-icon"><i class="fas fa-book"></i></div>
+                        <h3>${escapeHTML(info.title)}</h3>
+                        <p>Записей: <strong>${count}</strong></p>
+                    </a>`;
+            }).join('');
+        } catch (err) {
+            loading.style.display = 'none';
+            grid.innerHTML = `<p class="error-block">Ошибка загрузки: ${escapeHTML(err.message)}</p>`;
+        }
+    }
+
+    /* --- 6. ЗАПИСИ КОНКРЕТНОЙ КНИГИ --- */
+    async function initBook(params) {
+        const type = params.get('type');
+        const typeInfo = getTypeInfo(type);
+        const loading = document.getElementById('bookLoading');
+        const container = document.getElementById('bookRecordsContainer');
+        const titleEl = document.getElementById('bookTitle');
+        const descEl = document.getElementById('bookDescription');
+
+        loading.style.display = 'block';
+        container.innerHTML = '';
+
+        if (!type || !typeInfo) {
+            loading.style.display = 'none';
+            container.innerHTML = '<p class="error-block">Неверный тип книги</p>';
+            return;
+        }
+        titleEl.textContent = `Записи книги: ${typeInfo.title}`;
+        descEl.textContent = `Все актовые записи типа «${typeInfo.title}».`;
+
+        try {
+            const { data, error } = await supabase
+                .schema('documents_certificates')
+                .from(typeInfo.table)
+                .select('*')
+                .order('registry_act_date', { ascending: false })
+                .order('created_at', { ascending: false });
+            if (error) throw error;
+            loading.style.display = 'none';
+
+            if (!data || data.length === 0) {
+                container.innerHTML = '<p class="no-data">В этой книге пока нет записей.</p>';
+                return;
+            }
+
+            let html = '<table class="records-table"><thead><tr>';
+            html += '<th>ID</th>';
+            if (typeInfo.hasTwoCodes) {
+                html += '<th>Муж (личный код)</th><th>Жена (личный код)</th>';
+            } else {
+                html += '<th>Владелец (личный код)</th>';
+            }
+            html += '<th>Серия/номер</th><th>Дата актовой записи</th><th>Статус</th><th>Действие</th></tr></thead><tbody>';
+
+            data.forEach(rec => {
+                const statusClass = `badge-${rec.status}`;
+                const statusLabel = rec.status === 'verified' ? 'Подтверждено' :
+                                    rec.status === 'oncheck' ? 'На проверке' :
+                                    rec.status === 'rejected' ? 'Отклонено' : 'Архивный';
+                const actDate = rec.registry_act_date ? formatDate(rec.registry_act_date) : '—';
+                const number = rec.certificate_series_number || '—';
+
+                html += '<tr>';
+                html += `<td>${escapeHTML(rec.id)}</td>`;
+                if (typeInfo.hasTwoCodes) {
+                    html += `<td>${escapeHTML(rec.husband_personal_code || '—')}</td>`;
+                    html += `<td>${escapeHTML(rec.wife_personal_code || '—')}</td>`;
+                } else {
+                    html += `<td>${escapeHTML(rec.personal_code || '—')}</td>`;
+                }
+                html += `<td>${escapeHTML(number)}</td>`;
+                html += `<td>${escapeHTML(actDate)}</td>`;
+                html += `<td><span class="badge-status ${statusClass}">${statusLabel}</span></td>`;
+                html += `<td><a href="#/record?type=${type}&id=${rec.id}" class="btn-small">Просмотр</a></td>`;
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        } catch (err) {
+            loading.style.display = 'none';
+            container.innerHTML = `<p class="error-block">Ошибка: ${escapeHTML(err.message)}</p>`;
+        }
+    }
+
+    /* --- 7. ПРОСМОТР ЗАПИСИ КНИГИ --- */
+    async function initRecord(params) {
+        const type = params.get('type');
+        const id = params.get('id');
+        const typeInfo = getTypeInfo(type);
+        const loading = document.getElementById('recordLoading');
+        const errorEl = document.getElementById('recordError');
+        const display = document.getElementById('recordDisplay');
+        const titleEl = document.getElementById('recordTitle');
+        const backLink = document.getElementById('recordBackLink');
+
+        loading.style.display = 'block';
+        errorEl.style.display = 'none';
+        display.style.display = 'none';
+        display.innerHTML = '';
+
+        if (!type || !id || !typeInfo) {
+            loading.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorEl.textContent = 'Неверные параметры';
+            return;
+        }
+        backLink.href = `#/book?type=${type}`;
+
+        try {
+            const { data, error } = await supabase
+                .schema('documents_certificates')
+                .from(typeInfo.table)
+                .select('*')
+                .eq('id', id)
+                .single();
+            if (error || !data) throw error || new Error('Запись не найдена');
+
+            loading.style.display = 'none';
+            display.style.display = 'block';
+            titleEl.textContent = `Запись № ${data.certificate_series_number || data.id}`;
+
+            let html = '<table class="details-table"><tbody>';
+            if (type === 'marriage' || type === 'divorce') {
+                html += `<tr class="spouse-section"><th colspan="2">Сведения о супругах</th></tr>`;
+            }
+            Object.entries(data).forEach(([key, value]) => {
+                let displayValue = value;
+                if (value === null || value === undefined) displayValue = '—';
+                else if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) displayValue = formatDate(value);
+                else if (typeof value === 'object') displayValue = JSON.stringify(value);
+                else displayValue = String(value);
+
+                if (type === 'marriage' || type === 'divorce') {
+                    if (key.startsWith('husband_')) {
+                        html += `<tr><th>${escapeHTML(key)} (он)</th><td>${escapeHTML(displayValue)}</td></tr>`;
+                    } else if (key.startsWith('wife_')) {
+                        html += `<tr><th>${escapeHTML(key)} (она)</th><td>${escapeHTML(displayValue)}</td></tr>`;
+                    } else {
+                        html += `<tr><th>${escapeHTML(key)}</th><td>${escapeHTML(displayValue)}</td></tr>`;
+                    }
+                } else {
+                    html += `<tr><th>${escapeHTML(key)}</th><td>${escapeHTML(displayValue)}</td></tr>`;
+                }
+            });
+            html += '</tbody></table>';
+            display.innerHTML = html;
+        } catch (err) {
+            loading.style.display = 'none';
+            errorEl.style.display = 'block';
+            errorEl.textContent = err.message;
+        }
+    }
+
+    /* ------------------- СТАРТ ------------------- */
+    async function boot() {
+        if (!await requireAdmin()) return;
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = '../../login.html';
+        });
+
+        window.addEventListener('hashchange', router);
+        await router();
+    }
+
+    document.addEventListener('DOMContentLoaded', boot);
     </script>
 </body>
 </html>

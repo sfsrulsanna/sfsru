@@ -1,0 +1,220 @@
+/* ===== primary-certificate.css – зеленая тема ===== */
+:root {
+  --primary-green: #2e7d32;       /* основной зеленый */
+  --dark-green: #1b5e20;          /* тёмный оттенок */
+  --secondary-gray: #6c757d;
+  --light-green-bg: #f1f8e9;      /* очень светлый фон */
+  --border-green: #c8e6c9;        /* цвет рамки */
+  --field-bg: #dcedc8;            /* фон полосок */
+  --text-dark: #000;
+  --maroon: #7b091a;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; }
+@media (max-width: 700px) { html { font-size: clamp(12px, 3vw, 16px); } }
+
+/* ============================================================
+   1. ОБЁРТКА СТРАНИЦЫ
+   ============================================================ */
+.profile-main {
+  padding: 34px 16px 64px;
+  background: radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%), #f6f7f9;
+  min-height: 100vh;
+}
+.profile-container { max-width: 1120px; margin: 0 auto; }
+
+/* ============================================================
+   2. ПРИВЕТСТВЕННЫЙ БЛОК
+   ============================================================ */
+.greeting-block {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 26px 28px;
+  margin: 0 0 26px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+  border: 1px solid #f1d7d7;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+  overflow: hidden;
+}
+.greeting-block::after {
+  content: "";
+  position: absolute;
+  right: -70px; top: -70px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+  pointer-events: none;
+}
+.greeting-emoji { flex-shrink: 0; font-size: 3rem; line-height: 1; position: relative; z-index: 1; }
+.greeting-content { flex: 1 1 220px; min-width: 0; position: relative; z-index: 1; }
+.greeting-text { margin: 0 0 6px; font-size: 1.9rem; font-weight: 700; line-height: 1.2; color: #1a1a1a; }
+.greeting-subtitle { margin: 0; font-size: 1rem; color: #6b6b6b; line-height: 1.45; }
+.greeting-actions { display: flex; flex-direction: column; gap: 10px; flex-shrink: 0; align-items: stretch; position: relative; z-index: 1; }
+.greeting-action-link {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 10px 18px; border-radius: 10px; background: #ffffff; border: 1px solid #ececec;
+  color: #2a2a2a; text-decoration: none; font-size: 0.92rem; font-weight: 500; white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+.greeting-action-link:hover, .greeting-action-link:focus-visible {
+  border-color: #b30000; background: #fff5f5; color: #b30000; transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12); outline: none;
+}
+
+/* ============================================================
+   3. ЗАГРУЗКА
+   ============================================================ */
+.loading, .no-data { text-align: center; padding: 3rem 1rem; font-size: 1.2rem; color: #666; }
+
+/* ============================================================
+   4. КАРТОЧКА АТТЕСТАТА
+   ============================================================ */
+.certificate-container {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  background: var(--light-green-bg);
+  border: 12px solid var(--border-green);
+  border-radius: 20px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+  overflow: hidden;
+  font-family: 'Times New Roman', Times, serif;
+}
+.certificate-header { background: var(--border-green); padding: 1.5rem 1rem; text-align: center; }
+.certificate-header .title { font-size: 2rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: var(--primary-green); }
+.certificate-header .subtitle { font-size: 1.2rem; font-weight: 700; margin-top: 0.2rem; color: var(--primary-green); }
+
+.certificate-content { padding: 2rem 2rem; }
+
+/* ===== ПОЛЯ ===== */
+.field-block { margin-bottom: 1.2rem; min-width: 0; }
+.field-value {
+  text-align: center; font-size: 1.25rem; font-weight: 500; margin-bottom: 0.2rem;
+  color: var(--text-dark); word-break: break-word; line-height: 1.4;
+}
+.field-line { height: 1px; background: var(--field-bg); width: 100%; margin: 0.1rem 0 0.2rem; }
+.field-label { text-align: center; font-size: 0.85rem; font-style: italic; color: var(--primary-green); }
+
+/* Ряд из двух полей */
+.double-field { display: flex; gap: 2rem; }
+.double-field .field-block { flex: 1; }
+
+/* ============================================================
+   5. ПРИЛОЖЕНИЕ К АТТЕСТАТУ (ОТДЕЛЬНЫЙ БЛОК)
+   ============================================================ */
+.appendix-container {
+  max-width: 800px;
+  margin: 0 auto 30px;
+  background: #ffffff;
+  border: 4px solid var(--border-green);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+}
+.appendix-header {
+  background: var(--primary-green);
+  color: #ffffff;
+  text-align: center;
+  padding: 1rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Таблица предметов */
+.subjects-table { width: 100%; border-collapse: collapse; }
+.subjects-table th, .subjects-table td { padding: 12px 20px; border-bottom: 1px solid var(--field-bg); text-align: left; }
+.subjects-table th { background-color: var(--light-green-bg); color: var(--primary-green); font-weight: 600; }
+.subjects-table td:last-child { 
+  text-align: center; 
+  font-weight: bold; 
+  white-space: nowrap; 
+  min-width: 130px; 
+  padding-left: 10px;
+  padding-right: 10px;
+}
+.subjects-table tbody tr:last-child td { border-bottom: none; }
+
+/* Дополнительная информация */
+.additional-info-block {
+  padding: 1.5rem 2rem;
+  background: var(--light-green-bg);
+  border-top: 1px solid var(--border-green);
+}
+.additional-info-title {
+  color: var(--primary-green);
+  font-weight: 700;
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  font-family: 'Times New Roman', Times, serif;
+}
+.additional-info-text {
+  font-size: 1rem;
+  color: #333;
+  line-height: 1.5;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+/* ============================================================
+   6. СТАТУС И КНОПКИ
+   ============================================================ */
+.status-and-edit { display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap; margin: 1.5rem 0; }
+.document-status { padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 500; font-size: 1rem; line-height: 1.5; }
+.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-pending { background: rgba(255, 193, 7, 0.15); color: #856404; }
+.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.status-archived { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
+.edit-btn {
+  display: inline-block; padding: 0.6rem 1.5rem; font-size: 1rem; line-height: 1.5;
+  border-radius: 8px; text-align: center; text-decoration: none; box-sizing: border-box;
+  border: none; cursor: pointer; transition: opacity 0.2s ease, background 0.2s ease;
+  background: var(--primary-green); color: white;
+}
+.edit-btn:hover { background: var(--dark-green); }
+
+/* ============================================================
+   7. МОБИЛЬНАЯ АДАПТАЦИЯ
+   ============================================================ */
+@media (max-width: 640px) {
+  .profile-main { padding: 22px 12px 48px; }
+  .greeting-block { padding: 22px 20px; gap: 16px; }
+  .greeting-emoji { font-size: 2.2rem; }
+  .greeting-text { font-size: 1.4rem; }
+  .greeting-subtitle { font-size: 0.9rem; }
+  .greeting-actions { flex-direction: row; flex: 1 1 100%; width: 100%; gap: 8px; }
+  .greeting-actions > * { flex: 1 1 0; }
+  .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+  .certificate-header .title { font-size: 1.4rem; letter-spacing: 1px; }
+  .certificate-header .subtitle { font-size: 0.95rem; }
+  .certificate-content { padding: 1.5rem 1rem; }
+  .field-value { font-size: 1.1rem; }
+  
+  .double-field { flex-direction: column; gap: 0; }
+
+  .subjects-table th, .subjects-table td { padding: 8px 12px; font-size: 0.9rem; }
+  
+  .additional-info-block { padding: 1rem; }
+  .additional-info-title { font-size: 1rem; }
+  .additional-info-text { font-size: 0.9rem; }
+
+  .status-and-edit { flex-direction: column; }
+  .edit-btn { width: 100%; text-align: center; }
+}
+
+/* ===== СЛИШКОМ МАЛЕНЬКИЙ ЭКРАН ===== */
+.too-small-message {
+  display: none; text-align: center; padding: 2rem 1rem; font-size: 1.2rem;
+  color: #666; background: #f9f9f9; border-radius: 8px; margin: 2rem auto; max-width: 400px;
+}
+@media (max-width: 320px) {
+  .too-small-message { display: block; }
+  .certificate-container, .appendix-container, #content, .status-and-edit { display: none !important; }
+}
