@@ -1,6 +1,5 @@
 import { supabase } from '../../../js/supabase-config.js'
 
-// -------------------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ --------------------
 let currentStep = 1
 const totalSteps = 3
 let formData = {}
@@ -8,7 +7,7 @@ let userPersonalCode = null
 let currentDocId = null
 let userProfile = null
 
-// -------------------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ --------------------
+/* ---------------- УТИЛИТЫ ---------------- */
 function formatDate(dateString) {
   if (!dateString) return '—'
   try {
@@ -36,14 +35,23 @@ function getStatusClass(status) {
   return 'document-status'
 }
 
-// -------------------- ЗАГРУЗКА ПРОФИЛЯ --------------------
+function escapeHTML(str) {
+  if (!str) return '—'
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;')
+}
+
+/* ---------------- ЗАГРУЗКА ПРОФИЛЯ ---------------- */
 async function loadUserProfile() {
   const { data: { session }, error: sessionError } = await supabase.auth.getSession()
   if (sessionError || !session) {
     window.location.href = '../../login.html'
     return null
   }
-
   const { data, error } = await supabase
     .from('users')
     .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
@@ -62,7 +70,7 @@ async function loadUserProfile() {
   return data
 }
 
-// -------------------- ЗАГРУЗКА ЗАГРАНПАСПОРТА --------------------
+/* ---------------- ЗАГРУЗКА ДОКУМЕНТА ---------------- */
 async function loadForeignPassport() {
   try {
     const profile = await loadUserProfile()
@@ -74,29 +82,22 @@ async function loadForeignPassport() {
     let data = null
     if (currentDocId) {
       const { data: doc, error } = await supabase
-        .schema('documents')
-        .from('foreign_passport')
-        .select('*')
-        .eq('id', currentDocId)
-        .maybeSingle()
+        .schema('documents').from('foreign_passport').select('*')
+        .eq('id', currentDocId).maybeSingle()
       if (error) throw error
       data = doc
     } else {
       const { data: docs, error } = await supabase
-        .schema('documents')
-        .from('foreign_passport')
-        .select('*')
+        .schema('documents').from('foreign_passport').select('*')
         .eq('personal_code', userPersonalCode)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .order('created_at', { ascending: false }).limit(1)
       if (error) throw error
       data = docs?.[0]
       if (data) currentDocId = data.id
     }
 
-    if (data) {
-      renderPassport(data)
-    } else {
+    if (data) renderPassport(data)
+    else {
       document.getElementById('loading').style.display = 'none'
       document.getElementById('noData').style.display = 'block'
     }
@@ -107,18 +108,16 @@ async function loadForeignPassport() {
   }
 }
 
-// -------------------- ОТРИСОВКА ЗАГРАНПАСПОРТА --------------------
+/* ---------------- ОТРИСОВКА ПАСПОРТА ---------------- */
 function renderPassport(data) {
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
 
-  // Устанавливаем цветовую переменную в зависимости от типа паспорта
   let borderColor = '#7b091a'
   if (data.passport_type === 'дипломатический') borderColor = '#0d4d26'
   else if (data.passport_type === 'служебный') borderColor = '#0d2a4d'
   document.documentElement.style.setProperty('--primary-red', borderColor)
 
-  // Определяем заголовки в зависимости от типа паспорта
   let docTypeCyr = 'ЗАГРАНИЧНЫЙ ПАСПОРТ'
   let docTypeEng = 'FOREIGN PASSPORT'
   if (data.passport_type === 'дипломатический') {
@@ -175,8 +174,8 @@ function renderPassport(data) {
             <div class="barcode-container">
               <svg id="passportBarcode" class="barcode"></svg>
             </div>
-            <div style="text-align: center; margin-top: 15px;">
-              <div id="passportQrCode" style="display: inline-block; width: 80px; height: 80px;"></div>
+            <div style="text-align: center;">
+              <div id="passportQrCode"></div>
             </div>
           </div>
 
@@ -194,27 +193,27 @@ function renderPassport(data) {
               <div class="field-value-english">${escapeHTML(data.name_lat || '—')}</div>
             </div>
             <div class="data-field">
+              <div class="field-label">Дата рождения</div>
+              <div class="field-label-english">Date of birth</div>
+              <div class="field-value">${formatDate(data.birth_date)}</div>
+            </div>
+            <div class="data-field">
               <div class="field-label">Пол</div>
               <div class="field-label-english">Sex</div>
               <div class="field-value">${escapeHTML(data.gender_cyr || '—')}</div>
               <div class="field-value-english">${escapeHTML(data.gender_lat || '—')}</div>
             </div>
             <div class="data-field">
-              <div class="field-label">Дата рождения</div>
-              <div class="field-label-english">Date of birth</div>
-              <div class="field-value">${formatDate(data.birth_date)}</div>
+              <div class="field-label">Гражданство</div>
+              <div class="field-label-english">Citizenship</div>
+              <div class="field-value">${escapeHTML(data.citizenship_cyr || 'СФСР Юльсанна')}</div>
+              <div class="field-value-english">${escapeHTML(data.citizenship_lat || 'SFSR Ulsanna')}</div>
             </div>
             <div class="data-field">
               <div class="field-label">Место рождения</div>
               <div class="field-label-english">Place of birth</div>
               <div class="field-value">${escapeHTML(data.birth_place_cyr || '—')}</div>
               <div class="field-value-english">${escapeHTML(data.birth_place_lat || '—')}</div>
-            </div>
-            <div class="data-field">
-              <div class="field-label">Гражданство</div>
-              <div class="field-label-english">Citizenship</div>
-              <div class="field-value">${escapeHTML(data.citizenship_cyr || 'СФСР Юльсанна')}</div>
-              <div class="field-value-english">${escapeHTML(data.citizenship_lat || 'SFSR Ulsanna')}</div>
             </div>
           </div>
         </div>
@@ -225,7 +224,7 @@ function renderPassport(data) {
   document.getElementById('passportContent').innerHTML = html
   document.getElementById('passportContent').style.display = 'block'
 
-  // --- Дополнительные секции: информация о паспорте, визы ---
+  /* --- Доп. секции --- */
   let extraHtml = `
     <h3 class="section-title"><i class="fas fa-info-circle"></i> Информация о паспорте</h3>
     <div class="info-grid">
@@ -243,8 +242,10 @@ function renderPassport(data) {
           ${data.has_chip ? 'Присутствует' + (data.chip_version ? ` (версия ${escapeHTML(data.chip_version)})` : '') : 'Отсутствует'}
         </div>
       </div>
-      <div class="info-item signature-container" style="display: flex; align-items: center; gap: 15px;">
-        <div class="info-label">Подпись владельца</div>
+      <div class="info-item" style="display:flex; align-items:center; gap: 14px;">
+        <div>
+          <div class="info-label">Подпись владельца</div>
+        </div>
         <img id="signatureImg" src="../../images/default-signature.png" alt="Подпись" class="signature-img" />
       </div>
     </div>
@@ -279,12 +280,10 @@ function renderPassport(data) {
     `
   }
 
-  if (extraHtml) {
-    document.getElementById('extraSections').innerHTML = extraHtml
-    document.getElementById('extraSections').style.display = 'block'
-  }
+  document.getElementById('extraSections').innerHTML = extraHtml
+  document.getElementById('extraSections').style.display = 'block'
 
-  // --- Фото, QR, штрихкод, подпись ---
+  /* --- Фото, QR, штрихкод, подпись --- */
   const personalCode = data.personal_code || ''
   const avatarImg = document.getElementById('passportAvatar')
   const signatureImg = document.getElementById('signatureImg')
@@ -310,8 +309,8 @@ function renderPassport(data) {
     try {
       new QRCode(qrContainer, {
         text: `https://e-pass-sfsru.web.app/${personalCode}/`,
-        width: 80,
-        height: 80,
+        width: 76,
+        height: 76,
         colorDark: '#000',
         colorLight: '#fff',
         correctLevel: QRCode.CorrectLevel.L
@@ -323,15 +322,12 @@ function renderPassport(data) {
   if (seriesNumber && seriesNumber.length >= 6) {
     try {
       JsBarcode("#passportBarcode", seriesNumber, {
-        format: "CODE128",
-        displayValue: false,
-        height: 50,
-        margin: 0
+        format: "CODE128", displayValue: false, height: 50, margin: 0
       })
     } catch (e) { console.warn('Barcode error', e) }
   }
 
-  // --- Кнопка редактирования и статус ---
+  /* --- Статус и кнопки --- */
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
 
@@ -340,14 +336,12 @@ function renderPassport(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  // Кнопка замены паспорта (всегда видна)
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/passport/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить паспорт'
   statusAndEdit.appendChild(replaceLink)
 
-  // Кнопка изменения данных (только если статус не verified)
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
@@ -360,32 +354,18 @@ function renderPassport(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
-  document.getElementById('passportContent').parentNode.insertBefore(statusAndEdit, document.getElementById('extraSections'))
+  document.getElementById('passportContent').parentNode
+    .insertBefore(statusAndEdit, document.getElementById('extraSections'))
 
   document.getElementById('loading').style.display = 'none'
 }
 
-// -------------------- ЭСКЕЙПИНГ HTML --------------------
-function escapeHTML(str) {
-  if (!str) return '—'
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;')
-}
-
-// -------------------- МОДАЛЬНОЕ ОКНО --------------------
+/* ---------------- МОДАЛЬНОЕ ОКНО ---------------- */
 async function openAddModal() {
   if (!userProfile) {
     await loadUserProfile()
-    if (!userProfile) {
-      alert('Не удалось загрузить профиль. Перезагрузите страницу.')
-      return
-    }
+    if (!userProfile) { alert('Не удалось загрузить профиль. Перезагрузите страницу.'); return }
   }
-
   currentStep = 1
   formData = {
     personal_code: userPersonalCode || '',
@@ -420,13 +400,12 @@ window.closeModal = function() {
   currentStep = 1
 }
 
-// -------------------- ОБНОВЛЕНИЕ ШАГА --------------------
 function updateStep() {
   const stepIndicator = document.getElementById('stepIndicator')
   if (stepIndicator) stepIndicator.textContent = `Шаг ${currentStep} из ${totalSteps}`
 
   const prevBtn = document.getElementById('prevBtn')
-  if (prevBtn) prevBtn.style.display = currentStep > 1 ? 'inline-block' : 'none'
+  if (prevBtn) prevBtn.style.display = currentStep > 1 ? 'inline-flex' : 'none'
 
   const nextBtn = document.getElementById('nextBtn')
   if (nextBtn) nextBtn.textContent = currentStep === totalSteps ? 'Сохранить' : 'Далее'
@@ -441,148 +420,94 @@ function updateStep() {
   if (modalBody) modalBody.innerHTML = content
 }
 
-// --- ШАГ 1: Основные данные ---
 function renderStep1() {
   return `
-    <div class="form-group">
-      <label>Фамилия (кириллица)</label>
-      <input type="text" id="surname_cyr" class="form-input" value="${escapeHTML(formData.surname_cyr || '')}">
-    </div>
-    <div class="form-group">
-      <label>Фамилия (латиница)</label>
-      <input type="text" id="surname_lat" class="form-input" value="${escapeHTML(formData.surname_lat || '')}">
-    </div>
-    <div class="form-group">
-      <label>Имя (кириллица)</label>
-      <input type="text" id="name_cyr" class="form-input" value="${escapeHTML(formData.name_cyr || '')}">
-    </div>
-    <div class="form-group">
-      <label>Имя (латиница)</label>
-      <input type="text" id="name_lat" class="form-input" value="${escapeHTML(formData.name_lat || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата рождения</label>
-      <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения (кириллица)</label>
-      <input type="text" id="birth_place_cyr" class="form-input" value="${escapeHTML(formData.birth_place_cyr || '')}">
-    </div>
-    <div class="form-group">
-      <label>Место рождения (латиница)</label>
-      <input type="text" id="birth_place_lat" class="form-input" value="${escapeHTML(formData.birth_place_lat || '')}">
-    </div>
-    <div class="form-group">
-      <label>Пол (кириллица)</label>
-      <input type="text" id="gender_cyr" class="form-input" value="${escapeHTML(formData.gender_cyr || '')}">
-    </div>
-    <div class="form-group">
-      <label>Пол (латиница)</label>
-      <input type="text" id="gender_lat" class="form-input" value="${escapeHTML(formData.gender_lat || '')}">
-    </div>
-    <div class="form-group">
-      <label>Гражданство (кириллица)</label>
-      <input type="text" id="citizenship_cyr" class="form-input" value="${escapeHTML(formData.citizenship_cyr || 'СФСР Юльсанна')}">
-    </div>
-    <div class="form-group">
-      <label>Гражданство (латиница)</label>
-      <input type="text" id="citizenship_lat" class="form-input" value="${escapeHTML(formData.citizenship_lat || 'SFSR Ulsanna')}">
-    </div>
-    <div class="form-group">
-      <label>Серия и номер</label>
-      <input type="text" id="series_number" class="form-input" value="${escapeHTML(formData.series_number || '')}">
-    </div>
-    <div class="form-group">
-      <label>Дата выдачи</label>
-      <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Срок действия</label>
-      <input type="date" id="expiry_date" class="form-input" value="${formData.expiry_date || ''}">
-    </div>
-    <div class="form-group">
-      <label>Кем выдан (кириллица)</label>
-      <input type="text" id="issued_by_cyr" class="form-input" value="${escapeHTML(formData.issued_by_cyr || '')}">
-    </div>
-    <div class="form-group">
-      <label>Кем выдан (латиница)</label>
-      <input type="text" id="issued_by_lat" class="form-input" value="${escapeHTML(formData.issued_by_lat || '')}">
-    </div>
-    <div class="form-group">
-      <label>Личный код</label>
-      <input type="text" id="personal_code" class="form-input" value="${userPersonalCode || ''}" readonly>
-    </div>
+    <div class="form-group"><label>Фамилия (кириллица)</label>
+      <input type="text" id="surname_cyr" class="form-input" value="${escapeHTML(formData.surname_cyr || '')}"></div>
+    <div class="form-group"><label>Фамилия (латиница)</label>
+      <input type="text" id="surname_lat" class="form-input" value="${escapeHTML(formData.surname_lat || '')}"></div>
+    <div class="form-group"><label>Имя (кириллица)</label>
+      <input type="text" id="name_cyr" class="form-input" value="${escapeHTML(formData.name_cyr || '')}"></div>
+    <div class="form-group"><label>Имя (латиница)</label>
+      <input type="text" id="name_lat" class="form-input" value="${escapeHTML(formData.name_lat || '')}"></div>
+    <div class="form-group"><label>Дата рождения</label>
+      <input type="date" id="birth_date" class="form-input" value="${formData.birth_date || ''}"></div>
+    <div class="form-group"><label>Место рождения (кириллица)</label>
+      <input type="text" id="birth_place_cyr" class="form-input" value="${escapeHTML(formData.birth_place_cyr || '')}"></div>
+    <div class="form-group"><label>Место рождения (латиница)</label>
+      <input type="text" id="birth_place_lat" class="form-input" value="${escapeHTML(formData.birth_place_lat || '')}"></div>
+    <div class="form-group"><label>Пол (кириллица)</label>
+      <input type="text" id="gender_cyr" class="form-input" value="${escapeHTML(formData.gender_cyr || '')}"></div>
+    <div class="form-group"><label>Пол (латиница)</label>
+      <input type="text" id="gender_lat" class="form-input" value="${escapeHTML(formData.gender_lat || '')}"></div>
+    <div class="form-group"><label>Гражданство (кириллица)</label>
+      <input type="text" id="citizenship_cyr" class="form-input" value="${escapeHTML(formData.citizenship_cyr || 'СФСР Юльсанна')}"></div>
+    <div class="form-group"><label>Гражданство (латиница)</label>
+      <input type="text" id="citizenship_lat" class="form-input" value="${escapeHTML(formData.citizenship_lat || 'SFSR Ulsanna')}"></div>
+    <div class="form-group"><label>Серия и номер</label>
+      <input type="text" id="series_number" class="form-input" value="${escapeHTML(formData.series_number || '')}"></div>
+    <div class="form-group"><label>Дата выдачи</label>
+      <input type="date" id="issue_date" class="form-input" value="${formData.issue_date || ''}"></div>
+    <div class="form-group"><label>Срок действия</label>
+      <input type="date" id="expiry_date" class="form-input" value="${formData.expiry_date || ''}"></div>
+    <div class="form-group"><label>Кем выдан (кириллица)</label>
+      <input type="text" id="issued_by_cyr" class="form-input" value="${escapeHTML(formData.issued_by_cyr || '')}"></div>
+    <div class="form-group"><label>Кем выдан (латиница)</label>
+      <input type="text" id="issued_by_lat" class="form-input" value="${escapeHTML(formData.issued_by_lat || '')}"></div>
+    <div class="form-group"><label>Личный код</label>
+      <input type="text" id="personal_code" class="form-input" value="${userPersonalCode || ''}" readonly></div>
   `
 }
 
-// --- ШАГ 2: Тип паспорта, биометрия, чип ---
 function renderStep2() {
   return `
-    <div class="form-group">
-      <label>Тип паспорта</label>
+    <div class="form-group"><label>Тип паспорта</label>
       <select id="passport_type" class="form-input">
         <option value="">—</option>
         <option value="общегражданский" ${formData.passport_type === 'общегражданский' ? 'selected' : ''}>Общегражданский</option>
         <option value="дипломатический" ${formData.passport_type === 'дипломатический' ? 'selected' : ''}>Дипломатический</option>
         <option value="служебный" ${formData.passport_type === 'служебный' ? 'selected' : ''}>Служебный</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Биометрический</label>
+      </select></div>
+    <div class="form-group"><label>Биометрический</label>
       <select id="is_biometric" class="form-input">
         <option value="">—</option>
         <option value="true" ${formData.is_biometric === true ? 'selected' : ''}>Да</option>
         <option value="false" ${formData.is_biometric === false ? 'selected' : ''}>Нет</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Чип биометрических данных</label>
+      </select></div>
+    <div class="form-group"><label>Чип биометрических данных</label>
       <select id="has_chip" class="form-input">
         <option value="">—</option>
         <option value="true" ${formData.has_chip === true ? 'selected' : ''}>Есть</option>
         <option value="false" ${formData.has_chip === false ? 'selected' : ''}>Нет</option>
-      </select>
-    </div>
-    <div class="form-group">
-      <label>Номер версии чипа</label>
-      <input type="text" id="chip_version" class="form-input" value="${escapeHTML(formData.chip_version || '')}">
-    </div>
+      </select></div>
+    <div class="form-group"><label>Номер версии чипа</label>
+      <input type="text" id="chip_version" class="form-input" value="${escapeHTML(formData.chip_version || '')}"></div>
   `
 }
 
-// --- ШАГ 3: Визы ---
 function renderStep3() {
   const visas = formData.visas || []
-  let listHtml = visas.map((v, i) => `
+  const listHtml = visas.map((v, i) => `
     <div class="record-block" data-index="${i}">
-      <div class="form-group">
-        <label>Страна</label>
-        <input type="text" class="form-input visa-country" value="${escapeHTML(v.country || '')}">
-      </div>
-      <div class="form-group">
-        <label>Тип визы</label>
-        <input type="text" class="form-input visa-type" value="${escapeHTML(v.type || '')}">
-      </div>
-      <div class="form-group">
-        <label>Дата выдачи</label>
-        <input type="date" class="form-input visa-issue" value="${v.issueDate || ''}">
-      </div>
-      <div class="form-group">
-        <label>Действительна до</label>
-        <input type="date" class="form-input visa-expiry" value="${v.expiryDate || ''}">
-      </div>
-      <button type="button" class="btn btn-secondary" onclick="window.removeRecord(this, 'visas')">Удалить</button>
+      <div class="form-group"><label>Страна</label>
+        <input type="text" class="form-input visa-country" value="${escapeHTML(v.country || '')}"></div>
+      <div class="form-group"><label>Тип визы</label>
+        <input type="text" class="form-input visa-type" value="${escapeHTML(v.type || '')}"></div>
+      <div class="form-group"><label>Дата выдачи</label>
+        <input type="date" class="form-input visa-issue" value="${v.issueDate || ''}"></div>
+      <div class="form-group"><label>Действительна до</label>
+        <input type="date" class="form-input visa-expiry" value="${v.expiryDate || ''}"></div>
+      <button type="button" class="btn btn-secondary" onclick="window.removeRecord(this)">Удалить</button>
     </div>
   `).join('')
 
   return `
-    <p><strong>Сведения о визах:</strong></p>
+    <p style="margin-bottom: 12px;"><strong>Сведения о визах:</strong></p>
     <div id="visasContainer">${listHtml}</div>
-    <button type="button" class="btn btn-secondary" id="addVisaBtn">+ Добавить визу</button>
+    <button type="button" class="btn btn-secondary" id="addVisaBtn" style="margin-top: 8px;">+ Добавить визу</button>
   `
 }
 
-// -------------------- СОХРАНЕНИЕ ДАННЫХ ШАГА --------------------
 function saveStepData() {
   switch (currentStep) {
     case 1:
@@ -604,7 +529,7 @@ function saveStepData() {
       formData.issued_by_lat = document.getElementById('issued_by_lat')?.value.trim() || ''
       formData.personal_code = document.getElementById('personal_code')?.value.trim() || userPersonalCode
       break
-    case 2:
+    case 2: {
       formData.passport_type = document.getElementById('passport_type')?.value || null
       const isBio = document.getElementById('is_biometric')?.value
       formData.is_biometric = isBio === 'true' ? true : (isBio === 'false' ? false : null)
@@ -612,6 +537,7 @@ function saveStepData() {
       formData.has_chip = chip === 'true' ? true : (chip === 'false' ? false : null)
       formData.chip_version = document.getElementById('chip_version')?.value.trim() || ''
       break
+    }
     case 3:
       formData.visas = Array.from(document.querySelectorAll('#visasContainer .record-block')).map(block => ({
         country: block.querySelector('.visa-country')?.value.trim() || '',
@@ -623,21 +549,19 @@ function saveStepData() {
   }
 }
 
-// -------------------- ДИНАМИЧЕСКОЕ ДОБАВЛЕНИЕ ВИЗ --------------------
 window.addRecord = function(containerId, type) {
   if (type === 'visas') {
     const container = document.getElementById(containerId)
     if (!container) return
-    const html = `
+    container.insertAdjacentHTML('beforeend', `
       <div class="record-block">
         <div class="form-group"><label>Страна</label><input type="text" class="form-input visa-country"></div>
         <div class="form-group"><label>Тип визы</label><input type="text" class="form-input visa-type"></div>
         <div class="form-group"><label>Дата выдачи</label><input type="date" class="form-input visa-issue"></div>
         <div class="form-group"><label>Действительна до</label><input type="date" class="form-input visa-expiry"></div>
-        <button type="button" class="btn btn-secondary" onclick="window.removeRecord(this, 'visas')">Удалить</button>
+        <button type="button" class="btn btn-secondary" onclick="window.removeRecord(this)">Удалить</button>
       </div>
-    `
-    container.insertAdjacentHTML('beforeend', html)
+    `)
   }
 }
 
@@ -646,7 +570,6 @@ window.removeRecord = function(btn) {
   if (block) block.remove()
 }
 
-// -------------------- НАВИГАЦИЯ ПО ШАГАМ --------------------
 window.nextStep = function() {
   saveStepData()
   if (currentStep < totalSteps) {
@@ -664,39 +587,25 @@ window.prevStep = function() {
   }
 }
 
-// -------------------- СОХРАНЕНИЕ ЗАГРАНПАСПОРТА --------------------
 async function saveForeignPassport() {
   try {
-    if (!userPersonalCode) {
-      alert('Ошибка: личный код не загружен')
-      return
-    }
+    if (!userPersonalCode) { alert('Ошибка: личный код не загружен'); return }
 
     const cleanData = { ...formData }
     Object.keys(cleanData).forEach(key => {
       if (cleanData[key] === null || cleanData[key] === undefined) delete cleanData[key]
     })
-
     cleanData.personal_code = userPersonalCode
     cleanData.status = 'oncheck'
     cleanData.updated_at = new Date().toISOString()
 
     let result
     if (currentDocId) {
-      result = await supabase
-        .schema('documents')
-        .from('foreign_passport')
-        .update(cleanData)
-        .eq('id', currentDocId)
+      result = await supabase.schema('documents').from('foreign_passport').update(cleanData).eq('id', currentDocId)
     } else {
       cleanData.created_at = new Date().toISOString()
-      result = await supabase
-        .schema('documents')
-        .from('foreign_passport')
-        .insert([cleanData])
-        .select()
+      result = await supabase.schema('documents').from('foreign_passport').insert([cleanData]).select()
     }
-
     if (result.error) throw result.error
 
     window.closeModal()
@@ -708,7 +617,6 @@ async function saveForeignPassport() {
   }
 }
 
-// -------------------- ИНИЦИАЛИЗАЦИЯ --------------------
 document.addEventListener('DOMContentLoaded', async () => {
   await loadForeignPassport()
 
@@ -726,11 +634,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   })
 })
 
-// Экспорт в глобальную область
 window.openAddModal = openAddModal
 window.openEditModal = openEditModal
-window.closeModal = closeModal
-window.nextStep = nextStep
-window.prevStep = prevStep
-window.addRecord = addRecord
-window.removeRecord = removeRecord
+window.nextStep = window.nextStep
+window.prevStep = window.prevStep
+window.addRecord = window.addRecord
+window.removeRecord = window.removeRecord

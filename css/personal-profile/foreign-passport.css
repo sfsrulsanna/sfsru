@@ -1,307 +1,259 @@
-/* ===== foreign-passport.css (полная версия с исправлениями) ===== */
+/* ============================================================
+   foreign-passport.css — страница заграничного паспорта
+   Единый дизайн с обычным паспортом, greeting-блок, секции,
+   модалка. Мобильная оптимизация — только размеры (не шапка).
+   Раскладка полей — одна на десктопе и мобильном.
+   ============================================================ */
+
+/* ---------- Переменные ---------- */
 :root {
+  /* Цвета паспорта — управляются из JS по типу (обычный/дипломатический/служебный) */
   --primary-red: #7b091a;
   --dark-red: #650E15;
   --light-red: #a83232;
-  --diplomatic-green: #0d4d26;
-  --service-blue: #0d2a4d;
-  --secondary-gray: #6c757d;
-  --cream: #F5E7E7;
   --white: #ffffff;
+
+  /* Новый дизайн */
+  --accent: #b30000;
+  --accent-soft: #fff5f5;
+  --accent-border: #f5c6c6;
+  --secondary-gray: #6c757d;
+  --text: #1f1f1f;
+  --muted: #888;
+  --border: #ececec;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+/* ---------- Reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  font-size: 16px;
-}
-@media (max-width: 700px) {
-  html {
-    font-size: clamp(12px, 3vw, 16px);
-  }
-}
-
+/* ============================================================
+   1. ОБЁРТКА СТРАНИЦЫ
+   ============================================================ */
 .profile-main {
-  padding: 2rem 0;
-  background: white;
+  padding: 34px 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
   min-height: 100vh;
 }
 .profile-container {
-  max-width: 900px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 1.5rem;
-}
-.loading, .no-data {
-  text-align: center;
-  padding: 3rem 1rem;
-  font-size: 1.2rem;
-  color: #666;
 }
 
-/* ===== КНОПКИ ===== */
-.add-btn, .edit-btn, .btn, .btn-primary, .btn-secondary,
-a.add-btn, a.edit-btn, .document-status {
-  display: inline-block;
-  padding: 0.6rem 1.5rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 8px;
-  text-align: center;
-  text-decoration: none;
-  box-sizing: border-box;
-  border: none;
-  cursor: pointer;
-  transition: opacity 0.2s ease, background 0.2s ease;
-}
-.add-btn, .edit-btn, .btn-primary, a.add-btn, a.edit-btn {
-  background: var(--primary-red);
-  color: white;
-}
-.add-btn:hover, .edit-btn:hover, .btn-primary:hover,
-a.add-btn:hover, a.edit-btn:hover {
-  background: var(--dark-red);
-}
-.btn-secondary {
-  background: var(--secondary-gray) !important;
-  color: white;
-}
-.btn-secondary:hover {
-  background: #5a6268 !important;
-}
-
-/* ===== СТАТУС ===== */
-.status-and-edit {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 1.5rem;
-  margin: 2rem 0;
-}
-.document-status {
-  background: transparent;
-}
-.status-verified { background: rgba(40,167,69,0.15); color: #28a745; }
-.status-pending { background: rgba(255,193,7,0.15); color: #856404; }
-.status-rejected { background: rgba(220,53,69,0.15); color: #dc3545; }
-
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0,0,0,0.6);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-  opacity: 0;
-  visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-.modal-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
-.modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 700px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-.modal-header h4 {
-  margin: 0;
-  color: var(--primary-red);
-  font-size: 1.25rem;
-}
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-}
-.close-modal:hover { color: var(--primary-red); }
-.step-indicator {
-  padding: 0.5rem 1.5rem;
-  text-align: center;
-  font-size: 0.9rem;
-  color: var(--primary-red);
-  background: #f9f9f9;
-  border-bottom: 1px solid #eee;
-}
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-.modal-footer {
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid #eee;
-}
-
-/* ===== ФОРМЫ ===== */
-.form-group {
-  margin-bottom: 1.2rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-}
-.form-input {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  box-sizing: border-box;
-}
-.record-block {
-  border: 1px solid #eee;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  background: #fafafa;
-}
-
-/* ===== ЗАГОЛОВКИ СЕКЦИЙ ===== */
-.section-title {
-  font-family: 'PT Serif', serif;
-  color: var(--primary-red);
-  font-size: 1.7rem;
-  margin: 35px 0 20px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--primary-red);
+/* ============================================================
+   2. ПРИВЕТСТВЕННЫЙ БЛОК
+   ============================================================ */
+.greeting-block {
+  position: relative;
   display: flex;
   align-items: center;
-  font-weight: 700;
-}
-.section-title i { margin-right: 12px; color: var(--primary-red); }
-
-/* ===== ИНФО-СЕТКА ===== */
-.info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 15px;
-  margin-bottom: 25px;
-}
-.info-item {
-  padding: 15px;
-  background: #f9f9f9;
-  border-radius: 10px;
-  border-left: 3px solid var(--primary-red);
-}
-.info-label { font-weight: 600; color: var(--primary-red); }
-.signature-img {
-  width: 70px;
-  height: 70px;
-  object-fit: contain;
-  border: 1px solid #ddd;
-  padding: 4px;
-  background: white;
-  border-radius: 6px;
-}
-
-/* ===== ТАБЛИЦА ВИЗ ===== */
-.info-table {
-  overflow-x: auto;
-  margin-bottom: 2rem;
-}
-.info-table table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: white;
-  border-radius: 14px;
-  border: 2px solid var(--primary-red);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 26px 28px;
+  margin: 0 0 26px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+  border: 1px solid #f1d7d7;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
   overflow: hidden;
 }
-.info-table thead {
-  background: var(--primary-red);
-  color: white;
+.greeting-block::after {
+  content: "";
+  position: absolute;
+  right: -70px; top: -70px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+  pointer-events: none;
 }
-.info-table th,
-.info-table td {
-  padding: 0.8rem 1rem;
+.greeting-emoji {
+  flex-shrink: 0;
+  font-size: 3rem;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.greeting-content {
+  flex: 1 1 220px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.greeting-text {
+  margin: 0 0 6px;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+}
+.greeting-subtitle {
+  margin: 0;
   font-size: 1rem;
-  text-align: left;
-  border-right: 1px solid rgba(255,255,255,0.15);
+  color: #6b6b6b;
+  line-height: 1.45;
 }
-.info-table th:last-child,
-.info-table td:last-child { border-right: none; }
-.info-table td {
-  background: white;
-  border-bottom: 1px solid #eee;
-}
-.info-table tbody tr:last-child td { border-bottom: none; }
-.info-table tbody tr:nth-child(even) td { background: #f9f9f9; }
-.info-table tbody tr:hover td { background: rgba(123,9,26,0.05); }
-
-/* ===== QR-код ===== */
-#passportQrCode {
-  width: 80px;
-  height: 80px;
-  max-width: 80px;
-  display: inline-block;
-}
-.qr-code-container {
-  width: 100%;
-  margin-top: 1rem;
+.greeting-actions {
   display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+.greeting-action-link {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: #2a2a2a;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, background-color 0.2s ease, color 0.15s ease;
+}
+.greeting-action-link:hover,
+.greeting-action-link:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+  outline: none;
 }
 
-/* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
-.too-small-message {
-  display: none;
+/* ============================================================
+   3. LOADING / NO-DATA
+   ============================================================ */
+.loading,
+.no-data {
   text-align: center;
-  padding: 2rem 1rem;
-  font-size: 1.2rem;
-  color: #666;
-  background: #f9f9f9;
-  border-radius: 8px;
-  margin: 2rem auto;
-  max-width: 400px;
+  padding: 3rem 1.5rem;
+  font-size: 1rem;
+  color: #6c757d;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  margin: 0 0 20px;
+  line-height: 1.55;
 }
-@media (max-width: 320px) {
-  .too-small-message { display: block; }
-  #passportContent, .extra-sections, .status-and-edit, .passport-template {
-    display: none !important;
-  }
+.no-data p { margin: 12px 0 18px; color: #555; }
+
+/* ============================================================
+   4. КНОПКИ (единый стиль)
+   ============================================================ */
+.add-btn,
+.edit-btn,
+.btn,
+.btn-primary,
+.btn-secondary,
+a.add-btn,
+a.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.4;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease,
+              border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
+}
+.add-btn,
+.edit-btn,
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #e53935 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+}
+.add-btn:hover,
+.edit-btn:hover,
+.btn-primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+}
+.btn-secondary {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: #2a2a2a;
+}
+.btn-secondary:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
-/* ===== СТИЛИ ЗАГРАНПАСПОРТА ===== */
+/* ============================================================
+   5. СТАТУС
+   ============================================================ */
+.status-and-edit {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 20px;
+}
+.document-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.4;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+}
+.status-verified {
+  background: #eefaf0;
+  color: #16a34a;
+  border-color: #b8e6c2;
+}
+.status-pending {
+  background: #fff8ec;
+  color: #c2710c;
+  border-color: #f5d9a8;
+}
+.status-rejected {
+  background: #fff0f0;
+  color: var(--accent);
+  border-color: var(--accent-border);
+}
+
+/* ============================================================
+   6. БЛОК ЗАГРАНПАСПОРТА (визуал сохранён, раскладка новая)
+   ============================================================ */
 .passport-template {
   background: #ffffff;
   border: 0.75rem solid var(--primary-red);
   border-radius: 12px;
   padding: 0;
   width: 100%;
-  max-width: 900px;
+  max-width: 780px;
   margin: 0 auto 2rem;
-  box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
   overflow: hidden;
+  font-family: 'PT Serif', serif;
 }
+
 .passport-header {
   background: var(--primary-red);
   color: var(--white);
@@ -329,13 +281,43 @@ a.add-btn:hover, a.edit-btn:hover {
 .document-type-english {
   font-size: 1rem;
 }
+
+/* --- Верхняя часть: grid 2 колонки --- */
 .passport-content {
   padding: 1.5rem;
   font-family: 'PT Serif', serif;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+  align-items: start;
 }
-.data-field {
-  margin-bottom: 1rem;
+
+/* Строка 1: Серия и номер (1) | Личный код (5) */
+.passport-content > .data-field:nth-child(1) { grid-column: 1; grid-row: 1; }
+.passport-content > .data-field:nth-child(5) { grid-column: 2; grid-row: 1; }
+
+/* Строка 2: Дата выдачи (2) | Срок действия (3) */
+.passport-content > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
+.passport-content > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
+
+/* Строка 3: Кем выдан (4) — на всю ширину */
+.passport-content > .data-field:nth-child(4) { grid-column: 1 / -1; grid-row: 3; }
+
+/* Разделитель и низ — на всю ширину */
+.passport-content > .passport-divider {
+  grid-column: 1 / -1;
+  grid-row: 4;
+  margin: 4px 0;
+  height: 2px;
+  background: var(--primary-red);
 }
+.passport-content > .passport-lower {
+  grid-column: 1 / -1;
+  grid-row: 5;
+}
+
+/* --- Поля --- */
+.data-field { margin-bottom: 0; }
 .field-label {
   color: var(--primary-red);
   font-size: 0.9rem;
@@ -352,6 +334,7 @@ a.add-btn:hover, a.edit-btn:hover {
   font-size: 1rem;
   border-bottom: 1px dashed #999;
   padding-bottom: 0.3rem;
+  word-break: break-word;
 }
 .field-value-english {
   font-size: 0.9rem;
@@ -363,24 +346,28 @@ a.add-btn:hover, a.edit-btn:hover {
   letter-spacing: 2px;
   color: var(--primary-red);
 }
+
+/* --- Нижняя часть: фото слева, ФИО справа --- */
 .passport-lower {
   display: flex;
   gap: 1.5rem;
-  margin-top: 1.5rem;
+  margin-top: 0.5rem;
+  align-items: flex-start;
 }
+
 .photo-barcode-section {
-  flex: 0 0 25%;
-  min-width: 130px;
+  flex: 0 0 32%;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
 }
 .passport-photo-container {
   width: 100%;
   aspect-ratio: 3 / 4;
   border: 2px solid var(--primary-red);
   background: var(--white);
-  margin-bottom: 0.8rem;
+  margin-bottom: 6px;
   overflow: hidden;
   border-radius: 12px;
 }
@@ -388,60 +375,361 @@ a.add-btn:hover, a.edit-btn:hover {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
-.barcode-container { width: 100%; }
+.barcode-container {
+  width: 100%;
+  margin: 0 0 6px;
+}
 .barcode {
   width: 100%;
   height: auto;
   max-height: 3rem;
-  border-radius: 8px;
+  display: block;
 }
+
+/* QR — по центру фото */
+.photo-barcode-section > div:last-child {
+  text-align: center;
+  margin-top: 0;
+}
+#passportQrCode {
+  display: block;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto;
+}
+#passportQrCode canvas,
+#passportQrCode img {
+  display: block;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto;
+}
+
+/* --- ФИО: 2 колонки --- */
 .fio-and-details {
   flex: 1;
   min-width: 0;
-}
-.passport-divider {
-  height: 2px;
-  background: var(--primary-red);
-  margin: 1.5rem 0;
-}
-
-/* ===== АДАПТАЦИЯ ДЛЯ ТЕЛЕФОНОВ (ГОРИЗОНТАЛЬНО) ===== */
-@media (max-width: 600px) {
-  .passport-lower {
-    flex-direction: row !important;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-  .photo-barcode-section {
-    flex: 0 0 30%;
-    min-width: 100px;
-    align-items: flex-start;
-  }
-  .passport-photo-container {
-    max-width: none;
-    width: 100%;
-  }
-  .barcode {
-    max-height: 2.5rem;
-  }
-  .fio-and-details {
-    flex: 1;
-    min-width: 0;
-  }
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1.2rem;
+  align-content: start;
 }
 
-/* ===== ПЛАНШЕТЫ ===== */
-@media (min-width: 601px) and (max-width: 900px) {
-  .photo-barcode-section {
-    min-width: 150px;
-  }
+/* Порядок: Фамилия → Имя → Дата рождения | Пол → Гражданство → Место рождения */
+.fio-and-details > .data-field:nth-child(1) { grid-column: 1 / -1; grid-row: 1; }
+.fio-and-details > .data-field:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+.fio-and-details > .data-field:nth-child(3) { grid-column: 1; grid-row: 3; }
+.fio-and-details > .data-field:nth-child(4) { grid-column: 2; grid-row: 3; }
+.fio-and-details > .data-field:nth-child(5) { grid-column: 1 / -1; grid-row: 4; }
+.fio-and-details > .data-field:nth-child(6) { grid-column: 1 / -1; grid-row: 5; }
+
+/* ============================================================
+   7. СЕКЦИИ ДОП. ИНФОРМАЦИИ
+   ============================================================ */
+.section-title {
+  color: #1a1a1a;
+  font-size: 1.25rem;
+  margin: 28px 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  font-family: 'PT Serif', serif;
+}
+.section-title i { color: var(--accent); font-size: 1rem; margin-right: 0; }
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.info-item {
+  padding: 16px 18px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+.info-label {
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+.info-value {
+  color: var(--text);
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+.signature-img {
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  border: 1px solid var(--border);
+  padding: 4px;
+  background: #fafafa;
+  border-radius: 8px;
 }
 
-#passportContent,
-.passport-template {
+.info-table {
+  overflow-x: auto;
+  margin-bottom: 24px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+.info-table table { width: 100%; border-collapse: collapse; }
+.info-table thead {
+  background: linear-gradient(135deg, var(--accent) 0%, #e53935 100%);
+  color: #ffffff;
+}
+.info-table th, .info-table td {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  text-align: left;
+  line-height: 1.45;
+}
+.info-table th {
+  font-weight: 600;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #8a0000;
+}
+.info-table td {
+  color: #333;
+  border-bottom: 1px solid #f2f2f2;
+}
+.info-table tbody tr:last-child td { border-bottom: none; }
+.info-table tbody tr:nth-child(even) td { background: #fafafa; }
+.info-table tbody tr:hover td { background: #fff9f9; }
+
+/* ============================================================
+   8. МОДАЛЬНОЕ ОКНО
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  padding: 16px;
+}
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
+.modal {
+  background: #ffffff;
+  border-radius: 18px;
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
+}
+.modal-header h4 {
+  margin: 0;
+  color: #1a1a1a;
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.close-modal {
+  background: #f5f5f5;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.close-modal:hover { background: #ffe5e5; color: var(--accent); }
+
+.step-indicator {
+  padding: 10px 24px;
+  text-align: center;
+  font-size: 0.86rem;
+  color: var(--accent);
+  background: #fafafa;
+  border-bottom: 1px solid #f0f0f0;
+  font-weight: 500;
+}
+.modal-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+.modal-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  flex-wrap: wrap;
+}
+
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
+.form-group label {
   display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  font-size: 0.86rem;
+  color: #555;
+}
+.form-input {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #1a1a1a;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.form-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.1);
+}
+.record-block {
+  border: 1px solid #f0f0f0;
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+/* ============================================================
+   9. TOO SMALL
+   ============================================================ */
+.too-small-message {
+  display: none;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+@media (max-width: 320px) {
+  .too-small-message { display: block !important; }
+  .profile-container > *:not(.too-small-message) { display: none !important; }
+}
+
+/* ============================================================
+   10. МОБИЛЬНАЯ АДАПТАЦИЯ — только размеры
+   ============================================================ */
+@media (max-width: 640px) {
+  .profile-main { padding: 22px 12px 48px; }
+
+  /* Приветствие */
+  .greeting-block { padding: 22px 20px; gap: 16px; }
+  .greeting-emoji { font-size: 2.2rem; }
+  .greeting-text { font-size: 1.4rem; }
+  .greeting-subtitle { font-size: 0.9rem; }
+  .greeting-actions {
+    flex-direction: row;
+    flex: 1 1 100%;
+    width: 100%;
+    gap: 8px;
+  }
+  .greeting-actions > * { flex: 1 1 0; }
+  .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+  /* Кнопки/статусы */
+  .status-and-edit { gap: 8px; }
+  .status-and-edit .edit-btn { flex: 1 1 auto; }
+  .add-btn, .edit-btn, .btn-primary { width: auto; }
+
+  /* Секции */
+  .section-title { font-size: 1.1rem; margin-top: 24px; padding-bottom: 10px; }
+  .info-grid { grid-template-columns: 1fr; }
+  .info-table th, .info-table td { padding: 10px 12px; font-size: 0.84rem; }
+
+  /* Паспорт — только размеры */
+  .passport-template {
+    border-width: 6px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .passport-header { padding: 12px 10px; }
+  .country-name { font-size: 1.15rem; margin-bottom: 2px; letter-spacing: 0.5px; }
+  .country-name-english { font-size: 0.82rem; margin-bottom: 6px; }
+  .document-type { font-size: 0.92rem; margin-top: 2px; }
+  .document-type-english { font-size: 0.72rem; }
+
+  .passport-content {
+    padding: 12px 14px;
+    gap: 10px 14px;
+  }
+  .field-label { font-size: 0.65rem; margin-bottom: 1px; }
+  .field-label-english { font-size: 0.6rem; margin-bottom: 0; }
+  .field-value { font-size: 0.78rem; padding-bottom: 2px; }
+  .field-value-english { font-size: 0.72rem; }
+  .series-number { font-size: 0.95rem; letter-spacing: 0.5px; }
+
+  .passport-content > .passport-divider { margin: 4px 0; height: 1.5px; }
+
+  .passport-lower { gap: 12px; margin-top: 6px; }
+  .photo-barcode-section { flex: 0 0 40%; }
+  .passport-photo-container { margin-bottom: 4px; }
+  .barcode-container { margin-bottom: 4px; }
+  .barcode { max-height: 22px; }
+  #passportQrCode,
+  #passportQrCode canvas,
+  #passportQrCode img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .fio-and-details { gap: 6px 8px; }
+  .fio-and-details .field-label { font-size: 0.63rem; }
+  .fio-and-details .field-label-english { font-size: 0.58rem; }
+  .fio-and-details .field-value { font-size: 0.76rem; }
+  .fio-and-details .field-value-english { font-size: 0.7rem; }
+}
+
+/* ============================================================
+   11. Reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .greeting-action-link,
+  .add-btn, .edit-btn, .btn, .btn-primary, .btn-secondary,
+  .close-modal, .form-input {
+    transition: none !important;
+  }
 }
