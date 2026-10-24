@@ -20,9 +20,20 @@
 html { font-size: 16px; }
 @media (max-width: 700px) { html { font-size: clamp(12px, 3vw, 16px); } }
 
-/* ============================================================
-   ПРИВЕТСТВЕННЫЙ БЛОК (как на странице паспорта)
-   ============================================================ */
+/* ===== ОСНОВНОЙ КОНТЕЙНЕР (в точности как у паспорта) ===== */
+.profile-main {
+  padding: 34px 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
+  min-height: 100vh;
+}
+.profile-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* ===== ПРИВЕТСТВЕННЫЙ БЛОК ===== */
 .greeting-block {
   position: relative;
   display: flex;
@@ -109,19 +120,7 @@ html { font-size: 16px; }
   outline: none;
 }
 
-/* ===== ОСНОВНОЙ КОНТЕЙНЕР (фон как у паспорта) ===== */
-.main-content {
-  padding: 2rem 16px 64px;
-  background:
-    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
-    #f6f7f9;
-  min-height: 100vh;
-}
-.container {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
+/* ===== БАЗОВЫЕ СТИЛИ СТРАНИЦЫ ===== */
 .loading, .no-data {
   text-align: center;
   padding: 3rem 1rem;
@@ -161,7 +160,7 @@ a.edit-btn {
   box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
 }
 
-/* ===== СТАТУСЫ (стиль паспорта) ===== */
+/* ===== СТАТУСЫ ===== */
 .status-and-edit {
   display: flex;
   flex-wrap: wrap;
@@ -197,7 +196,7 @@ a.edit-btn {
   border-color: var(--accent-border);
 }
 
-/* ===== КАРТОЧКА E-PASS — БЕЗ ИЗМЕНЕНИЙ ===== */
+/* ===== КАРТОЧКА E-PASS ===== */
 .epass-card {
   position: relative;
   background: var(--card-pink);
@@ -279,7 +278,7 @@ a.edit-btn {
 }
 .qr-corner canvas { width: 100% !important; height: 100% !important; display: block; }
 
-/* ===== ИСТОРИЯ ФОТОГРАФИЙ (только просмотр) ===== */
+/* ===== ИСТОРИЯ ФОТОГРАФИЙ ===== */
 .photo-history-section {
   max-width: 700px;
   margin: 2rem auto;
@@ -383,26 +382,46 @@ a.edit-btn {
 }
 @media (max-width: 320px) {
   .too-small-message { display: block !important; }
-  #content { display: none !important; }
+  .profile-container > *:not(.too-small-message) { display: none !important; }
 }
 
-/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
-@media (max-width: 600px) {
+/* ===== МОБИЛЬНАЯ АДАПТАЦИЯ (640px) ===== */
+@media (max-width: 640px) {
+  .profile-main { padding: 22px 12px 48px; }
+
+  /* Приветствие */
+  .greeting-block { padding: 22px 20px; gap: 16px; }
+  .greeting-emoji { font-size: 2.2rem; }
+  .greeting-text { font-size: 1.4rem; }
+  .greeting-subtitle { font-size: 0.9rem; }
+  .greeting-actions {
+    flex-direction: row;
+    flex: 1 1 100%;
+    width: 100%;
+    gap: 8px;
+  }
+  .greeting-actions > * { flex: 1 1 0; }
+  .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+  /* Карточка E-Pass */
   .epass-body { flex-direction: row; gap: 1rem; }
   .epass-right { width: 100px; flex-shrink: 0; }
   .qr-corner { bottom: 2rem; right: 2rem; width: 60px; height: 60px; }
   .data-label { font-size: 0.7rem; }
   .data-value { font-size: 0.9rem; }
+  
   .status-and-edit { flex-direction: column; margin: 1rem 0; }
   .photo-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   .photo-history-section { padding: 1.25rem; margin: 1.5rem auto; }
   .photo-history-title { font-size: 1.1rem; }
 }
-@media (min-width: 601px) and (max-width: 900px) {
+
+@media (min-width: 641px) and (max-width: 900px) {
   .epass-right { width: 130px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .greeting-action-link,
   .add-btn, .edit-btn, .btn-primary,
   .photo-item { transition: none !important; }
 }
