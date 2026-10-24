@@ -1,24 +1,24 @@
 /* ============================================================
    foreign-passport.css — страница заграничного паспорта
-   Единый дизайн с обычным паспортом, greeting-блок, секции,
-   модалка. Мобильная оптимизация — только размеры (не шапка).
-   Раскладка полей — одна на десктопе и мобильном.
+   Единый дизайн с обычным паспортом. Раскладка полей паспорта —
+   одна на десктопе и мобильном (grid + flex). В @media только размеры.
    ============================================================ */
 
 /* ---------- Переменные ---------- */
 :root {
-  /* Цвета паспорта — управляются из JS по типу (обычный/дипломатический/служебный) */
+  /* Цвета паспорта — переопределяются из JS по типу документа */
   --primary-red: #7b091a;
   --dark-red: #650E15;
   --light-red: #a83232;
   --white: #ffffff;
 
-  /* Новый дизайн */
+  /* Общая палитра сайта */
   --accent: #b30000;
   --accent-soft: #fff5f5;
   --accent-border: #f5c6c6;
   --secondary-gray: #6c757d;
   --text: #1f1f1f;
+  --text-soft: #555;
   --muted: #888;
   --border: #ececec;
 }
@@ -146,10 +146,10 @@
   margin: 0 0 20px;
   line-height: 1.55;
 }
-.no-data p { margin: 12px 0 18px; color: #555; }
+.no-data p { margin: 12px 0 18px; color: var(--text-soft); }
 
 /* ============================================================
-   4. КНОПКИ (единый стиль)
+   4. КНОПКИ
    ============================================================ */
 .add-btn,
 .edit-btn,
@@ -175,6 +175,7 @@ a.edit-btn {
   transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease,
               border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
+
 .add-btn,
 .edit-btn,
 .btn-primary {
@@ -189,6 +190,7 @@ a.edit-btn {
   filter: brightness(1.08);
   box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
 }
+
 .btn-secondary {
   background: #ffffff;
   border: 1px solid var(--border);
@@ -201,7 +203,7 @@ a.edit-btn {
 }
 
 /* ============================================================
-   5. СТАТУС
+   5. СТАТУС + КНОПКИ УПРАВЛЕНИЯ
    ============================================================ */
 .status-and-edit {
   display: flex;
@@ -239,7 +241,8 @@ a.edit-btn {
 }
 
 /* ============================================================
-   6. БЛОК ЗАГРАНПАСПОРТА (визуал сохранён, раскладка новая)
+   6. БЛОК ПАСПОРТА
+   Визуал сохранён. Раскладка полей — одна для десктопа и мобильного.
    ============================================================ */
 .passport-template {
   background: #ffffff;
@@ -292,14 +295,14 @@ a.edit-btn {
   align-items: start;
 }
 
-/* Строка 1: Серия и номер (1) — на всю ширину */
+/* Строка 1: Серия и номер — на всю ширину */
 .passport-content > .data-field:nth-child(1) { grid-column: 1 / -1; grid-row: 1; }
 
-/* Строка 2: Дата выдачи (2) | Срок действия (3) */
+/* Строка 2: Дата выдачи | Срок действия */
 .passport-content > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
 .passport-content > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
 
-/* Строка 3: Кем выдан (4) | Личный код (5) */
+/* Строка 3: Кем выдан | Личный код */
 .passport-content > .data-field:nth-child(4) { grid-column: 1; grid-row: 3; }
 .passport-content > .data-field:nth-child(5) { grid-column: 2; grid-row: 3; }
 
@@ -388,23 +391,35 @@ a.edit-btn {
   display: block;
 }
 
-/* QR — по центру фото */
-.photo-barcode-section > div:last-child {
+/* QR + подпись под ним */
+.qr-signature-wrap {
   text-align: center;
   margin-top: 0;
 }
-#passportQrCode {
+.qr-signature-wrap #passportQrCode {
+  display: block;
+  width: 76px;
+  height: 76px;
+  margin: 0 auto 6px;
+}
+.qr-signature-wrap #passportQrCode canvas,
+.qr-signature-wrap #passportQrCode img {
   display: block;
   width: 76px;
   height: 76px;
   margin: 0 auto;
 }
-#passportQrCode canvas,
-#passportQrCode img {
+.signature-img {
   display: block;
-  width: 76px;
-  height: 76px;
   margin: 0 auto;
+  width: 76px;
+  height: auto;
+  max-height: 40px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #f0f0f0;
+  border-radius: 6px;
+  padding: 2px;
 }
 
 /* --- ФИО: 2 колонки --- */
@@ -417,12 +432,16 @@ a.edit-btn {
   align-content: start;
 }
 
-/* Порядок: Фамилия → Имя → Дата рождения | Пол → Гражданство → Место рождения */
+/* Фамилия */
 .fio-and-details > .data-field:nth-child(1) { grid-column: 1 / -1; grid-row: 1; }
+/* Имя */
 .fio-and-details > .data-field:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+/* Дата рождения | Пол */
 .fio-and-details > .data-field:nth-child(3) { grid-column: 1; grid-row: 3; }
 .fio-and-details > .data-field:nth-child(4) { grid-column: 2; grid-row: 3; }
+/* Гражданство */
 .fio-and-details > .data-field:nth-child(5) { grid-column: 1 / -1; grid-row: 4; }
+/* Место рождения */
 .fio-and-details > .data-field:nth-child(6) { grid-column: 1 / -1; grid-row: 5; }
 
 /* ============================================================
@@ -468,15 +487,6 @@ a.edit-btn {
   color: var(--text);
   font-size: 0.95rem;
   line-height: 1.4;
-}
-.signature-img {
-  width: 70px;
-  height: 70px;
-  object-fit: contain;
-  border: 1px solid var(--border);
-  padding: 4px;
-  background: #fafafa;
-  border-radius: 8px;
 }
 
 .info-table {
@@ -596,6 +606,7 @@ a.edit-btn {
   flex-wrap: wrap;
 }
 
+/* ---------- Поля в модалке ---------- */
 .form-group { margin-bottom: 14px; }
 .form-group:last-child { margin-bottom: 0; }
 .form-group label {
@@ -603,7 +614,7 @@ a.edit-btn {
   margin-bottom: 6px;
   font-weight: 500;
   font-size: 0.86rem;
-  color: #555;
+  color: var(--text-soft);
 }
 .form-input {
   width: 100%;
@@ -612,7 +623,7 @@ a.edit-btn {
   border-radius: 10px;
   font-size: 0.95rem;
   font-family: inherit;
-  color: #1a1a1a;
+  color: var(--text);
   background: #fff;
   box-sizing: border-box;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
@@ -651,7 +662,7 @@ a.edit-btn {
 }
 
 /* ============================================================
-   10. МОБИЛЬНАЯ АДАПТАЦИЯ — только размеры
+   10. МОБИЛЬНАЯ АДАПТАЦИЯ — только размеры, без правок раскладки
    ============================================================ */
 @media (max-width: 640px) {
   .profile-main { padding: 22px 12px 48px; }
@@ -670,10 +681,9 @@ a.edit-btn {
   .greeting-actions > * { flex: 1 1 0; }
   .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
 
-  /* Кнопки/статусы */
+  /* Статус/кнопки */
   .status-and-edit { gap: 8px; }
   .status-and-edit .edit-btn { flex: 1 1 auto; }
-  .add-btn, .edit-btn, .btn-primary { width: auto; }
 
   /* Секции */
   .section-title { font-size: 1.1rem; margin-top: 24px; padding-bottom: 10px; }
@@ -709,11 +719,17 @@ a.edit-btn {
   .passport-photo-container { margin-bottom: 4px; }
   .barcode-container { margin-bottom: 4px; }
   .barcode { max-height: 22px; }
-  #passportQrCode,
-  #passportQrCode canvas,
-  #passportQrCode img {
+
+  .qr-signature-wrap #passportQrCode,
+  .qr-signature-wrap #passportQrCode canvas,
+  .qr-signature-wrap #passportQrCode img {
     width: 56px;
     height: 56px;
+  }
+  .qr-signature-wrap #passportQrCode { margin-bottom: 4px; }
+  .signature-img {
+    width: 56px;
+    max-height: 30px;
   }
 
   .fio-and-details { gap: 6px 8px; }

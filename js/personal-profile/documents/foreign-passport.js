@@ -174,8 +174,9 @@ function renderPassport(data) {
             <div class="barcode-container">
               <svg id="passportBarcode" class="barcode"></svg>
             </div>
-            <div style="text-align: center;">
+            <div class="qr-signature-wrap">
               <div id="passportQrCode"></div>
+              <img id="signatureImg" src="../../images/default-signature.png" alt="Подпись владельца" class="signature-img" />
             </div>
           </div>
 
@@ -242,13 +243,6 @@ function renderPassport(data) {
           ${data.has_chip ? 'Присутствует' + (data.chip_version ? ` (версия ${escapeHTML(data.chip_version)})` : '') : 'Отсутствует'}
         </div>
       </div>
-      <div class="info-item" style="display:flex; align-items:center; gap: 14px;">
-        <div>
-          <div class="info-label">Подпись владельца</div>
-        </div>
-        <img id="signatureImg" src="../../images/default-signature.png" alt="Подпись" class="signature-img" />
-      </div>
-    </div>
   `
 
   const visas = data.visas || []
