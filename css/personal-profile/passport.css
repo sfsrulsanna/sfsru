@@ -1,54 +1,38 @@
-    /* ============================================================
-       passport.html — оформление страницы
-       БЛОК ПАСПОРТА (.passport-template и его классы) НЕ ИЗМЕНЁН.
-       Улучшены: фон страницы, приветственный блок, архивные карточки,
-       таблицы доп. информации, кнопки, блок «Заметили ошибку».
-       ============================================================ */
+/* ============================================================
+   passport.html — полный CSS страницы паспорта
+   ============================================================ */
 
-    /* ---------- Переменные ---------- */
-    :root {
-      --primary-red: #7b091a;         /* сохранено для паспорта */
-      --dark-red: #650E15;
-      --light-red: #a83232;
-      --secondary-gray: #6c757d;
-      --cream: #F5E7E7;
-      --white: #ffffff;
-      /* новая палитра для окружения */
-      --accent: #b30000;
-      --accent-soft: #fff5f5;
-      --accent-border: #f5c6c6;
-      --text: #1f1f1f;
-      --text-soft: #555;
-      --muted: #888;
-      --border: #ececec;
-      --soft-bg: #f6f7f9;
-    }
-
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-@media (max-width: 700px) {
-  .passport-template,
-  .passport-header,
-  .passport-content,
-  .status-and-edit {
-    font-size: clamp(13px, 3.5vw, 16px);
-  }
+/* ---------- Переменные ---------- */
+:root {
+  --primary-red: #7b091a;
+  --dark-red: #650E15;
+  --light-red: #a83232;
+  --secondary-gray: #6c757d;
+  --white: #ffffff;
+  --accent: #b30000;
 }
 
-    /* ---------- Обёртка страницы ---------- */
-    .profile-main {
-      padding: 34px 16px 64px;
-      background:
-        radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
-        #f6f7f9;
-      min-height: 100vh;
-    }
-    .profile-container {
-      max-width: 1120px;
-      margin: 0 auto;
-      padding: 0;
-    }
+/* ---------- Reset ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ---------- Приветственный блок ---------- */
+/* ============================================================
+   1. ОБЁРТКА СТРАНИЦЫ
+   ============================================================ */
+.profile-main {
+  padding: 34px 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
+  min-height: 100vh;
+}
+.profile-container {
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+/* ============================================================
+   2. ПРИВЕТСТВЕННЫЙ БЛОК
+   ============================================================ */
 .greeting-block {
   position: relative;
   display: flex;
@@ -63,17 +47,15 @@
   box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
   overflow: hidden;
 }
-    .greeting-block::after {
-      content: "";
-      position: absolute;
-      right: -70px;
-      top: -70px;
-      width: 220px;
-      height: 220px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
-      pointer-events: none;
-    }
+.greeting-block::after {
+  content: "";
+  position: absolute;
+  right: -70px; top: -70px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+  pointer-events: none;
+}
 .greeting-emoji {
   flex-shrink: 0;
   font-size: 3rem;
@@ -81,12 +63,12 @@
   position: relative;
   z-index: 1;
 }
-    .greeting-content {
-      flex: 1 1 220px;
-      min-width: 0;
-      position: relative;
-      z-index: 1;
-    }
+.greeting-content {
+  flex: 1 1 220px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
 .greeting-text {
   margin: 0 0 6px;
   font-size: 1.9rem;
@@ -110,594 +92,528 @@
   position: relative;
   z-index: 1;
 }
-    .greeting-action-link {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 10px 18px;
-      border-radius: 10px;
-      background: #ffffff;
-      border: 1px solid #ececec;
-      color: #2a2a2a;
-      text-decoration: none;
-      font-size: 0.92rem;
-      font-weight: 500;
-      white-space: nowrap;
-      transition: transform 0.15s ease, box-shadow 0.2s ease,
-                  border-color 0.2s ease, background-color 0.2s ease, color 0.15s ease;
-    }
-    .greeting-action-link:hover,
-    .greeting-action-link:focus-visible {
-      border-color: #b30000;
-      background: #fff5f5;
-      color: #b30000;
-      transform: translateY(-1px);
-      box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
-      outline: none;
-    }
-
-    /* ---------- Loading / no-data ---------- */
-    .loading,
-    .no-data {
-      text-align: center;
-      padding: 3rem 1.5rem;
-      font-size: 1rem;
-      color: #6c757d;
-      background: #ffffff;
-      border: 1px solid #ececec;
-      border-radius: 16px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-      margin: 0 0 20px;
-      line-height: 1.55;
-    }
-    .no-data p {
-      margin: 12px 0 18px;
-      color: #555;
-    }
-
-    /* ---------- Кнопки ---------- */
-    .add-btn,
-    .btn-details,
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
-      color: #ffffff;
-      border: none;
-      border-radius: 10px;
-      padding: 11px 20px;
-      font-size: 0.92rem;
-      font-weight: 500;
-      font-family: inherit;
-      cursor: pointer;
-      margin: 0;
-      transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
-      text-decoration: none;
-      box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
-      white-space: nowrap;
-    }
-    .add-btn:hover,
-    .btn-details:hover,
-    .btn:hover {
-      filter: brightness(1.08);
-      box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
-    }
-    .btn-details {
-      background: #ffffff;
-      border: 1px solid #ececec;
-      color: #2a2a2a;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-    }
-    .btn-details:hover {
-      background: #fff5f5;
-      border-color: #b30000;
-      color: #b30000;
-      box-shadow: 0 6px 14px rgba(179, 0, 0, 0.1);
-      filter: none;
-    }
-    .details-btn-wrap {
-      text-align: center;
-      margin: 8px 0 24px;
-    }
-
-    /* ---------- Статус (сохранено как в оригинале) ---------- */
-    .status-and-edit {
-      display: flex;
-      justify-content: center;
-      margin: 2rem 0;
-    }
-    .document-status {
-      display: inline-block;
-      padding: 0.6rem 1.5rem;
-      font-size: 1rem;
-      line-height: 1.5;
-      border-radius: 8px;
-      text-align: center;
-      text-decoration: none;
-      background: transparent;
-    }
-    .status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
-    .status-pending  { background: rgba(255, 193, 7, 0.15); color: #856404; }
-    .status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
-    .status-archived { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
-
-    /* ============================================================
-       ПАСПОРТ — НЕ ИЗМЕНЕНО (копия оригинала)
-       ============================================================ */
-    .passport-template {
-      background: #ffffff;
-      border: 0.75rem solid var(--primary-red);
-      border-radius: 12px;
-      padding: 0;
-      width: 100%;
-      max-width: 900px;
-      margin: 0 auto 2rem;
-      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-      overflow: hidden;
-    }
-    .passport-header {
-      background: var(--primary-red);
-      color: var(--white);
-      padding: 1.5rem 1rem;
-      text-align: center;
-      border-bottom: 2px solid var(--dark-red);
-      font-family: 'PT Serif', serif;
-    }
-    .country-name {
-      font-size: 2.2rem;
-      font-weight: 700;
-      margin-bottom: 0.2rem;
-      text-transform: uppercase;
-    }
-    .document-type {
-      font-size: 1.8rem;
-      font-weight: 700;
-    }
-    .passport-content {
-      padding: 1.5rem;
-      font-family: 'PT Serif', serif;
-    }
-    .data-field {
-      margin-bottom: 1rem;
-    }
-    .field-label {
-      color: var(--primary-red);
-      font-size: 0.9rem;
-      font-weight: 700;
-      margin-bottom: 0.2rem;
-    }
-    .field-value {
-      font-size: 1rem;
-      border-bottom: 1px dashed #999;
-      padding-bottom: 0.3rem;
-    }
-    .series-number {
-      font-weight: bold;
-      font-size: 1.5rem;
-      letter-spacing: 2px;
-      color: var(--primary-red);
-    }
-    .passport-lower {
-      display: flex;
-      gap: 1.5rem;
-      margin-top: 1.5rem;
-    }
-    .photo-barcode-section {
-      flex: 0 0 25%;
-      min-width: 130px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-    }
-    .passport-photo-container {
-      width: 100%;
-      aspect-ratio: 3 / 4;
-      border: 2px solid var(--primary-red);
-      background: var(--white);
-      margin-bottom: 0.8rem;
-      overflow: hidden;
-      border-radius: 12px;
-    }
-    .passport-photo {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-    .barcode-container {
-      width: 100%;
-    }
-    .barcode {
-      width: 100%;
-      height: auto;
-      max-height: 3rem;
-    }
-    .fio-section {
-      flex: 1;
-      min-width: 0;
-    }
-    .passport-divider {
-      height: 2px;
-      background: var(--primary-red);
-      margin: 1.5rem 0;
-    }
-    @media (max-width: 600px) {
-      .passport-lower {
-        flex-direction: column;
-      }
-      .photo-barcode-section {
-        flex: none;
-        width: 100%;
-        align-items: center;
-      }
-      .passport-photo-container {
-        max-width: 200px;
-        margin: 0 auto 0.8rem;
-      }
-    }
-    /* ============================================================
-       КОНЕЦ БЛОКА ПАСПОРТА
-       ============================================================ */
-
-    /* ---------- Архивные паспорта — улучшены ---------- */
-    .archived-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-      margin: 0 0 24px;
-    }
-    .archived-card {
-      position: relative;
-      background: #ffffff;
-      border: 1px solid #ececec;
-      border-radius: 14px;
-      padding: 18px 20px 20px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-      transition: transform 0.2s ease, box-shadow 0.2s ease,
-                  border-color 0.2s ease, background-color 0.2s ease;
-    }
-    .archived-card:hover {
-      transform: translateY(-3px);
-      border-color: #b30000;
-      background: #fff9f9;
-      box-shadow: 0 12px 26px rgba(179, 0, 0, 0.12);
-    }
-    .archived-card h4 {
-      color: #1f1f1f;
-      margin: 0 0 10px;
-      font-size: 1.05rem;
-      font-weight: 700;
-      line-height: 1.3;
-      font-family: 'PT Serif', serif;
-      letter-spacing: 0.02em;
-    }
-    .archived-card p {
-      margin: 4px 0;
-      font-size: 0.88rem;
-      color: #555;
-      line-height: 1.5;
-    }
-    .archived-card p strong {
-      color: #888;
-      font-weight: 500;
-    }
-    .archived-card .status-badge {
-      display: inline-block;
-      margin-top: 10px;
-      font-size: 0.74rem;
-      padding: 3px 12px;
-      border-radius: 20px;
-      background: #f0f0f0;
-      color: #666;
-      border: 1px solid #e0e0e0;
-      font-weight: 600;
-    }
-    @media (max-width: 600px) {
-      .archived-grid { grid-template-columns: 1fr; }
-    }
-
-    /* ---------- Заголовки секций и таблицы — улучшены ---------- */
-    .section-title {
-      font-family: 'PT Serif', serif;
-      color: #1a1a1a;
-      font-size: 1.25rem;
-      margin: 28px 0 16px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid #f0f0f0;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      font-weight: 700;
-      line-height: 1.3;
-    }
-    .section-title i {
-      color: #b30000;
-      font-size: 1rem;
-      margin-right: 0;
-    }
-    .info-table {
-      overflow-x: auto;
-      margin-bottom: 24px;
-      background: #ffffff;
-      border: 1px solid #ececec;
-      border-radius: 14px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
-    }
-    .info-table table {
-      width: 100%;
-      border-collapse: collapse;
-      background: transparent;
-    }
-    .info-table thead {
-      background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
-      color: #ffffff;
-    }
-    .info-table th,
-    .info-table td {
-      padding: 12px 16px;
-      font-size: 0.9rem;
-      text-align: left;
-      line-height: 1.45;
-    }
-    .info-table th {
-      font-weight: 600;
-      font-size: 0.82rem;
-      letter-spacing: 0.01em;
-      border-bottom: 1px solid #8a0000;
-    }
-    .info-table td {
-      color: #333;
-      border-bottom: 1px solid #f2f2f2;
-    }
-    .info-table tbody tr:last-child td { border-bottom: none; }
-    .info-table tbody tr:nth-child(even) td { background: #fafafa; }
-    .info-table tbody tr:hover td { background: #fff9f9; }
-
-    /* ---------- Блок «Заметили ошибку» — улучшен ---------- */
-    .error-report {
-      text-align: center;
-      margin: 24px 0 8px;
-      padding: 20px 24px;
-      background: #fff5f5;
-      border: 1px solid #f5c6c6;
-      border-radius: 14px;
-    }
-    .error-report p {
-      margin: 0 0 10px;
-      font-weight: 500;
-      color: #555;
-      font-size: 0.95rem;
-    }
-    .error-report p i {
-      color: #b30000;
-      margin-right: 6px;
-    }
-    .error-link {
-      color: #b30000;
-      text-decoration: underline;
-      font-weight: 500;
-      font-size: 0.92rem;
-      transition: opacity 0.15s ease;
-    }
-    .error-link:hover {
-      text-decoration: none;
-      opacity: 0.85;
-    }
-
-    /* ---------- too-small-message (медиа-запрос теперь работает) ---------- */
-    .too-small-message {
-      display: none;
-      text-align: center;
-      padding: 2rem 1rem;
-      font-size: 1.2rem;
-      color: #666;
-      background: #ffffff;
-      border: 1px solid #ececec;
-      border-radius: 12px;
-      margin: 2rem auto;
-      max-width: 400px;
-    }
-    @media (max-width: 320px) {
-      .too-small-message { display: block; }
-      .profile-container > *:not(.too-small-message) { display: none !important; }
-    }
-
-    /* ---------- Адаптивность ---------- */
-    @media (max-width: 640px) {
-      .profile-main { padding: 22px 12px 48px; }
-
-      .greeting-block {
-        padding: 20px;
-        gap: 14px;
-      }
-.greeting-emoji { font-size: 2.2rem; }
-.greeting-text { font-size: 1.4rem; }
-.greeting-subtitle { font-size: 0.9rem; }
-      .greeting-actions {
-        flex: 1 1 100%;
-        width: 100%;
-      }
-      .greeting-action-link {
-        width: 100%;
-        justify-content: center;
-        padding: 10px 14px;
-        font-size: 0.86rem;
-      }
-
-      .add-btn,
-      .btn-details,
-      .btn { width: 100%; }
-
-      .section-title {
-        font-size: 1.1rem;
-        margin-top: 24px;
-        padding-bottom: 10px;
-      }
-      .info-table th,
-      .info-table td {
-        padding: 10px 12px;
-        font-size: 0.84rem;
-      }
-      .archived-card { padding: 16px 18px 18px; }
-    }
-
-@media (max-width: 640px) {
-
-  /* ---- Контейнер паспорта ---- */
-  #passportContent .passport-template {
-    width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 auto 1.5rem !important;
-    border-width: 6px !important;
-    border-radius: 8px !important;
-  }
-
-  /* ---- Шапка ---- */
-  #passportContent .passport-header { padding: 12px 10px !important; }
-  #passportContent .country-name {
-    font-size: 1.15rem !important;
-    margin: 0 0 2px !important;
-    letter-spacing: 0.5px !important;
-  }
-  #passportContent .document-type { font-size: 0.95rem !important; }
-
-  /* ---- Верхняя часть: сетка 2 колонки ---- */
-  #passportContent .passport-content {
-    padding: 12px 14px !important;
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 8px 14px !important;
-  }
-
-  /* Строка 1: Серия (1) | Личный код (6) */
-  #passportContent .passport-content > .data-field:nth-child(1) { grid-column: 1; grid-row: 1; }
-  #passportContent .passport-content > .data-field:nth-child(6) { grid-column: 2; grid-row: 1; }
-
-  /* Строка 2: Дата выдачи (2) | Срок действия (3) */
-  #passportContent .passport-content > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
-  #passportContent .passport-content > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
-
-  /* Строка 3: Кем выдан (4) — на всю ширину */
-  #passportContent .passport-content > .data-field:nth-child(4) { grid-column: 1 / -1; grid-row: 3; }
-
-  /* Строка 4: Код подразделения (5) — на всю ширину */
-  #passportContent .passport-content > .data-field:nth-child(5) { grid-column: 1 / -1; grid-row: 4; }
-
-  #passportContent .passport-divider {
-    grid-column: 1 / -1 !important;
-    grid-row: 5 !important;
-    margin: 6px 0 !important;
-    height: 1.5px !important;
-  }
-
-  #passportContent .passport-lower {
-    grid-column: 1 / -1 !important;
-    grid-row: 6 !important;
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 12px !important;
-    margin-top: 0 !important;
-    align-items: flex-start !important;
-  }
-
-  /* ---- Поля верхней части — компактные ---- */
-  #passportContent .passport-content > .data-field { margin-bottom: 0 !important; }
-  #passportContent .field-label {
-    font-size: 0.65rem !important;
-    margin: 0 0 1px !important;
-  }
-  #passportContent .field-value {
-    font-size: 0.78rem !important;
-    padding-bottom: 1px !important;
-  }
-  #passportContent .series-number {
-    font-size: 0.95rem !important;
-    letter-spacing: 0.5px !important;
-  }
-
-  /* ---- Левая колонка низа: фото + штрихкод + QR (плотно) ---- */
-  #passportContent .photo-barcode-section {
-    flex: 0 0 42% !important;
-    min-width: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-  }
-  #passportContent .passport-photo-container {
-    max-width: 100% !important;
-    margin: 0 0 4px !important;
-  }
-  #passportContent .barcode-container {
-    width: 100% !important;
-    margin: 0 !important;
-  }
-  #passportContent .barcode {
-    max-height: 22px !important;
-    margin: 0 !important;
-  }
-  /* обёртка QR — инлайн-стиль text-align: center уже стоит в HTML,
-     но перебиваем margin-top: 15px → 4px */
-  #passportContent .photo-barcode-section > div:last-child {
-    margin-top: 4px !important;
-    text-align: center !important;
-  }
-  #passportContent #passportQrCode {
-    display: block !important;
-    width: 52px !important;
-    height: 52px !important;
-    margin: 0 auto !important;
-  }
-  #passportContent #passportQrCode canvas,
-  #passportContent #passportQrCode img {
-    width: 52px !important;
-    height: 52px !important;
-    display: block !important;
-    margin: 0 auto !important;
-  }
-  #passportContent #passportQrCode canvas,
-  #passportContent #passportQrCode img {
-    width: 52px !important;
-    height: 52px !important;
-  }
-
-  /* ---- Правая колонка: ФИО в 2 колонки ---- */
-  #passportContent .fio-section {
-    flex: 1 !important;
-    min-width: 0 !important;
-    display: grid !important;
-    grid-template-columns: 1fr 1fr !important;
-    gap: 6px 10px !important;
-    align-content: start !important;
-  }
-
-  /* Строка 1: Фамилия — на всю ширину */
-  #passportContent .fio-section > .data-field:nth-child(1) { grid-column: 1 / -1; grid-row: 1; }
-
-  /* Строка 2: Имя | Отчество */
-  #passportContent .fio-section > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
-  #passportContent .fio-section > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
-
-  /* Строка 3: Дата рождения (5) | Пол (4) */
-  #passportContent .fio-section > .data-field:nth-child(5) { grid-column: 1; grid-row: 3; }
-  #passportContent .fio-section > .data-field:nth-child(4) { grid-column: 2; grid-row: 3; }
-
-  /* Строка 4: Место рождения — на всю ширину */
-  #passportContent .fio-section > .data-field:nth-child(6) { grid-column: 1 / -1; grid-row: 4; }
-
-  #passportContent .fio-section .data-field { margin-bottom: 0 !important; }
-  #passportContent .fio-section .field-label { font-size: 0.63rem !important; }
-  #passportContent .fio-section .field-value { font-size: 0.76rem !important; }
+.greeting-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  color: #2a2a2a;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, background-color 0.2s ease, color 0.15s ease;
+}
+.greeting-action-link:hover,
+.greeting-action-link:focus-visible {
+  border-color: #b30000;
+  background: #fff5f5;
+  color: #b30000;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+  outline: none;
 }
 
-    @media (prefers-reduced-motion: reduce) {
-      .archived-card,
-      .btn-details,
-      .btn,
-      .add-btn,
-      .greeting-action-link,
-      .error-link {
-        transition: none !important;
-      }
-    }
+/* ============================================================
+   3. LOADING / NO-DATA
+   ============================================================ */
+.loading,
+.no-data {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  font-size: 1rem;
+  color: #6c757d;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  margin: 0 0 20px;
+  line-height: 1.55;
+}
+.no-data p { margin: 12px 0 18px; color: #555; }
+
+/* ============================================================
+   4. КНОПКИ
+   ============================================================ */
+.add-btn,
+.btn,
+.btn-details {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  margin: 0;
+  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
+  white-space: nowrap;
+}
+.add-btn:hover,
+.btn:hover,
+.btn-details:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
+}
+.btn-details {
+  background: #ffffff;
+  border: 1px solid #ececec;
+  color: #2a2a2a;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+.btn-details:hover {
+  background: #fff5f5;
+  border-color: #b30000;
+  color: #b30000;
+  box-shadow: 0 6px 14px rgba(179, 0, 0, 0.1);
+  filter: none;
+}
+.details-btn-wrap {
+  text-align: center;
+  margin: 8px 0 24px;
+}
+
+/* ============================================================
+   5. СТАТУС (сохранено из оригинала)
+   ============================================================ */
+.status-and-edit {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+.document-status {
+  display: inline-block;
+  padding: 0.6rem 1.5rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: 8px;
+  text-align: center;
+  text-decoration: none;
+  background: transparent;
+}
+.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-pending  { background: rgba(255, 193, 7, 0.15); color: #856404; }
+.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.status-archived { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
+
+/* ============================================================
+   6. БЛОК ПАСПОРТА
+   Визуал сохранён, раскладка полей — единая (десктоп + мобильный)
+   ============================================================ */
+.passport-template {
+  background: #ffffff;
+  border: 0.75rem solid var(--primary-red);
+  border-radius: 12px;
+  padding: 0;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto 2rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  overflow: hidden;
+  font-family: 'PT Serif', serif;
+}
+
+.passport-header {
+  background: var(--primary-red);
+  color: var(--white);
+  padding: 1.5rem 1rem;
+  text-align: center;
+  border-bottom: 2px solid var(--dark-red);
+  font-family: 'PT Serif', serif;
+}
+.country-name {
+  font-size: 2.2rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  text-transform: uppercase;
+}
+.document-type {
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+/* --- Верхняя часть паспорта: сетка 2 колонки --- */
+.passport-content {
+  padding: 1.5rem;
+  font-family: 'PT Serif', serif;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem 2rem;
+  align-items: start;
+}
+
+/* Строка 1: Серия (1) | Личный код (6) */
+.passport-content > .data-field:nth-child(1) { grid-column: 1; grid-row: 1; }
+.passport-content > .data-field:nth-child(6) { grid-column: 2; grid-row: 1; }
+
+/* Строка 2: Дата выдачи (2) | Срок действия (3) */
+.passport-content > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
+.passport-content > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
+
+/* Строка 3: Кем выдан (4) — на всю ширину */
+.passport-content > .data-field:nth-child(4) { grid-column: 1 / -1; grid-row: 3; }
+
+/* Строка 4: Код подразделения (5) — на всю ширину */
+.passport-content > .data-field:nth-child(5) { grid-column: 1 / -1; grid-row: 4; }
+
+/* Разделитель и низ — на всю ширину */
+.passport-content > .passport-divider {
+  grid-column: 1 / -1;
+  grid-row: 5;
+  margin: 4px 0;
+  height: 2px;
+  background: var(--primary-red);
+}
+.passport-content > .passport-lower {
+  grid-column: 1 / -1;
+  grid-row: 6;
+  margin-top: 0;
+}
+
+/* Поля */
+.data-field { margin-bottom: 0; }
+.field-label {
+  color: var(--primary-red);
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+}
+.field-value {
+  font-size: 1rem;
+  border-bottom: 1px dashed #999;
+  padding-bottom: 0.3rem;
+  word-break: break-word;
+}
+.series-number {
+  font-weight: bold;
+  font-size: 1.5rem;
+  letter-spacing: 2px;
+  color: var(--primary-red);
+}
+
+/* --- Нижняя часть: фото слева, ФИО справа --- */
+.passport-lower {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0;
+  align-items: flex-start;
+}
+
+.photo-barcode-section {
+  flex: 0 0 30%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.passport-photo-container {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border: 2px solid var(--primary-red);
+  background: var(--white);
+  margin-bottom: 0.6rem;
+  overflow: hidden;
+  border-radius: 12px;
+}
+.passport-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.barcode-container {
+  width: 100%;
+  margin: 0;
+}
+.barcode {
+  width: 100%;
+  height: auto;
+  max-height: 3rem;
+  display: block;
+}
+
+/* QR — по центру относительно фото */
+.photo-barcode-section > div:last-child {
+  text-align: center;
+  margin-top: 6px;
+}
+#passportQrCode {
+  display: block;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto;
+}
+#passportQrCode canvas,
+#passportQrCode img {
+  display: block;
+  width: 70px;
+  height: 70px;
+  margin: 0 auto;
+}
+
+/* --- ФИО: сетка 2 колонки --- */
+.fio-section {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1.2rem;
+  align-content: start;
+}
+
+/* Строка 1: Фамилия (1) — на всю ширину */
+.fio-section > .data-field:nth-child(1) { grid-column: 1 / -1; grid-row: 1; }
+/* Строка 2: Имя (2) | Отчество (3) */
+.fio-section > .data-field:nth-child(2) { grid-column: 1; grid-row: 2; }
+.fio-section > .data-field:nth-child(3) { grid-column: 2; grid-row: 2; }
+/* Строка 3: Дата рождения (5) | Пол (4) */
+.fio-section > .data-field:nth-child(5) { grid-column: 1; grid-row: 3; }
+.fio-section > .data-field:nth-child(4) { grid-column: 2; grid-row: 3; }
+/* Строка 4: Место рождения (6) — на всю ширину */
+.fio-section > .data-field:nth-child(6) { grid-column: 1 / -1; grid-row: 4; }
+
+/* ============================================================
+   7. АРХИВНЫЕ ПАСПОРТА
+   ============================================================ */
+.archived-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 0 0 24px;
+}
+.archived-card {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, background-color 0.2s ease;
+}
+.archived-card:hover {
+  transform: translateY(-3px);
+  border-color: #b30000;
+  background: #fff9f9;
+  box-shadow: 0 12px 26px rgba(179, 0, 0, 0.12);
+}
+.archived-card h4 {
+  color: #1f1f1f;
+  margin: 0 0 10px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+  font-family: 'PT Serif', serif;
+}
+.archived-card p {
+  margin: 4px 0;
+  font-size: 0.88rem;
+  color: #555;
+  line-height: 1.5;
+}
+.archived-card p strong { color: #888; font-weight: 500; }
+.archived-card .status-badge {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.74rem;
+  padding: 3px 12px;
+  border-radius: 20px;
+  background: #f0f0f0;
+  color: #666;
+  border: 1px solid #e0e0e0;
+  font-weight: 600;
+}
+
+/* ============================================================
+   8. ЗАГОЛОВКИ СЕКЦИЙ И ТАБЛИЦЫ
+   ============================================================ */
+.section-title {
+  color: #1a1a1a;
+  font-size: 1.25rem;
+  margin: 28px 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  line-height: 1.3;
+  font-family: 'PT Serif', serif;
+}
+.section-title i { color: #b30000; font-size: 1rem; margin-right: 0; }
+
+.info-table {
+  overflow-x: auto;
+  margin-bottom: 24px;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+.info-table table { width: 100%; border-collapse: collapse; }
+.info-table thead {
+  background: linear-gradient(135deg, #b30000 0%, #e53935 100%);
+  color: #ffffff;
+}
+.info-table th, .info-table td {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  text-align: left;
+  line-height: 1.45;
+}
+.info-table th {
+  font-weight: 600;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #8a0000;
+}
+.info-table td {
+  color: #333;
+  border-bottom: 1px solid #f2f2f2;
+}
+.info-table tbody tr:last-child td { border-bottom: none; }
+.info-table tbody tr:nth-child(even) td { background: #fafafa; }
+.info-table tbody tr:hover td { background: #fff9f9; }
+
+/* ============================================================
+   9. ЗАМЕТИЛИ ОШИБКУ
+   ============================================================ */
+.error-report {
+  text-align: center;
+  margin: 24px 0 8px;
+  padding: 20px 24px;
+  background: #fff5f5;
+  border: 1px solid #f5c6c6;
+  border-radius: 14px;
+}
+.error-report p {
+  margin: 0 0 10px;
+  font-weight: 500;
+  color: #555;
+  font-size: 0.95rem;
+}
+.error-report p i { color: #b30000; margin-right: 6px; }
+.error-link {
+  color: #b30000;
+  text-decoration: underline;
+  font-weight: 500;
+  font-size: 0.92rem;
+  transition: opacity 0.15s ease;
+}
+.error-link:hover { text-decoration: none; opacity: 0.85; }
+
+/* ============================================================
+   10. TOO SMALL
+   ============================================================ */
+.too-small-message {
+  display: none;
+  text-align: center;
+  padding: 2rem 1rem;
+  font-size: 1.2rem;
+  color: #666;
+  background: #ffffff;
+  border: 1px solid #ececec;
+  border-radius: 12px;
+  margin: 2rem auto;
+  max-width: 400px;
+}
+@media (max-width: 320px) {
+  .too-small-message { display: block !important; }
+  .profile-container > *:not(.too-small-message) { display: none !important; }
+}
+
+/* ============================================================
+   11. МОБИЛЬНАЯ АДАПТАЦИЯ
+   Только размеры. Раскладка полей уже задана в базовых правилах.
+   ============================================================ */
+@media (max-width: 640px) {
+  .profile-main { padding: 22px 12px 48px; }
+
+  /* Приветствие */
+  .greeting-block { padding: 22px 20px; gap: 16px; }
+  .greeting-emoji { font-size: 2.2rem; }
+  .greeting-text { font-size: 1.4rem; }
+  .greeting-subtitle { font-size: 0.9rem; }
+  .greeting-actions {
+    flex-direction: row;
+    flex: 1 1 100%;
+    width: 100%;
+    gap: 8px;
+  }
+  .greeting-actions > * { flex: 1 1 0; }
+  .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+  /* Кнопки */
+  .add-btn, .btn, .btn-details { width: 100%; }
+  .details-btn-wrap { margin: 8px 0 20px; }
+
+  /* Секции */
+  .section-title { font-size: 1.1rem; margin-top: 24px; padding-bottom: 10px; }
+  .info-table th, .info-table td { padding: 10px 12px; font-size: 0.84rem; }
+
+  /* Архив */
+  .archived-grid { grid-template-columns: 1fr; }
+  .archived-card { padding: 16px 18px 18px; }
+
+  /* --- Паспорт: только размеры --- */
+  .passport-template {
+    border-width: 6px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .passport-header { padding: 12px 10px; }
+  .country-name { font-size: 1.15rem; margin-bottom: 2px; letter-spacing: 0.5px; }
+  .document-type { font-size: 0.95rem; }
+
+  .passport-content {
+    padding: 12px 14px;
+    gap: 10px 14px;
+  }
+  .field-label { font-size: 0.65rem; margin-bottom: 1px; }
+  .field-value { font-size: 0.78rem; padding-bottom: 2px; }
+  .series-number { font-size: 0.95rem; letter-spacing: 0.5px; }
+
+  .passport-content > .passport-divider { margin: 4px 0; height: 1.5px; }
+
+  .passport-lower { gap: 12px; }
+  .photo-barcode-section { flex: 0 0 38%; }
+  .passport-photo-container { margin-bottom: 4px; }
+  .barcode { max-height: 22px; }
+  .photo-barcode-section > div:last-child { margin-top: 4px; }
+  #passportQrCode,
+  #passportQrCode canvas,
+  #passportQrCode img {
+    width: 56px;
+    height: 56px;
+  }
+
+  .fio-section { gap: 8px 10px; }
+  .fio-section .field-label { font-size: 0.63rem; }
+  .fio-section .field-value { font-size: 0.76rem; }
+}
+
+/* ============================================================
+   12. Reduced motion
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  .archived-card,
+  .btn-details,
+  .btn,
+  .add-btn,
+  .greeting-action-link,
+  .error-link {
+    transition: none !important;
+  }
+}
