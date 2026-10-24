@@ -11,11 +11,39 @@ function formatDate(dateString) {
   catch { return dateString }
 }
 
+// --- НОВАЯ ФУНКЦИЯ: Перевод пола на русский ---
+function formatGender(gender) {
+  if (!gender) return '—'
+  const g = String(gender).toLowerCase().trim()
+  if (g === 'male' || g === 'м' || g === 'мужской' || g === 'm') return 'Мужской'
+  if (g === 'female' || g === 'ж' || g === 'женский' || g === 'f') return 'Женский'
+  return gender // Если значение неизвестное, возвращаем как есть
+}
+
 function getStatusLabel(status) {
   if (status === 'verified') return '✅ Подтверждено'
   if (status === 'oncheck') return '⏳ На проверке'
   if (status === 'rejected') return '❌ Отклонено'
   return '—'
+}
+
+// --- ФУНКЦИЯ ДЛЯ ПРОВЕРКИ СРОКА ДЕЙСТВИЯ ---
+function getExpiryBadge(expiryDateStr) {
+  if (!expiryDateStr) return ''
+  
+  const expiryDate = new Date(expiryDateStr)
+  expiryDate.setHours(23, 59, 59, 999) // Конец дня
+  const today = new Date()
+  
+  const diffTime = expiryDate - today
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+  
+  if (diffDays < 0) {
+    return '<span class="document-status status-expired">❌ Истёк срок</span>'
+  } else if (diffDays <= 30) {
+    return `<span class="document-status status-warning">⚠️ Истекает (${diffDays} дн.)</span>`
+  }
+  return ''
 }
 
 function safeSetText(id, text) {
@@ -69,13 +97,16 @@ async function renderUserInfo() {
   safeSetText('fullName', fullName)
   safeSetText('birthDate', formatDate(userProfile.date_of_birth))
   safeSetText('birthPlace', userProfile.place_of_birth || '—')
-  safeSetText('gender', userProfile.gender || '—')
+  
+  // Применяем функцию перевода для поля "Пол"
+  safeSetText('gender', formatGender(userProfile.gender))
+  
   safeSetText('personalCode', userProfile.personal_code || '—')
 
   // Аватар из приватного bucket
   const avatarImg = document.getElementById('userAvatar')
   if (avatarImg) {
-    avatarImg.src = '../../images/default-avatar.png' // заглушка на время загрузки
+    avatarImg.src = '../../images/default-avatar.png'
     if (personalCode) {
       const signedUrl = await getSignedPhotoUrl(personalCode)
       if (signedUrl) {
@@ -83,15 +114,11 @@ async function renderUserInfo() {
         img.onload = () => { avatarImg.src = signedUrl }
         img.onerror = () => { avatarImg.src = '../../images/default-avatar.png' }
         img.src = signedUrl
-      } else {
-        avatarImg.src = '../../images/default-avatar.png'
       }
-    } else {
-      avatarImg.src = '../../images/default-avatar.png'
     }
   }
 
-  // QR-код (остаётся без изменений)
+  // QR-код
   const qrContainer = document.getElementById('userQrCode')
   if (qrContainer && personalCode) {
     qrContainer.innerHTML = ''
@@ -148,30 +175,18 @@ async function loadAllDocuments() {
 
 function getDocumentNumber(doc, type) {
   switch (type) {
-    case 'passport':
-      return doc.series_number || doc.seriesNumber || '—'
-    case 'foreignPassport':
-      return doc.series_number || doc.seriesNumber || '—'
-    case 'inn':
-      return doc.inn_number || '—'
-    case 'nss':
-      return doc.nss_number || doc.number || '—'
-    case 'driverLicense':
-      return doc.license_number || doc.series_number || '—'
-    case 'idCard':
-      return doc.card_number || doc.series_number || '—'
-    case 'militaryId':
-      return doc.ticket_number || doc.series_number || '—'
-    case 'oms':
-      return doc.oms_number || doc.number || '—'
-    case 'pension':
-      return doc.pension_number || doc.number || '—'
-    case 'disability':
-      return doc.disability_number || doc.number || '—'
-    case 'internationalDriving':
-      return doc.license_number || doc.series_number || '—'
-    default:
-      return '—'
+    case 'passport': return doc.series_number || doc.seriesNumber || '—'
+    case 'foreignPassport': return doc.series_number || doc.seriesNumber || '—'
+    case 'inn': return doc.inn_number || '—'
+    case 'nss': return doc.nss_number || doc.number || '—'
+    case 'driverLicense': return doc.license_number || doc.series_number || '—'
+    case 'idCard': return doc.card_number || doc.series_number || '—'
+    case 'militaryId': return doc.ticket_number || doc.series_number || '—'
+    case 'oms': return doc.oms_number || doc.number || '—'
+    case 'pension': return doc.pension_number || doc.number || '—'
+    case 'disability': return doc.disability_number || doc.number || '—'
+    case 'internationalDriving': return doc.license_number || doc.series_number || '—'
+    default: return '—'
   }
 }
 
@@ -217,6 +232,9 @@ function renderDocumentsGrid(documents) {
     const statusLabel = getStatusLabel(doc.status)
     const statusClass = doc.status === 'verified' ? 'status-verified' : (doc.status === 'oncheck' ? 'status-pending' : 'status-rejected')
     const number = getDocumentNumber(doc, item.type)
+    
+    // Генерируем плашку срока действия (если применимо)
+    const expiryBadge = getExpiryBadge(doc.expiry_date)
 
     const card = document.createElement('a')
     card.href = `${item.url}?id=${doc.id}`
@@ -224,7 +242,10 @@ function renderDocumentsGrid(documents) {
     card.innerHTML = `
       <div class="document-header">
         <div class="document-title">${item.title}</div>
-        <span class="document-status ${statusClass}">${statusLabel}</span>
+        <div class="document-badges">
+          <span class="document-status ${statusClass}">${statusLabel}</span>
+          ${expiryBadge}
+        </div>
       </div>
       <div class="document-fields">
         <div class="document-field">
