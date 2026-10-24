@@ -209,6 +209,30 @@ function renderCard(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
+  // Логика проверки срока действия
+  if (data.expiry_date) {
+    const expiryDate = new Date(data.expiry_date)
+    expiryDate.setHours(23, 59, 59, 999) // Конец дня
+    const today = new Date()
+    
+    const diffTime = expiryDate - today
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays < 0) {
+      // Срок истек
+      const expiredBadge = document.createElement('span')
+      expiredBadge.className = 'document-status status-expired'
+      expiredBadge.textContent = '❌ Истёк срок действия'
+      statusAndEdit.appendChild(expiredBadge)
+    } else if (diffDays <= 30) {
+      // Меньше месяца до истечения
+      const warningBadge = document.createElement('span')
+      warningBadge.className = 'document-status status-warning'
+      warningBadge.textContent = `⚠️ Истекает срок действия (${diffDays} дн.)`
+      statusAndEdit.appendChild(warningBadge)
+    }
+  }
+
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/id-card/'
   replaceLink.className = 'edit-btn'
@@ -227,7 +251,6 @@ function renderCard(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
-  // Вставляем в новый контейнер #statusAndEditContainer
   const container = document.getElementById('statusAndEditContainer')
   if (container) {
     container.innerHTML = ''
@@ -613,7 +636,7 @@ function openEditModal() {
 
 async function saveDocument() {
   if (currentStep === 2) {
-    // Данные собраны на шаге 1 и 2
+    // Данные собраны
   } else {
     collectMainDataFromForm()
   }
