@@ -18,6 +18,19 @@ function formatDate(dateString) {
   }
 }
 
+// НОВОЕ: расшифровка оценок
+function formatGrade(grade) {
+  if (grade === null || grade === undefined || grade === '') return '—'
+  const g = String(grade).trim()
+  const map = {
+    '5': 'отлично',
+    '4': 'хорошо',
+    '3': 'удовлетв.',
+    '2': 'неудовлетв.'
+  }
+  return map[g] ? `${g} (${map[g]})` : g
+}
+
 function getStatusLabel(status) {
   if (status === 'verified') return '✅ Подтверждено'
   if (status === 'oncheck') return '⏳ На проверке'
@@ -74,8 +87,6 @@ async function loadData() {
     const idFromUrl = urlParams.get('id')
 
     let data = null
-
-    // ИЗМЕНЕНО: обращаемся к отдельной таблице, без фильтра по type
     if (idFromUrl) {
       const { data: doc, error } = await supabase
         .schema('documents_education')
@@ -120,7 +131,6 @@ async function loadData() {
 }
 
 // ==================== ОТРИСОВКА ДОКУМЕНТА ====================
-// (эта часть без изменений — код из предыдущего ответа)
 function renderCertificate(data) {
   const fullName = data.full_name || `${userProfile?.surname || ''} ${userProfile?.name || ''} ${userProfile?.patronymic || ''}`.trim() || '—'
   const isHonors = data.with_honors === true
@@ -207,6 +217,7 @@ function renderCertificate(data) {
 
   document.getElementById('certificateContainer').innerHTML = certHtml
 
+  // --- ПРИЛОЖЕНИЕ ---
   const appendixContainer = document.getElementById('appendixContainer')
 
   if (subjects.length > 0 || data.additional_info) {
@@ -214,12 +225,14 @@ function renderCertificate(data) {
     if (subjects.length > 0) {
       subjectsTableHtml = `
         <table class="subjects-table">
-          <thead><tr><th>Предмет</th><th>Оценка</th></tr></thead>
+          <thead>
+            <tr><th>Предмет</th><th>Оценка</th></tr>
+          </thead>
           <tbody>
             ${subjects.map(subj => `
               <tr>
                 <td>${escapeHTML(subj.name || '')}</td>
-                <td>${escapeHTML(subj.grade || '')}</td>
+                <td>${escapeHTML(formatGrade(subj.grade))}</td>
               </tr>
             `).join('')}
           </tbody>
@@ -248,6 +261,7 @@ function renderCertificate(data) {
     appendixContainer.innerHTML = ''
   }
 
+  // --- СТАТУС ---
   const statusText = getStatusLabel(data.status)
   const statusClass = getStatusClass(data.status)
   
