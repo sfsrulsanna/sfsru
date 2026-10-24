@@ -331,15 +331,6 @@ function renderPassport(data) {
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  /* --- Статус и кнопки --- */
-  const statusAndEdit = document.createElement('div')
-  statusAndEdit.className = 'status-and-edit'
-
-  const statusSpan = document.createElement('span')
-  statusSpan.className = statusClass
-  statusSpan.textContent = statusText
-  statusAndEdit.appendChild(statusSpan)
-
   // --- Проверка срока действия ---
   if (data.expiry_date) {
     const expiryDate = new Date(data.expiry_date)
@@ -361,12 +352,6 @@ function renderPassport(data) {
       statusAndEdit.appendChild(warningBadge)
     }
   }
-
-  const replaceLink = document.createElement('a')
-  replaceLink.href = '../../services/documents/passport/'
-  replaceLink.className = 'edit-btn'
-  replaceLink.textContent = 'Заменить паспорт'
-  statusAndEdit.appendChild(replaceLink)
 
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/passport/'
