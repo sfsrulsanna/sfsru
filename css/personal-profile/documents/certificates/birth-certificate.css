@@ -24,16 +24,18 @@ html {
   html { font-size: clamp(12px, 3vw, 16px); }
 }
 
+/* Обновленный фон в стиле личного кабинета */
 .main-content {
-  padding: 2rem 0;
-  background: white;
+  padding: 2rem 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
   min-height: 100vh;
 }
 
 .container {
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 1.5rem;
 }
 
 .loading, .no-data {
@@ -112,7 +114,7 @@ html {
   color: var(--primary-green);
 }
 
-/* ===== БЛОК РОДИТЕЛЕЙ (аналогично супругам) ===== */
+/* ===== БЛОК РОДИТЕЛЕЙ ===== */
 .parents-section {
   margin: 1.5rem 0;
 }
@@ -167,7 +169,7 @@ html {
   min-width: 120px;
 }
 
-/* ===== АКТОВАЯ ЗАПИСЬ (как в браке) ===== */
+/* ===== АКТОВАЯ ЗАПИСЬ ===== */
 .act-record {
   margin: 1.5rem 0;
 }
@@ -205,7 +207,7 @@ html {
   margin: 0.1rem 0 0.2rem;
 }
 
-/* ===== МЕСТО РЕГИСТРАЦИИ И ВЫДАЧИ (как в браке) ===== */
+/* ===== МЕСТО РЕГИСТРАЦИИ И ВЫДАЧИ ===== */
 .place-row {
   position: static;
   display: block;
@@ -245,7 +247,7 @@ html {
   color: var(--text-dark);
 }
 
-/* ===== ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ (как в браке) ===== */
+/* ===== ПРАВАЯ ИНФОРМАЦИЯ С ЛИНИЯМИ ===== */
 .right-info-container {
   margin-left: auto;
   width: fit-content;
@@ -302,7 +304,7 @@ html {
   margin: 1rem 0 0.3rem;
 }
 
-/* ===== СТАТУС И КНОПКИ (унифицированные) ===== */
+/* ===== СТАТУС И КНОПКИ ===== */
 .status-and-edit {
   display: flex;
   gap: 1rem;
@@ -320,27 +322,12 @@ html {
   line-height: 1.5;
 }
 
-.status-verified {
-  background: rgba(40, 167, 69, 0.15);
-  color: #28a745;
-}
-.status-pending {
-  background: rgba(255, 193, 7, 0.15);
-  color: #856404;
-}
-.status-rejected {
-  background: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
-}
-.status-archived {
-  background: rgba(108, 117, 125, 0.15);
-  color: #6c757d;
-}
+.status-verified { background: rgba(40, 167, 69, 0.15); color: #28a745; }
+.status-pending { background: rgba(255, 193, 7, 0.15); color: #856404; }
+.status-rejected { background: rgba(220, 53, 69, 0.15); color: #dc3545; }
+.status-archived { background: rgba(108, 117, 125, 0.15); color: #6c757d; }
 
-.edit-btn,
-.btn-primary,
-.btn-secondary,
-a.edit-btn {
+.edit-btn {
   display: inline-block;
   padding: 0.6rem 1.5rem;
   font-size: 1rem;
@@ -352,26 +339,33 @@ a.edit-btn {
   border: none;
   cursor: pointer;
   transition: opacity 0.2s ease, background 0.2s ease;
-}
-
-.edit-btn,
-.btn-primary,
-a.edit-btn {
   background: var(--primary-green);
   color: white;
 }
-.edit-btn:hover,
-.btn-primary:hover,
-a.edit-btn:hover {
+.edit-btn:hover {
   background: var(--dark-green);
 }
 
-.btn-secondary {
-  background: var(--secondary-gray) !important;
-  color: white;
+/* ===== СТРОКА С ДАТОЙ РОЖДЕНИЯ И ЛИЧНЫМ КОДОМ ===== */
+.birth-details-row {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 0.8rem;
+  align-items: baseline;
 }
-.btn-secondary:hover {
-  background: #5a6268 !important;
+.birth-details-row .birth-label {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--primary-green);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.birth-details-row .field-block {
+  flex: 1;
+  min-width: 120px;
+}
+.birth-details-row .field-block .field-value {
+  text-align: center;
 }
 
 /* ===== МОБИЛЬНАЯ АДАПТАЦИЯ ===== */
@@ -382,7 +376,8 @@ a.edit-btn:hover {
 
   .parent-row,
   .citizenship-row,
-  .right-row {
+  .right-row,
+  .birth-details-row {
     flex-direction: column;
     align-items: stretch;
     gap: 0.2rem;
@@ -449,97 +444,11 @@ a.edit-btn:hover {
     width: 100%;
     text-align: center;
   }
-}
 
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
-.modal-overlay {
-  display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0,0,0,0.5);
-  z-index: 1000;
-  overflow-y: auto;
-}
-
-.modal-overlay.active {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 2rem 1rem;
-}
-
-.modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
-  max-width: 700px;
-  max-height: 90vh;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem 1.5rem 0.5rem;
-  border-bottom: 1px solid #eee;
-}
-
-.modal-header h4 {
-  margin: 0;
-  color: var(--primary-green);
-  font-size: 1.25rem;
-}
-
-.close-modal {
-  background: none;
-  border: none;
-  font-size: 1.8rem;
-  line-height: 1;
-  cursor: pointer;
-  color: #666;
-  padding: 0;
-}
-.close-modal:hover { color: var(--primary-green); }
-
-.modal-body {
-  padding: 1.5rem;
-  overflow-y: auto;
-  flex: 1;
-}
-
-.modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid #eee;
-}
-
-.form-group {
-  margin-bottom: 1.2rem;
-}
-.form-group label {
-  display: block;
-  margin-bottom: 0.4rem;
-  font-weight: 500;
-  color: var(--primary-green);
-}
-.form-input {
-  width: 100%;
-  padding: 0.6rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-}
-.form-input[readonly] {
-  background: #f5f5f5;
-  cursor: not-allowed;
+  .birth-details-row .birth-label {
+    text-align: left;
+    margin-bottom: 0.1rem;
+  }
 }
 
 /* ===== СЛИШКОМ МАЛЕНЬКИЙ ЭКРАН ===== */
@@ -561,41 +470,7 @@ a.edit-btn:hover {
   }
   .certificate-container,
   #content,
-  .status-and-edit,
-  .modal-overlay {
+  .status-and-edit {
     display: none !important;
-  }
-}
-/* ===== СТРОКА С ДАТОЙ РОЖДЕНИЯ И ЛИЧНЫМ КОДОМ ===== */
-.birth-details-row {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 0.8rem;
-  align-items: baseline;
-}
-.birth-details-row .birth-label {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--primary-green);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.birth-details-row .field-block {
-  flex: 1;
-  min-width: 120px;
-}
-.birth-details-row .field-block .field-value {
-  text-align: center;
-}
-
-/* Адаптация для мобильных */
-@media (max-width: 600px) {
-  .birth-details-row {
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .birth-details-row .birth-label {
-    text-align: left;
-    margin-bottom: 0.1rem;
   }
 }
