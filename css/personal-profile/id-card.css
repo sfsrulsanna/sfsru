@@ -1,4 +1,9 @@
-/* ===== id-card.css (исправленная версия для мобильных) ===== */
+/* ============================================================
+   id-card.css — страница ID-карты
+   Единый дизайн с паспортом, ИНН, НСС. Визуал ID-карты сохранён.
+   Глобальный font-size не уменьшается.
+   ============================================================ */
+
 :root {
   --primary-red: #7b091a;
   --dark-red: #650E15;
@@ -8,116 +13,241 @@
   --text-dark: #5c3b3b;
   --border-radius: 16px;
   --shadow: 0 10px 25px rgba(0,0,0,0.1);
+
+  --accent: #b30000;
+  --accent-soft: #fff5f5;
+  --accent-border: #f5c6c6;
+  --border: #ececec;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-/* ===== БАЗОВЫЙ РАЗМЕР ШРИФТА (адаптивный) ===== */
-html {
-  font-size: 16px;
-}
-@media (max-width: 700px) {
-  html {
-    font-size: clamp(12px, 3vw, 16px);
-  }
-}
-
-/* ===== ОСНОВНОЙ КОНТЕЙНЕР ===== */
-.main-content {
-  padding: 2rem 0;
-  background: white;
+/* ============================================================
+   1. ОБЁРТКА СТРАНИЦЫ
+   ============================================================ */
+.profile-main {
+  padding: 34px 16px 64px;
+  background:
+    radial-gradient(1100px 380px at 50% -120px, rgba(179, 0, 0, 0.07), transparent 65%),
+    #f6f7f9;
   min-height: 100vh;
 }
-.container {
-  max-width: 900px;
+.profile-container {
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 0 1.5rem;
-}
-.loading, .no-data {
-  text-align: center;
-  padding: 3rem 1rem;
-  font-size: 1.2rem;
-  color: #666;
 }
 
-/* ===== КНОПКИ (унифицированы) ===== */
+/* ============================================================
+   2. ПРИВЕТСТВЕННЫЙ БЛОК
+   ============================================================ */
+.greeting-block {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding: 26px 28px;
+  margin: 0 0 26px;
+  background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+  border: 1px solid #f1d7d7;
+  border-radius: 18px;
+  box-shadow: 0 10px 28px rgba(179, 0, 0, 0.07);
+  overflow: hidden;
+}
+.greeting-block::after {
+  content: "";
+  position: absolute;
+  right: -70px; top: -70px;
+  width: 220px; height: 220px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(179, 0, 0, 0.09), transparent 70%);
+  pointer-events: none;
+}
+.greeting-emoji {
+  flex-shrink: 0;
+  font-size: 3rem;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+}
+.greeting-content {
+  flex: 1 1 220px;
+  min-width: 0;
+  position: relative;
+  z-index: 1;
+}
+.greeting-text {
+  margin: 0 0 6px;
+  font-size: 1.9rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+}
+.greeting-subtitle {
+  margin: 0;
+  font-size: 1rem;
+  color: #6b6b6b;
+  line-height: 1.45;
+}
+.greeting-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+  align-items: stretch;
+  position: relative;
+  z-index: 1;
+}
+.greeting-action-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: #2a2a2a;
+  text-decoration: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  white-space: nowrap;
+  transition: transform 0.15s ease, box-shadow 0.2s ease,
+              border-color 0.2s ease, background-color 0.2s ease, color 0.15s ease;
+}
+.greeting-action-link:hover,
+.greeting-action-link:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px rgba(179, 0, 0, 0.12);
+  outline: none;
+}
+
+/* ============================================================
+   3. LOADING / NO-DATA
+   ============================================================ */
+.loading,
+.no-data {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  font-size: 1rem;
+  color: #6c757d;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+  margin: 0 0 20px;
+  line-height: 1.55;
+}
+.no-data p { margin: 12px 0 18px; color: #555; }
+.no-data-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* ============================================================
+   4. КНОПКИ
+   ============================================================ */
 .add-btn,
 .edit-btn,
 .btn,
 .btn-primary,
 .btn-secondary,
 a.add-btn,
-a.edit-btn,
-.document-status {
-  display: inline-block;
-  padding: 0.6rem 1.5rem;
-  font-size: 1rem;
-  line-height: 1.5;
-  border-radius: 8px;
-  text-align: center;
-  text-decoration: none;
-  box-sizing: border-box;
-  border: none;
+a.edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  font-family: inherit;
+  line-height: 1.4;
   cursor: pointer;
-  transition: opacity 0.2s ease, background 0.2s ease;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  transition: filter 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease,
+              border-color 0.15s ease, background-color 0.15s ease, color 0.15s ease;
 }
 
 .add-btn,
 .edit-btn,
-.btn-primary,
-a.add-btn,
-a.edit-btn {
-  background: var(--primary-red);
-  color: white;
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #e53935 100%);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 12px rgba(179, 0, 0, 0.22);
 }
 .add-btn:hover,
 .edit-btn:hover,
-.btn-primary:hover,
-a.add-btn:hover,
-a.edit-btn:hover {
-  background: var(--dark-red);
+.btn-primary:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 6px 16px rgba(179, 0, 0, 0.3);
 }
 
 .btn-secondary {
-  background: var(--secondary-gray) !important;
-  color: white;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  color: #2a2a2a;
 }
 .btn-secondary:hover {
-  background: #5a6268 !important;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
 }
 
-/* ===== СТАТУС ДОКУМЕНТА ===== */
+/* ============================================================
+   5. СТАТУС + КНОПКИ УПРАВЛЕНИЯ
+   ============================================================ */
 .status-and-edit {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 1.5rem;
-  margin: 2rem 0;
+  gap: 12px;
+  margin: 0 0 24px;
 }
 .document-status {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 18px;
+  font-size: 0.92rem;
+  font-weight: 500;
+  line-height: 1.4;
+  border-radius: 10px;
+  border: 1px solid transparent;
   background: transparent;
 }
 .status-verified {
-  background: rgba(40, 167, 69, 0.15);
-  color: #28a745;
+  background: #eefaf0;
+  color: #16a34a;
+  border-color: #b8e6c2;
 }
 .status-pending {
-  background: rgba(255, 193, 7, 0.15);
-  color: #856404;
+  background: #fff8ec;
+  color: #c2710c;
+  border-color: #f5d9a8;
 }
 .status-rejected {
-  background: rgba(220, 53, 69, 0.15);
-  color: #dc3545;
+  background: #fff0f0;
+  color: var(--accent);
+  border-color: var(--accent-border);
 }
 
-/* ===== КАРТОЧКА ===== */
+/* ============================================================
+   6. БЛОК ID-КАРТЫ (ВИЗУАЛ СОХРАНЁН)
+   ============================================================ */
 .card-container {
   perspective: 1500px;
-  margin: 2rem auto;
+  margin: 0 auto 24px;
   max-width: 800px;
 }
 
@@ -125,7 +255,7 @@ a.edit-btn:hover {
   position: relative;
   width: 100%;
   height: 0;
-  padding-bottom: 60%; /* соотношение сторон 5:3 */
+  padding-bottom: 60%;
   transform-style: preserve-3d;
   transition: transform 0.6s;
   cursor: pointer;
@@ -323,216 +453,268 @@ a.edit-btn:hover {
   color: #7b091a;
 }
 
-/* ===== ТАБЛИЦА РАНЕЕ ВЫДАННЫХ КАРТ ===== */
+/* ============================================================
+   7. ТАБЛИЦА РАНЕЕ ВЫДАННЫХ КАРТ
+   ============================================================ */
 .previous-section {
-  margin-top: 2rem;
-  max-width: 800px;
-  margin-left: auto;
-  margin-right: auto;
+  margin-top: 20px;
+  margin-bottom: 24px;
 }
-.previous-title {
-  font-size: 1.2rem;
-  color: var(--primary-red);
-  border-bottom: 2px solid var(--primary-red);
-  padding-bottom: 0.3rem;
-  margin-bottom: 1rem;
+.section-title {
+  color: #1a1a1a;
+  font-size: 1.25rem;
+  margin: 0 0 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  line-height: 1.3;
 }
-.previous-table {
-  overflow-x: auto;
-  margin-bottom: 2rem;
-}
-.previous-table table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  background: white;
-  border-radius: 14px;
-  border: 2px solid var(--primary-red);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  overflow: hidden;
-}
-.previous-table thead {
-  background: var(--primary-red);
-  color: white;
-}
-.previous-table th,
-.previous-table td {
-  padding: 0.8rem 1rem;
-  font-size: 1rem;
-  text-align: left;
-  border-right: 1px solid rgba(255,255,255,0.15);
-}
-.previous-table th:last-child,
-.previous-table td:last-child {
-  border-right: none;
-}
-.previous-table td {
-  background: white;
-  border-bottom: 1px solid #eee;
-}
-.previous-table tbody tr:last-child td {
-  border-bottom: none;
-}
-.previous-table tbody tr:nth-child(even) td {
-  background: #f9f9f9;
-}
-.previous-table tbody tr:hover td {
-  background: rgba(123,9,26,0.05);
-}
-.previous-table thead tr th:first-child {
-  border-top-left-radius: 12px;
-}
-.previous-table thead tr th:last-child {
-  border-top-right-radius: 12px;
-}
-.previous-table tbody tr:last-child td:first-child {
-  border-bottom-left-radius: 12px;
-}
-.previous-table tbody tr:last-child td:last-child {
-  border-bottom-right-radius: 12px;
-}
+.section-title i { color: var(--accent); font-size: 1rem; }
 
-/* ===== МОДАЛЬНОЕ ОКНО ===== */
+.table-responsive {
+  overflow-x: auto;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+.standard-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.standard-table thead {
+  background: linear-gradient(135deg, var(--accent) 0%, #e53935 100%);
+  color: #ffffff;
+}
+.standard-table th,
+.standard-table td {
+  padding: 12px 16px;
+  font-size: 0.9rem;
+  text-align: left;
+  line-height: 1.45;
+}
+.standard-table th {
+  font-weight: 600;
+  font-size: 0.82rem;
+  border-bottom: 1px solid #8a0000;
+}
+.standard-table td {
+  color: #333;
+  border-bottom: 1px solid #f2f2f2;
+}
+.standard-table tbody tr:last-child td { border-bottom: none; }
+.standard-table tbody tr:nth-child(even) td { background: #fafafa; }
+.standard-table tbody tr:hover td { background: #fff9f9; }
+
+/* ============================================================
+   8. МОДАЛЬНОЕ ОКНО
+   ============================================================ */
 .modal-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.6);
+  inset: 0;
+  background: rgba(20, 20, 20, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 2000;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease, visibility 0.3s ease;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+  padding: 16px;
 }
-.modal-overlay.active {
-  opacity: 1;
-  visibility: visible;
-}
+.modal-overlay.active { opacity: 1; visibility: visible; }
+
 .modal {
-  background: white;
-  border-radius: 16px;
-  width: 90%;
+  background: #ffffff;
+  border-radius: 18px;
+  width: 100%;
   max-width: 700px;
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
 }
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.5rem 1.5rem 0.5rem;
-  border-bottom: 1px solid #eee;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f0f0f0;
 }
 .modal-header h4 {
   margin: 0;
-  color: var(--primary-red);
-  font-size: 1.25rem;
+  color: #1a1a1a;
+  font-size: 1.15rem;
+  font-weight: 700;
 }
 .close-modal {
-  background: none;
+  background: #f5f5f5;
   border: none;
-  font-size: 1.8rem;
+  font-size: 1.4rem;
   line-height: 1;
   cursor: pointer;
   color: #666;
   padding: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease, color 0.15s ease;
 }
-.close-modal:hover { color: var(--primary-red); }
+.close-modal:hover { background: #ffe5e5; color: var(--accent); }
+
 .modal-body {
-  padding: 1.5rem;
+  padding: 20px 24px;
   overflow-y: auto;
   flex: 1;
 }
 .modal-footer {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  padding: 1rem 1.5rem 1.5rem;
-  border-top: 1px solid #eee;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  flex-wrap: wrap;
 }
-.form-group {
-  margin-bottom: 1.2rem;
-}
+
+.form-group { margin-bottom: 14px; }
+.form-group:last-child { margin-bottom: 0; }
 .form-group label {
   display: block;
-  margin-bottom: 0.4rem;
+  margin-bottom: 6px;
   font-weight: 500;
+  font-size: 0.86rem;
+  color: #555;
 }
 .form-input, .form-textarea {
   width: 100%;
-  padding: 0.6rem 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
+  padding: 11px 14px;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-family: inherit;
+  color: #1a1a1a;
+  background: #fff;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .form-textarea {
   resize: vertical;
   min-height: 60px;
 }
+.form-input:focus, .form-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(179, 0, 0, 0.1);
+}
+
 .steps-indicator {
   display: flex;
   justify-content: space-around;
   margin-bottom: 1.5rem;
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid #f0f0f0;
 }
 .step {
-  padding: 0.5rem 1rem;
-  background: #f0f0f0;
+  padding: 8px 16px;
+  background: #fafafa;
+  border: 1px solid #ececec;
   border-radius: 20px;
-  font-size: 0.9rem;
-  color: #666;
+  font-size: 0.86rem;
+  font-weight: 500;
+  color: #888;
 }
 .step.active {
-  background: var(--primary-red);
-  color: white;
+  background: var(--accent-soft);
+  border-color: var(--accent-border);
+  color: var(--accent);
 }
 .step-nav-buttons {
   margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
 }
 .add-card-section {
-  background: #f9f9f9;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-bottom: 1.5rem;
+  background: #fafafa;
+  border: 1px solid #f0f0f0;
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 16px;
+}
+.add-card-section h5 {
+  margin-bottom: 12px;
+  color: #1a1a1a;
+  font-size: 0.95rem;
 }
 .cards-list-section h5 {
-  margin-bottom: 0.5rem;
-  color: var(--primary-red);
+  margin-bottom: 8px;
+  color: #1a1a1a;
+  font-size: 0.95rem;
 }
 
-/* ===== СООБЩЕНИЕ ДЛЯ ОЧЕНЬ МАЛЕНЬКИХ ЭКРАНОВ ===== */
+/* ============================================================
+   9. TOO SMALL
+   ============================================================ */
 .too-small-message {
   display: none;
   text-align: center;
   padding: 2rem 1rem;
   font-size: 1.2rem;
   color: #666;
-  background: #f9f9f9;
-  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   margin: 2rem auto;
   max-width: 400px;
 }
 @media (max-width: 320px) {
-  .too-small-message {
-    display: block;
+  .too-small-message { display: block !important; }
+  .profile-container > *:not(.too-small-message) { display: none !important; }
+}
+
+/* ============================================================
+   10. МОБИЛЬНАЯ АДАПТАЦИЯ ID-КАРТЫ
+   ============================================================ */
+@media (max-width: 768px) {
+  .profile-main { padding: 22px 12px 48px; }
+  .greeting-block { padding: 22px 20px; gap: 16px; }
+  .greeting-emoji { font-size: 2.2rem; }
+  .greeting-text { font-size: 1.4rem; }
+  .greeting-subtitle { font-size: 0.9rem; }
+  .greeting-actions {
+    flex-direction: row;
+    flex: 1 1 100%;
+    width: 100%;
+    gap: 8px;
   }
-  .card-container,
-  #content,
-  .status-and-edit,
-  .previous-section,
-  .modal-overlay {
-    display: none !important;
+  .greeting-actions > * { flex: 1 1 0; }
+  .greeting-action-link { padding: 10px 12px; font-size: 0.86rem; }
+
+  .no-data-actions { flex-direction: column; align-items: stretch; }
+  .no-data-actions .add-btn { width: 100%; }
+
+  .section-title { font-size: 1.1rem; margin-top: 20px; padding-bottom: 10px; }
+  .standard-table th, .standard-table td { padding: 10px 12px; font-size: 0.84rem; }
+
+  .status-and-edit { flex-direction: column; margin: 16px 0; }
+  .status-and-edit .edit-btn,
+  .status-and-edit a.edit-btn,
+  .status-and-edit .document-status {
+    font-size: 0.9rem;
+    padding: 10px 16px;
+    width: 100%;
+    justify-content: center;
   }
 }
 
-/* ===== АДАПТАЦИЯ ДЛЯ МОБИЛЬНЫХ (ДО 600px) ===== */
 @media (max-width: 600px) {
   .card {
     padding-bottom: 70%;
@@ -578,13 +760,11 @@ a.edit-btn:hover {
     font-size: 0.65rem;
   }
 
-  /* QR-код меньше, чтобы не выходил за границы */
   .qr-code {
     width: 30px;
     height: 30px;
   }
 
-  /* Двойные поля на одной строке */
   .double-field, .double-back {
     flex-direction: row;
     gap: 0.2rem;
@@ -593,39 +773,12 @@ a.edit-btn:hover {
   .double-back .back-block {
     flex: 1;
   }
-
-  /* Кнопки статуса и действий — одинаковый размер */
-  .status-and-edit {
-    flex-direction: column;
-    margin: 1rem 0;
-  }
-  .status-and-edit .edit-btn,
-  .status-and-edit a.edit-btn,
-  .status-and-edit .document-status {
-    font-size: 0.9rem;
-    padding: 0.4rem 1rem;
-    width: auto;
-    box-sizing: border-box;
-    text-align: center;
-    display: inline-block;
-  }
 }
 
-/* ===== ПЛАНШЕТЫ (601px - 900px) ===== */
-@media (min-width: 601px) and (max-width: 900px) {
-  .front-content {
-    flex-direction: row;
-  }
-  .left-col {
-    width: 30%;
-  }
-  .right-col {
-    width: 70%;
-  }
-  .signature {
-    width: 60px;
-    height: 60px;
+@media (prefers-reduced-motion: reduce) {
+  .greeting-action-link,
+  .add-btn, .edit-btn, .btn, .btn-primary, .btn-secondary,
+  .close-modal, .form-input, .card {
+    transition: none !important;
   }
 }
-
-/* ===== ДЕСКТОП (≥901px) уже задан базовыми стилями (25%/75%) ===== */

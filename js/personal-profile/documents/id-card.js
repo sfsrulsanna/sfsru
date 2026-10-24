@@ -1,4 +1,4 @@
-import { supabase } from '../../js/supabase-config.js'
+import { supabase } from '../../../js/supabase-config.js'
 
 // ==================== ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ====================
 let currentDocId = null
@@ -26,7 +26,7 @@ let formData = {
   registration_address: '',
   previous_id_cards: []
 }
-let currentStep = 1 // 1 – основные данные, 2 – предыдущие карты
+let currentStep = 1
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 function formatDate(dateString) {
@@ -75,7 +75,6 @@ async function loadData() {
       return
     }
 
-    // Загрузка профиля пользователя
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('personal_code, surname, name, patronymic, date_of_birth, place_of_birth, gender')
@@ -91,7 +90,6 @@ async function loadData() {
     userProfile = profile
     userPersonalCode = profile.personal_code
 
-    // Определяем ID документа из URL или ищем последний
     const urlParams = new URLSearchParams(window.location.search)
     const idFromUrl = urlParams.get('id')
 
@@ -125,7 +123,6 @@ async function loadData() {
       documentData = data
       currentDocId = data.id
 
-      // Парсим previous_id_cards, если пришло строкой
       if (typeof documentData.previous_id_cards === 'string') {
         try {
           documentData.previous_id_cards = JSON.parse(documentData.previous_id_cards)
@@ -153,7 +150,6 @@ async function loadData() {
 
 // ==================== ОТРИСОВКА КАРТОЧКИ ====================
 function renderCard(data) {
-  // Заполняем поля на лицевой стороне
   document.getElementById('surname1').textContent = data.surname1 || '—'
   document.getElementById('name1').textContent = data.name1 || '—'
   document.getElementById('patronymic1').textContent = data.patronymic1 || '—'
@@ -164,7 +160,6 @@ function renderCard(data) {
   document.getElementById('expiryDate').textContent = formatDate(data.expiry_date)
   document.getElementById('cardNumber').textContent = data.card_number || '—'
 
-  // Оборотная сторона
   document.getElementById('backCardNumber').textContent = data.card_number || '—'
   document.getElementById('departmentCode').textContent = data.department_code || '—'
   document.getElementById('issuedBy').textContent = data.issued_by || '—'
@@ -176,7 +171,6 @@ function renderCard(data) {
   document.getElementById('nss').textContent = data.nss_number || '—'
   document.getElementById('address').textContent = data.registration_address || '—'
 
-  // Фото и подпись
   const safeCode = (userPersonalCode || '').replace(/[^a-zA-Z0-9\-]/g, '')
   const photoImg = document.getElementById('userPhoto')
   const signatureImg = document.getElementById('userSignature')
@@ -190,7 +184,6 @@ function renderCard(data) {
     signatureImg.src = '../../images/default-avatar.png'
   }
 
-  // QR-код (личный код)
   const qrContainer = document.getElementById('qrCode')
   qrContainer.innerHTML = ''
   if (userPersonalCode) {
@@ -211,20 +204,17 @@ function renderCard(data) {
   const statusAndEdit = document.createElement('div')
   statusAndEdit.className = 'status-and-edit'
 
-  // Статус
   const statusSpan = document.createElement('span')
   statusSpan.className = statusClass
   statusSpan.textContent = statusText
   statusAndEdit.appendChild(statusSpan)
 
-  // Ссылка "Заменить ID-карту" (всегда)
   const replaceLink = document.createElement('a')
   replaceLink.href = '../../services/documents/id-card/'
   replaceLink.className = 'edit-btn'
   replaceLink.textContent = 'Заменить ID-карту'
   statusAndEdit.appendChild(replaceLink)
 
-  // Кнопка "Изменить данные" (только если статус не verified)
   if (data.status !== 'verified') {
     const editBtn = document.createElement('button')
     editBtn.className = 'edit-btn'
@@ -237,21 +227,18 @@ function renderCard(data) {
     statusAndEdit.appendChild(editBtn)
   }
 
-  // Вставляем блок после карточки, но перед таблицей "Ранее выданные карты"
-  const cardContainer = document.querySelector('.card-container')
-  const previousSection = document.querySelector('.previous-section')
-  if (previousSection) {
-    cardContainer.parentNode.insertBefore(statusAndEdit, previousSection)
-  } else {
-    cardContainer.parentNode.insertBefore(statusAndEdit, cardContainer.nextSibling)
+  // Вставляем в новый контейнер #statusAndEditContainer
+  const container = document.getElementById('statusAndEditContainer')
+  if (container) {
+    container.innerHTML = ''
+    container.appendChild(statusAndEdit)
   }
 
-  // --- Переворот карты по клику ---
+  // --- Переворот карты ---
   const cardEl = document.getElementById('card')
   if (cardEl) {
     cardEl.removeEventListener('click', window.toggleFlip)
     window.toggleFlip = function(e) {
-      // Игнорируем клики по интерактивным элементам
       const tag = e.target.tagName
       if (tag !== 'BUTTON' && tag !== 'A' && tag !== 'IMG') {
         cardEl.classList.toggle('flipped')
@@ -298,7 +285,6 @@ function renderModalStep() {
   const stepsContainer = document.createElement('div')
   stepsContainer.className = 'modal-steps'
 
-  // Индикатор шагов
   const stepsIndicator = document.createElement('div')
   stepsIndicator.className = 'steps-indicator'
   stepsIndicator.innerHTML = `
@@ -318,12 +304,8 @@ function renderModalStep() {
 
   stepsContainer.appendChild(stepContent)
 
-  // Кнопки навигации
   const navButtons = document.createElement('div')
   navButtons.className = 'step-nav-buttons'
-  navButtons.style.display = 'flex'
-  navButtons.style.justifyContent = 'space-between'
-  navButtons.style.marginTop = '1rem'
 
   if (currentStep === 1) {
     const nextBtn = document.createElement('button')
@@ -363,7 +345,6 @@ function renderModalStep() {
   }
 }
 
-// --- Форма основных данных (шаг 1) ---
 function createMainDataForm() {
   const container = document.createElement('div')
   container.className = 'main-data-form'
@@ -432,7 +413,6 @@ function createMainDataForm() {
   return container
 }
 
-// --- Форма для предыдущих карт (шаг 2) ---
 function createPreviousCardsForm() {
   const container = document.createElement('div')
   container.className = 'previous-cards-form'
@@ -487,7 +467,6 @@ function createPreviousCardsForm() {
   return container
 }
 
-// --- Отображение списка добавленных карт внутри модального окна ---
 function renderPreviousCardsModalList() {
   const container = document.getElementById('previousCardsModalList')
   if (!container) return
@@ -498,7 +477,7 @@ function renderPreviousCardsModalList() {
   }
 
   const table = document.createElement('table')
-  table.className = 'previous-table'
+  table.className = 'standard-table'
   table.innerHTML = `
     <thead>
       <tr>
@@ -525,7 +504,6 @@ function renderPreviousCardsModalList() {
   container.appendChild(table)
 }
 
-// --- Добавление новой предыдущей карты ---
 window.addPreviousCard = function() {
   const cardNumber = document.getElementById('prev_card_number')?.value.trim()
   const issuedBy = document.getElementById('prev_issued_by')?.value.trim()
@@ -555,7 +533,6 @@ window.addPreviousCard = function() {
   renderPreviousCardsModalList()
 }
 
-// --- Удаление предыдущей карты ---
 window.removePreviousCard = function(index) {
   if (formData.previous_id_cards && index >= 0 && index < formData.previous_id_cards.length) {
     formData.previous_id_cards.splice(index, 1)
@@ -563,7 +540,6 @@ window.removePreviousCard = function(index) {
   }
 }
 
-// --- Сбор данных с первого шага ---
 function collectMainDataFromForm() {
   formData.surname1 = document.getElementById('edit_surname1')?.value || ''
   formData.name1 = document.getElementById('edit_name1')?.value || ''
@@ -585,7 +561,6 @@ function collectMainDataFromForm() {
   formData.registration_address = document.getElementById('edit_registration_address')?.value || ''
 }
 
-// --- Открытие модалки для добавления ---
 function openAddModal() {
   formData = {
     surname1: '',
@@ -611,7 +586,6 @@ function openAddModal() {
   openModal('Добавление ID-карты')
 }
 
-// --- Открытие модалки для редактирования ---
 function openEditModal() {
   formData = {
     surname1: documentData.surname1 || '',
@@ -637,10 +611,9 @@ function openEditModal() {
   openModal('Редактирование ID-карты')
 }
 
-// --- Сохранение документа ---
 async function saveDocument() {
   if (currentStep === 2) {
-    // На втором шаге данные уже в formData
+    // Данные собраны на шаге 1 и 2
   } else {
     collectMainDataFromForm()
   }
@@ -657,8 +630,6 @@ async function saveDocument() {
     updated_at: new Date().toISOString(),
     previous_id_cards: formData.previous_id_cards || []
   }
-
-  console.log('Сохранение:', dataToSend)
 
   let result
   if (currentDocId) {
@@ -683,7 +654,6 @@ async function saveDocument() {
     return
   }
 
-  console.log('Сохранение успешно, ответ:', result)
   window.closeModal()
   const newId = currentDocId || result.data[0].id
   window.location.href = `id-card.html?id=${newId}`
@@ -697,7 +667,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.getElementById('modalSaveBtn')?.addEventListener('click', saveDocument)
 })
 
-// Экспорт в глобальную область (для inline-обработчиков)
 window.openAddModal = openAddModal
 window.openEditModal = openEditModal
 window.closeModal = closeModal
