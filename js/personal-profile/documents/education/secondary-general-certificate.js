@@ -24,18 +24,13 @@ function formatGrade(grade) {
   const g = String(grade).trim()
   const gLower = g.toLowerCase()
 
-  // Текстовые отметки — выводятся как есть
+  // Текстовые отметки
   if (gLower === 'зачет' || gLower === 'зачтено') return 'Зачтено'
   if (gLower === 'незачет' || gLower === 'незачтено') return 'Не зачтено'
 
-  // Числовые отметки с расшифровкой
-  const map = {
-    '5': 'отлично',
-    '4': 'хорошо',
-    '3': 'удовлетв.',
-    '2': 'неудовлетв.'
-  }
-  return map[g] ? `${g} (${map[g]})` : g
+  // Числовые отметки — \u00A0 (NBSP) не даёт браузеру перенести скобку на новую строку
+  const map = { '5': 'отлично', '4': 'хорошо', '3': 'удовлетв.', '2': 'неудовлетв.' }
+  return map[g] ? `${g}\u00A0(${map[g]})` : g
 }
 
 function getStatusLabel(status) {
