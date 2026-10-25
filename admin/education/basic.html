@@ -509,12 +509,17 @@
       return labels[status] || status || '—';
     }
 
-    function formatGrade(grade) {
-      if (grade === null || grade === undefined || grade === '') return '—';
-      const g = String(grade).trim();
-      const map = { '5': 'отлично', '4': 'хорошо', '3': 'удовлетв.', '2': 'неудовлетв.' };
-      return map[g] ? `${g} (${map[g]})` : g;
-    }
+function formatGrade(grade) {
+  if (grade === null || grade === undefined || grade === '') return '—';
+  const g = String(grade).trim();
+  const gLower = g.toLowerCase();
+
+  if (gLower === 'зачет' || gLower === 'зачтено') return 'Зачтено';
+  if (gLower === 'незачет' || gLower === 'незачтено') return 'Не зачтено';
+
+  const map = { '5': 'отлично', '4': 'хорошо', '3': 'удовлетв.', '2': 'неудовлетв.' };
+  return map[g] ? `${g} (${map[g]})` : g;
+}
 
     function parseSubjects(value) {
       if (!value) return [];
@@ -846,13 +851,14 @@
           tr.innerHTML = `
             <td><input type="text" class="form-input subject-name" value="${escapeHTML(subj.name || '')}"></td>
             <td>
-              <select class="form-select subject-grade">
-                <option value="">—</option>
-                <option value="5" ${subj.grade === '5' ? 'selected' : ''}>5 (отлично)</option>
-                <option value="4" ${subj.grade === '4' ? 'selected' : ''}>4 (хорошо)</option>
-                <option value="3" ${subj.grade === '3' ? 'selected' : ''}>3 (удовлетв.)</option>
-                <option value="2" ${subj.grade === '2' ? 'selected' : ''}>2 (неудовлетв.)</option>
-              </select>
+<select class="form-select subject-grade">
+  <option value="">—</option>
+  <option value="5" ${subj.grade === '5' ? 'selected' : ''}>5 (отлично)</option>
+  <option value="4" ${subj.grade === '4' ? 'selected' : ''}>4 (хорошо)</option>
+  <option value="3" ${subj.grade === '3' ? 'selected' : ''}>3 (удовлетв.)</option>
+  <option value="2" ${subj.grade === '2' ? 'selected' : ''}>2 (неудовлетв.)</option>
+  <option value="зачет" ${subj.grade === 'зачет' ? 'selected' : ''}>Зачтено</option>
+</select>
             </td>
             <td><button type="button" class="btn-remove-subject">×</button></td>`;
           tr.querySelector('.btn-remove-subject').onclick = () => tr.remove();
