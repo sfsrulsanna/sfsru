@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Аттестаты и дипломы — Админ панель СФСРЮ</title>
+  <title>Аттестаты — Админ панель СФСРЮ</title>
 
   <!-- favicons -->
   <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
@@ -36,11 +36,9 @@
   </script>
 
   <style>
-    /* SPA-страницы */
     .page { display: none; }
     .page.active { display: block; }
 
-    /* Таблица */
     .records-table {
       width: 100%;
       border-collapse: collapse;
@@ -62,7 +60,6 @@
     }
     .records-table tr:hover { background: #f5f5f5; }
 
-    /* Бейджи */
     .badge-status {
       display: inline-block;
       padding: 3px 8px;
@@ -75,7 +72,6 @@
     .badge-rejected { background: #f8d7da; color: #721c24; }
     .badge-archived { background: #e2e3e5; color: #383d41; }
 
-    /* Детальная таблица */
     .details-table {
       width: 100%;
       border-collapse: collapse;
@@ -96,7 +92,6 @@
       border: 1px solid #dee2e6;
     }
 
-    /* Кнопки действий */
     .btn-verify, .btn-reject, .btn-view, .btn-archive, .btn-edit, .btn-delete, .btn-small {
       padding: 6px 12px;
       border: none;
@@ -121,7 +116,6 @@
       cursor: not-allowed;
     }
 
-    /* Действия */
     .actions {
       display: flex;
       gap: 10px;
@@ -129,7 +123,6 @@
       flex-wrap: wrap;
     }
 
-    /* Форма */
     .form-container {
       max-width: 900px;
       margin: 2rem auto;
@@ -155,11 +148,6 @@
       font-family: inherit;
     }
     .form-textarea { min-height: 80px; resize: vertical; }
-    .form-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1rem;
-    }
     .form-checkbox {
       display: flex;
       align-items: center;
@@ -168,7 +156,6 @@
     }
     .form-checkbox input { width: auto; }
 
-    /* Редактор предметов */
     .subjects-editor { margin-top: 0.5rem; }
     .subjects-editor table {
       width: 100%;
@@ -206,7 +193,6 @@
       line-height: 1;
     }
 
-    /* Уведомление */
     .notification {
       position: fixed;
       top: 20px;
@@ -222,7 +208,6 @@
     .notification.error   { background: #dc3545; }
     .notification.info    { background: #17a2b8; }
 
-    /* Состояния */
     .loading, .no-data {
       text-align: center;
       padding: 2rem;
@@ -234,7 +219,6 @@
       padding: 2rem;
     }
 
-    /* Фильтры */
     .filters {
       display: flex;
       gap: 10px;
@@ -284,7 +268,6 @@
     }
     .btn-submit:hover { background: #218838; }
 
-    /* Карточки хаба */
     .admin-cards {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -312,10 +295,6 @@
     .admin-card h3 { margin-bottom: 0.5rem; color: #2c3e50; }
     .admin-card p { color: #666; font-size: 0.9rem; margin-bottom: 1rem; }
 
-    .subjects-preview {
-      font-size: 0.85rem;
-      color: #666;
-    }
     .grade-extended {
       font-weight: 600;
       color: #28a745;
@@ -356,14 +335,14 @@
 
       <!-- === ХАБ === -->
       <section id="page-index" class="page">
-        <h1 class="page-title">Аттестаты и дипломы</h1>
-        <p class="page-description">Управление всеми документами об образовании</p>
+        <h1 class="page-title">Аттестаты</h1>
+        <p class="page-description">Управление аттестатами об образовании</p>
 
         <div class="admin-cards">
           <div class="admin-card" onclick="location.hash='#/list'">
             <div class="card-icon"><i class="fas fa-list"></i></div>
             <h3>Все аттестаты</h3>
-            <p>Просмотр, фильтрация и управление всеми документами.</p>
+            <p>Просмотр, фильтрация и управление аттестатами.</p>
           </div>
           <div class="admin-card" onclick="location.hash='#/verify'">
             <div class="card-icon"><i class="fas fa-check-circle"></i></div>
@@ -372,8 +351,8 @@
           </div>
           <div class="admin-card" onclick="location.hash='#/add'">
             <div class="card-icon"><i class="fas fa-plus-circle"></i></div>
-            <h3>Добавить документ</h3>
-            <p>Создание новой записи об образовании.</p>
+            <h3>Добавить аттестат</h3>
+            <p>Создание новой записи об аттестате.</p>
           </div>
         </div>
       </section>
@@ -405,12 +384,12 @@
 
       <!-- === ФОРМА (ДОБАВЛЕНИЕ / РЕДАКТИРОВАНИЕ) === -->
       <section id="page-form" class="page">
-        <h1 id="formTitle" class="page-title">Добавить документ</h1>
+        <h1 id="formTitle" class="page-title">Добавить аттестат</h1>
         <p class="page-description">Заполните все необходимые поля.</p>
 
         <div class="form-container">
           <div class="form-group" id="formTypeWrapper">
-            <label for="formTypeSelect">Тип документа:</label>
+            <label for="formTypeSelect">Тип аттестата:</label>
             <select id="formTypeSelect" class="form-select">
               <option value="">-- Выберите тип --</option>
             </select>
@@ -456,7 +435,7 @@
 
       <!-- === ПРОСМОТР === -->
       <section id="page-view" class="page">
-        <h1 id="viewTitle" class="page-title">Просмотр документа</h1>
+        <h1 id="viewTitle" class="page-title">Просмотр аттестата</h1>
         <div id="viewLoading" class="loading">Загрузка...</div>
         <div id="viewError" class="error-block" style="display:none;"></div>
         <div id="viewDisplay" style="display:none;"></div>
@@ -476,41 +455,29 @@
   <script type="module">
     import { supabase } from '../../js/supabase-config.js';
 
-    /* ------------------- КОНФИГУРАЦИЯ ТИПОВ ------------------- */
+    /* ------------------- ТОЛЬКО АТТЕСТАТЫ ------------------- */
     const EDUCATION_TABLES = {
-      preschool:               { table: 'preschool_certificate',                title: 'Аттестат о дошкольном образовании' },
-      primary:                 { table: 'primary_certificate',                  title: 'Аттестат о начальном образовании' },
-      basic_general:           { table: 'basic_general_certificate',            title: 'Аттестат об основном общем образовании' },
-      secondary_general:       { table: 'secondary_general_certificate',        title: 'Аттестат о среднем общем образовании' },
-      secondary_vocational:    { table: 'secondary_vocational_diploma',         title: 'Диплом о среднем профессиональном образовании' },
-      basic_higher:            { table: 'basic_higher_diploma',                 title: 'Диплом о базовом высшем образовании' },
-      specialized_higher:      { table: 'specialized_higher_diploma',           title: 'Диплом о специализированном высшем образовании' },
-      qualified_higher:        { table: 'qualified_higher_diploma',             title: 'Диплом о квалифицированном высшем образовании' },
-      incomplete_higher:       { table: 'incomplete_higher_diploma',            title: 'Диплом о неполном высшем образовании' },
-      professional_retraining: { table: 'professional_retraining_diploma',      title: 'Диплом о профессиональной переподготовке' },
-      driving_school:          { table: 'driving_school_certificate',           title: 'Свидетельство об окончании автошколы' },
-      candidate_sciences:      { table: 'candidate_sciences_diploma',           title: 'Диплом кандидата наук' },
-      doctor_sciences:         { table: 'doctor_sciences_diploma',              title: 'Диплом доктора наук' },
-      memorial:                { table: 'memorial_certificate',                 title: 'Памятный аттестат' },
-      special_school:          { table: 'special_school_certificate',           title: 'Свидетельство об окончании спецшколы' },
-      school_certificate:      { table: 'school_certificate',                   title: 'Справка об окончании школы (колледжа)' }
+      preschool:         { table: 'preschool_certificate',         title: 'Аттестат о дошкольном образовании' },
+      primary:           { table: 'primary_certificate',           title: 'Аттестат о начальном образовании' },
+      basic_general:     { table: 'basic_general_certificate',     title: 'Аттестат об основном общем образовании' },
+      secondary_general: { table: 'secondary_general_certificate', title: 'Аттестат о среднем общем образовании' },
+      memorial:          { table: 'memorial_certificate',          title: 'Памятный аттестат' }
     };
 
-    /* Поля одинаковые у всех 16 таблиц */
     const FIELDS = [
-      { name: 'personal_code',      label: 'Личный код владельца',         type: 'text',     required: true },
-      { name: 'full_name',          label: 'ФИО владельца',                type: 'text',     required: true },
-      { name: 'issued_by',          label: 'Образовательное учреждение',   type: 'text' },
-      { name: 'director',           label: 'Директор / руководитель',      type: 'text' },
-      { name: 'document_number',    label: 'Номер документа',              type: 'text' },
-      { name: 'registration_number',label: 'Регистрационный номер',        type: 'text' },
-      { name: 'document_status',    label: 'Статус документа',             type: 'select',   options: ['', 'Оригинал', 'Дубликат'] },
-      { name: 'with_honors',        label: 'С отличием',                   type: 'checkbox' },
-      { name: 'study_start_date',   label: 'Дата начала обучения',         type: 'date' },
-      { name: 'study_end_date',     label: 'Дата окончания обучения',      type: 'date' },
-      { name: 'issue_date',         label: 'Дата выдачи',                  type: 'date' },
-      { name: 'additional_info',    label: 'Дополнительная информация',    type: 'textarea' },
-      { name: 'subjects',           label: 'Приложение: предметы и оценки',type: 'subjects' }
+      { name: 'personal_code',       label: 'Личный код владельца',         type: 'text',     required: true },
+      { name: 'full_name',           label: 'ФИО владельца',                type: 'text',     required: true },
+      { name: 'issued_by',           label: 'Образовательное учреждение',   type: 'text' },
+      { name: 'director',            label: 'Директор / руководитель',      type: 'text' },
+      { name: 'document_number',     label: 'Номер документа',              type: 'text' },
+      { name: 'registration_number', label: 'Регистрационный номер',        type: 'text' },
+      { name: 'document_status',     label: 'Статус документа',             type: 'select',   options: ['', 'Оригинал', 'Дубликат'] },
+      { name: 'with_honors',         label: 'С отличием',                   type: 'checkbox' },
+      { name: 'study_start_date',    label: 'Дата начала обучения',         type: 'date' },
+      { name: 'study_end_date',      label: 'Дата окончания обучения',      type: 'date' },
+      { name: 'issue_date',          label: 'Дата выдачи',                  type: 'date' },
+      { name: 'additional_info',     label: 'Дополнительная информация',    type: 'textarea' },
+      { name: 'subjects',            label: 'Приложение: предметы и оценки',type: 'subjects' }
     ];
 
     /* ------------------- ХЕЛПЕРЫ ------------------- */
@@ -569,7 +536,7 @@
     /* ------------------- ЗАПРОСЫ К БД ------------------- */
     async function fetchList(type, filters = {}) {
       const info = getTypeInfo(type);
-      if (!info) throw new Error('Неизвестный тип документа');
+      if (!info) throw new Error('Неизвестный тип аттестата');
 
       let query = supabase.schema('documents_education').from(info.table).select('*');
 
@@ -587,7 +554,7 @@
 
     async function fetchById(type, id) {
       const info = getTypeInfo(type);
-      if (!info) throw new Error('Неизвестный тип документа');
+      if (!info) throw new Error('Неизвестный тип аттестата');
       const { data, error } = await supabase
         .schema('documents_education').from(info.table)
         .select('*').eq('id', id).single();
@@ -787,11 +754,10 @@
       form.reset();
       fieldsDiv.innerHTML = '';
       submitBtn.textContent = mode === 'edit' ? 'Сохранить изменения' : 'Создать';
-      titleEl.textContent = mode === 'edit' ? 'Редактирование документа' : 'Добавление документа';
+      titleEl.textContent = mode === 'edit' ? 'Редактирование аттестата' : 'Добавление аттестата';
 
       let currentData = null;
 
-      // Загружаем данные для редактирования
       if (mode === 'edit') {
         if (!typeFromUrl || !idFromUrl) {
           alert('Неверные параметры');
@@ -822,7 +788,6 @@
           const required = field.required ? 'required' : '';
 
           if (field.type === 'subjects') {
-            const subjects = parseSubjects(val);
             html += `
               <div class="form-group">
                 <label>${escapeHTML(field.label)}</label>
@@ -872,7 +837,6 @@
         fieldsDiv.innerHTML = html;
         form.style.display = 'block';
 
-        // Инициализируем редактор предметов
         const subjectsBody = document.getElementById('subjectsBody');
         const addSubjectBtn = document.getElementById('addSubjectBtn');
         const subjects = parseSubjects(currentData?.subjects);
@@ -925,7 +889,6 @@
           }
         });
 
-        // Собираем предметы
         const subjects = [];
         document.querySelectorAll('#subjectsBody tr').forEach(tr => {
           const name = tr.querySelector('.subject-name').value.trim();
@@ -947,7 +910,7 @@
             setTimeout(() => location.hash = `#/view?type=${type}&id=${idFromUrl}`, 600);
           } else {
             const created = await createDoc(type, payload);
-            showFormMsg('Документ создан (ID: ' + created.id + ')', 'success');
+            showFormMsg('Аттестат создан (ID: ' + created.id + ')', 'success');
             setTimeout(() => location.hash = `#/list`, 800);
           }
         } catch (err) {
@@ -1056,7 +1019,7 @@
         };
 
         Object.entries(data).forEach(([key, value]) => {
-          if (key === 'subjects') return; // отдельно
+          if (key === 'subjects') return;
           let disp = value;
           if (value === null || value === undefined) disp = '—';
           else if (key === 'with_honors') disp = value ? 'Да' : 'Нет';
@@ -1079,11 +1042,9 @@
         html += '</tbody></table>';
         display.innerHTML = html;
 
-        // Кнопки действий
         const actions = document.createElement('div');
         actions.className = 'actions';
 
-        // Смена статуса
         ['verified', 'rejected', 'archived'].forEach(st => {
           const btn = document.createElement('button');
           btn.textContent = st === 'verified' ? '✅ Подтвердить' :
@@ -1102,14 +1063,12 @@
           actions.appendChild(btn);
         });
 
-        // Редактировать
         const editBtn = document.createElement('a');
         editBtn.textContent = '✎ Редактировать';
         editBtn.className = 'btn-edit';
         editBtn.href = `#/edit?type=${type}&id=${id}`;
         actions.appendChild(editBtn);
 
-        // Удалить
         const delBtn = document.createElement('button');
         delBtn.textContent = '🗑 Удалить';
         delBtn.className = 'btn-delete';
@@ -1125,7 +1084,6 @@
         };
         actions.appendChild(delBtn);
 
-        // Назад
         const back = document.createElement('a');
         back.textContent = '← К списку';
         back.className = 'btn-secondary';
