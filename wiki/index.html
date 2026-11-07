@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Википедия СФСРЮ</title>
-
-    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../images/favicons/apple-touch-icon-72x72.png" />
@@ -96,6 +94,35 @@
         import { supabase } from '../js/supabase-config.js';
 
         let allArticles = [];
+        let categories = [];
+
+        function getDefaultCategories() {
+            return [
+                { key: 'people',     name: 'Люди',            icon: '👥', sort_order: 1 },
+                { key: 'countries',  name: 'Страны',          icon: '🌍', sort_order: 2 },
+                { key: 'politics',   name: 'Политика',        icon: '⚖️', sort_order: 3 },
+                { key: 'education',  name: 'Образование',     icon: '📚', sort_order: 4 },
+                { key: 'healthcare', name: 'Здравоохранение', icon: '🏥', sort_order: 5 },
+                { key: 'registry',   name: 'Реестры',         icon: '📃', sort_order: 6 },
+                { key: 'currency',   name: 'Валюты',          icon: '💴', sort_order: 7 },
+                { key: 'other',      name: 'Другое',          icon: '✨', sort_order: 999 }
+            ];
+        }
+
+        async function loadCategories() {
+            try {
+                const { data, error } = await supabase
+                    .schema('wiki')
+                    .from('categories')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
+                if (error) throw error;
+                return (data && data.length > 0) ? data : getDefaultCategories();
+            } catch (e) {
+                console.warn('wiki.categories недоступна, использую дефолт:', e.message);
+                return getDefaultCategories();
+            }
+        }
 
         async function loadArticles() {
             const { data, error } = await supabase
@@ -107,7 +134,7 @@
                 console.error('Ошибка загрузки:', error);
                 return [];
             }
-            return data;
+            return data || [];
         }
 
         function shuffle(arr) {
@@ -119,16 +146,14 @@
         }
 
         function getRandomArticles(arr, n) {
-            const shuffled = shuffle([...arr]);
-            return shuffled.slice(0, n);
+            return shuffle([...arr]).slice(0, n);
         }
 
         function renderRandom(articles) {
             const container = document.querySelector('.random-pages');
             container.innerHTML = '';
             if (!articles || articles.length === 0) return;
-            const randomArticles = getRandomArticles(articles, 3);
-            randomArticles.forEach(article => {
+            getRandomArticles(articles, 3).forEach(article => {
                 const card = document.createElement('a');
                 card.href = article.url;
                 card.className = 'random-card';
@@ -145,58 +170,49 @@
             const container = document.getElementById('categories-container');
             container.innerHTML = '';
 
-            const categories = {};
+            // группируем статьи по категории
+            const byCategory = {};
             articles.forEach(article => {
-                if (!categories[article.category]) {
-                    categories[article.category] = [];
-                }
-                categories[article.category].push(article);
+                const cat = article.category || 'other';
+                if (!byCategory[cat]) byCategory[cat] = [];
+                byCategory[cat].push(article);
             });
 
-            const iconMap = {
-                'people': '👥',
-                'countries': '🌍',
-                'politics': '⚖️',
-                'education': '📚',
-                'healthcare': '🏥',
-                'registry': '📃',
-                'currency': '💴',
-                'other': '✨'
-            };
-            const nameMap = {
-                'people': 'Люди',
-                'countries': 'Страны',
-                'politics': 'Политика',
-                'education': 'Образование',
-                'healthcare': 'Здравоохранение',
-                'registry': 'Реестры',
-                'currency': 'Валюты',
-                'other': 'Другое'
-            };
-            const categoryOrder = ['people', 'countries', 'politics', 'education', 'healthcare', 'registry', 'currency', 'other'];
+            const knownKeys = new Set(categories.map(c => c.key));
 
-            categoryOrder.forEach(cat => {
-                if (categories[cat] && categories[cat].length > 0) {
-                    const group = document.createElement('div');
-                    group.className = 'category-group';
-
-                    const title = document.createElement('h2');
-                    title.className = 'category-title';
-                    title.innerHTML = `<span class="cat-icon">${iconMap[cat] || '📄'}</span> ${nameMap[cat] || cat}`;
-                    group.appendChild(title);
-
-                    const list = document.createElement('div');
-                    list.className = 'category-articles';
-                    categories[cat].forEach(article => {
-                        const link = document.createElement('a');
-                        link.href = article.url;
-                        link.innerHTML = `${article.title} <span class="article-desc">${article.description || ''}</span>`;
-                        list.appendChild(link);
-                    });
-                    group.appendChild(list);
-                    container.appendChild(group);
-                }
+            // 1) сначала — известные разделы из БД в их порядке
+            categories.forEach(cat => {
+                const list = byCategory[cat.key];
+                if (!list || list.length === 0) return;
+                container.appendChild(buildCategoryGroup(cat.icon || '📄', cat.name, list));
             });
+
+            // 2) любые «осиротевшие» категории (не в БД) — в конец с сырым ключом
+            Object.keys(byCategory).forEach(key => {
+                if (knownKeys.has(key)) return;
+                container.appendChild(buildCategoryGroup('📄', key, byCategory[key]));
+            });
+        }
+
+        function buildCategoryGroup(icon, name, list) {
+            const group = document.createElement('div');
+            group.className = 'category-group';
+
+            const title = document.createElement('h2');
+            title.className = 'category-title';
+            title.innerHTML = `<span class="cat-icon">${icon}</span> ${name}`;
+            group.appendChild(title);
+
+            const listEl = document.createElement('div');
+            listEl.className = 'category-articles';
+            list.forEach(article => {
+                const link = document.createElement('a');
+                link.href = article.url;
+                link.innerHTML = `${article.title} <span class="article-desc">${article.description || ''}</span>`;
+                listEl.appendChild(link);
+            });
+            group.appendChild(listEl);
+            return group;
         }
 
         function search(query) {
@@ -241,7 +257,8 @@
         }
 
         async function init() {
-            allArticles = await loadArticles();
+            [categories, allArticles] = await Promise.all([loadCategories(), loadArticles()]);
+
             if (allArticles.length === 0) {
                 document.querySelector('.random-pages').innerHTML = '<p>Статьи не найдены. Добавьте их через админ-панель.</p>';
                 return;
@@ -256,9 +273,7 @@
                 search(input.value);
             });
             input.addEventListener('input', () => {
-                if (input.value.trim() === '') {
-                    search('');
-                }
+                if (input.value.trim() === '') search('');
             });
         }
 

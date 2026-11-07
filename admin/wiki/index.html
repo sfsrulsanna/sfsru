@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Управление статьями — Админ панель СФСРЮ</title>
-    <!-- favicons -->
     <link rel="apple-touch-icon-precomposed" sizes="57x57" href="../../images/favicons/apple-touch-icon-57x57.png" />
     <link rel="apple-touch-icon-precomposed" sizes="114x114" href="../../images/favicons/apple-touch-icon-114x114.png" />
     <link rel="apple-touch-icon-precomposed" sizes="72x72" href="../../images/favicons/apple-touch-icon-72x72.png" />
@@ -31,224 +30,6 @@
     <link rel="stylesheet" href="../../css/admin.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Дополнительные стили, специфичные для этой страницы */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-        .page-title {
-            font-size: 1.75rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #1e293b;
-            border-left: 4px solid #7b091a;
-            padding-left: 1rem;
-        }
-        .page-description {
-            color: #64748b;
-            margin-bottom: 2rem;
-            font-size: 1rem;
-        }
-        .action-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .search-box {
-            flex: 1;
-            max-width: 300px;
-        }
-        .search-box input {
-            width: 100%;
-            padding: 0.6rem 1rem;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1rem;
-        }
-        .btn-add {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1rem;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            transition: background 0.2s;
-        }
-        .btn-add:hover {
-            background: #218838;
-        }
-        .table-container {
-            background: white;
-            border-radius: 12px;
-            padding: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            overflow-x: auto;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            cursor: pointer;
-            user-select: none;
-            position: relative;
-        }
-        th:hover {
-            background: #e9ecef;
-        }
-        th i {
-            margin-left: 5px;
-            font-size: 0.8rem;
-        }
-        td {
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
-        }
-        .btn-edit, .btn-delete {
-            padding: 0.3rem 0.8rem;
-            font-size: 0.85rem;
-            border-radius: 4px;
-            cursor: pointer;
-            border: none;
-            margin: 0 0.2rem;
-            transition: background 0.2s;
-        }
-        .btn-edit {
-            background: #ffc107;
-            color: #212529;
-        }
-        .btn-edit:hover {
-            background: #e0a800;
-        }
-        .btn-delete {
-            background: #dc3545;
-            color: white;
-        }
-        .btn-delete:hover {
-            background: #c82333;
-        }
-        .loading, .no-data, .error {
-            text-align: center;
-            padding: 2rem;
-            color: #666;
-        }
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-overlay.active {
-            display: flex;
-        }
-        .modal {
-            background: white;
-            border-radius: 8px;
-            max-width: 600px;
-            width: 90%;
-            max-height: 90vh;
-            overflow-y: auto;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #dee2e6;
-        }
-        .modal-header h4 {
-            margin: 0;
-            color: #7b091a;
-        }
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 1.5rem;
-            cursor: pointer;
-            color: #666;
-        }
-        .modal-body {
-            padding: 1.5rem;
-        }
-        .modal-footer {
-            padding: 1rem 1.5rem;
-            border-top: 1px solid #dee2e6;
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
-        }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 0.3rem;
-        }
-        .form-input {
-            width: 100%;
-            padding: 0.5rem;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .btn-primary {
-            background: #007bff;
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-        .btn-primary:hover {
-            background: #0056b3;
-        }
-        .category-badge {
-            display: inline-block;
-            padding: 0.2rem 0.6rem;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            background: #e9ecef;
-            color: #495057;
-        }
-        .category-badge.people { background: #f8d7da; color: #721c24; }
-        .category-badge.countries { background: #d4edda; color: #155724; }
-        .category-badge.politics { background: #cce5ff; color: #004085; }
-        .category-badge.education { background: #fff3cd; color: #856404; }
-        .category-badge.healthcare { background: #d6d8db; color: #383d41; }
-        .category-badge.registry { background: #f5c6cb; color: #721c24; }
-        .category-badge.currency { background: #50c878; color: #00a550; }
-        .category-badge.other { background: #808080; color: #666666; }
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem 1rem; }
         .page-title { font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1e293b; border-left: 4px solid #7b091a; padding-left: 1rem; }
         .page-description { color: #64748b; margin-bottom: 2rem; font-size: 1rem; }
@@ -257,6 +38,8 @@
         .search-box input { width: 100%; padding: 0.6rem 1rem; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
         .btn-add { background: #28a745; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s; }
         .btn-add:hover { background: #218838; }
+        .btn-cats { background: #007bff; color: white; border: none; padding: 0.6rem 1.2rem; border-radius: 8px; cursor: pointer; font-size: 1rem; display: inline-flex; align-items: center; gap: 0.5rem; transition: background 0.2s; }
+        .btn-cats:hover { background: #0062cc; }
         .table-container { background: white; border-radius: 12px; padding: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; }
         th { background: #f8f9fa; padding: 12px; text-align: left; cursor: pointer; user-select: none; }
@@ -292,7 +75,21 @@
         .category-badge.healthcare { background: #d6d8db; color: #383d41; }
         .category-badge.registry { background: #f5c6cb; color: #721c24; }
         .category-badge.currency { background: #50c878; color: #00a550; }
-        .category-badge.other { background: #808080; color: #666666; }
+        .category-badge.other { background: #808080; color: #ffffff; }
+        .hint { font-size: 0.8rem; color: #666; margin-top: 0.3rem; }
+        .cat-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; border-bottom: 1px solid #eee; }
+        .cat-row .cat-icon { font-size: 1.3rem; }
+        .cat-row .cat-name { flex: 1; font-weight: 600; }
+        .cat-row .cat-key { color: #666; font-size: 0.8rem; font-family: monospace; }
+        .cat-row .cat-order { color: #666; font-size: 0.8rem; min-width: 40px; text-align: right; }
+        .cat-row .btn-del { background: #dc3545; color: white; border: none; border-radius: 4px; padding: 0.2rem 0.6rem; cursor: pointer; }
+        .add-cat-grid { display: grid; grid-template-columns: 1fr 1fr 80px 90px auto; gap: 0.5rem; align-items: end; }
+        .add-cat-grid label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.2rem; }
+        .warn-box { background: #fff3cd; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; font-size: 0.85rem; }
+        .warn-box code { display: block; background: #fff; padding: 0.5rem; border-radius: 4px; margin-top: 0.5rem; overflow-x: auto; white-space: pre; font-size: 0.75rem; }
+        @media (max-width: 640px) {
+            .add-cat-grid { grid-template-columns: 1fr; }
+        }
     </style>
 </head>
 <body>
@@ -336,7 +133,10 @@
                 <div class="search-box">
                     <input type="text" id="searchInput" placeholder="Поиск по названию или описанию...">
                 </div>
-                <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить статью</button>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <button id="manageCategoriesBtn" class="btn-cats"><i class="fas fa-folder-open"></i> Разделы</button>
+                    <button id="addBtn" class="btn-add"><i class="fas fa-plus"></i> Добавить статью</button>
+                </div>
             </div>
 
             <div id="loading" class="loading">Загрузка...</div>
@@ -366,6 +166,7 @@
         <p>Телефон: +7 (993) 609-81-26 | Почта: <a href="mailto:sfsr.ulsanna@gmail.com">sfsr.ulsanna@gmail.com</a></p>
     </footer>
 
+    <!-- Модалка статьи -->
     <div id="editModal" class="modal-overlay">
         <div class="modal">
             <div class="modal-header">
@@ -384,21 +185,14 @@
                         <textarea id="formDescription" class="form-input" rows="3" placeholder="Краткое описание"></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="formCategory">Категория *</label>
-                        <select id="formCategory" class="form-input" required>
-                            <option value="people">Люди</option>
-                            <option value="countries">Страны</option>
-                            <option value="politics">Политика</option>
-                            <option value="education">Образование</option>
-                            <option value="healthcare">Здравоохранение</option>
-                            <option value="registry">Реестры</option>
-                            <option value="currency">Валюты</option>
-                            <option value="other">Другое</option>
-                        </select>
+                        <label for="formCategory">Раздел *</label>
+                        <select id="formCategory" class="form-input" required></select>
+                        <div class="hint">Нет нужного раздела? Нажмите «Разделы» вверху и добавьте его.</div>
                     </div>
                     <div class="form-group">
                         <label for="formUrl">Путь к файлу (URL) *</label>
                         <input type="text" id="formUrl" class="form-input" placeholder="например: pages/lenin.html" required>
+                        <div class="hint">Относительно папки <code>wiki/</code>. Убедитесь, что файл с таким путём действительно существует.</div>
                     </div>
                 </form>
             </div>
@@ -409,13 +203,62 @@
         </div>
     </div>
 
+    <!-- Модалка разделов -->
+    <div id="categoriesModal" class="modal-overlay">
+        <div class="modal" style="max-width: 720px;">
+            <div class="modal-header">
+                <h4>Управление разделами</h4>
+                <button type="button" class="close-modal" onclick="closeCategoriesModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="catTableWarning" class="warn-box" style="display: none;">
+                    <strong>⚠️ Таблица wiki.categories не найдена.</strong> Выполните SQL в Supabase, чтобы включить полноценное управление разделами:
+                    <code>CREATE TABLE wiki.categories (
+  id BIGSERIAL PRIMARY KEY,
+  key TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  icon TEXT DEFAULT '📄',
+  sort_order INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);</code>
+                </div>
+                <h5 style="margin-top: 0;">Существующие разделы</h5>
+                <div id="categoriesList"></div>
+                <hr style="margin: 1rem 0;">
+                <h5>Добавить раздел</h5>
+                <div class="add-cat-grid">
+                    <div>
+                        <label>Ключ (лат.)</label>
+                        <input type="text" id="newCatKey" class="form-input" placeholder="sport">
+                    </div>
+                    <div>
+                        <label>Название</label>
+                        <input type="text" id="newCatName" class="form-input" placeholder="Спорт">
+                    </div>
+                    <div>
+                        <label>Иконка</label>
+                        <input type="text" id="newCatIcon" class="form-input" placeholder="⚽">
+                    </div>
+                    <div>
+                        <label>Порядок</label>
+                        <input type="number" id="newCatOrder" class="form-input" value="100">
+                    </div>
+                    <button type="button" class="btn-primary" id="addCategoryBtn">Добавить</button>
+                </div>
+                <div class="hint">Ключ — латиница/цифры/_, по нему статья привязывается к разделу. Порядок — число, чем меньше, тем выше раздел.</div>
+            </div>
+        </div>
+    </div>
+
     <script src="../../js/mob-menu.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-      <script type="module">
-	      import { supabase } from '../../js/supabase-config.js';
-	  
+    <script type="module">
+        import { supabase } from '../../js/supabase-config.js';
+
         let currentUser = null;
         let articles = [];
+        let categories = [];
+        let categoriesTableExists = false;
         let sortField = 'id';
         let sortDirection = 'asc';
 
@@ -424,6 +267,7 @@
         const tableBody = document.getElementById('tableBody');
         const searchInput = document.getElementById('searchInput');
         const addBtn = document.getElementById('addBtn');
+        const manageCategoriesBtn = document.getElementById('manageCategoriesBtn');
         const logoutBtn = document.getElementById('logoutBtn');
         const adminEmail = document.getElementById('adminEmail');
 
@@ -436,12 +280,29 @@
         const formUrl = document.getElementById('formUrl');
         const saveBtn = document.getElementById('saveArticleBtn');
 
-        // Аутентификация
+        const categoriesModal = document.getElementById('categoriesModal');
+        const categoriesList = document.getElementById('categoriesList');
+        const catTableWarning = document.getElementById('catTableWarning');
+
+        function getDefaultCategories() {
+            return [
+                { key: 'people',     name: 'Люди',            icon: '👥', sort_order: 1 },
+                { key: 'countries',  name: 'Страны',          icon: '🌍', sort_order: 2 },
+                { key: 'politics',   name: 'Политика',        icon: '⚖️', sort_order: 3 },
+                { key: 'education',  name: 'Образование',     icon: '📚', sort_order: 4 },
+                { key: 'healthcare', name: 'Здравоохранение', icon: '🏥', sort_order: 5 },
+                { key: 'registry',   name: 'Реестры',         icon: '📃', sort_order: 6 },
+                { key: 'currency',   name: 'Валюты',          icon: '💴', sort_order: 7 },
+                { key: 'other',      name: 'Другое',          icon: '✨', sort_order: 999 }
+            ];
+        }
+
         async function checkSession() {
             const { data: { session } } = await supabase.auth.getSession();
             if (session) {
                 currentUser = session.user;
                 adminEmail.textContent = currentUser.email;
+                await loadCategories();
                 loadArticles();
             } else {
                 window.location.href = 'index.html';
@@ -453,7 +314,37 @@
             window.location.href = 'index.html';
         });
 
-        // Запросы к таблице wiki.articles с явным указанием схемы
+        async function loadCategories() {
+            try {
+                const { data, error } = await supabase
+                    .schema('wiki')
+                    .from('categories')
+                    .select('*')
+                    .order('sort_order', { ascending: true });
+                if (error) throw error;
+                categoriesTableExists = true;
+                categories = data && data.length > 0 ? data : getDefaultCategories();
+            } catch (err) {
+                categoriesTableExists = false;
+                categories = getDefaultCategories();
+            }
+            populateCategorySelect();
+        }
+
+        function populateCategorySelect() {
+            const current = formCategory.value;
+            formCategory.innerHTML = '';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat.key;
+                opt.textContent = `${cat.icon || ''} ${cat.name}`.trim();
+                formCategory.appendChild(opt);
+            });
+            if (current && categories.find(c => c.key === current)) {
+                formCategory.value = current;
+            }
+        }
+
         async function loadArticles() {
             try {
                 const { data, error } = await supabase
@@ -477,20 +368,20 @@
                 tableBody.innerHTML = `<tr><td colspan="6" class="no-data">Статей не найдено</td></tr>`;
                 return;
             }
+            const catMap = {};
+            categories.forEach(c => catMap[c.key] = c);
             let html = '';
             data.forEach(article => {
-                const categoryMap = {
-                    'people': 'Люди', 'countries': 'Страны', 'politics': 'Политика',
-                    'education': 'Образование', 'healthcare': 'Здравоохранение', 'registry': 'Реестры', 'currency': 'Валюты', 'other': 'Другое'
-                };
-                const catLabel = categoryMap[article.category] || article.category;
+                const cat = catMap[article.category];
+                const catLabel = cat ? cat.name : article.category;
+                const catIcon = cat ? (cat.icon || '') : '📄';
                 const catClass = article.category || '';
                 const created = article.created_at ? new Date(article.created_at).toLocaleDateString('ru-RU') : '—';
                 html += `
                     <tr>
                         <td>${article.id}</td>
                         <td><strong>${article.title}</strong><br><small style="color:#666;">${article.description || ''}</small></td>
-                        <td><span class="category-badge ${catClass}">${catLabel}</span></td>
+                        <td><span class="category-badge ${catClass}">${catIcon} ${catLabel}</span></td>
                         <td><code style="font-size:0.85rem;">${article.url}</code></td>
                         <td>${created}</td>
                         <td>
@@ -502,10 +393,10 @@
             });
             tableBody.innerHTML = html;
 
-            document.querySelectorAll('.btn-edit').forEach(btn => {
+            tableBody.querySelectorAll('.btn-edit').forEach(btn => {
                 btn.addEventListener('click', () => openEditModal(btn.dataset.id));
             });
-            document.querySelectorAll('.btn-delete').forEach(btn => {
+            tableBody.querySelectorAll('.btn-delete').forEach(btn => {
                 btn.addEventListener('click', () => deleteArticle(btn.dataset.id));
             });
         }
@@ -537,6 +428,7 @@
         });
 
         function openEditModal(id = null) {
+            populateCategorySelect();
             if (id) {
                 const article = articles.find(a => a.id == id);
                 if (!article) return;
@@ -545,13 +437,21 @@
                 formTitle.value = article.title;
                 formDescription.value = article.description || '';
                 formCategory.value = article.category;
+                if (!formCategory.value && article.category) {
+                    // категория статьи не найдена в списке
+                    const opt = document.createElement('option');
+                    opt.value = article.category;
+                    opt.textContent = `${article.category} (нет в списке)`;
+                    formCategory.appendChild(opt);
+                    formCategory.value = article.category;
+                }
                 formUrl.value = article.url;
             } else {
                 modalTitle.textContent = 'Добавление статьи';
                 editId.value = '';
                 formTitle.value = '';
                 formDescription.value = '';
-                formCategory.value = 'people';
+                if (categories.length > 0) formCategory.value = categories[0].key;
                 formUrl.value = '';
             }
             modal.classList.add('active');
@@ -573,7 +473,7 @@
             const url = formUrl.value.trim();
 
             if (!title || !category || !url) {
-                alert('Заполните все обязательные поля (Название, Категория, URL)');
+                alert('Заполните все обязательные поля (Название, Раздел, URL)');
                 return;
             }
 
@@ -581,7 +481,6 @@
 
             try {
                 if (id) {
-                    // UPDATE в таблице wiki.articles
                     const { error } = await supabase
                         .schema('wiki')
                         .from('articles')
@@ -589,7 +488,6 @@
                         .eq('id', id);
                     if (error) throw error;
                 } else {
-                    // INSERT в таблицу wiki.articles
                     payload.created_at = new Date();
                     const { error } = await supabase
                         .schema('wiki')
@@ -620,6 +518,124 @@
         }
 
         addBtn.addEventListener('click', () => openEditModal(null));
+
+        // === Управление разделами ===
+        manageCategoriesBtn.addEventListener('click', () => {
+            renderCategoriesList();
+            catTableWarning.style.display = categoriesTableExists ? 'none' : 'block';
+            document.getElementById('addCategoryBtn').disabled = !categoriesTableExists;
+            categoriesModal.classList.add('active');
+        });
+
+        window.closeCategoriesModal = function() {
+            categoriesModal.classList.remove('active');
+        };
+
+        categoriesModal.addEventListener('click', (e) => {
+            if (e.target === categoriesModal) closeCategoriesModal();
+        });
+
+        function renderCategoriesList() {
+            categoriesList.innerHTML = '';
+            if (categories.length === 0) {
+                categoriesList.innerHTML = '<p style="color:#666;">Разделов пока нет.</p>';
+                return;
+            }
+            categories.forEach(cat => {
+                const row = document.createElement('div');
+                row.className = 'cat-row';
+                row.innerHTML = `
+                    <span class="cat-icon">${cat.icon || '📄'}</span>
+                    <span class="cat-name">${cat.name}</span>
+                    <code class="cat-key">${cat.key}</code>
+                    <span class="cat-order">#${cat.sort_order || 0}</span>
+                    <button class="btn-del" data-key="${cat.key}" title="Удалить раздел" ${categoriesTableExists ? '' : 'disabled'}>✕</button>
+                `;
+                categoriesList.appendChild(row);
+            });
+            categoriesList.querySelectorAll('.btn-del').forEach(btn => {
+                btn.addEventListener('click', () => deleteCategory(btn.dataset.key));
+            });
+        }
+
+        document.getElementById('addCategoryBtn').addEventListener('click', async () => {
+            if (!categoriesTableExists) {
+                alert('Сначала создайте таблицу wiki.categories (см. SQL в предупреждении).');
+                return;
+            }
+            const key = document.getElementById('newCatKey').value.trim().toLowerCase();
+            const name = document.getElementById('newCatName').value.trim();
+            const icon = document.getElementById('newCatIcon').value.trim() || '📄';
+            const order = parseInt(document.getElementById('newCatOrder').value, 10) || 100;
+
+            if (!key || !name) {
+                alert('Укажите ключ и название');
+                return;
+            }
+            if (!/^[a-z0-9_]+$/.test(key)) {
+                alert('Ключ должен содержать только латиницу, цифры и _');
+                return;
+            }
+            if (categories.find(c => c.key === key)) {
+                alert('Раздел с таким ключом уже существует');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .schema('wiki')
+                    .from('categories')
+                    .insert([{ key, name, icon, sort_order: order }]);
+                if (error) throw error;
+                await loadCategories();
+                renderCategoriesList();
+                document.getElementById('newCatKey').value = '';
+                document.getElementById('newCatName').value = '';
+                document.getElementById('newCatIcon').value = '';
+                document.getElementById('newCatOrder').value = '100';
+            } catch (err) {
+                alert('Ошибка добавления: ' + err.message);
+            }
+        });
+
+        async function deleteCategory(key) {
+            if (!categoriesTableExists) return;
+            const count = articles.filter(a => a.category === key).length;
+            let moveToOther = false;
+
+            if (count > 0) {
+                const hasOther = categories.find(c => c.key === 'other');
+                const msg = hasOther
+                    ? `Удалить раздел «${key}»?\n\nВ нём ${count} статей. Они будут перемещены в «Другое».`
+                    : `Удалить раздел «${key}»?\n\nВ нём ${count} статей. Раздел «other» (Другое) не найден — статьи останутся без корректного раздела.`;
+                if (!confirm(msg)) return;
+                moveToOther = !!hasOther;
+            } else {
+                if (!confirm(`Удалить пустой раздел «${key}»?`)) return;
+            }
+
+            try {
+                if (moveToOther) {
+                    const { error: updErr } = await supabase
+                        .schema('wiki')
+                        .from('articles')
+                        .update({ category: 'other' })
+                        .eq('category', key);
+                    if (updErr) throw updErr;
+                }
+                const { error } = await supabase
+                    .schema('wiki')
+                    .from('categories')
+                    .delete()
+                    .eq('key', key);
+                if (error) throw error;
+                await loadCategories();
+                await loadArticles();
+                renderCategoriesList();
+            } catch (err) {
+                alert('Ошибка удаления: ' + err.message);
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', checkSession);
     </script>
